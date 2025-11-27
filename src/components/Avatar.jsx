@@ -2,7 +2,7 @@
 // THREE-LAYER AVATAR:
 // 1) Ambient halo
 // 2) Breathing aura (practice only)
-// 3) Static sigil core + metrics
+// 3) Static sigil core (real image)
 
 import React, { useEffect, useState } from "react";
 
@@ -98,72 +98,23 @@ function BreathingAura({ breathPattern }) {
 }
 
 //
-// ─── STATIC SIGIL CORE (placeholder – swap to PNG later) ──────────────────────
+// ─── STATIC SIGIL CORE (real image) ────────────────────────────────────────────
 //
 function StaticSigilCore() {
   return (
     <div className="relative z-10 flex items-center justify-center">
-      {/* Outer rough ring */}
-      <div
-        className="rounded-full border border-amber-200/70 bg-black/70"
+      <img
+        src="/sigils/flame.png"
+        alt="Flame sigil"
+        className="pointer-events-none select-none"
         style={{
-          width: "52%",
-          height: "52%",
-          boxShadow:
-            "0 0 24px rgba(251,191,36,0.9), 0 0 64px rgba(250,204,21,0.35)",
+          width: "60%",
+          height: "60%",
+          objectFit: "contain",
+          filter:
+            "drop-shadow(0 0 18px rgba(253,224,71,0.9)) drop-shadow(0 0 42px rgba(251,191,36,0.65))",
         }}
-      >
-        {/* You can replace the inner divs with an <img src="/sigils/flame.png" /> later */}
-        <div className="w-full h-full flex items-center justify-center">
-          {/* Wobbly inner rings via borders */}
-          <div
-            className="rounded-full border border-amber-100/60"
-            style={{
-              width: "76%",
-              height: "76%",
-              boxShadow: "0 0 16px rgba(252,211,77,0.75)",
-            }}
-          />
-          <div
-            className="absolute rounded-full border border-amber-100/35"
-            style={{ width: "62%", height: "62%" }}
-          />
-          {/* Eye glyph */}
-          <div className="absolute flex items-center justify-center">
-            <div
-              className="rounded-full flex items-center justify-center"
-              style={{
-                width: "32px",
-                height: "32px",
-                background:
-                  "radial-gradient(circle, #fef9c3 0%, #fde68a 40%, transparent 100%)",
-                boxShadow: "0 0 18px rgba(253,224,71,0.9)",
-              }}
-            >
-              <div
-                className="rounded-full border border-amber-700/80"
-                style={{
-                  width: "80%",
-                  height: "60%",
-                  background: "rgba(0,0,0,0.55)",
-                }}
-              >
-                <div
-                  className="rounded-full"
-                  style={{
-                    width: "40%",
-                    height: "60%",
-                    margin: "auto",
-                    marginTop: "18%",
-                    background:
-                      "radial-gradient(circle, #fef3c7 0%, #facc15 60%, #fbbf24 100%)",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      />
     </div>
   );
 }
@@ -256,11 +207,11 @@ function AvatarContainer({ mode, label, breathPattern }) {
           <BreathingAura breathPattern={breathPattern} />
         )}
 
-        {/* Layer 3: static sigil core (placeholder) */}
+        {/* Layer 3: static sigil core (real image) */}
         <StaticSigilCore />
       </div>
 
-      {/* Label to the right, as before */}
+      {/* Label to the right */}
       <div className="absolute left-[calc(100%+0.75rem)] top-1/2 -translate-y-1/2 text-xs tracking-[0.25em] text-white/90 uppercase whitespace-nowrap">
         {label}
       </div>
