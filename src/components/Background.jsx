@@ -13,7 +13,7 @@ export function Background() {
       <div 
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(circle at 50% 40%, rgba(34,211,238,0.03) 0%, transparent 50%)",
+          background: "radial-gradient(circle at 50% 50%, transparent 30%, rgba(5, 5, 8, 0.6) 100%)",
         }}
       />
 

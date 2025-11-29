@@ -3,6 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { addSession } from "../state/practiceStore.js";
 import { recordPracticeEffect } from "../state/mandalaStore.js";
+import { BreathingRing } from "./BreathingRing.jsx";
+import { Avatar } from "./Avatar.jsx";
 
 // available practice types
 const PRACTICES = ["Breathing", "Meditation", "Yoga", "Visualization"];
@@ -152,6 +154,7 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
 
   const [accuracyView, setAccuracyView] = useState("pulse");
+  const [ripple, setRipple] = useState(null);
 
   const timerRef = useRef(null);
   const breathStartTimeRef = useRef(null);
@@ -349,58 +352,81 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
     };
   }, [isRunning, practice, totalPatternSeconds, pattern]);
 
-  const handleAccuracyTap = () => {
+  const handleAccuracyTap = (errorMsFromRing = null) => {
     if (!isRunning || practice !== "Breathing") {
       return;
     }
 
-    const now = Date.now();
+    let errorMs;
 
-    if (!breathStartTimeRef.current) {
-      breathStartTimeRef.current = now;
+    // If errorMs is provided by BreathingRing, use it directly
+    if (errorMsFromRing !== null) {
+      errorMs = errorMsFromRing;
+    } else {
+      // Otherwise calculate it (for non-ring taps, though this path isn't used currently)
+      const now = Date.now();
+
+      if (!breathStartTimeRef.current) {
+        breathStartTimeRef.current = now;
+      }
+
+      const elapsedMs = now - breathStartTimeRef.current;
+      const cycle = totalPatternSeconds * 1000 || 1;
+      const phase = (elapsedMs % cycle) / cycle;
+
+      const inhaleEnd =
+        (pattern.inhale || 0) / totalPatternSeconds;
+      const holdTopEnd =
+        ((pattern.inhale || 0) + (pattern.hold1 || 0)) /
+        totalPatternSeconds;
+      const exhaleEnd =
+        ((pattern.inhale || 0) +
+          (pattern.hold1 || 0) +
+          (pattern.exhale || 0)) /
+        totalPatternSeconds;
+
+      let isPeak = false;
+      let expectedPhase = 0;
+
+      // Inhale peak (end of inhale expansion)
+      if (phase >= inhaleEnd - 0.15 && phase <= inhaleEnd + 0.15) {
+        isPeak = true;
+        expectedPhase = inhaleEnd;
+      } 
+      // Inhale release (end of hold top, start of exhale)
+      else if (phase >= holdTopEnd - 0.15 && phase <= holdTopEnd + 0.15) {
+        isPeak = true;
+        expectedPhase = holdTopEnd;
+      } 
+      // Exhale peak (end of exhale contraction)
+      else if (
+        phase >= exhaleEnd - 0.15 &&
+        phase <= exhaleEnd + 0.15
+      ) {
+        isPeak = true;
+        expectedPhase = exhaleEnd;
+      } 
+      // Exhale release (end of hold bottom, start of next inhale)
+      else if (phase >= 0.85 && phase <= 1.0) {
+        isPeak = true;
+        expectedPhase = 1.0;
+      }
+
+      if (!isPeak || totalPatternSeconds === 0) {
+        return;
+      }
+
+      const expectedMs = expectedPhase * cycle;
+      const actualMs = elapsedMs % cycle;
+      errorMs = actualMs - expectedMs;
     }
-
-    const elapsedMs = now - breathStartTimeRef.current;
-    const cycle = totalPatternSeconds * 1000 || 1;
-    const phase = (elapsedMs % cycle) / cycle;
-
-    const inhaleEnd =
-      (pattern.inhale || 0) / totalPatternSeconds;
-    const holdTopEnd =
-      ((pattern.inhale || 0) + (pattern.hold1 || 0)) /
-      totalPatternSeconds;
-    const exhaleEnd =
-      ((pattern.inhale || 0) +
-        (pattern.hold1 || 0) +
-        (pattern.exhale || 0)) /
-      totalPatternSeconds;
-
-    let isPeak = false;
-    let expectedPhase = 0;
-
-    if (phase >= inhaleEnd - 0.15 && phase <= inhaleEnd + 0.15) {
-      isPeak = true;
-      expectedPhase = inhaleEnd;
-    } else if (
-      phase >= exhaleEnd - 0.15 &&
-      phase <= exhaleEnd + 0.15
-    ) {
-      isPeak = true;
-      expectedPhase = exhaleEnd;
-    }
-
-    if (!isPeak || totalPatternSeconds === 0) {
-      setLastErrorMs(null);
-      setLastSignedErrorMs(null);
-      return;
-    }
-
-    const expectedMs = expectedPhase * cycle;
-    const actualMs = elapsedMs % cycle;
-    const errorMs = actualMs - expectedMs;
 
     setLastErrorMs(Math.abs(errorMs));
     setLastSignedErrorMs(errorMs);
+    
+    // Trigger ripple animation
+    setRipple({ id: Date.now() });
+    setTimeout(() => setRipple(null), 600);
 
     setTapErrors((prev) => {
       const newTapErrors = [...prev, errorMs];
@@ -453,6 +479,172 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
       : null;
   const bestErrorMs =
     tapCount > 0 ? Math.round(Math.min(...tapErrors)) : null;
+
+  const safePattern = pattern || {};
+  const patternForBreath = {
+    inhale: typeof safePattern.inhale === "number" ? safePattern.inhale : 4,
+    holdTop: typeof safePattern.hold1 === "number" ? safePattern.hold1 : 4,
+    exhale: typeof safePattern.exhale === "number" ? safePattern.exhale : 4,
+    holdBottom:
+      typeof safePattern.hold2 === "number" ? safePattern.hold2 : 2,
+  };
+
+  // Show breathing ring as main focus during breathing practice
+  if (practice === "Breathing" && isRunning) {
+    // Calculate progress for progress ring
+    const totalSec = durationMin * 60;
+    const elapsed = totalSec - remainingSec;
+    const progressPercent = (elapsed / totalSec) * 100;
+    const circumference = 2 * Math.PI * 45; // radius 45
+    const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+    
+    return (
+      <div className="w-full max-w-md mx-auto mt-6 flex flex-col items-center">
+        {/* Avatar peek - small, dimmed, at top */}
+        <div style={{ opacity: 0.3, marginBottom: "-2rem", zIndex: 5, pointerEvents: "none" }}>
+          <Avatar mode="practice" breathPattern={patternForBreath} />
+        </div>
+        
+        {/* Breathing ring with ripple */}
+        <div style={{ position: "relative", marginTop: "2rem" }}>
+        <BreathingRing 
+          breathPattern={patternForBreath}
+          onTap={handleAccuracyTap}
+        />
+          
+          {/* Tap ripple - expands outward on successful tap */}
+          {ripple && (
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: "20px",
+              height: "20px",
+              border: "2px solid #fcd34d",
+              borderRadius: "50%",
+              transform: "translate(-50%, -50%)",
+              animation: "rippleExpand 0.6s ease-out forwards",
+              pointerEvents: "none"
+            }} />
+          )}
+        </div>
+        
+        {/* Timer with progress ring */}
+        <div className="mt-6 text-center relative">
+          {/* Progress ring SVG */}
+          <svg style={{ position: "absolute", top: "-65px", left: "50%", transform: "translateX(-50%)", width: "120px", height: "120px" }}>
+            {/* Background circle */}
+            <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(253, 224, 71, 0.1)" strokeWidth="2" />
+            {/* Progress arc */}
+            <circle 
+              cx="60" 
+              cy="60" 
+              r="45" 
+              fill="none" 
+              stroke="#fcd34d" 
+              strokeWidth="3"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              style={{ transform: "rotate(-90deg)", transformOrigin: "60px 60px", transition: "stroke-dashoffset 0.5s ease" }}
+            />
+          </svg>
+          
+          <div style={{ fontSize: "1.25rem", fontFamily: "Cinzel, serif", letterSpacing: "0.2em", color: "rgba(253, 251, 245, 0.6)" }}>
+            {mm}:{ss}
+          </div>
+          <button
+            onClick={handleStop}
+            style={{
+              marginTop: "1rem",
+              padding: "0.5rem 1.5rem",
+              fontFamily: "Cinzel, serif",
+              fontSize: "0.625rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              border: "1px solid rgba(253, 224, 71, 0.3)",
+              color: "rgba(253, 251, 245, 0.8)",
+              background: "transparent",
+              borderRadius: "9999px",
+              cursor: "pointer",
+            }}
+          >
+            End
+          </button>
+        </div>
+
+        {/* Tap tracker section */}
+        <div className="mt-8 w-full max-w-sm">
+          <button
+            className="w-full h-16 rounded-2xl border border-white/30 bg-white/5 text-[11px] text-white/80 flex items-center justify-center active:bg-white/10"
+            onClick={handleAccuracyTap}
+          >
+            <span 
+              style={{ 
+                fontFamily: "Crimson Pro, serif",
+                fontSize: "0.8125rem",
+                color: "rgba(253, 251, 245, 0.6)",
+                letterSpacing: "0.03em"
+              }}
+            >
+              Tap at the peak of each breath
+            </span>
+          </button>
+
+          {/* Tap stats */}
+          {tapCount > 0 && (
+            <div className="mt-3 space-y-1 text-[10px] text-white/60">
+              <div className="flex justify-between">
+                <span>Taps recorded</span>
+                <span>{tapCount}</span>
+              </div>
+              {avgErrorMs != null && (
+                <div className="flex justify-between">
+                  <span>Average offset</span>
+                  <span>{avgErrorMs}ms</span>
+                </div>
+              )}
+              {bestErrorMs != null && (
+                <div className="flex justify-between">
+                  <span>Best</span>
+                  <span>{bestErrorMs}ms</span>
+                </div>
+              )}
+              {lastSignedErrorMs != null && (
+                <div className="flex justify-between">
+                  <span>Last tap</span>
+                  <span style={{
+                    color: lastSignedErrorMs === 0 
+                      ? '#fcd34d'
+                      : lastSignedErrorMs > 0 
+                      ? '#ff8c00'
+                      : '#4dd4d4'
+                  }}>
+                    {lastSignedErrorMs === 0
+                      ? "on beat"
+                      : `${Math.abs(lastSignedErrorMs)}ms ${
+                          lastSignedErrorMs > 0 ? "late" : "early"
+                        }`}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Accuracy visual */}
+          {accuracyView === "pulse" ? (
+            <div className="mt-4">
+              <AccuracyPulse avgErrorMs={avgErrorMs} bestErrorMs={bestErrorMs} />
+            </div>
+          ) : (
+            <div className="mt-4">
+              <AccuracyPetals avgErrorMs={avgErrorMs} tapCount={tapCount} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto mt-6">
@@ -654,11 +846,25 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
                 {lastSignedErrorMs != null && (
                   <div>
                     Last tap:{" "}
-                    {lastSignedErrorMs === 0
-                      ? "on beat"
-                      : `${Math.abs(lastSignedErrorMs)} ms ${
-                          lastSignedErrorMs > 0 ? "late" : "early"
-                        }`}
+                    <span
+                      style={{
+                        fontFamily: "JetBrains Mono, monospace",
+                        color:
+                          lastSignedErrorMs === 0
+                            ? "#fcd34d" // Gold for perfect
+                            : Math.abs(lastSignedErrorMs) <= 20
+                            ? "#34d399" // Emerald for good (±20ms)
+                            : lastSignedErrorMs > 0
+                            ? "#ff8c00" // Orange for late
+                            : "#4dd4d4", // Cyan for early
+                      }}
+                    >
+                      {lastSignedErrorMs === 0
+                        ? "on beat"
+                        : `${Math.abs(lastSignedErrorMs)} ms ${
+                            lastSignedErrorMs > 0 ? "late" : "early"
+                          }`}
+                    </span>
                   </div>
                 )}
               </div>
@@ -712,7 +918,7 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
             <span>
               {practice} * {durationMin} min
             </span>
-            <span>Immanence OS · Practice engine</span>
+            <span>Immanence OS Â· Practice engine</span>
           </div>
         </div>
       </div>

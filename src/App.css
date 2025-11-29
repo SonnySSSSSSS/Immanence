@@ -40,3 +40,18 @@
 .read-the-docs {
   color: #888;
 }
+
+@keyframes avatarRuneSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rune-ring-spinner {
+  animation: avatarRuneSpin 48s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}

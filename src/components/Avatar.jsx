@@ -1,10 +1,13 @@
 // src/components/Avatar.jsx
-// THREE-LAYER AVATAR:
-// 1) Ambient halo
-// 2) Breathing aura (practice only)
-// 3) Static sigil core (real image)
+// FIVE-LAYER AVATAR STACK:
+// 0) Luminous field (canvas rings)
+// 1) Breathing aura (practice only)
+// 2) Rune ring (PNG, rotating)
+// 3) Inner sigil core (PNG, stage-aware)
+// 4) Metrics text
 
 import React, { useEffect, useState } from "react";
+import { AvatarLuminousCanvas } from "./AvatarLuminousCanvas.jsx";
 
 // Local fallback until ../state/mandalaStore.js exists
 // Replace this with a real import when mandalaStore.js is available:
@@ -98,86 +101,82 @@ function BreathingAura({ breathPattern }) {
 }
 
 //
-// ─── STATIC SIGIL CORE (real image) ────────────────────────────────────────────
+// ─── RUNE RING LAYER (rotating outer glyph circle) ────────────────────────────
 //
-function StaticSigilCore() {
+const STAGE_RUNE_COLORS = {
+  seedling: "rgba(75, 192, 192, 0.6)", // cyan
+  ember: "rgba(255, 140, 0, 0.6)", // orange
+  flame: "rgba(253, 224, 71, 0.6)", // gold
+  beacon: "rgba(100, 200, 255, 0.6)", // bright cyan
+  stellar: "rgba(200, 150, 255, 0.6)", // purple
+};
+
+function RuneRingLayer({ stage = "flame" }) {
+  const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
+
   return (
-    <div className="relative z-10 flex items-center justify-center">
-      <img
-        src="/sigils/flame.png"
-        alt="Flame sigil"
-        className="pointer-events-none select-none"
-        style={{
-          width: "60%",
-          height: "60%",
-          objectFit: "contain",
-          filter:
-            "drop-shadow(0 0 18px rgba(253,224,71,0.9)) drop-shadow(0 0 42px rgba(251,191,36,0.65))",
-        }}
-      />
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Wrapper div rotates, img stays still inside */}
+      <div className="rune-ring-wrapper w-[88%] h-[88%]">
+        <img
+          src="/sigils/rune-ring.png"
+          alt="Rune ring"
+          className="w-full h-full object-contain"
+          style={{
+            filter: `drop-shadow(0 0 18px ${glowColor}) drop-shadow(0 0 42px ${glowColor})`,
+          }}
+        />
+      </div>
     </div>
   );
 }
 
 //
-// ─── AMBIENT HALO / STATIC RINGS ───────────────────────────────────────────────
+// ─── STAGE SIGILS ──────────────────────────────────────────────────────────────
 //
-function AmbientHalo({ mode }) {
-  const rings = [
-    { r: 92, opacity: 0.14, strokeWidth: 0.5 },
-    { r: 82, opacity: 0.18, strokeWidth: 0.6 },
-    { r: 72, opacity: 0.25, strokeWidth: 0.7 },
-    { r: 62, opacity: 0.32, strokeWidth: 0.8 },
-  ];
+const STAGE_SIGILS = {
+  seedling: "/sigils/seedling.png",
+  ember: "/sigils/ember.png",
+  flame: "/sigils/flame.png",
+  beacon: "/sigils/beacon.png",
+  stellar: "/sigils/stellar.png",
+};
 
-  // Mode-based color accents
-  let haloColor = "rgba(234,179,8,0.35)"; // hub / default – amber
-  let ringColor = "rgba(248,250,252,0.9)";
-
-  if (mode === "practice") {
-    haloColor = "rgba(251,191,36,0.5)"; // warmer, stronger
-  } else if (mode === "wisdom") {
-    haloColor = "rgba(129,140,248,0.45)"; // indigo
-    ringColor = "rgba(219,234,254,0.95)";
-  } else if (mode === "application") {
-    haloColor = "rgba(45,212,191,0.45)"; // teal
-    ringColor = "rgba(204,251,241,0.95)";
-  } else if (mode === "navigation") {
-    haloColor = "rgba(192,132,252,0.45)"; // violet
-    ringColor = "rgba(237,233,254,0.95)";
-  }
+//
+// ─── STATIC SIGIL CORE (stage-aware) ────────────────────────────────────────────
+//
+function StaticSigilCore({ stage = "flame" }) {
+  const src = STAGE_SIGILS[stage] || STAGE_SIGILS.flame;
 
   return (
-    <>
-      {/* Soft base halo */}
+    <div className="relative z-10 flex items-center justify-center">
+      {/* Circular crop container */}
       <div
-        className="absolute inset-0 rounded-full"
+        className="pointer-events-none select-none"
         style={{
-          background: `radial-gradient(circle, ${haloColor} 0%, transparent 70%)`,
-          filter: "blur(12px)",
-          mixBlendMode: "screen",
+          width: "64%",
+          height: "64%",
+          borderRadius: "9999px",
+          overflow: "hidden",
+          WebkitMaskImage:
+            "radial-gradient(circle, white 72%, transparent 100%)",
+          maskImage: "radial-gradient(circle, white 72%, transparent 100%)",
         }}
-      />
-
-      {/* Fine white rings for structure */}
-      <svg
-        viewBox="0 0 200 200"
-        className="absolute inset-0 w-full h-full pointer-events-none"
       >
-        {rings.map((ring, i) => (
-          <circle
-            key={i}
-            cx="100"
-            cy="100"
-            r={ring.r}
-            fill="none"
-            stroke={ringColor}
-            strokeWidth={ring.strokeWidth}
-            opacity={ring.opacity}
-          />
-        ))}
-      </svg>
-    </>
+        <img
+          src={src}
+          alt={`${stage} sigil`}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "50% 50%",
+            filter:
+              "drop-shadow(0 0 24px rgba(253,224,71,0.9)) drop-shadow(0 0 64px rgba(250,204,21,0.35))",
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -195,20 +194,26 @@ const LABELS = {
 //
 // ─── AVATAR CONTAINER ──────────────────────────────────────────────────────────
 //
-function AvatarContainer({ mode, label, breathPattern }) {
+function AvatarContainer({ mode, label, breathPattern, stage = "flame", totalSessions = 0, avgAccuracy = 0 }) {
   return (
     <div className="relative w-56 h-56 flex items-center justify-center">
       <div className="relative w-48 h-48 flex items-center justify-center">
-        {/* Layer 1: ambient halo + structural rings */}
-        <AmbientHalo mode={mode} />
+        {/* Layer 0: luminous ring field (canvas) */}
+        <AvatarLuminousCanvas
+          totalSessions={totalSessions}
+          avgAccuracy={avgAccuracy}
+        />
 
-        {/* Layer 2: breathing aura (only in Practice mode) */}
+        {/* Layer 1: breathing aura (only in Practice mode) */}
         {mode === "practice" && (
           <BreathingAura breathPattern={breathPattern} />
         )}
 
-        {/* Layer 3: static sigil core (real image) */}
-        <StaticSigilCore />
+        {/* Layer 2: rune ring (rotating PNG, stage-aware color) */}
+        <RuneRingLayer stage={stage} />
+
+        {/* Layer 3: static sigil core (stage-aware PNG) */}
+        <StaticSigilCore stage={stage} />
       </div>
 
       {/* Label to the right */}
@@ -226,6 +231,10 @@ export function Avatar({ mode, breathPattern }) {
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
+  const [stageIndex, setStageIndex] = useState(2); // Start at Flame (index 2)
+
+  const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
+  const currentStage = STAGE_NAMES[stageIndex];
 
   useEffect(() => {
     function refresh() {
@@ -247,6 +256,10 @@ export function Avatar({ mode, breathPattern }) {
   const clarity = transient.clarity || 0;
   const distortion = transient.distortion || 0;
 
+  // For now, derive totalSessions from avgAccuracy × 100 as a placeholder.
+  // Later, wire this to real totalSessions from mandalaStore.
+  const totalSessions = mandalaSnapshot?.totalSessions || Math.round(avgAccuracy * 100);
+
   const accPct = Math.round(avgAccuracy * 100);
   const wkPct = Math.round(weeklyConsistency * 100);
 
@@ -267,12 +280,19 @@ export function Avatar({ mode, breathPattern }) {
       typeof safePattern.hold2 === "number" ? safePattern.hold2 : 2,
   };
 
+  const handleSigilClick = () => {
+    setStageIndex((prev) => (prev + 1) % STAGE_NAMES.length);
+  };
+
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center cursor-pointer" onClick={handleSigilClick}>
       <AvatarContainer
         mode={mode}
         label={label}
         breathPattern={patternForBreath}
+        stage={currentStage}
+        totalSessions={totalSessions}
+        avgAccuracy={avgAccuracy}
       />
 
       <div className="mt-3 text-[10px] text-white/70 text-center space-y-0.5">
@@ -282,6 +302,9 @@ export function Avatar({ mode, breathPattern }) {
         <div>
           live f {Math.round(focus * 100)} · c {Math.round(clarity * 100)} · d{" "}
           {Math.round(distortion * 100)}
+        </div>
+        <div className="text-[9px] text-white/50">
+          stage: {currentStage} (click to cycle)
         </div>
       </div>
     </div>
