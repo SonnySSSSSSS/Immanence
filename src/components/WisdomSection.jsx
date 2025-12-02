@@ -27,7 +27,7 @@ const mockBlog = [
   },
 ];
 
-const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos", "Blog"];
+const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos"];
 const BOOKMARKS_KEY = "immanenceOS.bookmarkedChapters";
 const SCROLL_KEY = "immanenceOS.chapterScrollPositions";
 
@@ -730,7 +730,7 @@ export function WisdomSection() {
                 <button
                   key={tab}
                   className={
-                    "px-4 py-1.5 rounded-full text-xs font-medium transition-colors " +
+                    "px-5 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap " +
                     (active
                       ? "bg-white text-bgEnd shadow-[0_0_0_1px_rgba(255,255,255,0.8)]"
                       : "text-white/70 hover:text-white")

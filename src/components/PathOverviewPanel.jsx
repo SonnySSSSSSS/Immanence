@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { treatiseChapters } from '../data/treatise.generated.js';
 
 export function PathOverviewPanel({ pathId }) {
     const path = getPathById(pathId);
@@ -20,6 +21,20 @@ export function PathOverviewPanel({ pathId }) {
 
     const handleBegin = () => {
         beginPath(pathId);
+    };
+
+    // Helper to get chapter title from ID
+    const getChapterTitle = (chapterId) => {
+        const chapter = treatiseChapters.find(ch => ch.id === chapterId);
+        if (chapter) return chapter.title;
+
+        // Fallback: format the ID nicely
+        return chapterId
+            .replace(/chapter-/g, 'Chapter ')
+            .replace(/-/g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
     };
 
     return (
@@ -78,7 +93,7 @@ export function PathOverviewPanel({ pathId }) {
                         {path.chapters.map((chapterId, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
                                 <span className="text-[rgba(253,224,71,0.5)]">•</span>
-                                {chapterId}
+                                {getChapterTitle(chapterId)}
                             </li>
                         ))}
                     </ul>
@@ -208,7 +223,7 @@ export function PathOverviewPanel({ pathId }) {
                                                         {week.reading.map((chapterId, idx) => (
                                                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
                                                                 <span className="text-[rgba(253,224,71,0.4)] mt-0.5">•</span>
-                                                                <span>{chapterId}</span>
+                                                                <span>{getChapterTitle(chapterId)}</span>
                                                             </li>
                                                         ))}
                                                     </ul>

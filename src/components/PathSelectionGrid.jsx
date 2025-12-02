@@ -54,7 +54,7 @@ export function PathSelectionGrid() {
 
                             {/* Title */}
                             <h3
-                                className="text-sm font-semibold text-[rgba(253,251,245,0.92)] mb-1 leading-tight"
+                                className="text-sm font-semibold text-[rgba(253,251,245,0.92)] mb-1.5 leading-tight line-clamp-2"
                                 style={{ fontFamily: 'Cinzel, serif' }}
                             >
                                 {path.title}
@@ -62,7 +62,7 @@ export function PathSelectionGrid() {
 
                             {/* Subtitle */}
                             <p
-                                className="text-xs text-[rgba(253,251,245,0.65)] mb-2"
+                                className="text-[11px] text-[rgba(253,251,245,0.65)] mb-2.5 leading-snug line-clamp-2"
                                 style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
                             >
                                 {path.subtitle}
