@@ -1,37 +1,56 @@
 // src/components/AvatarLuminousCanvas.jsx
-// RITUAL AESTHETIC: Warm amber particles with organic motion
-// - Particles always warm (gold/amber), not stage-colored
-// - VERY slow hypnotic drift (50% slower rotation)
-// - Organic wobble, varying opacity, smoke-like trails
-// - VERY LONG TRAILS for maximum visibility
+// RITUAL AESTHETIC: Seven Flames Avatar
+// - Fixed flame nodes representing weekly progress
+// - Streak arc connecting practiced days
+// - Organic particle system spiraling inward
 
 import React, { useEffect, useRef } from "react";
 
 // RITUAL AESTHETIC: Warm amber particles (practice energy, not stage color)
-// Particles always stay in gold/amber family regardless of stage
 const WARM_PARTICLE_COLOR = { h: 48, s: 90, l: 65 }; // Gold
 
+// CONFIGURATION
+const PARTICLE_COUNT = 6;
+const TRAIL_HISTORY_LENGTH = 30;
+
+// Geometry constants (relative to canvas center)
+// Canvas is scaled 1.5x larger than container to prevent clipping
+const CANVAS_SCALE = 1.5;
+// Rune Ring wrapper is 88% of container -> radius is 44%
+const RUNE_RING_RADIUS_PCT = 0.44 / CANVAS_SCALE;
+const INNER_BOUNDARY_PCT = (0.44 * 1.08) / CANVAS_SCALE; // 8% buffer
+const MAX_RADIUS_PCT = 0.495 / CANVAS_SCALE; // Just inside container edge (50%)
+
+// SEVEN FLAMES CONFIGURATION
+const FLAME_RADIUS_PCT = 0.54 / CANVAS_SCALE; // Outside the particle zone
+
+const WEEK_NODES = [
+  { day: 'Mon', angle: -Math.PI * 0.5 },      // Top (12 o'clock)
+  { day: 'Tue', angle: -Math.PI * 0.214 },    // ~1:45
+  { day: 'Wed', angle: Math.PI * 0.071 },     // ~3:30
+  { day: 'Thu', angle: Math.PI * 0.357 },     // ~5:15
+  { day: 'Fri', angle: Math.PI * 0.643 },     // ~7:00
+  { day: 'Sat', angle: Math.PI * 0.929 },     // ~8:45
+  { day: 'Sun', angle: -Math.PI * 0.786 },    // ~10:30
+];
+
 class Particle {
-  constructor(maxRadius) {
+  constructor(maxRadius, innerBoundary) {
     this.maxRadius = maxRadius;
+    this.innerBoundary = innerBoundary;
+    this.trail = [];
     this.reset();
   }
 
   reset() {
-    // Start at outer edge
     this.radius = this.maxRadius;
     this.angle = Math.random() * Math.PI * 2;
-    this.speed = 0.11 + Math.random() * 0.165; // SLOW: 0.11-0.275 px/frame
-    this.angularSpeed = 0.0019 + Math.random() * 0.0039; // VERY SLOW: 0.0019-0.0058 radians/frame (50% slower)
-    this.size = 2 + Math.random() * 1; // 2-3px (50% smaller to distinguish from badges)
-    this.opacity = 0.64 + Math.random() * 0.16; // 0.64-0.8 (20% reduction)
 
-    // ORGANIC BEHAVIOR: Add wobble and variation
-    this.wobblePhase = Math.random() * Math.PI * 2; // Random phase for wobble
-    this.wobbleSpeed = 0.03 + Math.random() * 0.02; // How fast wobble cycles
-    this.wobbleAmount = 2 + Math.random() * 1; // 2-3px drift
-    this.opacityPhase = Math.random() * Math.PI * 2; // For varying opacity
-    this.opacitySpeed = 0.02 + Math.random() * 0.01; // Slow opacity fluctuation
+    // SPEED: Very slow to allow for "hypnotic" spiral within the narrow band
+    this.speed = 0.02 + Math.random() * 0.02;
+    this.angularSpeed = 0.002 + Math.random() * 0.002;
+
+    this.trail = [];
   }
 
   update() {
@@ -39,60 +58,157 @@ class Particle {
     this.radius -= this.speed;
     this.angle += this.angularSpeed;
 
-    // ORGANIC: Update wobble and opacity phases
-    this.wobblePhase += this.wobbleSpeed;
-    this.opacityPhase += this.opacitySpeed;
+    // Calculate position relative to center (0,0)
+    const x = Math.cos(this.angle) * this.radius;
+    const y = Math.sin(this.angle) * this.radius;
 
-    // Reset when reaching center
-    if (this.radius < 40) {
-      this.reset();
+    // Boundary check
+    if (this.radius >= this.innerBoundary) {
+      this.trail.unshift({ x, y });
+      if (this.trail.length > TRAIL_HISTORY_LENGTH) {
+        this.trail.pop();
+      }
+    } else {
+      // Inside boundary - do not add new points
+      // Trim tail to simulate disappearing into the ring
+      if (this.trail.length > 0) {
+        this.trail.pop();
+      } else {
+        // Trail fully gone, reset particle
+        this.reset();
+      }
     }
   }
 
-  draw(ctx, centerX, centerY, color, scaleMod = 1.0, glowMod = 1.0, wobbleMod = 1.0) {
-    // ORGANIC: Add wobble offset (drift away from perfect spiral)
-    const wobbleX = Math.cos(this.wobblePhase) * this.wobbleAmount * wobbleMod;
-    const wobbleY = Math.sin(this.wobblePhase) * this.wobbleAmount * wobbleMod;
+  draw(ctx, centerX, centerY, color, scaleMod = 1.0, glowMod = 1.0) {
+    if (this.trail.length < 2) return;
 
-    // Apply breath scaling to radius
-    const effectiveRadius = this.radius * scaleMod;
+    // 1. Draw Smooth Tapered Trail
+    for (let i = 0; i < this.trail.length - 1; i++) {
+      const p1 = this.trail[i];
+      const p2 = this.trail[i + 1];
 
-    const x = centerX + Math.cos(this.angle) * effectiveRadius + wobbleX;
-    const y = centerY + Math.sin(this.angle) * effectiveRadius + wobbleY;
+      const t = i / this.trail.length; // 0 at head, 1 at tail
 
-    // Calculate opacity with organic variation
-    // Note: use maxRadius * scaleMod for distance factor to keep proportions
-    const maxR = this.maxRadius * scaleMod;
-    const distanceFactor = Math.min(
-      effectiveRadius / (maxR * 0.7),
-      (maxR - effectiveRadius) / (maxR * 0.3)
-    );
+      ctx.beginPath();
+      // Apply breathing scale to positions
+      ctx.moveTo(centerX + p1.x * scaleMod, centerY + p1.y * scaleMod);
+      ctx.lineTo(centerX + p2.x * scaleMod, centerY + p2.y * scaleMod);
 
-    // ORGANIC: Varying opacity using sine wave (not linear fade)
-    const opacityVariation = 0.85 + Math.sin(this.opacityPhase) * 0.15; // 0.7-1.0
-    const alpha = this.opacity * distanceFactor * opacityVariation * glowMod;
+      // Taper: 4px -> 0.4px
+      ctx.lineWidth = 4 * (1 - t * 0.9);
 
+      // Opacity: Quadratic falloff (0.7 -> 0)
+      const alpha = 0.7 * (1 - t * t) * glowMod;
+
+      ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+
+    // 2. Draw Particle Head (Glow)
+    const head = this.trail[0];
+    const hx = centerX + head.x * scaleMod;
+    const hy = centerY + head.y * scaleMod;
+
+    // Pass 1: Large soft halo
+    const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, 24 * scaleMod);
+    halo.addColorStop(0, `hsla(${color.h}, ${color.s}%, ${color.l}%, ${0.5 * glowMod})`);
+    halo.addColorStop(0.5, `hsla(${color.h}, ${color.s}%, ${color.l}%, ${0.15 * glowMod})`);
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
     ctx.beginPath();
-    // Scale particle size slightly with breath
-    ctx.arc(x, y, this.size * Math.sqrt(scaleMod), 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
+    ctx.arc(hx, hy, 24 * scaleMod, 0, Math.PI * 2);
     ctx.fill();
 
-    // Add glow
-    ctx.shadowBlur = 10 * glowMod;
-    ctx.shadowColor = `hsla(${color.h}, ${color.s}%, ${color.l + 10}%, ${alpha * 0.9})`;
+    // Pass 2: Bright core
+    const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, 6 * scaleMod);
+    core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod})`);
+    core.addColorStop(0.4, `rgba(253, 230, 138, ${0.9 * glowMod})`);
+    core.addColorStop(1, 'transparent');
+    ctx.fillStyle = core;
+    ctx.beginPath();
+    ctx.arc(hx, hy, 6 * scaleMod, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
   }
 }
 
-export function AvatarLuminousCanvas({ breathState }) {
+function drawWeekNode(ctx, x, y, practiced, isToday) {
+  const intensity = practiced ? 1 : 0.15;
+  // Pulse effect for today (invitation) or practiced (alive)
+  const time = Date.now() / 1000;
+  const pulseScale = isToday && !practiced
+    ? 1 + Math.sin(time * 3) * 0.1 // Faster invitation pulse
+    : practiced
+      ? 1 + Math.sin(time * 1.5) * 0.05 // Slow steady pulse
+      : 1;
+
+  // Layer 1: Outer halo (Large soft glow)
+  if (practiced) {
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, 40 * pulseScale);
+    halo.addColorStop(0, `rgba(253, 224, 71, ${0.15 * intensity})`);
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, 40 * pulseScale, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Layer 2: Medium glow
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, 20 * pulseScale);
+  glow.addColorStop(0, `rgba(253, 224, 71, ${0.4 * intensity})`);
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, 20 * pulseScale, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Layer 3: Bright core
+  const core = ctx.createRadialGradient(x, y, 0, x, y, 8);
+  core.addColorStop(0, `rgba(255, 251, 240, ${0.95 * intensity})`);
+  core.addColorStop(0.5, `rgba(253, 224, 71, ${0.8 * intensity})`);
+  core.addColorStop(1, 'transparent');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Layer 4: White-hot center (only if practiced)
+  if (practiced) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawStreakArc(ctx, nodes, centerX, centerY, radius) {
+  // Find contiguous practiced days
+  ctx.strokeStyle = 'rgba(253, 224, 71, 0.25)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+
+  for (let i = 0; i < nodes.length; i++) {
+    const current = nodes[i];
+    const nextIndex = (i + 1) % nodes.length;
+    const next = nodes[nextIndex];
+
+    if (current.practiced && next.practiced) {
+      // Draw arc from current to next
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, current.angle, next.angle, false);
+      ctx.stroke();
+    }
+  }
+}
+
+export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], weeklyConsistency = 0 }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const particlesRef = useRef([]);
-
-  // Keep latest breath state in ref for animation loop
   const breathStateRef = useRef(breathState);
+
+  // Keep latest breath state in ref
   useEffect(() => {
     breathStateRef.current = breathState;
   }, [breathState]);
@@ -118,69 +234,77 @@ export function AvatarLuminousCanvas({ breathState }) {
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Reinitialize particles on resize
-      const maxRadius = Math.min(width, height) * 0.48;
-      particlesRef.current = Array.from({ length: 15 }, () => new Particle(maxRadius));
+      // Initialize particles
+      const size = Math.min(width, height);
+      const maxRadius = size * MAX_RADIUS_PCT;
+      const innerBoundary = size * INNER_BOUNDARY_PCT;
+
+      particlesRef.current = Array.from(
+        { length: PARTICLE_COUNT },
+        () => new Particle(maxRadius, innerBoundary)
+      );
     }
 
     resize();
     window.addEventListener("resize", resize);
 
-    let frameCount = 0;
-
     function drawFrame() {
       const centerX = width / 2;
       const centerY = height / 2;
+      const size = Math.min(width, height);
+      const flameRadius = size * FLAME_RADIUS_PCT;
 
       // Calculate breath modifiers
       const bs = breathStateRef.current || { phase: 'rest', progress: 0, isPracticing: false };
       let scaleMod = 1.0;
       let glowMod = 1.0;
-      let wobbleMod = 1.0;
 
       if (bs.isPracticing) {
         if (bs.phase === 'inhale') {
-          // Expand 1.0 -> 1.1 (more visible expansion)
-          scaleMod = 1.0 + (bs.progress * 0.1);
-          // Glow 1.0 -> 1.5
-          glowMod = 1.0 + (bs.progress * 0.5);
-          // Wobble increases
-          wobbleMod = 1.0 + (bs.progress * 0.5);
+          scaleMod = 1.0 + (bs.progress * 0.05); // Subtle expansion
+          glowMod = 1.0 + (bs.progress * 0.3);   // Brighten
         } else if (bs.phase === 'holdTop') {
-          scaleMod = 1.1;
-          glowMod = 1.5;
-          wobbleMod = 0.5; // Calmer wobble at top
+          scaleMod = 1.05;
+          glowMod = 1.3;
         } else if (bs.phase === 'exhale') {
-          // Contract 1.1 -> 1.0
-          scaleMod = 1.1 - (bs.progress * 0.1);
-          // Glow 1.5 -> 1.0
-          glowMod = 1.5 - (bs.progress * 0.5);
-          wobbleMod = 1.5 - (bs.progress * 0.5);
+          scaleMod = 1.05 - (bs.progress * 0.05);
+          glowMod = 1.3 - (bs.progress * 0.3);
         } else if (bs.phase === 'holdBottom') {
           scaleMod = 1.0;
           glowMod = 1.0;
-          wobbleMod = 1.0;
         }
       }
 
-      // ORGANIC: Varying trail fade (smoke-like breakup) - VERY LONG TRAILS (24s)
-      // STAGGERED FADE: Instead of a hard wipe, we fade slightly every few frames.
-      // To achieve ~24s trails with 8-bit color limits, we fade every 5 frames.
-      frameCount++;
-      if (frameCount % 5 === 0) {
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.fillStyle = "rgba(0, 0, 0, 0.02)"; // 2% fade every 5 frames
-        ctx.fillRect(0, 0, width, height);
-        ctx.globalCompositeOperation = "source-over";
-      }
+      // Clear canvas completely each frame
+      ctx.clearRect(0, 0, width, height);
 
-      // Always use warm particle color (not stage-based)
-      const particleColor = WARM_PARTICLE_COLOR;
+      // 1. Draw Week Nodes (Seven Flames) - Layer 3 (behind particles)
+      // Prepare node data
+      const currentDayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon...
+      // Map JS getDay() to our array index (Mon=0, Sun=6)
+      const jsDayToMyIndex = [6, 0, 1, 2, 3, 4, 5];
+      const todayIndex = jsDayToMyIndex[currentDayIndex];
 
-      // Update and draw particles
+      const nodes = WEEK_NODES.map((node, i) => ({
+        ...node,
+        practiced: weeklyPracticeLog[i] || false,
+        isToday: i === todayIndex
+      }));
+
+      // Draw Streak Arc first (behind flames)
+      drawStreakArc(ctx, nodes, centerX, centerY, flameRadius);
+
+      // Draw Flames
+      nodes.forEach(node => {
+        const x = centerX + Math.cos(node.angle) * flameRadius;
+        const y = centerY + Math.sin(node.angle) * flameRadius;
+        drawWeekNode(ctx, x, y, node.practiced, node.isToday);
+      });
+
+      // 2. Draw Particles - Layer 5
       particlesRef.current.forEach((particle) => {
         particle.update();
-        particle.draw(ctx, centerX, centerY, particleColor, scaleMod, glowMod, wobbleMod);
+        particle.draw(ctx, centerX, centerY, WARM_PARTICLE_COLOR, scaleMod, glowMod);
       });
 
       animationRef.current = requestAnimationFrame(drawFrame);
@@ -194,13 +318,13 @@ export function AvatarLuminousCanvas({ breathState }) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []); // No stage dependency - particles are always warm
+  }, [weeklyPracticeLog]); // Re-init if log changes
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ zIndex: 10 }}
+      className="absolute w-[150%] h-[150%] -left-[25%] -top-[25%] pointer-events-none"
+    // No zIndex, so it sits behind the Rune Ring
     />
   );
 }

@@ -136,119 +136,7 @@ function ConsistencyAura({ weeklyConsistency = 0 }) {
 //
 // ─── WEEKLY BADGES (7 dots around avatar showing practice days) ───────────────
 //
-function WeeklyBadges({ weeklyPracticeLog = [] }) {
-  // weeklyPracticeLog is an array of 7 booleans (Mon-Sun)
-  // Each represents whether the user practiced that day
-  const dayLabels = ["M", "T", "W", "Th", "F", "S", "Su"];
 
-  // RITUAL AESTHETIC: Position badges beyond the rune ring (52% radius)
-  // Creates space for lightning connections between practiced badges
-  const angleStep = 360 / 7;
-  const radius = 52; // Moved outward from 44% for lightning effect space
-
-  // Calculate positions for lightning connections
-  const positions = dayLabels.map((_, i) => {
-    const angle = (i * angleStep - 90) * (Math.PI / 180);
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius;
-    return { x, y, practiced: weeklyPracticeLog[i] || false };
-  });
-
-  // Find consecutive practiced badges for lightning connections
-  const connections = [];
-  for (let i = 0; i < positions.length; i++) {
-    if (positions[i].practiced) {
-      // Check next badge (wrapping around)
-      const next = (i + 1) % positions.length;
-      if (positions[next].practiced) {
-        connections.push({ from: i, to: next });
-      }
-    }
-  }
-
-  return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {/* Lightning connections - electrical arcs showing consistency momentum */}
-      {connections.length > 0 && (
-        <svg
-          className="absolute inset-0 w-full h-full"
-          style={{ overflow: "visible" }}
-        >
-          <defs>
-            <filter id="lightning-glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-          {connections.map(({ from, to }, idx) => {
-            const fromPos = positions[from];
-            const toPos = positions[to];
-            // Convert percentage to actual coordinates (50% = center)
-            const x1 = `calc(50% + ${fromPos.x}%)`;
-            const y1 = `calc(50% + ${fromPos.y}%)`;
-            const x2 = `calc(50% + ${toPos.x}%)`;
-            const y2 = `calc(50% + ${toPos.y}%)`;
-
-            return (
-              <line
-                key={idx}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="rgba(253,224,71,0.8)"
-                strokeWidth="1.5"
-                filter="url(#lightning-glow)"
-                style={{
-                  animation: "lightningSpark 2s ease-in-out infinite",
-                  animationDelay: `${idx * 0.3}s`,
-                }}
-              />
-            );
-          })}
-        </svg>
-      )}
-      {dayLabels.map((label, i) => {
-        const practiced = weeklyPracticeLog[i] || false;
-        const angle = (i * angleStep) - 90; // Start from top, -90 to offset
-        const x = Math.cos((angle * Math.PI) / 180) * radius;
-        const y = Math.sin((angle * Math.PI) / 180) * radius;
-
-        return (
-          <div
-            key={i}
-            className="absolute"
-            style={{
-              left: `calc(50% + ${x}%)`,
-              top: `calc(50% + ${y}%)`,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            <div
-              className="weekly-badge"
-              style={{
-                width: "10px",
-                height: "10px",
-                borderRadius: "50%",
-                // RITUAL COLORS: warm gold (practiced) vs dim bronze (unpracticed)
-                backgroundColor: practiced ? "#fcd34d" : "rgba(139,92,46,0.4)",
-                boxShadow: practiced
-                  ? "0 0 10px rgba(252,211,77,0.7), 0 0 5px rgba(252,211,77,0.9)"
-                  : "0 0 4px rgba(139,92,46,0.3)",
-                transition: "all 300ms ease-out",
-                animation: "badgePulse 4s ease-in-out infinite",
-              }}
-              title={`${label}: ${practiced ? "Practiced" : "Not practiced"}`}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 //
 // ─── RUNE RING LAYER (rotating outer glyph circle) ────────────────────────────
@@ -493,6 +381,7 @@ function AvatarContainer({
         style={{
           background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, 0.45) 0%, hsla(${h}, ${s}%, ${l - 5}%, 0.32) 35%, hsla(${h}, ${s - 5}%, ${l - 10}%, 0.18) 60%, hsla(${h}, ${s - 10}%, ${l - 15}%, 0.08) 80%, hsla(${h}, ${s - 15}%, ${l - 20}%, 0.03) 90%, transparent 95%)`,
           filter: "blur(100px)",
+          borderRadius: "50%",
           animation: "breathingPulse 8s ease-in-out infinite",
         }}
       />
@@ -503,6 +392,7 @@ function AvatarContainer({
         style={{
           background: `radial-gradient(circle, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.6) 0%, hsla(${h}, ${s}%, ${l + 5}%, 0.4) 30%, hsla(${h}, ${s - 5}%, ${l}%, 0.15) 55%, transparent 75%)`,
           filter: "blur(50px)",
+          borderRadius: "50%",
           animation: "breathingPulse 8s ease-in-out infinite 0.2s",
         }}
       />
@@ -513,18 +403,18 @@ function AvatarContainer({
         style={{
           background: `radial-gradient(circle, hsla(${h}, ${s + 10}%, ${l + 15}%, 0.5) 0%, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.25) 25%, transparent 50%)`,
           filter: "blur(30px)",
+          borderRadius: "50%",
           animation: "breathingPulse 8s ease-in-out infinite 0.4s",
         }}
       />
 
       <div className="relative w-72 h-72 flex items-center justify-center">
         {/* Layer 0: luminous ring field (canvas) */}
-        <AvatarLuminousCanvas breathState={breathState} />
-
-
-
-        {/* Layer 0.75: weekly badges (7 dots showing practice days) */}
-        <WeeklyBadges weeklyPracticeLog={weeklyPracticeLog} />
+        <AvatarLuminousCanvas
+          breathState={breathState}
+          weeklyPracticeLog={weeklyPracticeLog}
+          weeklyConsistency={weeklyConsistency}
+        />
 
         {/* Layer 1: breathing aura (only in Practice mode) */}
         {mode === "practice" && (
