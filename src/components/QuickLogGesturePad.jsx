@@ -122,45 +122,51 @@ export function QuickLogGesturePad() {
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[rgba(253,224,71,0.4)]" />
 
                         {/* Direction Labels */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                        <div className="absolute top-8 left-1/2 -translate-x-1/2">
                             <div
-                                className={`text-sm text-center transition-all ${justLogged === 'up' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'up' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
-                                ↑<br />
-                                <span className="text-xs">{trackingItems.up}</span>
+                                <div className="text-lg mb-0.5">↑</div>
+                                <div className="text-[10px] line-clamp-2 leading-tight">{trackingItems.up}</div>
                             </div>
                         </div>
 
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                        <div className="absolute left-6 top-1/2 -translate-y-1/2">
                             <div
-                                className={`text-sm text-center transition-all ${justLogged === 'left' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-left transition-all max-w-[100px] ${justLogged === 'left' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
-                                ← {trackingItems.left}
+                                <div className="flex items-center gap-1">
+                                    <span className="text-lg flex-shrink-0">←</span>
+                                    <span className="text-[10px] line-clamp-2 leading-tight">{trackingItems.left}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                             <div
-                                className={`text-sm text-center transition-all ${justLogged === 'down' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'down' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
-                                ↓<br />
-                                <span className="text-xs">{trackingItems.down}</span>
+                                <div className="text-[10px] line-clamp-2 leading-tight mb-0.5">{trackingItems.down}</div>
+                                <div className="text-lg">↓</div>
                             </div>
                         </div>
 
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2">
                             <div
-                                className={`text-sm text-center transition-all ${justLogged === 'right' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-right transition-all max-w-[100px] ${justLogged === 'right' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
-                                {trackingItems.right} →
+                                <div className="flex items-center gap-1 justify-end">
+                                    <span className="text-[10px] line-clamp-2 leading-tight text-right">{trackingItems.right}</span>
+                                    <span className="text-lg flex-shrink-0">→</span>
+                                </div>
                             </div>
                         </div>
 

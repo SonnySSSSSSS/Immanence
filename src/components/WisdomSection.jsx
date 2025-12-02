@@ -85,12 +85,12 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
           animation: 'scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        {/* Reading Progress Indicator */}
+        {/* Reading Progress Indicator - made slightly more prominent */}
         <div
-          className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-[#fcd34d] to-[#f59e0b] transition-all duration-150"
+          className="absolute top-0 left-0 h-[3px] bg-gradient-to-r from-[#fcd34d] to-[#f59e0b] transition-all duration-150 z-10"
           style={{
             width: `${scrollProgress}%`,
-            boxShadow: '0 0 8px rgba(253, 224, 71, 0.4)'
+            boxShadow: '0 0 12px rgba(253, 224, 71, 0.5)'
           }}
         />
 
@@ -156,16 +156,17 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         >
           {sanitizedExcerpt && (
             <blockquote
-              className="border-l-2 pl-6 pr-4 py-4 italic my-6"
+              className="border-l-2 pl-6 pr-4 py-4 my-6 markdown-content"
               style={{
                 borderColor: 'rgba(253,224,71,0.4)',
                 backgroundColor: 'rgba(253,224,71,0.03)',
                 boxShadow: '-2px 0 8px rgba(253,224,71,0.1)',
-                color: 'rgba(253,251,245,0.85)',
                 borderRadius: '0 8px 8px 0'
               }}
             >
-              {sanitizedExcerpt}
+              <ReactMarkdown>
+                {sanitizedExcerpt}
+              </ReactMarkdown>
             </blockquote>
           )}
           {sanitizedBody ? (
@@ -180,9 +181,11 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(253,224,71,0.15)] px-8 py-4 flex items-center justify-between text-xs text-[rgba(253,251,245,0.4)] flex-shrink-0">
-          <div>Press <span className="font-mono px-1.5 py-0.5 rounded bg-[rgba(253,224,71,0.1)] text-[rgba(253,251,245,0.6)]">Esc</span> to close</div>
-          <div style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Chapter {chapter.order}</div>
+        <div className="border-t border-[rgba(253,224,71,0.15)] px-8 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="text-[9px] text-[rgba(253,251,245,0.4)]" style={{ fontFamily: 'Crimson Pro, serif' }}>
+            Press <span className="font-mono px-1.5 py-0.5 rounded bg-[rgba(253,224,71,0.1)] text-[rgba(253,251,245,0.5)]">Esc</span> to close
+          </div>
+          <div className="text-xs text-[rgba(253,251,245,0.5)]" style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Chapter {chapter.order}</div>
         </div>
       </div>
 
