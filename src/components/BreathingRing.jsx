@@ -256,6 +256,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
             style={{
               width: "100%",
               height: "100%",
+              opacity: 1,
+              animation: 'ensoFadeOut 500ms ease-out 800ms forwards',
             }}
           >
             <EnsoStroke
@@ -442,6 +444,15 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           100% {
             opacity: 0;
             transform: scale(2);
+          }
+        }
+        
+        @keyframes ensoFadeOut {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
           }
         }
       `}</style>

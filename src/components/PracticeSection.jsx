@@ -6,12 +6,14 @@ import { recordPracticeEffect } from "../state/mandalaStore.js";
 
 const PRACTICES = ["Breathing", "Meditation", "Yoga", "Visualization"];
 const DURATIONS = [5, 10, 15, 20];
-const PRESETS = ["Box", "4-7-8", "Kumbhaka"];
+const PRESETS = ["Box", "4-7-8", "Kumbhaka", "Relax", "Energy"];
 
 const PATTERN_PRESETS = {
   Box: { inhale: 4, hold1: 4, exhale: 4, hold2: 4 },
   "4-7-8": { inhale: 4, hold1: 7, exhale: 8, hold2: 0 },
   Kumbhaka: { inhale: 4, hold1: 16, exhale: 8, hold2: 0 },
+  Relax: { inhale: 4, hold1: 4, exhale: 6, hold2: 2 },
+  Energy: { inhale: 3, hold1: 0, exhale: 3, hold2: 0 },
 };
 
 export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
@@ -584,20 +586,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               >
                 Pattern
               </div>
-              <div
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "13px",
-                  color: "rgba(253,251,245,0.7)",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {pattern.inhale}s in · {pattern.hold1}s hold ·{" "}
-                {pattern.exhale}s out · {pattern.hold2}s hold
-              </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {PRESETS.map((name) => (
                 <button
                   key={name}

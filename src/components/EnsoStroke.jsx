@@ -181,18 +181,30 @@ export function EnsoStroke({ centerX = 200, centerY = 200, radius = 140, accurac
                     x2={gradientEnd.x}
                     y2={gradientEnd.y}
                 >
-                    <stop offset="0%" stopColor="#d4a847" stopOpacity="0.85" />
-                    <stop offset="30%" stopColor="#fcd34d" stopOpacity="0.95" />
-                    <stop offset="70%" stopColor="#fcd34d" stopOpacity="0.92" />
-                    <stop offset="95%" stopColor="#b8942d" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="#b8942d" stopOpacity="0.1" />
+                    <stop offset="0%" stopColor="#d4a847" stopOpacity="0.72" />
+                    <stop offset="30%" stopColor="#fcd34d" stopOpacity="0.81" />
+                    <stop offset="70%" stopColor="#fcd34d" stopOpacity="0.78" />
+                    <stop offset="95%" stopColor="#b8942d" stopOpacity="0.42" />
+                    <stop offset="100%" stopColor="#b8942d" stopOpacity="0.08" />
                 </linearGradient>
 
-                <filter id="ensoGlow">
-                    <feGaussianBlur stdDeviation={accuracy === 'perfect' ? '4' : accuracy === 'good' ? '3' : '2'} result="blur" />
+                <filter id="enso3D">
+                    {/* Inner highlight for 3D effect */}
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="innerBlur" />
+                    <feOffset in="innerBlur" dx="-1" dy="-1" result="innerOffset" />
+                    <feFlood floodColor="#fffef0" floodOpacity="0.3" result="innerColor" />
+                    <feComposite in="innerColor" in2="innerOffset" operator="in" result="innerHighlight" />
+
+                    {/* Outer glow for depth */}
+                    <feGaussianBlur in="SourceAlpha" stdDeviation={accuracy === 'perfect' ? '6' : accuracy === 'good' ? '4' : '3'} result="outerBlur" />
+                    <feOffset in="outerBlur" dx="1" dy="1" result="outerOffset" />
+                    <feFlood floodColor="#d4a847" floodOpacity="0.4" result="outerColor" />
+                    <feComposite in="outerColor" in2="outerOffset" operator="in" result="outerGlow" />
+
                     <feMerge>
-                        <feMergeNode in="blur" />
+                        <feMergeNode in="outerGlow" />
                         <feMergeNode in="SourceGraphic" />
+                        <feMergeNode in="innerHighlight" />
                     </feMerge>
                 </filter>
             </defs>
@@ -201,7 +213,7 @@ export function EnsoStroke({ centerX = 200, centerY = 200, radius = 140, accurac
                 <path
                     d={ensoPath}
                     fill="url(#ensoGradient)"
-                    filter="url(#ensoGlow)"
+                    filter="url(#enso3D)"
                 />
             </g>
         </svg>
