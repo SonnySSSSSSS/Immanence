@@ -1,0 +1,35 @@
+
+D:\Unity Apps\immanence-os\src\components\PracticeSection.jsx
+   1:38  error    'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  47:7   error    Error: Cannot access variable before it is declared
+
+`handleStop` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  45 |       }, 1000);
+  46 |     } else if (timeLeft === 0 && isRunning) {
+> 47 |       handleStop();
+     |       ^^^^^^^^^^ `handleStop` accessed before it is declared
+  48 |     }
+  49 |     return () => clearInterval(interval);
+  50 |   }, [isRunning, timeLeft]);
+
+  50 |   }, [isRunning, timeLeft]);
+  51 |
+> 52 |   const handleStop = () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |     setIsRunning(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 54 |
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 78 |     setTimeLeft(duration * 60);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 79 |   };
+     | ^^^^^ `handleStop` is declared here
+  80 |
+  81 |   const toggleTimer = () => {
+  82 |     if (isRunning) {  react-hooks/immutability
+  50:6   warning  React Hook useEffect has a missing dependency: 'handleStop'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+Γ£û 3 problems (2 errors, 1 warning)
+

@@ -1,75 +1,72 @@
-import React, { useState } from "react";
-
-const plans = {
-  shadow: {
-    label: "Integrate Shadow Work",
-    weeks: ["Notice reactivity patterns", "Journal after conflict"],
-  },
-  consistency: {
-    label: "Develop Consistent Practice",
-    weeks: ["5 minutes daily", "Same time each day"],
-  },
-  nonduality: {
-    label: "Understand Non-Duality",
-    weeks: ["Observe thoughts as passing", 'Ask "what is aware?" once/day'],
-  },
-};
+// src/components/NavigationSection.jsx
+import React, { useRef } from 'react';
+import { useNavigationStore } from '../state/navigationStore.js';
+import { PathSelectionGrid } from './PathSelectionGrid.jsx';
+import { PathOverviewPanel } from './PathOverviewPanel.jsx';
+import { ActivePathState } from './ActivePathState.jsx';
+import { FoundationCard } from './FoundationCard.jsx';
+import { PathFinderCard } from './PathFinderCard.jsx';
 
 export function NavigationSection() {
-  const [goal, setGoal] = useState("shadow");
-  const current = plans[goal];
+  const { selectedPathId, activePath } = useNavigationStore();
+  const pathGridRef = useRef(null);
+
+  const handlePathRecommended = (pathId) => {
+    if (pathId && pathGridRef.current) {
+      // Scroll to path grid with smooth behavior
+      pathGridRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-3">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1">
-          Select Goal
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <GoalChip
-            label="Shadow Work"
-            active={goal === "shadow"}
-            onClick={() => setGoal("shadow")}
-          />
-          <GoalChip
-            label="Consistency"
-            active={goal === "consistency"}
-            onClick={() => setGoal("consistency")}
-          />
-          <GoalChip
-            label="Non-Duality"
-            active={goal === "nonduality"}
-            onClick={() => setGoal("nonduality")}
-          />
-        </div>
-      </div>
+    <div className="w-full max-w-6xl mx-auto space-y-8 pb-12">
+      {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
+      {!activePath && (
+        <div className="space-y-6 pt-8">
+          {/* Foundation Card */}
+          <FoundationCard />
 
-      <div className="flex-1 rounded-2xl bg-black/25 border border-white/12 px-3 py-2 overflow-y-auto text-[11px]">
-        <div className="text-sm font-semibold mb-2">{current.label}</div>
-        {current.weeks.map((w, i) => (
-          <div
-            key={i}
-            className="mb-1 pb-1 border-b border-white/10 last:border-b-0 last:pb-0"
-          >
-            <span className="font-semibold">Week {i + 1}:</span> {w}
+          {/* Ornamental Divider */}
+          <div className="flex items-center justify-center py-2">
+            <div className="flex items-center gap-4 text-[rgba(253,224,71,0.3)]">
+              <div className="w-32 h-[1px] bg-gradient-to-r from-transparent to-[rgba(253,224,71,0.3)]" />
+              <div style={{ fontSize: '12px' }}>◆</div>
+              <div className="w-32 h-[1px] bg-gradient-to-l from-transparent to-[rgba(253,224,71,0.3)]" />
+            </div>
           </div>
-        ))}
+
+          {/* Path Finder Card */}
+          <PathFinderCard onPathRecommended={handlePathRecommended} />
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="space-y-6" ref={pathGridRef}>
+        {/* Path Selection Grid - always visible */}
+        <PathSelectionGrid />
+
+        {/* Path Overview or Active Path State */}
+        {activePath ? (
+          // Show active path state if a path is in progress
+          <ActivePathState />
+        ) : selectedPathId ? (
+          // Show overview panel if a path is selected but not started
+          <PathOverviewPanel pathId={selectedPathId} />
+        ) : (
+          // No selection yet - show helper text
+          <div className="text-center py-12">
+            <p
+              className="text-sm text-[rgba(253,251,245,0.5)] italic"
+              style={{ fontFamily: 'Crimson Pro, serif' }}
+            >
+              Select a path to view details and begin your journey
+            </p>
+          </div>
+        )}
       </div>
     </div>
-  );
-}
-
-function GoalChip({ label, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs border whitespace-nowrap ${
-        active
-          ? "bg-white text-bgStart border-white"
-          : "border-white/30 text-white/80"
-      }`}
-    >
-      {label}
-    </button>
   );
 }

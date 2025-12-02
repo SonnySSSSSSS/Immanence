@@ -1,5 +1,5 @@
 // src/components/Background.jsx
-// SIMPLIFIED - Dark background so the avatar is the star
+// Dark background with velvet texture overlay
 
 import React from "react";
 
@@ -9,8 +9,8 @@ export function Background() {
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
 
-      {/* Very subtle center glow - just enough to not be flat black */}
-      <div 
+      {/* Very subtle center glow */}
+      <div
         className="absolute inset-0"
         style={{
           background: "radial-gradient(circle at 50% 50%, transparent 30%, rgba(5, 5, 8, 0.6) 100%)",
@@ -18,20 +18,40 @@ export function Background() {
       />
 
       {/* Subtle vignette */}
-      <div 
+      <div
         className="absolute inset-0"
         style={{
           background: "radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.4) 100%)",
         }}
       />
 
-      {/* Very faint noise texture */}
+      {/* VELVET TEXTURE - SVG noise overlay for materiality */}
+      <svg width="0" height="0" style={{ position: "absolute" }}>
+        <defs>
+          <filter id="velvetNoise">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.8"
+              numOctaves="4"
+              seed="42"
+            />
+            <feColorMatrix
+              type="matrix"
+              values="0 0 0 0 0.99
+                      0 0 0 0 0.98
+                      0 0 0 0 0.96
+                      0 0 0 0.15 0"
+            />
+          </filter>
+        </defs>
+      </svg>
+
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0"
         style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)",
-          backgroundSize: "4px 4px",
+          filter: "url(#velvetNoise)",
+          mixBlendMode: "soft-light",
+          opacity: 1,
         }}
       />
     </div>

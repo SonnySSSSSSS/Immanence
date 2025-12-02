@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AvatarLuminousCanvas } from "./AvatarLuminousCanvas.jsx";
+import "./Avatar.css";
 
 // Local fallback until ../state/mandalaStore.js exists
 // Replace this with a real import when mandalaStore.js is available:
@@ -16,6 +17,7 @@ function getMandalaState() {
   return {
     avgAccuracy: 0,
     weeklyConsistency: 0,
+    weeklyPracticeLog: [true, true, false, true, false, true, false], // Example: Mon-Sun practice pattern
     phase: "foundation",
     transient: {
       focus: 0,
@@ -101,6 +103,154 @@ function BreathingAura({ breathPattern }) {
 }
 
 //
+// ─── CONSISTENCY AURA (pulsing outer glow based on weekly consistency) ─────────
+//
+function ConsistencyAura({ weeklyConsistency = 0 }) {
+  // weeklyConsistency is 0-7 (days practiced this week)
+  // Map to opacity: 0 days = 0.15, 7 days = 0.5
+  const minOpacity = 0.15;
+  const maxOpacity = 0.5;
+  const opacity = minOpacity + (maxOpacity - minOpacity) * (weeklyConsistency / 7);
+
+  // Pulse intensity also scales with consistency
+  const pulseScale = 0.05 + (0.1 * (weeklyConsistency / 7));
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div
+        className="consistency-aura-pulse rounded-full"
+        style={{
+          width: "100%",
+          height: "100%",
+          background: `radial-gradient(circle, rgba(252,211,77,${opacity}) 0%, rgba(253,224,71,${opacity * 0.6}) 35%, transparent 70%)`,
+          filter: "blur(12px)",
+          mixBlendMode: "screen",
+          // Custom CSS property for animation intensity
+          "--pulse-scale": pulseScale,
+        }}
+      />
+    </div>
+  );
+}
+
+//
+// ─── WEEKLY BADGES (7 dots around avatar showing practice days) ───────────────
+//
+function WeeklyBadges({ weeklyPracticeLog = [] }) {
+  // weeklyPracticeLog is an array of 7 booleans (Mon-Sun)
+  // Each represents whether the user practiced that day
+  const dayLabels = ["M", "T", "W", "Th", "F", "S", "Su"];
+
+  // RITUAL AESTHETIC: Position badges beyond the rune ring (52% radius)
+  // Creates space for lightning connections between practiced badges
+  const angleStep = 360 / 7;
+  const radius = 52; // Moved outward from 44% for lightning effect space
+
+  // Calculate positions for lightning connections
+  const positions = dayLabels.map((_, i) => {
+    const angle = (i * angleStep - 90) * (Math.PI / 180);
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    return { x, y, practiced: weeklyPracticeLog[i] || false };
+  });
+
+  // Find consecutive practiced badges for lightning connections
+  const connections = [];
+  for (let i = 0; i < positions.length; i++) {
+    if (positions[i].practiced) {
+      // Check next badge (wrapping around)
+      const next = (i + 1) % positions.length;
+      if (positions[next].practiced) {
+        connections.push({ from: i, to: next });
+      }
+    }
+  }
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Lightning connections - electrical arcs showing consistency momentum */}
+      {connections.length > 0 && (
+        <svg
+          className="absolute inset-0 w-full h-full"
+          style={{ overflow: "visible" }}
+        >
+          <defs>
+            <filter id="lightning-glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          {connections.map(({ from, to }, idx) => {
+            const fromPos = positions[from];
+            const toPos = positions[to];
+            // Convert percentage to actual coordinates (50% = center)
+            const x1 = `calc(50% + ${fromPos.x}%)`;
+            const y1 = `calc(50% + ${fromPos.y}%)`;
+            const x2 = `calc(50% + ${toPos.x}%)`;
+            const y2 = `calc(50% + ${toPos.y}%)`;
+
+            return (
+              <line
+                key={idx}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="rgba(253,224,71,0.8)"
+                strokeWidth="1.5"
+                filter="url(#lightning-glow)"
+                style={{
+                  animation: "lightningSpark 2s ease-in-out infinite",
+                  animationDelay: `${idx * 0.3}s`,
+                }}
+              />
+            );
+          })}
+        </svg>
+      )}
+      {dayLabels.map((label, i) => {
+        const practiced = weeklyPracticeLog[i] || false;
+        const angle = (i * angleStep) - 90; // Start from top, -90 to offset
+        const x = Math.cos((angle * Math.PI) / 180) * radius;
+        const y = Math.sin((angle * Math.PI) / 180) * radius;
+
+        return (
+          <div
+            key={i}
+            className="absolute"
+            style={{
+              left: `calc(50% + ${x}%)`,
+              top: `calc(50% + ${y}%)`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <div
+              className="weekly-badge"
+              style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                // RITUAL COLORS: warm gold (practiced) vs dim bronze (unpracticed)
+                backgroundColor: practiced ? "#fcd34d" : "rgba(139,92,46,0.4)",
+                boxShadow: practiced
+                  ? "0 0 10px rgba(252,211,77,0.7), 0 0 5px rgba(252,211,77,0.9)"
+                  : "0 0 4px rgba(139,92,46,0.3)",
+                transition: "all 300ms ease-out",
+                animation: "badgePulse 4s ease-in-out infinite",
+              }}
+              title={`${label}: ${practiced ? "Practiced" : "Not practiced"}`}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+//
 // ─── RUNE RING LAYER (rotating outer glyph circle) ────────────────────────────
 //
 const STAGE_RUNE_COLORS = {
@@ -123,7 +273,7 @@ function RuneRingLayer({ stage = "flame" }) {
           alt="Rune ring"
           className="w-full h-full object-contain"
           style={{
-            filter: `drop-shadow(0 0 18px ${glowColor}) drop-shadow(0 0 42px ${glowColor})`,
+            filter: `brightness(1.1) saturate(1.2) drop-shadow(0 0 12px ${glowColor}) drop-shadow(0 0 24px ${glowColor}) drop-shadow(0 0 48px rgba(253, 224, 71, 0.4))`,
           }}
         />
       </div>
@@ -149,15 +299,129 @@ function StaticSigilCore({ stage = "flame" }) {
   const src = STAGE_SIGILS[stage] || STAGE_SIGILS.flame;
 
   return (
-    <div className="relative z-10 flex items-center justify-center">
-      {/* Circular crop container */}
+    <div className="absolute inset-0 z-10 flex items-center justify-center">
+      {/* LIVING NEBULA VOID - Barely visible warm cloudiness with slow rotation */}
       <div
-        className="pointer-events-none select-none"
+        className="absolute pointer-events-none"
         style={{
-          width: "64%",
-          height: "64%",
+          width: "50%",
+          height: "50%",
+          borderRadius: "9999px",
+          background: "radial-gradient(circle, #030302 0%, #050403 40%, #0a0806 100%)",
+          boxShadow: "inset 0 0 20px rgba(253,224,71,0.15), inset 0 0 40px rgba(200,150,50,0.08)",
+        }}
+      />
+
+      {/* Nebula Layer 1 - Rotating warm cloudiness (clearly visible) */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "50%",
+          height: "50%",
+          borderRadius: "9999px",
+          background: `
+            radial-gradient(ellipse at 30% 40%, rgba(80,55,30,0.9) 0%, transparent 45%),
+            radial-gradient(ellipse at 70% 60%, rgba(65,45,25,0.8) 0%, transparent 40%),
+            radial-gradient(ellipse at 50% 80%, rgba(75,50,28,0.85) 0%, transparent 35%)
+          `,
+          animation: "voidRotate 45s linear infinite, nebulaPulse 6s ease-in-out infinite",
+        }}
+      />
+
+      {/* Nebula Layer 2 - Counter-rotating for depth */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "50%",
+          height: "50%",
+          borderRadius: "9999px",
+          background: `
+            radial-gradient(ellipse at 60% 30%, rgba(60,42,24,0.7) 0%, transparent 50%),
+            radial-gradient(ellipse at 40% 70%, rgba(70,48,26,0.65) 0%, transparent 45%)
+          `,
+          animation: "voidRotate 60s linear infinite reverse, nebulaPulse 7s ease-in-out infinite",
+        }}
+      />
+
+
+      {/* WHIRLPOOL VORTEX - Spiraling lines pulling into void */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "70%",
+          height: "70%",
+          borderRadius: "9999px",
+          background: `
+            conic-gradient(
+              from 0deg,
+              transparent 0%,
+              rgba(253,224,71,0.08) 10%,
+              transparent 20%,
+              rgba(253,224,71,0.08) 30%,
+              transparent 40%,
+              rgba(253,224,71,0.08) 50%,
+              transparent 60%,
+              rgba(253,224,71,0.08) 70%,
+              transparent 80%,
+              rgba(253,224,71,0.08) 90%,
+              transparent 100%
+            )
+          `,
+          animation: "whirlpool 90s linear infinite, whirlpoolWaver 8s ease-in-out infinite, whirlpoolFade 24s ease-in-out infinite",
+        }}
+      />
+
+      {/* WHIRLPOOL Layer 2 - Counter-rotating for depth */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "70%",
+          height: "70%",
+          borderRadius: "9999px",
+          background: `
+            conic-gradient(
+              from 45deg,
+              transparent 0%,
+              rgba(253,224,71,0.05) 15%,
+              transparent 30%,
+              rgba(253,224,71,0.05) 45%,
+              transparent 60%,
+              rgba(253,224,71,0.05) 75%,
+              transparent 90%
+            )
+          `,
+          animation: "whirlpool 120s linear infinite reverse, whirlpoolWaver 10s ease-in-out infinite, whirlpoolFade 24s ease-in-out infinite 4s",
+        }}
+      />
+
+      {/* EVENT HORIZON - Intense multi-layer glow stack */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "50%",
+          height: "50%",
+          borderRadius: "9999px",
+          border: "2px solid rgba(255, 251, 232, 0.9)", // Near-white core border
+          boxShadow: `
+            0 0 2px #fffbe8,
+            0 0 6px #fde68a,
+            0 0 12px #fcd34d,
+            0 0 24px #f59e0b,
+            0 0 48px rgba(180,83,9,0.6),
+            0 0 80px rgba(120,50,5,0.3)
+          `,
+        }}
+      />
+
+      {/* Sigil overlay - Low opacity (25%) floating in void */}
+      <div
+        className="relative pointer-events-none select-none"
+        style={{
+          width: "50%",
+          height: "50%",
           borderRadius: "9999px",
           overflow: "hidden",
+          animation: "sigilRadiate 4s ease-in-out infinite",
           WebkitMaskImage:
             "radial-gradient(circle, white 72%, transparent 100%)",
           maskImage: "radial-gradient(circle, white 72%, transparent 100%)",
@@ -172,7 +436,7 @@ function StaticSigilCore({ stage = "flame" }) {
             objectFit: "contain",
             objectPosition: "50% 50%",
             filter:
-              "drop-shadow(0 0 24px rgba(253,224,71,0.9)) drop-shadow(0 0 64px rgba(250,204,21,0.35))",
+              "drop-shadow(0 0 20px rgba(253,224,71,0.8)) drop-shadow(0 0 40px rgba(250,204,21,0.4)) contrast(1.1)",
           }}
         />
       </div>
@@ -192,17 +456,75 @@ const LABELS = {
 };
 
 //
+// ─── STAGE GLOW COLORS ─────────────────────────────────────────────────────────
+//
+const STAGE_GLOW_COLORS = {
+  seedling: { h: 180, s: 70, l: 50 },  // cyan
+  ember: { h: 25, s: 85, l: 55 },      // orange
+  flame: { h: 48, s: 90, l: 60 },      // gold
+  beacon: { h: 200, s: 85, l: 60 },    // bright cyan
+  stellar: { h: 270, s: 80, l: 65 },   // violet
+};
+
+//
 // ─── AVATAR CONTAINER ──────────────────────────────────────────────────────────
 //
-function AvatarContainer({ mode, label, breathPattern, stage = "flame", totalSessions = 0, avgAccuracy = 0 }) {
+function AvatarContainer({
+  mode,
+  label,
+  breathPattern,
+  stage = "flame",
+  totalSessions = 0,
+  avgAccuracy = 0,
+  weeklyConsistency = 0,
+  weeklyPracticeLog = [],
+  breathState
+}) {
+  const glowColor = STAGE_GLOW_COLORS[stage] || STAGE_GLOW_COLORS.flame;
+  const { h, s, l } = glowColor;
+
   return (
-    <div className="relative w-56 h-56 flex items-center justify-center">
-      <div className="relative w-48 h-48 flex items-center justify-center">
+    <div className="relative w-80 h-80 flex items-center justify-center">
+      {/* Volumetric Glow Layers - AMPLIFIED */}
+
+      {/* Layer 0a: Outer atmospheric wash - EXTENDED FALLOFF */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, 0.45) 0%, hsla(${h}, ${s}%, ${l - 5}%, 0.32) 35%, hsla(${h}, ${s - 5}%, ${l - 10}%, 0.18) 60%, hsla(${h}, ${s - 10}%, ${l - 15}%, 0.08) 80%, hsla(${h}, ${s - 15}%, ${l - 20}%, 0.03) 90%, transparent 95%)`,
+          filter: "blur(100px)",
+          animation: "breathingPulse 8s ease-in-out infinite",
+        }}
+      />
+
+      {/* Layer 0b: Mid bloom - TRIPLED INTENSITY */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.6) 0%, hsla(${h}, ${s}%, ${l + 5}%, 0.4) 30%, hsla(${h}, ${s - 5}%, ${l}%, 0.15) 55%, transparent 75%)`,
+          filter: "blur(50px)",
+          animation: "breathingPulse 8s ease-in-out infinite 0.2s",
+        }}
+      />
+
+      {/* Layer 0c: Tight inner bloom */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle, hsla(${h}, ${s + 10}%, ${l + 15}%, 0.5) 0%, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.25) 25%, transparent 50%)`,
+          filter: "blur(30px)",
+          animation: "breathingPulse 8s ease-in-out infinite 0.4s",
+        }}
+      />
+
+      <div className="relative w-72 h-72 flex items-center justify-center">
         {/* Layer 0: luminous ring field (canvas) */}
-        <AvatarLuminousCanvas
-          totalSessions={totalSessions}
-          avgAccuracy={avgAccuracy}
-        />
+        <AvatarLuminousCanvas breathState={breathState} />
+
+
+
+        {/* Layer 0.75: weekly badges (7 dots showing practice days) */}
+        <WeeklyBadges weeklyPracticeLog={weeklyPracticeLog} />
 
         {/* Layer 1: breathing aura (only in Practice mode) */}
         {mode === "practice" && (
@@ -217,7 +539,7 @@ function AvatarContainer({ mode, label, breathPattern, stage = "flame", totalSes
       </div>
 
       {/* Label to the right */}
-      <div className="absolute left-[calc(100%+0.75rem)] top-1/2 -translate-y-1/2 text-xs tracking-[0.25em] text-white/90 uppercase whitespace-nowrap">
+      <div className="absolute left-[calc(100%+1rem)] top-1/2 -translate-y-1/2 text-xs tracking-[0.25em] text-white/90 uppercase whitespace-nowrap">
         {label}
       </div>
     </div>
@@ -227,7 +549,7 @@ function AvatarContainer({ mode, label, breathPattern, stage = "flame", totalSes
 //
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
-export function Avatar({ mode, breathPattern }) {
+export function Avatar({ mode, breathPattern, breathState }) {
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
@@ -250,6 +572,7 @@ export function Avatar({ mode, breathPattern }) {
 
   const avgAccuracy = mandalaSnapshot?.avgAccuracy || 0;
   const weeklyConsistency = mandalaSnapshot?.weeklyConsistency || 0;
+  const weeklyPracticeLog = mandalaSnapshot?.weeklyPracticeLog || [false, false, false, false, false, false, false];
   const phase = mandalaSnapshot?.phase || "foundation";
   const transient = mandalaSnapshot?.transient || {};
   const focus = transient.focus || 0;
@@ -293,20 +616,10 @@ export function Avatar({ mode, breathPattern }) {
         stage={currentStage}
         totalSessions={totalSessions}
         avgAccuracy={avgAccuracy}
+        weeklyConsistency={weeklyConsistency}
+        weeklyPracticeLog={weeklyPracticeLog}
+        breathState={breathState}
       />
-
-      <div className="mt-3 text-[10px] text-white/70 text-center space-y-0.5">
-        <div>
-          acc {accPct} ({accLabel}) · wk {wkPct} ({wkLabel}) · phase {phase}
-        </div>
-        <div>
-          live f {Math.round(focus * 100)} · c {Math.round(clarity * 100)} · d{" "}
-          {Math.round(distortion * 100)}
-        </div>
-        <div className="text-[9px] text-white/50">
-          stage: {currentStage} (click to cycle)
-        </div>
-      </div>
     </div>
   );
 }

@@ -3,10 +3,11 @@
 // - Scales smoothly to match exact breath pattern timing
 // - Echo effect + sound on inhale peak and exhale bottom
 // - User locks eyes on ring to feel the rhythm
+// - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
 
 import React, { useEffect, useState, useRef } from "react";
 
-export function BreathingRing({ breathPattern }) {
+export function BreathingRing({ breathPattern, onTap }) {
   const {
     inhale = 4,
     holdTop = 4,
@@ -133,14 +134,83 @@ export function BreathingRing({ breathPattern }) {
     osc.stop(now + 0.12);
   };
 
+  // Handle click on breathing ring - calculate error and call onTap
+  const handleRingClick = () => {
+    if (!onTap) return;
+
+    // Find which peak the user was trying to hit
+    // Valid tap points: Start (0), Inhale Peak, Hold Release, Exhale Bottom, End (1)
+    const peaks = [
+      { name: 'inhale start', phase: 0 },
+      { name: 'inhale peak', phase: tInhale },
+      { name: 'hold release', phase: tHoldTop },
+      { name: 'exhale bottom', phase: tExhale },
+      { name: 'cycle end', phase: 1.0 }
+    ];
+
+    // Find closest peak
+    let closestPeak = peaks[0];
+    let minDistance = Math.abs(progress - peaks[0].phase);
+
+    for (let i = 1; i < peaks.length; i++) {
+      const distance = Math.abs(progress - peaks[i].phase);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPeak = peaks[i];
+      }
+    }
+
+    // Calculate error from closest peak
+    const cycleMs = total * 1000;
+    const expectedMs = closestPeak.phase * cycleMs;
+    const actualMs = progress * cycleMs;
+
+    // INPUT LATENCY COMPENSATION
+    // Typical touchscreen/mouse latency is ~60ms. 
+    // Without this, perfect physical taps register as "Late".
+    const INPUT_LATENCY_MS = 60;
+    const errorMs = (actualMs - expectedMs) - INPUT_LATENCY_MS;
+
+    // VALIDATION: Accept all taps, let parent handle "out of bounds" logic
+    // const MAX_TAP_WINDOW_MS = 1000;
+    // if (Math.abs(errorMs) > MAX_TAP_WINDOW_MS) { ... }
+
+    console.log('✅ Tap accepted:', errorMs, 'ms from', closestPeak.name, 'peak');
+    onTap(errorMs);
+  };
+
   return (
-    <div className="relative w-full flex items-center justify-center py-12">
-      {/* Main breathing ring */}
+    <div
+      className="relative w-full flex items-center justify-center py-12 cursor-pointer"
+      onClick={handleRingClick}
+      style={{ userSelect: "none" }}
+    >
+      {/* Main breathing ring with EVENT HORIZON GLOW */}
       <svg
         viewBox="0 0 200 200"
         className="w-64 h-64"
         style={{
-          filter: "drop-shadow(0 0 32px rgba(253, 224, 71, 0.3))",
+          pointerEvents: "none",
+          // EVENT HORIZON GLOW - Clean layered box-shadow
+          filter: progress < tInhale
+            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px #fffbe8) 
+               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px #fde68a) 
+               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px #fcd34d) 
+               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px rgba(245,158,11,0.4))`
+            : progress < tHoldTop
+              ? `drop-shadow(0 0 9.6px #fffbe8) 
+               drop-shadow(0 0 19.2px #fde68a) 
+               drop-shadow(0 0 28.8px #fcd34d) 
+               drop-shadow(0 0 38.4px rgba(245,158,11,0.4))`
+              : progress < tExhale
+                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fffbe8) 
+               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fde68a) 
+               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fcd34d) 
+               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px rgba(245,158,11,0.4))`
+                : `drop-shadow(0 0 8px #fffbe8) 
+               drop-shadow(0 0 16px #fde68a) 
+               drop-shadow(0 0 24px #fcd34d) 
+               drop-shadow(0 0 32px rgba(245,158,11,0.4))`
         }}
       >
         <circle
@@ -149,7 +219,7 @@ export function BreathingRing({ breathPattern }) {
           r="80"
           fill="none"
           stroke="#fcd34d"
-          strokeWidth="3"
+          strokeWidth="4"
           strokeLinecap="round"
           style={{
             transform: `scale(${scale})`,
@@ -166,6 +236,7 @@ export function BreathingRing({ breathPattern }) {
           className="absolute w-64 h-64"
           style={{
             animation: "fadeOutEcho 0.4s ease-out forwards",
+            pointerEvents: "none",
           }}
         >
           <circle
@@ -199,16 +270,28 @@ export function BreathingRing({ breathPattern }) {
           fontFamily: "Cinzel, serif",
           fontWeight: "500",
           zIndex: 10,
+          pointerEvents: "none",
         }}
       >
         {progress < tInhale
           ? "Inhale"
           : progress < tHoldTop
-          ? "Hold"
-          : progress < tExhale
-          ? "Exhale"
-          : "Hold"}
+            ? "Hold"
+            : progress < tExhale
+              ? "Exhale"
+              : "Hold"}
       </div>
+
+      <style>{`
+        @keyframes fadeOutEcho {
+          0% {
+            opacity: 0.5;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }

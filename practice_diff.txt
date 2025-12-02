@@ -1,0 +1,158 @@
+diff --git a/src/components/PracticeSection.jsx b/src/components/PracticeSection.jsx
+index 7695dbc..bb6eba1 100644
+--- a/src/components/PracticeSection.jsx
++++ b/src/components/PracticeSection.jsx
+@@ -499,14 +499,14 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
+     const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+     
+     return (
+-      <div className="w-full max-w-md mx-auto mt-6 flex flex-col items-center">
++      <div className="w-full flex flex-col items-center overflow-visible" style={{ minHeight: "100vh" }}>
+         {/* Avatar peek - small, dimmed, at top */}
+-        <div style={{ opacity: 0.3, marginBottom: "-2rem", zIndex: 5, pointerEvents: "none" }}>
++        <div style={{ opacity: 0.3, zIndex: 5, pointerEvents: "none", position: "absolute", top: "60px" }}>
+           <Avatar mode="practice" breathPattern={patternForBreath} />
+         </div>
+         
+-        {/* Breathing ring with ripple */}
+-        <div style={{ position: "relative", marginTop: "2rem" }}>
++        {/* Breathing ring - FULL WIDTH, NO CONSTRAINTS */}
++        <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center", paddingTop: "60px" }}>
+         <BreathingRing 
+           breathPattern={patternForBreath}
+           onTap={handleAccuracyTap}
+@@ -529,118 +529,40 @@ export function PracticeSection({ onPatternChange, onModeChange }) {
+           )}
+         </div>
+         
+-        {/* Timer with progress ring */}
+-        <div className="mt-6 text-center relative">
+-          {/* Progress ring SVG */}
+-          <svg style={{ position: "absolute", top: "-65px", left: "50%", transform: "translateX(-50%)", width: "120px", height: "120px" }}>
+-            {/* Background circle */}
+-            <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(253, 224, 71, 0.1)" strokeWidth="2" />
+-            {/* Progress arc */}
+-            <circle 
+-              cx="60" 
+-              cy="60" 
+-              r="45" 
+-              fill="none" 
+-              stroke="#fcd34d" 
+-              strokeWidth="3"
+-              strokeDasharray={circumference}
+-              strokeDashoffset={strokeDashoffset}
+-              strokeLinecap="round"
+-              style={{ transform: "rotate(-90deg)", transformOrigin: "60px 60px", transition: "stroke-dashoffset 0.5s ease" }}
+-            />
+-          </svg>
+-          
+-          <div style={{ fontSize: "1.25rem", fontFamily: "Cinzel, serif", letterSpacing: "0.2em", color: "rgba(253, 251, 245, 0.6)" }}>
++        {/* Timer/Stats Footer - Fixed at bottom */}
++        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#050508] to-transparent px-6 py-8">
++          <div className="max-w-md mx-auto text-center">
++          <div style={{ fontSize: "2rem", fontFamily: "Cinzel, serif", letterSpacing: "0.2em", color: "rgba(253, 251, 245, 0.7)", marginBottom: "1rem" }}>
+             {mm}:{ss}
+           </div>
+           <button
+             onClick={handleStop}
+             style={{
+-              marginTop: "1rem",
+-              padding: "0.5rem 1.5rem",
++              padding: "0.75rem 2rem",
+               fontFamily: "Cinzel, serif",
+               fontSize: "0.625rem",
+               letterSpacing: "0.2em",
+               textTransform: "uppercase",
+-              border: "1px solid rgba(253, 224, 71, 0.3)",
+-              color: "rgba(253, 251, 245, 0.8)",
++              border: "1px solid rgba(253, 224, 71, 0.5)",
++              color: "rgba(253, 251, 245, 0.9)",
+               background: "transparent",
+               borderRadius: "9999px",
+               cursor: "pointer",
++              transition: "all 0.2s ease",
+             }}
++            onMouseEnter={(e) => e.target.style.borderColor = "rgba(253, 224, 71, 0.8)"}
++            onMouseLeave={(e) => e.target.style.borderColor = "rgba(253, 224, 71, 0.5)"}
+           >
+-            End
++            End Session
+           </button>
+-        </div>
+-
+-        {/* Tap tracker section */}
+-        <div className="mt-8 w-full max-w-sm">
+-          <button
+-            className="w-full h-16 rounded-2xl border border-white/30 bg-white/5 text-[11px] text-white/80 flex items-center justify-center active:bg-white/10"
+-            onClick={handleAccuracyTap}
+-          >
+-            <span 
+-              style={{ 
+-                fontFamily: "Crimson Pro, serif",
+-                fontSize: "0.8125rem",
+-                color: "rgba(253, 251, 245, 0.6)",
+-                letterSpacing: "0.03em"
+-              }}
+-            >
+-              Tap at the peak of each breath
+-            </span>
+-          </button>
+-
+-          {/* Tap stats */}
++          
++          {/* Tap stats inline */}
+           {tapCount > 0 && (
+-            <div className="mt-3 space-y-1 text-[10px] text-white/60">
+-              <div className="flex justify-between">
+-                <span>Taps recorded</span>
+-                <span>{tapCount}</span>
+-              </div>
+-              {avgErrorMs != null && (
+-                <div className="flex justify-between">
+-                  <span>Average offset</span>
+-                  <span>{avgErrorMs}ms</span>
+-                </div>
+-              )}
+-              {bestErrorMs != null && (
+-                <div className="flex justify-between">
+-                  <span>Best</span>
+-                  <span>{bestErrorMs}ms</span>
+-                </div>
+-              )}
+-              {lastSignedErrorMs != null && (
+-                <div className="flex justify-between">
+-                  <span>Last tap</span>
+-                  <span style={{
+-                    color: lastSignedErrorMs === 0 
+-                      ? '#fcd34d'
+-                      : lastSignedErrorMs > 0 
+-                      ? '#ff8c00'
+-                      : '#4dd4d4'
+-                  }}>
+-                    {lastSignedErrorMs === 0
+-                      ? "on beat"
+-                      : `${Math.abs(lastSignedErrorMs)}ms ${
+-                          lastSignedErrorMs > 0 ? "late" : "early"
+-                        }`}
+-                  </span>
+-                </div>
+-              )}
+-            </div>
+-          )}
+-
+-          {/* Accuracy visual */}
+-          {accuracyView === "pulse" ? (
+-            <div className="mt-4">
+-              <AccuracyPulse avgErrorMs={avgErrorMs} bestErrorMs={bestErrorMs} />
+-            </div>
+-          ) : (
+-            <div className="mt-4">
+-              <AccuracyPetals avgErrorMs={avgErrorMs} tapCount={tapCount} />
++            <div className="mt-4 text-[10px] text-white/60 space-y-1">
++              <div>Taps: {tapCount} · Avg: {avgErrorMs != null ? avgErrorMs + 'ms' : '—'} · Best: {bestErrorMs != null ? bestErrorMs + 'ms' : '—'}</div>
+             </div>
+           )}
++          </div>
+         </div>
+       </div>
+     );

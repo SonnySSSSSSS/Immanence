@@ -1,89 +1,101 @@
 // src/components/AvatarLuminousCanvas.jsx
-// LUMINOUS RING FIELD BACKGROUND FOR AVATAR
-// - Procedural, resolution-independent
-// - Responds to totalSessions (progression) and avgAccuracy (refinement)
+// RITUAL AESTHETIC: Warm amber particles with organic motion
+// - Particles always warm (gold/amber), not stage-colored
+// - VERY slow hypnotic drift (50% slower rotation)
+// - Organic wobble, varying opacity, smoke-like trails
+// - VERY LONG TRAILS for maximum visibility
 
 import React, { useEffect, useRef } from "react";
 
-const STAGES = [
-  {
-    id: 0,
-    name: "SEEDLING",
-    thresholdSessions: 0,
-    ringCount: 3,
-    baseHue: 190, // teal/cyan
-    saturation: 80,
-    lightnessInner: 70,
-    lightnessOuter: 10,
-    wobble: 0.4,
-  },
-  {
-    id: 1,
-    name: "EMBER",
-    thresholdSessions: 5,
-    ringCount: 4,
-    baseHue: 28, // orange
-    saturation: 88,
-    lightnessInner: 72,
-    lightnessOuter: 10,
-    wobble: 0.6,
-  },
-  {
-    id: 2,
-    name: "FLAME",
-    thresholdSessions: 15,
-    ringCount: 5,
-    baseHue: 48, // gold
-    saturation: 90,
-    lightnessInner: 78,
-    lightnessOuter: 12,
-    wobble: 0.8,
-  },
-  {
-    id: 3,
-    name: "BEACON",
-    thresholdSessions: 40,
-    ringCount: 6,
-    baseHue: 190, // bright cyan
-    saturation: 92,
-    lightnessInner: 80,
-    lightnessOuter: 14,
-    wobble: 1.0,
-  },
-  {
-    id: 4,
-    name: "STELLAR",
-    thresholdSessions: 80,
-    ringCount: 7,
-    baseHue: 265, // violet
-    saturation: 90,
-    lightnessInner: 82,
-    lightnessOuter: 16,
-    wobble: 1.2,
-  },
-];
+// RITUAL AESTHETIC: Warm amber particles (practice energy, not stage color)
+// Particles always stay in gold/amber family regardless of stage
+const WARM_PARTICLE_COLOR = { h: 48, s: 90, l: 65 }; // Gold
 
-// Choose stage based on totalSessions (primary) and avgAccuracy (secondary)
-function pickStage(totalSessions = 0, avgAccuracy = 0) {
-  const sessions = Math.max(0, totalSessions || 0);
-  const acc = Math.max(0, Math.min(1, avgAccuracy || 0));
-
-  let stage = STAGES[0];
-  for (const s of STAGES) {
-    if (sessions >= s.thresholdSessions) stage = s;
+class Particle {
+  constructor(maxRadius) {
+    this.maxRadius = maxRadius;
+    this.reset();
   }
 
-  // Small accuracy boost: if accuracy is high, bias toward higher hue brightness
-  const accuracyBoost = acc * 12; // up to +12 lightness
-  return { ...stage, accuracyBoost };
+  reset() {
+    // Start at outer edge
+    this.radius = this.maxRadius;
+    this.angle = Math.random() * Math.PI * 2;
+    this.speed = 0.11 + Math.random() * 0.165; // SLOW: 0.11-0.275 px/frame
+    this.angularSpeed = 0.0019 + Math.random() * 0.0039; // VERY SLOW: 0.0019-0.0058 radians/frame (50% slower)
+    this.size = 2 + Math.random() * 1; // 2-3px (50% smaller to distinguish from badges)
+    this.opacity = 0.64 + Math.random() * 0.16; // 0.64-0.8 (20% reduction)
+
+    // ORGANIC BEHAVIOR: Add wobble and variation
+    this.wobblePhase = Math.random() * Math.PI * 2; // Random phase for wobble
+    this.wobbleSpeed = 0.03 + Math.random() * 0.02; // How fast wobble cycles
+    this.wobbleAmount = 2 + Math.random() * 1; // 2-3px drift
+    this.opacityPhase = Math.random() * Math.PI * 2; // For varying opacity
+    this.opacitySpeed = 0.02 + Math.random() * 0.01; // Slow opacity fluctuation
+  }
+
+  update() {
+    // Spiral inward
+    this.radius -= this.speed;
+    this.angle += this.angularSpeed;
+
+    // ORGANIC: Update wobble and opacity phases
+    this.wobblePhase += this.wobbleSpeed;
+    this.opacityPhase += this.opacitySpeed;
+
+    // Reset when reaching center
+    if (this.radius < 40) {
+      this.reset();
+    }
+  }
+
+  draw(ctx, centerX, centerY, color, scaleMod = 1.0, glowMod = 1.0, wobbleMod = 1.0) {
+    // ORGANIC: Add wobble offset (drift away from perfect spiral)
+    const wobbleX = Math.cos(this.wobblePhase) * this.wobbleAmount * wobbleMod;
+    const wobbleY = Math.sin(this.wobblePhase) * this.wobbleAmount * wobbleMod;
+
+    // Apply breath scaling to radius
+    const effectiveRadius = this.radius * scaleMod;
+
+    const x = centerX + Math.cos(this.angle) * effectiveRadius + wobbleX;
+    const y = centerY + Math.sin(this.angle) * effectiveRadius + wobbleY;
+
+    // Calculate opacity with organic variation
+    // Note: use maxRadius * scaleMod for distance factor to keep proportions
+    const maxR = this.maxRadius * scaleMod;
+    const distanceFactor = Math.min(
+      effectiveRadius / (maxR * 0.7),
+      (maxR - effectiveRadius) / (maxR * 0.3)
+    );
+
+    // ORGANIC: Varying opacity using sine wave (not linear fade)
+    const opacityVariation = 0.85 + Math.sin(this.opacityPhase) * 0.15; // 0.7-1.0
+    const alpha = this.opacity * distanceFactor * opacityVariation * glowMod;
+
+    ctx.beginPath();
+    // Scale particle size slightly with breath
+    ctx.arc(x, y, this.size * Math.sqrt(scaleMod), 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
+    ctx.fill();
+
+    // Add glow
+    ctx.shadowBlur = 10 * glowMod;
+    ctx.shadowColor = `hsla(${color.h}, ${color.s}%, ${color.l + 10}%, ${alpha * 0.9})`;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
 }
 
-export function AvatarLuminousCanvas({
-  totalSessions = 0,
-  avgAccuracy = 0,
-}) {
+export function AvatarLuminousCanvas({ breathState }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
+  const particlesRef = useRef([]);
+
+  // Keep latest breath state in ref for animation loop
+  const breathStateRef = useRef(breathState);
+  useEffect(() => {
+    breathStateRef.current = breathState;
+  }, [breathState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -105,114 +117,65 @@ export function AvatarLuminousCanvas({
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Reinitialize particles on resize
+      const maxRadius = Math.min(width, height) * 0.48;
+      particlesRef.current = Array.from({ length: 15 }, () => new Particle(maxRadius));
     }
 
     resize();
     window.addEventListener("resize", resize);
 
-    let startTime = performance.now();
-
-    function drawFrame(now) {
-      const t = (now - startTime) / 1000; // seconds
+    function drawFrame() {
       const centerX = width / 2;
       const centerY = height / 2;
-      const radius = Math.min(width, height) * 0.45;
 
-      const stage = pickStage(totalSessions, avgAccuracy);
+      // Calculate breath modifiers
+      const bs = breathStateRef.current || { phase: 'rest', progress: 0, isPracticing: false };
+      let scaleMod = 1.0;
+      let glowMod = 1.0;
+      let wobbleMod = 1.0;
 
-      ctx.clearRect(0, 0, width, height);
-
-      // --- Background radial haze ---
-      const bgGradient = ctx.createRadialGradient(
-        centerX,
-        centerY,
-        radius * 0.1,
-        centerX,
-        centerY,
-        radius * 1.2
-      );
-      bgGradient.addColorStop(
-        0,
-        `hsla(${stage.baseHue}, ${stage.saturation}%, ${
-          stage.lightnessInner + stage.accuracyBoost
-        }%, 0.35)`
-      );
-      bgGradient.addColorStop(
-        1,
-        `hsla(${stage.baseHue}, ${stage.saturation}%, ${
-          stage.lightnessOuter
-        }%, 0)`
-      );
-
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0, 0, width, height);
-
-      // --- Concentric noisy rings ---
-      const ringCount = stage.ringCount;
-      const baseLightness = stage.lightnessInner + stage.accuracyBoost;
-
-      for (let i = 0; i < ringCount; i++) {
-        const progress = i / (ringCount - 1 || 1);
-        const ringRadius = radius * (0.35 + 0.5 * progress);
-        const wobbleAmp = stage.wobble * (0.4 + 0.8 * progress); // outer rings wobble more
-        const lineWidth = 0.8 + 0.9 * (1 - progress);
-
-        ctx.beginPath();
-        const segments = 160;
-        for (let s = 0; s <= segments; s++) {
-          const angle = (Math.PI * 2 * s) / segments;
-          const noise =
-            Math.sin(angle * 3 + t * 0.7 + i * 0.9) * 0.3 +
-            Math.cos(angle * 5 - t * 0.4 + i * 1.3) * 0.2;
-          const r = ringRadius * (1 + wobbleAmp * noise * 0.02);
-
-          const x = centerX + Math.cos(angle) * r;
-          const y = centerY + Math.sin(angle) * r;
-
-          if (s === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+      if (bs.isPracticing) {
+        if (bs.phase === 'inhale') {
+          // Expand 1.0 -> 1.1 (more visible expansion)
+          scaleMod = 1.0 + (bs.progress * 0.1);
+          // Glow 1.0 -> 1.5
+          glowMod = 1.0 + (bs.progress * 0.5);
+          // Wobble increases
+          wobbleMod = 1.0 + (bs.progress * 0.5);
+        } else if (bs.phase === 'holdTop') {
+          scaleMod = 1.1;
+          glowMod = 1.5;
+          wobbleMod = 0.5; // Calmer wobble at top
+        } else if (bs.phase === 'exhale') {
+          // Contract 1.1 -> 1.0
+          scaleMod = 1.1 - (bs.progress * 0.1);
+          // Glow 1.5 -> 1.0
+          glowMod = 1.5 - (bs.progress * 0.5);
+          wobbleMod = 1.5 - (bs.progress * 0.5);
+        } else if (bs.phase === 'holdBottom') {
+          scaleMod = 1.0;
+          glowMod = 1.0;
+          wobbleMod = 1.0;
         }
-
-        const alpha = 0.35 + 0.4 * (1 - progress);
-        const lightness = baseLightness - progress * 24;
-
-        ctx.strokeStyle = `hsla(${stage.baseHue}, ${stage.saturation}%, ${lightness}%, ${alpha})`;
-        ctx.lineWidth = lineWidth;
-        ctx.stroke();
       }
 
-      // --- Soft inner core glow ---
-      const innerGradient = ctx.createRadialGradient(
-        centerX,
-        centerY,
-        0,
-        centerX,
-        centerY,
-        radius * 0.55
-      );
-      innerGradient.addColorStop(
-        0,
-        `hsla(${stage.baseHue}, ${stage.saturation}%, ${
-          baseLightness + 6
-        }%, 0.6)`
-      );
-      innerGradient.addColorStop(
-        0.75,
-        `hsla(${stage.baseHue}, ${stage.saturation}%, ${
-          baseLightness
-        }%, 0.18)`
-      );
-      innerGradient.addColorStop(
-        1,
-        `hsla(${stage.baseHue}, ${stage.saturation}%, ${
-          stage.lightnessOuter
-        }%, 0)`
-      );
+      // ORGANIC: Varying trail fade (smoke-like breakup) - VERY LONG TRAILS
+      // Reduced fade rate even more for longer, more visible trails
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.02)"; // Very slow fade for long trails
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalCompositeOperation = "source-over";
 
-      ctx.fillStyle = innerGradient;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
-      ctx.fill();
+      // Always use warm particle color (not stage-based)
+      const particleColor = WARM_PARTICLE_COLOR;
+
+      // Update and draw particles
+      particlesRef.current.forEach((particle) => {
+        particle.update();
+        particle.draw(ctx, centerX, centerY, particleColor, scaleMod, glowMod, wobbleMod);
+      });
 
       animationRef.current = requestAnimationFrame(drawFrame);
     }
@@ -225,12 +188,13 @@ export function AvatarLuminousCanvas({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [totalSessions, avgAccuracy]);
+  }, []); // No stage dependency - particles are always warm
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 10 }}
     />
   );
 }

@@ -1,0 +1,143 @@
+/* Avatar-specific animations and styles */
+
+@keyframes consistency-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(calc(1 + var(--pulse-scale, 0.08)));
+        opacity: 0.85;
+    }
+}
+
+@keyframes breathingPulse {
+
+    0%,
+    100% {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    50% {
+        transform: scale(1.02);
+        opacity: 1;
+    }
+}
+
+@keyframes sigilRadiate {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: brightness(1) saturate(1);
+        opacity: 0.25;
+    }
+
+    50% {
+        transform: scale(1.05);
+        filter: brightness(1.25) saturate(1.25);
+        opacity: 0.25;
+    }
+}
+
+@keyframes badgePulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.3);
+        filter: brightness(1.3);
+        opacity: 1;
+    }
+}
+
+@keyframes nebulaPulse {
+
+    0%,
+    100% {
+        opacity: 0.9;
+    }
+
+    50% {
+        opacity: 1.0;
+    }
+}
+
+@keyframes voidRotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes lightningSpark {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1.0;
+    }
+}
+
+@keyframes whirlpool {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes whirlpoolWaver {
+
+    0%,
+    100% {
+        transform: scale(0.98);
+    }
+
+    33% {
+        transform: scale(1.01);
+    }
+
+    66% {
+        transform: scale(0.99);
+    }
+}
+
+@keyframes whirlpoolFade {
+    0% {
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.consistency-aura-pulse {
+    animation: consistency-pulse 4s ease-in-out infinite;
+}
