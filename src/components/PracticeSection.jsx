@@ -416,7 +416,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
 
         <div className="relative px-7 py-6">
           {/* Row 1: Practice + Duration */}
-          <div className="flex items-start justify-between gap-6 mb-7">
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-7">
             {/* Practice selector */}
             <div className="flex-1">
               <div
@@ -424,7 +424,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 style={{
                   fontFamily: "Georgia, serif",
                   fontSize: "9px",
-                  letterSpacing: "0.25em",
+                  letterSpacing: "0.15em",
                   textTransform: "uppercase",
                   color: "rgba(253,251,245,0.4)",
                 }}
@@ -475,7 +475,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 style={{
                   fontFamily: "Georgia, serif",
                   fontSize: "9px",
-                  letterSpacing: "0.25em",
+                  letterSpacing: "0.15em",
                   textTransform: "uppercase",
                   color: "rgba(253,251,245,0.4)",
                 }}
