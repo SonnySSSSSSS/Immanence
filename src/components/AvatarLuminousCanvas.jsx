@@ -126,6 +126,8 @@ export function AvatarLuminousCanvas({ breathState }) {
     resize();
     window.addEventListener("resize", resize);
 
+    let frameCount = 0;
+
     function drawFrame() {
       const centerX = width / 2;
       const centerY = height / 2;
@@ -161,12 +163,16 @@ export function AvatarLuminousCanvas({ breathState }) {
         }
       }
 
-      // ORGANIC: Varying trail fade (smoke-like breakup) - VERY LONG TRAILS
-      // Reduced fade rate even more for longer, more visible trails
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.fillStyle = "rgba(0, 0, 0, 0.02)"; // Very slow fade for long trails
-      ctx.fillRect(0, 0, width, height);
-      ctx.globalCompositeOperation = "source-over";
+      // ORGANIC: Varying trail fade (smoke-like breakup) - VERY LONG TRAILS (24s)
+      // STAGGERED FADE: Instead of a hard wipe, we fade slightly every few frames.
+      // To achieve ~24s trails with 8-bit color limits, we fade every 5 frames.
+      frameCount++;
+      if (frameCount % 5 === 0) {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.02)"; // 2% fade every 5 frames
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalCompositeOperation = "source-over";
+      }
 
       // Always use warm particle color (not stage-based)
       const particleColor = WARM_PARTICLE_COLOR;
