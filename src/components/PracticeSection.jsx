@@ -36,6 +36,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   const [lastErrorMs, setLastErrorMs] = useState(null);    // absolute ms value of last tap
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null); // signed last tap
 
+  // Breath counter
+  const [breathCount, setBreathCount] = useState(0);
+
 
 
   // keep timer in sync with duration
@@ -120,6 +123,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     setTapErrors([]);
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
+    setBreathCount(0);
   };
 
   const handleAccuracyTap = (errorMs) => {
@@ -278,6 +282,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
           <BreathingRing
             breathPattern={breathingPatternForRing}
             onTap={handleAccuracyTap}
+            onCycleComplete={() => setBreathCount(prev => prev + 1)}
           />
         </div>
 
@@ -334,6 +339,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
           >
             {formatTime(timeLeft)}
           </div>
+
+          {/* Breath Counter */}
+          {breathCount > 0 && (
+            <div
+              className="mt-2"
+              style={{
+                fontFamily: "Georgia, serif",
+                fontSize: "9px",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "rgba(253,224,71,0.5)",
+              }}
+            >
+              Breath {breathCount}
+            </div>
+          )}
         </div>
 
         <style>{`

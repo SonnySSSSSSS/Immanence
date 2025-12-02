@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { treatiseChapters } from "../data/treatise.generated.js";
 import { wisdomCategories, getAllCategories } from "../data/wisdomRecommendations.js";
 import { sanitizeText } from "../utils/textUtils.js";
+import { Avatar } from "./Avatar.jsx";
 
 const mockVideos = [
   {

@@ -6,6 +6,7 @@ import { PathOverviewPanel } from './PathOverviewPanel.jsx';
 import { ActivePathState } from './ActivePathState.jsx';
 import { FoundationCard } from './FoundationCard.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
+import { Avatar } from './Avatar.jsx';
 
 export function NavigationSection() {
   const { selectedPathId, activePath } = useNavigationStore();
@@ -23,6 +24,13 @@ export function NavigationSection() {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 pb-12">
+      {/* Avatar - consistent across sections */}
+      <div className="flex justify-center pt-8">
+        <div style={{ transform: 'scale(0.65)' }}>
+          <Avatar mode="navigation" />
+        </div>
+      </div>
+
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
       {!activePath && (
         <div className="space-y-6 pt-8">

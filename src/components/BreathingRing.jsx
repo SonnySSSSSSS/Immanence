@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 
-export function BreathingRing({ breathPattern, onTap }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
   const {
     inhale = 4,
     holdTop = 4,
@@ -23,6 +23,8 @@ export function BreathingRing({ breathPattern, onTap }) {
   const [echo, setEcho] = useState(null);
   const previousProgressRef = useRef(0);
   const audioContextRef = useRef(null);
+  const [mandalaProgress, setMandalaProgress] = useState(0);
+  const lastCycleRef = useRef(0);
 
   // Phase boundaries (as fractions of cycle)
   const tInhale = inhale / total;
@@ -67,13 +69,18 @@ export function BreathingRing({ breathPattern, onTap }) {
       playSound(400); // Low ping (exhale bottom)
     }
 
-    // Crossed back into INHALE phase (release from exhale hold)
+    // Crossed back into INHALE phase (release from exhale hold) - CYCLE COMPLETE
     if (prevP >= tExhale && currP < tExhale) {
       playSound(500); // Medium-low ping (exhale release)
+      // Cycle completed - increment mandala
+      setMandalaProgress(prev => Math.min(prev + 0.1, 1)); // Grow to max 100%
+      if (onCycleComplete) {
+        onCycleComplete();
+      }
     }
 
     previousProgressRef.current = currP;
-  }, [progress, tInhale, tHoldTop, tExhale]);
+  }, [progress, tInhale, tHoldTop, tExhale, onCycleComplete]);
 
   // Main animation loop - tracks progress through breath cycle
   useEffect(() => {
@@ -213,6 +220,55 @@ export function BreathingRing({ breathPattern, onTap }) {
                drop-shadow(0 0 32px rgba(245,158,11,0.4))`
         }}
       >
+        {/* Mandala Pattern - grows with each breath */}
+        {mandalaProgress > 0 && (
+          <g>
+            {/* Center circle */}
+            <circle
+              cx="100"
+              cy="100"
+              r={mandalaProgress * 15}
+              fill="none"
+              stroke="rgba(253,224,71,0.4)"
+              strokeWidth="1"
+              opacity={mandalaProgress * 0.4}
+            />
+
+            {/* Petal pattern - 6 petals */}
+            {[0, 1, 2, 3, 4, 5].map(i => {
+              const angle = (i * 60 * Math.PI) / 180;
+              const radius = mandalaProgress * 30;
+              const cx = 100 + Math.cos(angle) * radius;
+              const cy = 100 + Math.sin(angle) * radius;
+              return (
+                <circle
+                  key={i}
+                  cx={cx}
+                  cy={cy}
+                  r={mandalaProgress * 8}
+                  fill="none"
+                  stroke="rgba(253,224,71,0.3)"
+                  strokeWidth="0.5"
+                  opacity={mandalaProgress * 0.35}
+                />
+              );
+            })}
+
+            {/* Outer ring */}
+            {mandalaProgress > 0.5 && (
+              <circle
+                cx="100"
+                cy="100"
+                r={mandalaProgress * 50}
+                fill="none"
+                stroke="rgba(253,224,71,0.2)"
+                strokeWidth="0.5"
+                opacity={mandalaProgress * 0.3}
+              />
+            )}
+          </g>
+        )}
+
         <circle
           cx="100"
           cy="100"
