@@ -1,149 +1,283 @@
 // src/components/AvatarLuminousCanvas.jsx
-// RITUAL AESTHETIC: Seven Flames Avatar
-// - Fixed flame nodes representing weekly progress
-// - Streak arc connecting practiced days
-// - Organic particle system spiraling inward
+// RITUAL AESTHETIC: Dense Luminous Atmosphere
+// - Background: Noise texture, Nebula wisps, Distant stars
+// - Structure: Sacred geometry underlay
+// - Foreground: Seven Flames, Multi-lane particles, Ambient dust, Filaments
 
 import React, { useEffect, useRef } from "react";
 
-// RITUAL AESTHETIC: Warm amber particles (practice energy, not stage color)
-const WARM_PARTICLE_COLOR = { h: 48, s: 90, l: 65 }; // Gold
-
 // CONFIGURATION
-const PARTICLE_COUNT = 6;
-const TRAIL_HISTORY_LENGTH = 30;
+const CANVAS_SCALE = 1.5; // Prevent clipping
+// Removed single constant WARM_PARTICLE_COLOR in favor of per-particle variation
 
 // Geometry constants (relative to canvas center)
-// Canvas is scaled 1.5x larger than container to prevent clipping
-const CANVAS_SCALE = 1.5;
-// Rune Ring wrapper is 88% of container -> radius is 44%
 const RUNE_RING_RADIUS_PCT = 0.44 / CANVAS_SCALE;
 const INNER_BOUNDARY_PCT = (0.44 * 1.08) / CANVAS_SCALE; // 8% buffer
-const MAX_RADIUS_PCT = 0.495 / CANVAS_SCALE; // Just inside container edge (50%)
+const MAX_RADIUS_PCT = 0.495 / CANVAS_SCALE;
 
 // SEVEN FLAMES CONFIGURATION
-const FLAME_RADIUS_PCT = 0.54 / CANVAS_SCALE; // Outside the particle zone
+const FLAME_RADIUS_PCT = 0.54 / CANVAS_SCALE;
 
 const WEEK_NODES = [
-  { day: 'Mon', angle: -Math.PI * 0.5 },      // Top (12 o'clock)
-  { day: 'Tue', angle: -Math.PI * 0.214 },    // ~1:45
-  { day: 'Wed', angle: Math.PI * 0.071 },     // ~3:30
-  { day: 'Thu', angle: Math.PI * 0.357 },     // ~5:15
-  { day: 'Fri', angle: Math.PI * 0.643 },     // ~7:00
-  { day: 'Sat', angle: Math.PI * 0.929 },     // ~8:45
-  { day: 'Sun', angle: -Math.PI * 0.786 },    // ~10:30
+  { day: 'Mon', angle: -Math.PI * 0.5 },
+  { day: 'Tue', angle: -Math.PI * 0.214 },
+  { day: 'Wed', angle: Math.PI * 0.071 },
+  { day: 'Thu', angle: Math.PI * 0.357 },
+  { day: 'Fri', angle: Math.PI * 0.643 },
+  { day: 'Sat', angle: Math.PI * 0.929 },
+  { day: 'Sun', angle: -Math.PI * 0.786 },
 ];
 
+// PARTICLE LANES
+const PARTICLE_LANES = {
+  outer: { count: 5, speedMod: 0.8, sizeMod: 1.2, trailLen: 35 },
+  middle: { count: 5, speedMod: 1.0, sizeMod: 1.0, trailLen: 30 },
+  inner: { count: 5, speedMod: 1.4, sizeMod: 0.8, trailLen: 25 },
+};
+
+// UTILS
+function createNoiseTexture(width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  const imageData = ctx.createImageData(width, height);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = Math.random() * 25;
+    data[i] = noise;     // R
+    data[i + 1] = noise * 0.9;  // G (warm)
+    data[i + 2] = noise * 0.7;  // B
+    data[i + 3] = 8;       // A (low opacity)
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
 class Particle {
-  constructor(maxRadius, innerBoundary) {
+  constructor(maxRadius, innerBoundary, laneConfig) {
     this.maxRadius = maxRadius;
     this.innerBoundary = innerBoundary;
+    this.laneConfig = laneConfig;
     this.trail = [];
+    this.color = { h: 48, s: 90, l: 65 }; // Default
     this.reset();
   }
 
   reset() {
-    this.radius = this.maxRadius;
+    // Start at random radius within outer band to avoid clumping
+    this.radius = this.maxRadius * (0.9 + Math.random() * 0.1);
     this.angle = Math.random() * Math.PI * 2;
 
-    // SPEED: Very slow to allow for "hypnotic" spiral within the narrow band
-    this.speed = 0.02 + Math.random() * 0.02;
-    this.angularSpeed = 0.002 + Math.random() * 0.002;
+    // VARY COLOR: Warm range
+    // Hue: 35 (Amber) -> 55 (Yellow)
+    // Sat: 80% -> 100%
+    // Light: 60% -> 80%
+    this.color = {
+      h: 35 + Math.random() * 20,
+      s: 80 + Math.random() * 20,
+      l: 60 + Math.random() * 20
+    };
+
+    // Speed based on lane
+    const baseSpeed = 0.02;
+    const baseAngular = 0.002;
+
+    this.speed = (baseSpeed * this.laneConfig.speedMod) + (Math.random() * 0.01);
+    this.angularSpeed = (baseAngular * this.laneConfig.speedMod) + (Math.random() * 0.001);
 
     this.trail = [];
   }
 
   update() {
-    // Spiral inward
     this.radius -= this.speed;
     this.angle += this.angularSpeed;
 
-    // Calculate position relative to center (0,0)
     const x = Math.cos(this.angle) * this.radius;
     const y = Math.sin(this.angle) * this.radius;
 
-    // Boundary check
     if (this.radius >= this.innerBoundary) {
       this.trail.unshift({ x, y });
-      if (this.trail.length > TRAIL_HISTORY_LENGTH) {
+      if (this.trail.length > this.laneConfig.trailLen) {
         this.trail.pop();
       }
     } else {
-      // Inside boundary - do not add new points
-      // Trim tail to simulate disappearing into the ring
       if (this.trail.length > 0) {
         this.trail.pop();
       } else {
-        // Trail fully gone, reset particle
         this.reset();
+        this.radius = this.maxRadius; // Reset to outside
       }
     }
   }
 
-  draw(ctx, centerX, centerY, color, scaleMod = 1.0, glowMod = 1.0) {
+  draw(ctx, centerX, centerY, scaleMod, glowMod) {
     if (this.trail.length < 2) return;
 
-    // 1. Draw Smooth Tapered Trail
+    // Trail
     for (let i = 0; i < this.trail.length - 1; i++) {
       const p1 = this.trail[i];
       const p2 = this.trail[i + 1];
-
-      const t = i / this.trail.length; // 0 at head, 1 at tail
+      const t = i / this.trail.length;
 
       ctx.beginPath();
-      // Apply breathing scale to positions
       ctx.moveTo(centerX + p1.x * scaleMod, centerY + p1.y * scaleMod);
       ctx.lineTo(centerX + p2.x * scaleMod, centerY + p2.y * scaleMod);
 
-      // Taper: 4px -> 0.4px
-      ctx.lineWidth = 4 * (1 - t * 0.9);
-
-      // Opacity: Quadratic falloff (0.7 -> 0)
+      ctx.lineWidth = (4 * this.laneConfig.sizeMod) * (1 - t * 0.9);
       const alpha = 0.7 * (1 - t * t) * glowMod;
 
-      ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
+      ctx.strokeStyle = `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${alpha})`;
       ctx.lineCap = "round";
       ctx.stroke();
     }
 
-    // 2. Draw Particle Head (Glow)
+    // Head
     const head = this.trail[0];
     const hx = centerX + head.x * scaleMod;
     const hy = centerY + head.y * scaleMod;
+    const size = this.laneConfig.sizeMod;
 
-    // Pass 1: Large soft halo
-    const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, 24 * scaleMod);
-    halo.addColorStop(0, `hsla(${color.h}, ${color.s}%, ${color.l}%, ${0.5 * glowMod})`);
-    halo.addColorStop(0.5, `hsla(${color.h}, ${color.s}%, ${color.l}%, ${0.15 * glowMod})`);
+    // Halo
+    const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, 24 * size * scaleMod);
+    halo.addColorStop(0, `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${0.5 * glowMod})`);
     halo.addColorStop(1, 'transparent');
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(hx, hy, 24 * scaleMod, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 24 * size * scaleMod, 0, Math.PI * 2);
     ctx.fill();
 
-    // Pass 2: Bright core
-    const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, 6 * scaleMod);
+    // Core
+    const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, 6 * size * scaleMod);
     core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod})`);
-    core.addColorStop(0.4, `rgba(253, 230, 138, ${0.9 * glowMod})`);
+    core.addColorStop(0.4, `hsla(${this.color.h}, ${this.color.s}%, 85%, ${0.9 * glowMod})`);
     core.addColorStop(1, 'transparent');
     ctx.fillStyle = core;
     ctx.beginPath();
-    ctx.arc(hx, hy, 6 * scaleMod, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 6 * size * scaleMod, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
+class Dust {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+    this.reset();
+  }
+
+  reset() {
+    this.x = Math.random() * this.width;
+    this.y = Math.random() * this.height;
+    this.size = 1 + Math.random() * 1.5;
+    this.opacity = 0.08 + Math.random() * 0.1;
+    this.vx = (Math.random() - 0.5) * 0.1;
+    this.vy = (Math.random() - 0.5) * 0.1;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (this.x < 0) this.x = this.width;
+    if (this.x > this.width) this.x = 0;
+    if (this.y < 0) this.y = this.height;
+    if (this.y > this.height) this.y = 0;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = `rgba(253, 224, 71, ${this.opacity})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// DRAWING HELPERS
+function drawNebulaWisps(ctx, centerX, centerY, time) {
+  const wisps = [
+    { angle: time * 0.0001, dist: 120, size: 150, opacity: 0.04 },
+    { angle: time * 0.00015 + 2, dist: 150, size: 180, opacity: 0.03 },
+    { angle: time * 0.00008 + 4, dist: 100, size: 120, opacity: 0.05 },
+  ];
+
+  wisps.forEach(wisp => {
+    const x = centerX + Math.cos(wisp.angle) * wisp.dist;
+    const y = centerY + Math.sin(wisp.angle) * wisp.dist;
+
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, wisp.size);
+    gradient.addColorStop(0, `rgba(180, 140, 80, ${wisp.opacity})`);
+    gradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, wisp.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawSacredGeometry(ctx, centerX, centerY, radius) {
+  ctx.strokeStyle = 'rgba(253, 224, 71, 0.04)';
+  ctx.lineWidth = 1;
+
+  // Concentric circles
+  for (let r = 40; r < radius; r += 40) {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Radial lines
+  for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
+    ctx.beginPath();
+    ctx.moveTo(centerX + Math.cos(angle) * 60, centerY + Math.sin(angle) * 60);
+    ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+    ctx.stroke();
+  }
+}
+
+function drawFilaments(ctx, nodes, centerX, centerY, innerRadius) {
+  nodes.forEach(node => {
+    if (!node.practiced) return;
+
+    const flameRadius = innerRadius; // Nodes are at flame radius
+    const startX = centerX + Math.cos(node.angle) * flameRadius;
+    const startY = centerY + Math.sin(node.angle) * flameRadius;
+
+    // End near rune ring
+    const endDist = flameRadius * 0.6;
+    const endX = centerX + Math.cos(node.angle) * endDist;
+    const endY = centerY + Math.sin(node.angle) * endDist;
+
+    const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+    gradient.addColorStop(0, 'rgba(253, 224, 71, 0.15)');
+    gradient.addColorStop(1, 'rgba(253, 224, 71, 0.0)');
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+
+    // Slight curve
+    const cpX = (startX + endX) / 2 + (Math.random() - 0.5) * 10;
+    const cpY = (startY + endY) / 2 + (Math.random() - 0.5) * 10;
+    ctx.quadraticCurveTo(cpX, cpY, endX, endY);
+
+    ctx.stroke();
+  });
+}
+
 function drawWeekNode(ctx, x, y, practiced, isToday) {
   const intensity = practiced ? 1 : 0.15;
-  // Pulse effect for today (invitation) or practiced (alive)
   const time = Date.now() / 1000;
   const pulseScale = isToday && !practiced
-    ? 1 + Math.sin(time * 3) * 0.1 // Faster invitation pulse
+    ? 1 + Math.sin(time * 3) * 0.1
     : practiced
-      ? 1 + Math.sin(time * 1.5) * 0.05 // Slow steady pulse
+      ? 1 + Math.sin(time * 1.5) * 0.05
       : 1;
 
-  // Layer 1: Outer halo (Large soft glow)
   if (practiced) {
     const halo = ctx.createRadialGradient(x, y, 0, x, y, 40 * pulseScale);
     halo.addColorStop(0, `rgba(253, 224, 71, ${0.15 * intensity})`);
@@ -154,7 +288,6 @@ function drawWeekNode(ctx, x, y, practiced, isToday) {
     ctx.fill();
   }
 
-  // Layer 2: Medium glow
   const glow = ctx.createRadialGradient(x, y, 0, x, y, 20 * pulseScale);
   glow.addColorStop(0, `rgba(253, 224, 71, ${0.4 * intensity})`);
   glow.addColorStop(1, 'transparent');
@@ -163,7 +296,6 @@ function drawWeekNode(ctx, x, y, practiced, isToday) {
   ctx.arc(x, y, 20 * pulseScale, 0, Math.PI * 2);
   ctx.fill();
 
-  // Layer 3: Bright core
   const core = ctx.createRadialGradient(x, y, 0, x, y, 8);
   core.addColorStop(0, `rgba(255, 251, 240, ${0.95 * intensity})`);
   core.addColorStop(0.5, `rgba(253, 224, 71, ${0.8 * intensity})`);
@@ -173,7 +305,6 @@ function drawWeekNode(ctx, x, y, practiced, isToday) {
   ctx.arc(x, y, 8, 0, Math.PI * 2);
   ctx.fill();
 
-  // Layer 4: White-hot center (only if practiced)
   if (practiced) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.beginPath();
@@ -183,7 +314,6 @@ function drawWeekNode(ctx, x, y, practiced, isToday) {
 }
 
 function drawStreakArc(ctx, nodes, centerX, centerY, radius) {
-  // Find contiguous practiced days
   ctx.strokeStyle = 'rgba(253, 224, 71, 0.25)';
   ctx.lineWidth = 2;
   ctx.lineCap = "round";
@@ -194,7 +324,6 @@ function drawStreakArc(ctx, nodes, centerX, centerY, radius) {
     const next = nodes[nextIndex];
 
     if (current.practiced && next.practiced) {
-      // Draw arc from current to next
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, current.angle, next.angle, false);
       ctx.stroke();
@@ -202,13 +331,15 @@ function drawStreakArc(ctx, nodes, centerX, centerY, radius) {
   }
 }
 
+// MAIN COMPONENT
 export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], weeklyConsistency = 0 }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const particlesRef = useRef([]);
+  const dustRef = useRef([]);
+  const noiseCanvasRef = useRef(null);
   const breathStateRef = useRef(breathState);
 
-  // Keep latest breath state in ref
   useEffect(() => {
     breathStateRef.current = breathState;
   }, [breathState]);
@@ -234,15 +365,23 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Initialize particles
+      // Init Noise
+      noiseCanvasRef.current = createNoiseTexture(width, height);
+
+      // Init Particles (Multi-lane)
       const size = Math.min(width, height);
       const maxRadius = size * MAX_RADIUS_PCT;
       const innerBoundary = size * INNER_BOUNDARY_PCT;
 
-      particlesRef.current = Array.from(
-        { length: PARTICLE_COUNT },
-        () => new Particle(maxRadius, innerBoundary)
-      );
+      particlesRef.current = [];
+      Object.values(PARTICLE_LANES).forEach(config => {
+        for (let i = 0; i < config.count; i++) {
+          particlesRef.current.push(new Particle(maxRadius, innerBoundary, config));
+        }
+      });
+
+      // Init Dust
+      dustRef.current = Array.from({ length: 40 }, () => new Dust(width, height));
     }
 
     resize();
@@ -253,16 +392,17 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       const centerY = height / 2;
       const size = Math.min(width, height);
       const flameRadius = size * FLAME_RADIUS_PCT;
+      const time = Date.now();
 
-      // Calculate breath modifiers
+      // Breath mods
       const bs = breathStateRef.current || { phase: 'rest', progress: 0, isPracticing: false };
       let scaleMod = 1.0;
       let glowMod = 1.0;
 
       if (bs.isPracticing) {
         if (bs.phase === 'inhale') {
-          scaleMod = 1.0 + (bs.progress * 0.05); // Subtle expansion
-          glowMod = 1.0 + (bs.progress * 0.3);   // Brighten
+          scaleMod = 1.0 + (bs.progress * 0.05);
+          glowMod = 1.0 + (bs.progress * 0.3);
         } else if (bs.phase === 'holdTop') {
           scaleMod = 1.05;
           glowMod = 1.3;
@@ -275,13 +415,22 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         }
       }
 
-      // Clear canvas completely each frame
+      // 1. Clear & Background
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Draw Week Nodes (Seven Flames) - Layer 3 (behind particles)
-      // Prepare node data
-      const currentDayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon...
-      // Map JS getDay() to our array index (Mon=0, Sun=6)
+      // Noise Overlay
+      if (noiseCanvasRef.current) {
+        ctx.drawImage(noiseCanvasRef.current, 0, 0, width, height);
+      }
+
+      // Nebula & Stars
+      drawNebulaWisps(ctx, centerX, centerY, time);
+
+      // Sacred Geometry
+      drawSacredGeometry(ctx, centerX, centerY, flameRadius * 1.2);
+
+      // 2. Week Nodes & Filaments
+      const currentDayIndex = new Date().getDay();
       const jsDayToMyIndex = [6, 0, 1, 2, 3, 4, 5];
       const todayIndex = jsDayToMyIndex[currentDayIndex];
 
@@ -291,20 +440,25 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         isToday: i === todayIndex
       }));
 
-      // Draw Streak Arc first (behind flames)
+      drawFilaments(ctx, nodes, centerX, centerY, flameRadius);
       drawStreakArc(ctx, nodes, centerX, centerY, flameRadius);
 
-      // Draw Flames
       nodes.forEach(node => {
         const x = centerX + Math.cos(node.angle) * flameRadius;
         const y = centerY + Math.sin(node.angle) * flameRadius;
         drawWeekNode(ctx, x, y, node.practiced, node.isToday);
       });
 
-      // 2. Draw Particles - Layer 5
+      // 3. Particles
       particlesRef.current.forEach((particle) => {
         particle.update();
-        particle.draw(ctx, centerX, centerY, WARM_PARTICLE_COLOR, scaleMod, glowMod);
+        particle.draw(ctx, centerX, centerY, scaleMod, glowMod);
+      });
+
+      // 4. Ambient Dust
+      dustRef.current.forEach(dust => {
+        dust.update();
+        dust.draw(ctx);
       });
 
       animationRef.current = requestAnimationFrame(drawFrame);
@@ -318,13 +472,12 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [weeklyPracticeLog]); // Re-init if log changes
+  }, [weeklyPracticeLog]);
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute w-[150%] h-[150%] -left-[25%] -top-[25%] pointer-events-none"
-    // No zIndex, so it sits behind the Rune Ring
     />
   );
 }

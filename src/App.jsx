@@ -94,7 +94,7 @@ function App() {
 
           <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
             <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-              v1.4.10
+              v1.4.12
             </div>
             {!isHub && (
               <button
