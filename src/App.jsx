@@ -92,7 +92,10 @@ function App() {
             {currentLabel}
           </div>
 
-          <div className="min-w-[72px] flex justify-end">
+          <div className="min-w-[72px] flex justify-end items-center gap-3">
+            <div className="text-[8px] uppercase tracking-[0.2em] text-white/40">
+              v1.4.2
+            </div>
             {!isHub && (
               <button
                 type="button"

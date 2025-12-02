@@ -6,7 +6,6 @@
 // - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
 
 import React, { useEffect, useState, useRef } from "react";
-import { EnsoStroke } from "./EnsoStroke";
 
 export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
   const {
@@ -204,12 +203,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     const absError = Math.abs(errorMs);
 
     // Trigger enso feedback (once per phase)
-    console.log('🎯 Tap debug:', { currentPhase, lastTapPhase: lastTapPhaseRef.current, absError });
-
     if (currentPhase && lastTapPhaseRef.current !== currentPhase) {
       const accuracy = absError < 50 ? 'perfect' : absError < 200 ? 'good' : 'loose';
-
-      console.log('✨ Triggering enso:', { accuracy, currentPhase });
 
       setEnsoFeedback(prev => ({
         active: true,
@@ -221,8 +216,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
 
       // Clear enso after animation completes
       setTimeout(() => setEnsoFeedback(prev => ({ ...prev, active: false })), 1400);
-    } else {
-      console.log('❌ Enso NOT triggered - already tapped this phase or no phase');
     }
 
     console.log('✅ Tap accepted:', errorMs, 'ms from', closestPeak.name, 'peak');
@@ -239,33 +232,37 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
       {ensoFeedback.active && (
         <div
           key={ensoFeedback.key}
-          className="absolute"
+          className="absolute w-64 h-64"
           style={{
             pointerEvents: "none",
             top: "50%",
             left: "50%",
-            width: "128px",
-            height: "128px",
             transform: ensoFeedback.accuracy === 'loose'
               ? 'translate(-50%, -50%) scale(0.85)'
               : 'translate(-50%, -50%) scale(1)',
             zIndex: 20,
           }}
         >
-          <div
+          <img
+            src="/enso_brush_stroke_1764681834447.png"
+            alt=""
             style={{
               width: "100%",
               height: "100%",
+              opacity: 0,
+              // Color the black enso to golden using CSS filters
+              filter: ensoFeedback.accuracy === 'perfect'
+                ? 'brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%) drop-shadow(0 0 12px rgba(253, 224, 71, 0.9))'
+                : ensoFeedback.accuracy === 'good'
+                  ? 'brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%) drop-shadow(0 0 8px rgba(253, 224, 71, 0.6))'
+                  : 'brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%)',
+              animation: ensoFeedback.accuracy === 'perfect'
+                ? 'ensoReveal 400ms ease-out forwards, ensoGlowPerfect 400ms ease-in-out 400ms, ensoFade 600ms ease-out 800ms forwards'
+                : ensoFeedback.accuracy === 'good'
+                  ? 'ensoReveal 400ms ease-out forwards, ensoGlow 400ms ease-in-out 400ms, ensoFade 600ms ease-out 800ms forwards'
+                  : 'ensoReveal 300ms ease-out forwards, ensoFade 400ms ease-out 600ms forwards',
             }}
-          >
-            <EnsoStroke
-              centerX={64}
-              centerY={64}
-              radius={50}
-              accuracy={ensoFeedback.accuracy}
-              isActive={true}
-            />
-          </div>
+          />
 
           {/* Perfect timing flash at completion point */}
           {ensoFeedback.accuracy === 'perfect' && (
