@@ -219,8 +219,9 @@ function drawNebulaWisps(ctx, centerX, centerY, time) {
 }
 
 function drawSacredGeometry(ctx, centerX, centerY, radius) {
-  ctx.strokeStyle = 'rgba(253, 224, 71, 0.04)';
-  ctx.lineWidth = 1;
+  // Increased opacity from 0.04 to 0.10 for better visibility
+  ctx.strokeStyle = 'rgba(253, 224, 71, 0.10)';
+  ctx.lineWidth = 1.5;
 
   // Concentric circles
   for (let r = 40; r < radius; r += 40) {
@@ -269,6 +270,39 @@ function drawFilaments(ctx, nodes, centerX, centerY, innerRadius) {
   });
 }
 
+function drawHexagram(ctx, x, y, size, opacity) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = `rgba(253, 224, 71, ${opacity})`;
+  ctx.lineWidth = 1.5;
+
+  // Triangle 1 (pointing up)
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const angle = -Math.PI / 2 + (i * Math.PI * 2 / 3);
+    const px = Math.cos(angle) * size;
+    const py = Math.sin(angle) * size;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // Triangle 2 (pointing down)
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const angle = Math.PI / 2 + (i * Math.PI * 2 / 3);
+    const px = Math.cos(angle) * size;
+    const py = Math.sin(angle) * size;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawWeekNode(ctx, x, y, practiced, isToday) {
   const intensity = practiced ? 1 : 0.15;
   const time = Date.now() / 1000;
@@ -296,19 +330,14 @@ function drawWeekNode(ctx, x, y, practiced, isToday) {
   ctx.arc(x, y, 20 * pulseScale, 0, Math.PI * 2);
   ctx.fill();
 
-  const core = ctx.createRadialGradient(x, y, 0, x, y, 8);
-  core.addColorStop(0, `rgba(255, 251, 240, ${0.95 * intensity})`);
-  core.addColorStop(0.5, `rgba(253, 224, 71, ${0.8 * intensity})`);
-  core.addColorStop(1, 'transparent');
-  ctx.fillStyle = core;
-  ctx.beginPath();
-  ctx.arc(x, y, 8, 0, Math.PI * 2);
-  ctx.fill();
+  //Draw hexagram instead of simple dot
+  drawHexagram(ctx, x, y, 6 * pulseScale, intensity * 0.9);
 
   if (practiced) {
+    // Add a brighter center point for practiced nodes
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.beginPath();
-    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -428,6 +457,16 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
 
       // Sacred Geometry
       drawSacredGeometry(ctx, centerX, centerY, flameRadius * 1.2);
+
+      // Decorative dashed ring between nodes and rune ring
+      const runeRingRadius = size * RUNE_RING_RADIUS_PCT;
+      ctx.setLineDash([8, 12]);
+      ctx.strokeStyle = 'rgba(253, 224, 71, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, runeRingRadius * 1.15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
       // 2. Week Nodes & Filaments
       const currentDayIndex = new Date().getDay();
