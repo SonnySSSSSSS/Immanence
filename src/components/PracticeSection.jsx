@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { addSession } from "../state/practiceStore.js";
 import { recordPracticeEffect } from "../state/mandalaStore.js";
+import { useTheme } from "../context/ThemeContext";
 
 const PRACTICES = ["Breathing", "Meditation", "Yoga", "Visualization"];
 const DURATIONS = [5, 10, 15, 20];
@@ -233,17 +234,21 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     holdBottom: pattern.hold2,
   };
 
+  // Read theme for dynamic colors
+  const theme = useTheme();
+  const { primary, secondary, muted, glow } = theme.accent;
+
   // ───────────────────────────────────────────────────────────
   // RUNNING VIEW – full-screen breathing circle, no panel box
   // ───────────────────────────────────────────────────────────
   if (isRunning && practice === "Breathing") {
     // Determine button color based on last tap feedback
-    // BRONZE (early/late/out), WHITE (perfect), GOLD (good)
-    let buttonBg = "linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)"; // Default gold
-    let buttonGlow = "0 0 24px rgba(251,191,36,0.28)";
+    // BRONZE (early/late/out), WHITE (perfect), THEME (good)
+    let buttonBg = `linear-gradient(180deg, ${primary} 0%, ${secondary} 100%)`; // Default theme
+    let buttonGlow = `0 0 24px ${glow}`;
 
     // Feedback text state
-    let feedbackColor = "#fcd34d";
+    let feedbackColor = primary;
     let feedbackText = "";
     let feedbackShadow = "none";
 
@@ -251,11 +256,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
       const absError = Math.round(Math.abs(lastSignedErrorMs));
 
       if (absError > 1000) {
-        // OUT OF BOUNDS - Bronze
-        feedbackColor = "#d4a574";
+        // OUT OF BOUNDS - Bronze/Muted
+        feedbackColor = muted;
         feedbackText = "OUT OF BOUNDS";
-        buttonBg = "linear-gradient(180deg, #d4a574 0%, #b8894e 100%)";
-        buttonGlow = "0 0 24px rgba(212,165,116,0.4)";
+        buttonBg = `linear-gradient(180deg, ${muted} 0%, #1e1b4b 100%)`;
+        buttonGlow = `0 0 24px ${muted}66`;
       } else if (absError <= 50) {
         // Perfect - WHITE
         feedbackColor = "#f8fafc";
@@ -264,17 +269,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         buttonBg = "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
         buttonGlow = "0 0 24px rgba(248,250,252,0.5)";
       } else if (absError <= 200) {
-        // Good - GOLD
-        feedbackColor = "#fcd34d";
+        // Good - THEME PRIMARY
+        feedbackColor = primary;
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
-        buttonBg = "linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)";
-        buttonGlow = "0 0 24px rgba(252,211,77,0.4)";
+        buttonBg = `linear-gradient(180deg, ${primary} 0%, ${secondary} 100%)`;
+        buttonGlow = `0 0 24px ${glow}`;
       } else {
-        // Bad - BRONZE
-        feedbackColor = "#d4a574";
+        // Bad - Muted
+        feedbackColor = muted;
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
-        buttonBg = "linear-gradient(180deg, #d4a574 0%, #b8894e 100%)";
-        buttonGlow = "0 0 24px rgba(212,165,116,0.4)";
+        buttonBg = `linear-gradient(180deg, ${muted} 0%, #1e1b4b 100%)`;
+        buttonGlow = `0 0 24px ${muted}66`;
       }
     }
     return (
@@ -320,9 +325,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               // Radiate effect: Pulse shadow based on last tap accuracy
               boxShadow: lastSignedErrorMs !== null
                 ? `0 0 ${Math.abs(lastSignedErrorMs) <= 50 ? "40px rgba(255,255,255,0.6)" :
-                  Math.abs(lastSignedErrorMs) <= 200 ? "30px rgba(251,191,36,0.4)" :
-                    "20px rgba(212,165,116,0.3)"}, inset 0 1px 0 rgba(255,255,255,0.35)`
-                : "0 0 24px rgba(251,191,36,0.28), inset 0 1px 0 rgba(255,255,255,0.35)",
+                  Math.abs(lastSignedErrorMs) <= 200 ? `30px ${glow}` :
+                    `20px ${muted}4d`}, inset 0 1px 0 rgba(255,255,255,0.35)`
+                : `0 0 24px ${glow}, inset 0 1px 0 rgba(255,255,255,0.35)`,
               borderRadius: "999px",
             }}
           >
@@ -351,7 +356,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 fontSize: "9px",
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
-                color: "rgba(253,224,71,0.5)",
+                color: `${primary}80`, // 50% opacity
               }}
             >
               Breath {breathCount}
@@ -386,7 +391,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         style={{
           background:
             "linear-gradient(180deg, rgba(22,22,37,0.95) 0%, rgba(15,15,26,0.98) 100%)",
-          border: "1px solid rgba(253,224,71,0.12)",
+          border: `1px solid ${primary}1f`, // 12% opacity
           boxShadow:
             "0 0 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03)",
         }}
@@ -396,7 +401,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(253,224,71,0.06) 0%, transparent 70%)",
+              `radial-gradient(ellipse 80% 40% at 50% 0%, ${primary}0f 0%, transparent 70%)`, // 6% opacity
           }}
         />
 
@@ -524,7 +529,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 fontWeight: 400,
                 letterSpacing: "0.2em",
                 color: "rgba(253,251,245,0.92)",
-                textShadow: "0 0 32px rgba(253,224,71,0.2)",
+                textShadow: `0 0 32px ${glow}33`, // 20% opacity
               }}
             >
               {formatTime(timeLeft)}
@@ -543,7 +548,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 color: "#050508",
                 border: "none",
                 boxShadow:
-                  "0 0 24px rgba(251,191,36,0.2), inset 0 1px 0 rgba(255,255,255,0.3)",
+                  `0 0 24px ${glow}33, inset 0 1px 0 rgba(255,255,255,0.3)`,
               }}
             >
               Start
@@ -556,14 +561,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               style={{
                 height: "1px",
                 background:
-                  "linear-gradient(90deg, transparent 0%, rgba(253,224,71,0.15) 20%, rgba(253,224,71,0.35) 50%, rgba(253,224,71,0.15) 80%, transparent 100%)",
+                  `linear-gradient(90deg, transparent 0%, ${primary}26 20%, ${primary}59 50%, ${primary}26 80%, transparent 100%)`,
               }}
             />
             <div
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
               style={{
                 fontSize: "8px",
-                color: "rgba(245,158,11,0.7)",
+                color: `${secondary}b3`, // 70% opacity
                 background: "rgba(15,15,26,1)",
               }}
             >
@@ -712,18 +717,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   >
                     <stop
                       offset="0%"
-                      stopColor="rgba(253, 224, 71, 0.2)"
+                      stopColor={`${primary}33`} // 20% opacity
                     />
                     <stop
                       offset="100%"
-                      stopColor="rgba(253, 224, 71, 0)"
+                      stopColor={`${primary}00`} // 0% opacity
                     />
                   </linearGradient>
                 </defs>
                 <path
                   d={pathD}
                   fill="url(#patternGradient)"
-                  stroke="#fcd34d"
+                  stroke={primary}
                   strokeWidth="0.5"
                   vectorEffect="non-scaling-stroke"
                 />
