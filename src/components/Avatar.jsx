@@ -372,7 +372,7 @@ function AvatarContainer({
   const { h, s, l } = glowColor;
 
   return (
-    <div className="relative w-80 h-80 flex items-center justify-center">
+    <div className="relative w-80 h-80 flex items-center justify-center overflow-visible">
       {/* Volumetric Glow Layers - AMPLIFIED */}
 
       {/* Layer 0a: Outer atmospheric wash - EXTENDED FALLOFF */}
@@ -408,7 +408,7 @@ function AvatarContainer({
         }}
       />
 
-      <div className="relative w-72 h-72 flex items-center justify-center">
+      <div className="relative w-72 h-72 flex items-center justify-center overflow-visible">
         {/* Layer 0: luminous ring field (canvas) */}
         <AvatarLuminousCanvas
           breathState={breathState}
@@ -498,7 +498,7 @@ export function Avatar({ mode, breathPattern, breathState }) {
   };
 
   return (
-    <div className="flex flex-col items-center cursor-pointer" onClick={handleSigilClick}>
+    <div className="flex flex-col items-center cursor-pointer overflow-visible" onClick={handleSigilClick}>
       <AvatarContainer
         mode={mode}
         label={label}
