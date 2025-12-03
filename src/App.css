@@ -14,3 +14,55 @@
 .section-enter {
   animation: sectionEnter 300ms ease-out;
 }
+
+/* Dynamic Theme Variables */
+:root {
+  --brand-gold: #fcd34d;
+  /* Fixed brand color */
+  --accent-h: 42;
+  --accent-s: 95%;
+  --accent-l: 58%;
+  --accent-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+}
+
+/* Brand Gold Utilities (Static) */
+.text-brand-gold {
+  color: var(--brand-gold);
+}
+
+.bg-brand-gold {
+  background-color: var(--brand-gold);
+}
+
+.border-brand-gold {
+  border-color: var(--brand-gold);
+}
+
+/* Accent Utilities (Dynamic - match avatar) */
+.text-accent {
+  color: var(--accent-color);
+  transition: color 2s ease;
+}
+
+.bg-accent {
+  background-color: var(--accent-color);
+  transition: background-color 2s ease;
+}
+
+.border-accent {
+  border-color: var(--accent-color);
+  transition: border-color 2s ease;
+}
+
+/* Accent Transition Classes */
+.card-accent {
+  transition: border-color 2s ease, box-shadow 2s ease;
+}
+
+.btn-accent {
+  transition: color 2s ease, border-color 2s ease, background-color 2s ease;
+}
+
+.progress-accent {
+  transition: background 2s ease;
+}

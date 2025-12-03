@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar } from "./components/Avatar.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
 import { HomeHub } from "./components/HomeHub.jsx";
@@ -17,7 +17,7 @@ const SECTION_LABELS = {
 };
 
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange }) {
   // Navigation and Application sections handle their own avatars
   const showAvatar = section !== 'navigation' && section !== 'application';
 
@@ -31,7 +31,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
             opacity: isPracticing ? 0.5 : 1,
           }}
         >
-          <Avatar mode={section} breathState={breathState} />
+          <Avatar mode={section} breathState={breathState} onStageChange={onStageChange} />
         </div>
       )}
 
@@ -64,6 +64,20 @@ function App() {
   });
   const [isPracticing, setIsPracticing] = useState(false);
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
+
+  // Dynamic theme accent color 
+  const [accent, setAccent] = useState({ h: 42, s: 95, l: 58 });
+
+  // Update CSS variables when accent changes
+  useEffect(() => {
+    const { h, s, l } = accent;
+    const root = document.documentElement;
+    root.style.setProperty("--accent-h", String(h));
+    root.style.setProperty("--accent-s", `${s}%`);
+    root.style.setProperty("--accent-l", `${l}%`);
+    root.style.setProperty("--accent-color", `hsl(${h} ${s}% ${l}%)`);
+  }, [accent]);
+
   const isHub = activeSection === null;
   const currentLabel = isHub ? "Home" : SECTION_LABELS[activeSection];
 
@@ -94,7 +108,7 @@ function App() {
 
           <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
             <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-              v1.4.24
+              v1.4.34
             </div>
             {!isHub && (
               <button
@@ -111,10 +125,10 @@ function App() {
         {/* Main content */}
         {isHub ? (
           <div key="hub" className="section-enter">
-            <HomeHub onSelectSection={setActiveSection} />
+            <HomeHub onSelectSection={setActiveSection} onStageChange={setAccent} />
           </div>
         ) : (
-          <SectionView key={activeSection} section={activeSection} isPracticing={isPracticing} onPracticingChange={setIsPracticing} breathState={breathState} onBreathStateChange={setBreathState} />
+          <SectionView key={activeSection} section={activeSection} isPracticing={isPracticing} onPracticingChange={setIsPracticing} breathState={breathState} onBreathStateChange={setBreathState} onStageChange={setAccent} />
         )}
       </div>
 

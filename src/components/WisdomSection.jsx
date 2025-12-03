@@ -88,10 +88,10 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
       >
         {/* Reading Progress Indicator - made slightly more prominent */}
         <div
-          className="absolute top-0 left-0 h-[3px] bg-gradient-to-r from-[#fcd34d] to-[#f59e0b] transition-all duration-150 z-10"
+          className="absolute top-0 left-0 h-[3px] bg-accent transition-all duration-150 z-10"
           style={{
             width: `${scrollProgress}%`,
-            boxShadow: '0 0 12px rgba(253, 224, 71, 0.5)'
+            boxShadow: '0 0 12px var(--accent-color-shadow)'
           }}
         />
 
@@ -99,7 +99,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         <div className="border-b border-[rgba(253,224,71,0.15)] px-8 py-6 flex items-start justify-between gap-4 flex-shrink-0">
           <div className="flex-1">
             <h2
-              className="text-2xl font-semibold text-[#fcd34d] mb-2"
+              className="text-2xl font-semibold text-accent mb-2"
               style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
             >
               {sanitizedTitle}
@@ -477,9 +477,12 @@ export function WisdomSection() {
                 key={cat.key}
                 onClick={() => setSelectedCategory(cat.key)}
                 className={`px-3 py-2 rounded-full text-[10px] border transition-all ${selectedCategory === cat.key
-                  ? "bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] text-[#050508] font-semibold border-transparent shadow-[0_0_12px_rgba(253,224,71,0.25)]"
+                  ? "bg-accent text-[#050508] font-semibold border-transparent shadow-[0_0_12px_rgba(251,191,36,0.25)]"
                   : "border-[rgba(253,224,71,0.2)] text-[rgba(253,251,245,0.65)] hover:border-[rgba(253,224,71,0.35)] hover:bg-[rgba(253,224,71,0.05)]"
                   }`}
+                style={{
+                  background: selectedCategory === cat.key ? `linear-gradient(to bottom right, var(--accent-color), var(--accent-color))` : undefined
+                }}
               >
                 {cat.label}
               </button>
@@ -541,7 +544,7 @@ export function WisdomSection() {
                       )}
                     </div>
                     <div className="text-[12px] text-[rgba(253,251,245,0.65)] leading-relaxed">
-                      <span className="text-[rgba(253,224,71,0.5)]">Why: </span>
+                      <span className="text-accent" style={{ color: 'var(--accent-color)', opacity: 0.5 }}>Why: </span>
                       {sanitizeText(rec.reasoning)}
                     </div>
                   </div>

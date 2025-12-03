@@ -62,7 +62,7 @@ class Particle {
     this.innerBoundary = innerBoundary;
     this.laneConfig = laneConfig;
     this.trail = [];
-    this.color = { h: 48, s: 90, l: 65 }; // Default
+    this.color = { h: 42, s: 95, l: 63 }; // Warm amber-gold
     this.reset();
   }
 

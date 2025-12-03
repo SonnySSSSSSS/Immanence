@@ -91,7 +91,7 @@ function BreathingAura({ breathPattern }) {
           width: "80%",
           height: "80%",
           background:
-            "radial-gradient(circle, rgba(252,211,77,0.95) 0%, rgba(251,191,36,0.45) 32%, rgba(248,250,252,0.02) 75%, transparent 100%)",
+            "radial-gradient(circle, rgba(255,200,60,0.95) 0%, rgba(255,170,40,0.45) 32%, rgba(248,250,252,0.02) 75%, transparent 100%)",
           filter: "blur(6px)",
           transform: `scale(${scale})`,
           transition: "transform 80ms linear",
@@ -289,7 +289,7 @@ function StaticSigilCore({ stage = "flame" }) {
           width: "50%",
           height: "50%",
           borderRadius: "9999px",
-          border: "2px solid rgba(255, 251, 232, 0.9)", // Near-white core border
+          border: "2px solid rgba(255, 190, 50, 0.3)", // Near-white core border
           boxShadow: `
             0 0 2px #fffbe8,
             0 0 6px #fde68a,
@@ -324,7 +324,7 @@ function StaticSigilCore({ stage = "flame" }) {
             objectFit: "contain",
             objectPosition: "50% 50%",
             filter:
-              "drop-shadow(0 0 20px rgba(253,224,71,0.8)) drop-shadow(0 0 40px rgba(250,204,21,0.4)) contrast(1.1)",
+              "drop-shadow(0 0 16px rgba(255,190,50,0.6)) drop-shadow(0 0 32px rgba(255,160,40,0.2)) contrast(1.1)",
           }}
         />
       </div>
@@ -349,7 +349,7 @@ const LABELS = {
 const STAGE_GLOW_COLORS = {
   seedling: { h: 180, s: 70, l: 50 },  // cyan
   ember: { h: 25, s: 85, l: 55 },      // orange
-  flame: { h: 48, s: 90, l: 60 },      // gold
+  flame: { h: 42, s: 95, l: 58 },      // warm amber-gold
   beacon: { h: 200, s: 85, l: 60 },    // bright cyan
   stellar: { h: 270, s: 80, l: 65 },   // violet
 };
@@ -439,7 +439,7 @@ function AvatarContainer({
 //
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
-export function Avatar({ mode, breathPattern, breathState }) {
+export function Avatar({ mode, breathPattern, breathState, onStageChange }) {
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
@@ -447,6 +447,14 @@ export function Avatar({ mode, breathPattern, breathState }) {
 
   const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
   const currentStage = STAGE_NAMES[stageIndex];
+
+  // Notify parent when stage changes
+  useEffect(() => {
+    if (onStageChange) {
+      const stageColors = STAGE_GLOW_COLORS[currentStage];
+      onStageChange(stageColors);
+    }
+  }, [stageIndex, currentStage, onStageChange]);
 
   useEffect(() => {
     function refresh() {

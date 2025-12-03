@@ -442,7 +442,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   <button
                     key={name}
                     onClick={() => setPractice(name)}
-                    className="rounded-full px-3 py-1.5 transition-all duration-200"
+                    className={`rounded-full px-3 py-1.5 transition-all duration-200 ${practice === name ? 'bg-accent' : ''}`}
                     style={{
                       fontFamily: "Georgia, serif",
                       fontSize: "9px",
@@ -450,7 +450,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                       textTransform: "uppercase",
                       background:
                         practice === name
-                          ? "linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)"
+                          ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
                           : "transparent",
                       color:
                         practice === name
@@ -487,7 +487,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   <button
                     key={min}
                     onClick={() => setDuration(min)}
-                    className="rounded-full px-2 py-1 transition-all duration-200"
+                    className={`rounded-full px-2 py-1 transition-all duration-200 ${duration === min ? 'border-accent text-accent' : ''}`}
                     style={{
                       fontFamily: "Georgia, serif",
                       fontSize: "8px",
@@ -495,12 +495,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                       textTransform: "uppercase",
                       background: "transparent",
                       border: `1px solid ${duration === min
-                        ? "rgba(253,224,71,0.5)"
+                        ? "var(--accent-color)"
                         : "rgba(253,224,71,0.08)"
                         }`,
                       color:
                         duration === min
-                          ? "#fcd34d"
+                          ? "var(--accent-color)"
                           : "rgba(253,251,245,0.4)",
                       boxShadow:
                         duration === min
@@ -532,14 +532,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
 
             <button
               onClick={handleStart}
-              className="rounded-full px-6 py-2.5 transition-all duration-200 hover:-translate-y-0.5"
+              className="rounded-full px-6 py-2.5 transition-all duration-200 hover:-translate-y-0.5 bg-accent"
               style={{
                 fontFamily: "Georgia, serif",
                 fontSize: "10px",
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
                 background:
-                  "linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)",
+                  `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`,
                 color: "#050508",
                 border: "none",
                 boxShadow:
@@ -593,7 +593,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 <button
                   key={name}
                   onClick={() => setPreset(name)}
-                  className="rounded-full px-2.5 py-1 transition-all duration-200"
+                  className={`rounded-full px-2.5 py-1 transition-all duration-200 ${preset === name ? 'border-accent text-accent' : ''}`}
                   style={{
                     fontFamily: "Georgia, serif",
                     fontSize: "8px",
@@ -601,12 +601,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                     textTransform: "uppercase",
                     background: "transparent",
                     border: `1px solid ${preset === name
-                      ? "rgba(253,224,71,0.5)"
+                      ? "var(--accent-color)"
                       : "rgba(253,224,71,0.08)"
                       }`,
                     color:
                       preset === name
-                        ? "#fcd34d"
+                        ? "var(--accent-color)"
                         : "rgba(253,251,245,0.4)",
                     boxShadow:
                       preset === name

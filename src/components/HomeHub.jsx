@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Avatar } from "./Avatar.jsx";
 
-function HomeHub({ onSelectSection }) {
+function HomeHub({ onSelectSection, onStageChange }) {
   // Placeholder stats - wire to real data later
   const [stats, setStats] = useState({
     totalSessions: 24,
@@ -30,7 +30,7 @@ function HomeHub({ onSelectSection }) {
           ────────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-4">
         <div className="w-full flex items-center justify-center overflow-visible">
-          <Avatar mode="hub" />
+          <Avatar mode="hub" onStageChange={onStageChange} />
         </div>
 
         {/* Welcome message */}
@@ -55,11 +55,11 @@ function HomeHub({ onSelectSection }) {
         {/* Stats grid: 4 columns on desktop, 2 on mobile */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {/* Total Sessions */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[rgba(253,224,71,0.15)] px-3 py-3 backdrop-blur-sm hover:border-[rgba(253,224,71,0.35)] transition-colors">
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               Sessions
             </div>
-            <div className="text-2xl font-semibold text-[#fcd34d] mb-1">
+            <div className="text-2xl font-semibold text-accent mb-1" style={{ color: 'var(--accent-color)' }}>
               {stats.totalSessions}
             </div>
             <div className="text-[9px] text-[rgba(253,251,245,0.4)]">
@@ -68,11 +68,11 @@ function HomeHub({ onSelectSection }) {
           </div>
 
           {/* Weekly Consistency */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[rgba(253,224,71,0.15)] px-3 py-3 backdrop-blur-sm hover:border-[rgba(253,224,71,0.35)] transition-colors">
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               This Week
             </div>
-            <div className="text-2xl font-semibold text-[#fcd34d] mb-1">
+            <div className="text-2xl font-semibold text-accent mb-1" style={{ color: 'var(--accent-color)' }}>
               {stats.weeklyConsistency}/7
             </div>
             <div className="text-[9px] text-[rgba(253,251,245,0.4)]">
@@ -81,11 +81,11 @@ function HomeHub({ onSelectSection }) {
           </div>
 
           {/* Accuracy */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[rgba(253,224,71,0.15)] px-3 py-3 backdrop-blur-sm hover:border-[rgba(253,224,71,0.35)] transition-colors">
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               Accuracy
             </div>
-            <div className="text-2xl font-semibold text-[#fcd34d] mb-1">
+            <div className="text-2xl font-semibold text-accent mb-1" style={{ color: 'var(--accent-color)' }}>
               {accuracyPct}%
             </div>
             <div className="text-[9px] text-[rgba(253,251,245,0.4)]">
@@ -94,11 +94,11 @@ function HomeHub({ onSelectSection }) {
           </div>
 
           {/* Current Streak */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[rgba(253,224,71,0.15)] px-3 py-3 backdrop-blur-sm hover:border-[rgba(253,224,71,0.35)] transition-colors">
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               Streak
             </div>
-            <div className="text-2xl font-semibold text-[#fcd34d] mb-1">
+            <div className="text-2xl font-semibold text-accent mb-1" style={{ color: 'var(--accent-color)' }}>
               {stats.currentStreak}
             </div>
             <div className="text-[9px] text-[rgba(253,251,245,0.4)]">
@@ -110,18 +110,18 @@ function HomeHub({ onSelectSection }) {
         {/* ──────────────────────────────────────────────────────────────────
             STAGE PROGRESSION - Show path to next stage
             ────────────────────────────────────────────────────────────────── */}
-        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#161625] via-[#0f0f1a] to-[#161625] border border-[rgba(253,224,71,0.15)] px-4 py-4 backdrop-blur-sm">
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#161625] via-[#0f0f1a] to-[#161625] border px-4 py-4 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="space-y-1">
               <div className="text-[10px] uppercase tracking-[0.2em] text-[rgba(253,251,245,0.65)]">
                 Progress to Next Stage
               </div>
-              <div className="text-sm font-semibold text-[#fcd34d]">
+              <div className="text-sm font-semibold text-accent" style={{ color: 'var(--accent-color)' }}>
                 {stats.nextStage}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-[#fcd34d]">
+              <div className="text-lg font-semibold text-accent" style={{ color: 'var(--accent-color)' }}>
                 {progressPct}%
               </div>
               <div className="text-[9px] text-[rgba(253,251,245,0.4)]">
@@ -133,8 +133,8 @@ function HomeHub({ onSelectSection }) {
           {/* Progress bar */}
           <div className="w-full h-1.5 rounded-full bg-[rgba(253,224,71,0.15)] overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#f59e0b] via-[#fcd34d] to-[#f59e0b] transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
+              className="h-full progress-accent"
+              style={{ width: `${progressPct}%`, background: 'var(--accent-color)' }}
             />
           </div>
 
@@ -142,13 +142,13 @@ function HomeHub({ onSelectSection }) {
           <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
             <div className="bg-[rgba(253,224,71,0.08)] rounded-lg px-2 py-1.5">
               <div className="text-[rgba(253,251,245,0.65)]">Sessions</div>
-              <div className="text-[#fcd34d] font-semibold">
+              <div className="text-accent font-semibold" style={{ color: 'var(--accent-color)' }}>
                 {Math.round(sessionScore * 100)}% ({stats.totalSessions}/150)
               </div>
             </div>
             <div className="bg-[rgba(253,224,71,0.08)] rounded-lg px-2 py-1.5">
               <div className="text-[rgba(253,251,245,0.65)]">Accuracy</div>
-              <div className="text-[#fcd34d] font-semibold">
+              <div className="text-accent font-semibold" style={{ color: 'var(--accent-color)' }}>
                 {Math.round(accuracyScore * 100)}% ({accuracyPct}%)
               </div>
             </div>

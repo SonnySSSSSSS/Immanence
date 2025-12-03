@@ -1,7 +1,5 @@
 // src/components/IndrasNet.jsx
-// INDRA'S NET - Static Image Loop with Enhancements
-// - Background: 'bottom loop.png' (1920x304) tiling horizontally
-// - Overlay: Radial gradient for center glow
+// INDRA'S NET - Visual Effects without Background Image
 // - Particles: Golden nodes scattered on waves
 // - Effects: Center blur/brightness, subtle curve
 
@@ -58,14 +56,14 @@ export function IndrasNet() {
                 const y = p.y + Math.sin(time + p.offset) * 5;
 
                 // Draw particle
-                ctx.fillStyle = `rgba(253, 224, 71, ${p.alpha})`;
+                ctx.fillStyle = `rgba(255, 190, 50, ${p.alpha})`; // Warmer amber
                 ctx.beginPath();
                 ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Glow
                 const glow = ctx.createRadialGradient(p.x, y, 0, p.x, y, p.size * 4);
-                glow.addColorStop(0, `rgba(253, 224, 71, ${p.alpha * 0.5})`);
+                glow.addColorStop(0, `rgba(255, 190, 50, ${p.alpha * 0.5})`);
                 glow.addColorStop(1, 'transparent');
                 ctx.fillStyle = glow;
                 ctx.beginPath();
@@ -106,23 +104,26 @@ export function IndrasNet() {
                     backgroundPosition: "bottom center",
                     backgroundSize: "auto 100%",
                     animation: "indrasNetScroll 120s linear infinite",
-                    // Base opacity
-                    opacity: 0.7,
+                    opacity: 0.12, // 12% opacity
                 }}
             />
 
-            {/* 2. Center Brightness/Blur Overlay (The "Vertical Slice") */}
+            {/* 2. Blur Shadow Underneath */}
             <div
                 style={{
                     position: "absolute",
-                    inset: 0,
-                    background: "radial-gradient(ellipse at bottom center, rgba(253, 224, 71, 0.15) 0%, transparent 70%)",
-                    mixBlendMode: "screen",
-                    filter: "blur(20px)",
+                    bottom: 0,
+                    left: "50%",
+                    transform: "translateX(-50%) scale(1.05)",
+                    width: "60%",
+                    height: "100%",
+                    background: "radial-gradient(ellipse at bottom center, rgba(0, 0, 0, 0.2) 0%, transparent 70%)",
+                    filter: "blur(15px)",
+                    opacity: 0.2,
                 }}
             />
 
-            {/* 3. Intense Center Glow (Core) */}
+            {/* 3. Breathing Pulse Center (Core) */}
             <div
                 style={{
                     position: "absolute",
@@ -134,6 +135,7 @@ export function IndrasNet() {
                     background: "radial-gradient(ellipse at bottom center, rgba(255, 255, 255, 0.1) 0%, transparent 60%)",
                     mixBlendMode: "overlay",
                     filter: "blur(40px)",
+                    animation: "indrasPulse 4s ease-in-out infinite",
                 }}
             />
 
@@ -148,25 +150,16 @@ export function IndrasNet() {
                 }}
             />
 
-            {/* 5. Upward Curve Mask (Simulated via radial gradient at bottom) */}
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: "-50px",
-                    left: 0,
-                    width: "100%",
-                    height: "100px",
-                    background: "radial-gradient(ellipse at top center, black 40%, transparent 70%)",
-                    // This "eats" into the bottom edge to curve it? 
-                    // Actually, to curve the waves UP, we want to mask the bottom corners?
-                    // Let's try a simpler approach: A radial gradient overlay at the bottom that pushes the visual "floor" down at the sides
-                }}
-            />
+            {/* 4. Upward Curve Mask */}
 
             <style>{`
         @keyframes indrasNetScroll {
           from { background-position-x: 0px; }
           to { background-position-x: 1920px; }
+        }
+        @keyframes indrasPulse {
+          0%, 100% { transform: translateX(-50%) scale(0.98); opacity: 0.85; }
+          50% { transform: translateX(-50%) scale(1.02); opacity: 0.95; }
         }
       `}</style>
         </div>
