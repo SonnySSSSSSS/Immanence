@@ -81,7 +81,7 @@ function App() {
     <div className="relative min-h-screen flex flex-col items-center text-white">
       <Background />
 
-      <div className="relative z-10 w-full max-w-5xl flex-1 flex flex-col px-4 pt-6 pb-10">
+      <div className="relative z-10 w-full max-w-5xl flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
         {/* Header */}
         <header className="flex items-center justify-between mb-4">
           <div className="text-[10px] uppercase tracking-[0.3em] text-white/70">
@@ -94,7 +94,7 @@ function App() {
 
           <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
             <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-              v1.4.18
+              v1.4.24
             </div>
             {!isHub && (
               <button

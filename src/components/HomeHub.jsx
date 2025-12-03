@@ -24,12 +24,12 @@ function HomeHub({ onSelectSection }) {
   const stageScore = sessionScore + accuracyScore;
 
   return (
-    <div className="w-full flex flex-col items-center gap-8 py-8">
+    <div className="w-full flex flex-col items-center gap-8 py-8 overflow-visible">
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR SECTION - Primary focal point
           ────────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-4">
-        <div className="w-full flex items-center justify-center">
+        <div className="w-full flex items-center justify-center overflow-visible">
           <Avatar mode="hub" />
         </div>
 
@@ -102,7 +102,7 @@ function HomeHub({ onSelectSection }) {
               {stats.currentStreak}
             </div>
             <div className="text-[9px] text-[rgba(253,251,245,0.4)]">
-              {stats.currentStreak >= 7 ? "on 🔥" : "days"} 
+              {stats.currentStreak >= 7 ? "on 🔥" : "days"}
             </div>
           </div>
         </div>
@@ -201,10 +201,10 @@ function HomeHub({ onSelectSection }) {
           {stats.currentStreak >= 7
             ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
             : stats.avgAccuracy < 0.5
-            ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
-            : stats.weeklyConsistency < 4
-            ? "You're inconsistent this week. One practice per day keeps the alignment alive."
-            : "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."}
+              ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
+              : stats.weeklyConsistency < 4
+                ? "You're inconsistent this week. One practice per day keeps the alignment alive."
+                : "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."}
         </div>
       </div>
     </div>
