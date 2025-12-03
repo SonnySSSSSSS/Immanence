@@ -84,6 +84,7 @@ function App() {
 
   return (
     <ThemeProvider currentStage={avatarStage}>
+      {console.log('🔄 App rendering with avatarStage:', avatarStage)}
       <div className="relative min-h-screen flex flex-col items-center text-white">
         <Background />
 
@@ -100,7 +101,7 @@ function App() {
 
             <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
               <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                v1.4.40
+                v1.4.46
               </div>
               {!isHub && (
                 <button
@@ -119,11 +120,14 @@ function App() {
             <div key="hub" className="section-enter">
               <HomeHub onSelectSection={setActiveSection} onStageChange={(hsl, stageName) => {
                 console.log('📱 App received stage change:', stageName);
+                console.log('📱 Setting avatarStage to:', stageName);
                 setAvatarStage(stageName); // Update theme based on avatar stage
+                console.log('📱 avatarStage state should now be:', stageName);
               }} />
             </div>
           ) : (
             <SectionView key={activeSection} section={activeSection} isPracticing={isPracticing} onPracticingChange={setIsPracticing} breathState={breathState} onBreathStateChange={setBreathState} onStageChange={(hsl, stageName) => {
+              console.log('📱 SectionView received stage change:', stageName);
               setAvatarStage(stageName);
             }} />
           )}

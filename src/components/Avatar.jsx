@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AvatarLuminousCanvas } from "./AvatarLuminousCanvas.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 import "./Avatar.css";
 
 // Local fallback until ../state/mandalaStore.js exists
@@ -83,6 +84,22 @@ function BreathingAura({ breathPattern }) {
     scale = minScale;
   }
 
+  // Read colors directly from theme context (bypasses CSS variable issues)
+  const theme = useTheme();
+  console.log('🎨 BreathingAura theme:', theme);
+
+  const { primary, secondary, muted } = theme.accent;
+  console.log('🎨 BreathingAura accent colors:', { primary, secondary, muted });
+
+  // Create gradient using actual color values with alpha
+  const gradient = `radial-gradient(circle, 
+    ${primary}f2 0%, 
+    ${secondary}73 32%, 
+    ${muted}33 58%, 
+    rgba(248,250,252,0.02) 75%, 
+    transparent 100%)`;
+
+  console.log('🎨 BreathingAura gradient:', gradient);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -92,8 +109,7 @@ function BreathingAura({ breathPattern }) {
         style={{
           width: "80%",
           height: "80%",
-          background:
-            `radial-gradient(circle, hsla(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 15%), 0.95) 0%, hsla(var(--accent-h), calc(var(--accent-s) - 5%), var(--accent-l), 0.45) 32%, rgba(248,250,252,0.02) 75%, transparent 100%)`,
+          background: gradient,
           filter: "blur(6px)",
           transform: `scale(${scale})`,
           transition: "transform 80ms linear, background 2s ease",
@@ -435,7 +451,7 @@ function AvatarContainer({
 
         {/* Layer 1: breathing aura (only in Practice mode) */}
         {mode === "practice" && (
-          <BreathingAura breathPattern={breathPattern} />
+          <BreathingAura key={stage.label} breathPattern={breathPattern} />
         )}
 
         {/* Layer 2: rune ring (rotating PNG, stage-aware color) */}

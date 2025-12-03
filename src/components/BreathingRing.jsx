@@ -7,6 +7,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { EnsoStroke } from "./EnsoStroke";
+import { useTheme } from "../context/ThemeContext";
 
 export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
   const {
@@ -229,6 +230,10 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     onTap(errorMs);
   };
 
+  // Read theme for dynamic colors
+  const theme = useTheme();
+  const { primary, secondary, muted, glow } = theme.accent;
+
   return (
     <div
       className="relative w-full flex items-center justify-center py-12 cursor-pointer"
@@ -295,26 +300,26 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
         className="w-64 h-64"
         style={{
           pointerEvents: "none",
-          // EVENT HORIZON GLOW - Clean layered box-shadow
+          // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
           filter: progress < tInhale
-            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px #fffbe8) 
-               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px #fde68a) 
-               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px #fcd34d) 
-               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px rgba(245,158,11,0.4))`
+            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px ${primary}) 
+               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px ${secondary}) 
+               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px ${muted}) 
+               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px ${glow})`
             : progress < tHoldTop
-              ? `drop-shadow(0 0 9.6px #fffbe8) 
-               drop-shadow(0 0 19.2px #fde68a) 
-               drop-shadow(0 0 28.8px #fcd34d) 
-               drop-shadow(0 0 38.4px rgba(245,158,11,0.4))`
+              ? `drop-shadow(0 0 9.6px ${primary}) 
+               drop-shadow(0 0 19.2px ${secondary}) 
+               drop-shadow(0 0 28.8px ${muted}) 
+               drop-shadow(0 0 38.4px ${glow})`
               : progress < tExhale
-                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fffbe8) 
-               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fde68a) 
-               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fcd34d) 
-               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px rgba(245,158,11,0.4))`
-                : `drop-shadow(0 0 8px #fffbe8) 
-               drop-shadow(0 0 16px #fde68a) 
-               drop-shadow(0 0 24px #fcd34d) 
-               drop-shadow(0 0 32px rgba(245,158,11,0.4))`
+                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${primary}) 
+               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${secondary}) 
+               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${muted}) 
+               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${glow})`
+                : `drop-shadow(0 0 8px ${primary}) 
+               drop-shadow(0 0 16px ${secondary}) 
+               drop-shadow(0 0 24px ${muted}) 
+               drop-shadow(0 0 32px ${glow})`
         }}
       >
         <circle
@@ -322,7 +327,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           cy="100"
           r="80"
           fill="none"
-          stroke="#fcd34d"
+          stroke={primary}
           strokeWidth="4"
           strokeLinecap="round"
           style={{
@@ -348,7 +353,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
             cy="100"
             r="80"
             fill="none"
-            stroke="#fcd34d"
+            stroke={primary}
             strokeWidth="3"
             strokeLinecap="round"
             style={{
@@ -370,11 +375,12 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           fontSize: "0.875rem",
           letterSpacing: "0.25em",
           textTransform: "uppercase",
-          color: "rgba(253, 224, 71, 0.7)",
+          color: primary,
           fontFamily: "Cinzel, serif",
           fontWeight: "500",
           zIndex: 10,
           pointerEvents: "none",
+          textShadow: `0 0 10px ${glow}`
         }}
       >
         {progress < tInhale
