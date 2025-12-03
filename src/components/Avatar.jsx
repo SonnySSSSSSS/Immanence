@@ -83,16 +83,33 @@ function BreathingAura({ breathPattern }) {
     scale = minScale;
   }
 
+
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Main breathing glow - uses stage color from CSS variables */}
       <div
         className="rounded-full"
         style={{
           width: "80%",
           height: "80%",
           background:
-            "radial-gradient(circle, rgba(255,200,60,0.95) 0%, rgba(255,170,40,0.45) 32%, rgba(248,250,252,0.02) 75%, transparent 100%)",
+            `radial-gradient(circle, hsla(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 15%), 0.95) 0%, hsla(var(--accent-h), calc(var(--accent-s) - 5%), var(--accent-l), 0.45) 32%, rgba(248,250,252,0.02) 75%, transparent 100%)`,
           filter: "blur(6px)",
+          transform: `scale(${scale})`,
+          transition: "transform 80ms linear, background 2s ease",
+          mixBlendMode: "screen",
+        }}
+      />
+
+      {/* Gold accent trace for 3D depth */}
+      <div
+        className="rounded-full absolute"
+        style={{
+          width: "80%",
+          height: "80%",
+          background:
+            `radial-gradient(circle at 30% 30%, rgba(252, 211, 77, 0.3) 0%, transparent 40%)`,
+          filter: "blur(8px)",
           transform: `scale(${scale})`,
           transition: "transform 80ms linear",
           mixBlendMode: "screen",
@@ -452,7 +469,10 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange }) {
   useEffect(() => {
     if (onStageChange) {
       const stageColors = STAGE_GLOW_COLORS[currentStage];
-      onStageChange(stageColors);
+      // Capitalize first letter for theme system: "seedling" -> "Seedling"
+      const stageName = currentStage.charAt(0).toUpperCase() + currentStage.slice(1);
+      console.log('🔄 Avatar stage changed to:', stageName, 'with colors:', stageColors);
+      onStageChange(stageColors, stageName);
     }
   }, [stageIndex, currentStage, onStageChange]);
 

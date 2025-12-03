@@ -7,6 +7,7 @@ import { ApplicationSection } from "./components/ApplicationSection.jsx";
 import { NavigationSection } from "./components/NavigationSection.jsx";
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import "./App.css";
 
 const SECTION_LABELS = {
@@ -64,19 +65,9 @@ function App() {
   });
   const [isPracticing, setIsPracticing] = useState(false);
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
+  const [avatarStage, setAvatarStage] = useState("Flame"); // Track avatar stage name for theme
 
-  // Dynamic theme accent color 
-  const [accent, setAccent] = useState({ h: 42, s: 95, l: 58 });
-
-  // Update CSS variables when accent changes
-  useEffect(() => {
-    const { h, s, l } = accent;
-    const root = document.documentElement;
-    root.style.setProperty("--accent-h", String(h));
-    root.style.setProperty("--accent-s", `${s}%`);
-    root.style.setProperty("--accent-l", `${l}%`);
-    root.style.setProperty("--accent-color", `hsl(${h} ${s}% ${l}%)`);
-  }, [accent]);
+  // Note: CSS variables now set by ThemeProvider based on avatarStage
 
   const isHub = activeSection === null;
   const currentLabel = isHub ? "Home" : SECTION_LABELS[activeSection];
@@ -92,49 +83,56 @@ function App() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center text-white">
-      <Background />
+    <ThemeProvider currentStage={avatarStage}>
+      <div className="relative min-h-screen flex flex-col items-center text-white">
+        <Background />
 
-      <div className="relative z-10 w-full max-w-5xl flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-4">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-white/70">
-            Immanence OS
-          </div>
-
-          <div className="text-sm font-medium text-white/80">
-            {currentLabel}
-          </div>
-
-          <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
-            <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-              v1.4.34
+        <div className="relative z-10 w-full max-w-5xl flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
+          {/* Header */}
+          <header className="flex items-center justify-between mb-4">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-white/70">
+              Immanence OS
             </div>
-            {!isHub && (
-              <button
-                type="button"
-                onClick={() => setActiveSection(null)}
-                className="text-[11px] uppercase tracking-[0.18em] text-white/70 hover:text-white transition-colors"
-              >
-                Home
-              </button>
-            )}
-          </div>
-        </header>
 
-        {/* Main content */}
-        {isHub ? (
-          <div key="hub" className="section-enter">
-            <HomeHub onSelectSection={setActiveSection} onStageChange={setAccent} />
-          </div>
-        ) : (
-          <SectionView key={activeSection} section={activeSection} isPracticing={isPracticing} onPracticingChange={setIsPracticing} breathState={breathState} onBreathStateChange={setBreathState} onStageChange={setAccent} />
-        )}
+            <div className="text-sm font-medium text-white/80">
+              {currentLabel}
+            </div>
+
+            <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
+              <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
+                v1.4.40
+              </div>
+              {!isHub && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(null)}
+                  className="text-[11px] uppercase tracking-[0.18em] text-white/70 hover:text-white transition-colors"
+                >
+                  Home
+                </button>
+              )}
+            </div>
+          </header>
+
+          {/* Main content */}
+          {isHub ? (
+            <div key="hub" className="section-enter">
+              <HomeHub onSelectSection={setActiveSection} onStageChange={(hsl, stageName) => {
+                console.log('📱 App received stage change:', stageName);
+                setAvatarStage(stageName); // Update theme based on avatar stage
+              }} />
+            </div>
+          ) : (
+            <SectionView key={activeSection} section={activeSection} isPracticing={isPracticing} onPracticingChange={setIsPracticing} breathState={breathState} onBreathStateChange={setBreathState} onStageChange={(hsl, stageName) => {
+              setAvatarStage(stageName);
+            }} />
+          )}
+        </div>
+
+        {/* Indra's Net - animated web at bottom */}
+        <IndrasNet />
       </div>
-
-      {/* Indra's Net - animated web at bottom */}
-      <IndrasNet />
-    </div>
+    </ThemeProvider>
   );
 }
 
