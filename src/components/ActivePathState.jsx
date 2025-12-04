@@ -1,4 +1,4 @@
-﻿// src/components/ActivePathState.jsx
+// src/components/ActivePathState.jsx
 import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -31,7 +31,7 @@ export function ActivePathState() {
             {/* Header */}
             <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
-                    className="text-2xl font-semibold text-[#fcd34d] mb-2"
+                    className="text-2xl font-semibold text-[var(--accent-color)] mb-2"
                     style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
                 >
                     {path.title}
@@ -47,7 +47,7 @@ export function ActivePathState() {
             {/* Progress Timeline */}
             <div>
                 <h3
-                    className="text-base font-semibold text-[#fcd34d] mb-3"
+                    className="text-base font-semibold text-[var(--accent-color)] mb-3"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     Progress
@@ -68,9 +68,9 @@ export function ActivePathState() {
                                         className={`
                       w-4 h-4 rounded-full transition-all
                       ${isCompleted
-                                                ? 'bg-[#fcd34d] opacity-100 shadow-[0_0_8px_var(--accent-40)]'
+                                                ? 'bg-[var(--accent-color)] opacity-100 shadow-[0_0_8px_var(--accent-40)]'
                                                 : isCurrent
-                                                    ? 'bg-[#fcd34d] opacity-100 shadow-[0_0_12px_var(--accent-60)] animate-pulse'
+                                                    ? 'bg-[var(--accent-color)] opacity-100 shadow-[0_0_12px_var(--accent-60)] animate-pulse'
                                                     : 'border border-[var(--accent-30)] bg-transparent opacity-30'
                                             }
                     `}
@@ -85,7 +85,7 @@ export function ActivePathState() {
                                 {idx < path.weeks.length - 1 && (
                                     <div className={`
                     flex-1 h-[2px] transition-all
-                    ${isCompleted ? 'bg-[#fcd34d] opacity-60' : 'bg-[var(--accent-15)] opacity-30'}
+                    ${isCompleted ? 'bg-[var(--accent-color)] opacity-60' : 'bg-[var(--accent-15)] opacity-30'}
                   `} />
                                 )}
                             </React.Fragment>
@@ -98,7 +98,7 @@ export function ActivePathState() {
             {currentWeekData && !isPathComplete && (
                 <div className="border border-[var(--accent-20)] rounded-2xl p-4 bg-[var(--accent-10)]">
                     <h3
-                        className="text-lg font-semibold text-[#fcd34d] mb-3"
+                        className="text-lg font-semibold text-[var(--accent-color)] mb-3"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Week {currentWeekData.number}: {currentWeekData.title}
@@ -166,7 +166,7 @@ export function ActivePathState() {
             {isPathComplete && (
                 <div className="text-center py-8">
                     <p
-                        className="text-lg text-[#fcd34d] mb-2"
+                        className="text-lg text-[var(--accent-color)] mb-2"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         You've completed this path!
@@ -184,7 +184,7 @@ export function ActivePathState() {
             {!isPathComplete && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[#fcd34d] mb-3"
+                        className="text-base font-semibold text-[var(--accent-color)] mb-3"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Quick Actions
@@ -218,8 +218,8 @@ export function ActivePathState() {
                     <>
                         <button
                             onClick={handleCompleteWeek}
-                            className="flex-1 px-6 py-3 rounded-full bg-[var(--ui-button-gradient)] text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
-                            style={{ fontFamily: 'Cinzel, serif' }}
+                            className="flex-1 px-6 py-3 rounded-full text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
+                            style={{ fontFamily: 'Cinzel, serif', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
                         >
                             COMPLETE WEEK {activePath.currentWeek}
                         </button>

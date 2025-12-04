@@ -9,7 +9,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { EnsoStroke } from "./EnsoStroke";
 import { useTheme } from "../context/ThemeContext";
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime }) {
   const {
     inhale = 4,
     holdTop = 4,
@@ -106,16 +106,17 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     previousProgressRef.current = currP;
   }, [progress, tInhale, tHoldTop, tExhale, onCycleComplete]);
 
-  // Main animation loop - tracks progress through breath cycle
+  // Main animation loop - SYNCED to session start time
   useEffect(() => {
     if (!total || total <= 0) return;
 
     const cycleMs = total * 1000;
-    const start = performance.now();
+    // Use provided startTime or current time as reference
+    const referenceTime = startTime || performance.now();
     let frameId = null;
 
     const loop = (now) => {
-      const elapsed = now - start;
+      const elapsed = now - referenceTime;
       const t = (elapsed % cycleMs) / cycleMs;
       setProgress(t);
       frameId = requestAnimationFrame(loop);
@@ -125,7 +126,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [total]);
+  }, [total, startTime]); // Re-sync when startTime changes
 
   // Trigger echo visual effect
   const triggerEcho = () => {

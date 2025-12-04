@@ -1,4 +1,4 @@
-﻿// src/components/TodayAwarenessLog.jsx
+// src/components/TodayAwarenessLog.jsx
 import React, { useState } from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
 
@@ -88,7 +88,7 @@ export function TodayAwarenessLog() {
                                     <div className="mt-0.5">
                                         {hasResponse ? (
                                             log.respondedDifferently ? (
-                                                <span style={{ color: 'var(--accent-color)' }} title="Responded differently">✓</span>
+                                                <span className="text-[var(--accent-color)]" title="Responded differently">✓</span>
                                             ) : (
                                                 <span className="text-[rgba(253,251,245,0.3)]" title="Autopilot">○</span>
                                             )
@@ -147,7 +147,8 @@ export function TodayAwarenessLog() {
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleSaveReflection(log.id, true)}
-                                                    className="flex-1 px-4 py-2 rounded-lg border border-[var(--accent-30)] bg-[var(--ui-button-gradient)] text-[#050508] font-semibold text-sm hover:shadow-[0_0_15px_var(--accent-30)] transition-all"
+                                                    className="flex-1 px-4 py-2 rounded-lg border border-[var(--accent-30)] text-[#050508] font-semibold text-sm hover:shadow-[0_0_15px_var(--accent-30)] transition-all"
+                                                    style={{ background: 'var(--ui-button-gradient)' }}
                                                 >
                                                     Yes ✓
                                                 </button>

@@ -62,15 +62,12 @@ export function FoundationCard() {
                             disabled={isPlaying}
                             className={`
                 w-20 h-20 rounded-full border-2 flex items-center justify-center
-                transition-all duration-300 group
+                transition-all duration-300 group foundation-play-btn
                 ${isPlaying
                                     ? 'border-[var(--accent-60)] bg-[var(--accent-10)]'
                                     : 'border-[var(--accent-40)] hover:border-[var(--accent-70)] hover:shadow-[0_0_20px_var(--accent-30)]'
                                 }
               `}
-                            style={{
-                                animation: isPlaying ? 'none' : 'pulse-subtle 4s ease-in-out infinite'
-                            }}
                         >
                             {isPlaying ? (
                                 <div className="w-3 h-3 rounded-full bg-[var(--accent-color)] animate-pulse" />
@@ -112,10 +109,13 @@ export function FoundationCard() {
               transition-all duration-300
               ${isPlaying
                                 ? 'bg-[var(--accent-20)] text-[var(--accent-50)] cursor-wait'
-                                : 'bg-gradient-to-br from-[var(--accent-color)] to-[#f59e0b] text-[#050508] hover:shadow-[0_0_25px_var(--accent-40)]'
+                                : 'text-[#050508] hover:shadow-[0_0_25px_var(--accent-40)]'
                             }
             `}
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        style={{ 
+                            fontFamily: 'Cinzel, serif',
+                            background: isPlaying ? undefined : 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))'
+                        }}
                     >
                         {isPlaying ? 'LOADING...' : 'WATCH INTRODUCTION'}
                     </button>
@@ -131,12 +131,15 @@ export function FoundationCard() {
             </div>
 
             <style>{`
+        .foundation-play-btn:not(:disabled) {
+          animation: pulse-subtle 4s ease-in-out infinite;
+        }
         @keyframes pulse-subtle {
           0%, 100% {
-            box-shadow: 0 0 0 0 rgba(253, 224, 71, 0.4);
+            box-shadow: 0 0 0 0 var(--accent-40);
           }
           50% {
-            box-shadow: 0 0 0 8px rgba(253, 224, 71, 0);
+            box-shadow: 0 0 0 8px transparent;
           }
         }
       `}</style>

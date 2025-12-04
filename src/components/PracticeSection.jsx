@@ -42,6 +42,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   // Breath counter
   const [breathCount, setBreathCount] = useState(0);
 
+  // Session start time for syncing breathing ring animation
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+
 
 
   // keep timer in sync with duration
@@ -122,6 +125,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   const handleStart = () => {
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
+    // Capture start time for breathing ring sync
+    setSessionStartTime(performance.now());
     // Reset tap accuracy data for new session
     setTapErrors([]);
     setLastErrorMs(null);
@@ -271,11 +276,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         radialGlow = '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
       } else if (absError <= 100) {
         // GREAT - GOLD radial glow
-        feedbackColor = '#fcd34d';
+        feedbackColor = 'var(--accent-color)';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
-        feedbackShadow = "0 0 10px rgba(252, 211, 77, 0.5)";
-        buttonBg = 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)';
-        radialGlow = '0 0 50px 12px rgba(252, 211, 77, 0.4), 0 0 25px rgba(252, 211, 77, 0.6)';
+        feedbackShadow = '0 0 10px var(--accent-50)';
+        buttonBg = 'linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)';
+        radialGlow = '0 0 50px 12px var(--accent-40), 0 0 25px var(--accent-60)';
       } else if (absError <= 300) {
         // GOOD - BRONZE radial glow
         feedbackColor = '#d97706';
@@ -300,6 +305,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             breathPattern={breathingPatternForRing}
             onTap={handleAccuracyTap}
             onCycleComplete={() => setBreathCount(prev => prev + 1)}
+            startTime={sessionStartTime}
           />
         </div>
 
@@ -364,7 +370,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 fontSize: "9px",
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
-                color: 'var(--accent-primary)80', // 50% opacity
+                color: 'var(--accent-50)',
               }}
             >
               Breath {breathCount}
@@ -416,13 +422,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         {/* Corner ornaments */}
         <div
           className="absolute top-3 left-4"
-          style={{ color: "rgba(245,158,11,0.4)", fontSize: "6px" }}
+          style={{ color: 'var(--accent-40)', fontSize: "6px" }}
         >
           ◆
         </div>
         <div
           className="absolute top-3 right-4"
-          style={{ color: "rgba(245,158,11,0.4)", fontSize: "6px" }}
+          style={{ color: 'var(--accent-40)', fontSize: "6px" }}
         >
           ◆
         </div>
@@ -471,7 +477,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                           : "rgba(253,251,245,0.4)",
                       boxShadow:
                         practice === name
-                          ? "0 0 12px rgba(251,191,36,0.15)"
+                          ? '0 0 12px var(--accent-15)'
                           : "none",
                     }}
                   >
@@ -517,7 +523,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                           : "rgba(253,251,245,0.4)",
                       boxShadow:
                         duration === min
-                          ? "0 0 12px rgba(251,191,36,0.15)"
+                          ? '0 0 12px var(--accent-15)'
                           : "none",
                     }}
                   >
@@ -623,7 +629,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                         : "rgba(253,251,245,0.4)",
                     boxShadow:
                       preset === name
-                        ? "0 0 12px rgba(251,191,36,0.15)"
+                        ? '0 0 12px var(--accent-15)'
                         : "none",
                   }}
                 >
@@ -685,7 +691,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
               style={{
                 fontSize: "8px",
-                color: "rgba(245,158,11,0.7)",
+                color: 'var(--accent-70)',
                 background: "rgba(15,15,26,1)",
               }}
             >

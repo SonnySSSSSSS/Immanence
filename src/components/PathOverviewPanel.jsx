@@ -188,7 +188,7 @@ export function PathOverviewPanel({ pathId }) {
                                     </button>
 
                                     {isExpanded && (
-                                        <div className="px-4 pb-4 space-y-3 border-t border-[rgba(253,224,71,0.08)] pt-3">
+                                        <div className="px-4 pb-4 space-y-3 border-t border-[var(--accent-10)] pt-3">
                                             {/* Focus */}
                                             <div>
                                                 <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>
@@ -264,8 +264,8 @@ export function PathOverviewPanel({ pathId }) {
             <div className="flex justify-center">
                 <button
                     onClick={handleBegin}
-                    className="px-8 py-3 rounded-full bg-gradient-to-br from-[var(--accent-color)] to-[#f59e0b] text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="px-8 py-3 rounded-full text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
+                    style={{ fontFamily: 'Cinzel, serif', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
                 >
                     BEGIN PATH
                 </button>

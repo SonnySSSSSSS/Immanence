@@ -90,7 +90,7 @@ export function PathFinderCard({ onPathRecommended }) {
                   border transition-all duration-200
                   flex items-center gap-3
                   ${isSelected
-                                        ? 'border-[var(--accent-50)] bg-[rgba(253,224,71,0.08)] shadow-[0_0_15px_var(--accent-10)]'
+                                        ? 'border-[var(--accent-50)] bg-[var(--accent-10)] shadow-[0_0_15px_var(--accent-10)]'
                                         : 'border-[var(--accent-15)] bg-[rgba(253,251,245,0.02)] hover:border-[var(--accent-30)] hover:bg-[rgba(253,251,245,0.04)]'
                                     }
                 `}

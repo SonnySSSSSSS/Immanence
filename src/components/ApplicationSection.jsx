@@ -22,7 +22,7 @@ export function ApplicationSection({ onStageChange, currentStage }) {
         </div>
 
         {/* Empty State */}
-        <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center card-accent" style={{ borderColor: 'var(--accent-15)' }}>
+        <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
           <h2
             className="text-lg mb-4"
             style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
