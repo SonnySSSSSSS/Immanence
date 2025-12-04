@@ -1,6 +1,3 @@
-// src/components/VisualizationCanvas.jsx
-// Canvas component for rendering geometric forms during visualization practice
-
 import React, { useRef, useEffect } from 'react';
 import { useVisualizationEngine } from '../hooks/useVisualizationEngine.js';
 import { useVisualizationAudio } from '../hooks/useVisualizationAudio.js';
@@ -25,21 +22,46 @@ export function VisualizationCanvas({
         cycleCount,
         isRunning,
         sessionSeed,
+        start,
+        stop,
     } = useVisualizationEngine({
         fadeInDuration,
         displayDuration,
         fadeOutDuration,
         voidDuration,
-        onPhaseChange: (newPhase) => {
-            console.log(`Phase: ${newPhase}`);
+        onPhaseChange: (newPhase, oldPhase) => {
+            console.log('Phase:', oldPhase, '->', newPhase);
+
+            if (!audioEnabled) return;
+
+            if (newPhase === 'void') {
+                playBell();
+                const warningTime = (voidDuration - 1) * 1000;
+                voidWarningTimerRef.current = setTimeout(() => {
+                    playRisingSweep();
+                }, warningTime);
+            }
+
+            if (oldPhase === 'void' && newPhase === 'fadeIn') {
+                playBell();
+                if (voidWarningTimerRef.current) {
+                    clearTimeout(voidWarningTimerRef.current);
+                    voidWarningTimerRef.current = null;
+                }
+            }
         },
         onCycleComplete: (cycle) => {
-            console.log(`Cycle ${cycle} complete`);
+            console.log('Cycle', cycle, 'complete');
             if (onCycleComplete) onCycleComplete(cycle);
         },
     });
 
-    // Get computed CSS variables for colors
+    useEffect(() => {
+        start();
+        return () => stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Run once on mount only
+
     const getAccentColor = (variable) => {
         if (typeof window === 'undefined') return '#fcd34d';
         return getComputedStyle(document.documentElement)
@@ -47,47 +69,37 @@ export function VisualizationCanvas({
             .trim() || '#fcd34d';
     };
 
-    // Render geometry to canvas
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
+        const width = 300;
+        const height = 300;
+
+        canvas.width = width;
+        canvas.height = height;
+
         const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
 
-        // Set canvas size for retina displays
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-
-        // Clear canvas
         ctx.fillStyle = '#0a0a12';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, width, height);
 
         if (phase === 'void') {
-            // Void phase - show "VISUALIZE" text
             ctx.save();
             ctx.fillStyle = 'rgba(253,251,245,0.3)';
             ctx.font = '14px Cinzel, serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('VISUALIZE', rect.width / 2, rect.height / 2);
+            ctx.fillText('VISUALIZE', width / 2, height / 2);
             ctx.restore();
             return;
         }
 
-        // Get geometry renderer
         const renderer = getGeometryRenderer(geometry);
-
-        // Calculate procedural variance from sessionSeed
         const rotation = sessionSeed * 360;
-        const scale = 0.9 + sessionSeed * 0.2; // 90%-110%
-        const strokeWidth = 1.5 + sessionSeed * 1.0; // 1.5-2.5px
+        const scale = 0.9 + sessionSeed * 0.2;
+        const strokeWidth = 1.5 + sessionSeed * 1.0;
 
-        // Get accent colors from CSS variables
         const accentColor = getAccentColor('--accent-color');
         const accentSecondary = getAccentColor('--accent-secondary');
         const accent40 = getAccentColor('--accent-40');
@@ -101,20 +113,15 @@ export function VisualizationCanvas({
             strokeWidth,
         };
 
-        // Save context for alpha manipulation
         ctx.save();
 
-        // Apply fade during fadeOut phase
         if (phase === 'fadeOut') {
-            ctx.globalAlpha = 1.0 - progress; // Fade from 1.0 to 0.0
+            ctx.globalAlpha = 1.0 - progress;
         }
 
-        // Render geometry
         if (phase === 'fadeIn') {
-            // Lines grow during fadeIn
             renderer(ctx, progress, config);
         } else if (phase === 'display' || phase === 'fadeOut') {
-            // Full geometry during display/fadeOut
             renderer(ctx, 1.0, config);
         }
 
@@ -126,8 +133,8 @@ export function VisualizationCanvas({
         <div
             style={{
                 position: 'relative',
-                width: '100%',
-                height: '100%',
+                width: '300px',
+                height: '300px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -136,10 +143,8 @@ export function VisualizationCanvas({
             <canvas
                 ref={canvasRef}
                 style={{
-                    width: '100%',
-                    height: '100%',
-                    maxWidth: '500px',
-                    maxHeight: '500px',
+                    width: '300px',
+                    height: '300px',
                 }}
             />
         </div>

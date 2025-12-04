@@ -257,7 +257,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   // ───────────────────────────────────────────────────────────
   // RUNNING VIEW – full-screen breathing circle, no panel box
   // ───────────────────────────────────────────────────────────
-  if (isRunning && practice === "Breathing") {
+  if (isRunning && (practice === "Breathing" || practice === "Visualization")) {
     // Determine button appearance and radial glow based on tap accuracy
     let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
     let radialGlow = ''; // Radial shine around button
@@ -308,16 +308,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         radialGlow = '0 0 35px 8px rgba(156, 163, 175, 0.25), 0 0 18px rgba(156, 163, 175, 0.4)';
       }
     }
+    console.log('[PracticeSection] Running state, practice type:', practice);
     return (
       <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-        {/* Breathing circle – Centered */}
+        {/* Practice Display – Centered */}
         <div className="flex items-center justify-center w-full mb-16 overflow-visible">
-          <BreathingRing
-            breathPattern={breathingPatternForRing}
-            onTap={handleAccuracyTap}
-            onCycleComplete={() => setBreathCount(prev => prev + 1)}
-            startTime={sessionStartTime}
-          />
+          {practice === "Visualization" ? (
+            <VisualizationCanvas
+              geometry={geometry}
+              fadeInDuration={fadeInDuration}
+              displayDuration={displayDuration}
+              fadeOutDuration={fadeOutDuration}
+              voidDuration={voidDuration}
+              audioEnabled={audioEnabled}
+              onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
+            />
+          ) : (
+            <BreathingRing
+              breathPattern={breathingPatternForRing}
+              onTap={handleAccuracyTap}
+              onCycleComplete={() => setBreathCount(prev => prev + 1)}
+              startTime={sessionStartTime}
+            />
+          )}
         </div>
 
         {/* Controls below ring */}
@@ -471,7 +484,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 {PRACTICES.map((name) => (
                   <button
                     key={name}
-                    onClick={() => setPractice(name)}
+                    onClick={() => {
+                      console.log('[PracticeSection] Practice selector clicked:', name);
+                      setPractice(name);
+                    }}
                     className={`rounded-full px-3 py-1.5 transition-all duration-200 ${practice === name ? 'bg-accent' : ''}`}
                     style={{
                       fontFamily: "Georgia, serif",
