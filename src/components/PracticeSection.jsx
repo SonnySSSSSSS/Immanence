@@ -242,10 +242,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   // RUNNING VIEW – full-screen breathing circle, no panel box
   // ───────────────────────────────────────────────────────────
   if (isRunning && practice === "Breathing") {
-    // Determine button color based on last tap feedback
-    // BRONZE (early/late/out), WHITE (perfect), THEME (good)
-    let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)'; // Default theme
-    let buttonGlow = '0 0 24px var(--accent-glow)';
+    // Determine button appearance and radial glow based on tap accuracy
+    let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
+    let radialGlow = ''; // Radial shine around button
+    let buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)'; // Default inner highlight
 
     // Feedback text state
     let feedbackColor = 'var(--accent-primary)';
@@ -256,30 +256,40 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
       const absError = Math.round(Math.abs(lastSignedErrorMs));
 
       if (absError > 1000) {
-        // OUT OF BOUNDS - Bronze/Muted
-        feedbackColor = 'var(--accent-muted)';
+        // OUT OF BOUNDS - No glow, warning text
+        feedbackColor = '#ef4444'; // Red for warning
         feedbackText = "OUT OF BOUNDS";
-        buttonBg = 'linear-gradient(180deg, var(--accent-muted) 0%, #1e1b4b 100%)';
-        buttonGlow = '0 0 24px var(--accent-muted)66';
-      } else if (absError <= 50) {
-        // Perfect - WHITE
+        feedbackShadow = "0 0 8px rgba(239, 68, 68, 0.5)";
+        buttonBg = 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(60,60,60,0.4) 100%)';
+        radialGlow = ''; // No glow
+      } else if (absError <= 30) {
+        // PERFECT - WHITE radial glow
         feedbackColor = "#f8fafc";
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
-        feedbackShadow = "0 0 10px rgba(255,255,255,0.5)";
+        feedbackShadow = "0 0 12px rgba(255,255,255,0.6)";
         buttonBg = "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
-        buttonGlow = "0 0 24px rgba(248,250,252,0.5)";
-      } else if (absError <= 200) {
-        // Good - THEME PRIMARY
-        feedbackColor = 'var(--accent-primary)';
+        radialGlow = '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
+      } else if (absError <= 100) {
+        // GREAT - GOLD radial glow
+        feedbackColor = '#fcd34d';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
-        buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
-        buttonGlow = '0 0 24px var(--accent-glow)';
+        feedbackShadow = "0 0 10px rgba(252, 211, 77, 0.5)";
+        buttonBg = 'linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%)';
+        radialGlow = '0 0 50px 12px rgba(252, 211, 77, 0.4), 0 0 25px rgba(252, 211, 77, 0.6)';
+      } else if (absError <= 300) {
+        // GOOD - BRONZE radial glow
+        feedbackColor = '#d97706';
+        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
+        feedbackShadow = "0 0 8px rgba(217, 119, 6, 0.4)";
+        buttonBg = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
+        radialGlow = '0 0 40px 10px rgba(217, 119, 6, 0.3), 0 0 20px rgba(217, 119, 6, 0.5)';
       } else {
-        // Bad - Muted
-        feedbackColor = 'var(--accent-muted)';
+        // POOR - GRAY radial glow
+        feedbackColor = '#9ca3af';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
-        buttonBg = 'linear-gradient(180deg, var(--accent-muted) 0%, #1e1b4b 100%)';
-        buttonGlow = '0 0 24px var(--accent-muted)66';
+        feedbackShadow = "0 0 6px rgba(156, 163, 175, 0.3)";
+        buttonBg = 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)';
+        radialGlow = '0 0 35px 8px rgba(156, 163, 175, 0.25), 0 0 18px rgba(156, 163, 175, 0.4)';
       }
     }
     return (
@@ -322,12 +332,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               textTransform: "uppercase",
               background: buttonBg,
               color: "#050508",
-              // Radiate effect: Pulse shadow based on last tap accuracy
-              boxShadow: lastSignedErrorMs !== null
-                ? `0 0 ${Math.abs(lastSignedErrorMs) <= 50 ? "40px rgba(255,255,255,0.6)" :
-                  Math.abs(lastSignedErrorMs) <= 200 ? '30px var(--accent-glow)' :
-                    '20px var(--accent-muted)4d'}, inset 0 1px 0 rgba(255,255,255,0.35)`
-                : '0 0 24px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.35)',
+              // Radial glow based on tap accuracy
+              boxShadow: radialGlow
+                ? `${radialGlow}, ${buttonShadow}`
+                : `0 0 24px var(--accent-30), ${buttonShadow}`,
               borderRadius: "999px",
             }}
           >
