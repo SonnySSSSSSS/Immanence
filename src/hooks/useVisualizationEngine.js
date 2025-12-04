@@ -2,7 +2,7 @@
 // 4-phase state machine for Visualization practice
 // Phases: fadeIn → display → fadeOut → void → (cycle repeats)
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 
 const PHASES = ['fadeIn', 'display', 'fadeOut', 'void'];
 
@@ -24,6 +24,17 @@ export function useVisualizationEngine({
     // Session seed for procedural variance (generated once per session)
     const [sessionSeed, setSessionSeed] = useState(0);
 
+    // Keep latest callbacks/durations in refs so the animation loop stays stable
+    const onPhaseChangeRef = useRef(onPhaseChange);
+    const onCycleCompleteRef = useRef(onCycleComplete);
+    const durationsRef = useRef({
+        fadeIn: fadeInDuration * 1000,
+        display: displayDuration * 1000,
+        fadeOut: fadeOutDuration * 1000,
+        void: voidDuration * 1000,
+    });
+    const isRunningRef = useRef(false);
+
     // Animation refs
     const frameRef = useRef(null);
     const startTimeRef = useRef(null);
@@ -32,14 +43,25 @@ export function useVisualizationEngine({
     const cycleCountRef = useRef(0);
 
     // Duration lookup
-    const phaseDurations = {
-        fadeIn: fadeInDuration * 1000,
-        display: displayDuration * 1000,
-        fadeOut: fadeOutDuration * 1000,
-        void: voidDuration * 1000,
-    };
+    const phaseDurations = useMemo(
+        () => ({
+            fadeIn: fadeInDuration * 1000,
+            display: displayDuration * 1000,
+            fadeOut: fadeOutDuration * 1000,
+            void: voidDuration * 1000,
+        }),
+        [fadeInDuration, displayDuration, fadeOutDuration, voidDuration]
+    );
 
-    const totalCycleDuration = Object.values(phaseDurations).reduce((a, b) => a + b, 0);
+    // Keep ref in sync for the animation loop
+    useEffect(() => {
+        durationsRef.current = phaseDurations;
+    }, [phaseDurations]);
+
+    const totalCycleDuration = useMemo(
+        () => Object.values(phaseDurations).reduce((a, b) => a + b, 0),
+        [phaseDurations]
+    );
 
     // Get next phase in cycle
     const getNextPhase = (currentPhase) => {
@@ -47,8 +69,19 @@ export function useVisualizationEngine({
         return PHASES[(idx + 1) % PHASES.length];
     };
 
+    // Keep callback refs updated so animate never re-subscribes
+    useEffect(() => {
+        onPhaseChangeRef.current = onPhaseChange;
+    }, [onPhaseChange]);
+
+    useEffect(() => {
+        onCycleCompleteRef.current = onCycleComplete;
+    }, [onCycleComplete]);
+
     // Main animation loop - drift-free using absolute timestamps
     const animate = useCallback((now) => {
+        if (!isRunningRef.current) return;
+
         if (!startTimeRef.current) {
             startTimeRef.current = now;
             phaseStartTimeRef.current = now;
@@ -60,7 +93,7 @@ export function useVisualizationEngine({
 
         // Calculate time within current phase
         const phaseElapsed = now - phaseStartTimeRef.current;
-        const currentPhaseDuration = phaseDurations[currentPhaseRef.current];
+        const currentPhaseDuration = durationsRef.current[currentPhaseRef.current];
 
         // Calculate progress within phase (0.0 to 1.0)
         const phaseProgress = Math.min(phaseElapsed / currentPhaseDuration, 1.0);
@@ -78,8 +111,8 @@ export function useVisualizationEngine({
             setProgress(0);
 
             // Fire phase change callback
-            if (onPhaseChange) {
-                onPhaseChange(newPhase, oldPhase);
+            if (onPhaseChangeRef.current) {
+                onPhaseChangeRef.current(newPhase, oldPhase);
             }
 
             // Check for cycle completion (when void ends → fadeIn begins)
@@ -87,19 +120,19 @@ export function useVisualizationEngine({
                 cycleCountRef.current += 1;
                 setCycleCount(cycleCountRef.current);
 
-                if (onCycleComplete) {
-                    onCycleComplete(cycleCountRef.current);
+                if (onCycleCompleteRef.current) {
+                    onCycleCompleteRef.current(cycleCountRef.current);
                 }
             }
         }
 
         // Continue animation loop
         frameRef.current = requestAnimationFrame(animate);
-    }, [phaseDurations, onPhaseChange, onCycleComplete]);
+    }, []);
 
     // Start the engine
     const start = useCallback(() => {
-        if (isRunning) return;
+        if (isRunningRef.current) return;
 
         // Generate new session seed
         setSessionSeed(Math.random());
@@ -115,9 +148,10 @@ export function useVisualizationEngine({
         phaseStartTimeRef.current = null;
 
         // Start animation loop
+        isRunningRef.current = true;
         setIsRunning(true);
         frameRef.current = requestAnimationFrame(animate);
-    }, [isRunning, animate]);
+    }, [animate]);
 
     // Stop the engine
     const stop = useCallback(() => {
@@ -125,17 +159,16 @@ export function useVisualizationEngine({
             cancelAnimationFrame(frameRef.current);
             frameRef.current = null;
         }
+        isRunningRef.current = false;
         setIsRunning(false);
     }, []);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (frameRef.current) {
-                cancelAnimationFrame(frameRef.current);
-            }
+            stop();
         };
-    }, []);
+    }, [stop]);
 
     // Calculate estimated total cycles for session
     const getEstimatedCycles = (sessionDurationMinutes) => {
