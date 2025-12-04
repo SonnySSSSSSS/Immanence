@@ -8,7 +8,7 @@ import { FoundationCard } from './FoundationCard.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { Avatar } from './Avatar.jsx';
 
-export function NavigationSection() {
+export function NavigationSection({ onStageChange }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const pathGridRef = useRef(null);
 
@@ -27,7 +27,7 @@ export function NavigationSection() {
       {/* Avatar - consistent across sections */}
       <div className="flex justify-center pt-8">
         <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="navigation" />
+          <Avatar mode="navigation" onStageChange={onStageChange} />
         </div>
       </div>
 
@@ -39,10 +39,10 @@ export function NavigationSection() {
 
           {/* Ornamental Divider */}
           <div className="flex items-center justify-center py-2">
-            <div className="flex items-center gap-4 text-[rgba(253,224,71,0.3)]">
-              <div className="w-32 h-[1px] bg-gradient-to-r from-transparent to-[rgba(253,224,71,0.3)]" />
+            <div className="flex items-center gap-4 text-[var(--accent-30)]">
+              <div className="w-32 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
               <div style={{ fontSize: '12px' }}>◆</div>
-              <div className="w-32 h-[1px] bg-gradient-to-l from-transparent to-[rgba(253,224,71,0.3)]" />
+              <div className="w-32 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-// src/components/WisdomSection.jsx
+﻿// src/components/WisdomSection.jsx
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { treatiseChapters } from "../data/treatise.generated.js";
@@ -81,7 +81,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
       }}
     >
       <div
-        className="bg-[#0a0a12] border border-[rgba(253,224,71,0.2)] rounded-3xl max-w-3xl w-full max-h-[88vh] overflow-hidden flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl max-w-3xl w-full max-h-[88vh] overflow-hidden flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
         style={{
           animation: 'scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)'
         }}
@@ -96,7 +96,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         />
 
         {/* Header */}
-        <div className="border-b border-[rgba(253,224,71,0.15)] px-8 py-6 flex items-start justify-between gap-4 flex-shrink-0">
+        <div className="border-b border-[var(--accent-15)] px-8 py-6 flex items-start justify-between gap-4 flex-shrink-0">
           <div className="flex-1">
             <h2
               className="text-2xl font-semibold text-accent mb-2"
@@ -116,16 +116,18 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => onBookmark(chapter.id)}
-              className={`text-sm px-3 py-1.5 rounded-full border transition-all ${isBookmarked
-                ? "bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] border-transparent text-[#050508] font-semibold shadow-[0_0_12px_rgba(253,224,71,0.3)]"
-                : "border-[rgba(253,224,71,0.3)] text-[rgba(253,224,71,0.7)] hover:border-[rgba(253,224,71,0.5)] hover:bg-[rgba(253,224,71,0.05)]"
-                }`}
+              className="text-sm px-3 py-1.5 rounded-full border transition-all"
+              style={{
+                background: isBookmarked ? 'var(--ui-button-gradient)' : 'transparent',
+                borderColor: isBookmarked ? 'transparent' : 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                color: isBookmarked ? '#050508' : 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.7)'
+              }}
             >
               {isBookmarked ? "★" : "☆"}
             </button>
             <button
               onClick={onClose}
-              className="text-[rgba(253,251,245,0.5)] hover:text-[rgba(253,251,245,0.9)] text-xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-[rgba(253,224,71,0.1)] transition-all flex-shrink-0"
+              className="text-[rgba(253,251,245,0.5)] hover:text-[rgba(253,251,245,0.9)] text-xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-10)] transition-all flex-shrink-0"
             >
               ✕
             </button>
@@ -133,11 +135,11 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         </div>
 
         {/* Ornamental Divider */}
-        <div className="flex items-center justify-center py-4 border-b border-[rgba(253,224,71,0.1)]">
-          <div className="flex items-center gap-4 text-[rgba(253,224,71,0.3)]">
-            <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[rgba(253,224,71,0.3)]" />
+        <div className="flex items-center justify-center py-4 border-b border-[var(--accent-10)]">
+          <div className="flex items-center gap-4 text-[var(--accent-30)]">
+            <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
             <div style={{ fontSize: '10px' }}>◆</div>
-            <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[rgba(253,224,71,0.3)]" />
+            <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
           </div>
         </div>
 
@@ -159,9 +161,9 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
             <blockquote
               className="border-l-2 pl-6 pr-4 py-4 my-6 markdown-content"
               style={{
-                borderColor: 'rgba(253,224,71,0.4)',
-                backgroundColor: 'rgba(253,224,71,0.03)',
-                boxShadow: '-2px 0 8px rgba(253,224,71,0.1)',
+                borderColor: 'var(--accent-40)',
+                backgroundColor: 'var(--accent-10)',
+                boxShadow: '-2px 0 8px var(--accent-10)',
                 borderRadius: '0 8px 8px 0'
               }}
             >
@@ -182,9 +184,9 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(253,224,71,0.15)] px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="border-t border-[var(--accent-15)] px-8 py-4 flex items-center justify-between flex-shrink-0">
           <div className="text-[9px] text-[rgba(253,251,245,0.4)]" style={{ fontFamily: 'Crimson Pro, serif' }}>
-            Press <span className="font-mono px-1.5 py-0.5 rounded bg-[rgba(253,224,71,0.1)] text-[rgba(253,251,245,0.5)]">Esc</span> to close
+            Press <span className="font-mono px-1.5 py-0.5 rounded bg-[var(--accent-10)] text-[rgba(253,251,245,0.5)]">Esc</span> to close
           </div>
           <div className="text-xs text-[rgba(253,251,245,0.5)]" style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Chapter {chapter.order}</div>
         </div>
@@ -219,7 +221,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         .markdown-content h5,
         .markdown-content h6 {
           font-family: 'Cinzel', serif;
-          color: #fcd34d;
+          color: var(--accent-color);
           font-weight: 600;
           letter-spacing: 0.02em;
           margin-top: 2.5em;
@@ -234,7 +236,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         .markdown-content h2 {
           font-size: 1.65em;
           line-height: 1.3;
-          border-bottom: 1px solid rgba(253, 224, 71, 0.15);
+          border-bottom: 1px solid var(--accent-15);
           padding-bottom: 0.5em;
         }
 
@@ -271,9 +273,9 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         }
 
         .markdown-content blockquote {
-          border-left: 2px solid rgba(253, 224, 71, 0.4);
-          background-color: rgba(253, 224, 71, 0.03);
-          box-shadow: -2px 0 8px rgba(253, 224, 71, 0.1);
+          border-left: 2px solid var(--accent-40);
+          background-color: var(--accent-10);
+          box-shadow: -2px 0 8px var(--accent-10);
           padding-left: 1.5em;
           padding-right: 1em;
           padding-top: 1em;
@@ -288,8 +290,8 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         }
 
         .markdown-content code {
-          background-color: rgba(253, 224, 71, 0.08);
-          color: rgba(253, 224, 71, 0.9);
+          background-color: var(--accent-10);
+          color: var(--text-accent);
           padding: 0.2em 0.5em;
           border-radius: 4px;
           font-family: 'JetBrains Mono', 'Courier New', monospace;
@@ -304,7 +306,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
           overflow-x: auto;
           margin-top: 1.5em;
           margin-bottom: 1.5em;
-          border: 1px solid rgba(253, 224, 71, 0.15);
+          border: 1px solid var(--accent-15);
         }
 
         .markdown-content pre code {
@@ -322,20 +324,20 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
 
         .markdown-content hr::after {
           content: '◆';
-          color: rgba(253, 224, 71, 0.3);
+          color: var(--accent-30);
           font-size: 12px;
         }
 
         .markdown-content a {
-          color: rgba(253, 224, 71, 0.8);
+          color: var(--text-accent);
           text-decoration: underline;
-          text-decoration-color: rgba(253, 224, 71, 0.3);
+          text-decoration-color: var(--accent-30);
           transition: all 0.2s;
         }
 
         .markdown-content a:hover {
-          color: #fcd34d;
-          text-decoration-color: rgba(253, 224, 71, 0.6);
+          color: var(--accent-color);
+          text-decoration-color: var(--accent-60);
         }
 
         .markdown-content table {
@@ -347,14 +349,14 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
 
         .markdown-content th,
         .markdown-content td {
-          border: 1px solid rgba(253, 224, 71, 0.15);
+          border: 1px solid var(--accent-15);
           padding: 0.75em;
           text-align: left;
         }
 
         .markdown-content th {
-          background-color: rgba(253, 224, 71, 0.08);
-          color: rgba(253, 224, 71, 0.9);
+          background-color: var(--accent-10);
+          color: var(--text-accent);
           font-weight: 600;
           font-family: 'Cinzel', serif;
         }
@@ -370,12 +372,12 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
         }
 
         .prose-content::-webkit-scrollbar-thumb {
-          background: rgba(253, 224, 71, 0.2);
+          background: var(--accent-20);
           border-radius: 4px;
         }
 
         .prose-content::-webkit-scrollbar-thumb:hover {
-          background: rgba(253, 224, 71, 0.3);
+          background: var(--accent-30);
         }
       `}</style>
     </div>
@@ -478,7 +480,7 @@ export function WisdomSection() {
                 onClick={() => setSelectedCategory(cat.key)}
                 className={`px-3 py-2 rounded-full text-[10px] border transition-all ${selectedCategory === cat.key
                   ? "bg-accent text-[#050508] font-semibold border-transparent shadow-[0_0_12px_rgba(251,191,36,0.25)]"
-                  : "border-[rgba(253,224,71,0.2)] text-[rgba(253,251,245,0.65)] hover:border-[rgba(253,224,71,0.35)] hover:bg-[rgba(253,224,71,0.05)]"
+                  : "border-[var(--accent-20)] text-[rgba(253,251,245,0.65)] hover:border-[var(--accent-40)] hover:bg-[var(--accent-10)]"
                   }`}
                 style={{
                   background: selectedCategory === cat.key ? `linear-gradient(to bottom right, var(--accent-color), var(--accent-color))` : undefined
@@ -492,7 +494,7 @@ export function WisdomSection() {
 
         {/* Category description */}
         {currentCategory && (
-          <div className="border-t border-[rgba(253,224,71,0.15)] pt-4">
+          <div className="border-t border-[var(--accent-15)] pt-4">
             <div
               className="text-[15px] text-[rgba(253,251,245,0.75)] mb-4 italic leading-relaxed"
               style={{ fontFamily: 'Crimson Pro, serif', lineHeight: '1.6' }}
@@ -510,7 +512,7 @@ export function WisdomSection() {
                 return (
                   <div
                     key={idx}
-                    className="border border-[rgba(253,224,71,0.1)] rounded-2xl px-4 py-3 bg-[rgba(253,251,245,0.02)] hover:border-[rgba(253,224,71,0.25)] hover:shadow-[0_0_20px_rgba(253,224,71,0.1)] transition-all cursor-pointer group"
+                    className="border border-[var(--accent-10)] rounded-2xl px-4 py-3 bg-[rgba(253,251,245,0.02)] hover:border-[var(--accent-25)] hover:shadow-[0_0_20px_var(--accent-10)] transition-all cursor-pointer group"
                     style={{ borderLeft: '3px solid rgba(253, 224, 71, 0.3)' }}
                     onClick={() => {
                       if (chapter) {
@@ -733,12 +735,12 @@ export function WisdomSection() {
               return (
                 <button
                   key={tab}
-                  className={
-                    "px-5 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap " +
-                    (active
-                      ? "bg-white text-bgEnd shadow-[0_0_0_1px_rgba(255,255,255,0.8)]"
-                      : "text-white/70 hover:text-white")
-                  }
+                  className="px-5 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap"
+                  style={{
+                    background: active ? 'var(--ui-button-gradient)' : 'transparent',
+                    color: active ? '#050508' : 'rgba(253,251,245,0.7)',
+                    fontWeight: active ? 600 : 400
+                  }}
                   onClick={() => setActiveTab(tab)}
                 >
                   {tab}

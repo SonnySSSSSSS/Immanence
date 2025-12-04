@@ -1,4 +1,4 @@
-// src/components/Avatar.jsx
+﻿// src/components/Avatar.jsx
 // FIVE-LAYER AVATAR STACK:
 // 0) Luminous field (canvas rings)
 // 1) Breathing aura (practice only)
@@ -91,13 +91,8 @@ function BreathingAura({ breathPattern }) {
   const { primary, secondary, muted } = theme.accent;
   console.log('🎨 BreathingAura accent colors:', { primary, secondary, muted });
 
-  // Create gradient using actual color values with alpha
-  const gradient = `radial-gradient(circle, 
-    ${primary}f2 0%, 
-    ${secondary}73 32%, 
-    ${muted}33 58%, 
-    rgba(248,250,252,0.02) 75%, 
-    transparent 100%)`;
+  // Create gradient using pre-computed alpha variants
+  const gradient = 'radial-gradient(circle, var(--accent-80) 0%, var(--accent-40) 32%, var(--accent-20) 58%, rgba(248,250,252,0.02) 75%, transparent 100%)';
 
   console.log('🎨 BreathingAura gradient:', gradient);
 
@@ -229,7 +224,7 @@ function StaticSigilCore({ stage = "flame" }) {
           height: "50%",
           borderRadius: "9999px",
           background: "radial-gradient(circle, #030302 0%, #050403 40%, #0a0806 100%)",
-          boxShadow: "inset 0 0 20px rgba(253,224,71,0.15), inset 0 0 40px rgba(200,150,50,0.08)",
+          boxShadow: "inset 0 0 20px var(--accent-15), inset 0 0 40px rgba(200,150,50,0.08)",
         }}
       />
 
@@ -276,15 +271,15 @@ function StaticSigilCore({ stage = "flame" }) {
             conic-gradient(
               from 0deg,
               transparent 0%,
-              rgba(253,224,71,0.08) 10%,
+              var(--accent-10) 10%,
               transparent 20%,
-              rgba(253,224,71,0.08) 30%,
+              var(--accent-10) 30%,
               transparent 40%,
-              rgba(253,224,71,0.08) 50%,
+              var(--accent-10) 50%,
               transparent 60%,
-              rgba(253,224,71,0.08) 70%,
+              var(--accent-10) 70%,
               transparent 80%,
-              rgba(253,224,71,0.08) 90%,
+              var(--accent-10) 90%,
               transparent 100%
             )
           `,
@@ -303,11 +298,11 @@ function StaticSigilCore({ stage = "flame" }) {
             conic-gradient(
               from 45deg,
               transparent 0%,
-              rgba(253,224,71,0.05) 15%,
+              var(--accent-10) 15%,
               transparent 30%,
-              rgba(253,224,71,0.05) 45%,
+              var(--accent-10) 45%,
               transparent 60%,
-              rgba(253,224,71,0.05) 75%,
+              var(--accent-10) 75%,
               transparent 90%
             )
           `,
@@ -472,14 +467,17 @@ function AvatarContainer({
 //
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
-export function Avatar({ mode, breathPattern, breathState, onStageChange }) {
+export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage }) {
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
   const [stageIndex, setStageIndex] = useState(2); // Start at Flame (index 2)
 
   const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
-  const currentStage = STAGE_NAMES[stageIndex];
+  const internalStage = STAGE_NAMES[stageIndex];
+
+  // Use controlled stage if provided, otherwise internal
+  const currentStage = controlledStage ? controlledStage.toLowerCase() : internalStage;
 
   // Notify parent when stage changes
   useEffect(() => {

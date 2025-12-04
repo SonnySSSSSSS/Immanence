@@ -1,4 +1,4 @@
-// src/components/ActivePathState.jsx
+﻿// src/components/ActivePathState.jsx
 import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -27,9 +27,9 @@ export function ActivePathState() {
     };
 
     return (
-        <div className="w-full bg-[#161625] border border-[rgba(253,224,71,0.15)] rounded-3xl p-6 space-y-6">
+        <div className="w-full bg-[#161625] border border-[var(--accent-15)] rounded-3xl p-6 space-y-6">
             {/* Header */}
-            <div className="border-b border-[rgba(253,224,71,0.15)] pb-4">
+            <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
                     className="text-2xl font-semibold text-[#fcd34d] mb-2"
                     style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
@@ -68,16 +68,16 @@ export function ActivePathState() {
                                         className={`
                       w-4 h-4 rounded-full transition-all
                       ${isCompleted
-                                                ? 'bg-[#fcd34d] opacity-100 shadow-[0_0_8px_rgba(253,224,71,0.4)]'
+                                                ? 'bg-[#fcd34d] opacity-100 shadow-[0_0_8px_var(--accent-40)]'
                                                 : isCurrent
-                                                    ? 'bg-[#fcd34d] opacity-100 shadow-[0_0_12px_rgba(253,224,71,0.6)] animate-pulse'
-                                                    : 'border border-[rgba(253,224,71,0.3)] bg-transparent opacity-30'
+                                                    ? 'bg-[#fcd34d] opacity-100 shadow-[0_0_12px_var(--accent-60)] animate-pulse'
+                                                    : 'border border-[var(--accent-30)] bg-transparent opacity-30'
                                             }
                     `}
                                     />
                                     <div className={`
                     text-[9px] transition-opacity
-                    ${isCompleted || isCurrent ? 'text-[rgba(253,224,71,0.8)] opacity-100' : 'text-[rgba(253,224,71,0.4)] opacity-40'}
+                    ${isCompleted || isCurrent ? 'text-[var(--accent-80)] opacity-100' : 'text-[var(--accent-40)] opacity-40'}
                   `}>
                                         {week.number}
                                     </div>
@@ -85,7 +85,7 @@ export function ActivePathState() {
                                 {idx < path.weeks.length - 1 && (
                                     <div className={`
                     flex-1 h-[2px] transition-all
-                    ${isCompleted ? 'bg-[#fcd34d] opacity-60' : 'bg-[rgba(253,224,71,0.15)] opacity-30'}
+                    ${isCompleted ? 'bg-[#fcd34d] opacity-60' : 'bg-[var(--accent-15)] opacity-30'}
                   `} />
                                 )}
                             </React.Fragment>
@@ -96,7 +96,7 @@ export function ActivePathState() {
 
             {/* Current Week Panel */}
             {currentWeekData && !isPathComplete && (
-                <div className="border border-[rgba(253,224,71,0.2)] rounded-2xl p-4 bg-[rgba(253,224,71,0.02)]">
+                <div className="border border-[var(--accent-20)] rounded-2xl p-4 bg-[var(--accent-10)]">
                     <h3
                         className="text-lg font-semibold text-[#fcd34d] mb-3"
                         style={{ fontFamily: 'Cinzel, serif' }}
@@ -107,7 +107,7 @@ export function ActivePathState() {
                     <div className="space-y-3">
                         {/* Focus */}
                         <div>
-                            <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Focus</div>
+                            <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>
                             <p
                                 className="text-sm text-[rgba(253,251,245,0.85)] italic leading-relaxed"
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
@@ -119,11 +119,11 @@ export function ActivePathState() {
                         {/* Practices */}
                         {currentWeekData.practices.length > 0 && (
                             <div>
-                                <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Practices</div>
+                                <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Practices</div>
                                 <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
                                     {currentWeekData.practices.map((practice, idx) => (
                                         <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-start gap-2">
-                                            <span className="text-[rgba(253,224,71,0.5)] mt-0.5">•</span>
+                                            <span className="text-[var(--accent-50)] mt-0.5">•</span>
                                             <span>{practice}</span>
                                         </li>
                                     ))}
@@ -134,11 +134,11 @@ export function ActivePathState() {
                         {/* Reading */}
                         {currentWeekData.reading.length > 0 && (
                             <div>
-                                <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Reading</div>
+                                <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Reading</div>
                                 <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
                                     {currentWeekData.reading.map((chapterId, idx) => (
                                         <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-start gap-2">
-                                            <span className="text-[rgba(253,224,71,0.5)] mt-0.5">•</span>
+                                            <span className="text-[var(--accent-50)] mt-0.5">•</span>
                                             <span>{chapterId}</span>
                                         </li>
                                     ))}
@@ -149,7 +149,7 @@ export function ActivePathState() {
                         {/* Tracking */}
                         {currentWeekData.tracking && (
                             <div>
-                                <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Tracking Focus</div>
+                                <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Tracking Focus</div>
                                 <p
                                     className="text-sm text-[rgba(253,251,245,0.8)]"
                                     style={{ fontFamily: 'Crimson Pro, serif' }}
@@ -190,13 +190,13 @@ export function ActivePathState() {
                         Quick Actions
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                        <button className="px-4 py-2 rounded-full border border-[rgba(253,224,71,0.3)] text-sm text-[rgba(253,251,245,0.8)] hover:border-[rgba(253,224,71,0.5)] hover:bg-[rgba(253,224,71,0.05)] transition-all">
+                        <button className="px-4 py-2 rounded-full border border-[var(--accent-30)] text-sm text-[rgba(253,251,245,0.8)] hover:border-[var(--accent-50)] hover:bg-[var(--accent-10)] transition-all">
                             → Go to Practice
                         </button>
-                        <button className="px-4 py-2 rounded-full border border-[rgba(253,224,71,0.3)] text-sm text-[rgba(253,251,245,0.8)] hover:border-[rgba(253,224,71,0.5)] hover:bg-[rgba(253,224,71,0.05)] transition-all">
+                        <button className="px-4 py-2 rounded-full border border-[var(--accent-30)] text-sm text-[rgba(253,251,245,0.8)] hover:border-[var(--accent-50)] hover:bg-[var(--accent-10)] transition-all">
                             → Go to Wisdom
                         </button>
-                        <button className="px-4 py-2 rounded-full border border-[rgba(253,224,71,0.3)] text-sm text-[rgba(253,251,245,0.8)] hover:border-[rgba(253,224,71,0.5)] hover:bg-[rgba(253,224,71,0.05)] transition-all">
+                        <button className="px-4 py-2 rounded-full border border-[var(--accent-30)] text-sm text-[rgba(253,251,245,0.8)] hover:border-[var(--accent-50)] hover:bg-[var(--accent-10)] transition-all">
                             → Track Application
                         </button>
                     </div>
@@ -205,10 +205,10 @@ export function ActivePathState() {
 
             {/* Ornamental Divider */}
             <div className="flex items-center justify-center py-2">
-                <div className="flex items-center gap-4 text-[rgba(253,224,71,0.3)]">
-                    <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[rgba(253,224,71,0.3)]" />
+                <div className="flex items-center gap-4 text-[var(--accent-30)]">
+                    <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
                     <div style={{ fontSize: '10px' }}>◆</div>
-                    <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[rgba(253,224,71,0.3)]" />
+                    <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
                 </div>
             </div>
 
@@ -218,7 +218,7 @@ export function ActivePathState() {
                     <>
                         <button
                             onClick={handleCompleteWeek}
-                            className="flex-1 px-6 py-3 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] text-[#050508] font-semibold text-base shadow-[0_0_20px_rgba(253,224,71,0.3)] hover:shadow-[0_0_30px_rgba(253,224,71,0.4)] transition-all"
+                            className="flex-1 px-6 py-3 rounded-full bg-[var(--ui-button-gradient)] text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
                             style={{ fontFamily: 'Cinzel, serif' }}
                         >
                             COMPLETE WEEK {activePath.currentWeek}
@@ -241,7 +241,7 @@ export function ActivePathState() {
                                 </button>
                                 <button
                                     onClick={() => setShowAbandonConfirm(false)}
-                                    className="px-4 py-2 text-sm text-[rgba(253,251,245,0.6)] border border-[rgba(253,224,71,0.2)] rounded-full hover:bg-[rgba(253,224,71,0.05)] transition-colors"
+                                    className="px-4 py-2 text-sm text-[rgba(253,251,245,0.6)] border border-[var(--accent-20)] rounded-full hover:bg-[var(--accent-10)] transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -251,7 +251,7 @@ export function ActivePathState() {
                 ) : (
                     <button
                         onClick={handleAbandon}
-                        className="flex-1 px-6 py-3 rounded-full border border-[rgba(253,224,71,0.3)] text-[rgba(253,251,245,0.8)] hover:border-[rgba(253,224,71,0.5)] hover:bg-[rgba(253,224,71,0.05)] transition-all"
+                        className="flex-1 px-6 py-3 rounded-full border border-[var(--accent-30)] text-[rgba(253,251,245,0.8)] hover:border-[var(--accent-50)] hover:bg-[var(--accent-10)] transition-all"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         SELECT NEW PATH

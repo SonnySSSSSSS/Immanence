@@ -59,10 +59,10 @@ export function PathFinderCard({ onPathRecommended }) {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.2)] rounded-3xl p-8">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-20)] rounded-3xl p-8">
                 {/* Header */}
                 <h2
-                    className="text-lg uppercase tracking-[0.2em] text-[rgba(253,224,71,0.8)] mb-4 text-center"
+                    className="text-lg uppercase tracking-[0.2em] text-[var(--accent-80)] mb-4 text-center"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     FIND YOUR PATH
@@ -90,8 +90,8 @@ export function PathFinderCard({ onPathRecommended }) {
                   border transition-all duration-200
                   flex items-center gap-3
                   ${isSelected
-                                        ? 'border-[rgba(253,224,71,0.5)] bg-[rgba(253,224,71,0.08)] shadow-[0_0_15px_rgba(253,224,71,0.1)]'
-                                        : 'border-[rgba(253,224,71,0.15)] bg-[rgba(253,251,245,0.02)] hover:border-[rgba(253,224,71,0.3)] hover:bg-[rgba(253,251,245,0.04)]'
+                                        ? 'border-[var(--accent-50)] bg-[rgba(253,224,71,0.08)] shadow-[0_0_15px_var(--accent-10)]'
+                                        : 'border-[var(--accent-15)] bg-[rgba(253,251,245,0.02)] hover:border-[var(--accent-30)] hover:bg-[rgba(253,251,245,0.04)]'
                                     }
                 `}
                             >
@@ -101,14 +101,14 @@ export function PathFinderCard({ onPathRecommended }) {
                     w-5 h-5 rounded-full border-2 flex-shrink-0
                     transition-all duration-200
                     ${isSelected
-                                            ? 'border-[#fcd34d] bg-[rgba(253,224,71,0.2)]'
-                                            : 'border-[rgba(253,224,71,0.3)]'
+                                            ? 'border-[var(--accent-color)] bg-[var(--accent-20)]'
+                                            : 'border-[var(--accent-30)]'
                                         }
                   `}
                                 >
                                     {isSelected && (
                                         <div className="w-full h-full rounded-full flex items-center justify-center">
-                                            <div className="w-2 h-2 rounded-full bg-[#fcd34d]" />
+                                            <div className="w-2 h-2 rounded-full bg-[var(--accent-color)]" />
                                         </div>
                                     )}
                                 </div>
@@ -134,16 +134,16 @@ export function PathFinderCard({ onPathRecommended }) {
                 {/* Recommendation */}
                 {selectedPrompt && (
                     <div
-                        className="text-center py-3 px-4 rounded-xl bg-[rgba(253,224,71,0.05)] border border-[rgba(253,224,71,0.15)]"
+                        className="text-center py-3 px-4 rounded-xl bg-[var(--accent-10)] border border-[var(--accent-15)]"
                         style={{ animation: 'fadeIn 300ms ease-out' }}
                     >
                         <p
-                            className="text-sm text-[rgba(253,224,71,0.8)]"
+                            className="text-sm text-[var(--accent-80)]"
                             style={{ fontFamily: 'Crimson Pro, serif' }}
                         >
                             → Suggested:{' '}
                             <span
-                                className="font-semibold text-[#fcd34d]"
+                                className="font-semibold text-[var(--accent-color)]"
                                 style={{ fontFamily: 'Cinzel, serif' }}
                             >
                                 {selectedPrompt.recommendedPath === 'shadow-work' && 'Integrate Shadow Work'}

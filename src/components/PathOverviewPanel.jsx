@@ -38,11 +38,11 @@ export function PathOverviewPanel({ pathId }) {
     };
 
     return (
-        <div className="w-full bg-[#161625] border border-[rgba(253,224,71,0.15)] rounded-3xl p-6 space-y-6">
+        <div className="w-full bg-[#161625] border border-[var(--accent-15)] rounded-3xl p-6 space-y-6">
             {/* Header */}
-            <div className="border-b border-[rgba(253,224,71,0.15)] pb-4">
+            <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
-                    className="text-2xl font-semibold text-[#fcd34d] mb-2"
+                    className="text-2xl font-semibold text-[var(--accent-color)] mb-2"
                     style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
                 >
                     {path.title}
@@ -53,7 +53,7 @@ export function PathOverviewPanel({ pathId }) {
                 >
                     {path.subtitle}
                 </p>
-                <div className="text-sm text-[rgba(253,224,71,0.6)]">
+                <div className="text-sm text-[var(--accent-60)]">
                     {path.duration} weeks
                 </div>
             </div>
@@ -62,7 +62,7 @@ export function PathOverviewPanel({ pathId }) {
             {path.practices.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[#fcd34d] mb-2"
+                        className="text-base font-semibold text-[var(--accent-color)] mb-2"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Practice
@@ -70,7 +70,7 @@ export function PathOverviewPanel({ pathId }) {
                     <ul className="space-y-1.5" style={{ fontFamily: 'Crimson Pro, serif' }}>
                         {path.practices.map((practice, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
-                                <span className="text-[rgba(253,224,71,0.5)]">•</span>
+                                <span className="text-[var(--accent-50)]">•</span>
                                 {practice.type}
                                 {practice.pattern && ` (${practice.pattern})`}
                                 {practice.duration && ` - ${practice.duration}min`}
@@ -84,7 +84,7 @@ export function PathOverviewPanel({ pathId }) {
             {path.chapters.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[#fcd34d] mb-2"
+                        className="text-base font-semibold text-[var(--accent-color)] mb-2"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Wisdom
@@ -92,7 +92,7 @@ export function PathOverviewPanel({ pathId }) {
                     <ul className="space-y-1.5" style={{ fontFamily: 'Crimson Pro, serif' }}>
                         {path.chapters.map((chapterId, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
-                                <span className="text-[rgba(253,224,71,0.5)]">•</span>
+                                <span className="text-[var(--accent-50)]">•</span>
                                 {getChapterTitle(chapterId)}
                             </li>
                         ))}
@@ -104,7 +104,7 @@ export function PathOverviewPanel({ pathId }) {
             {path.applicationItems.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[#fcd34d] mb-2"
+                        className="text-base font-semibold text-[var(--accent-color)] mb-2"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Application
@@ -112,7 +112,7 @@ export function PathOverviewPanel({ pathId }) {
                     <ul className="space-y-1.5" style={{ fontFamily: 'Crimson Pro, serif' }}>
                         {path.applicationItems.map((item, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
-                                <span className="text-[rgba(253,224,71,0.5)]">□</span>
+                                <span className="text-[var(--accent-50)]">□</span>
                                 {item}
                             </li>
                         ))}
@@ -124,7 +124,7 @@ export function PathOverviewPanel({ pathId }) {
             {path.weeks.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[#fcd34d] mb-3"
+                        className="text-base font-semibold text-[var(--accent-color)] mb-3"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Weekly Timeline
@@ -136,11 +136,11 @@ export function PathOverviewPanel({ pathId }) {
                                     className="flex flex-col items-center gap-1"
                                     title={week.title}
                                 >
-                                    <div className="w-3 h-3 rounded-full border border-[rgba(253,224,71,0.3)] bg-[rgba(253,224,71,0.05)]" />
-                                    <div className="text-[9px] text-[rgba(253,224,71,0.4)]">{week.number}</div>
+                                    <div className="w-3 h-3 rounded-full border border-[var(--accent-30)] bg-[var(--accent-10)]" />
+                                    <div className="text-[9px] text-[var(--accent-40)]">{week.number}</div>
                                 </div>
                                 {idx < path.weeks.length - 1 && (
-                                    <div className="flex-1 h-[1px] bg-[rgba(253,224,71,0.15)]" />
+                                    <div className="flex-1 h-[1px] bg-[var(--accent-15)]" />
                                 )}
                             </React.Fragment>
                         ))}
@@ -152,7 +152,7 @@ export function PathOverviewPanel({ pathId }) {
             {path.weeks.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[#fcd34d] mb-3"
+                        className="text-base font-semibold text-[var(--accent-color)] mb-3"
                         style={{ fontFamily: 'Cinzel, serif' }}
                     >
                         Weekly Breakdown
@@ -164,17 +164,17 @@ export function PathOverviewPanel({ pathId }) {
                             return (
                                 <div
                                     key={week.number}
-                                    className="border border-[rgba(253,224,71,0.1)] rounded-xl overflow-hidden"
+                                    className="border border-[var(--accent-10)] rounded-xl overflow-hidden"
                                 >
                                     <button
                                         onClick={() => toggleWeek(week.number)}
-                                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[rgba(253,224,71,0.05)] transition-colors text-left"
+                                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--accent-10)] transition-colors text-left"
                                     >
-                                        <span className="text-[rgba(253,224,71,0.5)]">
+                                        <span className="text-[var(--accent-50)]">
                                             {isExpanded ? '▾' : '▸'}
                                         </span>
                                         <span
-                                            className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider"
+                                            className="text-xs text-[var(--accent-60)] uppercase tracking-wider"
                                             style={{ fontFamily: 'Cinzel, serif' }}
                                         >
                                             Week {week.number}
@@ -191,7 +191,7 @@ export function PathOverviewPanel({ pathId }) {
                                         <div className="px-4 pb-4 space-y-3 border-t border-[rgba(253,224,71,0.08)] pt-3">
                                             {/* Focus */}
                                             <div>
-                                                <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Focus</div>
+                                                <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>
                                                 <p
                                                     className="text-sm text-[rgba(253,251,245,0.8)] italic leading-relaxed"
                                                     style={{ fontFamily: 'Crimson Pro, serif' }}
@@ -203,11 +203,11 @@ export function PathOverviewPanel({ pathId }) {
                                             {/* Practices */}
                                             {week.practices.length > 0 && (
                                                 <div>
-                                                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Practices</div>
+                                                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Practices</div>
                                                     <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
                                                         {week.practices.map((practice, idx) => (
                                                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
-                                                                <span className="text-[rgba(253,224,71,0.4)] mt-0.5">•</span>
+                                                                <span className="text-[var(--accent-40)] mt-0.5">•</span>
                                                                 <span>{practice}</span>
                                                             </li>
                                                         ))}
@@ -218,11 +218,11 @@ export function PathOverviewPanel({ pathId }) {
                                             {/* Reading */}
                                             {week.reading.length > 0 && (
                                                 <div>
-                                                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Reading</div>
+                                                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Reading</div>
                                                     <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
                                                         {week.reading.map((chapterId, idx) => (
                                                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
-                                                                <span className="text-[rgba(253,224,71,0.4)] mt-0.5">•</span>
+                                                                <span className="text-[var(--accent-40)] mt-0.5">•</span>
                                                                 <span>{getChapterTitle(chapterId)}</span>
                                                             </li>
                                                         ))}
@@ -233,7 +233,7 @@ export function PathOverviewPanel({ pathId }) {
                                             {/* Tracking */}
                                             {week.tracking && (
                                                 <div>
-                                                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1">Tracking Focus</div>
+                                                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Tracking Focus</div>
                                                     <p
                                                         className="text-sm text-[rgba(253,251,245,0.75)]"
                                                         style={{ fontFamily: 'Crimson Pro, serif' }}
@@ -253,10 +253,10 @@ export function PathOverviewPanel({ pathId }) {
 
             {/* Ornamental Divider */}
             <div className="flex items-center justify-center py-2">
-                <div className="flex items-center gap-4 text-[rgba(253,224,71,0.3)]">
-                    <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[rgba(253,224,71,0.3)]" />
+                <div className="flex items-center gap-4 text-[var(--accent-30)]">
+                    <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
                     <div style={{ fontSize: '10px' }}>◆</div>
-                    <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[rgba(253,224,71,0.3)]" />
+                    <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
                 </div>
             </div>
 
@@ -264,7 +264,7 @@ export function PathOverviewPanel({ pathId }) {
             <div className="flex justify-center">
                 <button
                     onClick={handleBegin}
-                    className="px-8 py-3 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] text-[#050508] font-semibold text-base shadow-[0_0_20px_rgba(253,224,71,0.3)] hover:shadow-[0_0_30px_rgba(253,224,71,0.4)] transition-all"
+                    className="px-8 py-3 rounded-full bg-gradient-to-br from-[var(--accent-color)] to-[#f59e0b] text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     BEGIN PATH

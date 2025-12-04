@@ -1,4 +1,4 @@
-// src/components/QuickLogGesturePad.jsx
+﻿// src/components/QuickLogGesturePad.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useApplicationStore } from '../state/applicationStore.js';
@@ -97,10 +97,10 @@ export function QuickLogGesturePad() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.15)] rounded-3xl p-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6">
                 {/* Header */}
                 <h3
-                    className="text-xs uppercase tracking-[0.2em] text-[rgba(253,224,71,0.6)] mb-3 text-center"
+                    className="text-xs uppercase tracking-[0.2em] text-[var(--accent-60)] mb-3 text-center"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     QUICK LOG
@@ -113,18 +113,18 @@ export function QuickLogGesturePad() {
                         onClick={handleClick}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
-                        className="relative aspect-square max-w-sm mx-auto rounded-2xl border-2 border-[rgba(253,224,71,0.2)] bg-[rgba(253,224,71,0.03)] cursor-pointer select-none overflow-hidden"
+                        className="relative aspect-square max-w-sm mx-auto rounded-2xl border-2 border-[var(--accent-20)] bg-[var(--accent-10)] cursor-pointer select-none overflow-hidden"
                         style={{
                             touchAction: 'none'
                         }}
                     >
                         {/* Center Dot */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[rgba(253,224,71,0.4)]" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--accent-40)]" />
 
                         {/* Direction Labels */}
                         <div className="absolute top-8 left-1/2 -translate-x-1/2">
                             <div
-                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'up' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'up' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
@@ -135,7 +135,7 @@ export function QuickLogGesturePad() {
 
                         <div className="absolute left-6 top-1/2 -translate-y-1/2">
                             <div
-                                className={`text-sm text-left transition-all max-w-[100px] ${justLogged === 'left' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-left transition-all max-w-[100px] ${justLogged === 'left' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
@@ -148,7 +148,7 @@ export function QuickLogGesturePad() {
 
                         <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                             <div
-                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'down' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'down' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
@@ -159,7 +159,7 @@ export function QuickLogGesturePad() {
 
                         <div className="absolute right-6 top-1/2 -translate-y-1/2">
                             <div
-                                className={`text-sm text-right transition-all max-w-[100px] ${justLogged === 'right' ? 'text-[#fcd34d] scale-110' : 'text-[rgba(253,224,71,0.6)]'
+                                className={`text-sm text-right transition-all max-w-[100px] ${justLogged === 'right' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
@@ -173,7 +173,7 @@ export function QuickLogGesturePad() {
                         {/* Ripple Effect */}
                         {ripple && (
                             <div
-                                className="absolute w-20 h-20 rounded-full border-2 border-[#fcd34d] pointer-events-none"
+                                className="absolute w-20 h-20 rounded-full border-2 border-[var(--accent-color)] pointer-events-none"
                                 style={{
                                     left: ripple.x - padRef.current.getBoundingClientRect().left - 40,
                                     top: ripple.y - padRef.current.getBoundingClientRect().top - 40,

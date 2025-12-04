@@ -1,4 +1,4 @@
-// src/components/ActiveTrackingItems.jsx
+﻿// src/components/ActiveTrackingItems.jsx
 import React from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useApplicationStore } from '../state/applicationStore.js';
@@ -44,10 +44,10 @@ export function ActiveTrackingItems() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.15)] rounded-3xl p-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6">
                 {/* Header */}
                 <h2
-                    className="text-sm uppercase tracking-[0.2em] text-[rgba(253,224,71,0.7)] mb-4 text-center"
+                    className="text-sm uppercase tracking-[0.2em] text-[var(--accent-70)] mb-4 text-center"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     TRACKING THIS WEEK
@@ -65,14 +65,14 @@ export function ActiveTrackingItems() {
                                 key={item.name}
                                 className="relative rounded-xl p-4 border transition-all"
                                 style={{
-                                    borderColor: `rgba(253, 224, 71, ${0.15 + intensity * 0.2})`,
-                                    backgroundColor: `rgba(253, 224, 71, ${goldOpacity * 0.3})`
+                                    borderColor: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${0.15 + intensity * 0.2})`,
+                                    backgroundColor: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${goldOpacity * 0.3})`
                                 }}
                             >
                                 {/* Direction Symbol */}
                                 <div
                                     className="text-3xl text-center mb-2"
-                                    style={{ color: `rgba(253, 224, 71, ${0.6 + intensity * 0.4})` }}
+                                    style={{ color: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${0.6 + intensity * 0.4})` }}
                                 >
                                     {DIRECTION_SYMBOLS[item.direction]}
                                 </div>
@@ -89,7 +89,7 @@ export function ActiveTrackingItems() {
                                 <div className="text-center">
                                     <span
                                         className="text-sm font-semibold"
-                                        style={{ color: `rgba(253, 224, 71, ${0.7 + intensity * 0.3})` }}
+                                        style={{ color: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${0.7 + intensity * 0.3})` }}
                                     >
                                         {item.count}
                                     </span>
@@ -101,8 +101,8 @@ export function ActiveTrackingItems() {
                 </div>
 
                 {/* Intention Statement */}
-                <div className="border-t border-[rgba(253,224,71,0.1)] pt-4">
-                    <div className="text-xs uppercase tracking-wider text-[rgba(253,224,71,0.6)] mb-2">
+                <div className="border-t border-[var(--accent-10)] pt-4">
+                    <div className="text-xs uppercase tracking-wider text-[var(--accent-60)] mb-2">
                         Intention
                     </div>
 
@@ -112,7 +112,7 @@ export function ActiveTrackingItems() {
                                 value={intentionInput}
                                 onChange={(e) => setIntentionInput(e.target.value)}
                                 placeholder="When I notice [pattern], I will..."
-                                className="w-full bg-[rgba(253,224,71,0.05)] border border-[rgba(253,224,71,0.2)] rounded-xl px-3 py-2 text-sm text-[rgba(253,251,245,0.9)] placeholder:text-[rgba(253,251,245,0.3)] focus:outline-none focus:border-[rgba(253,224,71,0.4)] resize-none"
+                                className="w-full bg-[var(--accent-10)] border border-[var(--accent-20)] rounded-xl px-3 py-2 text-sm text-[rgba(253,251,245,0.9)] placeholder:text-[rgba(253,251,245,0.3)] focus:outline-none focus:border-[var(--accent-40)] resize-none"
                                 style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
                                 rows={3}
                             />
@@ -125,7 +125,7 @@ export function ActiveTrackingItems() {
                                 </button>
                                 <button
                                     onClick={handleSaveIntention}
-                                    className="text-xs px-3 py-1 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] text-[#050508] font-semibold"
+                                    className="text-xs px-3 py-1 rounded-full bg-[var(--ui-button-gradient)] text-[#050508] font-semibold"
                                 >
                                     Save
                                 </button>
@@ -134,7 +134,7 @@ export function ActiveTrackingItems() {
                     ) : (
                         <div
                             onClick={() => setIsEditingIntention(true)}
-                            className="cursor-pointer hover:bg-[rgba(253,224,71,0.05)] transition-colors rounded-xl p-3"
+                            className="cursor-pointer hover:bg-[var(--accent-10)] transition-colors rounded-xl p-3"
                         >
                             {intention ? (
                                 <p

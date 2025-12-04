@@ -302,24 +302,24 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           pointerEvents: "none",
           // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
           filter: progress < tInhale
-            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px ${primary}) 
-               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px ${secondary}) 
-               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px ${muted}) 
-               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px ${glow})`
+            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px var(--accent-primary)) 
+               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px var(--accent-secondary)) 
+               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px var(--accent-muted)) 
+               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px var(--accent-glow))`
             : progress < tHoldTop
-              ? `drop-shadow(0 0 9.6px ${primary}) 
-               drop-shadow(0 0 19.2px ${secondary}) 
-               drop-shadow(0 0 28.8px ${muted}) 
-               drop-shadow(0 0 38.4px ${glow})`
+              ? `drop-shadow(0 0 9.6px var(--accent-primary)) 
+               drop-shadow(0 0 19.2px var(--accent-secondary)) 
+               drop-shadow(0 0 28.8px var(--accent-muted)) 
+               drop-shadow(0 0 38.4px var(--accent-glow))`
               : progress < tExhale
-                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${primary}) 
-               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${secondary}) 
-               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${muted}) 
-               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px ${glow})`
-                : `drop-shadow(0 0 8px ${primary}) 
-               drop-shadow(0 0 16px ${secondary}) 
-               drop-shadow(0 0 24px ${muted}) 
-               drop-shadow(0 0 32px ${glow})`
+                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-primary)) 
+               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-secondary)) 
+               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-muted)) 
+               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-glow))`
+                : `drop-shadow(0 0 8px var(--accent-primary)) 
+               drop-shadow(0 0 16px var(--accent-secondary)) 
+               drop-shadow(0 0 24px var(--accent-muted)) 
+               drop-shadow(0 0 32px var(--accent-glow))`
         }}
       >
         <circle
@@ -327,7 +327,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           cy="100"
           r="80"
           fill="none"
-          stroke={primary}
+          stroke="var(--accent-primary)"
           strokeWidth="4"
           strokeLinecap="round"
           style={{
@@ -353,7 +353,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
             cy="100"
             r="80"
             fill="none"
-            stroke={primary}
+            stroke="var(--accent-primary)"
             strokeWidth="3"
             strokeLinecap="round"
             style={{
@@ -375,12 +375,12 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           fontSize: "0.875rem",
           letterSpacing: "0.25em",
           textTransform: "uppercase",
-          color: primary,
+          color: 'var(--accent-primary)',
           fontFamily: "Cinzel, serif",
           fontWeight: "500",
           zIndex: 10,
           pointerEvents: "none",
-          textShadow: `0 0 10px ${glow}`
+          textShadow: '0 0 10px var(--accent-glow)'
         }}
       >
         {progress < tInhale

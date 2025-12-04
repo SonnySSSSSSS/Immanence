@@ -55,7 +55,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
         {/* Stats grid: 4 columns on desktop, 2 on mobile */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {/* Total Sessions */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[var(--accent-15)] px-3 py-3 backdrop-blur-sm">
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               Sessions
             </div>
@@ -68,7 +68,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
           </div>
 
           {/* Weekly Consistency */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[var(--accent-15)] px-3 py-3 backdrop-blur-sm">
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               This Week
             </div>
@@ -81,7 +81,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
           </div>
 
           {/* Accuracy */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[var(--accent-15)] px-3 py-3 backdrop-blur-sm">
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               Accuracy
             </div>
@@ -94,7 +94,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
           </div>
 
           {/* Current Streak */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border px-3 py-3 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
+          <div className="rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] border border-[var(--accent-15)] px-3 py-3 backdrop-blur-sm">
             <div className="text-[10px] text-[rgba(253,251,245,0.65)] uppercase tracking-[0.15em] mb-2">
               Streak
             </div>
@@ -110,7 +110,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
         {/* ──────────────────────────────────────────────────────────────────
             STAGE PROGRESSION - Show path to next stage
             ────────────────────────────────────────────────────────────────── */}
-        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#161625] via-[#0f0f1a] to-[#161625] border px-4 py-4 backdrop-blur-sm card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#161625] via-[#0f0f1a] to-[#161625] border border-[var(--accent-15)] px-4 py-4 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="space-y-1">
               <div className="text-[10px] uppercase tracking-[0.2em] text-[rgba(253,251,245,0.65)]">
@@ -131,7 +131,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
           </div>
 
           {/* Progress bar */}
-          <div className="w-full h-1.5 rounded-full bg-[rgba(253,224,71,0.15)] overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-[var(--accent-15)] overflow-hidden">
             <div
               className="h-full progress-accent"
               style={{ width: `${progressPct}%`, background: 'var(--accent-color)' }}
@@ -140,13 +140,13 @@ function HomeHub({ onSelectSection, onStageChange }) {
 
           {/* Breakdown */}
           <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
-            <div className="bg-[rgba(253,224,71,0.08)] rounded-lg px-2 py-1.5">
+            <div className="bg-[var(--accent-10)] rounded-lg px-2 py-1.5">
               <div className="text-[rgba(253,251,245,0.65)]">Sessions</div>
               <div className="text-accent font-semibold" style={{ color: 'var(--accent-color)' }}>
                 {Math.round(sessionScore * 100)}% ({stats.totalSessions}/150)
               </div>
             </div>
-            <div className="bg-[rgba(253,224,71,0.08)] rounded-lg px-2 py-1.5">
+            <div className="bg-[var(--accent-10)] rounded-lg px-2 py-1.5">
               <div className="text-[rgba(253,251,245,0.65)]">Accuracy</div>
               <div className="text-accent font-semibold" style={{ color: 'var(--accent-color)' }}>
                 {Math.round(accuracyScore * 100)}% ({accuracyPct}%)
@@ -195,8 +195,8 @@ function HomeHub({ onSelectSection, onStageChange }) {
       {/* ──────────────────────────────────────────────────────────────────────
           QUICK INSIGHTS - Small contextual suggestions
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full max-w-2xl rounded-2xl bg-gradient-to-r from-[#161625] to-[#0f0f1a] border border-[rgba(253,224,71,0.15)] px-4 py-3 backdrop-blur-sm">
-        <div className="text-[10px] text-[rgba(253,251,245,0.65)] mb-2 uppercase tracking-[0.15em]">Quick Insight</div>
+      <div className="w-full max-w-2xl rounded-2xl bg-gradient-to-r from-[#161625] to-[#0f0f1a] border border-[var(--accent-15)] px-4 py-3 backdrop-blur-sm">
+        <div className="text-[10px] mb-2 uppercase tracking-[0.15em]" style={{ color: 'var(--accent-color)' }}>Quick Insight</div>
         <div className="text-[11px] text-[rgba(253,251,245,0.92)] leading-relaxed">
           {stats.currentStreak >= 7
             ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
@@ -216,9 +216,9 @@ function ModeButton({ title, description, subtext, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] px-4 py-4 text-left border border-[rgba(253,224,71,0.15)] hover:border-[rgba(253,224,71,0.35)] hover:bg-gradient-to-br hover:from-[#1a1a2e] hover:to-[#161625] transition-all duration-200 backdrop-blur-sm"
+      className="group rounded-2xl bg-gradient-to-br from-[#161625] to-[#0f0f1a] px-4 py-4 text-left border border-[var(--accent-15)] hover:border-[var(--accent-25)] transition-all duration-200 backdrop-blur-sm"
     >
-      <div className="text-sm font-semibold text-[#fcd34d] group-hover:text-[#f59e0b] transition-colors">
+      <div className="text-sm font-semibold transition-colors" style={{ color: 'var(--accent-color)' }}>
         {title}
       </div>
       <div className="text-[11px] text-[rgba(253,251,245,0.65)] mt-1">{description}</div>

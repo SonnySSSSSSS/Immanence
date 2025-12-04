@@ -38,6 +38,16 @@ function hexToHSL(hex) {
     };
 }
 
+// Helper to convert hex to RGB components
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+    } : { r: 0, g: 0, b: 0 };
+}
+
 export function ThemeProvider({ children, currentStage = 'Flame' }) {
     // Map stage name to theme key
     const stageKey = STAGE_NAME_MAP[currentStage] || 'FLAME';
@@ -73,6 +83,24 @@ export function ThemeProvider({ children, currentStage = 'Flame' }) {
         root.style.setProperty('--accent-color', `hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)`);
 
         console.log('  Set --accent-color to:', `hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)`);
+
+        // RGB components for rgba() usage
+        const primaryRgb = hexToRgb(stageTheme.accent.primary);
+        root.style.setProperty('--accent-r', String(primaryRgb.r));
+        root.style.setProperty('--accent-g', String(primaryRgb.g));
+        root.style.setProperty('--accent-b', String(primaryRgb.b));
+
+        // Pre-computed alpha variants (most commonly used)
+        root.style.setProperty('--accent-10', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.1)`);
+        root.style.setProperty('--accent-15', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.15)`);
+        root.style.setProperty('--accent-20', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.2)`);
+        root.style.setProperty('--accent-25', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.25)`);
+        root.style.setProperty('--accent-30', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.3)`);
+        root.style.setProperty('--accent-40', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.4)`);
+        root.style.setProperty('--accent-50', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.5)`);
+        root.style.setProperty('--accent-60', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.6)`);
+        root.style.setProperty('--accent-70', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.7)`);
+        root.style.setProperty('--accent-80', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.8)`);
 
         // New semantic variables
         root.style.setProperty('--accent-primary', stageTheme.accent.primary);

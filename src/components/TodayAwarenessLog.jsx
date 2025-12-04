@@ -1,4 +1,4 @@
-// src/components/TodayAwarenessLog.jsx
+﻿// src/components/TodayAwarenessLog.jsx
 import React, { useState } from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
 
@@ -40,7 +40,7 @@ export function TodayAwarenessLog() {
     if (todayLogs.length === 0) {
         return (
             <div className="w-full">
-                <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.15)] rounded-3xl p-8 text-center">
+                <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-8 text-center">
                     <p
                         className="text-sm text-[rgba(253,251,245,0.5)] italic"
                         style={{ fontFamily: 'Crimson Pro, serif' }}
@@ -55,10 +55,10 @@ export function TodayAwarenessLog() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.15)] rounded-3xl p-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6">
                 {/* Header */}
                 <h3
-                    className="text-sm uppercase tracking-[0.2em] text-[rgba(253,224,71,0.7)] mb-4"
+                    className="text-sm uppercase tracking-[0.2em] text-[var(--accent-70)] mb-4"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     TODAY
@@ -73,14 +73,14 @@ export function TodayAwarenessLog() {
                         return (
                             <div
                                 key={log.id}
-                                className="border border-[rgba(253,224,71,0.1)] rounded-xl overflow-hidden transition-all"
+                                className="border border-[var(--accent-10)] rounded-xl overflow-hidden transition-all"
                             >
                                 <button
                                     onClick={() => handleToggleExpand(log.id)}
-                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-[rgba(253,224,71,0.05)] transition-colors text-left"
+                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-[var(--accent-10)] transition-colors text-left"
                                 >
                                     {/* Time */}
-                                    <div className="text-xs text-[rgba(253,224,71,0.6)] min-w-[60px]">
+                                    <div className="text-xs text-[var(--accent-60)] min-w-[60px]">
                                         {formatTime(log.timestamp)}
                                     </div>
 
@@ -93,7 +93,7 @@ export function TodayAwarenessLog() {
                                                 <span className="text-[rgba(253,251,245,0.3)]" title="Autopilot">○</span>
                                             )
                                         ) : (
-                                            <span className="text-[rgba(253,224,71,0.4)]">●</span>
+                                            <span className="text-[var(--accent-40)]">●</span>
                                         )}
                                     </div>
 
@@ -116,17 +116,17 @@ export function TodayAwarenessLog() {
                                     </div>
 
                                     {/* Expand Icon */}
-                                    <div className="text-[rgba(253,224,71,0.4)]">
+                                    <div className="text-[var(--accent-40)]">
                                         {isExpanded ? '▾' : '▸'}
                                     </div>
                                 </button>
 
                                 {/* Expanded Reflection Form */}
                                 {isExpanded && (
-                                    <div className="px-4 pb-4 space-y-3 border-t border-[rgba(253,224,71,0.08)]">
+                                    <div className="px-4 pb-4 space-y-3 border-t border-[var(--accent-10)]">
                                         {/* Note Input */}
                                         <div>
-                                            <label className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-1 block">
+                                            <label className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1 block">
                                                 What happened?
                                             </label>
                                             <input
@@ -134,26 +134,26 @@ export function TodayAwarenessLog() {
                                                 value={noteInput}
                                                 onChange={(e) => setNoteInput(e.target.value)}
                                                 placeholder="Quick note..."
-                                                className="w-full bg-[rgba(253,224,71,0.05)] border border-[rgba(253,224,71,0.15)] rounded-lg px-3 py-2 text-sm text-[rgba(253,251,245,0.9)] placeholder:text-[rgba(253,251,245,0.3)] focus:outline-none focus:border-[rgba(253,224,71,0.3)]"
+                                                className="w-full bg-[var(--accent-10)] border border-[var(--accent-15)] rounded-lg px-3 py-2 text-sm text-[rgba(253,251,245,0.9)] placeholder:text-[rgba(253,251,245,0.3)] focus:outline-none focus:border-[var(--accent-30)]"
                                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                                             />
                                         </div>
 
                                         {/* Response Buttons */}
                                         <div>
-                                            <label className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-2 block">
+                                            <label className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2 block">
                                                 Did you respond differently?
                                             </label>
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleSaveReflection(log.id, true)}
-                                                    className="flex-1 px-4 py-2 rounded-lg border border-[rgba(253,224,71,0.3)] bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] text-[#050508] font-semibold text-sm hover:shadow-[0_0_15px_rgba(253,224,71,0.3)] transition-all"
+                                                    className="flex-1 px-4 py-2 rounded-lg border border-[var(--accent-30)] bg-[var(--ui-button-gradient)] text-[#050508] font-semibold text-sm hover:shadow-[0_0_15px_var(--accent-30)] transition-all"
                                                 >
                                                     Yes ✓
                                                 </button>
                                                 <button
                                                     onClick={() => handleSaveReflection(log.id, false)}
-                                                    className="flex-1 px-4 py-2 rounded-lg border border-[rgba(253,224,71,0.2)] text-[rgba(253,251,245,0.7)] text-sm hover:bg-[rgba(253,224,71,0.05)] transition-all"
+                                                    className="flex-1 px-4 py-2 rounded-lg border border-[var(--accent-20)] text-[rgba(253,251,245,0.7)] text-sm hover:bg-[var(--accent-10)] transition-all"
                                                 >
                                                     No
                                                 </button>
@@ -173,7 +173,7 @@ export function TodayAwarenessLog() {
                 </div>
 
                 {/* Summary */}
-                <div className="mt-4 pt-4 border-t border-[rgba(253,224,71,0.1)] text-center">
+                <div className="mt-4 pt-4 border-t border-[var(--accent-10)] text-center">
                     <p
                         className="text-xs text-[rgba(253,251,245,0.5)]"
                         style={{ fontFamily: 'Crimson Pro, serif' }}
