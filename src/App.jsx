@@ -18,7 +18,7 @@ const SECTION_LABELS = {
 };
 
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage }) {
   // Navigation and Application sections handle their own avatars
   const showAvatar = section !== 'navigation' && section !== 'application';
 
@@ -32,15 +32,15 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
             opacity: isPracticing ? 0.5 : 1,
           }}
         >
-          <Avatar mode={section} breathState={breathState} onStageChange={onStageChange} />
+          <Avatar mode={section} breathState={breathState} onStageChange={onStageChange} stage={currentStage} />
         </div>
       )}
 
       <div className="w-full max-w-md flex-1">
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} />}
         {section === "wisdom" && <WisdomSection />}
-        {section === "application" && <ApplicationSection />}
-        {section === "navigation" && <NavigationSection onStageChange={onStageChange} />}
+        {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} />}
+        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} />}
       </div>
     </div>
   );
@@ -123,13 +123,13 @@ function App() {
                 console.log('📱 Setting avatarStage to:', stageName);
                 setAvatarStage(stageName); // Update theme based on avatar stage
                 console.log('📱 avatarStage state should now be:', stageName);
-              }} />
+              }} currentStage={avatarStage} />
             </div>
           ) : (
             <SectionView key={activeSection} section={activeSection} isPracticing={isPracticing} onPracticingChange={setIsPracticing} breathState={breathState} onBreathStateChange={setBreathState} onStageChange={(hsl, stageName) => {
               console.log('📱 SectionView received stage change:', stageName);
               setAvatarStage(stageName);
-            }} />
+            }} currentStage={avatarStage} />
           )}
         </div>
 

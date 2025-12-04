@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Avatar } from "./Avatar.jsx";
 
-function HomeHub({ onSelectSection, onStageChange }) {
+function HomeHub({ onSelectSection, onStageChange, currentStage }) {
   // Placeholder stats - wire to real data later
   const [stats, setStats] = useState({
     totalSessions: 24,
@@ -30,7 +30,7 @@ function HomeHub({ onSelectSection, onStageChange }) {
           ────────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-4">
         <div className="w-full flex items-center justify-center overflow-visible">
-          <Avatar mode="hub" onStageChange={onStageChange} />
+          <Avatar mode="hub" onStageChange={onStageChange} stage={currentStage} />
         </div>
 
         {/* Welcome message */}

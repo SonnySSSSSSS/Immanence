@@ -536,7 +536,19 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
   };
 
   const handleSigilClick = () => {
-    setStageIndex((prev) => (prev + 1) % STAGE_NAMES.length);
+    if (controlledStage && onStageChange) {
+      // Controlled mode - calculate next stage and notify parent
+      const currentIndex = STAGE_NAMES.indexOf(currentStage);
+      const nextIndex = (currentIndex + 1) % STAGE_NAMES.length;
+      const nextStage = STAGE_NAMES[nextIndex];
+      const stageColors = STAGE_GLOW_COLORS[nextStage];
+      const stageName = nextStage.charAt(0).toUpperCase() + nextStage.slice(1);
+      console.log('🖱️ Avatar clicked - next stage:', stageName);
+      onStageChange(stageColors, stageName);
+    } else {
+      // Uncontrolled mode - use internal state
+      setStageIndex((prev) => (prev + 1) % STAGE_NAMES.length);
+    }
   };
 
   return (

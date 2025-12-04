@@ -8,7 +8,7 @@ import { FoundationCard } from './FoundationCard.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { Avatar } from './Avatar.jsx';
 
-export function NavigationSection({ onStageChange }) {
+export function NavigationSection({ onStageChange, currentStage }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const pathGridRef = useRef(null);
 
@@ -27,7 +27,7 @@ export function NavigationSection({ onStageChange }) {
       {/* Avatar - consistent across sections */}
       <div className="flex justify-center pt-8">
         <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="navigation" onStageChange={onStageChange} />
+          <Avatar mode="navigation" onStageChange={onStageChange} stage={currentStage} />
         </div>
       </div>
 

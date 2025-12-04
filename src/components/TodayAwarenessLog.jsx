@@ -88,7 +88,7 @@ export function TodayAwarenessLog() {
                                     <div className="mt-0.5">
                                         {hasResponse ? (
                                             log.respondedDifferently ? (
-                                                <span className="text-[#fcd34d]" title="Responded differently">✓</span>
+                                                <span style={{ color: 'var(--accent-color)' }} title="Responded differently">✓</span>
                                             ) : (
                                                 <span className="text-[rgba(253,251,245,0.3)]" title="Autopilot">○</span>
                                             )

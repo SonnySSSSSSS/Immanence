@@ -7,7 +7,7 @@ import { QuickLogGesturePad } from './QuickLogGesturePad.jsx';
 import { TodayAwarenessLog } from './TodayAwarenessLog.jsx';
 import { WeeklyReview } from './WeeklyReview.jsx';
 
-export function ApplicationSection() {
+export function ApplicationSection({ onStageChange, currentStage }) {
   const { activePath } = useNavigationStore();
 
   // No active path - show empty state
@@ -17,12 +17,12 @@ export function ApplicationSection() {
         {/* Avatar */}
         <div className="flex justify-center pt-8">
           <div style={{ transform: 'scale(0.75)' }}>
-            <Avatar mode="application" />
+            <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} />
           </div>
         </div>
 
         {/* Empty State */}
-        <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center card-accent" style={{ borderColor: 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)' }}>
+        <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center card-accent" style={{ borderColor: 'var(--accent-15)' }}>
           <h2
             className="text-lg mb-4"
             style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
@@ -63,7 +63,7 @@ export function ApplicationSection() {
       {/* Avatar - smaller */}
       <div className="flex justify-center pt-8">
         <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="application" />
+          <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} />
         </div>
       </div>
 

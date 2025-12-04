@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { getPathById } from '../data/navigationData.js';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 // Direction symbols for gesture logging
 const DIRECTION_SYMBOLS = {
@@ -12,9 +13,24 @@ const DIRECTION_SYMBOLS = {
     right: '→'
 };
 
+// Helper to convert hex to RGB
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+    } : { r: 252, g: 211, b: 77 }; // Fallback to gold
+}
+
 export function ActiveTrackingItems() {
     const { activePath } = useNavigationStore();
     const { getWeekLogs, intention, setIntention } = useApplicationStore();
+    const theme = useTheme(); // Get theme for RGB values
+
+    // Calculate RGB from theme primary color
+    const accentRgb = hexToRgb(theme.accent.primary);
+
     const [isEditingIntention, setIsEditingIntention] = React.useState(false);
     const [intentionInput, setIntentionInput] = React.useState(intention || '');
 
@@ -65,14 +81,14 @@ export function ActiveTrackingItems() {
                                 key={item.name}
                                 className="relative rounded-xl p-4 border transition-all"
                                 style={{
-                                    borderColor: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${0.15 + intensity * 0.2})`,
-                                    backgroundColor: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${goldOpacity * 0.3})`
+                                    borderColor: `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${0.15 + intensity * 0.2})`,
+                                    backgroundColor: `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${goldOpacity * 0.3})`
                                 }}
                             >
                                 {/* Direction Symbol */}
                                 <div
                                     className="text-3xl text-center mb-2"
-                                    style={{ color: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${0.6 + intensity * 0.4})` }}
+                                    style={{ color: `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${0.6 + intensity * 0.4})` }}
                                 >
                                     {DIRECTION_SYMBOLS[item.direction]}
                                 </div>
@@ -89,7 +105,7 @@ export function ActiveTrackingItems() {
                                 <div className="text-center">
                                     <span
                                         className="text-sm font-semibold"
-                                        style={{ color: `rgba(var(--accent-r), var(--accent-g), var(--accent-b), ${0.7 + intensity * 0.3})` }}
+                                        style={{ color: `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, ${0.7 + intensity * 0.3})` }}
                                     >
                                         {item.count}
                                     </span>
