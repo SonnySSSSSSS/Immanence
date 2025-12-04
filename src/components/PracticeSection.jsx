@@ -1,6 +1,8 @@
-﻿// src/components/PracticeSection.jsx
+// src/components/PracticeSection.jsx
 import React, { useState, useEffect } from "react";
 import { BreathingRing } from "./BreathingRing.jsx";
+import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
+import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { addSession } from "../state/practiceStore.js";
 import { recordPracticeEffect } from "../state/mandalaStore.js";
 import { useTheme } from "../context/ThemeContext";
@@ -44,6 +46,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
 
   // Session start time for syncing breathing ring animation
   const [sessionStartTime, setSessionStartTime] = useState(null);
+
+  // Visualization practice state
+  const [geometry, setGeometry] = useState('enso');
+  const [fadeInDuration, setFadeInDuration] = useState(2.5);
+  const [displayDuration, setDisplayDuration] = useState(10);
+  const [fadeOutDuration, setFadeOutDuration] = useState(2.5);
+  const [voidDuration, setVoidDuration] = useState(10);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [visualizationCycles, setVisualizationCycles] = useState(0);
 
 
 
@@ -677,6 +688,27 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               </div>
             ))}
           </div>
+
+
+          {/* Visualization Config */}
+          {practice === "Visualization" && (
+            <VisualizationConfig
+              geometry={geometry}
+              setGeometry={setGeometry}
+              fadeInDuration={fadeInDuration}
+              setFadeInDuration={setFadeInDuration}
+              displayDuration={displayDuration}
+              setDisplayDuration={setDisplayDuration}
+              fadeOutDuration={fadeOutDuration}
+              setFadeOutDuration={setFadeOutDuration}
+              voidDuration={voidDuration}
+              setVoidDuration={setVoidDuration}
+              duration={duration}
+              setDuration={setDuration}
+              audioEnabled={audioEnabled}
+              setAudioEnabled={setAudioEnabled}
+            />
+          )}
 
           {/* Divider */}
           <div className="relative my-5">
