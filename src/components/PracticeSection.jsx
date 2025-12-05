@@ -1,5 +1,5 @@
 // src/components/PracticeSection.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
@@ -7,8 +7,8 @@ import { addSession } from "../state/practiceStore.js";
 import { recordPracticeEffect } from "../state/mandalaStore.js";
 import { useTheme } from "../context/ThemeContext";
 
-const PRACTICES = ["Breathing", "Meditation", "Yoga", "Visualization"];
-const DURATIONS = [5, 10, 15, 20];
+const PRACTICES = ["Breath & Stillness", "Sensory", "Sound", "Visualization"];
+const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 const PRESETS = ["Box", "4-7-8", "Kumbhaka", "Relax", "Energy"];
 
 const PATTERN_PRESETS = {
@@ -19,10 +19,153 @@ const PATTERN_PRESETS = {
   Energy: { inhale: 3, hold1: 0, exhale: 3, hold2: 0 },
 };
 
+const SENSORY_TYPES = [
+  "Guided Body Scan",
+  "Bhakti (Devotion)",
+  "Vipassana",
+  "Open Monitoring"
+];
+
+const SOUND_TYPES = [
+  "Mantra",
+  "Binaural Beats",
+  "Isochronic Tones",
+  "Nature",
+  "Silence"
+];
+
+// Scrolling Wheel Component
+function ScrollingWheel({ value, onChange, options }) {
+  const wheelRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  const itemHeight = 48;
+  const visibleItems = 3;
+
+  useEffect(() => {
+    const index = options.indexOf(value);
+    if (index !== -1) {
+      setScrollOffset(index * itemHeight);
+    }
+  }, [value, options, itemHeight]);
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartY(e.clientY);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const deltaY = startY - e.clientY;
+    const newOffset = Math.max(0, Math.min(scrollOffset + deltaY, (options.length - 1) * itemHeight));
+    setScrollOffset(newOffset);
+    setStartY(e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    const nearestIndex = Math.round(scrollOffset / itemHeight);
+    const snappedOffset = nearestIndex * itemHeight;
+    setScrollOffset(snappedOffset);
+    onChange(options[nearestIndex]);
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? itemHeight : -itemHeight;
+    const newOffset = Math.max(0, Math.min(scrollOffset + delta, (options.length - 1) * itemHeight));
+    setScrollOffset(newOffset);
+
+    const nearestIndex = Math.round(newOffset / itemHeight);
+    setScrollOffset(nearestIndex * itemHeight);
+    onChange(options[nearestIndex]);
+  };
+
+  return (
+    <div
+      ref={wheelRef}
+      className="relative overflow-hidden select-none"
+      style={{
+        height: `${itemHeight * visibleItems}px`,
+        width: "120px",
+      }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onWheel={handleWheel}
+    >
+      <div
+        className="absolute top-0 left-0 right-0 pointer-events-none z-10"
+        style={{
+          height: `${itemHeight}px`,
+          background: "linear-gradient(180deg, rgba(15,15,26,1) 0%, transparent 100%)"
+        }}
+      />
+
+      <div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+        style={{
+          height: `${itemHeight}px`,
+          background: "linear-gradient(0deg, rgba(15,15,26,1) 0%, transparent 100%)"
+        }}
+      />
+
+      <div
+        className="absolute left-0 right-0 pointer-events-none z-10"
+        style={{
+          top: `${itemHeight}px`,
+          height: `${itemHeight}px`,
+          border: "1px solid var(--accent-20)",
+          borderRadius: "8px",
+          background: "rgba(255,255,255,0.02)"
+        }}
+      />
+
+      <div
+        className="absolute w-full transition-transform duration-200"
+        style={{
+          transform: `translateY(${itemHeight - scrollOffset}px)`,
+          cursor: isDragging ? 'grabbing' : 'grab'
+        }}
+      >
+        {options.map((option, index) => {
+          const offset = Math.abs(index * itemHeight - scrollOffset);
+          const opacity = Math.max(0.2, 1 - offset / (itemHeight * 2));
+          const scale = Math.max(0.7, 1 - offset / (itemHeight * 3));
+
+          return (
+            <div
+              key={option}
+              className="flex items-center justify-center"
+              style={{
+                height: `${itemHeight}px`,
+                fontFamily: "Georgia, serif",
+                fontSize: "24px",
+                fontWeight: 400,
+                letterSpacing: "0.1em",
+                color: "rgba(253,251,245,0.9)",
+                opacity,
+                transform: `scale(${scale})`,
+                transition: "opacity 0.2s, transform 0.2s"
+              }}
+            >
+              {option}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
 
-  // Core practice settings
-  const [practice, setPractice] = useState("Breathing");
+  const [practice, setPractice] = useState("Breath & Stillness");
   const [duration, setDuration] = useState(10);
   const [preset, setPreset] = useState("Box");
   const [pattern, setPattern] = useState({
@@ -32,22 +175,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     hold2: 4,
   });
 
-  // Timer state
+  const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0]);
+  const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
+
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10 * 60);
 
-  // Tap accuracy tracking
-  const [tapErrors, setTapErrors] = useState([]);          // signed ms errors
-  const [lastErrorMs, setLastErrorMs] = useState(null);    // absolute ms value of last tap
-  const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null); // signed last tap
+  const [tapErrors, setTapErrors] = useState([]);
+  const [lastErrorMs, setLastErrorMs] = useState(null);
+  const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
 
-  // Breath counter
   const [breathCount, setBreathCount] = useState(0);
-
-  // Session start time for syncing breathing ring animation
   const [sessionStartTime, setSessionStartTime] = useState(null);
 
-  // Visualization practice state
   const [geometry, setGeometry] = useState('enso');
   const [fadeInDuration, setFadeInDuration] = useState(2.5);
   const [displayDuration, setDisplayDuration] = useState(10);
@@ -56,16 +196,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [visualizationCycles, setVisualizationCycles] = useState(0);
 
-
-
-  // keep timer in sync with duration
   useEffect(() => {
     if (!isRunning) {
       setTimeLeft(duration * 60);
     }
   }, [duration, isRunning]);
 
-  // apply pattern preset
   useEffect(() => {
     if (preset && PATTERN_PRESETS[preset]) {
       setPattern(PATTERN_PRESETS[preset]);
@@ -77,7 +213,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
       ...prev,
       [key]: Number.parseInt(value, 10) || 0,
     }));
-    setPreset(null); // manual edit breaks preset
+    setPreset(null);
   };
 
   const formatTime = (seconds) => {
@@ -96,7 +232,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         ? crypto.randomUUID()
         : String(Date.now());
 
-    // Calculate tap statistics
     const tapCount = tapErrors.length;
     let avgErrorMs = null;
     let bestErrorMs = null;
@@ -110,12 +245,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
       );
     }
 
+    let subType = null;
+    if (practice === "Sensory") subType = sensoryType;
+    if (practice === "Sound") subType = soundType;
+    if (practice === "Visualization") subType = geometry;
+
     const sessionPayload = {
       id,
       date: new Date().toISOString(),
       type: practice.toLowerCase(),
+      subType,
       durationMinutes: duration,
-      pattern: { ...pattern },
+      pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
       tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
     };
 
@@ -136,9 +277,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   const handleStart = () => {
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
-    // Capture start time for breathing ring sync
     setSessionStartTime(performance.now());
-    // Reset tap accuracy data for new session
     setTapErrors([]);
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
@@ -153,13 +292,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
 
     setTapErrors(prev => {
       const updated = [...prev, errorMs];
-      // Keep only last 50 taps to prevent memory growth
       if (updated.length > 50) updated.shift();
       return updated;
     });
   };
 
-  // countdown timer
   useEffect(() => {
     if (!isRunning) return;
 
@@ -177,10 +314,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
 
-  // basic breathState feed (kept very simple; avatar just gets a phase name)
   useEffect(() => {
     if (!onBreathStateChange) return;
-    if (!isRunning || practice !== "Breathing") {
+    if (!isRunning || practice !== "Breath & Stillness") {
       onBreathStateChange(null);
       return;
     }
@@ -189,7 +325,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
       onBreathStateChange(null);
       return;
     }
-    // crude phase cycling based only on absolute time; good enough to keep avatar moving
+
     const now = performance.now() / 1000;
     const cyclePos = (now % total);
 
@@ -225,7 +361,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     });
   }, [isRunning, practice, pattern, onBreathStateChange]);
 
-  // values for pattern preview
   const totalDuration =
     pattern.inhale + pattern.hold1 + pattern.exhale + pattern.hold2 || 1;
   const width = 100;
@@ -250,57 +385,49 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     holdBottom: pattern.hold2,
   };
 
-  // Read theme for dynamic colors
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
 
   // ───────────────────────────────────────────────────────────
-  // RUNNING VIEW – full-screen breathing circle, no panel box
+  // RUNNING VIEW
   // ───────────────────────────────────────────────────────────
-  if (isRunning && (practice === "Breathing" || practice === "Visualization")) {
-    // Determine button appearance and radial glow based on tap accuracy
+  if (isRunning) {
     let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
-    let radialGlow = ''; // Radial shine around button
-    let buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)'; // Default inner highlight
+    let radialGlow = '';
+    let buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
 
-    // Feedback text state
     let feedbackColor = 'var(--accent-primary)';
     let feedbackText = "";
     let feedbackShadow = "none";
 
-    if (lastSignedErrorMs !== null) {
+    if (lastSignedErrorMs !== null && practice === "Breath & Stillness") {
       const absError = Math.round(Math.abs(lastSignedErrorMs));
 
       if (absError > 1000) {
-        // OUT OF BOUNDS - No glow, warning text
-        feedbackColor = '#ef4444'; // Red for warning
+        feedbackColor = '#ef4444';
         feedbackText = "OUT OF BOUNDS";
         feedbackShadow = "0 0 8px rgba(239, 68, 68, 0.5)";
         buttonBg = 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(60,60,60,0.4) 100%)';
-        radialGlow = ''; // No glow
+        radialGlow = '';
       } else if (absError <= 30) {
-        // PERFECT - WHITE radial glow
         feedbackColor = "#f8fafc";
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
         feedbackShadow = "0 0 12px rgba(255,255,255,0.6)";
         buttonBg = "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
         radialGlow = '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
       } else if (absError <= 100) {
-        // GREAT - GOLD radial glow
         feedbackColor = 'var(--accent-color)';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
         feedbackShadow = '0 0 10px var(--accent-50)';
         buttonBg = 'linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)';
         radialGlow = '0 0 50px 12px var(--accent-40), 0 0 25px var(--accent-60)';
       } else if (absError <= 300) {
-        // GOOD - BRONZE radial glow
         feedbackColor = '#d97706';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
         feedbackShadow = "0 0 8px rgba(217, 119, 6, 0.4)";
         buttonBg = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
         radialGlow = '0 0 40px 10px rgba(217, 119, 6, 0.3), 0 0 20px rgba(217, 119, 6, 0.5)';
       } else {
-        // POOR - GRAY radial glow
         feedbackColor = '#9ca3af';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
         feedbackShadow = "0 0 6px rgba(156, 163, 175, 0.3)";
@@ -308,10 +435,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         radialGlow = '0 0 35px 8px rgba(156, 163, 175, 0.25), 0 0 18px rgba(156, 163, 175, 0.4)';
       }
     }
-    console.log('[PracticeSection] Running state, practice type:', practice);
+
     return (
       <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-        {/* Practice Display – Centered */}
         <div className="flex items-center justify-center w-full mb-16 overflow-visible">
           {practice === "Visualization" ? (
             <VisualizationCanvas
@@ -323,23 +449,38 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
-          ) : (
+          ) : practice === "Breath & Stillness" ? (
             <BreathingRing
               breathPattern={breathingPatternForRing}
               onTap={handleAccuracyTap}
               onCycleComplete={() => setBreathCount(prev => prev + 1)}
               startTime={sessionStartTime}
             />
+          ) : (
+            <div className="flex flex-col items-center justify-center animate-fade-in-up">
+              <div
+                className="text-2xl mb-4 text-center"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  color: "var(--accent-color)",
+                  textShadow: "0 0 20px var(--accent-30)"
+                }}
+              >
+                {practice === "Sensory" ? sensoryType : soundType}
+              </div>
+              <div className="w-32 h-32 rounded-full border border-[var(--accent-20)] flex items-center justify-center relative">
+                <div className="absolute inset-0 rounded-full animate-pulse opacity-20 bg-[var(--accent-color)] blur-xl"></div>
+                <div className="text-4xl opacity-80">✦</div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Controls below ring */}
         <div className="flex flex-col items-center z-50">
-          {/* Feedback Text - Above Button */}
           <div className="h-6 mb-3 flex items-center justify-center">
-            {lastSignedErrorMs !== null && (
+            {lastSignedErrorMs !== null && practice === "Breath & Stillness" && (
               <div
-                key={lastSignedErrorMs} // Re-animate on change
+                key={lastSignedErrorMs}
                 className="text-[11px] font-medium tracking-[0.15em] uppercase animate-fade-in-up"
                 style={{
                   fontFamily: "Georgia, serif",
@@ -362,7 +503,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               textTransform: "uppercase",
               background: buttonBg,
               color: "#050508",
-              // Radial glow based on tap accuracy
               boxShadow: radialGlow
                 ? `${radialGlow}, ${buttonShadow}`
                 : `0 0 24px var(--accent-30), ${buttonShadow}`,
@@ -385,8 +525,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             {formatTime(timeLeft)}
           </div>
 
-          {/* Breath Counter */}
-          {breathCount > 0 && (
+          {breathCount > 0 && practice === "Breath & Stillness" && (
             <div
               className="mt-2"
               style={{
@@ -415,35 +554,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     );
   }
 
-
-
-
   // ───────────────────────────────────────────────────────────
-  // CONFIG VIEW – panel with pattern, presets, preview
+  // CONFIG VIEW - OPTIMIZED LAYOUT
   // ───────────────────────────────────────────────────────────
   return (
     <section className="w-full flex flex-col items-center pt-16 pb-24">
-      {/* Main panel */}
       <div
         className="relative w-full max-w-3xl rounded-3xl overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg, rgba(22,22,37,0.95) 0%, rgba(15,15,26,0.98) 100%)",
-          border: '1px solid var(--accent-15)', // 12% opacity ~15%
+          border: '1px solid var(--accent-15)',
           boxShadow:
             "0 0 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03)",
         }}
       >
-        {/* Top glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(ellipse 80% 40% at 50% 0%, var(--accent-10) 0%, transparent 70%)', // 6% opacity ~10%
+              'radial-gradient(ellipse 80% 40% at 50% 0%, var(--accent-10) 0%, transparent 70%)',
           }}
         />
 
-        {/* Corner ornaments */}
         <div
           className="absolute top-3 left-4"
           style={{ color: 'var(--accent-40)', fontSize: "6px" }}
@@ -458,111 +591,94 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
         </div>
 
         <div className="relative px-7 py-6">
-          {/* Row 1: Practice + Duration */}
-          <div className="flex flex-wrap items-start justify-between gap-4 mb-7">
-            {/* Practice selector */}
-            <div className="flex-1">
-              <div
-                className="mb-2"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "9px",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.4)",
-                }}
-              >
-                Practice
-              </div>
-              <div
-                className="flex gap-1 p-1 rounded-full"
-                style={{
-                  background: "rgba(0,0,0,0.3)",
-                  border: "1px solid var(--accent-10)",
-                }}
-              >
-                {PRACTICES.map((name) => (
-                  <button
-                    key={name}
-                    onClick={() => {
-                      console.log('[PracticeSection] Practice selector clicked:', name);
-                      setPractice(name);
-                    }}
-                    className={`rounded-full px-3 py-1.5 transition-all duration-200 ${practice === name ? 'bg-accent' : ''}`}
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "9px",
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      background:
-                        practice === name
-                          ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
-                          : "transparent",
-                      color:
-                        practice === name
-                          ? "#050508"
-                          : "rgba(253,251,245,0.4)",
-                      boxShadow:
-                        practice === name
-                          ? '0 0 12px var(--accent-15)'
-                          : "none",
-                    }}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
+          {/* Practice selector - centered */}
+          <div className="mb-6">
+            <div
+              className="mb-3"
+              style={{
+                fontFamily: "Georgia, serif",
+                fontSize: "9px",
+                letterSpacing: "0.25em",
+                textTransform: "uppercase",
+                color: "rgba(253,251,245,0.4)",
+                textAlign: "center"
+              }}
+            >
+              Practice
             </div>
+            <div
+              className="flex gap-1 p-1 rounded-full flex-wrap justify-center"
+              style={{
+                background: "rgba(0,0,0,0.3)",
+                border: "1px solid var(--accent-10)",
+              }}
+            >
+              {PRACTICES.map((name) => (
+                <button
+                  key={name}
+                  onClick={() => setPractice(name)}
+                  className={`rounded-full px-3 py-1.5 transition-all duration-200`}
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: "9px",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    background:
+                      practice === name
+                        ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
+                        : "transparent",
+                    color:
+                      practice === name
+                        ? "#050508"
+                        : "rgba(253,251,245,0.4)",
+                    boxShadow:
+                      practice === name
+                        ? '0 0 12px var(--accent-15)'
+                        : "none",
+                  }}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Duration selector */}
-            <div>
+          {/* Duration wheel + Timer + Start button - horizontal layout */}
+          <div className="flex items-center justify-between mb-6">
+            {/* Duration wheel on left */}
+            <div className="flex flex-col items-center">
               <div
                 className="mb-2"
                 style={{
                   fontFamily: "Georgia, serif",
                   fontSize: "9px",
-                  letterSpacing: "0.15em",
+                  letterSpacing: "0.25em",
                   textTransform: "uppercase",
                   color: "rgba(253,251,245,0.4)",
                 }}
               >
                 Duration
               </div>
-              <div className="flex gap-1">
-                {DURATIONS.map((min) => (
-                  <button
-                    key={min}
-                    onClick={() => setDuration(min)}
-                    className={`rounded-full px-2 py-1 transition-all duration-200 ${duration === min ? 'border-accent text-accent' : ''}`}
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "8px",
-                      letterSpacing: "0.15em",
-                      textTransform: "uppercase",
-                      background: "transparent",
-                      border: `1px solid ${duration === min
-                        ? "var(--accent-color)"
-                        : "var(--accent-10)"
-                        }`,
-                      color:
-                        duration === min
-                          ? "var(--accent-color)"
-                          : "rgba(253,251,245,0.4)",
-                      boxShadow:
-                        duration === min
-                          ? '0 0 12px var(--accent-15)'
-                          : "none",
-                    }}
-                  >
-                    {min}m
-                  </button>
-                ))}
+              <ScrollingWheel
+                value={duration}
+                onChange={setDuration}
+                options={DURATIONS}
+              />
+              <div
+                className="mt-1"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: "8px",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  color: "rgba(253,251,245,0.3)",
+                }}
+              >
+                minutes
               </div>
             </div>
-          </div>
 
-          {/* Row 2: Timer + Start button */}
-          <div className="flex items-center justify-between mb-6">
+            {/* Timer in center */}
             <div
               style={{
                 fontFamily: "Georgia, serif",
@@ -570,12 +686,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 fontWeight: 400,
                 letterSpacing: "0.2em",
                 color: "rgba(253,251,245,0.92)",
-                textShadow: '0 0 32px var(--accent-30)', // 20% opacity ~30%
+                textShadow: '0 0 32px var(--accent-30)',
               }}
             >
               {formatTime(timeLeft)}
             </div>
 
+            {/* Start button on right */}
             <button
               onClick={handleStart}
               className="rounded-full px-6 py-2.5 transition-all duration-200 hover:-translate-y-0.5 bg-accent"
@@ -609,7 +726,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
               style={{
                 fontSize: "8px",
-                color: 'var(--accent-70)', // 70% opacity
+                color: 'var(--accent-70)',
                 background: "rgba(15,15,26,1)",
               }}
             >
@@ -617,94 +734,172 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             </div>
           </div>
 
-          {/* Pattern + presets */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
+          {/* BREATH & STILLNESS: Patterns & Presets */}
+          {practice === "Breath & Stillness" && (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: "9px",
+                    letterSpacing: "0.25em",
+                    textTransform: "uppercase",
+                    color: "rgba(253,251,245,0.4)",
+                  }}
+                >
+                  Pattern
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  {PRESETS.map((name) => (
+                    <button
+                      key={name}
+                      onClick={() => setPreset(name)}
+                      className={`rounded-full px-2.5 py-1 transition-all duration-200`}
+                      style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: "8px",
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        background: "transparent",
+                        border: `1px solid ${preset === name
+                          ? "var(--accent-color)"
+                          : "var(--accent-10)"
+                          }`,
+                        color:
+                          preset === name
+                            ? "var(--accent-color)"
+                            : "rgba(253,251,245,0.4)",
+                        boxShadow:
+                          preset === name
+                            ? '0 0 12px var(--accent-15)'
+                            : "none",
+                      }}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-3 mb-4">
+                {[
+                  { label: "Inhale", key: "inhale" },
+                  { label: "Hold 1", key: "hold1" },
+                  { label: "Exhale", key: "exhale" },
+                  { label: "Hold 2", key: "hold2" },
+                ].map(({ label, key }) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <label
+                      style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: "8px",
+                        letterSpacing: "0.25em",
+                        textTransform: "uppercase",
+                        color: "rgba(253,251,245,0.4)",
+                        textAlign: "center"
+                      }}
+                    >
+                      {label}
+                    </label>
+                    <input
+                      type="text"
+                      value={pattern[key]}
+                      onChange={(e) =>
+                        handlePatternChange(key, e.target.value)
+                      }
+                      className="text-center rounded-xl px-2 py-2 outline-none transition-all duration-200"
+                      style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: "14px",
+                        background: "rgba(0,0,0,0.4)",
+                        border: "1px solid var(--accent-10)",
+                        color: "rgba(253,251,245,0.9)",
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* SENSORY: Type Selection */}
+          {practice === "Sensory" && (
+            <div className="mb-6">
               <div
-                className="mb-1"
+                className="mb-3"
                 style={{
                   fontFamily: "Georgia, serif",
                   fontSize: "9px",
                   letterSpacing: "0.25em",
                   textTransform: "uppercase",
                   color: "rgba(253,251,245,0.4)",
+                  textAlign: "center"
                 }}
               >
-                Pattern
+                Sensory Focus
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {SENSORY_TYPES.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSensoryType(type)}
+                    className="rounded-xl px-4 py-3 transition-all duration-200 text-center"
+                    style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: "11px",
+                      letterSpacing: "0.05em",
+                      background: sensoryType === type ? "rgba(255,255,255,0.05)" : "transparent",
+                      border: `1px solid ${sensoryType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
+                      color: sensoryType === type ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
+                      boxShadow: sensoryType === type ? "0 0 15px var(--accent-10)" : "none"
+                    }}
+                  >
+                    {type}
+                  </button>
+                ))}
               </div>
             </div>
+          )}
 
-            <div className="flex gap-2 flex-wrap">
-              {PRESETS.map((name) => (
-                <button
-                  key={name}
-                  onClick={() => setPreset(name)}
-                  className={`rounded-full px-2.5 py-1 transition-all duration-200 ${preset === name ? 'border-accent text-accent' : ''}`}
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "8px",
-                    letterSpacing: "0.15em",
-                    textTransform: "uppercase",
-                    background: "transparent",
-                    border: `1px solid ${preset === name
-                      ? "var(--accent-color)"
-                      : "var(--accent-10)"
-                      }`,
-                    color:
-                      preset === name
-                        ? "var(--accent-color)"
-                        : "rgba(253,251,245,0.4)",
-                    boxShadow:
-                      preset === name
-                        ? '0 0 12px var(--accent-15)'
-                        : "none",
-                  }}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Input fields */}
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            {[
-              { label: "Inhale", key: "inhale" },
-              { label: "Hold 1", key: "hold1" },
-              { label: "Exhale", key: "exhale" },
-              { label: "Hold 2", key: "hold2" },
-            ].map(({ label, key }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <label
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "8px",
-                    letterSpacing: "0.25em",
-                    textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.4)",
-                  }}
-                >
-                  {label}
-                </label>
-                <input
-                  type="text"
-                  value={pattern[key]}
-                  onChange={(e) =>
-                    handlePatternChange(key, e.target.value)
-                  }
-                  className="text-center rounded-xl px-2 py-2 outline-none transition-all duration-200"
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "14px",
-                    background: "rgba(0,0,0,0.4)",
-                    border: "1px solid var(--accent-10)",
-                    color: "rgba(253,251,245,0.9)",
-                  }}
-                />
+          {/* SOUND: Type Selection */}
+          {practice === "Sound" && (
+            <div className="mb-6">
+              <div
+                className="mb-3"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: "9px",
+                  letterSpacing: "0.25em",
+                  textTransform: "uppercase",
+                  color: "rgba(253,251,245,0.4)",
+                  textAlign: "center"
+                }}
+              >
+                Soundscape
               </div>
-            ))}
-          </div>
-
+              <div className="grid grid-cols-2 gap-3">
+                {SOUND_TYPES.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSoundType(type)}
+                    className="rounded-xl px-4 py-3 transition-all duration-200 text-center"
+                    style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: "11px",
+                      letterSpacing: "0.05em",
+                      background: soundType === type ? "rgba(255,255,255,0.05)" : "transparent",
+                      border: `1px solid ${soundType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
+                      color: soundType === type ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
+                      boxShadow: soundType === type ? "0 0 15px var(--accent-10)" : "none"
+                    }}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Visualization Config */}
           {practice === "Visualization" && (
@@ -747,99 +942,101 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             </div>
           </div>
 
-          {/* Pattern preview */}
-          <div className="mb-2">
-            <div
-              className="mb-3 text-center"
-              style={{
-                fontFamily: "Georgia, serif",
-                fontSize: "9px",
-                letterSpacing: "0.25em",
-                textTransform: "uppercase",
-                color: "rgba(253,251,245,0.4)",
-              }}
-            >
-              Pattern Preview
-            </div>
-
-            <div className="relative w-full h-16">
-              <svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 100 40"
-                preserveAspectRatio="none"
+          {/* Pattern preview (Only for Breath & Stillness) */}
+          {practice === "Breath & Stillness" && (
+            <div className="mb-2">
+              <div
+                className="mb-3 text-center"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: "9px",
+                  letterSpacing: "0.25em",
+                  textTransform: "uppercase",
+                  color: "rgba(253,251,245,0.4)",
+                }}
               >
-                <defs>
-                  <linearGradient
-                    id="patternGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="var(--accent-20)" // 20% opacity
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="transparent" // 0% opacity
-                    />
-                  </linearGradient>
-                </defs>
-                <path
-                  d={pathD}
-                  fill="url(#patternGradient)"
-                  stroke="var(--accent-primary)"
-                  strokeWidth="0.5"
-                  vectorEffect="non-scaling-stroke"
-                />
-              </svg>
+                Pattern Preview
+              </div>
 
-              <div className="flex justify-between w-full px-1 mt-1">
-                <span
-                  style={{
-                    fontSize: "6px",
-                    color: "rgba(253,251,245,0.3)",
-                    width: `${(pattern.inhale / totalDuration) * 100}%`,
-                    textAlign: "center",
-                  }}
+              <div className="relative w-full h-16">
+                <svg
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 100 40"
+                  preserveAspectRatio="none"
                 >
-                  IN
-                </span>
-                <span
-                  style={{
-                    fontSize: "6px",
-                    color: "rgba(253,251,245,0.3)",
-                    width: `${(pattern.hold1 / totalDuration) * 100}%`,
-                    textAlign: "center",
-                  }}
-                >
-                  HOLD
-                </span>
-                <span
-                  style={{
-                    fontSize: "6px",
-                    color: "rgba(253,251,245,0.3)",
-                    width: `${(pattern.exhale / totalDuration) * 100}%`,
-                    textAlign: "center",
-                  }}
-                >
-                  OUT
-                </span>
-                <span
-                  style={{
-                    fontSize: "6px",
-                    color: "rgba(253,251,245,0.3)",
-                    width: `${(pattern.hold2 / totalDuration) * 100}%`,
-                    textAlign: "center",
-                  }}
-                >
-                  HOLD
-                </span>
+                  <defs>
+                    <linearGradient
+                      id="patternGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="var(--accent-20)"
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="transparent"
+                      />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={pathD}
+                    fill="url(#patternGradient)"
+                    stroke="var(--accent-primary)"
+                    strokeWidth="0.5"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+
+                <div className="flex justify-between w-full px-1 mt-1">
+                  <span
+                    style={{
+                      fontSize: "6px",
+                      color: "rgba(253,251,245,0.3)",
+                      width: `${(pattern.inhale / totalDuration) * 100}%`,
+                      textAlign: "center",
+                    }}
+                  >
+                    IN
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "6px",
+                      color: "rgba(253,251,245,0.3)",
+                      width: `${(pattern.hold1 / totalDuration) * 100}%`,
+                      textAlign: "center",
+                    }}
+                  >
+                    HOLD
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "6px",
+                      color: "rgba(253,251,245,0.3)",
+                      width: `${(pattern.exhale / totalDuration) * 100}%`,
+                      textAlign: "center",
+                    }}
+                  >
+                    OUT
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "6px",
+                      color: "rgba(253,251,245,0.3)",
+                      width: `${(pattern.hold2 / totalDuration) * 100}%`,
+                      textAlign: "center",
+                    }}
+                  >
+                    HOLD
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
