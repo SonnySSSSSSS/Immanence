@@ -188,8 +188,16 @@ function App() {
               </div>
 
               <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarPreview(true)}
+                  className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
+                  title="Path Selector (Shift+P)"
+                >
+                  🎨
+                </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v1.4.72
+                  v1.4.73
                 </div>
                 {!isHub && (
                   <button
