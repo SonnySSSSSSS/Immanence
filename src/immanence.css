@@ -34,6 +34,7 @@
   /* ─── Typography ─── */
   --font-display: 'Cinzel', serif;
   --font-body: 'Crimson Pro', serif;
+  --font-ui: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -45,24 +46,31 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
 @keyframes shimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
   }
+
   50% {
     opacity: 1;
   }
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 12px rgba(251, 191, 36, 0.15);
   }
+
   50% {
     box-shadow: 0 0 24px rgba(251, 191, 36, 0.25);
   }
@@ -74,6 +82,7 @@
     height: 20px;
     opacity: 1;
   }
+
   100% {
     width: 140px;
     height: 140px;
@@ -137,7 +146,7 @@
 }
 
 /* Ensure content sits above pseudo-elements */
-.panel-ornate > * {
+.panel-ornate>* {
   position: relative;
   z-index: 1;
 }
@@ -516,6 +525,7 @@
     opacity: 0.5;
     filter: drop-shadow(0 0 24px rgba(253, 224, 71, 0.4));
   }
+
   100% {
     opacity: 0;
     filter: drop-shadow(0 0 8px rgba(253, 224, 71, 0));

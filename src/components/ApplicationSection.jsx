@@ -2,12 +2,13 @@
 import React from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { Avatar } from './Avatar.jsx';
+import { StageTitle } from './StageTitle.jsx';
 import { ActiveTrackingItems } from './ActiveTrackingItems.jsx';
 import { QuickLogGesturePad } from './QuickLogGesturePad.jsx';
 import { TodayAwarenessLog } from './TodayAwarenessLog.jsx';
 import { WeeklyReview } from './WeeklyReview.jsx';
 
-export function ApplicationSection() {
+export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore }) {
   const { activePath } = useNavigationStore();
 
   // No active path - show empty state
@@ -15,17 +16,21 @@ export function ApplicationSection() {
     return (
       <div className="w-full max-w-4xl mx-auto space-y-8 pb-12">
         {/* Avatar */}
-        <div className="flex justify-center pt-8">
+        <div className="flex flex-col items-center pt-8">
           <div style={{ transform: 'scale(0.75)' }}>
-            <Avatar mode="application" />
+            <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
+          </div>
+          {/* Stage Title */}
+          <div className="mt-4">
+            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
           </div>
         </div>
 
         {/* Empty State */}
-        <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.15)] rounded-3xl p-12 text-center">
+        <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
           <h2
-            className="text-lg text-[rgba(253,224,71,0.8)] mb-4"
-            style={{ fontFamily: 'Cinzel, serif' }}
+            className="text-lg mb-4"
+            style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
           >
             Application
           </h2>
@@ -47,8 +52,8 @@ export function ApplicationSection() {
               // This would need to be wired through App.jsx
               window.location.hash = 'navigation';
             }}
-            className="px-6 py-3 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#f59e0b] text-[#050508] font-semibold text-sm"
-            style={{ fontFamily: 'Cinzel, serif' }}
+            className="px-6 py-3 rounded-full text-[#050508] font-semibold text-sm"
+            style={{ fontFamily: 'Cinzel, serif', background: 'var(--ui-button-gradient)' }}
           >
             GO TO NAVIGATION
           </button>
@@ -61,9 +66,13 @@ export function ApplicationSection() {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
       {/* Avatar - smaller */}
-      <div className="flex justify-center pt-8">
+      <div className="flex flex-col items-center pt-8">
         <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="application" />
+          <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
+        </div>
+        {/* Stage Title */}
+        <div className="mt-4">
+          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
         </div>
       </div>
 

@@ -6,8 +6,10 @@
 // - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
 
 import React, { useEffect, useState, useRef } from "react";
+import { EnsoStroke } from "./EnsoStroke";
+import { useTheme } from "../context/ThemeContext";
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime }) {
   const {
     inhale = 4,
     holdTop = 4,
@@ -26,10 +28,32 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
   const [mandalaProgress, setMandalaProgress] = useState(0);
   const lastCycleRef = useRef(0);
 
+  // Enso feedback state
+  const [ensoFeedback, setEnsoFeedback] = useState({
+    active: false,
+    accuracy: null, // 'perfect' | 'good' | 'loose'
+    key: 0
+  });
+  const [currentPhase, setCurrentPhase] = useState(null);
+  const lastTapPhaseRef = useRef(null);
+
   // Phase boundaries (as fractions of cycle)
   const tInhale = inhale / total;
   const tHoldTop = (inhale + holdTop) / total;
   const tExhale = (inhale + holdTop + exhale) / total;
+
+  // Track current phase for enso feedback
+  useEffect(() => {
+    if (progress < tInhale) {
+      setCurrentPhase('inhale');
+    } else if (progress < tHoldTop) {
+      setCurrentPhase('hold-top');
+    } else if (progress < tExhale) {
+      setCurrentPhase('exhale');
+    } else {
+      setCurrentPhase('hold-bottom');
+    }
+  }, [progress, tInhale, tHoldTop, tExhale]);
 
   // Calculate current scale based on progress through cycle
   let scale = minScale;
@@ -82,16 +106,17 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     previousProgressRef.current = currP;
   }, [progress, tInhale, tHoldTop, tExhale, onCycleComplete]);
 
-  // Main animation loop - tracks progress through breath cycle
+  // Main animation loop - SYNCED to session start time
   useEffect(() => {
     if (!total || total <= 0) return;
 
     const cycleMs = total * 1000;
-    const start = performance.now();
+    // Use provided startTime or current time as reference
+    const referenceTime = startTime || performance.now();
     let frameId = null;
 
     const loop = (now) => {
-      const elapsed = now - start;
+      const elapsed = now - referenceTime;
       const t = (elapsed % cycleMs) / cycleMs;
       setProgress(t);
       frameId = requestAnimationFrame(loop);
@@ -101,7 +126,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [total]);
+  }, [total, startTime]); // Re-sync when startTime changes
 
   // Trigger echo visual effect
   const triggerEcho = () => {
@@ -178,13 +203,37 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
     const INPUT_LATENCY_MS = 60;
     const errorMs = (actualMs - expectedMs) - INPUT_LATENCY_MS;
 
-    // VALIDATION: Accept all taps, let parent handle "out of bounds" logic
-    // const MAX_TAP_WINDOW_MS = 1000;
-    // if (Math.abs(errorMs) > MAX_TAP_WINDOW_MS) { ... }
+    const absError = Math.abs(errorMs);
+
+    // Trigger enso feedback (once per phase)
+    console.log('🎯 Tap debug:', { currentPhase, lastTapPhase: lastTapPhaseRef.current, absError });
+
+    if (currentPhase && lastTapPhaseRef.current !== currentPhase) {
+      const accuracy = absError < 50 ? 'perfect' : absError < 200 ? 'good' : 'loose';
+
+      console.log('✨ Triggering enso:', { accuracy, currentPhase });
+
+      setEnsoFeedback(prev => ({
+        active: true,
+        accuracy,
+        key: prev.key + 1
+      }));
+
+      lastTapPhaseRef.current = currentPhase;
+
+      // Clear enso after animation completes
+      setTimeout(() => setEnsoFeedback(prev => ({ ...prev, active: false })), 1400);
+    } else {
+      console.log('❌ Enso NOT triggered - already tapped this phase or no phase');
+    }
 
     console.log('✅ Tap accepted:', errorMs, 'ms from', closestPeak.name, 'peak');
     onTap(errorMs);
   };
+
+  // Read theme for dynamic colors
+  const theme = useTheme();
+  const { primary, secondary, muted, glow } = theme.accent;
 
   return (
     <div
@@ -192,89 +241,94 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
       onClick={handleRingClick}
       style={{ userSelect: "none" }}
     >
+      {/* Image-based Enso - authentic brush stroke (OUTSIDE SVG to avoid overlay) */}
+      {ensoFeedback.active && (
+        <div
+          key={ensoFeedback.key}
+          className="absolute"
+          style={{
+            pointerEvents: "none",
+            top: "50%",
+            left: "50%",
+            width: "128px",
+            height: "128px",
+            transform: ensoFeedback.accuracy === 'loose'
+              ? 'translate(-50%, -50%) scale(0.85)'
+              : 'translate(-50%, -50%) scale(1)',
+            zIndex: 20,
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              opacity: 1,
+              animation: 'ensoFadeOut 500ms ease-out 800ms forwards',
+            }}
+          >
+            <EnsoStroke
+              centerX={64}
+              centerY={64}
+              radius={50}
+              accuracy={ensoFeedback.accuracy}
+              isActive={true}
+            />
+          </div>
+
+          {/* Perfect timing flash at completion point */}
+          {ensoFeedback.accuracy === 'perfect' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '25%',
+                left: '22%',
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                background: '#fffef0',
+                boxShadow: '0 0 12px rgba(255, 254, 240, 0.9)',
+                animation: 'ensoFlash 200ms ease-out 400ms',
+                opacity: 0,
+              }}
+            />
+          )}
+        </div>
+      )}
+
       {/* Main breathing ring with EVENT HORIZON GLOW */}
       <svg
         viewBox="0 0 200 200"
         className="w-64 h-64"
         style={{
           pointerEvents: "none",
-          // EVENT HORIZON GLOW - Clean layered box-shadow
+          // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
           filter: progress < tInhale
-            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px #fffbe8) 
-               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px #fde68a) 
-               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px #fcd34d) 
-               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px rgba(245,158,11,0.4))`
+            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px var(--accent-primary)) 
+               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px var(--accent-secondary)) 
+               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px var(--accent-muted)) 
+               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px var(--accent-glow))`
             : progress < tHoldTop
-              ? `drop-shadow(0 0 9.6px #fffbe8) 
-               drop-shadow(0 0 19.2px #fde68a) 
-               drop-shadow(0 0 28.8px #fcd34d) 
-               drop-shadow(0 0 38.4px rgba(245,158,11,0.4))`
+              ? `drop-shadow(0 0 9.6px var(--accent-primary)) 
+               drop-shadow(0 0 19.2px var(--accent-secondary)) 
+               drop-shadow(0 0 28.8px var(--accent-muted)) 
+               drop-shadow(0 0 38.4px var(--accent-glow))`
               : progress < tExhale
-                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fffbe8) 
-               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fde68a) 
-               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px #fcd34d) 
-               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px rgba(245,158,11,0.4))`
-                : `drop-shadow(0 0 8px #fffbe8) 
-               drop-shadow(0 0 16px #fde68a) 
-               drop-shadow(0 0 24px #fcd34d) 
-               drop-shadow(0 0 32px rgba(245,158,11,0.4))`
+                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-primary)) 
+               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-secondary)) 
+               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-muted)) 
+               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-glow))`
+                : `drop-shadow(0 0 8px var(--accent-primary)) 
+               drop-shadow(0 0 16px var(--accent-secondary)) 
+               drop-shadow(0 0 24px var(--accent-muted)) 
+               drop-shadow(0 0 32px var(--accent-glow))`
         }}
       >
-        {/* Mandala Pattern - grows with each breath */}
-        {mandalaProgress > 0 && (
-          <g>
-            {/* Center circle */}
-            <circle
-              cx="100"
-              cy="100"
-              r={mandalaProgress * 15}
-              fill="none"
-              stroke="rgba(253,224,71,0.4)"
-              strokeWidth="1"
-              opacity={mandalaProgress * 0.4}
-            />
-
-            {/* Petal pattern - 6 petals */}
-            {[0, 1, 2, 3, 4, 5].map(i => {
-              const angle = (i * 60 * Math.PI) / 180;
-              const radius = mandalaProgress * 30;
-              const cx = 100 + Math.cos(angle) * radius;
-              const cy = 100 + Math.sin(angle) * radius;
-              return (
-                <circle
-                  key={i}
-                  cx={cx}
-                  cy={cy}
-                  r={mandalaProgress * 8}
-                  fill="none"
-                  stroke="rgba(253,224,71,0.3)"
-                  strokeWidth="0.5"
-                  opacity={mandalaProgress * 0.35}
-                />
-              );
-            })}
-
-            {/* Outer ring */}
-            {mandalaProgress > 0.5 && (
-              <circle
-                cx="100"
-                cy="100"
-                r={mandalaProgress * 50}
-                fill="none"
-                stroke="rgba(253,224,71,0.2)"
-                strokeWidth="0.5"
-                opacity={mandalaProgress * 0.3}
-              />
-            )}
-          </g>
-        )}
-
         <circle
           cx="100"
           cy="100"
           r="80"
           fill="none"
-          stroke="#fcd34d"
+          stroke="var(--accent-primary)"
           strokeWidth="4"
           strokeLinecap="round"
           style={{
@@ -300,7 +354,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
             cy="100"
             r="80"
             fill="none"
-            stroke="#fcd34d"
+            stroke="var(--accent-primary)"
             strokeWidth="3"
             strokeLinecap="round"
             style={{
@@ -322,11 +376,12 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
           fontSize: "0.875rem",
           letterSpacing: "0.25em",
           textTransform: "uppercase",
-          color: "rgba(253, 224, 71, 0.7)",
+          color: 'var(--accent-primary)',
           fontFamily: "Cinzel, serif",
           fontWeight: "500",
           zIndex: 10,
           pointerEvents: "none",
+          textShadow: '0 0 10px var(--accent-glow)'
         }}
       >
         {progress < tInhale
@@ -342,6 +397,66 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete }) {
         @keyframes fadeOutEcho {
           0% {
             opacity: 0.5;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+        
+        @keyframes ensoReveal {
+          0% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes ensoGlow {
+          0%, 100% {
+            filter: brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%) drop-shadow(0 0 8px rgba(253, 224, 71, 0.6));
+          }
+          50% {
+            filter: brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%) drop-shadow(0 0 16px rgba(253, 224, 71, 0.9));
+          }
+        }
+        
+        @keyframes ensoGlowPerfect {
+          0%, 100% {
+            filter: brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%) drop-shadow(0 0 12px rgba(253, 224, 71, 0.9));
+          }
+          50% {
+            filter: brightness(0) saturate(100%) invert(84%) sepia(29%) saturate(1000%) hue-rotate(358deg) brightness(104%) contrast(96%) drop-shadow(0 0 24px rgba(253, 224, 71, 1));
+          }
+        }
+        
+        @keyframes ensoFade {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+        
+        @keyframes ensoFlash {
+          0% {
+            opacity: 0;
+            transform: scale(0.5);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.5);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(2);
+          }
+        }
+        
+        @keyframes ensoFadeOut {
+          0% {
+            opacity: 1;
           }
           100% {
             opacity: 0;

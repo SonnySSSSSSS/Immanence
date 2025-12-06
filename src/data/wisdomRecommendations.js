@@ -1,13 +1,12 @@
 // src/data/wisdomRecommendations.js
-// WISDOM RECOMMENDATIONS MAPPING (DRAFT)
+// WISDOM RECOMMENDATIONS MAPPING
 // Based on Immanence OS treatise structure
-// Purpose: Functional testing of recommendation logic
-// To be refined based on user feedback and actual chapter content verification
 
 export const wisdomCategories = {
   "focus-presence": {
     label: "Focus & Presence",
     description: "For scattered energy, attention fragmentation, overstimulation",
+    symptoms: ["Scattered", "Fragmented", "Overstimulated"],
     chapters: [
       {
         title: "The Four Modes - Why Evolution Requires All Four",
@@ -30,6 +29,7 @@ export const wisdomCategories = {
   "emotional-regulation": {
     label: "Emotional Regulation",
     description: "For dysregulation, mood instability, feeling overwhelmed",
+    symptoms: ["Reactive", "Overwhelmed", "Flooded"],
     chapters: [
       {
         title: "The Resonant Symphony",
@@ -57,6 +57,7 @@ export const wisdomCategories = {
   "grounding-safety": {
     label: "Grounding & Safety",
     description: "For anxiety, disconnection, rootlessness, feeling unmoored",
+    symptoms: ["Anxious", "Unmoored", "Dissociated"],
     chapters: [
       {
         title: "The Sacred Ego - Boundary, Tool, and Divine Instrument",
@@ -84,6 +85,7 @@ export const wisdomCategories = {
   "shadow-integration": {
     label: "Shadow & Integration",
     description: "For recurring patterns, shame, denied parts of yourself, self-sabotage",
+    symptoms: ["Triggered", "Avoiding", "Projecting"],
     chapters: [
       {
         title: "Shadow as Curriculum - The Architecture of the Unchosen Self",
@@ -110,7 +112,8 @@ export const wisdomCategories = {
 
   "expression-voice": {
     label: "Expression & Voice",
-    description: "For suppressed creativity, difficulty speaking truth, blocked communication, creative stagnation",
+    description: "For suppressed creativity, difficulty speaking truth, blocked communication",
+    symptoms: ["Suppressed", "Inauthentic", "Voiceless"],
     chapters: [
       {
         title: "The Bridge of Breath/Resonance",
@@ -137,7 +140,8 @@ export const wisdomCategories = {
 
   "heart-connection": {
     label: "Heart & Connection",
-    description: "For isolation, relationship difficulty, closed heart, loneliness, difficulty with intimacy",
+    description: "For isolation, relationship difficulty, closed heart, loneliness",
+    symptoms: ["Disconnected", "Guarded", "Lonely"],
     chapters: [
       {
         title: "Love: The Invisible Reconciler",
@@ -164,7 +168,8 @@ export const wisdomCategories = {
 
   "resonance-alignment": {
     label: "Resonance & Alignment",
-    description: "For understanding why their life is structured the way it is, frequency work, attracting what they want",
+    description: "For understanding life patterns, frequency work, attracting what you want",
+    symptoms: ["Misaligned", "Off-rhythm", "Forcing"],
     chapters: [
       {
         title: "The Resonant Symphony",
@@ -191,7 +196,8 @@ export const wisdomCategories = {
 
   "self-knowledge": {
     label: "Self-Knowledge",
-    description: "For deeper understanding of your particular nature and context, who you actually are, your purpose",
+    description: "For deeper understanding of your nature, who you are, your purpose",
+    symptoms: ["Confused", "Identity-lost", "Seeking"],
     chapters: [
       {
         title: "The Architecture of Integration / Before You Practice",
@@ -232,7 +238,8 @@ export function getAllCategories() {
   return Object.entries(wisdomCategories).map(([key, data]) => ({
     key,
     label: data.label,
-    description: data.description
+    description: data.description,
+    symptoms: data.symptoms || []
   }));
 }
 

@@ -1,4 +1,4 @@
-// src/components/WeeklyReview.jsx
+﻿// src/components/WeeklyReview.jsx
 import React from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -36,7 +36,7 @@ export function WeeklyReview() {
         return (
             <div className="flex-1 flex items-end justify-center" style={{ height: '60px' }}>
                 <div
-                    className="w-full bg-gradient-to-t from-[#fcd34d] to-[rgba(253,224,71,0.6)] rounded-t-sm"
+                    className="w-full bg-gradient-to-t from-[var(--accent-color)] to-[var(--accent-60)] rounded-t-sm"
                     style={{ height: `${height}%` }}
                 />
             </div>
@@ -45,10 +45,10 @@ export function WeeklyReview() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[rgba(253,224,71,0.15)] rounded-3xl p-6 space-y-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6 space-y-6">
                 {/* Header */}
                 <h3
-                    className="text-sm uppercase tracking-[0.2em] text-[rgba(253,224,71,0.7)] text-center"
+                    className="text-sm uppercase tracking-[0.2em] text-[var(--accent-70)] text-center"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     THIS WEEK
@@ -56,7 +56,7 @@ export function WeeklyReview() {
 
                 {/* Practice Consistency */}
                 <div>
-                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-2">
+                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
                         Practice Consistency
                     </div>
                     <div className="flex items-center gap-3">
@@ -65,8 +65,8 @@ export function WeeklyReview() {
                                 <div
                                     key={i}
                                     className={`flex-1 h-6 rounded ${i < practiceDays
-                                            ? 'bg-gradient-to-br from-[#fcd34d] to-[#f59e0b]'
-                                            : 'bg-[rgba(253,224,71,0.1)]'
+                                        ? 'bg-[var(--ui-button-gradient)]'
+                                        : 'bg-[var(--accent-10)]'
                                         }`}
                                 />
                             ))}
@@ -79,10 +79,10 @@ export function WeeklyReview() {
 
                 {/* Awareness Moments */}
                 <div>
-                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-2">
+                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
                         Awareness Moments
                     </div>
-                    <div className="text-2xl text-[#fcd34d] mb-3" style={{ fontFamily: 'Cinzel, serif' }}>
+                    <div className="text-2xl text-[var(--accent-color)] mb-3" style={{ fontFamily: 'Cinzel, serif' }}>
                         {weekStats.total}
                     </div>
                     <div className="space-y-1.5">
@@ -94,7 +94,7 @@ export function WeeklyReview() {
                                 >
                                     {category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                                 </span>
-                                <span className="text-[rgba(253,224,71,0.7)] font-semibold">{count}</span>
+                                <span className="text-[var(--accent-70)] font-semibold">{count}</span>
                             </div>
                         ))}
                     </div>
@@ -102,17 +102,17 @@ export function WeeklyReview() {
 
                 {/* Responded Differently */}
                 <div>
-                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-2">
+                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
                         Responded Differently
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl text-[#fcd34d]" style={{ fontFamily: 'Cinzel, serif' }}>
+                        <span className="text-3xl text-[var(--accent-color)]" style={{ fontFamily: 'Cinzel, serif' }}>
                             {weekStats.respondedDifferently}
                         </span>
                         <span className="text-sm text-[rgba(253,251,245,0.6)]">
                             / {weekStats.total}
                         </span>
-                        <span className="ml-auto text-lg text-[rgba(253,224,71,0.8)]">
+                        <span className="ml-auto text-lg text-[var(--accent-80)]">
                             {weekStats.respondedDifferentlyPercent}%
                         </span>
                     </div>
@@ -120,16 +120,16 @@ export function WeeklyReview() {
 
                 {/* Divider */}
                 <div className="flex items-center justify-center py-2">
-                    <div className="flex items-center gap-4 text-[rgba(253,224,71,0.3)]">
-                        <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[rgba(253,224,71,0.3)]" />
+                    <div className="flex items-center gap-4 text-[var(--accent-30)]">
+                        <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
                         <div style={{ fontSize: '10px' }}>◆</div>
-                        <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[rgba(253,224,71,0.3)]" />
+                        <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
                     </div>
                 </div>
 
                 {/* Trend (past 8 weeks) */}
                 <div>
-                    <div className="text-xs text-[rgba(253,224,71,0.6)] uppercase tracking-wider mb-3 text-center">
+                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-3 text-center">
                         Trend (Past 8 Weeks)
                     </div>
 
@@ -159,7 +159,7 @@ export function WeeklyReview() {
                 </div>
 
                 {/* Insight */}
-                <div className="border-t border-[rgba(253,224,71,0.1)] pt-4">
+                <div className="border-t border-[var(--accent-10)] pt-4">
                     <p
                         className="text-sm text-[rgba(253,251,245,0.7)] italic text-center leading-relaxed"
                         style={{ fontFamily: 'Crimson Pro, serif' }}

@@ -32,21 +32,21 @@ export function PathSelectionGrid() {
                 transition-all
                 text-left
                 ${isPlaceholder
-                                    ? 'opacity-40 cursor-not-allowed border-[rgba(253,224,71,0.05)] bg-[rgba(253,251,245,0.01)]'
+                                    ? 'opacity-40 cursor-not-allowed border-[var(--accent-10)] bg-[rgba(253,251,245,0.01)]'
                                     : isSelected
-                                        ? 'border-[rgba(253,224,71,0.4)] shadow-[0_0_20px_rgba(253,224,71,0.15)] bg-[rgba(253,251,245,0.03)]'
-                                        : 'border-[rgba(253,224,71,0.1)] bg-[rgba(253,251,245,0.02)] hover:border-[rgba(253,224,71,0.2)] hover:bg-[rgba(253,251,245,0.05)]'
+                                        ? 'border-[var(--accent-40)] shadow-[0_0_20px_var(--accent-15)] bg-[rgba(253,251,245,0.03)]'
+                                        : 'border-[var(--accent-10)] bg-[rgba(253,251,245,0.02)] hover:border-[var(--accent-20)] hover:bg-[rgba(253,251,245,0.05)]'
                                 }
               `}
                         >
                             {/* Active path indicator */}
                             {isActive && (
-                                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#fcd34d] shadow-[0_0_8px_rgba(253,224,71,0.6)]" />
+                                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--accent-color)] shadow-[0_0_8px_var(--accent-60)]" />
                             )}
 
                             {/* Glyph */}
                             <div
-                                className="text-3xl mb-3 text-[rgba(253,224,71,0.7)]"
+                                className="text-3xl mb-3 text-[var(--accent-70)]"
                                 style={{ fontFamily: 'Cinzel, serif' }}
                             >
                                 {path.glyph}
@@ -70,7 +70,7 @@ export function PathSelectionGrid() {
 
                             {/* Duration */}
                             {!isPlaceholder && (
-                                <div className="text-[10px] text-[rgba(253,224,71,0.5)] uppercase tracking-wider">
+                                <div className="text-[10px] text-[var(--accent-50)] uppercase tracking-wider">
                                     {path.duration} weeks
                                 </div>
                             )}
