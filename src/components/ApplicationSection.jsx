@@ -1,23 +1,29 @@
 // src/components/ApplicationSection.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { Avatar } from './Avatar.jsx';
-import { ActiveTrackingItems } from './ActiveTrackingItems.jsx';
-import { QuickLogGesturePad } from './QuickLogGesturePad.jsx';
-import { TodayAwarenessLog } from './TodayAwarenessLog.jsx';
-import { WeeklyReview } from './WeeklyReview.jsx';
+import { StageTitle } from './StageTitle.jsx';
+import { TrackingView } from './TrackingView.jsx';
+import { FourModesHome } from './FourModesHome.jsx';
+import { ModeDetail } from './ModeDetail.jsx';
 
-export function ApplicationSection({ onStageChange, currentStage }) {
+export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore }) {
   const { activePath } = useNavigationStore();
+  const [activeSubView, setActiveSubView] = useState('tracking'); // 'tracking' | 'modes'
+  const [selectedModeId, setSelectedModeId] = useState(null);
 
   // No active path - show empty state
   if (!activePath) {
     return (
       <div className="w-full max-w-4xl mx-auto space-y-8 pb-12">
         {/* Avatar */}
-        <div className="flex justify-center pt-8">
+        <div className="flex flex-col items-center pt-8">
           <div style={{ transform: 'scale(0.75)' }}>
-            <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} />
+            <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
+          </div>
+          {/* Stage Title */}
+          <div className="mt-4">
+            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
           </div>
         </div>
 
@@ -43,8 +49,6 @@ export function ApplicationSection({ onStageChange, currentStage }) {
           </p>
           <button
             onClick={() => {
-              // Navigate to Navigation section
-              // This would need to be wired through App.jsx
               window.location.hash = 'navigation';
             }}
             className="px-6 py-3 rounded-full text-[#050508] font-semibold text-sm"
@@ -57,27 +61,80 @@ export function ApplicationSection({ onStageChange, currentStage }) {
     );
   }
 
-  // Active path - show tracking interface
+  // Handle mode detail view
+  const handleSelectMode = (modeId) => {
+    setSelectedModeId(modeId);
+  };
+
+  const handleBackFromMode = () => {
+    setSelectedModeId(null);
+  };
+
+  // Active path - show tracking / modes interface
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
       {/* Avatar - smaller */}
-      <div className="flex justify-center pt-8">
+      <div className="flex flex-col items-center pt-8">
         <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} />
+          <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
+        </div>
+        {/* Stage Title */}
+        <div className="mt-4">
+          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
         </div>
       </div>
 
-      {/* Active Tracking Items */}
-      <ActiveTrackingItems />
+      {/* Sub-Toggle: Tracking | Four Modes */}
+      <section
+        className="flex gap-1 rounded-full bg-black/30 p-1 border border-[var(--accent-10)]"
+        role="tablist"
+      >
+        <button
+          role="tab"
+          aria-selected={activeSubView === 'tracking'}
+          className="flex-1 px-4 py-2 rounded-full text-xs transition-all"
+          style={{
+            background: activeSubView === 'tracking' ? 'var(--gold-30)' : 'transparent',
+            color: activeSubView === 'tracking' ? 'var(--gold-100)' : 'rgba(253,251,245,0.6)',
+            fontWeight: activeSubView === 'tracking' ? 700 : 500,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            transform: activeSubView === 'tracking' ? 'scale(1.02)' : 'scale(1)',
+            transition: 'all 140ms ease-out',
+          }}
+          onClick={() => { setActiveSubView('tracking'); setSelectedModeId(null); }}
+        >
+          Tracking
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeSubView === 'modes'}
+          className="flex-1 px-4 py-2 rounded-full text-xs transition-all"
+          style={{
+            background: activeSubView === 'modes' ? 'var(--gold-30)' : 'transparent',
+            color: activeSubView === 'modes' ? 'var(--gold-100)' : 'rgba(253,251,245,0.6)',
+            fontWeight: activeSubView === 'modes' ? 700 : 500,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            transform: activeSubView === 'modes' ? 'scale(1.02)' : 'scale(1)',
+            transition: 'all 140ms ease-out',
+          }}
+          onClick={() => setActiveSubView('modes')}
+        >
+          Four Modes
+        </button>
+      </section>
 
-      {/* Quick Log Interface */}
-      <QuickLogGesturePad />
+      {/* Content based on active sub-view */}
+      {activeSubView === 'tracking' && <TrackingView />}
 
-      {/* Today's Log */}
-      <TodayAwarenessLog />
+      {activeSubView === 'modes' && !selectedModeId && (
+        <FourModesHome onSelectMode={handleSelectMode} />
+      )}
 
-      {/* Weekly Review */}
-      <WeeklyReview />
+      {activeSubView === 'modes' && selectedModeId && (
+        <ModeDetail modeId={selectedModeId} onBack={handleBackFromMode} />
+      )}
     </div>
   );
 }

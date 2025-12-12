@@ -45,76 +45,99 @@ export function WeeklyReview() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6 space-y-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-8 space-y-8 relative overflow-hidden">
+                {/* Application background - axe & stump */}
+                <div
+                    className="absolute inset-0 pointer-events-none rounded-3xl"
+                    style={{
+                        backgroundImage: `url(${import.meta.env.BASE_URL}application-axe-stump.png)`,
+                        backgroundSize: 'contain',
+                        backgroundPosition: 'center center',
+                        backgroundRepeat: 'no-repeat',
+                        opacity: 0.17,
+                        zIndex: 0,
+                    }}
+                />
+
                 {/* Header */}
                 <h3
-                    className="text-sm uppercase tracking-[0.2em] text-[var(--accent-70)] text-center"
+                    className="application-card-label text-[var(--accent-70)] text-center relative z-10"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     THIS WEEK
                 </h3>
 
-                {/* Practice Consistency */}
-                <div>
-                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
-                        Practice Consistency
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex-1 flex gap-1">
-                            {Array.from({ length: totalDays }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className={`flex-1 h-6 rounded ${i < practiceDays
-                                        ? 'bg-[var(--ui-button-gradient)]'
-                                        : 'bg-[var(--accent-10)]'
-                                        }`}
-                                />
-                            ))}
+                {/* PRIMARY: Practice Consistency - Big & Clear */}
+                <div className="relative" style={{ zIndex: 10 }}>
+                    <div className="text-center mb-6">
+                        <div className="text-4xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}>
+                            {practiceDays}/{totalDays}
                         </div>
-                        <div className="text-sm text-[rgba(253,251,245,0.8)]">
-                            {practiceDays}/{totalDays} days
+                        <div className="text-xs uppercase tracking-wider text-[var(--accent-60)] mb-3">
+                            Days Practiced
                         </div>
-                    </div>
-                </div>
-
-                {/* Awareness Moments */}
-                <div>
-                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
-                        Awareness Moments
-                    </div>
-                    <div className="text-2xl text-[var(--accent-color)] mb-3" style={{ fontFamily: 'Cinzel, serif' }}>
-                        {weekStats.total}
-                    </div>
-                    <div className="space-y-1.5">
-                        {Object.entries(weekStats.byCategory).map(([category, count]) => (
-                            <div key={category} className="flex items-center justify-between text-sm">
-                                <span
-                                    className="text-[rgba(253,251,245,0.7)]"
-                                    style={{ fontFamily: 'Crimson Pro, serif' }}
-                                >
-                                    {category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                                </span>
-                                <span className="text-[var(--accent-70)] font-semibold">{count}</span>
+                        {practiceDays >= 6 && (
+                            <div
+                                className="inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-wider"
+                                style={{ background: 'var(--gold-30)', color: 'var(--gold-100)' }}
+                            >
+                                Strong Week
                             </div>
+                        )}
+                        {practiceDays >= 4 && practiceDays < 6 && (
+                            <div
+                                className="inline-block px-3 py-1 rounded-full text-[10px] uppercase tracking-wider"
+                                style={{ background: 'var(--accent-20)', color: 'var(--accent-color)' }}
+                            >
+                                On Path
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex gap-1 max-w-xs mx-auto">
+                        {Array.from({ length: totalDays }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`flex-1 h-2 rounded-full ${i < practiceDays
+                                    ? 'bg-[var(--ui-button-gradient)]'
+                                    : 'bg-[var(--accent-10)]'
+                                    }`}
+                            />
                         ))}
                     </div>
                 </div>
 
-                {/* Responded Differently */}
-                <div>
-                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
-                        Responded Differently
+                {/* SECONDARY: Awareness & Agency - Side by Side */}
+                <div className="grid grid-cols-2 gap-6 relative" style={{ zIndex: 10 }}>
+                    {/* Awareness Moments */}
+                    <div>
+                        <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
+                            Awareness
+                        </div>
+                        <div className="text-3xl text-[var(--accent-color)] mb-1" style={{ fontFamily: 'Cinzel, serif' }}>
+                            {weekStats.total}
+                        </div>
+                        <div className="text-[10px] text-[rgba(253,251,245,0.5)]">
+                            moments logged
+                        </div>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl text-[var(--accent-color)]" style={{ fontFamily: 'Cinzel, serif' }}>
-                            {weekStats.respondedDifferently}
-                        </span>
-                        <span className="text-sm text-[rgba(253,251,245,0.6)]">
-                            / {weekStats.total}
-                        </span>
-                        <span className="ml-auto text-lg text-[var(--accent-80)]">
-                            {weekStats.respondedDifferentlyPercent}%
-                        </span>
+
+                    {/* Responded Differently */}
+                    <div>
+                        <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
+                            Agency
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl text-[var(--accent-color)]" style={{ fontFamily: 'Cinzel, serif' }}>
+                                {weekStats.respondedDifferently}
+                            </span>
+                            <span className="text-lg text-[var(--accent-80)]">
+                                {weekStats.respondedDifferentlyPercent}%
+                            </span>
+                        </div>
+                        <div className="text-[10px] text-[rgba(253,251,245,0.5)]">
+                            different responses
+                        </div>
                     </div>
                 </div>
 

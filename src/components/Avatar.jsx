@@ -9,6 +9,7 @@
 import React, { useEffect, useState } from "react";
 import { AvatarLuminousCanvas } from "./AvatarLuminousCanvas.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
+import MoonOrbit from "./MoonOrbit.jsx";
 import "./Avatar.css";
 
 // Local fallback until ../state/mandalaStore.js exists
@@ -143,6 +144,9 @@ function ConsistencyAura({ weeklyConsistency = 0 }) {
   // Pulse intensity also scales with consistency
   const pulseScale = 0.05 + (0.1 * (weeklyConsistency / 7));
 
+  // Center opacity reduced by 30% to not obscure avatar, outer glow preserved
+  const centerOpacity = opacity * 0.7;
+
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div
@@ -150,7 +154,7 @@ function ConsistencyAura({ weeklyConsistency = 0 }) {
         style={{
           width: "100%",
           height: "100%",
-          background: `radial-gradient(circle, rgba(252,211,77,${opacity}) 0%, rgba(253,224,71,${opacity * 0.6}) 35%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(252,211,77,${centerOpacity}) 0%, rgba(253,224,71,${centerOpacity * 0.6}) 35%, rgba(253,224,71,${opacity * 0.6}) 50%, transparent 70%)`,
           filter: "blur(12px)",
           mixBlendMode: "screen",
           // Custom CSS property for animation intensity
@@ -172,7 +176,7 @@ function ConsistencyAura({ weeklyConsistency = 0 }) {
 const STAGE_RUNE_COLORS = {
   seedling: "rgba(75, 192, 192, 0.6)", // cyan
   ember: "rgba(255, 140, 0, 0.6)", // orange
-  flame: "rgba(253, 224, 71, 0.6)", // gold
+  flame: "rgba(255, 247, 216, 0.8)", // warm white for contrast
   beacon: "rgba(100, 200, 255, 0.6)", // bright cyan
   stellar: "rgba(200, 150, 255, 0.6)", // purple
 };
@@ -182,10 +186,32 @@ function RuneRingLayer({ stage = "flame" }) {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Dark backdrop for Flame stage only - improves rune contrast */}
+      {stage === "flame" && (
+        <div
+          className="absolute w-[88%] h-[88%]"
+          style={{
+            borderRadius: "9999px",
+            background:
+              "radial-gradient(circle, transparent 45%, #2b2418 55%, #4a3a1d 100%)",
+          }}
+        />
+      )}
+
+      {/* Radial shadow for depth - all stages */}
+      <div
+        className="absolute w-[88%] h-[88%]"
+        style={{
+          borderRadius: "9999px",
+          background:
+            "radial-gradient(circle, transparent 60%, rgba(0,0,0,0.15) 70%, transparent 80%)",
+        }}
+      />
+
       {/* Wrapper div rotates, img stays still inside */}
       <div className="rune-ring-wrapper w-[88%] h-[88%]">
         <img
-          src="/sigils/rune-ring.png"
+          src={`${import.meta.env.BASE_URL}sigils/${stage === 'flame' ? 'rune-ring2.png' : 'rune-ring.png'}`}
           alt="Rune ring"
           className="w-full h-full object-contain"
           style={{
@@ -201,102 +227,57 @@ function RuneRingLayer({ stage = "flame" }) {
 // ─── STAGE SIGILS ──────────────────────────────────────────────────────────────
 //
 const STAGE_SIGILS = {
-  seedling: "/sigils/seedling.png",
-  ember: "/sigils/ember.png",
-  flame: "/sigils/flame.png",
-  beacon: "/sigils/beacon.png",
-  stellar: "/sigils/stellar.png",
+  seedling: `${import.meta.env.BASE_URL}avatars/seedling-core.png`,
+  ember: `${import.meta.env.BASE_URL}avatars/ember-core.png`,
+  flame: `${import.meta.env.BASE_URL}avatars/flame-core.png`,
+  beacon: `${import.meta.env.BASE_URL}avatars/beacon-core.png`,
+  stellar: `${import.meta.env.BASE_URL}avatars/stellar-core.png`,
 };
 
 //
-// ─── STATIC SIGIL CORE (stage-aware) ────────────────────────────────────────────
+// ─── STATIC SIGIL CORE (stage-aware + path-aware) ────────────────────────────────
 //
-function StaticSigilCore({ stage = "flame" }) {
-  const src = STAGE_SIGILS[stage] || STAGE_SIGILS.flame;
+function StaticSigilCore({ stage = "flame", path = null, showCore = true }) {
+  // Determine image source based on stage, path, and showCore flag
+  // If showCore = true or no path, use /avatars/stage-core.png
+  // If showCore = false and path exists, use /avatars/Stage-Path.png
+  const stageLower = stage.toLowerCase();
+  const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
+
+  console.log('🎭 StaticSigilCore props:', { stage, path, showCore });
+
+  // Get stage-specific color (hardcoded to avoid import issues)
+  const stageColors = {
+    'seedling': '#4ade80',
+    'ember': '#f97316',
+    'flame': '#fcd34d',
+    'beacon': '#22d3ee',
+    'stellar': '#a78bfa',
+  };
+  const accentColor = stageColors[stageLower] || '#fcd34d';
+
+  let src;
+  if (showCore || !path) {
+    src = `${import.meta.env.BASE_URL}avatars/${stageLower}-core.png`;
+  } else {
+    // Path files are named with capital: Stage-Path.png
+    const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1).toLowerCase();
+    src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
+  }
+  console.log('🎭 StaticSigilCore using image:', src);
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center">
-      {/* LIVING NEBULA VOID - Barely visible warm cloudiness with slow rotation */}
+      {/* Subtle whirlpool effect behind the avatar image */}
       <div
         className="absolute pointer-events-none"
         style={{
-          width: "50%",
-          height: "50%",
-          borderRadius: "9999px",
-          background: "radial-gradient(circle, #030302 0%, #050403 40%, #0a0806 100%)",
-          boxShadow: "inset 0 0 20px var(--accent-15), inset 0 0 40px rgba(200,150,50,0.08)",
-        }}
-      />
-
-      {/* Nebula Layer 1 - Rotating warm cloudiness (clearly visible) */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "50%",
-          height: "50%",
-          borderRadius: "9999px",
-          background: `
-            radial-gradient(ellipse at 30% 40%, rgba(80,55,30,0.9) 0%, transparent 45%),
-            radial-gradient(ellipse at 70% 60%, rgba(65,45,25,0.8) 0%, transparent 40%),
-            radial-gradient(ellipse at 50% 80%, rgba(75,50,28,0.85) 0%, transparent 35%)
-          `,
-          animation: "voidRotate 45s linear infinite, nebulaPulse 6s ease-in-out infinite",
-        }}
-      />
-
-      {/* Nebula Layer 2 - Counter-rotating for depth */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "50%",
-          height: "50%",
-          borderRadius: "9999px",
-          background: `
-            radial-gradient(ellipse at 60% 30%, rgba(60,42,24,0.7) 0%, transparent 50%),
-            radial-gradient(ellipse at 40% 70%, rgba(70,48,26,0.65) 0%, transparent 45%)
-          `,
-          animation: "voidRotate 60s linear infinite reverse, nebulaPulse 7s ease-in-out infinite",
-        }}
-      />
-
-
-      {/* WHIRLPOOL VORTEX - Spiraling lines pulling into void */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "70%",
-          height: "70%",
+          width: "45%",
+          height: "45%",
           borderRadius: "9999px",
           background: `
             conic-gradient(
               from 0deg,
-              transparent 0%,
-              var(--accent-10) 10%,
-              transparent 20%,
-              var(--accent-10) 30%,
-              transparent 40%,
-              var(--accent-10) 50%,
-              transparent 60%,
-              var(--accent-10) 70%,
-              transparent 80%,
-              var(--accent-10) 90%,
-              transparent 100%
-            )
-          `,
-          animation: "whirlpool 90s linear infinite, whirlpoolWaver 8s ease-in-out infinite, whirlpoolFade 24s ease-in-out infinite",
-        }}
-      />
-
-      {/* WHIRLPOOL Layer 2 - Counter-rotating for depth */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "70%",
-          height: "70%",
-          borderRadius: "9999px",
-          background: `
-            conic-gradient(
-              from 45deg,
               transparent 0%,
               var(--accent-10) 15%,
               transparent 30%,
@@ -306,56 +287,56 @@ function StaticSigilCore({ stage = "flame" }) {
               transparent 90%
             )
           `,
-          animation: "whirlpool 120s linear infinite reverse, whirlpoolWaver 10s ease-in-out infinite, whirlpoolFade 24s ease-in-out infinite 4s",
+          animation: "whirlpool 90s linear infinite",
+          opacity: 0.5,
         }}
       />
 
-      {/* EVENT HORIZON - Intense multi-layer glow stack */}
+      {/* Black circular backdrop */}
       <div
         className="absolute pointer-events-none"
         style={{
           width: "50%",
           height: "50%",
           borderRadius: "9999px",
-          border: "2px solid rgba(255, 190, 50, 0.3)", // Near-white core border
-          boxShadow: `
-            0 0 2px #fffbe8,
-            0 0 6px #fde68a,
-            0 0 12px #fcd34d,
-            0 0 24px #f59e0b,
-            0 0 48px rgba(180,83,9,0.6),
-            0 0 80px rgba(120,50,5,0.3)
-          `,
+          background: "#000000",
         }}
       />
 
-      {/* Sigil overlay - Low opacity (25%) floating in void */}
+      {/* Stage Avatar Core Image */}
       <div
         className="relative pointer-events-none select-none"
         style={{
-          width: "50%",
-          height: "50%",
+          width: "46%",
+          height: "46%",
           borderRadius: "9999px",
           overflow: "hidden",
-          animation: "sigilRadiate 4s ease-in-out infinite",
-          WebkitMaskImage:
-            "radial-gradient(circle, white 72%, transparent 100%)",
-          maskImage: "radial-gradient(circle, white 72%, transparent 100%)",
         }}
       >
         <img
           src={src}
-          alt={`${stage} sigil`}
+          alt={`${stage} ${path || 'core'} avatar`}
           style={{
             width: "100%",
             height: "100%",
-            objectFit: "contain",
+            objectFit: "cover",
             objectPosition: "50% 50%",
-            filter:
-              "drop-shadow(0 0 16px rgba(255,190,50,0.6)) drop-shadow(0 0 32px rgba(255,160,40,0.2)) contrast(1.1)",
           }}
         />
       </div>
+
+      {/* Colored glow ring between avatar and black backdrop */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "48%",
+          height: "48%",
+          borderRadius: "9999px",
+          background: accentColor,
+          opacity: stage === "flame" ? 0.3 : 0.4,
+          filter: "blur(8px)",
+        }}
+      />
     </div>
   );
 }
@@ -390,6 +371,8 @@ function AvatarContainer({
   label,
   breathPattern,
   stage = "flame",
+  path = null,
+  showCore = true,
   totalSessions = 0,
   avgAccuracy = 0,
   weeklyConsistency = 0,
@@ -452,8 +435,17 @@ function AvatarContainer({
         {/* Layer 2: rune ring (rotating PNG, stage-aware color) */}
         <RuneRingLayer stage={stage} />
 
-        {/* Layer 3: static sigil core (stage-aware PNG) */}
-        <StaticSigilCore stage={stage} />
+        {/* Layer 3: static sigil core (stage-aware + path-aware PNG) */}
+        <StaticSigilCore stage={stage} path={path} showCore={showCore} />
+
+        {/* Layer 4: Moon orbit (outermost layer) - SVG wrapper required */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+          viewBox="0 0 288 288"
+          style={{ overflow: 'visible' }}
+        >
+          <MoonOrbit avatarRadius={100} centerX={144} centerY={144} />
+        </svg>
       </div>
 
       {/* Label to the right */}
@@ -467,7 +459,8 @@ function AvatarContainer({
 //
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
-export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage }) {
+export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true }) {
+  console.log('🎭 Avatar received props:', { controlledStage, path, showCore });
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
@@ -558,6 +551,8 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
         label={label}
         breathPattern={patternForBreath}
         stage={currentStage}
+        path={path}
+        showCore={showCore}
         totalSessions={totalSessions}
         avgAccuracy={avgAccuracy}
         weeklyConsistency={weeklyConsistency}

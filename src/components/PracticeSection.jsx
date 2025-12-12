@@ -3,11 +3,21 @@ import React, { useState, useEffect, useRef } from "react";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
-import { addSession } from "../state/practiceStore.js";
-import { recordPracticeEffect } from "../state/mandalaStore.js";
+import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
+import { CymaticsConfig } from "./CymaticsConfig.jsx";
+import { SensorySession } from "./SensorySession.jsx";
+import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
+import { RitualPortal } from "./RitualPortal.jsx";
+import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
+import { useProgressStore } from "../state/progressStore.js";
+import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { useTheme } from "../context/ThemeContext";
+import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 
-const PRACTICES = ["Breath & Stillness", "Sensory", "Sound", "Visualization"];
+// DEV GALLERY MODE - now controlled via prop from App.jsx
+const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
+
+const PRACTICES = ["Breath & Stillness", "Ritual", "Sensory", "Sound", "Visualization", "Cymatics"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 const PRESETS = ["Box", "4-7-8", "Kumbhaka", "Relax", "Energy"];
 
@@ -20,10 +30,9 @@ const PATTERN_PRESETS = {
 };
 
 const SENSORY_TYPES = [
-  "Guided Body Scan",
-  "Bhakti (Devotion)",
-  "Vipassana",
-  "Open Monitoring"
+  { id: 'bodyScan', label: 'Body Scan' },
+  { id: 'vipassana', label: 'Vipassana' },
+  { id: 'sakshi', label: 'Sakshi' },
 ];
 
 const SOUND_TYPES = [
@@ -163,7 +172,9 @@ function ScrollingWheel({ value, onChange, options }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED }) {
+  // Avatar path determines particle effects (Soma, Prana, Dhyana, Drishti, Jnana, Samyoga)
+  // When showCore is true, use default particles (no path-specific effects)
 
   const [practice, setPractice] = useState("Breath & Stillness");
   const [duration, setDuration] = useState(10);
@@ -175,7 +186,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     hold2: 4,
   });
 
-  const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0]);
+  const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0].id);
   const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
 
   const [isRunning, setIsRunning] = useState(false);
@@ -195,6 +206,26 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   const [voidDuration, setVoidDuration] = useState(10);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [visualizationCycles, setVisualizationCycles] = useState(0);
+
+  // Cymatics state
+  const [frequencySet, setFrequencySet] = useState('solfeggio');
+  const [selectedFrequency, setSelectedFrequency] = useState(SOLFEGGIO_SET[4]); // 528 Hz - Love
+  const [driftEnabled, setDriftEnabled] = useState(false);
+
+  // Ritual Mode state
+  const [activeRitual, setActiveRitual] = useState(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  // FX Gallery state (DEV MODE - controlled by showFxGallery prop)
+  const [currentFxIndex, setCurrentFxIndex] = useState(0);
+  const currentFxPreset = showFxGallery ? ringFXPresets[currentFxIndex] : null;
+
+  const handlePrevFx = () => {
+    setCurrentFxIndex(prev => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
+  };
+  const handleNextFx = () => {
+    setCurrentFxIndex(prev => (prev + 1) % ringFXPresets.length);
+  };
 
   useEffect(() => {
     if (!isRunning) {
@@ -249,6 +280,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     if (practice === "Sensory") subType = sensoryType;
     if (practice === "Sound") subType = soundType;
     if (practice === "Visualization") subType = geometry;
+    if (practice === "Cymatics") subType = `${selectedFrequency.hz}Hz-${selectedFrequency.name}`;
+    if (practice === "Ritual") subType = activeRitual?.id;
 
     const sessionPayload = {
       id,
@@ -261,16 +294,35 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     };
 
     try {
-      addSession(sessionPayload);
-      recordPracticeEffect({
-        dateISO: sessionPayload.date,
-        durationMinutes: sessionPayload.durationMinutes,
-        accuracy: null,
+      // Map practice to domain for Path calculation
+      let domain = 'breathwork';
+      const p = practice.toLowerCase();
+      if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
+      else if (p === 'sensory') domain = sensoryType;
+      else if (p === 'ritual') domain = 'ritual';
+
+      // Record in progress store (single source of truth)
+      useProgressStore.getState().recordSession({
+        domain,
+        duration: duration, // minutes
+        metadata: {
+          subType,
+          pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
+          tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+          ritualId: activeRitual?.id,
+          legacyImport: false
+        }
       });
+
+      // Sync mandala store
+      syncFromProgressStore();
     } catch (e) {
       console.error("Failed to save session:", e);
     }
 
+    // Reset ritual state
+    setActiveRitual(null);
+    setCurrentStepIndex(0);
     setTimeLeft(duration * 60);
   };
 
@@ -282,6 +334,30 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
     setBreathCount(0);
+  };
+
+  // Ritual-specific handlers
+  const handleSelectRitual = (ritual) => {
+    setActiveRitual(ritual);
+    setCurrentStepIndex(0);
+    // Calculate total duration from steps
+    const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
+    setDuration(Math.ceil(totalSeconds / 60));
+    setTimeLeft(totalSeconds);
+    // Auto-start ritual
+    handleStart();
+  };
+
+  const handleNextStep = () => {
+    if (!activeRitual) return;
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex < activeRitual.steps.length) {
+      setCurrentStepIndex(nextIndex);
+    }
+  };
+
+  const handleRitualComplete = () => {
+    handleStop();
   };
 
   const handleAccuracyTap = (errorMs) => {
@@ -299,6 +375,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
 
   useEffect(() => {
     if (!isRunning) return;
+    // Skip timer countdown for Ritual mode (handled by RitualPortal)
+    if (practice === "Ritual") return;
 
     let interval = null;
     if (timeLeft > 0) {
@@ -312,7 +390,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
       if (interval) clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRunning, timeLeft]);
+  }, [isRunning, timeLeft, practice]);
 
   useEffect(() => {
     if (!onBreathStateChange) return;
@@ -392,6 +470,21 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
   // RUNNING VIEW
   // ───────────────────────────────────────────────────────────
   if (isRunning) {
+    // RITUAL MODE - Different running view
+    if (practice === "Ritual" && activeRitual) {
+      return (
+        <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
+          <RitualPortal
+            ritual={activeRitual}
+            currentStepIndex={currentStepIndex}
+            onNextStep={handleNextStep}
+            onComplete={handleRitualComplete}
+            onStop={handleStop}
+          />
+        </section>
+      );
+    }
+
     let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
     let radialGlow = '';
     let buttonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
@@ -437,8 +530,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
     }
 
     return (
-      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-        <div className="flex items-center justify-center w-full mb-16 overflow-visible">
+      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12" style={{ overflow: 'visible' }}>
+        <div className="flex items-center justify-center w-full mb-16" style={{ overflow: 'visible' }}>
           {practice === "Visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
@@ -449,12 +542,78 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
+          ) : practice === "Cymatics" ? (
+            <CymaticsVisualization
+              frequency={selectedFrequency.hz}
+              n={selectedFrequency.n}
+              m={selectedFrequency.m}
+              fadeInDuration={fadeInDuration}
+              displayDuration={displayDuration}
+              fadeOutDuration={fadeOutDuration}
+              voidDuration={voidDuration}
+              driftEnabled={driftEnabled}
+              audioEnabled={audioEnabled}
+              onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
+            />
           ) : practice === "Breath & Stillness" ? (
-            <BreathingRing
-              breathPattern={breathingPatternForRing}
-              onTap={handleAccuracyTap}
-              onCycleComplete={() => setBreathCount(prev => prev + 1)}
-              startTime={sessionStartTime}
+            <div className="flex flex-col items-center" style={{ overflow: 'visible', padding: '40px 0' }}>
+              {/* FX GALLERY SWITCHER - controlled by prop */}
+              {showFxGallery && (
+                <div
+                  className="flex items-center gap-3 mb-4 px-4 py-2 rounded-full"
+                  style={{
+                    background: 'rgba(0,0,0,0.5)',
+                    border: '1px solid var(--accent-20)',
+                  }}
+                >
+                  <button
+                    onClick={handlePrevFx}
+                    className="text-white/60 hover:text-white transition-colors px-2 py-1"
+                    style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}
+                  >
+                    ◀
+                  </button>
+                  <div
+                    className="text-center min-w-[200px]"
+                    style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '10px',
+                      letterSpacing: '0.1em',
+                      color: 'var(--accent-color)',
+                    }}
+                  >
+                    <div style={{ color: 'rgba(253,251,245,0.55)', fontSize: '8px', marginBottom: '2px' }}>
+                      {currentFxPreset?.category}
+                    </div>
+                    <div>{currentFxPreset?.name}</div>
+                    <div style={{ color: 'rgba(253,251,245,0.55)', fontSize: '8px', marginTop: '2px' }}>
+                      {currentFxIndex + 1} / {ringFXPresets.length}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleNextFx}
+                    className="text-white/60 hover:text-white transition-colors px-2 py-1"
+                    style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}
+                  >
+                    ▶
+                  </button>
+                </div>
+              )}
+              <BreathingRing
+                breathPattern={breathingPatternForRing}
+                onTap={handleAccuracyTap}
+                onCycleComplete={() => setBreathCount(prev => prev + 1)}
+                startTime={sessionStartTime}
+                pathId={showCore ? null : avatarPath}
+                fxPreset={currentFxPreset}
+              />
+            </div>
+          ) : practice === "Sensory" ? (
+            <SensorySession
+              sensoryType={sensoryType}
+              duration={duration}
+              onStop={handleStop}
+              onTimeUpdate={(remaining) => setTimeLeft(remaining)}
             />
           ) : (
             <div className="flex flex-col items-center justify-center animate-fade-in-up">
@@ -466,7 +625,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   textShadow: "0 0 20px var(--accent-30)"
                 }}
               >
-                {practice === "Sensory" ? sensoryType : soundType}
+                {soundType}
               </div>
               <div className="w-32 h-32 rounded-full border border-[var(--accent-20)] flex items-center justify-center relative">
                 <div className="absolute inset-0 rounded-full animate-pulse opacity-20 bg-[var(--accent-color)] blur-xl"></div>
@@ -569,6 +728,36 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             "0 0 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03)",
         }}
       >
+        {/* Mandala background - dual mask for mid-radius emphasis */}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+          {/* Mandala image - fairly visible, slightly scaled */}
+          <img
+            src={`${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`}
+            alt="Breath mandala"
+            className="object-contain w-full h-full"
+            style={{
+              opacity: 0.2,
+              transform: 'scale(1.25) translateY(-8%)',
+              transformOrigin: 'center',
+            }}
+          />
+
+          {/* INNER mask: darken the very center behind the timer */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(circle, rgba(0,0,0,0.55) 0%, transparent 42%)',
+            }}
+          />
+
+          {/* OUTER mask: soften edges so lines near panel border don't compete */}
+          <div
+            className="absolute inset-0 rounded-[32px]"
+            style={{
+              background: 'radial-gradient(circle, transparent 60%, rgba(0,0,0,0.45) 100%)',
+            }}
+          />
+        </div>
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -600,7 +789,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                 fontSize: "9px",
                 letterSpacing: "0.25em",
                 textTransform: "uppercase",
-                color: "rgba(253,251,245,0.4)",
+                color: "rgba(253,251,245,0.55)",
                 textAlign: "center"
               }}
             >
@@ -630,11 +819,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                     color:
                       practice === name
                         ? "#050508"
-                        : "rgba(253,251,245,0.4)",
+                        : "rgba(253,251,245,0.55)",
                     boxShadow:
                       practice === name
                         ? '0 0 12px var(--accent-15)'
                         : "none",
+                    transform: practice === name ? 'scale(1.05)' : 'scale(1)',
+                    transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms',
                   }}
                 >
                   {name}
@@ -643,96 +834,106 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             </div>
           </div>
 
-          {/* Duration wheel + Timer + Start button - horizontal layout */}
-          <div className="flex items-center justify-between mb-6">
-            {/* Duration wheel on left */}
-            <div className="flex flex-col items-center">
-              <div
-                className="mb-2"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "9px",
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.4)",
-                }}
-              >
-                Duration
-              </div>
-              <ScrollingWheel
-                value={duration}
-                onChange={setDuration}
-                options={DURATIONS}
-              />
-              <div
-                className="mt-1"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "8px",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.3)",
-                }}
-              >
-                minutes
-              </div>
-            </div>
-
-            {/* Timer in center */}
-            <div
-              style={{
-                fontFamily: "Georgia, serif",
-                fontSize: "40px",
-                fontWeight: 400,
-                letterSpacing: "0.2em",
-                color: "rgba(253,251,245,0.92)",
-                textShadow: '0 0 32px var(--accent-30)',
-              }}
-            >
-              {formatTime(timeLeft)}
-            </div>
-
-            {/* Start button on right */}
-            <button
-              onClick={handleStart}
-              className="rounded-full px-6 py-2.5 transition-all duration-200 hover:-translate-y-0.5 bg-accent"
-              style={{
-                fontFamily: "Georgia, serif",
-                fontSize: "10px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                background:
-                  `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`,
-                color: "#050508",
-                border: "none",
-                boxShadow:
-                  '0 0 24px var(--accent-30), inset 0 1px 0 rgba(255,255,255,0.3)',
-              }}
-            >
-              Start
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative my-5">
-            <div
-              style={{
-                height: "1px",
-                background:
-                  'linear-gradient(90deg, transparent 0%, var(--accent-15) 20%, var(--accent-30) 50%, var(--accent-15) 80%, transparent 100%)',
-              }}
+          {/* RITUAL MODE: Show deck instead of duration/timer/start */}
+          {practice === "Ritual" ? (
+            <RitualSelectionDeck
+              onSelectRitual={handleSelectRitual}
+              selectedRitualId={activeRitual?.id}
             />
-            <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
-              style={{
-                fontSize: "8px",
-                color: 'var(--accent-70)',
-                background: "rgba(15,15,26,1)",
-              }}
-            >
-              ✦
-            </div>
-          </div>
+          ) : (
+            <>
+              {/* Duration wheel + Timer + Start button - horizontal layout */}
+              <div className="flex items-center justify-between mb-6">
+                {/* Duration wheel on left */}
+                <div className="flex flex-col items-center">
+                  <div
+                    className="mb-2"
+                    style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: "9px",
+                      letterSpacing: "0.25em",
+                      textTransform: "uppercase",
+                      color: "rgba(253,251,245,0.55)",
+                    }}
+                  >
+                    Duration
+                  </div>
+                  <ScrollingWheel
+                    value={duration}
+                    onChange={setDuration}
+                    options={DURATIONS}
+                  />
+                  <div
+                    className="mt-1"
+                    style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: "8px",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      color: "rgba(253,251,245,0.45)",
+                    }}
+                  >
+                    minutes
+                  </div>
+                </div>
+
+                {/* Timer in center */}
+                <div
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: "40px",
+                    fontWeight: 400,
+                    letterSpacing: "0.2em",
+                    color: "rgba(253,251,245,0.92)",
+                    textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
+                  }}
+                >
+                  {formatTime(timeLeft)}
+                </div>
+
+                {/* Start button on right */}
+                <button
+                  onClick={handleStart}
+                  className="rounded-full px-6 py-2.5 transition-all duration-200 hover:-translate-y-0.5 bg-accent"
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: "10px",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                    background:
+                      `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`,
+                    color: "#050508",
+                    border: "none",
+                    boxShadow:
+                      '0 0 24px var(--accent-30), inset 0 1px 0 rgba(255,255,255,0.3)',
+                  }}
+                >
+                  Start
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="relative my-5">
+                <div
+                  style={{
+                    height: "1px",
+                    background:
+                      'linear-gradient(90deg, transparent 0%, var(--accent-15) 20%, var(--accent-30) 50%, var(--accent-15) 80%, transparent 100%)',
+                  }}
+                />
+                <div
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
+                  style={{
+                    fontSize: "8px",
+                    color: 'var(--accent-70)',
+                    background: "rgba(15,15,26,1)",
+                  }}
+                >
+                  ✦
+                </div>
+              </div>
+            </>
+          )}
 
           {/* BREATH & STILLNESS: Patterns & Presets */}
           {practice === "Breath & Stillness" && (
@@ -744,7 +945,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                     fontSize: "9px",
                     letterSpacing: "0.25em",
                     textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.4)",
+                    color: "rgba(253,251,245,0.55)",
                   }}
                 >
                   Pattern
@@ -769,7 +970,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                         color:
                           preset === name
                             ? "var(--accent-color)"
-                            : "rgba(253,251,245,0.4)",
+                            : "rgba(253,251,245,0.55)",
                         boxShadow:
                           preset === name
                             ? '0 0 12px var(--accent-15)'
@@ -796,7 +997,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                         fontSize: "8px",
                         letterSpacing: "0.25em",
                         textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.4)",
+                        color: "rgba(253,251,245,0.55)",
                         textAlign: "center"
                       }}
                     >
@@ -833,7 +1034,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   fontSize: "9px",
                   letterSpacing: "0.25em",
                   textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.4)",
+                  color: "rgba(253,251,245,0.55)",
                   textAlign: "center"
                 }}
               >
@@ -842,20 +1043,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
               <div className="grid grid-cols-2 gap-3">
                 {SENSORY_TYPES.map((type) => (
                   <button
-                    key={type}
-                    onClick={() => setSensoryType(type)}
+                    key={type.id}
+                    onClick={() => setSensoryType(type.id)}
                     className="rounded-xl px-4 py-3 transition-all duration-200 text-center"
                     style={{
                       fontFamily: "Georgia, serif",
                       fontSize: "11px",
                       letterSpacing: "0.05em",
-                      background: sensoryType === type ? "rgba(255,255,255,0.05)" : "transparent",
-                      border: `1px solid ${sensoryType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
-                      color: sensoryType === type ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
-                      boxShadow: sensoryType === type ? "0 0 15px var(--accent-10)" : "none"
+                      background: sensoryType === type.id ? "rgba(255,255,255,0.05)" : "transparent",
+                      border: `1px solid ${sensoryType === type.id ? "var(--accent-color)" : "var(--accent-10)"}`,
+                      color: sensoryType === type.id ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
+                      boxShadow: sensoryType === type.id ? "0 0 15px var(--accent-10)" : "none"
                     }}
                   >
-                    {type}
+                    {type.label}
                   </button>
                 ))}
               </div>
@@ -872,7 +1073,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   fontSize: "9px",
                   letterSpacing: "0.25em",
                   textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.4)",
+                  color: "rgba(253,251,245,0.55)",
                   textAlign: "center"
                 }}
               >
@@ -921,26 +1122,50 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
             />
           )}
 
-          {/* Divider */}
-          <div className="relative my-5">
-            <div
-              style={{
-                height: "1px",
-                background:
-                  "linear-gradient(90deg, transparent 0%, var(--accent-15) 20%, var(--accent-40) 50%, var(--accent-15) 80%, transparent 100%)",
-              }}
+          {/* Cymatics Config */}
+          {practice === "Cymatics" && (
+            <CymaticsConfig
+              frequencySet={frequencySet}
+              setFrequencySet={setFrequencySet}
+              selectedFrequency={selectedFrequency}
+              setSelectedFrequency={setSelectedFrequency}
+              fadeInDuration={fadeInDuration}
+              setFadeInDuration={setFadeInDuration}
+              displayDuration={displayDuration}
+              setDisplayDuration={setDisplayDuration}
+              fadeOutDuration={fadeOutDuration}
+              setFadeOutDuration={setFadeOutDuration}
+              voidDuration={voidDuration}
+              setVoidDuration={setVoidDuration}
+              driftEnabled={driftEnabled}
+              setDriftEnabled={setDriftEnabled}
+              audioEnabled={audioEnabled}
+              setAudioEnabled={setAudioEnabled}
             />
-            <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
-              style={{
-                fontSize: "8px",
-                color: 'var(--accent-70)',
-                background: "rgba(15,15,26,1)",
-              }}
-            >
-              ✦
+          )}
+
+          {/* Divider - hide for Ritual since it has no pattern preview */}
+          {practice !== "Ritual" && (
+            <div className="relative my-5">
+              <div
+                style={{
+                  height: "1px",
+                  background:
+                    "linear-gradient(90deg, transparent 0%, var(--accent-15) 20%, var(--accent-40) 50%, var(--accent-15) 80%, transparent 100%)",
+                }}
+              />
+              <div
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
+                style={{
+                  fontSize: "8px",
+                  color: 'var(--accent-70)',
+                  background: "rgba(15,15,26,1)",
+                }}
+              >
+                ✦
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Pattern preview (Only for Breath & Stillness) */}
           {practice === "Breath & Stillness" && (
@@ -952,7 +1177,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   fontSize: "9px",
                   letterSpacing: "0.25em",
                   textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.4)",
+                  color: "rgba(253,251,245,0.55)",
                 }}
               >
                 Pattern Preview
@@ -996,7 +1221,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   <span
                     style={{
                       fontSize: "6px",
-                      color: "rgba(253,251,245,0.3)",
+                      color: "rgba(253,251,245,0.45)",
                       width: `${(pattern.inhale / totalDuration) * 100}%`,
                       textAlign: "center",
                     }}
@@ -1006,7 +1231,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   <span
                     style={{
                       fontSize: "6px",
-                      color: "rgba(253,251,245,0.3)",
+                      color: "rgba(253,251,245,0.45)",
                       width: `${(pattern.hold1 / totalDuration) * 100}%`,
                       textAlign: "center",
                     }}
@@ -1016,7 +1241,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   <span
                     style={{
                       fontSize: "6px",
-                      color: "rgba(253,251,245,0.3)",
+                      color: "rgba(253,251,245,0.45)",
                       width: `${(pattern.exhale / totalDuration) * 100}%`,
                       textAlign: "center",
                     }}
@@ -1026,7 +1251,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange }) {
                   <span
                     style={{
                       fontSize: "6px",
-                      color: "rgba(253,251,245,0.3)",
+                      color: "rgba(253,251,245,0.45)",
                       width: `${(pattern.hold2 / totalDuration) * 100}%`,
                       textAlign: "center",
                     }}

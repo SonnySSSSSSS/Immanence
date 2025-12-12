@@ -4,12 +4,14 @@
 // - Echo effect + sound on inhale peak and exhale bottom
 // - User locks eyes on ring to feel the rhythm
 // - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
+// - PATH FX: path-specific particle effects sync with breath
 
 import React, { useEffect, useState, useRef } from "react";
 import { EnsoStroke } from "./EnsoStroke";
 import { useTheme } from "../context/ThemeContext";
+import { PathParticles } from "./PathParticles.jsx";
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset }) {
   const {
     inhale = 4,
     holdTop = 4,
@@ -18,8 +20,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   } = breathPattern || {};
 
   const total = inhale + holdTop + exhale + holdBottom;
-  const minScale = 1.0;
-  const maxScale = 1.2;
+  const minScale = 0.9;  // Decreased 10% from 1.0
+  const maxScale = 1.32; // Increased 10% from 1.2
 
   const [progress, setProgress] = useState(0);
   const [echo, setEcho] = useState(null);
@@ -237,10 +239,11 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
   return (
     <div
-      className="relative w-full flex items-center justify-center py-12 cursor-pointer"
+      className="relative w-full flex items-center justify-center py-16 cursor-pointer"
       onClick={handleRingClick}
-      style={{ userSelect: "none" }}
+      style={{ userSelect: "none", overflow: "visible" }}
     >
+
       {/* Image-based Enso - authentic brush stroke (OUTSIDE SVG to avoid overlay) */}
       {ensoFeedback.active && (
         <div
@@ -297,10 +300,13 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
       {/* Main breathing ring with EVENT HORIZON GLOW */}
       <svg
-        viewBox="0 0 200 200"
-        className="w-64 h-64"
+        viewBox="-50 -50 300 300"
+        className="w-80 h-80"
         style={{
+          position: 'relative',
+          zIndex: 10,
           pointerEvents: "none",
+          overflow: "visible",
           // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
           filter: progress < tInhale
             ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px var(--accent-primary)) 
@@ -342,11 +348,12 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       {/* Echo effect - appears at max scale, fades out */}
       {echo && (
         <svg
-          viewBox="0 0 200 200"
-          className="absolute w-64 h-64"
+          viewBox="-50 -50 300 300"
+          className="absolute w-80 h-80"
           style={{
             animation: "fadeOutEcho 0.4s ease-out forwards",
             pointerEvents: "none",
+            overflow: "visible",
           }}
         >
           <circle
@@ -365,6 +372,43 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           />
         </svg>
       )}
+
+      {/* PATH PARTICLES - Rendered ON TOP of the ring for visibility */}
+      {/* Canvas is 320x320 for headroom, centered exactly over the 320x320 SVG ring */}
+      <div
+        className="absolute"
+        style={{
+          width: 320,
+          height: 320,
+          pointerEvents: 'none',
+          zIndex: 20,
+          /* Center using transform - same technique as phase indicator */
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
+        <PathParticles
+          pathId={pathId}
+          fxPreset={fxPreset}
+          intensity={scale === maxScale ? 1 : (scale - minScale) / (maxScale - minScale)}
+          ringScale={scale}
+          ringRadius={85.33}  /* Actual SVG ring radius: r=80 in viewBox 300, scaled to 320px = 80/300*320 */
+          phase={
+            progress < tInhale ? 'inhale' :
+              progress < tHoldTop ? 'hold' :
+                progress < tExhale ? 'exhale' :
+                  'rest'
+          }
+          size={320}
+          accentColor={(() => {
+            const color = theme.accent.particleColor || primary;
+            console.log('🎨 PathParticles color:', color, 'stage:', theme.stage, 'has particleColor:', !!theme.accent.particleColor);
+            return color;
+          })()}
+          isActive={true}
+        />
+      </div>
 
       {/* Phase indicator - centered in circle for focus */}
       <div

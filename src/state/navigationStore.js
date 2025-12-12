@@ -78,11 +78,45 @@ export const useNavigationStore = create(
 
             // Last activity tracking
             lastActivityDate: null,
-            updateActivity: () => set({ lastActivityDate: new Date().toISOString() })
+            updateActivity: () => set({ lastActivityDate: new Date().toISOString() }),
+
+            // ========================================
+            // SECTION UNLOCKING (for quiz-gated content)
+            // ========================================
+            unlockedSections: [],
+
+            /**
+             * Unlock a section (e.g., after passing a quiz)
+             */
+            unlockSection: (sectionId) => {
+                const state = get();
+                if (state.unlockedSections.includes(sectionId)) return;
+                set({
+                    unlockedSections: [...state.unlockedSections, sectionId]
+                });
+            },
+
+            /**
+             * Check if a section is unlocked
+             */
+            isSectionUnlocked: (sectionId) => {
+                const state = get();
+                return state.unlockedSections.includes(sectionId);
+            },
+
+            /**
+             * Get all unlocked sections
+             */
+            getUnlockedSections: () => {
+                return get().unlockedSections;
+            }
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 1
+            version: 2,  // Bumped version for new fields
+            migrate: (persistedState, version) => {
+                return persistedState;
+            }
         }
     )
 );

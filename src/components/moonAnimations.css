@@ -1,0 +1,89 @@
+/* src/components/moonAnimations.css */
+/* Moon Atmosphere FX — Realistic-mystical light animations */
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                        ATMOSPHERIC HALO WOBBLE                              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Heat ripple wobble effect on advancement */
+@keyframes haloWobble {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    25% {
+        transform: scale(1.15) scaleY(0.95);
+        opacity: 1.2;
+    }
+
+    50% {
+        transform: scale(1.25);
+        opacity: 0.9;
+    }
+
+    75% {
+        transform: scale(1.1) scaleX(0.97);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.moon-halo-wobble {
+    animation: haloWobble 600ms ease-out;
+    transform-origin: center center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                           GHOST ECHO ARC                                    */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Visible arc path that fades out after advancement */
+@keyframes ghostEchoFade {
+    0% {
+        stroke-opacity: 0.3;
+        stroke-width: 2px;
+    }
+
+    50% {
+        stroke-opacity: 0.15;
+        stroke-width: 3px;
+    }
+
+    100% {
+        stroke-opacity: 0;
+        stroke-width: 1px;
+    }
+}
+
+.ghost-echo-arc {
+    animation: ghostEchoFade 400ms ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                         AMBIENT PULSE (IDLE)                                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Subtle breathing pulse for halo at rest */
+@keyframes haloPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.85;
+    }
+}
+
+/* Optional: apply to halo for constant subtle life */
+.moon-halo-pulse {
+    animation: haloPulse 4s ease-in-out infinite;
+}

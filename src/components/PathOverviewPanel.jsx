@@ -38,7 +38,20 @@ export function PathOverviewPanel({ pathId }) {
     };
 
     return (
-        <div className="w-full bg-[#161625] border border-[var(--accent-15)] rounded-3xl p-6 space-y-6">
+        <div
+            className="w-full p-6 space-y-6 relative"
+            style={{
+                background: 'linear-gradient(180deg, rgba(22, 22, 37, 0.95) 0%, rgba(16, 14, 28, 0.98) 100%)',
+                border: '2px solid rgba(250, 208, 120, 0.55)',
+                borderRadius: '24px',
+                boxShadow: '0 0 40px rgba(250, 208, 120, 0.15), inset 0 0 60px rgba(0, 0, 0, 0.5)',
+            }}
+        >
+            {/* Center top ornament */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />
+            </div>
+
             {/* Header */}
             <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
@@ -164,14 +177,14 @@ export function PathOverviewPanel({ pathId }) {
                             return (
                                 <div
                                     key={week.number}
-                                    className="border border-[var(--accent-10)] rounded-xl overflow-hidden"
+                                    className="border border-[var(--accent-10)] rounded-xl overflow-hidden transition-all duration-[1500ms] ease-in-out"
                                 >
                                     <button
                                         onClick={() => toggleWeek(week.number)}
                                         className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--accent-10)] transition-colors text-left"
                                     >
-                                        <span className="text-[var(--accent-50)]">
-                                            {isExpanded ? '▾' : '▸'}
+                                        <span className="text-[var(--accent-50)] transition-transform duration-[1000ms] ease-in-out" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                                            ▾
                                         </span>
                                         <span
                                             className="text-xs text-[var(--accent-60)] uppercase tracking-wider"
@@ -188,7 +201,7 @@ export function PathOverviewPanel({ pathId }) {
                                     </button>
 
                                     {isExpanded && (
-                                        <div className="px-4 pb-4 space-y-3 border-t border-[var(--accent-10)] pt-3">
+                                        <div className="px-4 pb-4 space-y-3 border-t border-[var(--accent-10)] pt-3 transition-all duration-[1500ms] ease-in-out" style={{ opacity: 1, transform: 'scaleY(1)', transformOrigin: 'top' }}>
                                             {/* Focus */}
                                             <div>
                                                 <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>

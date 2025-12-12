@@ -1,11 +1,18 @@
 // src/components/IndrasNet.jsx
-// INDRA'S NET - Visual Effects without Background Image
-// - Particles: Golden nodes scattered on waves
-// - Effects: Center blur/brightness, subtle curve
+// INDRA'S NET - Stage-aware cosmic particles at bottom
 
 import React, { useEffect, useRef } from "react";
 
-export function IndrasNet() {
+// Stage-specific particle colors
+const STAGE_PARTICLE_COLORS = {
+    seedling: { primary: 'rgba(92, 185, 95, ', glow: 'rgba(78, 205, 96, ' },     // Green
+    ember: { primary: 'rgba(255, 140, 60, ', glow: 'rgba(255, 118, 43, ' },      // Deep orange
+    flame: { primary: 'rgba(251, 191, 36, ', glow: 'rgba(252, 211, 77, ' },      // Gold
+    beacon: { primary: 'rgba(96, 165, 250, ', glow: 'rgba(59, 130, 246, ' },     // Blue
+    stellar: { primary: 'rgba(192, 132, 252, ', glow: 'rgba(168, 85, 247, ' },   // Purple
+};
+
+export function IndrasNet({ stage = 'flame' }) {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -18,16 +25,18 @@ export function IndrasNet() {
         let animationFrame;
 
         const particles = [];
-        const particleCount = 60; // Scattered nodes
+        const particleCount = 60;
+
+        // Get stage-specific colors
+        const stageLower = (stage || 'flame').toLowerCase();
+        const colors = STAGE_PARTICLE_COLORS[stageLower] || STAGE_PARTICLE_COLORS.flame;
 
         function initParticles() {
             particles.length = 0;
             for (let i = 0; i < particleCount; i++) {
-                // Concentration: Bias towards center x (0.5)
-                // Use a bell curve-like distribution for x
                 const u = Math.random();
                 const v = Math.random();
-                const xBias = (u + v) / 2; // Central limit theorem approximation
+                const xBias = (u + v) / 2;
 
                 particles.push({
                     x: xBias * width,
@@ -41,7 +50,8 @@ export function IndrasNet() {
         }
 
         function resize() {
-            width = window.innerWidth;
+            const rect = canvas.getBoundingClientRect();
+            width = rect.width;
             canvas.width = width;
             canvas.height = height;
             initParticles();
@@ -52,18 +62,17 @@ export function IndrasNet() {
             const time = Date.now() * 0.001;
 
             particles.forEach(p => {
-                // Float animation
                 const y = p.y + Math.sin(time + p.offset) * 5;
 
-                // Draw particle
-                ctx.fillStyle = `rgba(255, 190, 50, ${p.alpha})`; // Warmer amber
+                // Draw particle with stage color
+                ctx.fillStyle = `${colors.primary}${p.alpha})`;
                 ctx.beginPath();
                 ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Glow
+                // Glow with stage color
                 const glow = ctx.createRadialGradient(p.x, y, 0, p.x, y, p.size * 4);
-                glow.addColorStop(0, `rgba(255, 190, 50, ${p.alpha * 0.5})`);
+                glow.addColorStop(0, `${colors.glow}${p.alpha * 0.5})`);
                 glow.addColorStop(1, 'transparent');
                 ctx.fillStyle = glow;
                 ctx.beginPath();
@@ -82,29 +91,30 @@ export function IndrasNet() {
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationFrame);
         };
-    }, []);
+    }, [stage]);
 
     return (
         <div
-            className="fixed bottom-0 left-0 w-full z-0 pointer-events-none"
+            className="absolute bottom-0 left-0 w-full z-0 pointer-events-none"
             style={{
                 height: "304px",
-                // General fade at top
                 maskImage: "linear-gradient(to bottom, transparent 0%, black 30%, black 100%)",
                 WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 30%, black 100%)",
             }}
         >
-            {/* 1. Background Image Loop */}
+            {/* 1. Background Image - No repeat, ping-pong drift */}
             <div
                 style={{
                     position: "absolute",
                     inset: 0,
-                    backgroundImage: "url('/bottom loop.png')",
-                    backgroundRepeat: "repeat-x",
+                    width: "140%",
+                    left: "-20%",
+                    backgroundImage: `url('${import.meta.env.BASE_URL}bottom loop.png')`,
+                    backgroundRepeat: "no-repeat",
                     backgroundPosition: "bottom center",
-                    backgroundSize: "auto 100%",
-                    animation: "indrasNetScroll 120s linear infinite",
-                    opacity: 0.12, // 12% opacity
+                    backgroundSize: "cover",
+                    animation: "indrasNetDrift 120s ease-in-out infinite alternate",
+                    opacity: 0.284,
                 }}
             />
 
@@ -123,7 +133,7 @@ export function IndrasNet() {
                 }}
             />
 
-            {/* 3. Breathing Pulse Center (Core) */}
+            {/* 3. Breathing Pulse Center with stage color */}
             <div
                 style={{
                     position: "absolute",
@@ -132,7 +142,7 @@ export function IndrasNet() {
                     transform: "translateX(-50%)",
                     width: "60%",
                     height: "100%",
-                    background: "radial-gradient(ellipse at bottom center, rgba(255, 255, 255, 0.1) 0%, transparent 60%)",
+                    background: `radial-gradient(ellipse at bottom center, var(--accent-glow)15 0%, transparent 60%)`,
                     mixBlendMode: "overlay",
                     filter: "blur(40px)",
                     animation: "indrasPulse 4s ease-in-out infinite",
@@ -150,12 +160,10 @@ export function IndrasNet() {
                 }}
             />
 
-            {/* 4. Upward Curve Mask */}
-
             <style>{`
-        @keyframes indrasNetScroll {
-          from { background-position-x: 0px; }
-          to { background-position-x: 1920px; }
+        @keyframes indrasNetDrift {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-10%); }
         }
         @keyframes indrasPulse {
           0%, 100% { transform: translateX(-50%) scale(0.98); opacity: 0.85; }

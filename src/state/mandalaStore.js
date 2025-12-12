@@ -1,5 +1,8 @@
 // src/state/mandalaStore.js
 
+import { useProgressStore } from "./progressStore.js";
+import { getDateKey, getWeekStart } from "../utils/dateUtils.js";
+
 const STORAGE_KEY = "immanence_mandala_v1";
 
 const DEFAULT_STATE = {
@@ -38,27 +41,7 @@ function safeParse(json) {
   }
 }
 
-function getTodayKey(date) {
-  // normalize to YYYY-MM-DD in local time
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
 
-function getWeekStartKey(date) {
-  const d = new Date(date);
-  // move to Monday (or keep as first-session anchor)
-  const day = d.getDay(); // 0 = Sunday, 1 = Monday, ...
-  const diff = (day === 0 ? -6 : 1) - day; // move to Monday
-  const monday = new Date(d);
-  monday.setDate(d.getDate() + diff);
-  const year = monday.getFullYear();
-  const month = String(monday.getMonth() + 1).padStart(2, "0");
-  const dayStr = String(monday.getDate()).padStart(2, "0");
-  return `${year}-${month}-${dayStr}`;
-}
 
 function computePhase(totalSessions) {
   if (totalSessions < 30) return "foundation"; // roughly first month-ish
@@ -116,6 +99,85 @@ function saveMandalaState(state) {
  */
 export function getMandalaState() {
   return loadMandalaState();
+}
+
+/**
+ * Sync mandala state from progressStore.
+ * Call this after app load or when sessions change.
+ * This allows progressStore to be the single source of truth.
+ */
+export function syncFromProgressStore() {
+  // useProgressStore is imported at top level
+  const { sessions } = useProgressStore.getState();
+
+  if (!sessions || sessions.length === 0) {
+    return getMandalaState();
+  }
+
+  const state = loadMandalaState();
+  const now = new Date();
+  const todayKey = getDateKey(now);
+  const weekStartKey = getDateKey(getWeekStart(now));
+
+  // Filter breathwork sessions (the ones with accuracy data)
+  const breathworkSessions = sessions.filter(s => s.domain === 'breathwork');
+
+  // Calculate total sessions and minutes
+  const totalSessions = breathworkSessions.length;
+  const totalMinutes = breathworkSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+
+  // Calculate average accuracy from sessions with accuracy data
+  const accuracies = breathworkSessions
+    .map(s => s.metadata?.accuracy)
+    .filter(a => typeof a === 'number');
+  const avgAccuracy = accuracies.length > 0
+    ? accuracies.reduce((a, b) => a + b, 0) / accuracies.length
+    : state.avgAccuracy;
+
+  // Calculate daily accuracy
+  const todaySessions = breathworkSessions.filter(s => s.dateKey === todayKey);
+  const todayAccuracies = todaySessions
+    .map(s => s.metadata?.accuracy)
+    .filter(a => typeof a === 'number');
+  const dailyAccuracy = todayAccuracies.length > 0
+    ? todayAccuracies.reduce((a, b) => a + b, 0) / todayAccuracies.length
+    : 0;
+
+  // Calculate weekly consistency
+  const weekSessions = breathworkSessions.filter(s => s.dateKey >= weekStartKey);
+  const uniqueDays = new Set(weekSessions.map(s => s.dateKey)).size;
+  const weeklyConsistency = Math.min(1, uniqueDays / 4); // 4 days = 100%
+
+  // Weekly practice log (Mon-Sun)
+  const weeklyPracticeLog = [];
+  const mondayDate = new Date(weekStartKey);
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(mondayDate);
+    dayDate.setDate(mondayDate.getDate() + i);
+    const dayKey = getDateKey(dayDate);
+    weeklyPracticeLog.push(weekSessions.some(s => s.dateKey === dayKey));
+  }
+
+  // Phase based on total sessions
+  const phase = computePhase(totalSessions);
+
+  const syncedState = {
+    ...state,
+    totalSessions,
+    totalMinutes,
+    avgAccuracy,
+    dailyAccuracy,
+    dailyCount: todaySessions.length,
+    lastAccuracyDate: todayKey,
+    weekStartDate: weekStartKey,
+    sessionsThisWeek: weekSessions.length,
+    weeklyConsistency,
+    weeklyPracticeLog,
+    phase
+  };
+
+  saveMandalaState(syncedState);
+  return syncedState;
 }
 
 /**
@@ -196,8 +258,8 @@ export function recordPracticeEffect({
           timestamp != null
             ? timestamp
             : typeof Date !== "undefined"
-            ? Date.now()
-            : null,
+              ? Date.now()
+              : null,
       },
     };
 
@@ -208,8 +270,8 @@ export function recordPracticeEffect({
   // ----- full session aggregation -----
 
   const nowISO = dateISO || new Date().toISOString();
-  const todayKey = getTodayKey(nowISO);
-  const weekStartKey = getWeekStartKey(nowISO);
+  const todayKey = getDateKey(nowISO);
+  const weekStartKey = getDateKey(getWeekStart(nowISO));
 
   // long-term aggregates
   const newTotalSessions = state.totalSessions + 1;

@@ -2,40 +2,26 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { treatiseChapters } from "../data/treatise.generated.js";
+import { treatiseParts, getChaptersForPart } from "../data/treatiseParts.js";
 import { wisdomCategories, getAllCategories } from "../data/wisdomRecommendations.js";
 import { sanitizeText } from "../utils/textUtils.js";
-import { Avatar } from "./Avatar.jsx";
-
-const mockVideos = [
-  {
-    id: "ancestors-ddos",
-    title: "Ancestors as DDoS Protection",
-    length: "12:34",
-  },
-  {
-    id: "xom-reality-sync",
-    title: "Xóm Culture as Reality Sync",
-    length: "09:18",
-  },
-];
-
-const mockBlog = [
-  {
-    id: "glitched-horizon",
-    title: "The Glitched Horizon Aesthetic",
-    preview:
-      "What happens when spiritual clarity borrows its visual language from cyberpunk and soft apocalypses...",
-  },
-];
+import { VideoLibrary } from "./VideoLibrary.jsx";
 
 const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos"];
-const BOOKMARKS_KEY = "immanenceOS.bookmarkedChapters";
-const SCROLL_KEY = "immanenceOS.chapterScrollPositions";
+import { useWisdomStore } from "../state/wisdomStore.js";
 
-// Modal Component for reading full chapter text - Illuminated Manuscript Aesthetic
-function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHAPTER MODAL - Enhanced with Prev/Next navigation
+// ─────────────────────────────────────────────────────────────────────────────
+function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allChapters, onNavigate }) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const contentRef = useRef(null);
+
+  const currentIndex = allChapters.findIndex(ch => ch.id === chapter?.id);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < allChapters.length - 1;
 
   // Track reading progress
   useEffect(() => {
@@ -45,26 +31,28 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
       const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
       setScrollProgress(Math.min(100, Math.max(0, progress)));
     };
-
     const el = contentRef.current;
     if (el) {
       el.addEventListener('scroll', handleScroll);
       return () => el.removeEventListener('scroll', handleScroll);
     }
-  }, [isOpen]);
+  }, [isOpen, chapter]);
+
+  // Keyboard navigation
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && hasPrev) onNavigate(allChapters[currentIndex - 1]);
+      if (e.key === "ArrowRight" && hasNext) onNavigate(allChapters[currentIndex + 1]);
     };
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, hasPrev, hasNext, currentIndex, allChapters, onNavigate]);
 
   if (!isOpen || !chapter) return null;
 
-  // Sanitize chapter content
   const sanitizedTitle = sanitizeText(chapter.title || '');
   const sanitizedSubtitle = sanitizeText(chapter.subtitle || '');
   const sanitizedExcerpt = sanitizeText(chapter.excerpt || '');
@@ -72,388 +60,349 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      style={{
-        animation: 'fadeIn 300ms ease-out'
-      }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ animation: 'fadeIn 300ms ease-out' }}
     >
       <div
-        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl max-w-3xl w-full max-h-[88vh] overflow-hidden flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
-        style={{
-          animation: 'scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)]"
+        style={{ animation: 'scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)' }}
       >
-        {/* Reading Progress Indicator - made slightly more prominent */}
+        {/* Progress bar */}
         <div
-          className="absolute top-0 left-0 h-[3px] bg-accent transition-all duration-150 z-10"
+          className="absolute top-0 left-0 h-[3px] transition-all duration-150 z-10"
           style={{
             width: `${scrollProgress}%`,
-            boxShadow: '0 0 12px var(--accent-color-shadow)'
+            background: 'var(--accent-color)',
+            boxShadow: '0 0 12px var(--accent-color)'
           }}
         />
 
         {/* Header */}
-        <div className="border-b border-[var(--accent-15)] px-8 py-6 flex items-start justify-between gap-4 flex-shrink-0">
-          <div className="flex-1">
-            <h2
-              className="text-2xl font-semibold text-accent mb-2"
-              style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
-            >
-              {sanitizedTitle}
-            </h2>
-            {sanitizedSubtitle && (
-              <p
-                className="text-sm text-[rgba(253,251,245,0.7)] italic"
-                style={{ fontFamily: 'Crimson Pro, serif' }}
-              >
-                {sanitizedSubtitle}
-              </p>
-            )}
+        <div className="border-b border-[var(--accent-15)] px-8 py-5 flex items-center justify-between gap-4 flex-shrink-0">
+          <div className="text-[11px] uppercase tracking-[0.2em]" style={{ color: 'rgba(253,251,245,0.5)' }}>
+            Chapter {currentIndex + 1} of {allChapters.length}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => onBookmark(chapter.id)}
-              className="text-sm px-3 py-1.5 rounded-full border transition-all"
-              style={{
-                background: isBookmarked ? 'var(--ui-button-gradient)' : 'transparent',
-                borderColor: isBookmarked ? 'transparent' : 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
-                color: isBookmarked ? '#050508' : 'rgba(var(--accent-h), var(--accent-s), var(--accent-l), 0.7)'
-              }}
+              className="text-lg transition-all"
+              style={{ color: isBookmarked ? 'var(--accent-color)' : 'rgba(253,251,245,0.4)' }}
             >
               {isBookmarked ? "★" : "☆"}
             </button>
             <button
               onClick={onClose}
-              className="text-[rgba(253,251,245,0.5)] hover:text-[rgba(253,251,245,0.9)] text-xl w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-10)] transition-all flex-shrink-0"
+              className="text-xl w-9 h-9 flex items-center justify-center rounded-full transition-all"
+              style={{ color: 'rgba(253,251,245,0.5)' }}
             >
               ✕
             </button>
           </div>
         </div>
 
-        {/* Ornamental Divider */}
-        <div className="flex items-center justify-center py-4 border-b border-[var(--accent-10)]">
-          <div className="flex items-center gap-4 text-[var(--accent-30)]">
-            <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
-            <div style={{ fontSize: '10px' }}>◆</div>
-            <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
-          </div>
+        {/* Title section */}
+        <div className="px-12 pt-8 pb-6 text-center">
+          <h2
+            className="text-2xl font-semibold mb-2"
+            style={{
+              fontFamily: 'Cinzel, Georgia, serif',
+              color: 'var(--accent-color)',
+              letterSpacing: '0.03em',
+              textShadow: '0 1px 4px rgba(0,0,0,0.65)',
+            }}
+          >
+            {sanitizedTitle}
+          </h2>
+          {sanitizedSubtitle && (
+            <p className="text-sm italic" style={{ color: 'rgba(253,251,245,0.6)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+              {sanitizedSubtitle}
+            </p>
+          )}
+          {/* Chamber reveal divider */}
+          <div className="chapter-modal-divider mt-6 mx-auto max-w-md" />
         </div>
 
-        {/* Content with markdown rendering */}
+        {/* Content */}
         <div
           ref={contentRef}
           className="flex-1 overflow-y-auto px-12 py-8 prose-content"
-          style={{
-            fontFamily: 'Crimson Pro, serif',
-            fontSize: '17px',
-            lineHeight: '1.75',
-            color: 'rgba(253,251,245,0.92)',
-            maxWidth: '65ch',
-            margin: '0 auto',
-            width: '100%'
-          }}
+          style={{ fontFamily: 'Crimson Pro, Georgia, serif', fontSize: '17px', lineHeight: '1.62', color: 'rgba(253,251,245,0.92)' }}
         >
           {sanitizedExcerpt && (
             <blockquote
-              className="border-l-2 pl-6 pr-4 py-4 my-6 markdown-content"
-              style={{
-                borderColor: 'var(--accent-40)',
-                backgroundColor: 'var(--accent-10)',
-                boxShadow: '-2px 0 8px var(--accent-10)',
-                borderRadius: '0 8px 8px 0'
-              }}
+              className="border-l-2 pl-6 py-4 my-6 italic"
+              style={{ borderColor: 'var(--accent-40)', backgroundColor: 'var(--accent-10)', borderRadius: '0 8px 8px 0' }}
             >
-              <ReactMarkdown>
-                {sanitizedExcerpt}
-              </ReactMarkdown>
+              <ReactMarkdown>{sanitizedExcerpt}</ReactMarkdown>
             </blockquote>
           )}
           {sanitizedBody ? (
             <div className="markdown-content">
-              <ReactMarkdown>
-                {sanitizedBody}
-              </ReactMarkdown>
+              <ReactMarkdown>{sanitizedBody}</ReactMarkdown>
             </div>
           ) : (
-            <div className="text-[rgba(253,251,245,0.4)] text-center py-12">No content available.</div>
+            <div className="text-center py-12" style={{ color: 'rgba(253,251,245,0.4)' }}>No content available.</div>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer with navigation */}
         <div className="border-t border-[var(--accent-15)] px-8 py-4 flex items-center justify-between flex-shrink-0">
-          <div className="text-[9px] text-[rgba(253,251,245,0.4)]" style={{ fontFamily: 'Crimson Pro, serif' }}>
-            Press <span className="font-mono px-1.5 py-0.5 rounded bg-[var(--accent-10)] text-[rgba(253,251,245,0.5)]">Esc</span> to close
+          <button
+            onClick={() => hasPrev && onNavigate(allChapters[currentIndex - 1])}
+            className="px-4 py-2 rounded-full text-sm transition-all"
+            style={{
+              opacity: hasPrev ? 1 : 0.3,
+              cursor: hasPrev ? 'pointer' : 'default',
+              border: '1px solid var(--accent-20)',
+              color: 'rgba(253,251,245,0.7)'
+            }}
+            disabled={!hasPrev}
+          >
+            ← Previous
+          </button>
+          <div className="text-[10px] uppercase tracking-[0.15em]" style={{ color: 'rgba(253,251,245,0.4)' }}>
+            Press ← → to navigate • Esc to close
           </div>
-          <div className="text-xs text-[rgba(253,251,245,0.5)]" style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Chapter {chapter.order}</div>
+          <button
+            onClick={() => hasNext && onNavigate(allChapters[currentIndex + 1])}
+            className="px-4 py-2 rounded-full text-sm transition-all"
+            style={{
+              opacity: hasNext ? 1 : 0.3,
+              cursor: hasNext ? 'pointer' : 'default',
+              border: '1px solid var(--accent-20)',
+              color: 'rgba(253,251,245,0.7)'
+            }}
+            disabled={!hasNext}
+          >
+            Next →
+          </button>
         </div>
       </div>
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .markdown-content {
-          font-family: 'Crimson Pro', serif;
-          color: rgba(253, 251, 245, 0.92);
-          line-height: 1.75;
-        }
-
-        .markdown-content h1,
-        .markdown-content h2,
-        .markdown-content h3,
-        .markdown-content h4,
-        .markdown-content h5,
-        .markdown-content h6 {
-          font-family: 'Cinzel', serif;
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+          font-family: 'Cinzel', Georgia, serif;
           color: var(--accent-color);
-          font-weight: 600;
-          letter-spacing: 0.02em;
-          margin-top: 2.5em;
-          margin-bottom: 1em;
+          margin-top: 2em;
+          margin-bottom: 0.8em;
         }
-
-        .markdown-content h1 {
-          font-size: 2em;
-          line-height: 1.2;
-        }
-
-        .markdown-content h2 {
-          font-size: 1.65em;
-          line-height: 1.3;
-          border-bottom: 1px solid var(--accent-15);
-          padding-bottom: 0.5em;
-        }
-
-        .markdown-content h3 {
-          font-size: 1.35em;
-          line-height: 1.4;
-        }
-
-        .markdown-content h4 {
-          font-size: 1.15em;
-        }
-
-        .markdown-content h5,
-        .markdown-content h6 {
-          font-size: 1em;
-        }
-
-        .markdown-content p {
-          margin-top: 1em;
-          margin-bottom: 1em;
-        }
-
-        .markdown-content ul,
-        .markdown-content ol {
-          margin-top: 1em;
-          margin-bottom: 1em;
-          margin-left: 1.75em;
-          color: rgba(253, 251, 245, 0.92);
-        }
-
-        .markdown-content li {
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
-        }
-
+        .markdown-content h2 { font-size: 1.5em; border-bottom: 1px solid var(--accent-15); padding-bottom: 0.4em; }
+        .markdown-content p { margin: 1em 0; }
         .markdown-content blockquote {
           border-left: 2px solid var(--accent-40);
-          background-color: var(--accent-10);
-          box-shadow: -2px 0 8px var(--accent-10);
-          padding-left: 1.5em;
-          padding-right: 1em;
-          padding-top: 1em;
-          padding-bottom: 1em;
-          margin-left: 0;
-          margin-right: 0;
-          margin-top: 1.5em;
-          margin-bottom: 1.5em;
-          color: rgba(253, 251, 245, 0.85);
-          font-style: italic;
+          background: var(--accent-10);
+          padding: 1em 1.5em;
+          margin: 1.5em 0;
           border-radius: 0 8px 8px 0;
+          font-style: italic;
         }
+        .prose-content::-webkit-scrollbar { width: 6px; }
+        .prose-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+        .prose-content::-webkit-scrollbar-thumb { background: var(--accent-20); border-radius: 3px; }
+      `}</style>
+    </div>
+  );
+}
 
-        .markdown-content code {
-          background-color: var(--accent-10);
-          color: var(--text-accent);
-          padding: 0.2em 0.5em;
-          border-radius: 4px;
-          font-family: 'JetBrains Mono', 'Courier New', monospace;
-          font-size: 0.9em;
-        }
+// ─────────────────────────────────────────────────────────────────────────────
+// PART ACCORDION - Collapsible Parts for Treatise
+// ─────────────────────────────────────────────────────────────────────────────
+function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, bookmarkedIds, onBookmark }) {
+  const chapterCount = chapters.length;
+  const rangeText = part.chapterRange ? `Ch ${part.chapterRange[0]}–${part.chapterRange[1]}` : '';
 
-        .markdown-content pre {
-          background-color: rgba(0, 0, 0, 0.4);
-          color: rgba(253, 251, 245, 0.92);
-          padding: 1.25em;
-          border-radius: 8px;
-          overflow-x: auto;
-          margin-top: 1.5em;
-          margin-bottom: 1.5em;
-          border: 1px solid var(--accent-15);
-        }
+  return (
+    <div className="border-b border-[var(--accent-10)]">
+      {/* Part Header */}
+      <button
+        onClick={onToggle}
+        className="w-full px-5 py-4 flex items-center justify-between text-left transition-all hover:bg-[var(--accent-05)]"
+        style={{ background: isExpanded ? 'var(--accent-05)' : 'transparent' }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] transition-transform" style={{ color: 'var(--accent-color)', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+            ▶
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              {part.number && (
+                <span className="text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--accent-color)' }}>
+                  Part {part.number}
+                </span>
+              )}
+              <span className="text-[13px] font-medium" style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'rgba(253,251,245,0.9)' }}>
+                {part.title}
+              </span>
+            </div>
+            {part.subtitle && (
+              <div className="text-[11px] mt-0.5" style={{ color: 'rgba(253,251,245,0.5)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+                {part.subtitle}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="text-[10px] uppercase tracking-[0.15em]" style={{ color: 'rgba(253,251,245,0.4)' }}>
+          {rangeText || `${chapterCount} items`}
+        </div>
+      </button>
 
-        .markdown-content pre code {
-          background: none;
-          color: inherit;
-          padding: 0;
-          border-radius: 0;
-        }
+      {/* Expanded Chapters */}
+      {isExpanded && (
+        <div className="px-5 pb-4 space-y-2" style={{ animation: 'slideDown 200ms ease-out' }}>
+          {chapters.map((ch) => {
+            const isBookmarked = bookmarkedIds.includes(ch.id);
+            return (
+              <button
+                key={ch.id}
+                onClick={() => onChapterClick(ch)}
+                className="w-full text-left px-4 py-3 rounded-xl border transition-all group"
+                style={{
+                  background: 'rgba(0,0,0,0.2)',
+                  border: '1px solid var(--accent-10)'
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px]" style={{ color: 'var(--accent-color)' }}>
+                        {typeof ch.order === 'number' ? ch.order : ch.order}
+                      </span>
+                      <span className="text-[13px] font-medium group-hover:text-white transition-colors" style={{ color: 'rgba(253,251,245,0.85)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+                        {sanitizeText(ch.title)}
+                      </span>
+                    </div>
+                    {ch.subtitle && (
+                      <div className="text-[11px] mt-1 ml-6" style={{ color: 'rgba(253,251,245,0.5)' }}>
+                        {sanitizeText(ch.subtitle)}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onBookmark(ch.id); }}
+                    className="text-sm transition-all flex-shrink-0"
+                    style={{ color: isBookmarked ? 'var(--accent-color)' : 'rgba(253,251,245,0.3)' }}
+                  >
+                    {isBookmarked ? "★" : "☆"}
+                  </button>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-        .markdown-content hr {
-          border: none;
-          margin: 3em 0;
-          text-align: center;
-        }
-
-        .markdown-content hr::after {
-          content: '◆';
-          color: var(--accent-30);
-          font-size: 12px;
-        }
-
-        .markdown-content a {
-          color: var(--text-accent);
-          text-decoration: underline;
-          text-decoration-color: var(--accent-30);
-          transition: all 0.2s;
-        }
-
-        .markdown-content a:hover {
-          color: var(--accent-color);
-          text-decoration-color: var(--accent-60);
-        }
-
-        .markdown-content table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 1.5em;
-          margin-bottom: 1.5em;
-        }
-
-        .markdown-content th,
-        .markdown-content td {
-          border: 1px solid var(--accent-15);
-          padding: 0.75em;
-          text-align: left;
-        }
-
-        .markdown-content th {
-          background-color: var(--accent-10);
-          color: var(--text-accent);
-          font-weight: 600;
-          font-family: 'Cinzel', serif;
-        }
-
-        /* Custom scrollbar */
-        .prose-content::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .prose-content::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 4px;
-        }
-
-        .prose-content::-webkit-scrollbar-thumb {
-          background: var(--accent-20);
-          border-radius: 4px;
-        }
-
-        .prose-content::-webkit-scrollbar-thumb:hover {
-          background: var(--accent-30);
+      <style>{`
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY CARD - For Recommendations
+// ─────────────────────────────────────────────────────────────────────────────
+function CategoryCard({ category, isSelected, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative p-4 rounded-2xl border text-left transition-all overflow-hidden"
+      style={{
+        background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+        border: '1px solid transparent',
+        backgroundImage: isSelected
+          ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+             linear-gradient(135deg, var(--accent-50) 0%, var(--accent-40) 50%, var(--accent-50) 100%)`
+          : `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+             linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)`,
+        backgroundOrigin: 'border-box',
+        backgroundClip: 'padding-box, border-box',
+        boxShadow: isSelected
+          ? `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px var(--accent-25), 0 0 80px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)`
+          : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
+        minHeight: '140px'
+      }}
+      onMouseEnter={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
+        }
+      }}
+    >
+      {/* Volcanic glass texture overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-2xl"
+        style={{
+          background: `
+            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+            repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)
+          `,
+          opacity: 0.7
+        }}
+      />
+
+      {/* Inner glow */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-2xl"
+        style={{
+          background: `radial-gradient(circle at 50% 0%, ${isSelected ? 'var(--accent-glow)15' : 'var(--accent-glow)08'} 0%, transparent 60%)`
+        }}
+      />
+
+      <div className="relative z-10">
+        <div className="mb-3">
+          <span
+            className="text-[12px] font-medium uppercase tracking-[0.08em] leading-tight"
+            style={{ color: 'var(--accent-color)' }}
+          >
+            {category.label}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {category.symptoms.map((symptom, i) => (
+            <span
+              key={i}
+              className="text-[11px]"
+              style={{ color: 'rgba(253,251,245,0.55)' }}
+            >
+              {symptom}
+            </span>
+          ))}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 export function WisdomSection() {
   const [activeTab, setActiveTab] = useState("Recommendations");
-  const [selectedCategory, setSelectedCategory] = useState("focus-presence");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [expandedPart, setExpandedPart] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [bookmarkedIds, setBookmarkedIds] = useState([]);
-  const [scrollPositions, setScrollPositions] = useState({});
-  const [activeChapterId, setActiveChapterId] = useState(
-    treatiseChapters[0]?.id ?? null
-  );
-  const [focusMode, setFocusMode] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [modalChapter, setModalChapter] = useState(null);
-  const detailRef = useRef(null);
-
-  // Load bookmarks & scroll positions from localStorage
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const storedBookmarks = window.localStorage.getItem(BOOKMARKS_KEY);
-      if (storedBookmarks) {
-        setBookmarkedIds(JSON.parse(storedBookmarks));
-      }
-    } catch {
-      // ignore
-    }
-    try {
-      const storedScroll = window.localStorage.getItem(SCROLL_KEY);
-      if (storedScroll) {
-        setScrollPositions(JSON.parse(storedScroll));
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Persist bookmarks
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarkedIds));
-    } catch {
-      // ignore
-    }
-  }, [bookmarkedIds]);
-
-  // Persist scroll positions
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(SCROLL_KEY, JSON.stringify(scrollPositions));
-    } catch {
-      // ignore
-    }
-  }, [scrollPositions]);
-
-  // Helper functions
-  const getChapterById = (id) => treatiseChapters.find((ch) => ch.id === id);
-  const activeChapter = getChapterById(activeChapterId);
-
-  const getPreview = (text) => {
-    const stripped = text.replace(/[#*_`\[\]]/g, "");
-    return stripped.slice(0, 150).trim() + (stripped.length > 150 ? "..." : "");
-  };
+  const [modalOpen, setModalOpen] = useState(false);
+  const { bookmarks, addBookmark, removeBookmark } = useWisdomStore();
+  const bookmarkedIds = bookmarks.map(b => b.sectionId);
 
   const toggleBookmark = (chapterId) => {
-    setBookmarkedIds((prev) =>
-      prev.includes(chapterId)
-        ? prev.filter((id) => id !== chapterId)
-        : [...prev, chapterId]
-    );
+    const exists = bookmarks.some(b => b.sectionId === chapterId);
+    if (exists) {
+      removeBookmark(chapterId);
+    } else {
+      addBookmark({ sectionId: chapterId });
+    }
   };
 
   const openChapterModal = (chapter) => {
@@ -461,254 +410,256 @@ export function WisdomSection() {
     setModalOpen(true);
   };
 
-  // Recommendations view
+  const getChapterById = (id) => treatiseChapters.find(ch => ch.id === id);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RECOMMENDATIONS VIEW
+  // ─────────────────────────────────────────────────────────────────────────
   const renderRecommendationsView = () => {
     const categories = getAllCategories();
-    const currentCategory = wisdomCategories[selectedCategory];
+    const currentCategory = selectedCategory ? wisdomCategories[selectedCategory] : null;
 
-    return (
-      <div className="w-full flex flex-col gap-4">
-        {/* Category selector */}
-        <div className="flex flex-col gap-2">
-          <div className="text-[9px] uppercase tracking-[0.24em] text-[rgba(253,251,245,0.5)]">
-            Select Your Focus
+    if (currentCategory) {
+      // Expanded view - show back button and recommendations
+      return (
+        <div className="space-y-5">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className="flex items-center gap-2 text-sm transition-all"
+            style={{ color: 'var(--accent-color)' }}
+          >
+            <span>◀</span>
+            <span className="uppercase tracking-[0.15em]">{currentCategory.label}</span>
+          </button>
+
+          <div className="text-[14px] italic leading-relaxed" style={{ color: 'rgba(253,251,245,0.7)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+            {currentCategory.description}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setSelectedCategory(cat.key)}
-                className={`px-3 py-2 rounded-full text-[10px] border transition-all ${selectedCategory === cat.key
-                  ? "bg-accent text-[#050508] font-semibold border-transparent shadow-[0_0_12px_rgba(251,191,36,0.25)]"
-                  : "border-[var(--accent-20)] text-[rgba(253,251,245,0.65)] hover:border-[var(--accent-40)] hover:bg-[var(--accent-10)]"
-                  }`}
-                style={{
-                  background: selectedCategory === cat.key ? `linear-gradient(to bottom right, var(--accent-color), var(--accent-color))` : undefined
-                }}
-              >
-                {cat.label}
-              </button>
-            ))}
+
+          <div className="border-t border-[var(--accent-15)] pt-5 space-y-4">
+            {currentCategory.chapters.map((rec, idx) => {
+              const chapter = getChapterById(rec.chapterRef);
+              const isBookmarked = chapter && bookmarkedIds.includes(chapter.id);
+
+              return (
+                <div
+                  key={idx}
+                  className="p-5 rounded-2xl border cursor-pointer transition-all group"
+                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--accent-15)', borderLeft: '3px solid var(--accent-30)' }}
+                  onClick={() => chapter && openChapterModal(chapter)}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <h3 className="text-[15px] font-semibold group-hover:text-white transition-colors" style={{ fontFamily: 'Crimson Pro, Georgia, serif', color: 'rgba(253,251,245,0.9)' }}>
+                      {sanitizeText(rec.title)}
+                    </h3>
+                    {chapter && (
+                      <button onClick={(e) => { e.stopPropagation(); toggleBookmark(chapter.id); }} style={{ color: isBookmarked ? 'var(--accent-color)' : 'rgba(253,251,245,0.3)' }}>
+                        {isBookmarked ? "★" : "☆"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-[13px] leading-relaxed" style={{ color: 'rgba(253,251,245,0.6)' }}>
+                    <span style={{ color: 'var(--accent-color)' }}>Why: </span>
+                    {sanitizeText(rec.reasoning)}
+                  </div>
+                  <div className="mt-3 text-right">
+                    <span className="text-[11px] uppercase tracking-[0.15em]" style={{ color: 'var(--accent-color)' }}>
+                      Read Chapter →
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
+      );
+    }
 
-        {/* Category description */}
-        {currentCategory && (
-          <div className="border-t border-[var(--accent-15)] pt-4">
-            <div
-              className="text-[15px] text-[rgba(253,251,245,0.75)] mb-4 italic leading-relaxed"
-              style={{ fontFamily: 'Crimson Pro, serif', lineHeight: '1.6' }}
-            >
-              {currentCategory.description}
-            </div>
+    // Category selection grid
+    return (
+      <div className="space-y-5">
+        <div className="text-center">
+          <h2 className="text-[15px] uppercase tracking-[0.25em] mb-2" style={{ color: 'rgba(253,251,245,0.5)' }}>
+            What Do You Need?
+          </h2>
+        </div>
 
-            {/* Recommended chapters */}
-            <div className="space-y-3">
-              {currentCategory.chapters.map((rec, idx) => {
-                const chapter = getChapterById(rec.chapterRef);
-                const isBookmarked =
-                  chapter && bookmarkedIds.includes(chapter.id);
-
-                return (
-                  <div
-                    key={idx}
-                    className="border border-[var(--accent-10)] rounded-2xl px-4 py-3 bg-[rgba(253,251,245,0.02)] hover:border-[var(--accent-25)] hover:shadow-[0_0_20px_var(--accent-10)] transition-all cursor-pointer group"
-                    style={{ borderLeft: '3px solid rgba(253, 224, 71, 0.3)' }}
-                    onClick={() => {
-                      if (chapter) {
-                        openChapterModal(chapter);
-                      }
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1">
-                        <div
-                          className="text-[14px] font-semibold text-[rgba(253,251,245,0.92)] group-hover:text-[rgba(253,251,245,1)]"
-                          style={{ fontFamily: 'Crimson Pro, serif' }}
-                        >
-                          {sanitizeText(rec.title)}
-                        </div>
-                      </div>
-                      {chapter && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleBookmark(chapter.id);
-                          }}
-                          className={`text-sm px-2 py-1 rounded-full transition-all flex-shrink-0 ${isBookmarked
-                            ? "text-[#fcd34d]"
-                            : "text-[#8b6914] hover:text-[#fcd34d]"
-                            }`}
-                          title={isBookmarked ? "Remove bookmark" : "Bookmark chapter"}
-                        >
-                          {isBookmarked ? "★" : "☆"}
-                        </button>
-                      )}
-                    </div>
-                    <div className="text-[12px] text-[rgba(253,251,245,0.65)] leading-relaxed">
-                      <span className="text-accent" style={{ color: 'var(--accent-color)', opacity: 0.5 }}>Why: </span>
-                      {sanitizeText(rec.reasoning)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {categories.map((cat) => (
+            <CategoryCard
+              key={cat.key}
+              category={cat}
+              isSelected={selectedCategory === cat.key}
+              onClick={() => setSelectedCategory(cat.key)}
+            />
+          ))}
+        </div>
       </div>
     );
   };
 
-  // Treatise/Bookmarks view
+  // ─────────────────────────────────────────────────────────────────────────
+  // TREATISE VIEW - Parts Accordion
+  // ─────────────────────────────────────────────────────────────────────────
   const renderTreatiseView = () => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-    const baseChapters =
-      activeTab === "Bookmarks"
-        ? treatiseChapters.filter((ch) => bookmarkedIds.includes(ch.id))
-        : treatiseChapters;
 
+    // Filter chapters if searching
     const filteredChapters = normalizedQuery
-      ? baseChapters.filter((ch) => {
-        const searchText =
-          (ch.title + " " + (ch.subtitle || "") + " " + (ch.excerpt || ""))
-            .toLowerCase();
+      ? treatiseChapters.filter(ch => {
+        const searchText = (ch.title + " " + (ch.subtitle || "") + " " + (ch.excerpt || "")).toLowerCase();
         return searchText.includes(normalizedQuery);
       })
-      : baseChapters;
+      : null;
 
-    return (
-      <div className="flex flex-col md:flex-row gap-3 h-full">
-        {/* Left: Search + Chapter List */}
-        <div className="md:w-1/2 w-full flex flex-col max-h-64">
-          <div className="mb-2 flex items-center gap-2">
+    // If searching, show flat results
+    if (filteredChapters) {
+      return (
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="flex items-center gap-2">
             <div className="flex-1 relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={
-                  activeTab === "Bookmarks"
-                    ? "Search bookmarked chapters..."
-                    : "Search treatise..."
-                }
-                className="w-full bg-black/30 border border-white/15 rounded-full px-3 py-1.5 text-[11px] text-white placeholder:text-white/40 focus:outline-none focus:border-white/50"
+                placeholder="Search treatise..."
+                className="wisdom-search w-full px-4 py-3 text-[13px] placeholder:text-white/40"
+                style={{ color: 'rgba(253,251,245,0.9)' }}
               />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/40">
-                ⌕
-              </span>
             </div>
-            {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="px-4 py-3 rounded-xl text-[12px] border transition-all"
+              style={{ border: '1px solid var(--accent-20)', color: 'rgba(253,251,245,0.6)' }}
+            >
+              Clear
+            </button>
+          </div>
+
+          <div className="text-[11px]" style={{ color: 'rgba(253,251,245,0.5)' }}>
+            {filteredChapters.length} result{filteredChapters.length !== 1 ? 's' : ''} for "{searchQuery}"
+          </div>
+
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {filteredChapters.map(ch => (
               <button
-                onClick={() => setSearchQuery("")}
-                className="text-[10px] text-white/60 hover:text-white px-2 py-1 rounded-full border border-white/20"
+                key={ch.id}
+                onClick={() => openChapterModal(ch)}
+                className="w-full text-left px-4 py-3 rounded-xl border transition-all"
+                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--accent-10)' }}
               >
-                Clear
+                <div className="text-[13px] font-medium" style={{ color: 'rgba(253,251,245,0.85)' }}>
+                  {sanitizeText(ch.title)}
+                </div>
+                {ch.subtitle && <div className="text-[11px] mt-1" style={{ color: 'rgba(253,251,245,0.5)' }}>{sanitizeText(ch.subtitle)}</div>}
               </button>
-            )}
-          </div>
-
-          <div className="text-[10px] text-white/50 mb-1">
-            {baseChapters.length === 0 &&
-              (activeTab === "Bookmarks"
-                ? "No bookmarked chapters yet."
-                : "No chapters available.")}
-            {baseChapters.length > 0 &&
-              (normalizedQuery
-                ? `${filteredChapters.length} result${filteredChapters.length === 1 ? "" : "s"
-                } for "${searchQuery.trim()}"`
-                : activeTab === "Bookmarks"
-                  ? `${bookmarkedIds.length} bookmarked chapter${bookmarkedIds.length === 1 ? "" : "s"
-                  }`
-                  : `${treatiseChapters.length} chapters`)}
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-            {filteredChapters.map((ch) => {
-              const preview = getPreview(ch.body || "");
-
-              return (
-                <button
-                  key={ch.id}
-                  className="w-full text-left rounded-2xl px-3 py-2 border border-white/10 bg-white/0 text-white/80 hover:border-white/30 hover:bg-white/5 transition-colors"
-                  onClick={() => openChapterModal(ch)}
-                >
-                  <div className="text-[11px] font-semibold mb-1">
-                    {ch.title}
-                  </div>
-                  {ch.subtitle && (
-                    <div className="text-[10px] text-white/60 mb-1">
-                      {ch.subtitle}
-                    </div>
-                  )}
-                  {preview && (
-                    <div className="mt-1 text-[10px] text-white/50 line-clamp-2">
-                      {preview}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {filteredChapters.length === 0 && baseChapters.length > 0 && (
-              <div className="text-[11px] text-white/50 py-4">
-                No chapters match{" "}
-                <span className="italic">"{searchQuery.trim()}"</span>.
-              </div>
-            )}
+            ))}
           </div>
         </div>
+      );
+    }
 
-        {/* Right: Quick info */}
-        <div className="md:w-1/2 w-full pl-1 border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-3 text-[11px] text-white/60">
-          <div className="text-center text-[10px] text-white/50 py-8">
-            Click a chapter to read full text in modal
-          </div>
+    // Normal view - Parts accordion
+    return (
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="text-center pb-4 border-b border-[var(--accent-10)]">
+          <h2 className="text-[16px] uppercase tracking-[0.3em] mb-1" style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'var(--accent-color)' }}>
+            The Treatise
+          </h2>
+          <p className="text-[12px] italic" style={{ color: 'rgba(253,251,245,0.5)' }}>
+            A Map of Conscious Living
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chapters..."
+            className="wisdom-search w-full px-4 py-3 text-[13px] placeholder:text-white/40"
+            style={{ color: 'rgba(253,251,245,0.9)' }}
+          />
+        </div>
+
+        {/* Parts Accordion */}
+        <div className="border border-[var(--accent-15)] rounded-2xl overflow-hidden max-h-[450px] overflow-y-auto">
+          {treatiseParts.map((part) => {
+            const chapters = getChaptersForPart(part.id, treatiseChapters);
+            return (
+              <PartAccordion
+                key={part.id}
+                part={part}
+                chapters={chapters}
+                isExpanded={expandedPart === part.id}
+                onToggle={() => setExpandedPart(expandedPart === part.id ? null : part.id)}
+                onChapterClick={openChapterModal}
+                bookmarkedIds={bookmarkedIds}
+                onBookmark={toggleBookmark}
+              />
+            );
+          })}
         </div>
       </div>
     );
   };
 
-  // Render Videos
-  const renderVideos = () => (
-    <div className="space-y-3">
-      {mockVideos.map((video) => (
-        <div key={video.id} className="border border-white/10 rounded-2xl px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[11px] font-semibold text-white">
-                {video.title}
+  // ─────────────────────────────────────────────────────────────────────────
+  // BOOKMARKS VIEW
+  // ─────────────────────────────────────────────────────────────────────────
+  const renderBookmarksView = () => {
+    const bookmarkedChapters = treatiseChapters.filter(ch => bookmarkedIds.includes(ch.id));
+
+    if (bookmarkedChapters.length === 0) {
+      return (
+        <div className="text-center py-12" style={{ color: 'rgba(253,251,245,0.5)' }}>
+          <div className="text-2xl mb-3">☆</div>
+          <div className="text-[13px]">No bookmarked chapters yet</div>
+          <div className="text-[11px] mt-1">Click the star on any chapter to bookmark it</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3 max-h-[450px] overflow-y-auto">
+        {bookmarkedChapters.map(ch => (
+          <button
+            key={ch.id}
+            onClick={() => openChapterModal(ch)}
+            className="w-full text-left px-4 py-3 rounded-xl border transition-all group"
+            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--accent-15)' }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[13px] font-medium group-hover:text-white transition-colors" style={{ color: 'rgba(253,251,245,0.85)' }}>
+                  {sanitizeText(ch.title)}
+                </div>
+                {ch.subtitle && <div className="text-[11px] mt-1" style={{ color: 'rgba(253,251,245,0.5)' }}>{sanitizeText(ch.subtitle)}</div>}
               </div>
-              <div className="text-[10px] text-white/60 mt-1">
-                {video.length}
-              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleBookmark(ch.id); }}
+                style={{ color: 'var(--accent-color)' }}
+              >
+                ★
+              </button>
             </div>
-            <button className="text-[10px] px-3 py-1 rounded-full border border-white/30 text-white/70 hover:border-white/50 hover:bg-white/5 transition-colors">
-              Play
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // Render Blog
-  const renderBlog = () => (
-    <div className="space-y-3">
-      {mockBlog.map((post) => (
-        <div key={post.id} className="border border-white/10 rounded-2xl px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors">
-          <div className="text-[11px] font-semibold text-white mb-2">
-            {post.title}
-          </div>
-          <div className="text-[10px] text-white/60 mb-3">{post.preview}</div>
-          <button className="text-[10px] px-3 py-1 rounded-full border border-white/30 text-white/70 hover:border-white/50 hover:bg-white/5 transition-colors">
-            Read
           </button>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  };
 
-  // Main render
+  // ─────────────────────────────────────────────────────────────────────────
+  // VIDEOS VIEW - Now uses VideoLibrary component
+  // ─────────────────────────────────────────────────────────────────────────
+  const renderVideosView = () => <VideoLibrary />;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MAIN RENDER
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
       <ChapterModal
@@ -717,46 +668,64 @@ export function WisdomSection() {
         onClose={() => setModalOpen(false)}
         onBookmark={toggleBookmark}
         isBookmarked={modalChapter && bookmarkedIds.includes(modalChapter.id)}
+        allChapters={treatiseChapters}
+        onNavigate={(ch) => setModalChapter(ch)}
       />
 
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="rounded-3xl border border-white/15 bg-black/40 backdrop-blur-xl px-4 py-4 space-y-4 shadow-[0_0_40px_rgba(0,0,0,0.4)]">
+      <div className="w-full max-w-5xl mx-auto">
+        <div
+          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-8 pb-9 space-y-5 relative overflow-hidden"
+          style={{
+            background: 'rgba(20, 10, 15, 0.78)',
+            borderRadius: 'var(--radius-panel)',
+            boxShadow: 'var(--shadow-panel)',
+          }}
+        >
+          {/* Wisdom scroll background */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url(${import.meta.env.BASE_URL}wisdom-scroll.png)`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.17,
+              zIndex: 0,
+              borderRadius: 'var(--radius-panel)',
+            }}
+          />
           {/* Tabs */}
-          <section className="flex gap-1 rounded-full bg-white/5 p-1 border border-white/10">
+          <section className="flex gap-1 rounded-full bg-black/30 p-1 border border-[var(--accent-10)]">
             {TABS.map((tab) => {
               const active = activeTab === tab;
-              const countLabel =
-                tab === "Bookmarks"
-                  ? bookmarkedIds.length > 0
-                    ? ` (${bookmarkedIds.length})`
-                    : ""
-                  : "";
-
+              const countLabel = tab === "Bookmarks" && bookmarkedIds.length > 0 ? ` (${bookmarkedIds.length})` : "";
               return (
                 <button
                   key={tab}
-                  className="px-5 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap"
+                  className="flex-1 px-4 py-2 rounded-full text-xs transition-all"
                   style={{
                     background: active ? 'var(--ui-button-gradient)' : 'transparent',
-                    color: active ? '#050508' : 'rgba(253,251,245,0.7)',
-                    fontWeight: active ? 600 : 400
+                    color: active ? '#050508' : 'rgba(253,251,245,0.6)',
+                    fontWeight: active ? 700 : 500,
+                    transform: active ? 'scale(1.02)' : 'scale(1)',
+                    borderBottom: active ? '2px solid var(--gold-80)' : '2px solid transparent',
+                    opacity: active ? 1 : 0.6,
+                    transition: 'transform 140ms ease-out, opacity 140ms ease-out, border-bottom-color 140ms ease-out, background 140ms ease-out',
                   }}
                   onClick={() => setActiveTab(tab)}
                 >
-                  {tab}
-                  {countLabel}
+                  {tab}{countLabel}
                 </button>
               );
             })}
           </section>
 
           {/* Content */}
-          <section className="relative min-h-[300px] rounded-3xl border border-white/10 bg-gradient-to-b from-white/5 to-white/0 px-4 py-4 flex flex-col overflow-hidden">
+          <section className="min-h-[400px] relative z-10">
             {activeTab === "Recommendations" && renderRecommendationsView()}
-            {(activeTab === "Treatise" || activeTab === "Bookmarks") &&
-              renderTreatiseView()}
-            {activeTab === "Videos" && renderVideos()}
-            {activeTab === "Blog" && renderBlog()}
+            {activeTab === "Treatise" && renderTreatiseView()}
+            {activeTab === "Bookmarks" && renderBookmarksView()}
+            {activeTab === "Videos" && renderVideosView()}
           </section>
         </div>
       </div>

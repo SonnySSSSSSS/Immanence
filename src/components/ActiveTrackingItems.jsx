@@ -60,10 +60,18 @@ export function ActiveTrackingItems() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-8 relative overflow-hidden">
+                {/* Subtle gradient */}
+                <div
+                    className="absolute inset-0 pointer-events-none rounded-3xl"
+                    style={{
+                        background: 'radial-gradient(circle at top, rgba(255,220,120,0.05), transparent 60%)',
+                    }}
+                />
+
                 {/* Header */}
                 <h2
-                    className="text-sm uppercase tracking-[0.2em] text-[var(--accent-70)] mb-4 text-center"
+                    className="application-card-label text-[var(--accent-70)] mb-6 text-center relative z-10"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     TRACKING THIS WEEK

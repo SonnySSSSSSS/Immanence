@@ -12,6 +12,8 @@
   --gold-bright: #fcd34d;
   --gold-mid: #f59e0b;
   --gold-deep: #b45309;
+  --gold-strong: #F7C35F;
+  /* Explicit gold for active pills */
 
   /* ─── Background Palette ─── */
   --bg-void: #050508;
@@ -34,7 +36,31 @@
   /* ─── Typography ─── */
   --font-display: 'Cinzel', serif;
   --font-body: 'Crimson Pro', serif;
+  --font-ui: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* ─── Wisdom Section: Gold Scale ─── */
+  --gold-100: #F9E4A8;
+  --gold-80: #EDC365;
+  --gold-60: #C38F35;
+  --gold-30: #5C421F;
+
+  /* ─── Wisdom Section: Cosmic Tones ─── */
+  --cosmic-900: #0A0508;
+  --cosmic-800: #140A0F;
+  --cosmic-700: #2D1A1F;
+
+  /* ─── Wisdom Section: Shape Tokens ─── */
+  --radius-panel: 18px;
+  --radius-card: 16px;
+  --radius-input: 14px;
+
+  /* ─── Wisdom Section: Shadow Tokens ─── */
+  --shadow-panel: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --glow-gold: 0 0 12px rgba(255, 215, 130, 0.45);
+
+  /* ─── Wisdom Section: Accent ─── */
+  --accent-10: rgba(198, 90, 255, 0.35);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -45,24 +71,31 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
 @keyframes shimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
   }
+
   50% {
     opacity: 1;
   }
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 12px rgba(251, 191, 36, 0.15);
   }
+
   50% {
     box-shadow: 0 0 24px rgba(251, 191, 36, 0.25);
   }
@@ -74,6 +107,7 @@
     height: 20px;
     opacity: 1;
   }
+
   100% {
     width: 140px;
     height: 140px;
@@ -81,17 +115,94 @@
   }
 }
 
+/* Peak day dot pulse - subtle breathing for temporal meaning */
+@keyframes peakPulse {
+
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
-   RUNE RING ROTATION FIX
+   RUNE RING DUAL-LAYER ROTATION
+   Inner: Clockwise 60s | Outer: Counter-clockwise 90s
    ───────────────────────────────────────────────────────────────────────── */
 
+@keyframes rune-ring-clockwise {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rune-ring-counterclockwise {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Inner ring: Primary, closer to avatar, clockwise */
+.rune-ring-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rune-ring-clockwise 60s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* Outer ring: Secondary, larger, fainter, counter-clockwise */
+.rune-ring-outer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rune-ring-counterclockwise 90s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* Legacy wrapper - keep for backwards compatibility */
 .rune-ring-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: rune-ring-spin 48s linear infinite;
+  animation: rune-ring-clockwise 48s linear infinite;
   transform-origin: center;
   will-change: transform;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MOBILE LABEL SOFTENING
+   Reduces text glow/opacity on small screens for accessibility
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+
+  /* Soften rune-adjacent labels on mobile */
+  .avatar-label,
+  .rune-label,
+  .stage-label {
+    opacity: 0.9;
+    text-shadow: none;
+  }
+
+  /* Reduce glow intensity on mobile for eye comfort */
+  .rune-ring-inner img,
+  .rune-ring-outer img {
+    filter: brightness(0.95) !important;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -137,7 +248,7 @@
 }
 
 /* Ensure content sits above pseudo-elements */
-.panel-ornate > * {
+.panel-ornate>* {
   position: relative;
   z-index: 1;
 }
@@ -516,8 +627,133 @@
     opacity: 0.5;
     filter: drop-shadow(0 0 24px rgba(253, 224, 71, 0.4));
   }
+
   100% {
     opacity: 0;
     filter: drop-shadow(0 0 8px rgba(253, 224, 71, 0));
   }
+}
+
+/* ─── Cymatic Ripple Animation ─── */
+@keyframes cymaticRipple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(247, 195, 95, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WISDOM SECTION — Component Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Search Bar (Mythic Styling) ─── */
+.wisdom-search {
+  background: linear-gradient(180deg, rgba(40, 30, 35, 0.9), rgba(30, 20, 25, 0.85));
+  box-shadow: inset 0 0 8px rgba(255, 200, 100, 0.15);
+  caret-color: var(--gold-80);
+  border-radius: var(--radius-input);
+  border: 1px solid rgba(249, 228, 168, 0.15);
+  transition: box-shadow 180ms ease-out, border-color 180ms ease-out;
+}
+
+.wisdom-search:focus {
+  box-shadow: inset 0 0 12px rgba(255, 200, 100, 0.25), 0 0 6px rgba(255, 200, 120, 0.25);
+  border-color: rgba(249, 228, 168, 0.4);
+  outline: none;
+}
+
+/* ─── Recommendation Cards ─── */
+.wisdom-need-card {
+  border-radius: var(--radius-card);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background: radial-gradient(circle at top, rgba(249, 228, 168, 0.08), rgba(10, 5, 8, 0.95));
+  transition: box-shadow 180ms ease-out, transform 180ms ease-out;
+}
+
+.wisdom-need-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px var(--gold-60);
+  transform: translateY(-1px);
+}
+
+/* ─── Video Thumbnails ─── */
+.wisdom-video-thumb {
+  position: relative;
+  border-radius: 14px;
+  padding-top: 56.25%;
+  /* 16:9 aspect ratio */
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 186, 120, 0.22), transparent 55%),
+    linear-gradient(180deg, rgba(20, 15, 18, 0.95), rgba(10, 8, 10, 0.98));
+  box-shadow: inset 0 0 0 2px rgba(243, 210, 130, 0.7);
+  overflow: hidden;
+}
+
+.wisdom-video-play-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  text-shadow: 0 0 12px rgba(255, 200, 100, 0.8);
+  color: var(--gold-80);
+}
+
+.wisdom-video-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+/* ─── Chamber Reveal Animation (Modal) ─── */
+@keyframes chamberLine {
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+.chapter-modal-divider {
+  margin-top: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(249, 228, 168, 0.4), transparent);
+  animation: chamberLine 450ms ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   APPLICATION SECTION — Component Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Card Labels ─── */
+.application-card-label {
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+/* ─── Quick Log Axis Dots ─── */
+.quicklog-axis-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--gold-80);
+  opacity: 0.85;
+}
+
+/* ─── Empty State ─── */
+.application-empty-state {
+  font-size: 14px;
+  opacity: 0.8;
+  text-align: center;
+  font-style: italic;
+  padding-top: 16px;
 }

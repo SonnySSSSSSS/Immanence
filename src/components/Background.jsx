@@ -1,57 +1,63 @@
 // src/components/Background.jsx
-// Dark background with velvet texture overlay
+// Stage-specific cosmic backgrounds with colored vignettes
 
 import React from "react";
 
-export function Background() {
+// Vignette edge colors for each stage
+const STAGE_VIGNETTE_COLOR = {
+  seedling: 'rgba(92, 64, 51, 0.34)',    // Earth brown
+  ember: 'rgba(180, 60, 30, 0.30)',     // Deep red-orange
+  flame: 'rgba(150, 40, 20, 0.26)',      // Red tint
+  beacon: 'rgba(30, 60, 120, 0.30)',    // Deep blue
+  stellar: 'rgba(75, 40, 100, 0.18)',   // Deep purple (was silver-gray)
+};
+
+export function Background({ stage = 'flame' }) {
+  const stageLower = (stage || 'flame').toLowerCase();
+  const vignetteColor = STAGE_VIGNETTE_COLOR[stageLower] ?? 'rgba(150, 40, 20, 0.3)';
+
+  // Use stage-specific background image
+  const backgroundImage = `${import.meta.env.BASE_URL}bg/bg-${stageLower}.png`;
+
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
 
-      {/* Very subtle center glow */}
+      {/* Stage-specific cosmic background */}
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(circle at 50% 50%, transparent 30%, rgba(5, 5, 8, 0.6) 100%)",
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          opacity: 0.9,
+          mixBlendMode: 'lighten',
         }}
       />
 
-      {/* Subtle vignette */}
+
+
+      {/* Vertical fade - nebula dissolves into solid dark by ~40% */}
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.4) 100%)",
+          background: `linear-gradient(to bottom, 
+            transparent 0%, 
+            transparent 20%, 
+            rgba(10,10,18,0.4) 35%, 
+            rgba(10,10,18,0.85) 50%, 
+            #0a0a12 65%, 
+            #0a0a12 100%
+          )`,
         }}
       />
 
-      {/* VELVET TEXTURE - SVG noise overlay for materiality */}
-      <svg width="0" height="0" style={{ position: "absolute" }}>
-        <defs>
-          <filter id="velvetNoise">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.8"
-              numOctaves="4"
-              seed="42"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 0.99
-                      0 0 0 0 0.98
-                      0 0 0 0 0.96
-                      0 0 0 0.15 0"
-            />
-          </filter>
-        </defs>
-      </svg>
-
+      {/* Stage-colored vignette - adds tinted edges */}
       <div
         className="absolute inset-0"
         style={{
-          filter: "url(#velvetNoise)",
-          mixBlendMode: "soft-light",
-          opacity: 1,
+          background: `radial-gradient(ellipse 42% 36% at 50% 30%, transparent 40%, ${vignetteColor} 100%)`,
         }}
       />
     </div>

@@ -95,7 +95,7 @@ export function drawTriangle(ctx, progress, config) {
     // Equilateral triangle vertices
     const height = size * Math.sqrt(3) / 2;
     const points = [
-        { x: 0, y: -height * 2/3 },           // Top
+        { x: 0, y: -height * 2 / 3 },           // Top
         { x: size / 2, y: height / 3 },       // Bottom right
         { x: -size / 2, y: height / 3 },      // Bottom left
     ];
@@ -196,15 +196,137 @@ export function drawSquare(ctx, progress, config) {
 }
 
 /**
+ * SVG image cache for sacred symbols
+ */
+const svgImageCache = {};
+
+/**
+ * Load and cache an SVG image
+ */
+function getSvgImage(svgPath) {
+    if (!svgImageCache[svgPath]) {
+        const img = new Image();
+        img.src = svgPath;
+        svgImageCache[svgPath] = img;
+    }
+    return svgImageCache[svgPath];
+}
+
+/**
+ * Generic SVG renderer
+ * Progress controls opacity (fade-in effect)
+ * Applies accent color tinting to make black SVGs visible
+ */
+function drawSvgSymbol(ctx, progress, config, svgPath) {
+    const {
+        accentColor = '#fcd34d',
+        scale = 1.0,
+    } = config;
+
+    const centerX = ctx.canvas.width / 2;
+    const centerY = ctx.canvas.height / 2;
+    const size = 220 * scale;
+
+    const img = getSvgImage(svgPath);
+
+    // If image not loaded yet, just return (don't draw anything)
+    if (!img.complete) {
+        return;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = progress;
+
+    // Create an offscreen canvas for compositing
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = ctx.canvas.width;
+    offCanvas.height = ctx.canvas.height;
+    const offCtx = offCanvas.getContext('2d');
+
+    // Draw the SVG centered on offscreen canvas
+    offCtx.translate(centerX, centerY);
+    offCtx.drawImage(img, -size / 2, -size / 2, size, size);
+
+    // Apply accent color to all non-transparent pixels
+    // This replaces black (or any color) with the accent color
+    offCtx.globalCompositeOperation = 'source-in';
+    offCtx.fillStyle = accentColor;
+    offCtx.fillRect(-size / 2, -size / 2, size, size);
+
+    // Draw the tinted result to the main canvas
+    ctx.drawImage(offCanvas, 0, 0);
+
+    ctx.restore();
+}
+
+/**
+ * Draw Mandala
+ */
+export function drawMandala(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/mandala.svg`);
+}
+
+/**
+ * Draw Sri Yantra
+ */
+export function drawSriYantra(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/sri-yantra.svg`);
+}
+
+/**
+ * Draw Wheel of Dharma
+ */
+export function drawWheelOfDharma(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/wheel-of-dharma.svg`);
+}
+
+/**
+ * Draw Buddha
+ */
+export function drawBuddha(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/the-great-buddha-of-kamakura.svg`);
+}
+
+/**
+ * Draw Cross
+ */
+export function drawCross(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/cross-2.svg`);
+}
+
+/**
+ * Draw Yin Yang
+ */
+export function drawYinYang(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/yin-yang.svg`);
+}
+
+/**
+ * Draw Zen Stones
+ */
+export function drawZenStones(ctx, progress, config) {
+    drawSvgSymbol(ctx, progress, config, `${import.meta.env.BASE_URL}visualization/zen-stones.svg`);
+}
+
+/**
  * Get geometry renderer by name
  */
 export function getGeometryRenderer(geometryName) {
     const renderers = {
+        // Basic shapes
         enso: drawEnso,
         enzo: drawEnso, // common misspelling
         circle: drawCircle,
         triangle: drawTriangle,
         square: drawSquare,
+        // Sacred symbols
+        mandala: drawMandala,
+        'sri-yantra': drawSriYantra,
+        'wheel-of-dharma': drawWheelOfDharma,
+        buddha: drawBuddha,
+        cross: drawCross,
+        'yin-yang': drawYinYang,
+        'zen-stones': drawZenStones,
     };
 
     return renderers[geometryName] || drawEnso;

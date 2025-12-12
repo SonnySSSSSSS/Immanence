@@ -97,75 +97,91 @@ export function QuickLogGesturePad() {
 
     return (
         <div className="w-full">
-            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6">
+            <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-8 relative overflow-hidden">
+                {/* Subtle gradient */}
+                <div
+                    className="absolute inset-0 pointer-events-none rounded-3xl"
+                    style={{
+                        background: 'radial-gradient(circle at top, rgba(255,220,120,0.05), transparent 60%)',
+                    }}
+                />
+
                 {/* Header */}
                 <h3
-                    className="text-xs uppercase tracking-[0.2em] text-[var(--accent-60)] mb-3 text-center"
+                    className="application-card-label text-[var(--accent-70)] mb-4 text-center relative z-10"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
                     QUICK LOG
                 </h3>
 
                 {/* Gesture Pad */}
-                <div className="relative">
+                <div className="relative z-10">
                     <div
                         ref={padRef}
                         onClick={handleClick}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
-                        className="relative aspect-square max-w-sm mx-auto rounded-2xl border-2 border-[var(--accent-20)] bg-[var(--accent-10)] cursor-pointer select-none overflow-hidden"
+                        className="relative aspect-square max-w-sm mx-auto rounded-2xl border-2 bg-[var(--accent-10)] cursor-pointer select-none overflow-hidden"
                         style={{
+                            borderColor: 'var(--accent-20)',
+                            boxShadow: 'inset 0 0 24px rgba(255,220,120,0.08)',
                             touchAction: 'none'
                         }}
                     >
-                        {/* Center Dot */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--accent-40)]" />
+                        {/* Center Dot - Larger */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[var(--accent-50)]" />
+
+                        {/* Axis Dots - N/S/E/W */}
+                        <div className="quicklog-axis-dot absolute top-4 left-1/2 -translate-x-1/2" />
+                        <div className="quicklog-axis-dot absolute bottom-4 left-1/2 -translate-x-1/2" />
+                        <div className="quicklog-axis-dot absolute left-4 top-1/2 -translate-y-1/2" />
+                        <div className="quicklog-axis-dot absolute right-4 top-1/2 -translate-y-1/2" />
 
                         {/* Direction Labels */}
                         <div className="absolute top-8 left-1/2 -translate-x-1/2">
                             <div
-                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'up' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
+                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'up' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
-                                <div className="text-lg mb-0.5">↑</div>
-                                <div className="text-[10px] line-clamp-2 leading-tight">{trackingItems.up}</div>
+                                <div className="text-xl mb-0.5">↑</div>
+                                <div className="text-[11px] line-clamp-2 leading-tight">{trackingItems.up}</div>
                             </div>
                         </div>
 
                         <div className="absolute left-6 top-1/2 -translate-y-1/2">
                             <div
-                                className={`text-sm text-left transition-all max-w-[100px] ${justLogged === 'left' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
+                                className={`text-sm text-left transition-all max-w-[100px] ${justLogged === 'left' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
                                 <div className="flex items-center gap-1">
-                                    <span className="text-lg flex-shrink-0">←</span>
-                                    <span className="text-[10px] line-clamp-2 leading-tight">{trackingItems.left}</span>
+                                    <span className="text-xl flex-shrink-0">←</span>
+                                    <span className="text-[11px] line-clamp-2 leading-tight">{trackingItems.left}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                             <div
-                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'down' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
+                                className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'down' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
-                                <div className="text-[10px] line-clamp-2 leading-tight mb-0.5">{trackingItems.down}</div>
-                                <div className="text-lg">↓</div>
+                                <div className="text-[11px] line-clamp-2 leading-tight mb-0.5">{trackingItems.down}</div>
+                                <div className="text-xl">↓</div>
                             </div>
                         </div>
 
                         <div className="absolute right-6 top-1/2 -translate-y-1/2">
                             <div
-                                className={`text-sm text-right transition-all max-w-[100px] ${justLogged === 'right' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-60)]'
+                                className={`text-sm text-right transition-all max-w-[100px] ${justLogged === 'right' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
                                 style={{ fontFamily: 'Crimson Pro, serif' }}
                             >
                                 <div className="flex items-center gap-1 justify-end">
-                                    <span className="text-[10px] line-clamp-2 leading-tight text-right">{trackingItems.right}</span>
-                                    <span className="text-lg flex-shrink-0">→</span>
+                                    <span className="text-[11px] line-clamp-2 leading-tight text-right">{trackingItems.right}</span>
+                                    <span className="text-xl flex-shrink-0">→</span>
                                 </div>
                             </div>
                         </div>
@@ -185,7 +201,7 @@ export function QuickLogGesturePad() {
 
                     {/* Instruction */}
                     <p
-                        className="text-xs text-center text-[rgba(253,251,245,0.4)] mt-3"
+                        className="text-xs text-center text-[rgba(253,251,245,0.5)] mt-4"
                         style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
                     >
                         Tap direction or swipe

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" fill="none">
+  <defs>
+    <!-- Gold gradient for frame -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5D18A"/>
+      <stop offset="50%" stop-color="#EDC365"/>
+      <stop offset="100%" stop-color="#D4A84A"/>
+    </linearGradient>
+    
+    <!-- Inner glow -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Outer frame -->
+  <rect x="8" y="8" width="384" height="584" rx="20" ry="20" 
+        stroke="url(#goldGrad)" stroke-width="3" fill="none" filter="url(#glow)"/>
+  
+  <!-- Inner frame -->
+  <rect x="20" y="20" width="360" height="560" rx="16" ry="16" 
+        stroke="url(#goldGrad)" stroke-width="1.5" fill="none" opacity="0.6"/>
+  
+  <!-- Corner flourishes - Top Left -->
+  <g transform="translate(12, 12)" stroke="url(#goldGrad)" stroke-width="2" fill="none" filter="url(#glow)">
+    <path d="M0,30 Q0,0 30,0"/>
+    <path d="M5,20 Q5,5 20,5"/>
+    <circle cx="8" cy="8" r="3" fill="url(#goldGrad)"/>
+  </g>
+  
+  <!-- Corner flourishes - Top Right -->
+  <g transform="translate(388, 12) scale(-1, 1)" stroke="url(#goldGrad)" stroke-width="2" fill="none" filter="url(#glow)">
+    <path d="M0,30 Q0,0 30,0"/>
+    <path d="M5,20 Q5,5 20,5"/>
+    <circle cx="8" cy="8" r="3" fill="url(#goldGrad)"/>
+  </g>
+  
+  <!-- Corner flourishes - Bottom Left -->
+  <g transform="translate(12, 588) scale(1, -1)" stroke="url(#goldGrad)" stroke-width="2" fill="none" filter="url(#glow)">
+    <path d="M0,30 Q0,0 30,0"/>
+    <path d="M5,20 Q5,5 20,5"/>
+    <circle cx="8" cy="8" r="3" fill="url(#goldGrad)"/>
+  </g>
+  
+  <!-- Corner flourishes - Bottom Right -->
+  <g transform="translate(388, 588) scale(-1, -1)" stroke="url(#goldGrad)" stroke-width="2" fill="none" filter="url(#glow)">
+    <path d="M0,30 Q0,0 30,0"/>
+    <path d="M5,20 Q5,5 20,5"/>
+    <circle cx="8" cy="8" r="3" fill="url(#goldGrad)"/>
+  </g>
+  
+  <!-- Top center ornament -->
+  <g transform="translate(200, 8)" stroke="url(#goldGrad)" stroke-width="1.5" fill="none">
+    <path d="M-20,8 L0,0 L20,8" filter="url(#glow)"/>
+    <circle cx="0" cy="0" r="4" fill="url(#goldGrad)"/>
+  </g>
+  
+  <!-- Bottom center ornament -->
+  <g transform="translate(200, 592)" stroke="url(#goldGrad)" stroke-width="1.5" fill="none">
+    <path d="M-20,-8 L0,0 L20,-8" filter="url(#glow)"/>
+    <circle cx="0" cy="0" r="4" fill="url(#goldGrad)"/>
+  </g>
+</svg>

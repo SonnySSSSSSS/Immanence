@@ -59,7 +59,7 @@ export function VisualizationCanvas({
     useEffect(() => {
         start();
         return () => stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount only
 
     const getAccentColor = (variable) => {
@@ -83,6 +83,43 @@ export function VisualizationCanvas({
 
         ctx.fillStyle = '#0a0a12';
         ctx.fillRect(0, 0, width, height);
+
+        // Draw subtle grid background
+        const gridColor = getAccentColor('--accent-color');
+        const gridSpacing = 15; // 15px grid cells (finer grid)
+        ctx.save();
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 0.5;
+        ctx.globalAlpha = 0.4; // 40% opacity
+
+        // Vertical lines
+        for (let x = gridSpacing; x < width; x += gridSpacing) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+
+        // Horizontal lines
+        for (let y = gridSpacing; y < height; y += gridSpacing) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+
+        // Draw center crosshairs slightly brighter
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(width / 2, 0);
+        ctx.lineTo(width / 2, height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+
+        ctx.restore();
 
         if (phase === 'void') {
             ctx.save();

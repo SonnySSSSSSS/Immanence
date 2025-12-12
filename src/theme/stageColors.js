@@ -50,6 +50,7 @@ export const STAGE_THEMES = {
             secondary: '#f59e0b',    // Amber
             muted: '#92400e',        // Dark amber
             glow: 'rgba(252, 211, 77, 0.4)',
+            particleColor: '#FF6B35', // Orange-red for particles to stand out
         },
         text: {
             accent: '#fcd34d',
@@ -124,7 +125,7 @@ export const BASE_THEME = {
     fonts: {
         heading: "'Cinzel', serif",
         body: "'Crimson Pro', serif",
-        ui: "'Inter', sans-serif",
+        ui: "'Outfit', sans-serif",
     }
 };
 

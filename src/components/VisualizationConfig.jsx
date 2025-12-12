@@ -19,7 +19,10 @@ export function VisualizationConfig({
     audioEnabled,
     setAudioEnabled,
 }) {
-    const GEOMETRIES = ['enso', 'circle', 'triangle', 'square'];
+    // Basic shapes
+    const BASIC_GEOMETRIES = ['enso', 'circle', 'triangle', 'square'];
+    // Sacred/Spiritual symbols (SVG files)
+    const RELIGIOUS_GEOMETRIES = ['mandala', 'sri-yantra', 'wheel-of-dharma', 'buddha', 'cross', 'yin-yang', 'zen-stones'];
     const DURATIONS = [5, 10, 15, 20];
 
     const totalCycleDuration = fadeInDuration + displayDuration + fadeOutDuration + voidDuration;
@@ -32,15 +35,15 @@ export function VisualizationConfig({
                     className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
                     style={{ fontFamily: 'Cinzel, serif' }}
                 >
-                    Geometry
+                    Shapes
                 </div>
-                <div className="flex gap-2">
-                    {GEOMETRIES.map((g) => (
+                <div className="flex gap-2 mb-4">
+                    {BASIC_GEOMETRIES.map((g) => (
                         <button
                             key={g}
                             onClick={() => setGeometry(g)}
                             className={`
-                flex-1 px-4 py-3 rounded-xl text-sm transition-all
+                flex-1 px-3 py-2 rounded-xl text-xs transition-all
                 ${geometry === g
                                     ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[rgba(253,251,245,0.9)]'
                                     : 'border-[var(--accent-15)] text-[rgba(253,251,245,0.6)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
@@ -52,6 +55,34 @@ export function VisualizationConfig({
                             }}
                         >
                             {g.toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+
+                <div
+                    className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
+                    style={{ fontFamily: 'Cinzel, serif' }}
+                >
+                    Sacred Symbols
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {RELIGIOUS_GEOMETRIES.map((g, index) => (
+                        <button
+                            key={g}
+                            onClick={() => setGeometry(g)}
+                            className={`
+                px-3 py-2 rounded-xl text-xs transition-all
+                ${geometry === g
+                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[rgba(253,251,245,0.9)]'
+                                    : 'border-[var(--accent-15)] text-[rgba(253,251,245,0.6)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
+                                }
+              `}
+                            style={{
+                                border: geometry === g ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
+                                fontFamily: 'Cinzel, serif',
+                            }}
+                        >
+                            {g.replace(/-/g, ' ').toUpperCase()}
                         </button>
                     ))}
                 </div>
@@ -149,33 +180,6 @@ export function VisualizationConfig({
 
                 <div className="mt-3 text-center text-xs text-[rgba(253,251,245,0.5)]">
                     Total Cycle: {totalCycleDuration}s
-                </div>
-            </div>
-
-            {/* Session Duration */}
-            <div>
-                <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
-                    style={{ fontFamily: 'Cinzel, serif' }}
-                >
-                    Duration
-                </div>
-                <div className="flex gap-2">
-                    {DURATIONS.map((min) => (
-                        <button
-                            key={min}
-                            onClick={() => setDuration(min)}
-                            className="flex-1 px-3 py-2 rounded-xl text-sm transition-all"
-                            style={{
-                                border: duration === min ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                                background: duration === min ? 'var(--accent-10)' : 'transparent',
-                                color: duration === min ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
-                                boxShadow: duration === min ? '0 0 12px var(--accent-15)' : 'none',
-                            }}
-                        >
-                            {min}m
-                        </button>
-                    ))}
                 </div>
             </div>
 

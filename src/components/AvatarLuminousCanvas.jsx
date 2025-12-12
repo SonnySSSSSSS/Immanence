@@ -5,6 +5,7 @@
 // - Foreground: Seven Flames, Multi-lane particles, Ambient dust, Filaments
 
 import React, { useEffect, useRef } from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 // CONFIGURATION
 const CANVAS_SCALE = 1.5; // Used for DOM size (150%)
@@ -28,11 +29,15 @@ const WEEK_NODES = [
   { day: 'Sun', angle: -Math.PI * 0.786 },
 ];
 
-// PARTICLE LANES
+// PARTICLE LANES - Golden Ratio (φ ≈ 1.618) harmonics
+// Fibonacci sequence: 1, 1, 2, 3, 5, 8, 13, 21...
+// Trail lengths follow Fibonacci: 34, 55, 89, 144 (increased for visibility)
+const PHI = 1.618033988749895; // Golden ratio
 const PARTICLE_LANES = {
-  outer: { count: 5, speedMod: 0.8, sizeMod: 1.2, trailLen: 35 },
-  middle: { count: 5, speedMod: 1.0, sizeMod: 1.0, trailLen: 30 },
-  inner: { count: 5, speedMod: 1.4, sizeMod: 0.8, trailLen: 25 },
+  short: { count: 5, speedMod: 1.0, sizeMod: 0.9, trailLen: 34 },      // Fibonacci (increased from 21)
+  medium: { count: 3, speedMod: PHI * 0.5, sizeMod: 1.0, trailLen: 55 }, // Fibonacci
+  long: { count: 2, speedMod: PHI * 0.4, sizeMod: 1.1, trailLen: 89 },   // Fibonacci
+  vast: { count: 1, speedMod: PHI * 0.3, sizeMod: 1.2, trailLen: 144 },  // Fibonacci, majestic long trail
 };
 
 // UTILS
@@ -57,12 +62,14 @@ function createNoiseTexture(width, height) {
 }
 
 class Particle {
-  constructor(maxRadius, innerBoundary, laneConfig) {
+  constructor(maxRadius, innerBoundary, laneConfig, baseColor = { h: 42, s: 95, l: 63 }) {
     this.maxRadius = maxRadius;
     this.innerBoundary = innerBoundary;
     this.laneConfig = laneConfig;
+    this.trailLength = laneConfig.trailLen; // Store lane-specific trail length
     this.trail = [];
-    this.color = { h: 42, s: 95, l: 63 }; // Warm amber-gold
+    this.baseColor = baseColor; // Store base color from theme
+    this.color = { ...baseColor }; // Warm amber-gold or theme color
     this.reset();
   }
 
@@ -76,24 +83,28 @@ class Particle {
     this.angle = Math.random() * Math.PI * 2;
     this.startAngle = this.angle;
 
-    // VARY COLOR: Warm range
+    // VARY COLOR: Warm range based on base color
     this.color = {
-      h: 35 + Math.random() * 20,
-      s: 80 + Math.random() * 20,
-      l: 60 + Math.random() * 20
+      h: this.baseColor.h + (Math.random() - 0.5) * 10, // ±5 hue variation
+      s: Math.max(70, Math.min(100, this.baseColor.s + (Math.random() - 0.5) * 20)), // ±10 saturation
+      l: Math.max(50, Math.min(80, this.baseColor.l + (Math.random() - 0.5) * 20))  // ±10 lightness
     };
 
-    // Varied angular speed
-    this.angularSpeed = 0.0003 + Math.random() * 0.0004;
+    // Angular speed - 5x faster than original for visible trails
+    // Golden ratio harmonics preserved via lane speedMod multipliers
+    const baseAngular = 0.0015 * this.laneConfig.speedMod;
+    this.angularSpeed = baseAngular * (0.8 + Math.random() * 0.4); // ±20% variation
 
-    // Spiral speed
-    this.spiralSpeed = 0.02 + Math.random() * 0.03;
+    // Spiral speed with φ harmonic variation
+    const baseSpiral = 0.05 * this.laneConfig.speedMod;
+    this.spiralSpeed = baseSpiral * (PHI / 2) * (0.8 + Math.random() * 0.4);
 
-    // Size variation (3-6px)
-    this.size = 3 + Math.random() * 3;
+    // Size variation influenced by lane and φ ratio
+    const baseSize = 5 * this.laneConfig.sizeMod;
+    this.size = baseSize * (1 + Math.random() * (PHI - 1)); // Range: baseSize to baseSize×φ
 
-    // Brightness variation
-    this.brightness = 0.5 + Math.random() * 0.5;
+    // Brightness variation - increased for visibility
+    this.brightness = 0.8 + Math.random() * 0.2;
 
     // Orbital eccentricity
     this.eccentricity = 0.9 + Math.random() * 0.2;
@@ -141,10 +152,9 @@ class Particle {
     const x = Math.cos(this.angle) * this.radius * this.eccentricity;
     const y = Math.sin(this.angle) * this.radius * (1 + this.tilt);
 
-    // Update trail
+    // Update trail (using lane-specific length, not size-based)
     this.trail.unshift({ x, y });
-    const maxTrailLen = Math.ceil(this.size * 8);
-    if (this.trail.length > maxTrailLen) {
+    if (this.trail.length > this.trailLength) {
       this.trail.pop();
     }
   }
@@ -168,7 +178,7 @@ class Particle {
       ctx.lineTo(centerX + p2.x * scaleMod, centerY + p2.y * scaleMod);
 
       ctx.lineWidth = this.size * (1 - t * 0.9);
-      const alpha = this.brightness * 0.7 * (1 - t * t) * glowMod * lifeMod;
+      const alpha = this.brightness * 0.9 * (1 - t * t) * glowMod * lifeMod; // Increased from 0.7 to 0.9 for visibility
 
       ctx.strokeStyle = `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${alpha})`;
       ctx.lineCap = "round";
@@ -239,11 +249,10 @@ class Dust {
 // DRAWING HELPERS (Using 0,0 as center)
 
 function drawNebulaWisps(ctx, time) {
-  // These extend to ~330px. In virtual world (350px radius), they fit.
   const wisps = [
-    { angle: time * 0.0001, dist: 120, size: 150, opacity: 0.04 },
-    { angle: time * 0.00015 + 2, dist: 150, size: 180, opacity: 0.03 },
-    { angle: time * 0.00008 + 4, dist: 100, size: 120, opacity: 0.05 },
+    { angle: time * 0.0001, dist: 120, size: 150, opacity: 0.15 },
+    { angle: time * 0.00015 + 2, dist: 150, size: 180, opacity: 0.12 },
+    { angle: time * 0.00008 + 4, dist: 100, size: 120, opacity: 0.18 },
   ];
 
   wisps.forEach(wisp => {
@@ -262,8 +271,9 @@ function drawNebulaWisps(ctx, time) {
 }
 
 function drawSacredGeometry(ctx, radius) {
-  ctx.strokeStyle = 'rgba(253, 224, 71, 0.10)';
-  ctx.lineWidth = 1.5;
+  // Sacred geometry at 50% opacity (increased from 10%)
+  ctx.strokeStyle = 'rgba(253, 224, 71, 0.5)';
+  ctx.lineWidth = 2;
 
   // Concentric circles
   for (let r = 40; r < radius; r += 40) {
@@ -273,6 +283,7 @@ function drawSacredGeometry(ctx, radius) {
   }
 
   // Radial lines
+  ctx.lineWidth = 1.5;
   for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
     ctx.beginPath();
     ctx.moveTo(Math.cos(angle) * 60, Math.sin(angle) * 60);
@@ -282,25 +293,46 @@ function drawSacredGeometry(ctx, radius) {
 }
 
 function drawUnifyingGlow(ctx) {
-  // Scaled up to match virtual world size
-  const gradient = ctx.createRadialGradient(
-    0, 0, 100,   // Start inside rune ring
-    0, 0, 320    // Extend past outer decorative ring
-  );
+  // REFINED GLOW: Multi-layered bloom with lighter blend mode
+  // Core-focused with tight falloff for elegant luminosity
 
-  gradient.addColorStop(0, 'rgba(253, 224, 71, 0.15)');
-  gradient.addColorStop(0.3, 'rgba(253, 224, 71, 0.08)');
-  gradient.addColorStop(0.6, 'rgba(200, 160, 60, 0.04)');
-  gradient.addColorStop(1, 'transparent');
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter'; // Additive blending for true glow
 
-  ctx.fillStyle = gradient;
+  // Layer 1: Innermost core halo - very tight, warm white
+  const core = ctx.createRadialGradient(0, 0, 60, 0, 0, 120);
+  core.addColorStop(0, 'rgba(255, 250, 240, 0.19)');
+  core.addColorStop(0.5, 'rgba(253, 224, 71, 0.15)');
+  core.addColorStop(1, 'transparent');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(0, 0, 120, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Layer 2: Mid bloom - starts at rune ring edge
+  const mid = ctx.createRadialGradient(0, 0, 140, 0, 0, 220);
+  mid.addColorStop(0, 'rgba(253, 224, 71, 0.13)');
+  mid.addColorStop(0.6, 'rgba(220, 180, 60, 0.10)');
+  mid.addColorStop(1, 'transparent');
+  ctx.fillStyle = mid;
+  ctx.beginPath();
+  ctx.arc(0, 0, 220, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Layer 3: Outer atmospheric bloom - soft but visible
+  const outer = ctx.createRadialGradient(0, 0, 180, 0, 0, 320);
+  outer.addColorStop(0, 'rgba(200, 160, 80, 0.08)');
+  outer.addColorStop(0.5, 'rgba(180, 140, 60, 0.06)');
+  outer.addColorStop(1, 'transparent');
+  ctx.fillStyle = outer;
   ctx.beginPath();
   ctx.arc(0, 0, 320, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.restore();
 }
 
 function drawAtmosphericHaze(ctx, time) {
-  // Scaled up for virtual world
   const hazePoints = [
     { angle: time * 0.00008, dist: 190, size: 95 },
     { angle: time * 0.00012 + 2, dist: 220, size: 80 },
@@ -313,7 +345,7 @@ function drawAtmosphericHaze(ctx, time) {
     const y = Math.sin(h.angle) * h.dist;
 
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, h.size);
-    gradient.addColorStop(0, 'rgba(180, 140, 60, 0.06)');
+    gradient.addColorStop(0, 'rgba(180, 140, 60, 0.15)');
     gradient.addColorStop(1, 'transparent');
 
     ctx.fillStyle = gradient;
@@ -330,7 +362,8 @@ function drawLightRays(ctx, innerRadius, outerRadius) {
 
   for (let i = 0; i < rayCount; i++) {
     const angle = (i / rayCount) * Math.PI * 2;
-    const intensity = 0.03 + Math.sin(i * 1.5) * 0.02;
+    // REDUCED INTENSITY: from 0.03/0.02 to 0.015/0.01
+    const intensity = 0.015 + Math.sin(i * 1.5) * 0.01;
 
     const innerX = Math.cos(angle) * innerRadius;
     const innerY = Math.sin(angle) * innerRadius;
@@ -479,6 +512,45 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   const breathStateRef = useRef(breathState);
   const weeklyPracticeLogRef = useRef(weeklyPracticeLog);
 
+  const theme = useTheme();
+
+  // Default gold HSL for all stages except Flame
+  const defaultGoldHSL = { h: 42, s: 95, l: 63 };
+
+  // Only use particleColor for Flame stage (when it's explicitly defined)
+  // Otherwise use default gold for all other stages
+  const particleColorHSL = theme.accent.particleColor
+    ? (() => {
+      // Convert hex to HSL for Flame stage only
+      const hex = theme.accent.particleColor.replace('#', '');
+      const r = parseInt(hex.substr(0, 2), 16) / 255;
+      const g = parseInt(hex.substr(2, 2), 16) / 255;
+      const b = parseInt(hex.substr(4, 2), 16) / 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+
+      return {
+        h: Math.round(h * 360),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100)
+      };
+    })()
+    : defaultGoldHSL;
+
   useEffect(() => {
     breathStateRef.current = breathState;
   }, [breathState]);
@@ -486,6 +558,17 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   useEffect(() => {
     weeklyPracticeLogRef.current = weeklyPracticeLog;
   }, [weeklyPracticeLog]);
+
+  // Update particle colors when theme/stage changes
+  useEffect(() => {
+    if (particlesRef.current.length > 0) {
+      particlesRef.current.forEach(particle => {
+        particle.baseColor = particleColorHSL;
+        // Reset color with new baseColor on next reset, but don't force reset now
+        // This ensures smooth transition - particles will update on their natural lifecycle
+      });
+    }
+  }, [particleColorHSL.h, particleColorHSL.s, particleColorHSL.l]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -518,7 +601,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
 
         Object.values(PARTICLE_LANES).forEach(config => {
           for (let i = 0; i < config.count; i++) {
-            particlesRef.current.push(new Particle(maxRadius, innerBoundary, config));
+            particlesRef.current.push(new Particle(maxRadius, innerBoundary, config, particleColorHSL));
           }
         });
       }
@@ -583,7 +666,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       // Sacred Geometry
       drawSacredGeometry(ctx, flameRadius * 1.2);
 
-      // INTEGRATION LAYER 1: Unifying glow
+      // INTEGRATION LAYER 1: Refined multi-layered bloom glow
       drawUnifyingGlow(ctx);
 
       // INTEGRATION LAYER 2: Light rays
@@ -592,12 +675,12 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       // INTEGRATION LAYER 3: Atmospheric haze
       drawAtmosphericHaze(ctx, time);
 
-      // Decorative dashed ring
+      // Decorative dashed ring - REDUCED shadow blur
       ctx.save();
-      ctx.shadowColor = 'rgba(253, 224, 71, 0.3)';
-      ctx.shadowBlur = 15;
+      ctx.shadowColor = 'rgba(253, 224, 71, 0.15)';
+      ctx.shadowBlur = 8;
       ctx.setLineDash([8, 12]);
-      ctx.strokeStyle = 'rgba(253, 224, 71, 0.15)';
+      ctx.strokeStyle = 'rgba(253, 224, 71, 0.10)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(0, 0, runeRingRadius * 1.15, 0, Math.PI * 2);
@@ -658,6 +741,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
     <canvas
       ref={canvasRef}
       className="absolute w-[150%] h-[150%] -left-[25%] -top-[25%] pointer-events-none"
+      style={{ zIndex: 5 }}
     />
   );
 }

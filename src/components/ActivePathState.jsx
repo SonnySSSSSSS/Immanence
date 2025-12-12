@@ -27,7 +27,26 @@ export function ActivePathState() {
     };
 
     return (
-        <div className="w-full bg-[#161625] border border-[var(--accent-15)] rounded-3xl p-6 space-y-6">
+        <div
+            className="w-full p-6 space-y-6 relative"
+            style={{
+                background: 'linear-gradient(180deg, rgba(22, 22, 37, 0.95) 0%, rgba(16, 14, 28, 0.98) 100%)',
+                border: '2px solid rgba(250, 208, 120, 0.55)',
+                borderRadius: '24px',
+                boxShadow: '0 0 40px rgba(250, 208, 120, 0.15), inset 0 0 60px rgba(0, 0, 0, 0.5)',
+            }}
+        >
+            {/* Corner ornaments */}
+            <div className="absolute top-2 left-2 w-8 h-8 border-t-2 border-l-2 rounded-tl-lg" style={{ borderColor: 'rgba(250, 208, 120, 0.7)' }} />
+            <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 rounded-tr-lg" style={{ borderColor: 'rgba(250, 208, 120, 0.7)' }} />
+            <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 rounded-bl-lg" style={{ borderColor: 'rgba(250, 208, 120, 0.7)' }} />
+            <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 rounded-br-lg" style={{ borderColor: 'rgba(250, 208, 120, 0.7)' }} />
+
+            {/* Center top ornament */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />
+            </div>
+
             {/* Header */}
             <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
