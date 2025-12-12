@@ -32,38 +32,65 @@ export function CodexChamber({ onClose }) {
 
             {/* Glowing Orb Header Region */}
             <div className="codex-header-region relative flex flex-col items-center py-8 mb-4">
-                {/* Ambient glow */}
+                {/* Ambient glow - color changes based on mode */}
                 <div
-                    className="absolute"
+                    className="absolute transition-all duration-500"
                     style={{
                         width: '200px',
                         height: '200px',
                         top: '0',
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        background: 'radial-gradient(ellipse 100% 100% at center, rgba(250, 208, 120, 0.25) 0%, transparent 70%)',
+                        background: `radial-gradient(ellipse 100% 100% at center, ${activeMode === 'all' ? 'rgba(250, 208, 120, 0.25)' :
+                                activeMode === 'mirror' ? 'rgba(147, 197, 253, 0.3)' :
+                                    activeMode === 'resonator' ? 'rgba(167, 139, 250, 0.3)' :
+                                        activeMode === 'prism' ? 'rgba(251, 191, 36, 0.3)' :
+                                            'rgba(248, 113, 113, 0.3)'
+                            } 0%, transparent 70%)`,
                         filter: 'blur(30px)',
                         pointerEvents: 'none',
                     }}
                 />
 
-                {/* Central orb */}
+                {/* Central mode icon - replaces the orb */}
                 <div
-                    className="relative z-10"
+                    className="relative z-10 transition-all duration-500"
                     style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        background: 'radial-gradient(ellipse at 30% 30%, rgba(255, 220, 140, 0.9) 0%, rgba(250, 180, 80, 0.6) 40%, rgba(200, 120, 40, 0.3) 70%, transparent 100%)',
-                        boxShadow: `
-              0 0 40px rgba(250, 208, 120, 0.4),
-              0 0 80px rgba(250, 180, 80, 0.2),
-              inset 0 0 20px rgba(255, 255, 255, 0.1)
-            `,
+                        width: '100px',
+                        height: '100px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
-                />
+                >
+                    {activeMode === 'all' ? (
+                        // Default orb for "all" mode
+                        <div
+                            style={{
+                                width: '80px',
+                                height: '80px',
+                                borderRadius: '50%',
+                                background: 'radial-gradient(ellipse at 30% 30%, rgba(255, 220, 140, 0.9) 0%, rgba(250, 180, 80, 0.6) 40%, rgba(200, 120, 40, 0.3) 70%, transparent 100%)',
+                                boxShadow: '0 0 40px rgba(250, 208, 120, 0.4), 0 0 80px rgba(250, 180, 80, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)',
+                            }}
+                        />
+                    ) : (
+                        // Mode-specific icon image
+                        <img
+                            src={`${import.meta.env.BASE_URL}codex/${activeMode}.png`}
+                            alt={`${activeMode} mode icon`}
+                            className="transition-all duration-300"
+                            style={{
+                                width: '80px',
+                                height: '80px',
+                                objectFit: 'contain',
+                                filter: `drop-shadow(0 0 20px ${CODEX_MODES[activeMode]?.color || 'rgba(250, 208, 120, 0.5)'})`,
+                            }}
+                        />
+                    )}
+                </div>
 
-                {/* Sacred geometry rings around orb */}
+                {/* Sacred geometry rings around icon */}
                 <svg
                     className="absolute z-0"
                     width="160"
