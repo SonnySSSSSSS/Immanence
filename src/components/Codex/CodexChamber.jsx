@@ -32,7 +32,7 @@ const ORIENTATION_QUESTIONS = {
 };
 
 // Face-down card component
-function DormantCard({ isAwakened = false, isHighlighted = false, onClick, card, expandedCard, setExpandedCard }) {
+function DormantCard({ isAwakened = false, isHighlighted = false, onClick, card, expandedCard, setExpandedCard, onNavigate }) {
     if (isAwakened) {
         // Show the real card when awakened
         return (
@@ -43,6 +43,7 @@ function DormantCard({ isAwakened = false, isHighlighted = false, onClick, card,
                 isDimmed={!isHighlighted}
                 isHighlighted={isHighlighted}
                 onToggle={() => setExpandedCard(expandedCard === card.id ? null : card.id)}
+                onNavigate={onNavigate}
             />
         );
     }
@@ -74,7 +75,7 @@ function DormantCard({ isAwakened = false, isHighlighted = false, onClick, card,
     );
 }
 
-export function CodexChamber({ onClose }) {
+export function CodexChamber({ onClose, onNavigate }) {
     const [activeQuestion, setActiveQuestion] = useState(null);
     const [hoveredQuestion, setHoveredQuestion] = useState(null);
     const [expandedCard, setExpandedCard] = useState(null);
@@ -122,34 +123,205 @@ export function CodexChamber({ onClose }) {
     const isAwakened = activeQuestion !== null;
 
     return (
-        <div className="compass-chamber w-full flex flex-col">
+        <div className="compass-chamber w-full flex flex-col relative overflow-visible">
 
             {/* ═══════════════════════════════════════════════════════════════════
-                COMPASS HEADER — Minimal, faded
+                PRE-MOTION BACKGROUND — Subtle directional tension
+                Each quadrant drifts in mode-aligned direction (barely perceptible)
                 ═══════════════════════════════════════════════════════════════════ */}
-            <div className="text-center pt-4 pb-2">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: 0.25 }}>
+                {/* Mirror: vertical stillness with slow breath */}
+                <div
+                    className="absolute top-0 left-0 w-1/2 h-1/2 transition-opacity duration-500"
+                    style={{
+                        background: 'radial-gradient(ellipse at center, rgba(167, 139, 250, 0.3), transparent 70%)',
+                        animation: 'compass-drift-mirror 12s ease-in-out infinite',
+                        opacity: hoveredQuestion === 'mirror' ? 3 : 1,
+                    }}
+                />
+                {/* Resonator: horizontal oscillation */}
+                <div
+                    className="absolute top-0 right-0 w-1/2 h-1/2 transition-opacity duration-500"
+                    style={{
+                        background: 'radial-gradient(ellipse at center, rgba(59, 130, 246, 0.3), transparent 70%)',
+                        animation: 'compass-drift-resonator 8s ease-in-out infinite',
+                        opacity: hoveredQuestion === 'resonator' ? 3 : 1,
+                    }}
+                />
+                {/* Prism: radial breathing */}
+                <div
+                    className="absolute bottom-0 left-0 w-1/2 h-1/2 transition-opacity duration-500"
+                    style={{
+                        background: 'radial-gradient(ellipse at center, rgba(52, 211, 153, 0.3), transparent 70%)',
+                        animation: 'compass-drift-prism 15s ease-in-out infinite',
+                        opacity: hoveredQuestion === 'prism' ? 3 : 1,
+                    }}
+                />
+                {/* Sword: forward pressure (subtle push up) */}
+                <div
+                    className="absolute bottom-0 right-0 w-1/2 h-1/2 transition-opacity duration-500"
+                    style={{
+                        background: 'radial-gradient(ellipse at center, rgba(251, 146, 60, 0.3), transparent 70%)',
+                        animation: 'compass-drift-sword 10s ease-in-out infinite',
+                        opacity: hoveredQuestion === 'sword' ? 3 : 1,
+                    }}
+                />
+            </div>
+
+            {/* Pre-motion animation keyframes (EXAGGERATED FOR TESTING) */}
+            <style>{`
+                @keyframes compass-drift-mirror {
+                    0%, 100% { transform: translateY(0) scale(1); }
+                    50% { transform: translateY(15px) scale(1.08); }
+                }
+                @keyframes compass-drift-resonator {
+                    0%, 100% { transform: translateX(0); }
+                    50% { transform: translateX(20px); }
+                }
+                @keyframes compass-drift-prism {
+                    0%, 100% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.2); opacity: 0.5; }
+                }
+                @keyframes compass-drift-sword {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-15px); }
+                }
+            `}</style>
+
+
+            {/* ═══════════════════════════════════════════════════════════════════
+                COMPASS HEADER — Dynamic: shows mode name when selected
+                ═══════════════════════════════════════════════════════════════════ */}
+            <div className="text-center pt-4 pb-2 relative z-10">
                 <h1
+                    className="transition-all duration-500"
                     style={{
                         fontFamily: "'Cinzel', serif",
                         fontSize: '14px',
                         fontWeight: 300,
                         letterSpacing: '0.3em',
-                        color: 'rgba(245, 209, 138, 0.3)',
+                        color: activeQuestion
+                            ? CODEX_MODES[activeQuestion]?.color || 'rgba(245, 209, 138, 0.5)'
+                            : 'rgba(245, 209, 138, 0.3)',
                         textTransform: 'uppercase',
                     }}
                 >
-                    Compass
+                    {activeQuestion ? CODEX_MODES[activeQuestion]?.name : 'Compass'}
                 </h1>
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════════
                 CENTER OF GRAVITY — The Four Questions
                 ═══════════════════════════════════════════════════════════════════ */}
-            <div className="px-6 py-4">
+            <div className="px-6 py-4 relative" style={{ overflow: 'visible' }}>
+
+                {/* DIRECTIONAL ANCHORS — Icons orbit the question field corners */}
+                <div className="absolute inset-0 pointer-events-none">
+                    {/* Top-left: Mirror */}
+                    <div className="absolute transition-all duration-700"
+                        style={{
+                            top: '-60px',
+                            left: '-60px',
+                            opacity: activeQuestion === 'mirror' ? 1 : 0.4,
+                            filter: activeQuestion && activeQuestion !== 'mirror' ? 'blur(2px) brightness(0.7)' : 'blur(0px)',
+                        }}>
+                        <div className="absolute inset-0 transition-opacity duration-700"
+                            style={{
+                                width: '140px', height: '140px',
+                                transform: 'translate(-20px, -20px)',
+                                background: `radial-gradient(circle, ${CODEX_MODES.mirror.color}20, transparent 70%)`,
+                                opacity: activeQuestion === 'mirror' ? 1 : 0,
+                            }} />
+                        <img src={`${import.meta.env.BASE_URL}codex/mirror.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'mirror' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
+                    </div>
+                    {/* Top-right: Sword */}
+                    <div className="absolute transition-all duration-700"
+                        style={{
+                            top: '-60px',
+                            right: '-60px',
+                            opacity: activeQuestion === 'sword' ? 1 : 0.4,
+                            filter: activeQuestion && activeQuestion !== 'sword' ? 'blur(2px) brightness(0.7)' : 'blur(0px)',
+                        }}>
+                        <div className="absolute inset-0 transition-opacity duration-700"
+                            style={{
+                                width: '140px', height: '140px',
+                                transform: 'translate(-20px, -20px)',
+                                background: `radial-gradient(circle, ${CODEX_MODES.sword.color}20, transparent 70%)`,
+                                opacity: activeQuestion === 'sword' ? 1 : 0,
+                            }} />
+                        <img src={`${import.meta.env.BASE_URL}codex/sword.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'sword' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
+                    </div>
+                    {/* Bottom-left: Resonator */}
+                    <div className="absolute transition-all duration-700"
+                        style={{
+                            bottom: '-60px',
+                            left: '-60px',
+                            opacity: activeQuestion === 'resonator' ? 1 : 0.4,
+                            filter: activeQuestion && activeQuestion !== 'resonator' ? 'blur(2px) brightness(0.7)' : 'blur(0px)',
+                        }}>
+                        <div className="absolute inset-0 transition-opacity duration-700"
+                            style={{
+                                width: '140px', height: '140px',
+                                transform: 'translate(-20px, -20px)',
+                                background: `radial-gradient(circle, ${CODEX_MODES.resonator.color}20, transparent 70%)`,
+                                opacity: activeQuestion === 'resonator' ? 1 : 0,
+                            }} />
+                        <img src={`${import.meta.env.BASE_URL}codex/resonator.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'resonator' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
+                    </div>
+                    {/* Bottom-right: Prism */}
+                    <div className="absolute transition-all duration-700"
+                        style={{
+                            bottom: '-60px',
+                            right: '-60px',
+                            opacity: activeQuestion === 'prism' ? 1 : 0.4,
+                            filter: activeQuestion && activeQuestion !== 'prism' ? 'blur(2px) brightness(0.7)' : 'blur(0px)',
+                        }}>
+                        <div className="absolute inset-0 transition-opacity duration-700"
+                            style={{
+                                width: '140px', height: '140px',
+                                transform: 'translate(-20px, -20px)',
+                                background: `radial-gradient(circle, ${CODEX_MODES.prism.color}20, transparent 70%)`,
+                                opacity: activeQuestion === 'prism' ? 1 : 0,
+                            }} />
+                        <img src={`${import.meta.env.BASE_URL}codex/prism.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'prism' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
+                    </div>
+                </div>
+
+                {/* Icon breathing animation */}
+                <style>{`
+                    @keyframes icon-breathe {
+                        0%, 100% { transform: scale(1); opacity: 1; }
+                        50% { transform: scale(1.05); opacity: 0.9; }
+                    }
+                `}</style>
 
                 {/* Permission language — above questions */}
                 <p
-                    className="mb-4 text-center"
+                    className="mb-4 text-center relative z-10"
                     style={{
                         fontFamily: "'Outfit', sans-serif",
                         fontSize: '10px',
@@ -161,7 +333,25 @@ export function CodexChamber({ onClose }) {
                 </p>
 
                 {/* The Questions — Large, interactive anchors */}
-                <div className="w-full max-w-md mx-auto space-y-4">
+                {/* Container gets mode-specific deformation when hovering */}
+                <div
+                    className="w-full max-w-md mx-auto space-y-4 transition-all duration-500"
+                    style={{
+                        // Mode-specific UI deformation on hover (only when not active)
+                        filter: !activeQuestion && hoveredQuestion === 'mirror'
+                            ? 'blur(2px) brightness(0.7)' // Mirror: everything QUIETS significantly
+                            : !activeQuestion && hoveredQuestion === 'sword'
+                                ? 'contrast(1.5) brightness(1.2)' // Sword: HIGH contrast and brightness
+                                : !activeQuestion && hoveredQuestion === 'prism'
+                                    ? 'hue-rotate(15deg) saturate(1.5)' // Prism: STRONG chromatic shift
+                                    : !activeQuestion && hoveredQuestion === 'resonator'
+                                        ? 'brightness(1.15)' // Resonator: BRIGHT pulse
+                                        : 'none',
+                        transform: !activeQuestion && hoveredQuestion === 'resonator'
+                            ? 'scale(1.03)' // Resonator: VISIBLE scale pulse
+                            : 'scale(1)',
+                    }}
+                >
                     {Object.entries(ORIENTATION_QUESTIONS).map(([key, question]) => {
                         const isActive = activeQuestion === key;
                         const isHovered = hoveredQuestion === key;
@@ -219,36 +409,38 @@ export function CodexChamber({ onClose }) {
                     })}
                 </div>
 
-                {/* Mode totem (appears when selected) */}
-                {activeQuestion && (
-                    <div className="flex justify-center mt-4 opacity-40 transition-opacity duration-500">
-                        <img
-                            src={`${import.meta.env.BASE_URL}codex/${activeQuestion}.png`}
-                            alt=""
-                            style={{
-                                width: '60px',
-                                height: '60px',
-                                objectFit: 'contain',
-                                filter: `drop-shadow(0 0 15px ${CODEX_MODES[activeQuestion]?.color || 'rgba(250, 208, 120, 0.5)'})`,
-                            }}
-                        />
-                    </div>
-                )}
+                {/* Mode totem removed - now using corner icons instead */}
 
                 {/* Instruction after selection */}
                 {activeQuestion && (
-                    <p
-                        className="mt-3 text-center"
-                        style={{
-                            fontFamily: "'Outfit', sans-serif",
-                            fontSize: '9px',
-                            letterSpacing: '0.08em',
-                            color: CODEX_MODES[activeQuestion]?.color || 'rgba(253, 251, 245, 0.4)',
-                            opacity: 0.5,
-                        }}
-                    >
-                        Let this guide what you notice.
-                    </p>
+                    <>
+                        <p
+                            className="mt-3 text-center"
+                            style={{
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: '9px',
+                                letterSpacing: '0.08em',
+                                color: CODEX_MODES[activeQuestion]?.color || 'rgba(253, 251, 245, 0.4)',
+                                opacity: 0.5,
+                            }}
+                        >
+                            Let this guide what you notice.
+                        </p>
+
+                        {/* Diagnostic reminder - appears below instruction */}
+                        <p
+                            className="mt-2 text-center"
+                            style={{
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: '8px',
+                                letterSpacing: '0.12em',
+                                color: 'rgba(253, 251, 245, 0.3)',
+                                fontStyle: 'italic',
+                            }}
+                        >
+                            (This reflects what's active now — not what you are.)
+                        </p>
+                    </>
                 )}
             </div>
 
@@ -309,6 +501,7 @@ export function CodexChamber({ onClose }) {
                                     isHighlighted={isHighlighted}
                                     expandedCard={expandedCard}
                                     setExpandedCard={setExpandedCard}
+                                    onNavigate={onNavigate}
                                 />
                             );
                         })}
@@ -333,6 +526,7 @@ export function CodexChamber({ onClose }) {
                     </div>
                 )}
             </div>
+
 
             {/* ═══════════════════════════════════════════════════════════════════
                 EXIT — Reduced contrast

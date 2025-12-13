@@ -1,5 +1,5 @@
 // src/components/FourModesHome.jsx
-// Four Modes home screen with mode selection cards
+// Four Modes home screen - Field-based cards matching HUB grammar
 
 import React from 'react';
 import { FOUR_MODES } from '../data/fourModes.js';
@@ -7,60 +7,82 @@ import { FOUR_MODES } from '../data/fourModes.js';
 function ModeCard({ mode, onEnter }) {
     return (
         <button
-            className="relative p-5 rounded-2xl border text-left transition-all overflow-hidden group"
+            className="relative w-full rounded-2xl text-left transition-all overflow-hidden group"
             style={{
-                background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-                border: '1px solid var(--accent-20)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                aspectRatio: '16 / 10',
+                border: '1px solid rgba(255, 220, 120, 0.12)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
             }}
             onClick={() => onEnter(mode.id)}
             onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-15)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 12px 44px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 220, 120, 0.08)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.borderColor = 'rgba(255, 220, 120, 0.25)';
             }}
             onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.5)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.6)';
                 e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'rgba(255, 220, 120, 0.12)';
             }}
         >
-            {/* Background gradient */}
-            <div
-                className="absolute inset-0 pointer-events-none rounded-2xl opacity-60"
+            {/* Field background - THE CONTENT, not an overlay */}
+            <img
+                src={`${import.meta.env.BASE_URL}modes/mode-${mode.id}.png`}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 style={{
-                    background: 'radial-gradient(circle at top, rgba(255,220,120,0.05), transparent 60%)',
+                    opacity: 0.9,
                 }}
             />
 
-            {/* Icon */}
+            {/* Subtle vignette for text legibility */}
             <div
-                className="text-2xl mb-3 relative z-10"
-                style={{ color: 'var(--accent-color)' }}
-            >
-                {mode.icon}
-            </div>
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    background: 'radial-gradient(ellipse 120% 120% at 50% 40%, transparent 30%, rgba(0, 0, 0, 0.4) 100%)',
+                }}
+            />
 
-            {/* Name */}
-            <h3
-                className="text-[14px] font-semibold uppercase tracking-[0.1em] mb-1 relative z-10"
-                style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
-            >
-                {mode.name}
-            </h3>
-
-            {/* Tagline */}
-            <p
-                className="text-[12px] italic relative z-10"
-                style={{ fontFamily: 'Crimson Pro, serif', color: 'rgba(253,251,245,0.7)' }}
-            >
-                "{mode.tagline}"
-            </p>
-
-            {/* Enter CTA */}
+            {/* Text container - bottom left, minimal */}
             <div
-                className="mt-4 text-[10px] uppercase tracking-[0.15em] opacity-60 group-hover:opacity-100 transition-opacity relative z-10"
-                style={{ color: 'var(--accent-color)' }}
+                className="absolute bottom-0 left-0 right-0 p-5"
+                style={{
+                    background: 'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.5) 100%)',
+                }}
             >
-                Enter →
+                {/* Name */}
+                <h3
+                    className="text-[15px] font-semibold uppercase tracking-[0.08em] mb-1"
+                    style={{
+                        fontFamily: 'Cinzel, serif',
+                        color: 'var(--accent-color)',
+                        textShadow: '0 2px 8px rgba(0, 0, 0, 0.9)',
+                    }}
+                >
+                    {mode.name}
+                </h3>
+
+                {/* Tagline */}
+                <p
+                    className="text-[11px]"
+                    style={{
+                        fontFamily: 'Crimson Pro, serif',
+                        color: 'rgba(253, 251, 245, 0.7)',
+                        textShadow: '0 1px 4px rgba(0, 0, 0, 0.8)',
+                    }}
+                >
+                    {mode.tagline}
+                </p>
+
+                {/* Enter CTA - very subtle */}
+                <div
+                    className="mt-2 text-[9px] uppercase tracking-[0.12em] opacity-40 group-hover:opacity-80 transition-opacity"
+                    style={{
+                        color: 'rgba(253, 251, 245, 0.6)',
+                    }}
+                >
+                    Enter →
+                </div>
             </div>
         </button>
     );
@@ -85,7 +107,7 @@ export function FourModesHome({ onSelectMode }) {
                 </p>
             </div>
 
-            {/* Mode Cards Grid */}
+            {/* Mode Cards Grid - 2 columns like HUB */}
             <div className="grid grid-cols-2 gap-4">
                 {FOUR_MODES.map((mode) => (
                     <ModeCard

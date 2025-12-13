@@ -72,6 +72,27 @@ export function StageTitle({ stage, path, showWelcome = true }) {
         }}
       />
 
+      {/* Floating Particles - subtle sparkles for contrast */}
+      <div className="absolute pointer-events-none" style={{ width: '400px', height: '80px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="stage-particle absolute rounded-full"
+            style={{
+              width: `${2 + (i % 3)}px`,
+              height: `${2 + (i % 3)}px`,
+              left: `${10 + (i * 11)}%`,
+              top: `${20 + ((i * 17) % 60)}%`,
+              backgroundColor: stageColors.gradient[i % 3],
+              opacity: 0.4 + (i % 3) * 0.1,
+              animation: `particleFloat${i % 4} ${3 + (i % 2)}s ease-in-out infinite`,
+              animationDelay: `${i * 0.3}s`,
+              boxShadow: `0 0 ${4 + (i % 2) * 2}px ${stageColors.glow}60`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Title container - Composite Image based with text fallback */}
       <div className="relative flex items-center justify-center -mt-2">
         {/* Background separation - subtle dark backing for contrast */}
@@ -363,6 +384,27 @@ export function StageTitle({ stage, path, showWelcome = true }) {
               0 0 25px rgba(253,251,245,0.4),
               0 0 50px rgba(253,251,245,0.2);
           }
+        }
+
+        /* Particle float animations - 4 variations */
+        @keyframes particleFloat0 {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.4; }
+          25% { transform: translateY(-8px) translateX(3px); opacity: 0.6; }
+          50% { transform: translateY(-4px) translateX(-2px); opacity: 0.5; }
+          75% { transform: translateY(-10px) translateX(1px); opacity: 0.4; }
+        }
+        @keyframes particleFloat1 {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.5; }
+          33% { transform: translateY(-6px) translateX(-4px); opacity: 0.7; }
+          66% { transform: translateY(-12px) translateX(2px); opacity: 0.4; }
+        }
+        @keyframes particleFloat2 {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+          50% { transform: translateY(-10px) translateX(-3px); opacity: 0.6; }
+        }
+        @keyframes particleFloat3 {
+          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+          50% { transform: translateY(-8px) rotate(180deg); opacity: 0.7; }
         }
       `}</style>
     </div>

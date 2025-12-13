@@ -58,8 +58,15 @@ const ModeIcon = ({ mode }) => {
     );
 };
 
-export function CodexTablet({ card, isExpanded = false, isFocused = false, isDimmed = false, isHighlighted = false, onToggle }) {
+export function CodexTablet({ card, isExpanded = false, isFocused = false, isDimmed = false, isHighlighted = false, onToggle, onNavigate }) {
     const mode = CODEX_MODES[card.mode] || CODEX_MODES.mirror;
+
+    const handleBeginPractice = (e) => {
+        e.stopPropagation(); // Prevent card toggle
+        if (onNavigate) {
+            onNavigate('application');
+        }
+    };
 
     return (
         <div
@@ -78,51 +85,53 @@ export function CodexTablet({ card, isExpanded = false, isFocused = false, isDim
                 position: 'relative',
                 zIndex: isFocused || isHighlighted ? 10 : 1,
                 boxShadow: isHighlighted
-                    ? '0 0 20px rgba(250, 208, 120, 0.3), 0 0 40px rgba(250, 208, 120, 0.15)'
-                    : 'none',
+                    ? `0 0 30px 10px ${mode.color}20, inset 0 0 20px ${mode.color}10`
+                    : isFocused
+                        ? `0 0 20px 5px ${mode.color}15`
+                        : 'none',
             }}
         >
-            {/* Mode Icon */}
+            {/* Mode icon top center */}
             <div className="flex justify-center mb-3">
                 <ModeIcon mode={card.mode} />
             </div>
 
-            {/* Punchline (Title) */}
-            <p
-                className="punchline text-center mb-2"
+            {/* Title */}
+            <h3
                 style={{
-                    fontFamily: "'Crimson Pro', 'Cormorant Garamond', serif",
+                    fontFamily: "'Cinzel', serif",
+                    fontSize: '12px',
                     fontWeight: 600,
-                    fontSize: '14px',
-                    color: '#F5D18A',
-                    lineHeight: 1.35,
+                    color: 'rgba(253, 251, 245, 0.9)',
+                    textAlign: 'center',
+                    lineHeight: 1.3,
+                    marginBottom: '8px',
                 }}
             >
-                {card.punchline}
-            </p>
+                {card.title}
+            </h3>
 
-            {/* Body text - always visible but truncated */}
+            {/* Body text - more visible when highlighted */}
             <p
-                className="body text-center flex-1"
+                className="flex-1"
                 style={{
                     fontFamily: "'Crimson Pro', serif",
                     fontSize: '11px',
-                    color: 'rgba(253, 251, 245, 0.5)',
-                    lineHeight: 1.5,
                     fontStyle: 'italic',
-                    display: '-webkit-box',
-                    WebkitLineClamp: isExpanded ? 'unset' : 3,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: isExpanded ? 'visible' : 'hidden',
+                    color: isHighlighted ? 'rgba(253, 251, 245, 0.7)' : 'rgba(253, 251, 245, 0.5)',
+                    textAlign: 'center',
+                    lineHeight: 1.5,
+                    transition: 'color 0.3s ease',
                 }}
             >
                 {card.body}
             </p>
 
-            {/* CTA */}
+            {/* CTA - Now a clickable button */}
             <div className="mt-auto pt-3">
-                <p
-                    className="cta text-center"
+                <button
+                    onClick={handleBeginPractice}
+                    className="w-full text-center hover:opacity-100 transition-opacity"
                     style={{
                         fontFamily: "'Outfit', sans-serif",
                         fontSize: '10px',
@@ -130,10 +139,13 @@ export function CodexTablet({ card, isExpanded = false, isFocused = false, isDim
                         textTransform: 'uppercase',
                         letterSpacing: '0.1em',
                         opacity: 0.8,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
                     }}
                 >
-                    Begin practice
-                </p>
+                    Begin practice →
+                </button>
             </div>
         </div>
     );

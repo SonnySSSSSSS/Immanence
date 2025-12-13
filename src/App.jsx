@@ -12,6 +12,7 @@ import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
 import { AvatarPreview } from "./components/AvatarPreview.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { startImagePreloading } from "./utils/imagePreloader.js";
 import "./App.css";
 
 const SECTION_LABELS = {
@@ -22,7 +23,7 @@ const SECTION_LABELS = {
 };
 
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, showFxGallery }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, showFxGallery, onNavigate }) {
   // Navigation and Application sections handle their own avatars and stage titles
   const showAvatar = section !== 'navigation' && section !== 'application';
 
@@ -66,7 +67,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
         {section === "wisdom" && <WisdomSection />}
         {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} />}
-        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} />}
+        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} onNavigate={onNavigate} />}
       </div>
     </div>
   );
@@ -126,6 +127,11 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Preload critical images on app start
+  useEffect(() => {
+    startImagePreloading(import.meta.env.BASE_URL);
   }, []);
 
   // Note: CSS variables now set by ThemeProvider based on avatarStage
@@ -216,7 +222,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v2.25.0
+                  v2.43.0
                 </div>
                 {!isHub && (
                   <button
@@ -262,6 +268,7 @@ function App() {
                 previewPath={previewPath}
                 previewShowCore={previewShowCore}
                 showFxGallery={showFxGallery}
+                onNavigate={setActiveSection}
               />
             )}
           </div>

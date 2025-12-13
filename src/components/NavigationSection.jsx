@@ -10,7 +10,7 @@ import { CodexChamber } from './Codex/CodexChamber.jsx';
 import { Avatar } from './Avatar.jsx';
 import { StageTitle } from './StageTitle.jsx';
 
-export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore }) {
+export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, onNavigate }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
@@ -134,7 +134,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
       <div>
         {/* Simple conditional rendering - no complex crossfade */}
         {showCodex ? (
-          <CodexChamber onClose={() => setShowCodex(false)} />
+          <CodexChamber onClose={() => setShowCodex(false)} onNavigate={onNavigate} />
         ) : (
           <div className="space-y-6" ref={pathGridRef}>
             {/* Path Selection Grid - always visible */}
