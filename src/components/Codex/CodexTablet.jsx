@@ -58,7 +58,7 @@ const ModeIcon = ({ mode }) => {
     );
 };
 
-export function CodexTablet({ card, isExpanded = false, isFocused = false, isDimmed = false, onToggle }) {
+export function CodexTablet({ card, isExpanded = false, isFocused = false, isDimmed = false, isHighlighted = false, onToggle }) {
     const mode = CODEX_MODES[card.mode] || CODEX_MODES.mirror;
 
     return (
@@ -67,16 +67,19 @@ export function CodexTablet({ card, isExpanded = false, isFocused = false, isDim
             onClick={onToggle}
             style={{
                 background: 'linear-gradient(180deg, rgba(18, 14, 28, 0.7) 0%, rgba(12, 8, 18, 0.85) 100%)',
-                border: `1px solid rgba(250, 208, 120, ${isFocused ? 0.4 : 0.25})`,
+                border: `1px solid ${isHighlighted ? 'rgba(250, 208, 120, 0.6)' : isFocused ? 'rgba(250, 208, 120, 0.4)' : 'rgba(250, 208, 120, 0.25)'}`,
                 borderRadius: '8px',
                 padding: '16px 12px',
                 minHeight: '220px',
-                opacity: isDimmed ? 0.45 : 1,
+                opacity: isDimmed ? 0.35 : 1,
                 filter: isDimmed ? 'blur(0.5px)' : 'none',
-                transform: isFocused ? 'scale(1.02)' : 'scale(1)',
+                transform: isFocused || isHighlighted ? 'scale(1.02)' : 'scale(1)',
                 transition: 'all 0.4s ease-out',
                 position: 'relative',
-                zIndex: isFocused ? 10 : 1,
+                zIndex: isFocused || isHighlighted ? 10 : 1,
+                boxShadow: isHighlighted
+                    ? '0 0 20px rgba(250, 208, 120, 0.3), 0 0 40px rgba(250, 208, 120, 0.15)'
+                    : 'none',
             }}
         >
             {/* Mode Icon */}

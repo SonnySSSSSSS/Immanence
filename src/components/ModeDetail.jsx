@@ -1,8 +1,9 @@
 // src/components/ModeDetail.jsx
-// Four Modes detail page with placeholder sections
-
-import React from 'react';
+// Four Modes detail page with training entry point
+import React, { useState } from 'react';
 import { FOUR_MODES_BY_ID } from '../data/fourModes.js';
+import { ModeTraining } from './Application/ModeTraining.jsx';
+import { PRACTICE_DEFINITIONS } from '../state/practiceConfig.js';
 
 function Section({ title, children }) {
     return (
@@ -23,54 +24,10 @@ function Section({ title, children }) {
     );
 }
 
-function PlaceholderBlock({ text = 'Content coming soon...' }) {
-    return (
-        <div
-            className="p-4 rounded-xl border border-dashed"
-            style={{
-                borderColor: 'var(--accent-15)',
-                background: 'rgba(0,0,0,0.2)',
-                color: 'rgba(253,251,245,0.5)',
-                fontStyle: 'italic',
-            }}
-        >
-            {text}
-        </div>
-    );
-}
-
-function PlaceholderSteps() {
-    const steps = [
-        'Step 1: [Placeholder for first step]',
-        'Step 2: [Placeholder for second step]',
-        'Step 3: [Placeholder for third step]',
-    ];
-
-    return (
-        <div className="space-y-2">
-            {steps.map((step, i) => (
-                <div
-                    key={i}
-                    className="flex items-start gap-3 p-3 rounded-lg"
-                    style={{ background: 'rgba(0,0,0,0.2)' }}
-                >
-                    <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0"
-                        style={{ background: 'var(--accent-20)', color: 'var(--accent-color)' }}
-                    >
-                        {i + 1}
-                    </span>
-                    <span style={{ color: 'rgba(253,251,245,0.6)', fontStyle: 'italic' }}>
-                        {step}
-                    </span>
-                </div>
-            ))}
-        </div>
-    );
-}
-
 export function ModeDetail({ modeId, onBack }) {
+    const [trainingOpen, setTrainingOpen] = useState(false);
     const mode = FOUR_MODES_BY_ID[modeId];
+    const practice = PRACTICE_DEFINITIONS[modeId];
 
     if (!mode) {
         return (
@@ -116,28 +73,60 @@ export function ModeDetail({ modeId, onBack }) {
                 </p>
             </div>
 
-            {/* Sections */}
+            {/* Enter Practice Button - Primary CTA */}
+            <div className="flex justify-center py-4">
+                <button
+                    onClick={() => setTrainingOpen(true)}
+                    className="px-8 py-4 rounded-xl border transition-all hover:scale-[1.02]"
+                    style={{
+                        background: `linear-gradient(145deg, ${practice?.accent}15, ${practice?.accent}05)`,
+                        borderColor: practice?.accent || 'var(--accent-30)',
+                        boxShadow: `0 4px 20px ${practice?.accent}20`,
+                    }}
+                >
+                    <span
+                        className="text-[12px] uppercase tracking-[0.15em] font-semibold"
+                        style={{
+                            fontFamily: 'Outfit, sans-serif',
+                            color: practice?.accent || 'var(--accent-color)',
+                        }}
+                    >
+                        Enter {mode.name} Practice
+                    </span>
+                </button>
+            </div>
+
+            {/* Understanding Section */}
             <div className="space-y-8">
-                <Section title="Understand">
-                    <PlaceholderBlock text={`TODO: Explanation of ${mode.name} mode. ${mode.description}`} />
+                <Section title="About This Mode">
+                    <p>{mode.description}</p>
                 </Section>
 
                 <Section title="When to Use It">
-                    <PlaceholderBlock text={`TODO: Situations where ${mode.name} helps.`} />
+                    <p style={{ fontStyle: 'italic', color: 'rgba(253,251,245,0.6)' }}>
+                        {modeId === 'mirror' && "When you need to see clearly without distortion. When reactions are running ahead of awareness."}
+                        {modeId === 'resonator' && "When emotions feel overwhelming or stuck. When the body holds tension you can't name."}
+                        {modeId === 'prism' && "When you're trapped in one interpretation. When the story feels fixed but doesn't serve you."}
+                        {modeId === 'sword' && "When clarity exists but action doesn't follow. When hesitation has become the pattern."}
+                    </p>
                 </Section>
 
-                <Section title="How to Practice">
-                    <PlaceholderSteps />
-                </Section>
-
-                <Section title="Reflection Prompts">
-                    <PlaceholderBlock text="TODO: Questions to ask yourself in this mode." />
-                </Section>
-
-                <Section title="Integration with Tracking">
-                    <PlaceholderBlock text="TODO: How this mode shows up in your practice data." />
+                <Section title="The Practice">
+                    <p style={{ fontStyle: 'italic', color: 'rgba(253,251,245,0.6)' }}>
+                        {modeId === 'mirror' && "90 seconds of stillness. Let what is be enough."}
+                        {modeId === 'resonator' && "5 steps through sensation, emotion, story, need, and back to sensation. Skip what can't be named."}
+                        {modeId === 'prism' && "3 frames: what happened, what else could this mean, which frame gives you a next move."}
+                        {modeId === 'sword' && "3 prompts: what needs to stop, what needs to start, smallest real step today."}
+                    </p>
                 </Section>
             </div>
+
+            {/* Training Modal */}
+            <ModeTraining
+                mode={modeId}
+                isOpen={trainingOpen}
+                onClose={() => setTrainingOpen(false)}
+            />
         </div>
     );
 }

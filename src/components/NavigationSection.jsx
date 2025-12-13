@@ -58,7 +58,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         </div>
       )}
 
-      {/* Tab Bar: Paths | Codex - Differentiated by temperature + geometry */}
+      {/* Tab Bar: Paths | Compass - Differentiated by temperature + geometry */}
       <div className="flex flex-col items-center gap-2 py-4">
         <div className="flex items-center justify-center gap-4">
           {/* Paths Tab - Warm gold, continuous, progression */}
@@ -86,7 +86,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             )}
           </button>
 
-          {/* Codex Tab - Cold gold, notched, correction */}
+          {/* Compass Tab - Cold gold, notched, correction */}
           <button
             onClick={() => setShowCodex(true)}
             className="relative px-4 py-2 text-sm uppercase tracking-wider transition-all duration-300"
@@ -99,8 +99,8 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
               letterSpacing: showCodex ? '0.05em' : '0.15em',
             }}
           >
-            <span>◈ Codex</span>
-            {/* Notched underline for Codex - interruption signature */}
+            <span>◈ Compass</span>
+            {/* Notched underline for Compass - interruption signature */}
             {showCodex && (
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] flex items-center justify-center">
                 <div
@@ -131,13 +131,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
       </div>
 
       {/* Content Container */}
-      <div
-        className="transition-all duration-[2000ms] ease-in-out"
-        style={{
-          opacity: showCodex ? 0.95 : 1,
-          letterSpacing: showCodex ? '0.03em' : '0em',
-        }}
-      >
+      <div>
         {/* Simple conditional rendering - no complex crossfade */}
         {showCodex ? (
           <CodexChamber onClose={() => setShowCodex(false)} />
