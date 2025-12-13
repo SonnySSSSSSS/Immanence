@@ -8,6 +8,7 @@ import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SensorySession } from "./SensorySession.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
+import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS } from "./SoundConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { syncFromProgressStore } from "../state/mandalaStore.js";
@@ -36,9 +37,9 @@ const SENSORY_TYPES = [
 ];
 
 const SOUND_TYPES = [
-  "Mantra",
   "Binaural Beats",
   "Isochronic Tones",
+  "Mantra",
   "Nature",
   "Silence"
 ];
@@ -188,6 +189,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0].id);
   const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
+
+  // Sound configuration state
+  const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
+  const [isochronicPreset, setIsochronicPreset] = useState(ISOCHRONIC_PRESETS[1]); // Relaxation
+  const [mantraPreset, setMantraPreset] = useState(null);
+  const [naturePreset, setNaturePreset] = useState(null);
+  const [carrierFrequency, setCarrierFrequency] = useState(200);
+  const [soundVolume, setSoundVolume] = useState(0.5);
+
 
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10 * 60);
@@ -1063,43 +1073,24 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             </div>
           )}
 
-          {/* SOUND: Type Selection */}
+          {/* SOUND: Full Config Panel */}
           {practice === "Sound" && (
-            <div className="mb-6">
-              <div
-                className="mb-3"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "9px",
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.55)",
-                  textAlign: "center"
-                }}
-              >
-                Soundscape
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {SOUND_TYPES.map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSoundType(type)}
-                    className="rounded-xl px-4 py-3 transition-all duration-200 text-center"
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "11px",
-                      letterSpacing: "0.05em",
-                      background: soundType === type ? "rgba(255,255,255,0.05)" : "transparent",
-                      border: `1px solid ${soundType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
-                      color: soundType === type ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
-                      boxShadow: soundType === type ? "0 0 15px var(--accent-10)" : "none"
-                    }}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <SoundConfig
+              soundType={soundType}
+              setSoundType={setSoundType}
+              binauralPreset={binauralPreset}
+              setBinauralPreset={setBinauralPreset}
+              isochronicPreset={isochronicPreset}
+              setIsochronicPreset={setIsochronicPreset}
+              mantraPreset={mantraPreset}
+              setMantraPreset={setMantraPreset}
+              naturePreset={naturePreset}
+              setNaturePreset={setNaturePreset}
+              carrierFrequency={carrierFrequency}
+              setCarrierFrequency={setCarrierFrequency}
+              volume={soundVolume}
+              setVolume={setSoundVolume}
+            />
           )}
 
           {/* Visualization Config */}
