@@ -95,12 +95,12 @@ export function StageTitle({ stage, path, showWelcome = true }) {
 
       {/* Title container - Composite Image based with text fallback */}
       <div className="relative flex items-center justify-center -mt-2">
-        {/* Background separation - subtle dark backing for contrast */}
+        {/* Background separation - dark backing for contrast */}
         <div
-          className="absolute inset-0 -inset-x-4 rounded-lg"
+          className="absolute -inset-x-8 -inset-y-4 rounded-xl"
           style={{
-            background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.15) 50%, transparent 100%)',
-            filter: 'blur(8px)',
+            background: 'radial-gradient(ellipse 100% 100% at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
+            filter: 'blur(12px)',
             pointerEvents: 'none',
           }}
         />
