@@ -40,6 +40,15 @@ export const NATURE_PRESETS = [
     { id: 'thunder', name: 'Thunderstorm', description: 'Distant rumble' },
 ];
 
+// Sound type options
+export const SOUND_TYPES = [
+    'Binaural Beats',
+    'Isochronic Tones',
+    'Mantra',
+    'Nature',
+    'Silence'
+];
+
 export function SoundConfig({
     soundType,
     setSoundType,

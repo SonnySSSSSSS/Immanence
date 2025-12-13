@@ -8,7 +8,9 @@ import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SensorySession } from "./SensorySession.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
-import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS } from "./SoundConfig.jsx";
+import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
+import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
+import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { syncFromProgressStore } from "../state/mandalaStore.js";
@@ -20,29 +22,6 @@ const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
 
 const PRACTICES = ["Breath & Stillness", "Ritual", "Sensory", "Sound", "Visualization", "Cymatics"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
-const PRESETS = ["Box", "4-7-8", "Kumbhaka", "Relax", "Energy"];
-
-const PATTERN_PRESETS = {
-  Box: { inhale: 4, hold1: 4, exhale: 4, hold2: 4 },
-  "4-7-8": { inhale: 4, hold1: 7, exhale: 8, hold2: 0 },
-  Kumbhaka: { inhale: 4, hold1: 16, exhale: 8, hold2: 0 },
-  Relax: { inhale: 4, hold1: 4, exhale: 6, hold2: 2 },
-  Energy: { inhale: 3, hold1: 0, exhale: 3, hold2: 0 },
-};
-
-const SENSORY_TYPES = [
-  { id: 'bodyScan', label: 'Body Scan' },
-  { id: 'vipassana', label: 'Vipassana' },
-  { id: 'sakshi', label: 'Sakshi' },
-];
-
-const SOUND_TYPES = [
-  "Binaural Beats",
-  "Isochronic Tones",
-  "Mantra",
-  "Nature",
-  "Silence"
-];
 
 // Scrolling Wheel Component
 function ScrollingWheel({ value, onChange, options }) {
@@ -244,8 +223,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [duration, isRunning]);
 
   useEffect(() => {
-    if (preset && PATTERN_PRESETS[preset]) {
-      setPattern(PATTERN_PRESETS[preset]);
+    if (preset && BREATH_PRESETS[preset]) {
+      setPattern(BREATH_PRESETS[preset]);
     }
   }, [preset]);
 
@@ -945,132 +924,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             </>
           )}
 
-          {/* BREATH & STILLNESS: Patterns & Presets */}
+          {/* BREATH & STILLNESS: Config Component */}
           {practice === "Breath & Stillness" && (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <div
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "9px",
-                    letterSpacing: "0.25em",
-                    textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.55)",
-                  }}
-                >
-                  Pattern
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                  {PRESETS.map((name) => (
-                    <button
-                      key={name}
-                      onClick={() => setPreset(name)}
-                      className={`rounded-full px-2.5 py-1 transition-all duration-200`}
-                      style={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: "8px",
-                        letterSpacing: "0.15em",
-                        textTransform: "uppercase",
-                        background: "transparent",
-                        border: `1px solid ${preset === name
-                          ? "var(--accent-color)"
-                          : "var(--accent-10)"
-                          }`,
-                        color:
-                          preset === name
-                            ? "var(--accent-color)"
-                            : "rgba(253,251,245,0.55)",
-                        boxShadow:
-                          preset === name
-                            ? '0 0 12px var(--accent-15)'
-                            : "none",
-                      }}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-3 mb-4">
-                {[
-                  { label: "Inhale", key: "inhale" },
-                  { label: "Hold 1", key: "hold1" },
-                  { label: "Exhale", key: "exhale" },
-                  { label: "Hold 2", key: "hold2" },
-                ].map(({ label, key }) => (
-                  <div key={key} className="flex flex-col gap-1">
-                    <label
-                      style={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: "8px",
-                        letterSpacing: "0.25em",
-                        textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.55)",
-                        textAlign: "center"
-                      }}
-                    >
-                      {label}
-                    </label>
-                    <input
-                      type="text"
-                      value={pattern[key]}
-                      onChange={(e) =>
-                        handlePatternChange(key, e.target.value)
-                      }
-                      className="text-center rounded-xl px-2 py-2 outline-none transition-all duration-200"
-                      style={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: "14px",
-                        background: "rgba(0,0,0,0.4)",
-                        border: "1px solid var(--accent-10)",
-                        color: "rgba(253,251,245,0.9)",
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
+            <BreathConfig
+              pattern={pattern}
+              setPattern={setPattern}
+              preset={preset}
+              setPreset={setPreset}
+            />
           )}
 
-          {/* SENSORY: Type Selection */}
+          {/* SENSORY: Config Component */}
           {practice === "Sensory" && (
-            <div className="mb-6">
-              <div
-                className="mb-3"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "9px",
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.55)",
-                  textAlign: "center"
-                }}
-              >
-                Sensory Focus
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {SENSORY_TYPES.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => setSensoryType(type.id)}
-                    className="rounded-xl px-4 py-3 transition-all duration-200 text-center"
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "11px",
-                      letterSpacing: "0.05em",
-                      background: sensoryType === type.id ? "rgba(255,255,255,0.05)" : "transparent",
-                      border: `1px solid ${sensoryType === type.id ? "var(--accent-color)" : "var(--accent-10)"}`,
-                      color: sensoryType === type.id ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
-                      boxShadow: sensoryType === type.id ? "0 0 15px var(--accent-10)" : "none"
-                    }}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <SensoryConfig
+              sensoryType={sensoryType}
+              setSensoryType={setSensoryType}
+            />
           )}
 
           {/* SOUND: Full Config Panel */}
