@@ -8,6 +8,7 @@ import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SensorySession } from "./SensorySession.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
+import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
@@ -21,7 +22,7 @@ import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
 
-const PRACTICES = ["Breath & Stillness", "Ritual", "Sensory", "Sound", "Visualization", "Cymatics"];
+const PRACTICES = ["Breath & Stillness", "Ritual", "Vipassana", "Sensory", "Sound", "Visualization", "Cymatics"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
 // Scrolling Wheel Component
@@ -506,6 +507,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </section>
       );
     }
+
+    // VIPASSANA MODE - Thought labeling meditation
+    if (practice === "Vipassana") {
+      return (
+        <VipassanaVisual
+          themeId="dawnSky"
+          durationSeconds={duration * 60}
+          stage={theme.stage || 'flame'}
+          onComplete={handleStop}
+          onExit={handleStop}
+        />
+      );
+    }
+
 
     let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
     let radialGlow = '';
