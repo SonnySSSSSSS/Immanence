@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 import { getDateKey, getWeekStart } from '../utils/dateUtils';
 import { usePathStore } from './pathStore';
 import { useLunarStore } from './lunarStore';
+import { triggerWeeklyAggregation } from './attentionStore';
 
 // Helper: get days between two date keys
 function daysBetween(dateKey1, dateKey2) {
@@ -126,6 +127,9 @@ export const useProgressStore = create(
                 } catch (e) {
                     console.warn('lunarStore not available:', e);
                 }
+
+                // Trigger weekly attention aggregation
+                triggerWeeklyAggregation();
             },
 
             /**

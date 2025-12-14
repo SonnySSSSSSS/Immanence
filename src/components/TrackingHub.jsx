@@ -9,7 +9,6 @@ import { VacationToggle } from './VacationToggle.jsx';
 import { DishonorBadge } from './DishonorBadge.jsx';
 import { Icon } from '../icons/Icon.jsx';
 import SevenDayTrendCurve from './SevenDayTrendCurve.jsx';
-import TrackingHubDevPanel from './TrackingHubDevPanel.jsx';
 import { plateauMaterial, plateauMaterialElevated, plateauMaterialClear, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from '../styles/cardMaterial.js';
 
 // Domain configuration - using icon names for Icon component
@@ -140,7 +139,6 @@ export function TrackingHub() {
     const [startX, setStartX] = useState(0);
     const [translateX, setTranslateX] = useState(0);
     const [showHonorModal, setShowHonorModal] = useState(false);
-    const [showDevPanel, setShowDevPanel] = useState(false);
     const containerRef = useRef(null);
 
     // Get primary domain and reorder domains to show it first
@@ -155,18 +153,7 @@ export function TrackingHub() {
     const streakInfo = getStreakInfo();
     const weeklyPattern = getWeeklyPattern();
 
-    // DEV MODE: Keyboard shortcut (Ctrl+Shift+D)
-    React.useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                e.preventDefault();
-                setShowDevPanel(prev => !prev);
-                console.log(`📊 DEV Panel ${!showDevPanel ? 'OPENED' : 'CLOSED'}`);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [showDevPanel]);
+
 
     // Touch/mouse handlers for swipe
     const handleDragStart = (clientX) => {
@@ -665,8 +652,6 @@ export function TrackingHub() {
                 <DishonorBadge />
             </div >
 
-            {/* DEV MODE PANEL */}
-            {showDevPanel && <TrackingHubDevPanel onClose={() => setShowDevPanel(false)} />}
         </div >
     );
 }

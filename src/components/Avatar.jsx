@@ -237,14 +237,12 @@ const STAGE_SIGILS = {
 //
 // ─── STATIC SIGIL CORE (stage-aware + path-aware) ────────────────────────────────
 //
-function StaticSigilCore({ stage = "flame", path = null, showCore = true }) {
-  // Determine image source based on stage, path, and showCore flag
-  // If showCore = true or no path, use /avatars/stage-core.png
-  // If showCore = false and path exists, use /avatars/Stage-Path.png
+function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false }) {
+  // Determine image source based on stage, path, attention, and showCore flag
   const stageLower = stage.toLowerCase();
   const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
 
-  console.log('🎭 StaticSigilCore props:', { stage, path, showCore });
+  console.log('🎭 StaticSigilCore props:', { stage, path, showCore, attention, variationIndex, hasVariations });
 
   // Get stage-specific color (hardcoded to avoid import issues)
   const stageColors = {
@@ -258,9 +256,18 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true }) {
 
   let src;
   if (showCore || !path) {
+    // Use core image
     src = `${import.meta.env.BASE_URL}avatars/${stageLower}-core.png`;
+  } else if (attention && attention !== 'none') {
+    // Use attention-specific image with variation
+    const pathLower = path.toLowerCase();
+    const attentionLower = attention.toLowerCase();
+    const variationSuffix = `_0000${variationIndex + 1}_`;
+
+    // Try with variation suffix first
+    src = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
   } else {
-    // Path files are named with capital: Stage-Path.png
+    // Fallback to old Stage-Path.png format (when attention is null, empty, or 'none')
     const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1).toLowerCase();
     src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
   }
@@ -315,7 +322,7 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true }) {
       >
         <img
           src={src}
-          alt={`${stage} ${path || 'core'} avatar`}
+          alt={`${stage} ${path || 'core'} ${attention || ''} avatar`}
           style={{
             width: "100%",
             height: "100%",
@@ -324,6 +331,23 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true }) {
           }}
         />
       </div>
+
+      {/* Variation indicator - asterisk/sparkle when variations available */}
+      {hasVariations && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: "8%",
+            right: "8%",
+            fontSize: "1.5rem",
+            color: accentColor,
+            textShadow: `0 0 8px ${accentColor}, 0 0 16px ${accentColor}`,
+            animation: "pulse 2s ease-in-out infinite",
+          }}
+        >
+          ✦
+        </div>
+      )}
 
       {/* Colored glow ring between avatar and black backdrop */}
       <div
@@ -373,6 +397,9 @@ function AvatarContainer({
   stage = "flame",
   path = null,
   showCore = true,
+  attention = 'vigilance',
+  variationIndex = 0,
+  hasVariations = false,
   totalSessions = 0,
   avgAccuracy = 0,
   weeklyConsistency = 0,
@@ -435,8 +462,15 @@ function AvatarContainer({
         {/* Layer 2: rune ring (rotating PNG, stage-aware color) */}
         <RuneRingLayer stage={stage} />
 
-        {/* Layer 3: static sigil core (stage-aware + path-aware PNG) */}
-        <StaticSigilCore stage={stage} path={path} showCore={showCore} />
+        {/* Layer 3: static sigil core (stage-aware + path-aware + attention-aware PNG) */}
+        <StaticSigilCore
+          stage={stage}
+          path={path}
+          showCore={showCore}
+          attention={attention}
+          variationIndex={variationIndex}
+          hasVariations={hasVariations}
+        />
 
         {/* Layer 4: Moon orbit (outermost layer) - SVG wrapper required */}
         <svg
@@ -459,18 +493,54 @@ function AvatarContainer({
 //
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
-export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true }) {
-  console.log('🎭 Avatar received props:', { controlledStage, path, showCore });
+export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true, attention = 'vigilance' }) {
+  console.log('🎭 Avatar received props:', { controlledStage, path, showCore, attention });
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
   const [stageIndex, setStageIndex] = useState(2); // Start at Flame (index 2)
+  const [variationIndex, setVariationIndex] = useState(0);
+  const [maxVariations, setMaxVariations] = useState(1);
 
   const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
   const internalStage = STAGE_NAMES[stageIndex];
 
   // Use controlled stage if provided, otherwise internal
   const currentStage = controlledStage ? controlledStage.toLowerCase() : internalStage;
+
+  // Detect available variations when stage/path/attention changes
+  useEffect(() => {
+    if (!path || showCore || !attention || attention === 'none') {
+      setMaxVariations(1);
+      setVariationIndex(0);
+      return;
+    }
+
+    // Check for variations by trying to load images
+    const stageLower = currentStage.toLowerCase();
+    const pathLower = path.toLowerCase();
+    const attentionLower = attention.toLowerCase();
+
+    let count = 0;
+    const checkVariation = (index) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const variationSuffix = `_0000${index + 1}_`;
+        img.src = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+      });
+    };
+
+    // Check up to 10 variations
+    Promise.all([...Array(10)].map((_, i) => checkVariation(i)))
+      .then(results => {
+        const foundCount = results.filter(Boolean).length;
+        setMaxVariations(foundCount > 0 ? foundCount : 1);
+        setVariationIndex(0);
+        console.log(`🎭 Found ${foundCount} variations for ${stageLower}-${pathLower}-${attentionLower}`);
+      });
+  }, [currentStage, path, attention, showCore]);
 
   // Notify parent when stage changes
   useEffect(() => {
@@ -529,7 +599,11 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
   };
 
   const handleSigilClick = () => {
-    if (controlledStage && onStageChange) {
+    // If variations exist, cycle through them
+    if (maxVariations > 1) {
+      setVariationIndex((prev) => (prev + 1) % maxVariations);
+      console.log(`🎭 Cycling to variation ${(variationIndex + 1) % maxVariations + 1}/${maxVariations}`);
+    } else if (controlledStage && onStageChange) {
       // Controlled mode - calculate next stage and notify parent
       const currentIndex = STAGE_NAMES.indexOf(currentStage);
       const nextIndex = (currentIndex + 1) % STAGE_NAMES.length;
@@ -553,6 +627,9 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
         stage={currentStage}
         path={path}
         showCore={showCore}
+        attention={attention}
+        variationIndex={variationIndex}
+        hasVariations={maxVariations > 1}
         totalSessions={totalSessions}
         avgAccuracy={avgAccuracy}
         weeklyConsistency={weeklyConsistency}

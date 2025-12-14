@@ -1,7 +1,7 @@
 # Immanence OS - Session Summary
 
 **Last Updated:** 2025-12-14  
-**Current Version:** v2.47.0
+**Current Version:** v2.50.0
 
 ---
 
@@ -9,23 +9,29 @@
 
 ### What Was Accomplished
 
-#### Attention Path System — Phase 1 Instrumentation ✅ COMPLETE
-- ✅ Created `src/data/practiceFamily.js`:
-  - SETTLE, SCAN, RELATE, INQUIRE family definitions
-  - Priority-based resolution: sensoryType > ritualCategory > domain > default SETTLE
-  - yoga/wisdom intentionally omitted to force specific resolution
-- ✅ Created `src/hooks/useSessionInstrumentation.js`:
-  - `startSession()` — init tracking with practice family
-  - `recordAliveSignal()` — count user interactions
-  - `recordPause()` — track pause events
-  - `recordSwitch()` — track step switches
-  - `endSession(exitType)` — finalize with 4 exit types (completed, abandoned, backgrounded, system_kill)
-- ✅ Extended `progressStore.js` session schema with 10 instrumentation fields
-- ✅ Integrated into `PracticeSection.jsx`:
-  - startSession in handleStart, endSession with exit type detection, recordAliveSignal on taps
-- ✅ Integrated into `RitualPortal.jsx`:
-  - recordSwitch on step navigation, recordAliveSignal on button clicks
-- ✅ `BreathingRing.jsx` taps already tracked via callback chain
+#### Attention Path System — ALL PHASES COMPLETE ✅
+
+**Phase 1: Instrumentation**
+- Created `practiceFamily.js` (SETTLE/SCAN/RELATE/INQUIRE with priority resolution)
+- Created `useSessionInstrumentation.js` hook (alive signals, pauses, switches, exit types)
+- Extended `progressStore.js` session schema (10 instrumentation fields)
+- Integrated into `PracticeSection.jsx` and `RitualPortal.jsx`
+
+**Phase 2: Weekly Aggregation**
+- Created `attentionStore.js` with 18 weekly features
+- EMA windows (short/mid/long) for path calculation
+- Automatic aggregation trigger on session end
+
+**Phase 3: Mock Data Prototype**
+- Created `mockAttentionData.js` with 7 synthetic profiles
+- Created `attentionPathScoring.js` with centroids, weights, softmax
+- Gate checks for FORMING/EMERGING/COMMITTED/MIXED states
+
+**Phase 4: DevPanel Integration**
+- Added AttentionPathSection with probability bars
+- Mock profile testing with pass/fail validation
+- Reset attention data action
+
 
 ---
 

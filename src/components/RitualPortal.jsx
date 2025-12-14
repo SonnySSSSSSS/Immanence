@@ -91,93 +91,95 @@ export function RitualPortal({
             {/* ═══════════════════════════════════════════════════════════════
           THE OCULUS - Central HUD Frame (Scrying Mirror)
           ═══════════════════════════════════════════════════════════════ */}
-            <OculusRing
-                size={320}
-                totalSteps={totalSteps}
-                currentStep={currentStepIndex}
-            >
-                {/* Scrying Mirror Content - Image with glow bleed */}
-                <div className="relative w-full h-full flex items-center justify-center overflow-visible">
+            <div className="mt-12">
+                <OculusRing
+                    size={380}
+                    totalSteps={totalSteps}
+                    currentStep={currentStepIndex}
+                >
+                    {/* Scrying Mirror Content - Image with glow bleed */}
+                    <div className="relative w-full h-full flex items-center justify-center overflow-visible">
 
-                    {/* Background glow layer - bleeds outside the mask */}
-                    <div
-                        className="absolute inset-[-20%] rounded-full pointer-events-none"
-                        style={{
-                            background: 'radial-gradient(circle at center, var(--accent-20) 0%, transparent 50%)',
-                            filter: 'blur(20px)',
-                        }}
-                    />
-
-                    {/* Image container with soft edge mask */}
-                    <div
-                        className="relative w-full h-full rounded-full overflow-hidden"
-                        style={{
-                            maskImage: 'radial-gradient(circle at center, black 60%, transparent 100%)',
-                            WebkitMaskImage: 'radial-gradient(circle at center, black 60%, transparent 100%)',
-                        }}
-                    >
-                        {currentStep.image && (
-                            <img
-                                src={`${import.meta.env.BASE_URL}${currentStep.image}`}
-                                alt={currentStep.name}
-                                className="w-full h-full object-cover transition-opacity duration-500"
-                                style={{
-                                    opacity: imageLoaded ? 0.95 : 0,
-                                    filter: 'saturate(1.1) contrast(1.05)',
-                                }}
-                                onLoad={() => setImageLoaded(true)}
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    setImageLoaded(false);
-                                }}
-                            />
-                        )}
-                    </div>
-
-                    {/* Fallback glyph when no image or loading */}
-                    {(!currentStep.image || !imageLoaded) && (
+                        {/* Background glow layer - bleeds outside the mask */}
                         <div
-                            className="absolute text-7xl animate-pulse-slow"
+                            className="absolute inset-[-20%] rounded-full pointer-events-none"
                             style={{
-                                color: 'var(--accent-60)',
-                                textShadow: '0 0 40px var(--accent-40), 0 0 80px var(--accent-30)',
-                                filter: 'drop-shadow(0 0 30px var(--accent-color))',
+                                background: 'radial-gradient(circle at center, var(--accent-20) 0%, transparent 50%)',
+                                filter: 'blur(20px)',
                             }}
-                        >
-                            {ritual.icon || '☉'}
-                        </div>
-                    )}
+                        />
 
-                    {/* Timer overlay (bottom of frame) */}
-                    <div
-                        className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full"
-                        style={{
-                            background: 'rgba(0,0,0,0.8)',
-                            border: '1px solid var(--accent-40)',
-                            backdropFilter: 'blur(8px)',
-                            boxShadow: '0 0 20px rgba(0,0,0,0.5)',
-                        }}
-                    >
-                        <span
+                        {/* Image container with soft edge mask */}
+                        <div
+                            className="relative w-full h-full rounded-full overflow-hidden"
                             style={{
-                                fontFamily: 'Georgia, serif',
-                                fontSize: '20px',
-                                fontWeight: 500,
-                                letterSpacing: '0.12em',
-                                color: stepTimeRemaining < 30 ? '#fcd34d' : '#fefce8',
-                                textShadow: '0 0 10px var(--accent-60)',
+                                maskImage: 'radial-gradient(circle at center, black 60%, transparent 100%)',
+                                WebkitMaskImage: 'radial-gradient(circle at center, black 60%, transparent 100%)',
                             }}
                         >
-                            {formatTime(stepTimeRemaining)}
-                        </span>
+                            {currentStep.image && (
+                                <img
+                                    src={`${import.meta.env.BASE_URL}${currentStep.image}`}
+                                    alt={currentStep.name}
+                                    className="w-full h-full object-cover transition-opacity duration-500"
+                                    style={{
+                                        opacity: imageLoaded ? 0.95 : 0,
+                                        filter: 'saturate(1.1) contrast(1.05)',
+                                    }}
+                                    onLoad={() => setImageLoaded(true)}
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        setImageLoaded(false);
+                                    }}
+                                />
+                            )}
+                        </div>
+
+                        {/* Fallback glyph when no image or loading */}
+                        {(!currentStep.image || !imageLoaded) && (
+                            <div
+                                className="absolute text-7xl animate-pulse-slow"
+                                style={{
+                                    color: 'var(--accent-60)',
+                                    textShadow: '0 0 40px var(--accent-40), 0 0 80px var(--accent-30)',
+                                    filter: 'drop-shadow(0 0 30px var(--accent-color))',
+                                }}
+                            >
+                                {ritual.icon || '☉'}
+                            </div>
+                        )}
+
+                        {/* Timer overlay (bottom of frame) */}
+                        <div
+                            className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full"
+                            style={{
+                                background: 'rgba(0,0,0,0.8)',
+                                border: '1px solid var(--accent-40)',
+                                backdropFilter: 'blur(8px)',
+                                boxShadow: '0 0 20px rgba(0,0,0,0.5)',
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontFamily: 'Georgia, serif',
+                                    fontSize: '20px',
+                                    fontWeight: 500,
+                                    letterSpacing: '0.12em',
+                                    color: stepTimeRemaining < 30 ? '#fcd34d' : '#fefce8',
+                                    textShadow: '0 0 10px var(--accent-60)',
+                                }}
+                            >
+                                {formatTime(stepTimeRemaining)}
+                            </span>
+                        </div>
                     </div>
-                </div>
-            </OculusRing>
+                </OculusRing>
+            </div>
 
             {/* ═══════════════════════════════════════════════════════════════
           SIGIL SLIDER - Rune Progress Track (Icons Only)
           ═══════════════════════════════════════════════════════════════ */}
-            <div className="mt-8 w-full">
+            <div className="mt-6 w-full">
                 <SigilSlider
                     totalSteps={totalSteps}
                     currentStep={currentStepIndex}
@@ -189,13 +191,13 @@ export function RitualPortal({
             {/* ═══════════════════════════════════════════════════════════════
           INSTRUCTION TEXT
           ═══════════════════════════════════════════════════════════════ */}
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
                 <div
-                    className="max-w-sm mx-auto mb-4"
+                    className="max-w-sm mx-auto mb-3"
                     style={{
                         fontFamily: 'Georgia, serif',
-                        fontSize: '14px',
-                        lineHeight: 1.8,
+                        fontSize: '13px',
+                        lineHeight: 1.7,
                         color: 'rgba(253,251,245,0.9)',
                     }}
                 >
@@ -209,13 +211,13 @@ export function RitualPortal({
             {currentCue && (
                 <div
                     key={cueIndex}
-                    className="text-center mb-5 px-6 max-w-sm animate-fade-in"
+                    className="text-center mb-3 px-6 max-w-sm animate-fade-in"
                     style={{
                         fontFamily: 'Georgia, serif',
-                        fontSize: '12px',
+                        fontSize: '11px',
                         fontStyle: 'italic',
                         color: 'var(--accent-70)',
-                        minHeight: '44px',
+                        minHeight: '36px',
                         borderLeft: '2px solid var(--accent-40)',
                         paddingLeft: '14px',
                         textAlign: 'left',
@@ -228,7 +230,7 @@ export function RitualPortal({
             {/* ═══════════════════════════════════════════════════════════════
           ACTION BUTTONS - Gemstone Style
           ═══════════════════════════════════════════════════════════════ */}
-            <div className="flex gap-4 mt-4">
+            <div className="flex gap-4 mt-6">
                 {/* Abandon button - Subdued */}
                 <button
                     onClick={() => {
@@ -288,7 +290,7 @@ export function RitualPortal({
           RITUAL INFO - Bottom metadata
           ═══════════════════════════════════════════════════════════════ */}
             <div
-                className="mt-6 text-center"
+                className="mt-4 text-center"
                 style={{
                     fontFamily: 'Georgia, serif',
                     fontSize: '9px',

@@ -23,7 +23,7 @@ const SECTION_LABELS = {
 };
 
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, showFxGallery, onNavigate }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate }) {
   // Navigation and Application sections handle their own avatars and stage titles
   const showAvatar = section !== 'navigation' && section !== 'application';
 
@@ -46,6 +46,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
               stage={currentStage}
               path={previewPath}
               showCore={previewShowCore}
+              attention={previewAttention}
             />
           </div>
 
@@ -112,6 +113,7 @@ function App() {
   const [previewStage, setPreviewStage] = useState('Flame');
   const [previewPath, setPreviewPath] = useState('Soma');
   const [previewShowCore, setPreviewShowCore] = useState(true);
+  const [previewAttention, setPreviewAttention] = useState('none');
 
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {
@@ -188,6 +190,8 @@ function App() {
         setAvatarPath={setPreviewPath}
         showCore={previewShowCore}
         setShowCore={setPreviewShowCore}
+        avatarAttention={previewAttention}
+        setAvatarAttention={setPreviewAttention}
       />
 
       {/* Outer Black Container (The "Theater") */}
@@ -222,7 +226,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v2.47.0
+                  v2.50.0
                 </div>
                 {!isHub && (
                   <button
@@ -267,6 +271,7 @@ function App() {
                 currentStage={previewStage}
                 previewPath={previewPath}
                 previewShowCore={previewShowCore}
+                previewAttention={previewAttention}
                 showFxGallery={showFxGallery}
                 onNavigate={setActiveSection}
               />

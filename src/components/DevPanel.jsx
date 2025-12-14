@@ -5,9 +5,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useLunarStore } from '../state/lunarStore';
 import { usePathStore, PATH_NAMES, PATH_SYMBOLS } from '../state/pathStore';
+import { useAttentionStore } from '../state/attentionStore';
 import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
 import { Avatar } from './Avatar';
 import * as devHelpers from '../utils/devHelpers';
+import { calculatePathProbabilities, getDominantPath, determinePathState } from '../utils/attentionPathScoring';
+import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';
+import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
+import { useProgressStore } from '../state/progressStore';
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
@@ -21,7 +26,9 @@ export function DevPanel({
     avatarPath = 'Prana',
     setAvatarPath,
     showCore = false,
-    setShowCore
+    setShowCore,
+    avatarAttention = 'vigilance',
+    setAvatarAttention
 }) {
 
     // Lunar store state
@@ -42,6 +49,8 @@ export function DevPanel({
         avatar: true,
         lunar: true,
         path: false,
+        attention: false,
+        tracking: false,
         data: false
     });
 
@@ -144,7 +153,13 @@ export function DevPanel({
                                 stage={avatarStage}
                                 path={showCore ? null : avatarPath}
                                 showCore={showCore}
+                                attention={avatarAttention}
                             />
+                        </div>
+
+                        {/* Variation info */}
+                        <div className="text-xs text-center text-white/40 mb-4">
+                            Click avatar to cycle through variations
                         </div>
 
                         {/* Stage selector */}
@@ -174,6 +189,22 @@ export function DevPanel({
                                 {PATH_OPTIONS.map(p => (
                                     <option key={p} value={p} className="bg-[#1a1a24] text-white">{p}</option>
                                 ))}
+                            </select>
+                        </div>
+
+                        {/* Attention selector */}
+                        <div className="flex items-center gap-3 mb-3">
+                            <label className="text-xs text-white/50 w-16">Attention</label>
+                            <select
+                                value={avatarAttention}
+                                onChange={(e) => setAvatarAttention(e.target.value)}
+                                className="flex-1 bg-[#1a1a24] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90"
+                                style={{ colorScheme: 'dark' }}
+                            >
+                                <option value="none" className="bg-[#1a1a24] text-white">None (Stage/Path only)</option>
+                                <option value="vigilance" className="bg-[#1a1a24] text-white">Vigilance</option>
+                                <option value="sahaja" className="bg-[#1a1a24] text-white">Sahaja</option>
+                                <option value="ekagrata" className="bg-[#1a1a24] text-white">Ekagrata</option>
                             </select>
                         </div>
 
@@ -386,6 +417,24 @@ export function DevPanel({
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* ATTENTION PATH SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <AttentionPathSection
+                        expanded={expandedSections.attention}
+                        onToggle={() => toggleSection('attention')}
+                        armed={armed}
+                        handleDestructive={handleDestructive}
+                    />
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* TRACKINGHUB SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <TrackingHubSection
+                        expanded={expandedSections.tracking}
+                        onToggle={() => toggleSection('tracking')}
+                    />
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* DATA SECTION */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
@@ -443,6 +492,231 @@ export function DevPanel({
 // ═══════════════════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
+
+function AttentionPathSection({ expanded, onToggle, armed, handleDestructive }) {
+    const weeklyFeatures = useAttentionStore(s => s.weeklyFeatures);
+    const windows = useAttentionStore(s => s.windows);
+    const getValidWeekCount = useAttentionStore(s => s.getValidWeekCount);
+    const aggregateCurrentWeek = useAttentionStore(s => s.aggregateCurrentWeek);
+    const _devAggregateAll = useAttentionStore(s => s._devAggregateAll);
+    const _devReset = useAttentionStore(s => s._devReset);
+
+    const [mockProfile, setMockProfile] = useState('stable_ekagrata');
+    const [mockResult, setMockResult] = useState(null);
+
+    const validWeekCount = getValidWeekCount(12);
+    const featureVector = windows.mid || windows.short;
+
+    // Calculate current path state
+    let pathState = null;
+    if (featureVector) {
+        pathState = determinePathState(featureVector, validWeekCount);
+    }
+
+    // Run mock profile test
+    const runMockTest = () => {
+        const mockData = generateMockWeeklyData(mockProfile, 8, 0.2);
+        const lastWeek = mockData[mockData.length - 1];
+        const probs = calculatePathProbabilities(lastWeek);
+        const dominant = getDominantPath(probs);
+        const metadata = getProfileMetadata(mockProfile);
+        setMockResult({
+            profile: metadata,
+            probabilities: probs,
+            dominant,
+            expected: metadata?.expectedPath,
+            pass: dominant.path?.includes(metadata?.expectedPath) || dominant.status === metadata?.expectedPath,
+        });
+    };
+
+    return (
+        <Section
+            title="Attention Path (Ekagrata/Sahaja/Vigilance)"
+            expanded={expanded}
+            onToggle={onToggle}
+        >
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                    <div className="text-white/40">Valid Weeks</div>
+                    <div className="text-white/90 font-mono">{validWeekCount}/12</div>
+                </div>
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                    <div className="text-white/40">State</div>
+                    <div className="text-white/90">{pathState?.state || 'No Data'}</div>
+                </div>
+                <div className="bg-white/5 rounded-lg px-3 py-2 col-span-2">
+                    <div className="text-white/40">Attention Path</div>
+                    <div className="text-white/90 font-medium">
+                        {pathState?.path || 'None'}
+                        {pathState?.probability && <span className="text-white/50 ml-2">({(pathState.probability * 100).toFixed(0)}%)</span>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Probability Bars */}
+            {pathState?.probabilities && (
+                <div className="mb-4">
+                    <div className="text-xs text-white/50 mb-2">Path Probabilities</div>
+                    {['Ekagrata', 'Sahaja', 'Vigilance'].map(path => {
+                        const prob = pathState.probabilities[path] || 0;
+                        return (
+                            <div key={path} className="flex items-center gap-2 mb-1.5">
+                                <span className="text-xs text-white/60 w-16">{path}</span>
+                                <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full transition-all"
+                                        style={{
+                                            width: `${prob * 100}%`,
+                                            background: path === 'Ekagrata' ? '#a78bfa'
+                                                : path === 'Sahaja' ? '#34d399'
+                                                    : '#fbbf24',
+                                        }}
+                                    />
+                                </div>
+                                <span className="text-xs text-white/50 w-10 text-right font-mono">
+                                    {(prob * 100).toFixed(0)}%
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Actions */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+                <DevButton onClick={() => aggregateCurrentWeek()}>Aggregate Now</DevButton>
+                <DevButton onClick={() => _devAggregateAll()}>Aggregate All</DevButton>
+            </div>
+
+            {/* Mock Profile Testing */}
+            <div className="border-t border-white/10 pt-3 mt-2">
+                <div className="text-xs text-white/50 mb-2">Mock Profile Test</div>
+                <div className="flex gap-2 mb-2">
+                    <select
+                        value={mockProfile}
+                        onChange={(e) => setMockProfile(e.target.value)}
+                        className="flex-1 bg-[#1a1a24] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white/90"
+                        style={{ colorScheme: 'dark' }}
+                    >
+                        {getProfileKeys().map(key => (
+                            <option key={key} value={key}>{getProfileMetadata(key)?.name || key}</option>
+                        ))}
+                    </select>
+                    <DevButton onClick={runMockTest}>Test</DevButton>
+                </div>
+
+                {mockResult && (
+                    <div className={`text-xs p-2 rounded-lg ${mockResult.pass ? 'bg-green-500/20 border border-green-500/40' : 'bg-red-500/20 border border-red-500/40'}`}>
+                        <div className="flex justify-between mb-1">
+                            <span className="text-white/70">Expected: {mockResult.expected}</span>
+                            <span className="text-white/70">Got: {mockResult.dominant.path || mockResult.dominant.status}</span>
+                        </div>
+                        <div className="text-white/50">
+                            {mockResult.pass ? '✓ PASS' : '✗ FAIL'}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Reset */}
+            <div className="mt-3">
+                <DestructiveButton
+                    label="Reset Attention Data"
+                    armed={armed === 'attention'}
+                    onArm={() => handleDestructive('attention', _devReset)}
+                />
+            </div>
+        </Section>
+    );
+}
+
+function TrackingHubSection({ expanded, onToggle }) {
+    const { sessions } = useProgressStore();
+    const [selectedPattern, setSelectedPattern] = useState('dedicated');
+
+    const injectMockData = (patternKey) => {
+        const pattern = MOCK_PATTERNS[patternKey];
+        const mockSessions = [
+            ...generateMockSessions('breathwork', pattern.breathwork),
+            ...generateMockSessions('visualization', pattern.visualization),
+            ...generateMockSessions('wisdom', pattern.wisdom)
+        ];
+
+        // Inject into store (this will overwrite existing sessions)
+        useProgressStore.setState({ sessions: mockSessions });
+        console.log(`✅ Injected ${mockSessions.length} mock sessions (${pattern.label})`);
+    };
+
+    const clearMockData = () => {
+        const realSessions = sessions.filter(s => !s.metadata?.mock);
+        useProgressStore.setState({ sessions: realSessions });
+        console.log('🗑️ Cleared all mock data');
+    };
+
+    const mockSessionCount = sessions.filter(s => s.metadata?.mock).length;
+    const totalSessionCount = sessions.length;
+
+    return (
+        <Section
+            title="TrackingHub Mock Data"
+            expanded={expanded}
+            onToggle={onToggle}
+        >
+            {/* Session counts */}
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                    <div className="text-white/40">Total Sessions</div>
+                    <div className="text-white/90 font-mono">{totalSessionCount}</div>
+                </div>
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                    <div className="text-white/40">Mock Sessions</div>
+                    <div className="text-white/90 font-mono">{mockSessionCount}</div>
+                </div>
+            </div>
+
+            {/* Pattern injection */}
+            <div className="mb-4">
+                <div className="text-xs text-white/50 mb-2">Inject Mock Pattern</div>
+                <div className="space-y-2">
+                    {Object.entries(MOCK_PATTERNS).map(([key, pattern]) => (
+                        <button
+                            key={key}
+                            onClick={() => {
+                                setSelectedPattern(key);
+                                injectMockData(key);
+                            }}
+                            className={`
+                                w-full text-left px-3 py-2 rounded-lg text-xs transition-all
+                                ${selectedPattern === key
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
+                                    : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/10'
+                                }
+                            `}
+                        >
+                            {pattern.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Clear button */}
+            <button
+                onClick={clearMockData}
+                className="w-full px-3 py-2 rounded-lg text-xs bg-red-500/10 border border-red-500/30 text-red-400/70 hover:bg-red-500/20 transition-all"
+            >
+                🗑️ Clear Mock Data
+            </button>
+
+            {/* Info */}
+            <div className="mt-3 pt-3 border-t border-white/10">
+                <div className="text-[10px] text-white/40">
+                    Mock sessions simulate the last 30 days of practice data
+                </div>
+            </div>
+        </Section>
+    );
+}
 
 function Section({ title, expanded, onToggle, children }) {
     return (
