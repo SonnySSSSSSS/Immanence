@@ -158,7 +158,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: rune-ring-clockwise 60s linear infinite;
+  animation: rune-ring-clockwise 78s linear infinite;
   transform-origin: center;
   will-change: transform;
 }
@@ -168,7 +168,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: rune-ring-counterclockwise 90s linear infinite;
+  animation: rune-ring-counterclockwise 117s linear infinite;
   transform-origin: center;
   will-change: transform;
 }
@@ -178,7 +178,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: rune-ring-clockwise 48s linear infinite;
+  animation: rune-ring-clockwise 62.4s linear infinite;
   transform-origin: center;
   will-change: transform;
 }

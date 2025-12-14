@@ -372,9 +372,8 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         </div>
       </div>
 
-      {/* Geometric Base - Minimal line with flanking sacred geometry */}
-      <div className="stage-geometric-base relative flex items-center justify-center mt-4" style={{ width: '320px' }}>
-
+      {/* Decorative Divider - moved up to sit above attention vector */}
+      <div className="flex items-center justify-center gap-3 w-full -mt-4 mb-2 px-8">
         {/* Left flanking geometry - small diamond */}
         <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-40">
           <path
@@ -451,10 +450,10 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         </svg>
       </div>
 
-      {/* Attention Vector Row - subtle lowercase text below the geometric base */}
+      {/* Attention Vector Row - enhanced contrast and vertical spacing */}
       {attention && attention !== 'none' && (
         <div
-          className="attention-row relative flex items-center justify-center mt-3 gap-2"
+          className="attention-row relative flex items-center justify-center gap-2 -mt-1 mb-3"
           style={{
             fontFamily: "'Outfit', sans-serif",
           }}
@@ -477,14 +476,14 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
             ·
           </span>
 
-          {/* Attention text */}
+          {/* Attention text - enhanced contrast */}
           <span
             className="text-[11px] uppercase tracking-[0.25em] relative z-10"
             style={{
               color: stageColors.gradient[1],
-              opacity: 0.5,
-              letterSpacing: '0.2em',
-              textShadow: `0 0 12px ${stageColors.glow}30`,
+              opacity: 0.78,
+              letterSpacing: '0.24em',
+              textShadow: `0 1px 6px rgba(0,0,0,0.35), 0 0 12px ${stageColors.glow}30`,
             }}
           >
             {attention}
