@@ -7,7 +7,7 @@ import { TrackingView } from './TrackingView.jsx';
 import { FourModesHome } from './FourModesHome.jsx';
 import { ModeDetail } from './ModeDetail.jsx';
 
-export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore }) {
+export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention }) {
   const { activePath } = useNavigationStore();
   const [activeSubView, setActiveSubView] = useState('tracking'); // 'tracking' | 'modes'
   const [selectedModeId, setSelectedModeId] = useState(null);
@@ -23,7 +23,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
           </div>
           {/* Stage Title */}
           <div className="mt-4">
-            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
+            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
           </div>
         </div>
 
@@ -80,7 +80,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
         </div>
         {/* Stage Title */}
         <div className="mt-4">
-          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
+          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
         </div>
       </div>
 

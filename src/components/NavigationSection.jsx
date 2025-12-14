@@ -10,7 +10,7 @@ import { CodexChamber } from './Codex/CodexChamber.jsx';
 import { Avatar } from './Avatar.jsx';
 import { StageTitle } from './StageTitle.jsx';
 
-export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, onNavigate }) {
+export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
@@ -34,7 +34,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         </div>
         {/* Stage Title */}
         <div className="mt-4">
-          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
+          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
         </div>
       </div>
 

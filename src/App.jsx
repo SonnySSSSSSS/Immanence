@@ -59,7 +59,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
               pointerEvents: isPracticing ? 'none' : 'auto',
             }}
           >
-            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} showWelcome={false} />
+            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
           </div>
         </div>
       )}
@@ -67,8 +67,8 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
       <div className="w-full max-w-md flex-1" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
         {section === "wisdom" && <WisdomSection />}
-        {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} />}
-        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} onNavigate={onNavigate} />}
+        {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} />}
+        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />}
       </div>
     </div>
   );
@@ -253,6 +253,7 @@ function App() {
                   currentStage={previewStage}
                   previewPath={previewPath}
                   previewShowCore={previewShowCore}
+                  previewAttention={previewAttention}
                 />
               </div>
             ) : (

@@ -12,6 +12,83 @@ const PATH_TRANSLATIONS = {
   samyoga: { sanskrit: 'Samyoga', english: 'Union' },
 };
 
+// Attention vector labels
+const ATTENTION_LABELS = {
+  vigilance: 'vigilance',
+  sahaja: 'sahaja',
+  ekagrata: 'ekagrata',
+};
+
+// Sacred geometry path icons (SVG components)
+const PathIcon = ({ path, color, size = 20 }) => {
+  const iconColor = color || 'currentColor';
+
+  const icons = {
+    // Soma (Body): Concentric circles - grounded body-field
+    soma: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke={iconColor} strokeWidth="1" opacity="0.4" />
+        <circle cx="12" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.6" />
+        <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
+      </svg>
+    ),
+    // Prana (Breath): Spiral flow lines - vital currents
+    prana: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 3 C8 5, 6 9, 8 12 C10 15, 8 19, 12 21"
+          stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
+        />
+        <path
+          d="M12 3 C16 5, 18 9, 16 12 C14 15, 16 19, 12 21"
+          stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
+        />
+        <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
+      </svg>
+    ),
+    // Dhyana (Meditation): Abstract lotus geometry - stillness
+    dhyana: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M12 4 L14 10 L12 8 L10 10 Z" stroke={iconColor} strokeWidth="0.8" fill={iconColor} opacity="0.5" />
+        <path d="M12 4 L16 12 L12 9 L8 12 Z" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
+        <ellipse cx="12" cy="18" rx="6" ry="2" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+        <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
+      </svg>
+    ),
+    // Drishti (Vision): Aperture/lens rings - radiating perception
+    drishti: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke={iconColor} strokeWidth="0.8" opacity="0.3" />
+        <path d="M12 3 L12 6 M12 18 L12 21 M3 12 L6 12 M18 12 L21 12" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+        <path d="M5.5 5.5 L7.5 7.5 M16.5 16.5 L18.5 18.5 M5.5 18.5 L7.5 16.5 M16.5 7.5 L18.5 5.5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
+        <circle cx="12" cy="12" r="4" stroke={iconColor} strokeWidth="1" opacity="0.6" />
+        <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.95" />
+      </svg>
+    ),
+    // Jnana (Wisdom): Crystalline light burst - knowledge
+    jnana: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M12 2 L12 7 M12 17 L12 22 M2 12 L7 12 M17 12 L22 12" stroke={iconColor} strokeWidth="1.2" opacity="0.6" />
+        <path d="M5 5 L8.5 8.5 M15.5 15.5 L19 19 M5 19 L8.5 15.5 M15.5 8.5 L19 5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
+        <polygon points="12,6 14,10 12,9 10,10" fill={iconColor} opacity="0.7" />
+        <polygon points="12,18 14,14 12,15 10,14" fill={iconColor} opacity="0.7" />
+        <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
+      </svg>
+    ),
+    // Samyoga (Integration): Vesica piscis / interlocking rings - unity
+    samyoga: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="9" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+        <circle cx="15" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+        <ellipse cx="12" cy="12" rx="2.5" ry="5" fill={iconColor} opacity="0.3" />
+        <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.9" />
+      </svg>
+    ),
+  };
+
+  return icons[path?.toLowerCase()] || icons.soma;
+};
+
 // Stage colors for glow effects and styling
 export const STAGE_COLORS = {
   seedling: { gradient: ["#4ade80", "#22c55e", "#16a34a"], glow: "#22c55e" },
@@ -21,8 +98,8 @@ export const STAGE_COLORS = {
   stellar: { gradient: ["#c084fc", "#a855f7", "#9333ea"], glow: "#a855f7" },
 };
 
-// CSS-based Stage Title Component with horizontal layout
-export function StageTitle({ stage, path, showWelcome = true }) {
+// CSS-based Stage Title Component with stacked vertical layout
+export function StageTitle({ stage, path, attention, showWelcome = true }) {
   const [showEnglish, setShowEnglish] = useState(false);
 
   const stageLower = (stage || "flame").toLowerCase();
@@ -45,17 +122,7 @@ export function StageTitle({ stage, path, showWelcome = true }) {
     <div className="stage-title-container relative flex flex-col items-center justify-center overflow-visible">
 
       {/* Welcome label - optional */}
-      {showWelcome && (
-        <div
-          className="text-[10px] uppercase tracking-[0.3em] mb-3"
-          style={{
-            color: 'rgba(253,251,245,0.4)',
-            fontFamily: "'Outfit', sans-serif",
-          }}
-        >
-          {hasPath ? 'Welcome Back · Current Path' : 'Current Stage'}
-        </div>
-      )}
+      {/* Welcome text removed per user request */}
 
       {/* Ambient glow */}
       <div
@@ -100,6 +167,8 @@ export function StageTitle({ stage, path, showWelcome = true }) {
           className="absolute -inset-x-8 -inset-y-4 rounded-xl"
           style={{
             background: 'radial-gradient(ellipse 100% 100% at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             filter: 'blur(12px)',
             pointerEvents: 'none',
           }}
@@ -158,39 +227,86 @@ export function StageTitle({ stage, path, showWelcome = true }) {
             }}
           />
 
-          {/* Separator dot - only if path exists */}
+          {/* Divider glyph - symbolic separator (Option C) */}
           {hasPath && (
-            <span
-              className="text-base opacity-40 mx-1"
-              style={{
-                color: stageColors.gradient[1],
-                textShadow: `0 0 8px ${stageColors.glow}60`,
-              }}
-            >
-              ·
-            </span>
+            <div className="divider-glyph relative mx-3" style={{ opacity: 0.6 }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" className="transition-opacity duration-300">
+                {/* Diamond outline */}
+                <path
+                  d="M7 1 L13 7 L7 13 L1 7 Z"
+                  fill="none"
+                  stroke={stageColors.gradient[1]}
+                  strokeWidth="1.2"
+                  style={{
+                    filter: `drop-shadow(0 0 3px ${stageColors.glow}40)`,
+                  }}
+                />
+                {/* Center dot for weight */}
+                <circle
+                  cx="7"
+                  cy="7"
+                  r="1.5"
+                  fill={stageColors.gradient[1]}
+                  opacity="0.8"
+                />
+              </svg>
+            </div>
           )}
 
-          {/* Path image (right) - balanced with stage */}
+          {/* Path section - enhanced contrast with subtle halo (Option C) */}
           {hasPath && (
-            <img
-              src={`${import.meta.env.BASE_URL}titles/path-${pathLower}.png`}
-              alt={pathName}
-              className="path-title-img h-16 w-auto object-contain transition-opacity duration-500"
-              style={{
-                filter: `
-                  drop-shadow(0 2px 3px rgba(0,0,0,0.6))
-                  drop-shadow(0 0 1px rgba(0,0,0,0.8))
-                  contrast(1.05)
-                `,
-                maskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
-                WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
-                maxWidth: '200px',
-              }}
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <div className="path-section relative flex items-center justify-center">
+              {/* Subtle gold halo behind path */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  background: `radial-gradient(ellipse 100% 80% at center, ${stageColors.glow}08 0%, transparent 70%)`,
+                  filter: 'blur(8px)',
+                  zIndex: 0,
+                }}
+              />
+
+              {/* Path image - enhanced visibility with increased brightness */}
+              <img
+                src={`${import.meta.env.BASE_URL}titles/path-${pathLower}.png`}
+                alt={pathName}
+                className="path-title-img h-24 w-auto object-contain transition-opacity duration-500 relative z-10"
+                style={{
+                  filter: `
+                    brightness(1.23)
+                    drop-shadow(0 0 8px ${stageColors.glow}50)
+                    drop-shadow(0 2px 4px rgba(0,0,0,0.7))
+                  `,
+                  maxWidth: '288px',
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  // Show calligraphic text fallback
+                  const textFallback = e.currentTarget.parentElement?.querySelector('.path-text-fallback');
+                  if (textFallback) textFallback.style.display = 'block';
+                }}
+              />
+
+              {/* Path text fallback - calligraphic style */}
+              <span
+                className="path-text-fallback text-[1.5rem] tracking-[0.08em]"
+                onClick={() => setShowEnglish(!showEnglish)}
+                style={{
+                  display: 'none',
+                  fontFamily: "'Crimson Pro', 'Cormorant Garamond', Georgia, serif",
+                  fontStyle: 'italic',
+                  fontWeight: 500,
+                  color: `${stageColors.gradient[1]}dd`,
+                  textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                  cursor: 'pointer',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                {pathName}
+              </span>
+            </div>
           )}
         </div>
 
@@ -334,6 +450,55 @@ export function StageTitle({ stage, path, showWelcome = true }) {
           />
         </svg>
       </div>
+
+      {/* Attention Vector Row - subtle lowercase text below the geometric base */}
+      {attention && attention !== 'none' && (
+        <div
+          className="attention-row relative flex items-center justify-center mt-3 gap-2"
+          style={{
+            fontFamily: "'Outfit', sans-serif",
+          }}
+        >
+          {/* Subtle bloom background for legibility */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(ellipse 140% 120% at center, ${stageColors.glow}25 0%, ${stageColors.glow}12 30%, transparent 70%)`,
+              filter: 'blur(8px)',
+              zIndex: 0,
+            }}
+          />
+
+          {/* Small dot separator */}
+          <span
+            className="text-[10px] opacity-30 relative z-10"
+            style={{ color: stageColors.gradient[1] }}
+          >
+            ·
+          </span>
+
+          {/* Attention text */}
+          <span
+            className="text-[11px] uppercase tracking-[0.25em] relative z-10"
+            style={{
+              color: stageColors.gradient[1],
+              opacity: 0.5,
+              letterSpacing: '0.2em',
+              textShadow: `0 0 12px ${stageColors.glow}30`,
+            }}
+          >
+            {attention}
+          </span>
+
+          {/* Small dot separator */}
+          <span
+            className="text-[10px] opacity-30 relative z-10"
+            style={{ color: stageColors.gradient[1] }}
+          >
+            ·
+          </span>
+        </div>
+      )}
 
       {/* CSS Animations */}
       <style>{`

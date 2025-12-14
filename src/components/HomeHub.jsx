@@ -11,7 +11,7 @@ import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle }
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
 
-function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore }) {
+function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention }) {
   // Placeholder stats - wire to real data later
   const [stats, setStats] = useState({
     totalSessions: 24,
@@ -88,7 +88,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               opacity: 0.7,
             }}
           />
-          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} />
+          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} />
           <div className="text-[11px] text-[rgba(253,251,245,0.4)] mt-2">
             Last practiced {stats.lastPracticed}
           </div>
