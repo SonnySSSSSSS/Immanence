@@ -87,3 +87,51 @@
 .moon-halo-pulse {
     animation: haloPulse 4s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                      TWINKLING STARS (BREATHING-SYNCED)                     */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Slow twinkle animation - synced to breathing circle (4.5s) */
+@keyframes moonTwinkle {
+
+    0%,
+    100% {
+        opacity: 1;
+        filter: brightness(1);
+    }
+
+    20% {
+        opacity: 0.7;
+        filter: brightness(0.9);
+    }
+
+    35% {
+        opacity: 1;
+        filter: brightness(1.1);
+    }
+
+    50% {
+        opacity: 0.75;
+        filter: brightness(0.95);
+    }
+
+    70% {
+        opacity: 1;
+        filter: brightness(1.05);
+    }
+
+    85% {
+        opacity: 0.8;
+        filter: brightness(0.92);
+    }
+}
+
+.moon-twinkle {
+    animation: moonTwinkle 4.5s ease-in-out infinite;
+}
+
+/* Combined pulse + twinkle for stars */
+.moon-star-breathe {
+    animation: haloPulse 4.5s ease-in-out infinite, moonTwinkle 4.5s ease-in-out infinite;
+}

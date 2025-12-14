@@ -144,7 +144,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 r={haloRadius}
                 fill="url(#moonHaloGradient)"
                 opacity={haloOpacity}
-                className={isWobbling ? 'moon-halo-wobble' : ''}
+                className={`moon-star-breathe ${isWobbling ? 'moon-halo-wobble' : ''}`}
             />
 
             {/* Secondary inner halo - even more subtle */}
@@ -154,7 +154,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 r={haloRadius * 0.6}
                 fill="var(--accent-color)"
                 opacity={haloOpacity * 0.4}
-                className={isWobbling ? 'moon-halo-wobble' : ''}
+                className={`moon-star-breathe ${isWobbling ? 'moon-halo-wobble' : ''}`}
             />
 
             {/* ═══════════════════════════════════════════════════════════════ */}

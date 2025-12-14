@@ -65,9 +65,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
         {/* Stage Title - Dynamic animated image based on stage and path */}
         <div
-          className="relative text-center space-y-1 px-6 py-4 rounded-3xl"
+          className="relative text-center space-y-1 px-6 pt-4 pb-0 rounded-3xl overflow-hidden"
           style={{
-            background: 'rgba(0, 0, 0, 0.45)',
+            background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.21) 100%)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -89,8 +89,16 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           />
           <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} />
-          <div className="text-[11px] text-[rgba(253,251,245,0.4)] mt-2">
-            Last practiced {stats.lastPracticed}
+          {/* Unified bottom section - attention vector + last practiced */}
+          <div
+            className="relative -mx-6 -mb-4 px-6 pb-6 pt-3"
+            style={{
+              background: 'rgba(0, 0, 0, 0.21)',
+            }}
+          >
+            <div className="text-[11px] text-[rgba(253,251,245,0.4)] text-center mt-2">
+              Last practiced {stats.lastPracticed}
+            </div>
           </div>
         </div>
       </div>
