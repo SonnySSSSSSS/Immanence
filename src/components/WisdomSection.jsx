@@ -305,6 +305,79 @@ function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, b
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY SIGIL - Archetypal visual anchors
+// ─────────────────────────────────────────────────────────────────────────────
+function CategorySigil({ categoryKey }) {
+  const SIGIL_MAP = {
+    'focus-presence': 'focus-presence.png',
+    'emotional-regulation': 'emotional-regulation.png',
+    'grounding-safety': 'grounding-safety.png',
+    'shadow-integration': 'shadow-integration.png',
+    'expression-voice': 'expression-voice.png',
+    'heart-connection': 'heart-connection.png',
+    'resonance-alignment': 'resonance-alignment.png',
+    'self-knowledge': 'self-knowledge.png',
+  };
+
+  // Use PNG if available, otherwise SVG placeholder
+  if (SIGIL_MAP[categoryKey]) {
+    return (
+      <img
+        src={`${import.meta.env.BASE_URL}sigils/${SIGIL_MAP[categoryKey]}`}
+        alt=""
+        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
+        style={{
+          width: '80px',
+          height: '80px',
+          opacity: 0.16,
+          filter: 'blur(0.5px)',
+          zIndex: 1
+        }}
+      />
+    );
+  }
+
+  // SVG placeholders for remaining sigils
+  const SVG_SIGILS = {
+    'shadow-integration': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <circle cx="40" cy="40" r="20" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <circle cx="48" cy="40" r="20" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+      </svg>
+    ),
+    'expression-voice': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <circle cx="40" cy="40" r="3" fill="var(--accent-color)" />
+        {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+          <line key={angle} x1="40" y1="40" x2={40 + Math.cos(angle * Math.PI / 180) * 25} y2={40 + Math.sin(angle * Math.PI / 180) * 25} stroke="var(--accent-color)" strokeWidth="1.5" />
+        ))}
+      </svg>
+    ),
+    'heart-connection': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <circle cx="35" cy="40" r="18" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <circle cx="45" cy="40" r="18" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+      </svg>
+    ),
+    'resonance-alignment': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <path d="M20,40 Q30,25 40,40 T60,40" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <path d="M20,40 Q30,55 40,40 T60,40" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+      </svg>
+    ),
+    'self-knowledge': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <circle cx="40" cy="40" r="25" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <circle cx="40" cy="40" r="15" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <circle cx="40" cy="40" r="5" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+      </svg>
+    ),
+  };
+
+  return SVG_SIGILS[categoryKey] || null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CATEGORY CARD - For Recommendations
 // ─────────────────────────────────────────────────────────────────────────────
 function CategoryCard({ category, isSelected, onClick }) {
@@ -338,6 +411,9 @@ function CategoryCard({ category, isSelected, onClick }) {
         }
       }}
     >
+      {/* Symbolic sigil anchor - quiet archetypal visual */}
+      <CategorySigil categoryKey={category.key} />
+
       {/* Volcanic glass texture overlay */}
       <div
         className="absolute inset-0 pointer-events-none rounded-2xl"
@@ -475,24 +551,48 @@ export function WisdomSection() {
       );
     }
 
-    // Category selection grid
+    // Category selection grid - transformed into symbolic field
     return (
-      <div className="space-y-5">
-        <div className="text-center">
-          <h2 className="text-[15px] uppercase tracking-[0.25em] mb-2" style={{ color: 'rgba(253,251,245,0.5)' }}>
+      <div className="space-y-6">
+        {/* Ritual threshold - invocation framing */}
+        <div className="flex items-center justify-center gap-3 px-8">
+          {/* Left sigil divider */}
+          <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-40">
+            <circle cx="5" cy="5" r="1.5" fill="var(--accent-color)" />
+            <path d="M5 0 L5 3 M5 7 L5 10 M0 5 L3 5 M7 5 L10 5" stroke="var(--accent-color)" strokeWidth="0.5" opacity="0.5" />
+          </svg>
+
+          {/* Question as invocation */}
+          <h2 className="text-[15px] uppercase tracking-[0.28em] px-2" style={{ color: 'rgba(253,251,245,0.62)', letterSpacing: '0.28em' }}>
             What Do You Need?
           </h2>
+
+          {/* Right sigil divider */}
+          <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-40">
+            <circle cx="5" cy="5" r="1.5" fill="var(--accent-color)" />
+            <path d="M5 0 L5 3 M5 7 L5 10 M0 5 L3 5 M7 5 L10 5" stroke="var(--accent-color)" strokeWidth="0.5" opacity="0.5" />
+          </svg>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {categories.map((cat) => (
-            <CategoryCard
-              key={cat.key}
-              category={cat}
-              isSelected={selectedCategory === cat.key}
-              onClick={() => setSelectedCategory(cat.key)}
-            />
-          ))}
+        {/* Card grid as field - subtle vertical gradient */}
+        <div
+          className="p-4 rounded-3xl"
+          style={{
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.15) 100%)',
+            border: '1px solid rgba(198, 90, 255, 0.08)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)'
+          }}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {categories.map((cat) => (
+              <CategoryCard
+                key={cat.key}
+                category={cat}
+                isSelected={selectedCategory === cat.key}
+                onClick={() => setSelectedCategory(cat.key)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
