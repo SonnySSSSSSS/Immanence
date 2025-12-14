@@ -72,8 +72,9 @@ export const useProgressStore = create(
              * @param {string} params.domain - 'breathwork' | 'visualization' | 'wisdom'
              * @param {number} params.duration - minutes
              * @param {Object} [params.metadata] - domain-specific data
+             * @param {Object} [params.instrumentation] - attention path instrumentation data
              */
-            recordSession: ({ domain, duration, metadata = {} }) => {
+            recordSession: ({ domain, duration, metadata = {}, instrumentation = null }) => {
                 const state = get();
                 const now = new Date();
                 const dateKey = getDateKey(now);
@@ -84,7 +85,18 @@ export const useProgressStore = create(
                     dateKey,
                     domain,
                     duration,
-                    metadata
+                    metadata,
+                    // === Attention Path Instrumentation ===
+                    // These fields enable attention path calculation
+                    start_time: instrumentation?.start_time ?? null,
+                    end_time: instrumentation?.end_time ?? null,
+                    duration_ms: instrumentation?.duration_ms ?? (duration * 60 * 1000),
+                    exit_type: instrumentation?.exit_type ?? 'completed',
+                    practice_family: instrumentation?.practice_family ?? null,
+                    alive_signal_count: instrumentation?.alive_signal_count ?? 0,
+                    pause_count: instrumentation?.pause_count ?? 0,
+                    pause_total_ms: instrumentation?.pause_total_ms ?? 0,
+                    switch_count: instrumentation?.switch_count ?? 0,
                 };
 
                 // Update streak

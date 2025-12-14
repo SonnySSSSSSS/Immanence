@@ -13,6 +13,9 @@ export function RitualPortal({
     onNextStep,
     onComplete,
     onStop,
+    onSwitch,
+    onPause,
+    onAliveSignal,
 }) {
     const [stepTimeRemaining, setStepTimeRemaining] = useState(0);
     const [cueIndex, setCueIndex] = useState(0);
@@ -228,7 +231,10 @@ export function RitualPortal({
             <div className="flex gap-4 mt-4">
                 {/* Abandon button - Subdued */}
                 <button
-                    onClick={onStop}
+                    onClick={() => {
+                        onAliveSignal?.();
+                        onStop?.();
+                    }}
                     className="px-5 py-2.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
                     style={{
                         fontFamily: 'Georgia, serif',
@@ -246,7 +252,16 @@ export function RitualPortal({
 
                 {/* NEXT STEP / TRANSMUTE button - Gemstone PBR style */}
                 <button
-                    onClick={isLastStep ? onComplete : onNextStep}
+                    onClick={() => {
+                        // Track switch for attention path instrumentation
+                        onSwitch?.();
+                        onAliveSignal?.();
+                        if (isLastStep) {
+                            onComplete?.();
+                        } else {
+                            onNextStep?.();
+                        }
+                    }}
                     className="px-7 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95"
                     style={{
                         fontFamily: 'Georgia, serif',

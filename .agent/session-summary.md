@@ -1,7 +1,31 @@
 # Immanence OS - Session Summary
 
-**Last Updated:** 2025-12-13  
-**Current Version:** v2.45.0
+**Last Updated:** 2025-12-14  
+**Current Version:** v2.47.0
+
+---
+
+## Session: December 14, 2025
+
+### What Was Accomplished
+
+#### Attention Path System — Phase 1 Instrumentation ✅ COMPLETE
+- ✅ Created `src/data/practiceFamily.js`:
+  - SETTLE, SCAN, RELATE, INQUIRE family definitions
+  - Priority-based resolution: sensoryType > ritualCategory > domain > default SETTLE
+  - yoga/wisdom intentionally omitted to force specific resolution
+- ✅ Created `src/hooks/useSessionInstrumentation.js`:
+  - `startSession()` — init tracking with practice family
+  - `recordAliveSignal()` — count user interactions
+  - `recordPause()` — track pause events
+  - `recordSwitch()` — track step switches
+  - `endSession(exitType)` — finalize with 4 exit types (completed, abandoned, backgrounded, system_kill)
+- ✅ Extended `progressStore.js` session schema with 10 instrumentation fields
+- ✅ Integrated into `PracticeSection.jsx`:
+  - startSession in handleStart, endSession with exit type detection, recordAliveSignal on taps
+- ✅ Integrated into `RitualPortal.jsx`:
+  - recordSwitch on step navigation, recordAliveSignal on button clicks
+- ✅ `BreathingRing.jsx` taps already tracked via callback chain
 
 ---
 

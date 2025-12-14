@@ -16,6 +16,7 @@ import { useProgressStore } from "../state/progressStore.js";
 import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { useTheme } from "../context/ThemeContext";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
+import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
@@ -156,6 +157,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Avatar path determines particle effects (Soma, Prana, Dhyana, Drishti, Jnana, Samyoga)
   // When showCore is true, use default particles (no path-specific effects)
 
+  // Attention path instrumentation
+  const instrumentation = useSessionInstrumentation();
+
   const [practice, setPractice] = useState("Breath & Stillness");
   const [duration, setDuration] = useState(10);
   const [preset, setPreset] = useState("Box");
@@ -247,6 +251,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     onPracticingChange && onPracticingChange(false);
     onBreathStateChange && onBreathStateChange(null);
 
+    // Determine exit type: completed if timer reached 0, abandoned otherwise
+    const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
+
+    // End instrumentation and get session data
+    const instrumentationData = instrumentation.endSession(exitType);
+
     const id =
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
@@ -289,6 +299,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
       else if (p === 'sensory') domain = sensoryType;
       else if (p === 'ritual') domain = 'ritual';
+      else if (p === 'sound') domain = 'sound';
 
       // Record in progress store (single source of truth)
       useProgressStore.getState().recordSession({
@@ -300,7 +311,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
           ritualId: activeRitual?.id,
           legacyImport: false
-        }
+        },
+        // Pass instrumentation data for attention path calculation
+        instrumentation: instrumentationData,
       });
 
       // Sync mandala store
@@ -323,6 +336,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
     setBreathCount(0);
+
+    // Start instrumentation tracking
+    const p = practice.toLowerCase();
+    let domain = 'breathwork';
+    if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
+    else if (p === 'sensory') domain = sensoryType;
+    else if (p === 'ritual') domain = 'ritual';
+    else if (p === 'sound') domain = 'sound';
+
+    instrumentation.startSession(
+      domain,
+      activeRitual?.category || null,
+      p === 'sensory' ? sensoryType : null
+    );
   };
 
   // Ritual-specific handlers
@@ -351,6 +378,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const handleAccuracyTap = (errorMs) => {
     if (!isRunning) return;
+
+    // Track tap as alive signal for attention path
+    instrumentation.recordAliveSignal();
 
     setLastErrorMs(Math.abs(errorMs));
     setLastSignedErrorMs(errorMs);
@@ -469,6 +499,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             onNextStep={handleNextStep}
             onComplete={handleRitualComplete}
             onStop={handleStop}
+            onSwitch={instrumentation.recordSwitch}
+            onPause={instrumentation.recordPause}
+            onAliveSignal={instrumentation.recordAliveSignal}
           />
         </section>
       );

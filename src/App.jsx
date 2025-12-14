@@ -222,7 +222,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v2.46.0
+                  v2.47.0
                 </div>
                 {!isHub && (
                   <button
