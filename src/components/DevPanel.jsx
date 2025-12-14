@@ -15,7 +15,7 @@ import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 
 // Available stages and paths for dropdowns
-const STAGE_OPTIONS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
+const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
 const PATH_OPTIONS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
 export function DevPanel({
@@ -172,7 +172,7 @@ export function DevPanel({
                                 style={{ colorScheme: 'dark' }}
                             >
                                 {STAGE_OPTIONS.map(s => (
-                                    <option key={s} value={s} className="bg-[#1a1a24] text-white">{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                    <option key={s} value={s} className="bg-[#1a1a24] text-white">{s}</option>
                                 ))}
                             </select>
                         </div>
