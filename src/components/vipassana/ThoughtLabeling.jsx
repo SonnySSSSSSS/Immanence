@@ -1,12 +1,21 @@
 // src/components/vipassana/ThoughtLabeling.jsx
-// Core gesture interpreter for thought labeling
+// Core gesture interpreter for thought labeling - Canvas version
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PRACTICE_INVARIANT, VIPASSANA_AUDIO } from '../../data/vipassanaThemes';
-import { ThoughtElement } from './ThoughtElement';
+import { VipassanaCanvas } from './VipassanaCanvas';
 import { RadialDial } from './RadialDial';
 
 let thoughtIdCounter = 0;
+
+// 5 drift behaviors for variety
+const DRIFT_BEHAVIORS = [
+    { name: 'gentle', speedX: 0.3, speedY: -0.2, wobble: 2, wobbleFreq: 3000 },
+    { name: 'lazy', speedX: 0.1, speedY: -0.1, wobble: 4, wobbleFreq: 4000 },
+    { name: 'floaty', speedX: 0.2, speedY: -0.4, wobble: 3, wobbleFreq: 2500 },
+    { name: 'wander', speedX: 0.4, speedY: 0.1, wobble: 5, wobbleFreq: 2000 },
+    { name: 'drift', speedX: -0.2, speedY: -0.15, wobble: 2.5, wobbleFreq: 3500 },
+];
 
 export function ThoughtLabeling({
     theme,
@@ -29,6 +38,28 @@ export function ThoughtLabeling({
         onThoughtCountChange?.(thoughts.length);
     }, [thoughts.length, onThoughtCountChange]);
 
+    // Lifecycle: remove completed thoughts
+    useEffect(() => {
+        const checkExpired = () => {
+            const now = Date.now();
+            setThoughts(prev => {
+                const remaining = prev.filter(t => {
+                    const elapsed = now - t.spawnTime;
+                    const duration = t.baseDuration * t.fadeModifier * 1000;
+                    const isExpired = elapsed >= duration;
+                    if (isExpired) {
+                        onThoughtComplete?.(t.id);
+                    }
+                    return !isExpired;
+                });
+                return remaining.length !== prev.length ? remaining : prev;
+            });
+        };
+
+        const interval = setInterval(checkExpired, 500); // Check every 500ms
+        return () => clearInterval(interval);
+    }, [onThoughtComplete]);
+
     // Play audio cue (soft, no stacking)
     const playAudio = useCallback((cueKey) => {
         if (!audioEnabled) return;
@@ -49,26 +80,34 @@ export function ThoughtLabeling({
         }
     }, [audioEnabled]);
 
-    // Spawn neutral thought at position
+    // Spawn thought at position with random drift behavior
     const spawnThought = useCallback((x, y, category = 'neutral') => {
+        const driftBehavior = DRIFT_BEHAVIORS[Math.floor(Math.random() * DRIFT_BEHAVIORS.length)];
         const newThought = {
             id: `thought-${++thoughtIdCounter}`,
             x,
             y,
+            originX: x,
+            originY: y,
             category,
             spawnTime: Date.now(),
             baseDuration: PRACTICE_INVARIANT.thoughtLifetime,
             fadeModifier: 1.0,
             isSticky: false,
+            driftBehavior,
         };
 
         setThoughts((prev) => {
             // Graceful coalescing if over max
-            if (prev.length >= PRACTICE_INVARIANT.maxActiveThoughts) {
-                const sorted = [...prev].sort((a, b) => a.spawnTime - b.spawnTime);
-                sorted[0].fadeModifier *= 0.3; // Accelerate oldest
+            let updated = [...prev];
+            if (updated.length >= PRACTICE_INVARIANT.maxActiveThoughts) {
+                const sorted = [...updated].sort((a, b) => a.spawnTime - b.spawnTime);
+                const oldestIdx = updated.findIndex(t => t.id === sorted[0].id);
+                if (oldestIdx >= 0) {
+                    updated[oldestIdx] = { ...updated[oldestIdx], fadeModifier: updated[oldestIdx].fadeModifier * 0.3 };
+                }
             }
-            return [...prev, newThought];
+            return [...updated, newThought];
         });
 
         playAudio('thoughtNoticed');
@@ -85,18 +124,9 @@ export function ThoughtLabeling({
         setDialState({ visible: true, x, y });
     };
 
-    // Handle dial category selection - classify most recent unclassified
+    // Handle dial category selection - spawn NEW thought with selected category
     const handleDialSelect = (categoryId) => {
-        setThoughts((prev) => {
-            const neutralThoughts = prev.filter((t) => t.category === 'neutral');
-            if (neutralThoughts.length === 0) return prev;
-
-            const mostRecent = neutralThoughts[neutralThoughts.length - 1];
-            return prev.map((t) =>
-                t.id === mostRecent.id ? { ...t, category: categoryId } : t
-            );
-        });
-
+        spawnThought(dialState.x, dialState.y, categoryId);
         setDialState({ visible: false, x: 0, y: 0 });
     };
 
@@ -106,7 +136,7 @@ export function ThoughtLabeling({
     };
 
     // Handle tap on thought element - accelerate fade (release)
-    const handleThoughtTap = (thoughtId) => {
+    const handleThoughtTap = useCallback((thoughtId) => {
         setThoughts((prev) =>
             prev.map((t) =>
                 t.id === thoughtId
@@ -115,12 +145,11 @@ export function ThoughtLabeling({
             )
         );
         playAudio('thoughtRelease');
-    };
+    }, [playAudio]);
 
     // Handle long-press on thought - mark sticky (one at a time)
-    const handleThoughtLongPress = (thoughtId) => {
+    const handleThoughtLongPress = useCallback((thoughtId) => {
         if (PRACTICE_INVARIANT.allowOneSticky) {
-            // Remove previous sticky marker
             setThoughts((prev) =>
                 prev.map((t) => ({
                     ...t,
@@ -128,20 +157,12 @@ export function ThoughtLabeling({
                 }))
             );
             setStickyThoughtId(thoughtId);
+            playAudio('thoughtSticky'); // Audio feedback for sticky
         }
-    };
+    }, [playAudio]);
 
-    // Handle thought completion
-    const handleThoughtComplete = (thoughtId) => {
-        setThoughts((prev) => prev.filter((t) => t.id !== thoughtId));
-        onThoughtComplete?.(thoughtId);
-    };
-
-    // Main pointer handlers
+    // Main pointer handlers for EMPTY SPACE (canvas handles thought hit-testing)
     const handlePointerDown = (e) => {
-        // Ignore if tapping on a thought element
-        if (e.target.closest('[data-thought]')) return;
-
         tapStartTime.current = Date.now();
         tapPosition.current = { x: e.clientX, y: e.clientY };
 
@@ -156,7 +177,7 @@ export function ThoughtLabeling({
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
 
-            // Was a short tap
+            // Was a short tap on empty space
             const elapsed = Date.now() - tapStartTime.current;
             if (elapsed < PRACTICE_INVARIANT.longPressThreshold) {
                 handleEmptyTap(e.clientX, e.clientY);
@@ -175,17 +196,13 @@ export function ThoughtLabeling({
     const thoughtCount = thoughts.length;
     const { accumulation } = PRACTICE_INVARIANT;
     let saturation = 1.0;
-    let motionContrast = 1.0;
 
     if (thoughtCount > accumulation.crowded.max) {
         saturation = accumulation.coalescing.saturation;
-        motionContrast = accumulation.coalescing.motionContrast;
     } else if (thoughtCount > accumulation.busy.max) {
         saturation = accumulation.crowded.saturation;
-        motionContrast = accumulation.crowded.motionContrast;
     } else if (thoughtCount > accumulation.normal.max) {
         saturation = accumulation.busy.saturation;
-        motionContrast = accumulation.busy.motionContrast;
     }
 
     return (
@@ -199,27 +216,13 @@ export function ThoughtLabeling({
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerLeave}
         >
-            {/* Thought elements layer */}
-            <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                    // Motion contrast applied to thought layer only
-                    opacity: motionContrast,
-                }}
-            >
-                {thoughts.map((thought) => (
-                    <div key={thought.id} data-thought>
-                        <ThoughtElement
-                            {...thought}
-                            driftDirection={theme?.driftDirection || { x: 0.2, y: 0 }}
-                            elementType={theme?.thoughtElement || 'cloud'}
-                            onComplete={handleThoughtComplete}
-                            onTap={handleThoughtTap}
-                            onLongPress={handleThoughtLongPress}
-                        />
-                    </div>
-                ))}
-            </div>
+            {/* Canvas-based thought rendering */}
+            <VipassanaCanvas
+                thoughts={thoughts}
+                theme={theme}
+                onThoughtTap={handleThoughtTap}
+                onThoughtLongPress={handleThoughtLongPress}
+            />
 
             {/* Radial dial for classification */}
             <RadialDial
@@ -234,3 +237,4 @@ export function ThoughtLabeling({
 }
 
 export default ThoughtLabeling;
+

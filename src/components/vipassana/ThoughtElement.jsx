@@ -33,13 +33,13 @@ export function ThoughtElement({
     const categoryData = THOUGHT_CATEGORIES[category] || THOUGHT_CATEGORIES.neutral;
     const effectiveDuration = baseDuration * fadeModifier * 1000; // to ms
 
-    // Main lifecycle animation
+    // Main lifecycle animation - uses spawnTime from props, not local startTime
     useEffect(() => {
-        const startTime = Date.now();
-
+        // Use refs to access latest values without causing re-runs
         const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / effectiveDuration, 1);
+            const elapsed = Date.now() - spawnTime;
+            const duration = baseDuration * fadeModifier * 1000;
+            const progress = Math.min(elapsed / duration, 1);
 
             // Phase transitions
             if (progress < 0.045) {
@@ -87,7 +87,7 @@ export function ThoughtElement({
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [effectiveDuration, x, y, driftDirection, id, onComplete]);
+    }, [id]); // Only depend on id - animation should not restart
 
     // Show symbol briefly on category change
     useEffect(() => {

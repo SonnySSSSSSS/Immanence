@@ -1,0 +1,300 @@
+// src/components/vipassana/VipassanaCanvas.jsx
+// Canvas-based renderer for Vipassana thoughts
+// Phase 1: Foundation with hit-testing and render loop
+
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { renderThought as renderThoughtFn } from '../../utils/thoughtRenderers.js';
+
+export function VipassanaCanvas({
+    thoughts = [],
+    theme,
+    onThoughtTap,
+    onThoughtLongPress,
+}) {
+    const canvasRef = useRef(null);
+    const containerRef = useRef(null);
+    const animationFrameRef = useRef(null);
+    const longPressTimerRef = useRef(null);
+    const longPressThoughtRef = useRef(null);
+
+    // Dev debug overlay toggle
+    const [showDebug, setShowDebug] = useState(false);
+    const [fps, setFps] = useState(60);
+    const lastFrameTimeRef = useRef(performance.now());
+    const frameCountRef = useRef(0);
+
+    // DPR calculation with battery awareness
+    const getDPR = useCallback(() => {
+        // Check battery status (if available)
+        const isBattery = navigator.getBattery?.()?.then(battery => !battery.charging);
+        const dprCap = isBattery ? 1.5 : 2.0;
+        return Math.min(window.devicePixelRatio || 1, dprCap);
+    }, []);
+
+    // Hit-testing: Find thought at coordinate
+    const getThoughtAtCoordinate = useCallback((x, y) => {
+        if (!canvasRef.current) return null;
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const canvasX = x - rect.left;
+        const canvasY = y - rect.top;
+
+        // Iterate in reverse (top-most first)
+        for (let i = thoughts.length - 1; i >= 0; i--) {
+            const thought = thoughts[i];
+            const dx = canvasX - thought.x;
+            const dy = canvasY - thought.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // Use a default radius of 36px (half of 72px thought size)
+            const radius = 36;
+            if (dist < radius) {
+                return thought;
+            }
+        }
+        return null;
+    }, [thoughts]);
+
+    // Canvas event handlers - stop propagation only when thought is hit
+    const handleCanvasPointerDown = useCallback((e) => {
+        const thought = getThoughtAtCoordinate(e.clientX, e.clientY);
+
+        if (thought) {
+            // Hit a thought - stop propagation so parent doesn't spawn
+            e.stopPropagation();
+
+            // Start long-press timer
+            longPressThoughtRef.current = thought;
+            longPressTimerRef.current = setTimeout(() => {
+                onThoughtLongPress?.(thought.id);
+                longPressTimerRef.current = null;
+            }, 350); // Match PRACTICE_INVARIANT.longPressThreshold
+        }
+        // If no thought hit, let event bubble to parent for empty space handling
+    }, [getThoughtAtCoordinate, onThoughtLongPress]);
+
+    const handleCanvasPointerUp = useCallback((e) => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+
+            // Was a short tap on thought
+            const thought = longPressThoughtRef.current;
+            if (thought) {
+                e.stopPropagation(); // Prevent parent from spawning
+                onThoughtTap?.(thought.id);
+            }
+        }
+        longPressThoughtRef.current = null;
+    }, [onThoughtTap]);
+
+    const handleCanvasPointerLeave = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+        longPressThoughtRef.current = null;
+    }, []);
+
+    // Toggle debug overlay (long-press bottom-right corner)
+    const handleDebugToggle = useCallback((e) => {
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cornerSize = 50;
+
+        if (x > rect.width - cornerSize && y > rect.height - cornerSize) {
+            setShowDebug(prev => !prev);
+        }
+    }, []);
+
+    // Setup canvas and handle resize
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const container = containerRef.current;
+        if (!canvas || !container) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const resize = () => {
+            const rect = container.getBoundingClientRect();
+            const dpr = getDPR();
+
+            // Set actual size in memory (scaled by DPR)
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // Set display size (CSS pixels)
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            // Scale context to match DPR
+            ctx.scale(dpr, dpr);
+        };
+
+        resize();
+        window.addEventListener('resize', resize);
+        return () => window.removeEventListener('resize', resize);
+    }, [getDPR]);
+
+    // Render loop
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let lastTime = performance.now();
+
+        const render = (currentTime) => {
+            // FPS calculation
+            frameCountRef.current++;
+            const elapsed = currentTime - lastFrameTimeRef.current;
+            if (elapsed >= 1000) {
+                setFps(Math.round((frameCountRef.current * 1000) / elapsed));
+                frameCountRef.current = 0;
+                lastFrameTimeRef.current = currentTime;
+            }
+
+            // Clear canvas
+            const rect = canvas.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            // Viewport culling: only render visible thoughts
+            const margin = 50;
+            const visibleThoughts = thoughts.filter(t =>
+                t.x > -margin &&
+                t.x < rect.width + margin &&
+                t.y > -margin &&
+                t.y < rect.height + margin
+            );
+
+            // Draw thoughts using theme renderers
+            visibleThoughts.forEach(thought => {
+                const now = Date.now();
+                const age = (now - thought.spawnTime) / 1000; // seconds
+                const lifetime = thought.baseDuration * thought.fadeModifier;
+                const progress = Math.min(age / lifetime, 1);
+
+                // Calculate drift position using behavior
+                const drift = thought.driftBehavior || { speedX: 0.2, speedY: -0.1, wobble: 2, wobbleFreq: 3000 };
+                const driftX = age * drift.speedX * 10;
+                const driftY = age * drift.speedY * 10;
+                const wobbleX = Math.sin(now / drift.wobbleFreq) * drift.wobble;
+                const wobbleY = Math.cos(now / (drift.wobbleFreq * 1.3)) * drift.wobble * 0.7;
+
+                const renderX = (thought.originX || thought.x) + driftX + wobbleX;
+                const renderY = (thought.originY || thought.y) + driftY + wobbleY;
+
+                // Calculate opacity and scale based on lifecycle phase
+                // Fade starts at 77% (leaving 23% = ~5 seconds of 22 second lifetime)
+                let opacity = 1;
+                let scale = 1;
+
+                if (progress < 0.045) {
+                    // Appearing phase (~1 second)
+                    opacity = progress / 0.045;
+                    scale = 0.95 + (opacity * 0.05);
+                } else if (progress > 0.77) {
+                    // Dissolving phase (~5 seconds)
+                    const dissolveProgress = (progress - 0.77) / 0.23;
+                    opacity = 1 - dissolveProgress * 0.85;
+                    scale = 1 + (dissolveProgress * 0.15);
+                }
+
+                // Sticky thoughts don't fade
+                if (thought.isSticky) {
+                    opacity = 1;
+                    scale = 1;
+                }
+
+                // Apply lifecycle rendering
+                ctx.save();
+                ctx.globalAlpha = opacity;
+
+                // Draw sticky indicator ring (before thought)
+                if (thought.isSticky) {
+                    const pulseScale = 1 + Math.sin(now / 400) * 0.08;
+                    ctx.strokeStyle = 'rgba(255, 220, 100, 0.6)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(renderX, renderY, 42 * pulseScale, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Inner glow
+                    ctx.strokeStyle = 'rgba(255, 255, 200, 0.3)';
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    ctx.arc(renderX, renderY, 38 * pulseScale, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Apply scale at render position
+                ctx.translate(renderX, renderY);
+                ctx.scale(scale, scale);
+                ctx.translate(-renderX, -renderY);
+
+                // Render using theme-specific function (pass render position)
+                const renderThought = { ...thought, x: renderX, y: renderY };
+                renderThoughtFn(ctx, renderThought, theme);
+
+                ctx.restore();
+            });
+
+            // Debug overlay
+            if (showDebug) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(10, 10, 150, 80);
+                ctx.fillStyle = '#0f0';
+                ctx.font = '12px monospace';
+                ctx.fillText(`FPS: ${fps}`, 20, 30);
+                ctx.fillText(`Thoughts: ${thoughts.length}`, 20, 50);
+                ctx.fillText(`Visible: ${visibleThoughts.length}`, 20, 70);
+
+                // Draw bounding boxes
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.lineWidth = 1;
+                visibleThoughts.forEach(t => {
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, 36, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+
+            animationFrameRef.current = requestAnimationFrame(render);
+        };
+
+        animationFrameRef.current = requestAnimationFrame(render);
+
+        return () => {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, [thoughts, showDebug, fps]);
+
+    return (
+        <div
+            ref={containerRef}
+            className="absolute inset-0"
+            style={{ cursor: 'crosshair' }}
+        >
+            <canvas
+                ref={canvasRef}
+                className="absolute inset-0"
+                onPointerDown={handleCanvasPointerDown}
+                onPointerUp={handleCanvasPointerUp}
+                onPointerLeave={handleCanvasPointerLeave}
+                onContextMenu={handleDebugToggle}
+            />
+        </div>
+    );
+}
+
+export default VipassanaCanvas;

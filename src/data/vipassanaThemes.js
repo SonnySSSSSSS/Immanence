@@ -129,6 +129,10 @@ export const VIPASSANA_AUDIO = {
         file: 'vipassana/thought-release.mp3',
         volume: 0.12,  // gentle exhale
     },
+    thoughtSticky: {
+        file: 'vipassana/thought-release.mp3', // reuse release sound, slightly louder
+        volume: 0.20,
+    },
     sessionEnd: {
         file: 'vipassana/session-end.mp3',
         volume: 0.25,  // single bowl tone

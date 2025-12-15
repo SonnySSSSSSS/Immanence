@@ -2,20 +2,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
-import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
-import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SensorySession } from "./SensorySession.jsx";
-import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
-import { RitualPortal } from "./RitualPortal.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
+import { BhaktiVisual } from "./BhaktiVisual.jsx";
+import { RitualPortal } from "./RitualPortal.jsx";
+import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
+import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { syncFromProgressStore } from "../state/mandalaStore.js";
-import { useTheme } from "../context/ThemeContext";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
 
@@ -81,7 +81,7 @@ function ScrollingWheel({ value, onChange, options }) {
       ref={wheelRef}
       className="relative overflow-hidden select-none"
       style={{
-        height: `${itemHeight * visibleItems}px`,
+        height: `${itemHeight * visibleItems} px`,
         width: "120px",
       }}
       onMouseDown={handleMouseDown}
@@ -93,7 +93,7 @@ function ScrollingWheel({ value, onChange, options }) {
       <div
         className="absolute top-0 left-0 right-0 pointer-events-none z-10"
         style={{
-          height: `${itemHeight}px`,
+          height: `${itemHeight} px`,
           background: "linear-gradient(180deg, rgba(15,15,26,1) 0%, transparent 100%)"
         }}
       />
@@ -101,7 +101,7 @@ function ScrollingWheel({ value, onChange, options }) {
       <div
         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
         style={{
-          height: `${itemHeight}px`,
+          height: `${itemHeight} px`,
           background: "linear-gradient(0deg, rgba(15,15,26,1) 0%, transparent 100%)"
         }}
       />
@@ -109,8 +109,8 @@ function ScrollingWheel({ value, onChange, options }) {
       <div
         className="absolute left-0 right-0 pointer-events-none z-10"
         style={{
-          top: `${itemHeight}px`,
-          height: `${itemHeight}px`,
+          top: `${itemHeight} px`,
+          height: `${itemHeight} px`,
           border: "1px solid var(--accent-20)",
           borderRadius: "8px",
           background: "rgba(255,255,255,0.02)"
@@ -134,7 +134,7 @@ function ScrollingWheel({ value, onChange, options }) {
               key={option}
               className="flex items-center justify-center"
               style={{
-                height: `${itemHeight}px`,
+                height: `${itemHeight} px`,
                 fontFamily: "Georgia, serif",
                 fontSize: "24px",
                 fontWeight: 400,
@@ -173,6 +173,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0].id);
   const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
+  const [vipassanaTheme, setVipassanaTheme] = useState('dawnSky');
 
   // Sound configuration state
   const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
@@ -244,7 +245,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
+    return `${m}:${s.toString().padStart(2, "0")} `;
   };
 
   const handleStop = () => {
@@ -280,7 +281,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Sensory") subType = sensoryType;
     if (practice === "Sound") subType = soundType;
     if (practice === "Visualization") subType = geometry;
-    if (practice === "Cymatics") subType = `${selectedFrequency.hz}Hz-${selectedFrequency.name}`;
+    if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
     if (practice === "Ritual") subType = activeRitual?.id;
 
     const sessionPayload = {
@@ -474,7 +475,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     L ${iW + h1W} 0
     L ${iW + h1W + eW} ${height}
     L ${width} ${height}
-  `;
+`;
 
   const breathingPatternForRing = {
     inhale: pattern.inhale,
@@ -512,7 +513,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Vipassana") {
       return (
         <VipassanaVisual
-          themeId="dawnSky"
+          themeId={vipassanaTheme}
           durationSeconds={duration * 60}
           stage={theme.stage || 'flame'}
           onComplete={handleStop}
@@ -541,25 +542,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         radialGlow = '';
       } else if (absError <= 30) {
         feedbackColor = "#f8fafc";
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
+        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
         feedbackShadow = "0 0 12px rgba(255,255,255,0.6)";
         buttonBg = "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
         radialGlow = '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
       } else if (absError <= 100) {
         feedbackColor = 'var(--accent-color)';
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
+        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
         feedbackShadow = '0 0 10px var(--accent-50)';
         buttonBg = 'linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)';
         radialGlow = '0 0 50px 12px var(--accent-40), 0 0 25px var(--accent-60)';
       } else if (absError <= 300) {
         feedbackColor = '#d97706';
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
+        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
         feedbackShadow = "0 0 8px rgba(217, 119, 6, 0.4)";
         buttonBg = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
         radialGlow = '0 0 40px 10px rgba(217, 119, 6, 0.3), 0 0 20px rgba(217, 119, 6, 0.5)';
       } else {
         feedbackColor = '#9ca3af';
-        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"}`;
+        feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
         feedbackShadow = "0 0 6px rgba(156, 163, 175, 0.3)";
         buttonBg = 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)';
         radialGlow = '0 0 35px 8px rgba(156, 163, 175, 0.25), 0 0 18px rgba(156, 163, 175, 0.4)';
@@ -700,8 +701,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               background: buttonBg,
               color: "#050508",
               boxShadow: radialGlow
-                ? `${radialGlow}, ${buttonShadow}`
-                : `0 0 24px var(--accent-30), ${buttonShadow}`,
+                ? `${radialGlow}, ${buttonShadow} `
+                : `0 0 24px var(--accent - 30), ${buttonShadow} `,
               borderRadius: "999px",
             }}
           >
@@ -738,14 +739,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
 
         <style>{`
-          @keyframes fade-in-up {
-            0% { opacity: 0; transform: translateY(5px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in-up {
-            animation: fade-in-up 0.2s ease-out forwards;
-          }
-        `}</style>
+@keyframes fade -in -up {
+  0 % { opacity: 0; transform: translateY(5px); }
+  100 % { opacity: 1; transform: translateY(0); }
+}
+          .animate - fade -in -up {
+  animation: fade -in -up 0.2s ease - out forwards;
+}
+`}</style>
       </section>
     );
   }
@@ -769,7 +770,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
           {/* Mandala image - fairly visible, slightly scaled */}
           <img
-            src={`${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`}
+            src={`${import.meta.env.BASE_URL} bg / practice - breath - mandala.png`}
             alt="Breath mandala"
             className="object-contain w-full h-full"
             style={{
@@ -938,7 +939,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     letterSpacing: "0.2em",
                     textTransform: "uppercase",
                     background:
-                      `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`,
+                      `linear - gradient(180deg, var(--accent - color) 0 %, var(--accent - color) 100 %)`,
                     color: "#050508",
                     border: "none",
                     boxShadow:
@@ -988,6 +989,73 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               sensoryType={sensoryType}
               setSensoryType={setSensoryType}
             />
+          )}
+
+          {/* VIPASSANA: Theme Selector */}
+          {practice === "Vipassana" && (
+            <div className="mb-6">
+              <div
+                className="mb-3"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: "9px",
+                  letterSpacing: "0.25em",
+                  textTransform: "uppercase",
+                  color: "rgba(253,251,245,0.55)",
+                  textAlign: "center"
+                }}
+              >
+                Theme
+              </div>
+              <div
+                className="flex gap-2 p-1 rounded-full flex-wrap justify-center"
+                style={{
+                  background: "rgba(0,0,0,0.3)",
+                  border: "1px solid var(--accent-10)",
+                }}
+              >
+                {Object.values(VIPASSANA_THEMES).map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => setVipassanaTheme(theme.id)}
+                    className="rounded-full px-3 py-1.5 transition-all duration-200"
+                    style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: "9px",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      background:
+                        vipassanaTheme === theme.id
+                          ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
+                          : "transparent",
+                      color:
+                        vipassanaTheme === theme.id
+                          ? "#050508"
+                          : "rgba(253,251,245,0.55)",
+                      boxShadow:
+                        vipassanaTheme === theme.id
+                          ? '0 0 12px var(--accent-15)'
+                          : "none",
+                      transform: vipassanaTheme === theme.id ? 'scale(1.05)' : 'scale(1)',
+                      transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms',
+                    }}
+                  >
+                    {theme.name}
+                  </button>
+                ))}
+              </div>
+              <div
+                className="mt-2 text-center"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: "8px",
+                  letterSpacing: "0.15em",
+                  color: "rgba(253,251,245,0.45)",
+                }}
+              >
+                {VIPASSANA_THEMES[vipassanaTheme]?.description}
+              </div>
+            </div>
           )}
 
           {/* SOUND: Full Config Panel */}
@@ -1130,7 +1198,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     style={{
                       fontSize: "6px",
                       color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.inhale / totalDuration) * 100}%`,
+                      width: `${(pattern.inhale / totalDuration) * 100}% `,
                       textAlign: "center",
                     }}
                   >
@@ -1140,7 +1208,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     style={{
                       fontSize: "6px",
                       color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.hold1 / totalDuration) * 100}%`,
+                      width: `${(pattern.hold1 / totalDuration) * 100}% `,
                       textAlign: "center",
                     }}
                   >
@@ -1150,7 +1218,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     style={{
                       fontSize: "6px",
                       color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.exhale / totalDuration) * 100}%`,
+                      width: `${(pattern.exhale / totalDuration) * 100}% `,
                       textAlign: "center",
                     }}
                   >
@@ -1160,7 +1228,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     style={{
                       fontSize: "6px",
                       color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.hold2 / totalDuration) * 100}%`,
+                      width: `${(pattern.hold2 / totalDuration) * 100}% `,
                       textAlign: "center",
                     }}
                   >
