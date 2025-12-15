@@ -9,11 +9,13 @@ import { PathFinderCard } from './PathFinderCard.jsx';
 import { CodexChamber } from './Codex/CodexChamber.jsx';
 import { Avatar } from './Avatar.jsx';
 import { StageTitle } from './StageTitle.jsx';
+import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
+  const [navModalOpen, setNavModalOpen] = useState(false);
 
   const handlePathRecommended = (pathId) => {
     if (pathId && pathGridRef.current) {
@@ -58,76 +60,52 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         </div>
       )}
 
-      {/* Tab Bar: Paths | Compass - Differentiated by temperature + geometry */}
-      <div className="flex flex-col items-center gap-2 py-4">
-        <div className="flex items-center justify-center gap-4">
-          {/* Paths Tab - Warm gold, continuous, progression */}
-          <button
-            onClick={() => setShowCodex(false)}
-            className="relative px-4 py-2 text-sm uppercase tracking-wider transition-all duration-300"
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              borderRadius: !showCodex ? '12px' : '8px',
-              background: !showCodex ? 'rgba(250, 208, 120, 0.15)' : 'transparent',
-              border: `1px solid ${!showCodex ? 'rgba(250, 208, 120, 0.4)' : 'rgba(255,255,255,0.1)'}`,
-              color: !showCodex ? '#F5D18A' : 'rgba(253, 251, 245, 0.5)',
-              letterSpacing: !showCodex ? '0.1em' : '0.15em',
-            }}
-          >
-            <span>◇ Paths</span>
-            {/* Continuous underline for Paths */}
-            {!showCodex && (
-              <div
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px]"
-                style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(250, 208, 120, 0.6), transparent)',
-                }}
-              />
-            )}
-          </button>
-
-          {/* Compass Tab - Cold gold, notched, correction */}
-          <button
-            onClick={() => setShowCodex(true)}
-            className="relative px-4 py-2 text-sm uppercase tracking-wider transition-all duration-300"
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              borderRadius: showCodex ? '8px' : '8px',
-              background: showCodex ? 'rgba(220, 210, 180, 0.15)' : 'transparent',
-              border: `1px solid ${showCodex ? 'rgba(220, 210, 180, 0.4)' : 'rgba(255,255,255,0.1)'}`,
-              color: showCodex ? 'rgba(220, 210, 180, 1)' : 'rgba(253, 251, 245, 0.5)',
-              letterSpacing: showCodex ? '0.05em' : '0.15em',
-            }}
-          >
-            <span>◈ Compass</span>
-            {/* Notched underline for Compass - interruption signature */}
-            {showCodex && (
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] flex items-center justify-center">
-                <div
-                  className="flex-1 h-[1px]"
-                  style={{ background: 'linear-gradient(90deg, transparent, rgba(220, 210, 180, 0.6))' }}
-                />
-                <div className="w-2" /> {/* Notch - the "cut" */}
-                <div
-                  className="flex-1 h-[1px]"
-                  style={{ background: 'linear-gradient(90deg, rgba(220, 210, 180, 0.6), transparent)' }}
-                />
-              </div>
-            )}
-          </button>
-        </div>
-
-        {/* Descriptor Text - Declarative, rule-like */}
-        <p
-          className="text-xs text-center transition-opacity duration-300"
+      {/* Navigation Selector - Dropdown Style (matching practice menu) */}
+      <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+        {/* Text prompt above button */}
+        <div
           style={{
-            fontFamily: "'Crimson Pro', serif",
-            color: 'rgba(253, 251, 245, 0.4)',
-            fontStyle: 'italic',
+            fontFamily: 'Georgia, serif',
+            fontSize: '11px',
+            letterSpacing: '0.15em',
+            color: 'rgba(253,251,245,0.5)',
+            textTransform: 'uppercase',
           }}
         >
-          {showCodex ? 'Restore agency. Do not advance.' : 'Choose direction. Progress deliberately.'}
-        </p>
+          Choose direction. Progress deliberately.
+        </div>
+        <button
+          onClick={() => setNavModalOpen(true)}
+          className="px-6 py-3 rounded-full"
+          style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: '13px',
+            letterSpacing: '0.1em',
+            color: showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+            border: showCodex ? '1px solid rgba(220, 210, 180, 0.4)' : '1px solid rgba(250, 208, 120, 0.4)',
+            boxShadow: showCodex
+              ? '0 0 25px rgba(220, 210, 180, 0.15), inset 0 0 20px rgba(220, 210, 180, 0.08)'
+              : '0 0 25px rgba(250, 208, 120, 0.15), inset 0 0 20px rgba(250, 208, 120, 0.08)',
+            transform: navModalOpen ? 'scale(1.06)' : 'scale(1)',
+            transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
+          }}
+        >
+          <span>{showCodex ? '◈ Compass' : '◇ Paths'}</span>
+          {/* Chevron */}
+          <span
+            style={{
+              fontSize: '10px',
+              transform: navModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 200ms ease-out',
+            }}
+          >
+            ▼
+          </span>
+        </button>
       </div>
 
       {/* Content Container */}
@@ -158,6 +136,14 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
           </div>
         )}
       </div>
+
+      {/* Navigation Selection Modal */}
+      <NavigationSelectionModal
+        isOpen={navModalOpen}
+        onClose={() => setNavModalOpen(false)}
+        currentView={showCodex ? 'compass' : 'paths'}
+        onSelectView={(view) => setShowCodex(view === 'compass')}
+      />
     </div>
   );
 }

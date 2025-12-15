@@ -296,21 +296,33 @@ export function VipassanaCanvas({
 
                 ctx.globalAlpha = opacity;
 
-                // Draw sticky indicator ring (before thought)
-                if (thought.isSticky) {
-                    const pulseScale = 1 + Math.sin(now / 400) * 0.08;
-                    ctx.strokeStyle = 'rgba(255, 220, 100, 0.6)';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(renderX, renderY, 42 * pulseScale, 0, Math.PI * 2);
-                    ctx.stroke();
+                // Draw sticky indicator ring (before thought) with 0.5s fade out
+                if (thought.isSticky && thought.stickyStartTime) {
+                    const timeSinceSticky = now - thought.stickyStartTime;
+                    const fadeOutDuration = 500; // 0.5 seconds
 
-                    // Inner glow
-                    ctx.strokeStyle = 'rgba(255, 255, 200, 0.3)';
-                    ctx.lineWidth = 6;
-                    ctx.beginPath();
-                    ctx.arc(renderX, renderY, 38 * pulseScale, 0, Math.PI * 2);
-                    ctx.stroke();
+                    // Calculate fade out opacity: 1.0 -> 0.0 over 500ms
+                    const fadeProgress = Math.min(timeSinceSticky / fadeOutDuration, 1.0);
+                    const circleOpacity = Math.max(0, 1.0 - fadeProgress);
+
+                    // Only render if still visible
+                    if (circleOpacity > 0) {
+                        const pulseScale = 1 + Math.sin(now / 400) * 0.08;
+
+                        // Outer ring
+                        ctx.strokeStyle = `rgba(255, 220, 100, ${0.6 * circleOpacity})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(renderX, renderY, 42 * pulseScale, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Inner glow
+                        ctx.strokeStyle = `rgba(255, 255, 200, ${0.3 * circleOpacity})`;
+                        ctx.lineWidth = 6;
+                        ctx.beginPath();
+                        ctx.arc(renderX, renderY, 38 * pulseScale, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
                 }
 
                 // Render using image-based stamp system

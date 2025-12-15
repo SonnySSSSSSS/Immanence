@@ -50,6 +50,10 @@ export function ThoughtLabeling({
     const [dialState, setDialState] = useState({ visible: false, x: 0, y: 0 });
     const [stickyThoughtId, setStickyThoughtId] = useState(null);
 
+    // Refractory period tracking - prevents rapid spawn clusters
+    const lastSpawnTimeRef = useRef(0);
+    const lastLifetimeCategoryRef = useRef(null); // 'fleeting', 'sticky', or 'heavy'
+
     const longPressTimer = useRef(null);
     const tapStartTime = useRef(null);
     const tapPosition = useRef({ x: 0, y: 0 });
@@ -104,6 +108,26 @@ export function ThoughtLabeling({
 
     // Spawn thought at position with theme-specific motion behavior
     const spawnThought = useCallback((x, y, category = 'neutral') => {
+        const now = Date.now();
+
+        // *** REFRACTORY PERIOD CHECK ***
+        // Prevents rapid spawn clusters - "awareness catching its breath"
+        const timeSinceLastSpawn = now - lastSpawnTimeRef.current;
+        const baseRefractoryMs = 2000; // 2 seconds base
+        const heavyRefractoryMs = 4000; // 4 seconds after heavy thought
+
+        const requiredRefractory = lastLifetimeCategoryRef.current === 'heavy'
+            ? heavyRefractoryMs
+            : baseRefractoryMs;
+
+        // Apply probabilistic reduction during refractory
+        if (timeSinceLastSpawn < requiredRefractory) {
+            const refractoryProgress = timeSinceLastSpawn / requiredRefractory;
+            const spawnChance = refractoryProgress * 0.7; // Max 70% chance during refractory
+            if (Math.random() > spawnChance) {
+                return; // Suppress spawn
+            }
+        }
         const elementType = theme?.thoughtElement || 'cloud';
         const behavior = THEME_BEHAVIORS[elementType] || THEME_BEHAVIORS.cloud;
 
@@ -136,7 +160,7 @@ export function ThoughtLabeling({
             originY: y,
             category,
             elementType, // Store element type so it persists when user switches
-            spawnTime: Date.now(),
+            spawnTime: now,
             baseDuration: PRACTICE_INVARIANT.getWeightedLifetime(), // Weighted: 60% fleeting, 30% sticky, 10% heavy
             fadeModifier: 1.0,
             isSticky: false,
@@ -155,9 +179,39 @@ export function ThoughtLabeling({
             flipX, // Store flip state for rendering
         };
 
+        // Track spawn time and lifetime category for refractory period
+        lastSpawnTimeRef.current = now;
+        const lifetime = newThought.baseDuration;
+        if (lifetime < 10) {
+            lastLifetimeCategoryRef.current = 'fleeting';
+        } else if (lifetime < 25) {
+            lastLifetimeCategoryRef.current = 'sticky';
+        } else {
+            lastLifetimeCategoryRef.current = 'heavy';
+        }
+
         setThoughts((prev) => {
+            // *** GLOBAL GHOST PRESSURE ***
+            // New thoughts in Phase A/B accelerate ghost decay (oldest first)
+            // This creates attention displacement - ghosts compete, not coexist
+            let updated = [...prev].map(thought => {
+                const age = (now - thought.spawnTime) / 1000;
+
+                // Ghost phase: age > 8s
+                if (age > 8) {
+                    // Apply ghost pressure: reduce fadeModifier slightly
+                    // Older ghosts lose more opacity
+                    const ghostAge = age - 8;
+                    const pressureFactor = 0.92 - (ghostAge * 0.01); // Older ghosts fade faster
+                    return {
+                        ...thought,
+                        fadeModifier: thought.fadeModifier * Math.max(0.85, pressureFactor)
+                    };
+                }
+                return thought;
+            });
+
             // Graceful coalescing if over max
-            let updated = [...prev];
             if (updated.length >= PRACTICE_INVARIANT.maxActiveThoughts) {
                 const sorted = [...updated].sort((a, b) => a.spawnTime - b.spawnTime);
                 const oldestIdx = updated.findIndex(t => t.id === sorted[0].id);
@@ -214,10 +268,12 @@ export function ThoughtLabeling({
     // Handle long-press on thought - mark sticky (one at a time)
     const handleThoughtLongPress = useCallback((thoughtId) => {
         if (PRACTICE_INVARIANT.allowOneSticky) {
+            const now = Date.now();
             setThoughts((prev) =>
                 prev.map((t) => ({
                     ...t,
                     isSticky: t.id === thoughtId,
+                    stickyStartTime: t.id === thoughtId ? now : undefined, // Track when sticky started
                 }))
             );
             setStickyThoughtId(thoughtId);

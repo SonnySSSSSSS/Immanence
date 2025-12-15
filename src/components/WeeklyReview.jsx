@@ -31,10 +31,10 @@ export function WeeklyReview() {
     const agencyTrend = generateTrend(weekStats.respondedDifferently);
     const practiceTrend = [3, 5, 4, 6, 7, 6, 7, 7]; // Mock
 
-    const renderTrendBar = (value, maxValue) => {
+    const renderTrendBar = (value, maxValue, index) => {
         const height = Math.max(10, (value / maxValue) * 100);
         return (
-            <div className="flex-1 flex items-end justify-center" style={{ height: '60px' }}>
+            <div key={index} className="flex-1 flex items-end justify-center" style={{ height: '60px' }}>
                 <div
                     className="w-full bg-gradient-to-t from-[var(--accent-color)] to-[var(--accent-60)] rounded-t-sm"
                     style={{ height: `${height}%` }}
@@ -160,7 +160,7 @@ export function WeeklyReview() {
                     <div className="mb-4">
                         <div className="text-xs text-[rgba(253,251,245,0.6)] mb-2">Awareness</div>
                         <div className="flex gap-1">
-                            {awarenessTrend.map((value, i) => renderTrendBar(value, Math.max(...awarenessTrend)))}
+                            {awarenessTrend.map((value, i) => renderTrendBar(value, Math.max(...awarenessTrend), i))}
                         </div>
                     </div>
 
@@ -168,7 +168,7 @@ export function WeeklyReview() {
                     <div className="mb-4">
                         <div className="text-xs text-[rgba(253,251,245,0.6)] mb-2">Agency</div>
                         <div className="flex gap-1">
-                            {agencyTrend.map((value, i) => renderTrendBar(value, Math.max(...agencyTrend)))}
+                            {agencyTrend.map((value, i) => renderTrendBar(value, Math.max(...agencyTrend), i))}
                         </div>
                     </div>
 
@@ -176,7 +176,7 @@ export function WeeklyReview() {
                     <div className="mb-4">
                         <div className="text-xs text-[rgba(253,251,245,0.6)] mb-2">Practice</div>
                         <div className="flex gap-1">
-                            {practiceTrend.map((value, i) => renderTrendBar(value, 7))}
+                            {practiceTrend.map((value, i) => renderTrendBar(value, 7, i))}
                         </div>
                     </div>
                 </div>

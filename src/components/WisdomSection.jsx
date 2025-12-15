@@ -1,5 +1,6 @@
 ﻿// src/components/WisdomSection.jsx
 import React, { useState, useEffect, useRef } from "react";
+import { WisdomSelectionModal } from './WisdomSelectionModal.jsx';
 import ReactMarkdown from "react-markdown";
 import { treatiseChapters } from "../data/treatise.generated.js";
 import { treatiseParts, getChaptersForPart } from "../data/treatiseParts.js";
@@ -72,7 +73,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allC
         <div
           className="absolute top-0 left-0 h-[3px] transition-all duration-150 z-10"
           style={{
-            width: `${scrollProgress}%`,
+            width: `${scrollProgress}% `,
             background: 'var(--accent-color)',
             boxShadow: '0 0 12px var(--accent-color)'
           }}
@@ -181,28 +182,28 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allC
       </div>
 
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-          font-family: 'Cinzel', Georgia, serif;
-          color: var(--accent-color);
-          margin-top: 2em;
-          margin-bottom: 0.8em;
-        }
-        .markdown-content h2 { font-size: 1.5em; border-bottom: 1px solid var(--accent-15); padding-bottom: 0.4em; }
-        .markdown-content p { margin: 1em 0; }
-        .markdown-content blockquote {
-          border-left: 2px solid var(--accent-40);
-          background: var(--accent-10);
-          padding: 1em 1.5em;
-          margin: 1.5em 0;
-          border-radius: 0 8px 8px 0;
-          font-style: italic;
-        }
-        .prose-content::-webkit-scrollbar { width: 6px; }
-        .prose-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
-        .prose-content::-webkit-scrollbar-thumb { background: var(--accent-20); border-radius: 3px; }
-      `}</style>
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .markdown - content h1, .markdown - content h2, .markdown - content h3 {
+  font - family: 'Cinzel', Georgia, serif;
+  color: var(--accent - color);
+  margin - top: 2em;
+  margin - bottom: 0.8em;
+}
+        .markdown - content h2 { font - size: 1.5em; border - bottom: 1px solid var(--accent - 15); padding - bottom: 0.4em; }
+        .markdown - content p { margin: 1em 0; }
+        .markdown - content blockquote {
+  border - left: 2px solid var(--accent - 40);
+  background: var(--accent - 10);
+  padding: 1em 1.5em;
+  margin: 1.5em 0;
+  border - radius: 0 8px 8px 0;
+  font - style: italic;
+}
+        .prose - content:: -webkit - scrollbar { width: 6px; }
+        .prose - content:: -webkit - scrollbar - track { background: rgba(0, 0, 0, 0.2); border - radius: 3px; }
+        .prose - content:: -webkit - scrollbar - thumb { background: var(--accent - 20); border - radius: 3px; }
+`}</style>
     </div>
   );
 }
@@ -212,7 +213,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allC
 // ─────────────────────────────────────────────────────────────────────────────
 function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, bookmarkedIds, onBookmark }) {
   const chapterCount = chapters.length;
-  const rangeText = part.chapterRange ? `Ch ${part.chapterRange[0]}–${part.chapterRange[1]}` : '';
+  const rangeText = part.chapterRange ? `Ch ${part.chapterRange[0]}–${part.chapterRange[1]} ` : '';
 
   return (
     <div className="border-b border-[var(--accent-10)]">
@@ -295,11 +296,11 @@ function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, b
       )}
 
       <style>{`
-        @keyframes slideDown {
+@keyframes slideDown {
           from { opacity: 0; transform: translateY(-8px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+}
+`}</style>
     </div>
   );
 }
@@ -323,7 +324,7 @@ function CategorySigil({ categoryKey }) {
   if (SIGIL_MAP[categoryKey]) {
     return (
       <img
-        src={`${import.meta.env.BASE_URL}sigils/${SIGIL_MAP[categoryKey]}`}
+        src={`${import.meta.env.BASE_URL} sigils / ${SIGIL_MAP[categoryKey]} `}
         alt=""
         className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
         style={{
@@ -389,14 +390,14 @@ function CategoryCard({ category, isSelected, onClick }) {
         background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
         border: '1px solid transparent',
         backgroundImage: isSelected
-          ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-             linear-gradient(135deg, var(--accent-50) 0%, var(--accent-40) 50%, var(--accent-50) 100%)`
-          : `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-             linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)`,
+          ? `linear - gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+  linear - gradient(135deg, var(--accent - 50) 0 %, var(--accent - 40) 50 %, var(--accent - 50) 100 %)`
+          : `linear - gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+  linear - gradient(135deg, var(--accent - 40) 0 %, rgba(138, 43, 226, 0.2) 50 %, var(--accent - 30) 100 %)`,
         backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
         boxShadow: isSelected
-          ? `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px var(--accent-25), 0 0 80px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)`
+          ? `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px var(--accent - 25), 0 0 80px var(--accent - 10), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 - 3px 12px rgba(0, 0, 0, 0.4)`
           : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
         minHeight: '140px'
       }}
@@ -419,9 +420,9 @@ function CategoryCard({ category, isSelected, onClick }) {
         className="absolute inset-0 pointer-events-none rounded-2xl"
         style={{
           background: `
-            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-            repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)
-          `,
+radial - gradient(circle at 30 % 20 %, rgba(255, 255, 255, 0.02) 0 %, transparent 50 %),
+  repeating - linear - gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)
+    `,
           opacity: 0.7
         }}
       />
@@ -430,7 +431,7 @@ function CategoryCard({ category, isSelected, onClick }) {
       <div
         className="absolute inset-0 pointer-events-none rounded-2xl"
         style={{
-          background: `radial-gradient(circle at 50% 0%, ${isSelected ? 'var(--accent-glow)15' : 'var(--accent-glow)08'} 0%, transparent 60%)`
+          background: `radial - gradient(circle at 50 % 0 %, ${isSelected ? 'var(--accent-glow)15' : 'var(--accent-glow)08'} 0 %, transparent 60 %)`
         }}
       />
 
@@ -469,6 +470,7 @@ export function WisdomSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [modalChapter, setModalChapter] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [wisdomModalOpen, setWisdomModalOpen] = useState(false);
   const { bookmarks, addBookmark, removeBookmark } = useWisdomStore();
   const bookmarkedIds = bookmarks.map(b => b.sectionId);
 
@@ -785,7 +787,7 @@ export function WisdomSection() {
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: `url(${import.meta.env.BASE_URL}wisdom-scroll.png)`,
+              backgroundImage: `url(${import.meta.env.BASE_URL}wisdom - scroll.png)`,
               backgroundSize: 'contain',
               backgroundPosition: 'center center',
               backgroundRepeat: 'no-repeat',
@@ -794,31 +796,51 @@ export function WisdomSection() {
               borderRadius: 'var(--radius-panel)',
             }}
           />
-          {/* Tabs */}
-          <section className="flex gap-1 rounded-full bg-black/30 p-1 border border-[var(--accent-10)]">
-            {TABS.map((tab) => {
-              const active = activeTab === tab;
-              const countLabel = tab === "Bookmarks" && bookmarkedIds.length > 0 ? ` (${bookmarkedIds.length})` : "";
-              return (
-                <button
-                  key={tab}
-                  className="flex-1 px-4 py-2 rounded-full text-xs transition-all"
-                  style={{
-                    background: active ? 'var(--ui-button-gradient)' : 'transparent',
-                    color: active ? '#050508' : 'rgba(253,251,245,0.6)',
-                    fontWeight: active ? 700 : 500,
-                    transform: active ? 'scale(1.02)' : 'scale(1)',
-                    borderBottom: active ? '2px solid var(--gold-80)' : '2px solid transparent',
-                    opacity: active ? 1 : 0.6,
-                    transition: 'transform 140ms ease-out, opacity 140ms ease-out, border-bottom-color 140ms ease-out, background 140ms ease-out',
-                  }}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}{countLabel}
-                </button>
-              );
-            })}
-          </section>
+          {/* Wisdom Selector - Dropdown Style (matching practice menu) */}
+          <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            {/* Text prompt above button */}
+            <div
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '11px',
+                letterSpacing: '0.15em',
+                color: 'rgba(253,251,245,0.5)',
+                textTransform: 'uppercase',
+              }}
+            >
+              What do you need?
+            </div>
+            <button
+              onClick={() => setWisdomModalOpen(true)}
+              className="px-6 py-3 rounded-full"
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '13px',
+                letterSpacing: '0.1em',
+                color: 'var(--accent-color)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                border: '1px solid var(--accent-30)',
+                boxShadow: '0 0 25px var(--accent-15), inset 0 0 20px var(--accent-08)',
+                transform: wisdomModalOpen ? 'scale(1.06)' : 'scale(1)',
+                transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
+              }}
+            >
+              <span>{activeTab}{activeTab === "Bookmarks" && bookmarkedIds.length > 0 ? ` (${bookmarkedIds.length})` : ""}</span>
+              {/* Chevron */}
+              <span
+                style={{
+                  fontSize: '10px',
+                  transform: wisdomModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 200ms ease-out',
+                }}
+              >
+                ▼
+              </span>
+            </button>
+          </div>
 
           {/* Content */}
           <section className="min-h-[400px] relative z-10">
@@ -829,6 +851,15 @@ export function WisdomSection() {
           </section>
         </div>
       </div>
+
+      {/* Wisdom Selection Modal */}
+      <WisdomSelectionModal
+        isOpen={wisdomModalOpen}
+        onClose={() => setWisdomModalOpen(false)}
+        currentTab={activeTab}
+        onSelectTab={setActiveTab}
+        bookmarksCount={bookmarkedIds.length}
+      />
     </>
   );
 }

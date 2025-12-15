@@ -6,18 +6,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Weighted lifetime distribution (matches real Vipassana rhythms)
+// Median reduced by ~12% to prevent clutter while preserving contrast
 function getWeightedLifetime() {
     const roll = Math.random();
 
     if (roll < 0.60) {
         // Fleeting (60%): sensory noise, passing thoughts
-        return 6 + Math.random() * 6; // 6-12s
+        return 5 + Math.random() * 5; // 5-10s (was 6-12s)
     } else if (roll < 0.90) {
         // Sticky (30%): planning, memory, light narrative
-        return 12 + Math.random() * 8; // 12-20s
+        return 10 + Math.random() * 7; // 10-17s (was 12-20s)
     } else {
         // Heavy (10%): rumination, emotional charge (rare but salient)
-        return 25 + Math.random() * 15; // 25-40s
+        return 25 + Math.random() * 15; // 25-40s (unchanged - preserves long tail)
     }
 }
 

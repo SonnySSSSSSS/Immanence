@@ -6,11 +6,13 @@ import { StageTitle } from './StageTitle.jsx';
 import { TrackingView } from './TrackingView.jsx';
 import { FourModesHome } from './FourModesHome.jsx';
 import { ModeDetail } from './ModeDetail.jsx';
+import { ApplicationSelectionModal } from './ApplicationSelectionModal.jsx';
 
 export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention }) {
   const { activePath } = useNavigationStore();
   const [activeSubView, setActiveSubView] = useState('tracking'); // 'tracking' | 'modes'
   const [selectedModeId, setSelectedModeId] = useState(null);
+  const [appModalOpen, setAppModalOpen] = useState(false);
 
   // No active path - show empty state
   if (!activePath) {
@@ -84,46 +86,53 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
         </div>
       </div>
 
-      {/* Sub-Toggle: Tracking | Four Modes */}
-      <section
-        className="flex gap-1 rounded-full bg-black/30 p-1 border border-[var(--accent-10)]"
-        role="tablist"
-      >
-        <button
-          role="tab"
-          aria-selected={activeSubView === 'tracking'}
-          className="flex-1 px-4 py-2 rounded-full text-xs transition-all"
+      {/* Application Selector - Dropdown Style (matching practice menu) */}
+      <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+        {/* Text prompt above button */}
+        <div
           style={{
-            background: activeSubView === 'tracking' ? 'var(--gold-30)' : 'transparent',
-            color: activeSubView === 'tracking' ? 'var(--gold-100)' : 'rgba(253,251,245,0.6)',
-            fontWeight: activeSubView === 'tracking' ? 700 : 500,
-            letterSpacing: '0.12em',
+            fontFamily: 'Georgia, serif',
+            fontSize: '11px',
+            letterSpacing: '0.15em',
+            color: 'rgba(253,251,245,0.5)',
             textTransform: 'uppercase',
-            transform: activeSubView === 'tracking' ? 'scale(1.02)' : 'scale(1)',
-            transition: 'all 140ms ease-out',
           }}
-          onClick={() => { setActiveSubView('tracking'); setSelectedModeId(null); }}
         >
-          Tracking
-        </button>
+          This space reflects how you are showing up — not how well.
+        </div>
         <button
-          role="tab"
-          aria-selected={activeSubView === 'modes'}
-          className="flex-1 px-4 py-2 rounded-full text-xs transition-all"
+          onClick={() => setAppModalOpen(true)}
+          className="px-6 py-3 rounded-full"
           style={{
-            background: activeSubView === 'modes' ? 'var(--gold-30)' : 'transparent',
-            color: activeSubView === 'modes' ? 'var(--gold-100)' : 'rgba(253,251,245,0.6)',
-            fontWeight: activeSubView === 'modes' ? 700 : 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            transform: activeSubView === 'modes' ? 'scale(1.02)' : 'scale(1)',
-            transition: 'all 140ms ease-out',
+            fontFamily: 'Georgia, serif',
+            fontSize: '13px',
+            letterSpacing: '0.1em',
+            color: 'var(--gold-100)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+            border: '1px solid var(--gold-30)',
+            boxShadow: activeSubView === 'tracking'
+              ? '0 0 25px rgba(251, 191, 36, 0.15), inset 0 0 20px rgba(251, 191, 36, 0.08)'
+              : '0 0 25px rgba(202, 138, 4, 0.15), inset 0 0 20px rgba(202, 138, 4, 0.08)',
+            transform: appModalOpen ? 'scale(1.06)' : 'scale(1)',
+            transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
           }}
-          onClick={() => setActiveSubView('modes')}
         >
-          Four Modes
+          <span>{activeSubView === 'tracking' ? 'Tracking' : 'Four Modes'}</span>
+          {/* Chevron */}
+          <span
+            style={{
+              fontSize: '10px',
+              transform: appModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 200ms ease-out',
+            }}
+          >
+            ▼
+          </span>
         </button>
-      </section>
+      </div>
 
       {/* Content based on active sub-view */}
       {activeSubView === 'tracking' && <TrackingView />}
@@ -135,6 +144,14 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
       {activeSubView === 'modes' && selectedModeId && (
         <ModeDetail modeId={selectedModeId} onBack={handleBackFromMode} />
       )}
+
+      {/* Application Selection Modal */}
+      <ApplicationSelectionModal
+        isOpen={appModalOpen}
+        onClose={() => setAppModalOpen(false)}
+        currentView={activeSubView}
+        onSelectView={(view) => { setActiveSubView(view); setSelectedModeId(null); }}
+      />
     </div>
   );
 }
