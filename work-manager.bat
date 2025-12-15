@@ -147,6 +147,10 @@ goto MENU
 :: ============================================================================
 :DEPLOY_WEB
 :: ============================================================================
+echo.
+echo [DEBUG] Entered DEPLOY_WEB section
+echo Press any key to continue...
+pause >nul
 cls
 echo.
 echo ========================================
@@ -156,15 +160,25 @@ echo.
 echo SAFETY CHECKS:
 echo.
 
+echo [DEBUG] About to run git diff-index...
+pause
+
 :: Check 1: Is work saved?
 git diff-index --quiet HEAD --
-if errorlevel 1 (
+set GIT_RESULT=%errorlevel%
+echo [DEBUG] git diff-index returned: %GIT_RESULT%
+pause
+
+if %GIT_RESULT% NEQ 0 (
     echo [WARNING] You have unsaved changes
     echo.
-    echo You should save your work first (option 1).
+    echo You should save your work first [option 1].
     echo.
-    set /p continue="Continue anyway? (YES to continue): "
-    if /i not "!continue!"=="YES" (
+    set /p "CONTINUE_DEPLOY=Continue anyway? (YES to continue): "
+)
+
+if %GIT_RESULT% NEQ 0 (
+    if /i not "!CONTINUE_DEPLOY!"=="YES" (
         echo Cancelled. Go save your work first.
         pause
         goto MENU
