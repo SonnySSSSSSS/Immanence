@@ -180,25 +180,35 @@ export function VipassanaCanvas({
                 t.y < rect.height + margin
             );
 
-            // Draw thoughts using theme renderers
+            // Draw thoughts using theme-specific motion
             visibleThoughts.forEach(thought => {
                 const now = Date.now();
                 const age = (now - thought.spawnTime) / 1000; // seconds
                 const lifetime = thought.baseDuration * thought.fadeModifier;
                 const progress = Math.min(age / lifetime, 1);
 
-                // Calculate drift position using behavior
-                const drift = thought.driftBehavior || { speedX: 0.2, speedY: -0.1, wobble: 2, wobbleFreq: 3000 };
-                const driftX = age * drift.speedX * 10;
-                const driftY = age * drift.speedY * 10;
-                const wobbleX = Math.sin(now / drift.wobbleFreq) * drift.wobble;
-                const wobbleY = Math.cos(now / (drift.wobbleFreq * 1.3)) * drift.wobble * 0.7;
+                // Calculate position using per-thought motion parameters
+                const driftX = age * thought.vx * 15;
+                const driftY = age * thought.vy * 15;
 
-                const renderX = (thought.originX || thought.x) + driftX + wobbleX;
-                const renderY = (thought.originY || thought.y) + driftY + wobbleY;
+                // Theme-specific motion additions
+                let motionX = 0, motionY = 0;
+
+                // Clouds: gentle vertical bob
+                if (thought.bobAmplitude) {
+                    motionY = Math.sin(now / 1000 * thought.bobFrequency + thought.phase) * thought.bobAmplitude * 20;
+                }
+
+                // Lanterns: subtle horizontal flicker
+                if (thought.flickerVariance) {
+                    motionX = Math.sin(now / 200 + thought.phase) * thought.flickerVariance * 5;
+                    motionY += Math.sin(now / 400 + thought.phase * 1.5) * thought.flickerVariance * 2;
+                }
+
+                const renderX = (thought.originX || thought.x) + driftX + motionX;
+                const renderY = (thought.originY || thought.y) + driftY + motionY;
 
                 // Calculate opacity and scale based on lifecycle phase
-                // Fade starts at 77% (leaving 23% = ~5 seconds of 22 second lifetime)
                 let opacity = 1;
                 let scale = 1;
 
@@ -219,8 +229,18 @@ export function VipassanaCanvas({
                     scale = 1;
                 }
 
-                // Apply lifecycle rendering
-                ctx.save();
+                // Bird animation: calculate current wing frame
+                let animFrame = 0;
+                if (thought.flapRate) {
+                    animFrame = Math.floor((now / 1000 + thought.phase) * thought.flapRate * 3) % 3;
+                }
+
+                // Leaf rotation: accumulate over time
+                let rotation = 0;
+                if (thought.rotationSpeed) {
+                    rotation = (age * thought.rotationSpeed + thought.phase) % (Math.PI * 2);
+                }
+
                 ctx.globalAlpha = opacity;
 
                 // Draw sticky indicator ring (before thought)
@@ -240,20 +260,27 @@ export function VipassanaCanvas({
                     ctx.stroke();
                 }
 
-                // Apply scale at render position using setTransform (faster than save/restore)
-                ctx.translate(renderX, renderY);
-                ctx.scale(scale, scale);
-                ctx.translate(-renderX, -renderY);
-
                 // Render using stamp system
                 const themeElement = theme?.thoughtElement || 'cloud';
                 const variant = thought.variant || 0;
-                const stamp = getStamp(themeElement + 's', variant, thought.category, thought.animFrame || 0);
+                const stamp = getStamp(themeElement + 's', variant, thought.category, animFrame);
+                const stampSize = 72;
 
                 if (stamp) {
-                    // Draw pre-baked stamp (simple drawImage, no compositing)
-                    const stampSize = 72;
-                    ctx.drawImage(stamp, renderX - stampSize / 2, renderY - stampSize / 2, stampSize, stampSize);
+                    // Apply rotation for leaves using setTransform (faster than save/restore)
+                    if (rotation !== 0) {
+                        ctx.translate(renderX, renderY);
+                        ctx.rotate(rotation);
+                        ctx.scale(scale, scale);
+                        ctx.drawImage(stamp, -stampSize / 2, -stampSize / 2, stampSize, stampSize);
+                        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
+                    } else {
+                        // Non-rotating elements (clouds, birds, lanterns)
+                        ctx.translate(renderX, renderY);
+                        ctx.scale(scale, scale);
+                        ctx.drawImage(stamp, -stampSize / 2, -stampSize / 2, stampSize, stampSize);
+                        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
+                    }
                 } else {
                     // Fallback: simple circle if stamps not loaded
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -261,8 +288,6 @@ export function VipassanaCanvas({
                     ctx.arc(renderX, renderY, 24, 0, Math.PI * 2);
                     ctx.fill();
                 }
-
-                ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity (faster than restore)
             });
 
             // Debug overlay

@@ -3,7 +3,7 @@
 // Generates variant × category combinations at load time
 
 // Stamp count capped at 20 total for memory safety (<50MB on 3GB devices)
-const STAMP_CONFIG = {
+export const STAMP_CONFIG = {
     clouds: { count: 6, sizes: [96, 128, 160] },
     birds: { count: 3, wingPoses: 3 },
     leaves: { count: 6 },

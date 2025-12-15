@@ -5,17 +5,37 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PRACTICE_INVARIANT, VIPASSANA_AUDIO } from '../../data/vipassanaThemes';
 import { VipassanaCanvas } from './VipassanaCanvas';
 import { RadialDial } from './RadialDial';
+import { STAMP_CONFIG } from '../../utils/stamps';
 
 let thoughtIdCounter = 0;
 
-// 5 drift behaviors for variety
-const DRIFT_BEHAVIORS = [
-    { name: 'gentle', speedX: 0.3, speedY: -0.2, wobble: 2, wobbleFreq: 3000 },
-    { name: 'lazy', speedX: 0.1, speedY: -0.1, wobble: 4, wobbleFreq: 4000 },
-    { name: 'floaty', speedX: 0.2, speedY: -0.4, wobble: 3, wobbleFreq: 2500 },
-    { name: 'wander', speedX: 0.4, speedY: 0.1, wobble: 5, wobbleFreq: 2000 },
-    { name: 'drift', speedX: -0.2, speedY: -0.15, wobble: 2.5, wobbleFreq: 3500 },
-];
+// Helper: random value in range [min, max]
+const randomInRange = (min, max) => min + Math.random() * (max - min);
+
+// Theme-specific motion behaviors (AA-Level)
+const THEME_BEHAVIORS = {
+    cloud: {
+        drift: { vx: [0.2, 0.4], vy: [-0.1, 0.1] },
+        bob: { amplitude: 0.3, frequency: 0.1 },
+        lifecycle: 'dissolve',
+    },
+    bird: {
+        drift: { vx: [0.3, 0.6], vy: [-0.05, 0.05] },
+        flap: { rate: [0.25, 0.45], poses: 3 },
+        tailWag: { angle: 4 },
+        lifecycle: 'flyAway',
+    },
+    leaf: {
+        drift: { vx: [0.1, 0.3], vy: [0.3, 0.5] },
+        rotation: { speed: [0.02, 0.08] },
+        lifecycle: 'settle',
+    },
+    lantern: {
+        drift: { vx: [-0.05, 0.05], vy: [-0.15, -0.25] },
+        flicker: { rate: 0.8, variance: 0.15 },
+        lifecycle: 'fadeUp',
+    },
+};
 
 export function ThoughtLabeling({
     theme,
@@ -80,10 +100,28 @@ export function ThoughtLabeling({
         }
     }, [audioEnabled]);
 
-    // Spawn thought at position with random drift behavior and stamp variant
+    // Spawn thought at position with theme-specific motion behavior
     const spawnThought = useCallback((x, y, category = 'neutral') => {
-        const driftBehavior = DRIFT_BEHAVIORS[Math.floor(Math.random() * DRIFT_BEHAVIORS.length)];
-        const variant = Math.floor(Math.random() * 6); // 6 variants per theme
+        const elementType = theme?.thoughtElement || 'cloud';
+        const behavior = THEME_BEHAVIORS[elementType] || THEME_BEHAVIORS.cloud;
+
+        // Get correct variant count for this element type (cloud→clouds, bird→birds, etc)
+        const stampKey = elementType + 's'; // clouds, birds, leaves, lanterns
+        const variantCount = STAMP_CONFIG[stampKey]?.count || 6;
+        const variant = Math.floor(Math.random() * variantCount);
+
+        // Compute per-thought motion parameters from behavior ranges
+        const vx = randomInRange(behavior.drift.vx[0], behavior.drift.vx[1]);
+        const vy = randomInRange(behavior.drift.vy[0], behavior.drift.vy[1]);
+        const phase = Math.random() * Math.PI * 2; // Random phase offset
+
+        // Theme-specific extras
+        const flapRate = behavior.flap ? randomInRange(behavior.flap.rate[0], behavior.flap.rate[1]) : 0;
+        const rotationSpeed = behavior.rotation ? randomInRange(behavior.rotation.speed[0], behavior.rotation.speed[1]) : 0;
+        const bobAmplitude = behavior.bob?.amplitude || 0;
+        const bobFrequency = behavior.bob?.frequency || 0;
+        const flickerVariance = behavior.flicker?.variance || 0;
+
         const newThought = {
             id: `thought-${++thoughtIdCounter}`,
             x,
@@ -95,9 +133,18 @@ export function ThoughtLabeling({
             baseDuration: PRACTICE_INVARIANT.thoughtLifetime,
             fadeModifier: 1.0,
             isSticky: false,
-            driftBehavior,
             variant,
-            animFrame: 0, // For bird animation
+            // Motion parameters
+            vx,
+            vy,
+            phase,
+            flapRate,
+            rotationSpeed,
+            rotation: 0, // Current rotation angle
+            bobAmplitude,
+            bobFrequency,
+            flickerVariance,
+            lifecycle: behavior.lifecycle,
         };
 
         setThoughts((prev) => {
@@ -115,7 +162,7 @@ export function ThoughtLabeling({
 
         playAudio('thoughtNoticed');
         onThoughtSpawn?.(newThought);
-    }, [playAudio, onThoughtSpawn]);
+    }, [theme, playAudio, onThoughtSpawn]);
 
     // Handle tap on empty space - spawn neutral thought
     const handleEmptyTap = (x, y) => {
