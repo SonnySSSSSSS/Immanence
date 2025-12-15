@@ -124,6 +124,10 @@ export function ThoughtLabeling({
         const bobFrequency = behavior.bob ? randomInRange(behavior.bob.frequency[0], behavior.bob.frequency[1]) : 0;
         const flickerVariance = behavior.flicker ? randomInRange(behavior.flicker.variance[0], behavior.flicker.variance[1]) : 0;
 
+        // For birds: randomly flip 50% to face left, and adjust velocity direction
+        const flipX = elementType === 'bird' && Math.random() < 0.5;
+        const directionMultiplier = flipX ? -1 : 1; // Flipped birds move left, normal birds move right
+
         const newThought = {
             id: `thought-${++thoughtIdCounter}`,
             x,
@@ -133,12 +137,12 @@ export function ThoughtLabeling({
             category,
             elementType, // Store element type so it persists when user switches
             spawnTime: Date.now(),
-            baseDuration: PRACTICE_INVARIANT.thoughtLifetime,
+            baseDuration: PRACTICE_INVARIANT.getWeightedLifetime(), // Weighted: 60% fleeting, 30% sticky, 10% heavy
             fadeModifier: 1.0,
             isSticky: false,
             variant,
             // Motion parameters (randomized per thought)
-            vx,
+            vx: vx * directionMultiplier, // Flip horizontal velocity for flipped birds
             vy,
             phase,
             flapRate,
@@ -148,6 +152,7 @@ export function ThoughtLabeling({
             bobFrequency,
             flickerVariance,
             lifecycle: behavior.lifecycle,
+            flipX, // Store flip state for rendering
         };
 
         setThoughts((prev) => {

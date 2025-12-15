@@ -4,8 +4,26 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // PRACTICE INVARIANT — Same mechanics across all themes
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Weighted lifetime distribution (matches real Vipassana rhythms)
+function getWeightedLifetime() {
+    const roll = Math.random();
+
+    if (roll < 0.60) {
+        // Fleeting (60%): sensory noise, passing thoughts
+        return 6 + Math.random() * 6; // 6-12s
+    } else if (roll < 0.90) {
+        // Sticky (30%): planning, memory, light narrative
+        return 12 + Math.random() * 8; // 12-20s
+    } else {
+        // Heavy (10%): rumination, emotional charge (rare but salient)
+        return 25 + Math.random() * 15; // 25-40s
+    }
+}
+
 export const PRACTICE_INVARIANT = {
-    thoughtLifetime: 22,           // seconds base duration
+    getWeightedLifetime,           // Function for weighted lifetime
+    thoughtLifetime: 22,           // Deprecated: kept for compatibility
     releaseReduction: 0.4,         // 40% lifetime reduction on tap
     maxActiveThoughts: 30,         // graceful coalescing beyond
     allowOneSticky: true,          // only one sticky marker at a time

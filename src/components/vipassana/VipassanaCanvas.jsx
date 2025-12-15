@@ -248,19 +248,28 @@ export function VipassanaCanvas({
                 const renderX = (thought.originX || thought.x) + driftX + motionX;
                 const renderY = (thought.originY || thought.y) + driftY + motionY;
 
-                // Calculate opacity and scale based on lifecycle phase
+                // Calculate opacity and scale using 3-phase curve
+                // Matches real Vipassana: recognize clearly, release quickly, remember faintly
                 let opacity = 1;
                 let scale = 1;
 
-                if (progress < 0.045) {
-                    // Appearing phase (~1 second)
-                    opacity = progress / 0.045;
+                // Phase A: Recognition (0-2.5s) - "I see you"
+                if (age < 2.5) {
+                    opacity = Math.min(1, age / 0.5); // Fade in over 0.5s, then hold at 100%
                     scale = 0.95 + (opacity * 0.05);
-                } else if (progress > 0.77) {
-                    // Dissolving phase (~5 seconds)
-                    const dissolveProgress = (progress - 0.77) / 0.23;
-                    opacity = 1 - dissolveProgress * 0.85;
-                    scale = 1 + (dissolveProgress * 0.15);
+                }
+                // Phase B: Release (2.5-8s) - "I'm not holding you"
+                else if (age < 8) {
+                    const releaseProgress = (age - 2.5) / 5.5; // 0 to 1 over 5.5 seconds
+                    opacity = 1 - (releaseProgress * 0.75); // Drop from 100% to 25%
+                    scale = 1;
+                }
+                // Phase C: Ghost (8s+) - Memory residue, not attention capture
+                else {
+                    const ghostProgress = Math.min(1, (age - 8) / 5); // Gentle fade over 5s
+                    opacity = 0.25 - (ghostProgress * 0.10); // 25% → 15%
+                    opacity = Math.max(0.15, opacity); // Clamp at 15%
+                    scale = 1 + (ghostProgress * 0.1); // Slight expansion
                 }
 
                 // Sticky thoughts don't fade
@@ -304,28 +313,58 @@ export function VipassanaCanvas({
                     ctx.stroke();
                 }
 
-                // Render using stamp system
+                // Render using image-based stamp system
                 // Use thought's stored elementType so old thoughts keep their shape
                 const themeElement = thought.elementType || theme?.thoughtElement || 'cloud';
                 const variant = thought.variant || 0;
-                const stamp = getStamp(themeElement + 's', variant, thought.category, animFrame);
-                const stampSize = 72;
+                // Pluralization map for irregular plurals (leaf → leaves, not leafs)
+                const pluralize = { cloud: 'clouds', bird: 'birds', leaf: 'leaves', lantern: 'lanterns' };
+                const stampKey = pluralize[themeElement] || (themeElement + 's');
+                const stamp = getStamp(stampKey, variant, thought.category);
+                const stampSize = 64; // Standardized size for all stamps
 
                 if (stamp) {
-                    // Apply rotation for leaves using setTransform (faster than save/restore)
-                    if (rotation !== 0) {
-                        ctx.translate(renderX, renderY);
+                    // Determine if bird should be flipped (stored at spawn time)
+                    const shouldFlip = thought.flipX || false;
+
+                    // Get category color for glow effect
+                    const categoryColors = {
+                        neutral: 'rgba(255, 255, 255, 0)',
+                        future: 'rgba(96, 165, 250, 0.8)',      // Blue
+                        past: 'rgba(251, 191, 36, 0.8)',        // Amber
+                        evaluating: 'rgba(244, 114, 182, 0.8)', // Pink
+                        body: 'rgba(74, 222, 128, 0.8)',        // Green
+                    };
+                    const glowColor = categoryColors[thought.category] || categoryColors.neutral;
+
+                    // Apply transformations
+                    ctx.save();
+                    ctx.translate(renderX, renderY);
+
+                    // Add category glow (only if not neutral)
+                    if (thought.category !== 'neutral') {
+                        ctx.shadowBlur = 20 * scale;
+                        ctx.shadowColor = glowColor;
+                    }
+
+                    // For birds: flip horizontally if needed
+                    if (themeElement === 'bird' && shouldFlip) {
+                        ctx.scale(-scale, scale); // Flip horizontally
+                    } else if (themeElement === 'leaf' && rotation !== 0) {
+                        // For leaves: apply rotation
                         ctx.rotate(rotation);
                         ctx.scale(scale, scale);
-                        ctx.drawImage(stamp, -stampSize / 2, -stampSize / 2, stampSize, stampSize);
-                        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
+                    } else if (themeElement === 'cloud') {
+                        // For clouds: stretch horizontally 50%
+                        ctx.scale(scale * 1.5, scale);
                     } else {
-                        // Non-rotating elements (clouds, birds, lanterns)
-                        ctx.translate(renderX, renderY);
+                        // For lanterns and non-flipped birds
                         ctx.scale(scale, scale);
-                        ctx.drawImage(stamp, -stampSize / 2, -stampSize / 2, stampSize, stampSize);
-                        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
                     }
+
+                    // Draw the image centered
+                    ctx.drawImage(stamp, -stampSize / 2, -stampSize / 2, stampSize, stampSize);
+                    ctx.restore();
                 } else {
                     // Fallback: simple circle if stamps not loaded
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
