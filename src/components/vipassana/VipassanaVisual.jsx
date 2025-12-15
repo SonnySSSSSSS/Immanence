@@ -12,11 +12,14 @@ import { ScrollingFog } from './ScrollingFog';
 
 export function VipassanaVisual({
     themeId = 'dawnSky',
+    wallpaperId, // Optional: separate wallpaper selection
     durationSeconds = 300, // 5 min default
     stage = 'flame',
     onComplete,
     onExit,
 }) {
+    // Use wallpaperId if provided, otherwise fall back to themeId
+    const effectiveWallpaperId = wallpaperId || themeId;
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isActive, setIsActive] = useState(true);
     const [showSummary, setShowSummary] = useState(false);
@@ -35,8 +38,10 @@ export function VipassanaVisual({
     const highAliveTimerRef = useRef(0); // Seconds with alive_rate >= 0.8
     const lastAliveCheckRef = useRef(Date.now());
 
-    // Get theme from themeId FIRST
+    // Get theme from themeId (for thought element type)
     const themeData = VIPASSANA_THEMES[themeId] || VIPASSANA_THEMES.dawnSky;
+    // Get wallpaper data (may be different from theme)
+    const wallpaperData = VIPASSANA_THEMES[effectiveWallpaperId] || VIPASSANA_THEMES.dawnSky;
 
     // Element type toggle (clouds, birds, leaves, lanterns)
     const ELEMENT_TYPES = ['cloud', 'bird', 'leaf', 'lantern'];
@@ -166,7 +171,7 @@ export function VipassanaVisual({
             <div
                 className="absolute inset-0"
                 style={{
-                    backgroundImage: `url(${import.meta.env.BASE_URL}${themeData.wallpaper})`,
+                    backgroundImage: `url(${import.meta.env.BASE_URL}${wallpaperData.wallpaper})`,
                     backgroundSize: 'contain',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',

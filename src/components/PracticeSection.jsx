@@ -181,6 +181,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0].id);
   const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
   const [vipassanaTheme, setVipassanaTheme] = useState('dawnSky');
+  const [vipassanaWallpaper, setVipassanaWallpaper] = useState('dawnSky');
 
   // Sound configuration state
   const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
@@ -548,6 +549,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return (
         <VipassanaVisual
           themeId={vipassanaTheme}
+          wallpaperId={vipassanaWallpaper}
           durationSeconds={duration * 60}
           stage={theme.stage || 'flame'}
           onComplete={handleStop}
@@ -1090,6 +1092,60 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 }}
               >
                 {VIPASSANA_THEMES[vipassanaTheme]?.description}
+              </div>
+
+              {/* Wallpaper Selector */}
+              <div className="mt-4">
+                <div
+                  className="mb-2"
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: "9px",
+                    letterSpacing: "0.25em",
+                    textTransform: "uppercase",
+                    color: "rgba(253,251,245,0.55)",
+                    textAlign: "center"
+                  }}
+                >
+                  Wallpaper
+                </div>
+                <div
+                  className="flex gap-2 p-1 rounded-full flex-wrap justify-center"
+                  style={{
+                    background: "rgba(0,0,0,0.3)",
+                    border: "1px solid var(--accent-10)",
+                  }}
+                >
+                  {Object.values(VIPASSANA_THEMES).map((theme) => (
+                    <button
+                      key={`wp-${theme.id}`}
+                      onClick={() => setVipassanaWallpaper(theme.id)}
+                      className="rounded-full px-3 py-1.5 transition-all duration-200"
+                      style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: "9px",
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        background:
+                          vipassanaWallpaper === theme.id
+                            ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
+                            : "transparent",
+                        color:
+                          vipassanaWallpaper === theme.id
+                            ? "#050508"
+                            : "rgba(253,251,245,0.55)",
+                        boxShadow:
+                          vipassanaWallpaper === theme.id
+                            ? '0 0 12px var(--accent-15)'
+                            : "none",
+                        transform: vipassanaWallpaper === theme.id ? 'scale(1.05)' : 'scale(1)',
+                        transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms',
+                      }}
+                    >
+                      {theme.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
