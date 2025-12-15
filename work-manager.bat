@@ -187,19 +187,41 @@ if /i not "%confirm%"=="YES" (
 )
 
 call :DO_DEPLOY
+set DEPLOY_RESULT=!errorlevel!
 echo.
+if !DEPLOY_RESULT! NEQ 0 (
+    echo.
+    echo ========================================
+    echo DEPLOY FAILED - See errors above
+    echo ========================================
+    echo.
+)
 pause
 goto MENU
 
 :DO_DEPLOY
 echo.
 echo [DEPLOY] Building app...
+echo.
 
 :: Build the app
-call npm run build
+echo Running: npm run build
+echo.
+call npm run build 2>&1
 if errorlevel 1 (
+    echo.
+    echo ========================================
     echo [DEPLOY] FAILED - Build failed
-    echo Check the errors above.
+    echo ========================================
+    echo.
+    echo The npm build command failed.
+    echo Check the error messages above.
+    echo.
+    echo Common causes:
+    echo   - Syntax error in your code
+    echo   - Missing dependency
+    echo   - Import/export error
+    echo.
     exit /b 1
 )
 
@@ -220,10 +242,15 @@ for /f "tokens=*" %%b in ('git branch --show-current') do set "DEPLOY_ORIGINAL_B
 
 :: Switch to gh-pages
 echo [DEPLOY] Switching to gh-pages branch...
-git checkout gh-pages
+git checkout gh-pages 2>&1
 if errorlevel 1 (
+    echo.
+    echo ========================================
     echo [DEPLOY] FAILED - Could not checkout gh-pages
-    git checkout "%DEPLOY_ORIGINAL_BRANCH%"
+    echo ========================================
+    echo.
+    echo Attempting to return to %DEPLOY_ORIGINAL_BRANCH%...
+    git checkout "%DEPLOY_ORIGINAL_BRANCH%" 2>&1
     exit /b 1
 )
 
@@ -238,12 +265,24 @@ xcopy /E /I /Y "%TEMP_DEPLOY%\*" "." >nul
 rmdir /s /q "%TEMP_DEPLOY%"
 
 :: Commit and push
+echo [DEPLOY] Committing changes...
 git add -A
-git commit -m "Deploy v%CURRENT_VERSION%: %date% %time%"
-git push --force origin gh-pages
+git commit -m "Deploy v%CURRENT_VERSION%: %date% %time%" 2>&1
+echo [DEPLOY] Pushing to gh-pages...
+git push --force origin gh-pages 2>&1
 if errorlevel 1 (
+    echo.
+    echo ========================================
     echo [DEPLOY] FAILED - Could not push to gh-pages
-    git checkout "%DEPLOY_ORIGINAL_BRANCH%"
+    echo ========================================
+    echo.
+    echo This usually means:
+    echo   - No internet connection
+    echo   - GitHub authentication issue
+    echo   - Remote repository problem
+    echo.
+    echo Returning to %DEPLOY_ORIGINAL_BRANCH%...
+    git checkout "%DEPLOY_ORIGINAL_BRANCH%" 2>&1
     exit /b 1
 )
 
