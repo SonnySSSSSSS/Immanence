@@ -197,8 +197,8 @@ function App() {
       {/* Outer Black Container (The "Theater") */}
       <div className="min-h-screen w-full flex justify-center bg-black overflow-visible">
 
-        {/* Inner App Container (The "Screen") */}
-        <div className="relative w-full max-w-[1024px] min-h-screen flex flex-col items-center text-white shadow-2xl overflow-visible">
+        {/* Inner App Container (The "Screen") - 1080px for mobile-first (1080x1920) */}
+        <div className="relative w-full max-w-[1080px] min-h-screen flex flex-col items-center text-white shadow-2xl overflow-hidden">
           <Background stage={previewStage} />
 
           <div className="relative z-10 w-full flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
@@ -226,7 +226,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v2.63.0
+                  v2.65.0
                 </div>
                 {!isHub && (
                   <button

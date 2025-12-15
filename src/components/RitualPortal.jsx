@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { OculusRing } from './OculusRing.jsx';
 import { SigilSlider } from './SigilSlider.jsx';
+import { audioGuidance } from '../services/audioGuidanceService.js';
 
 export function RitualPortal({
     ritual,
@@ -68,6 +69,21 @@ export function RitualPortal({
         };
     }, [currentStepIndex, currentStep, isLastStep, onNextStep, onComplete]);
 
+    // Audio guidance - speak instructions when step changes
+    useEffect(() => {
+        if (!currentStep) return;
+
+        // Speak the instruction after a brief delay (let visual transition settle)
+        const speakTimeout = setTimeout(() => {
+            audioGuidance.speak(currentStep.instruction);
+        }, 800);
+
+        return () => {
+            clearTimeout(speakTimeout);
+            audioGuidance.stop(); // Stop audio when step changes or component unmounts
+        };
+    }, [currentStepIndex, currentStep]);
+
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
@@ -93,7 +109,7 @@ export function RitualPortal({
           ═══════════════════════════════════════════════════════════════ */}
             <div className="mt-12">
                 <OculusRing
-                    size={380}
+                    size={494}
                     totalSteps={totalSteps}
                     currentStep={currentStepIndex}
                 >

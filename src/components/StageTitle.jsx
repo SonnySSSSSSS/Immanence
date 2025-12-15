@@ -101,6 +101,8 @@ export const STAGE_COLORS = {
 // CSS-based Stage Title Component with stacked vertical layout
 export function StageTitle({ stage, path, attention, showWelcome = true }) {
   const [showEnglish, setShowEnglish] = useState(false);
+  const [tooltip, setTooltip] = useState(null); // 'stage', 'path', or null
+  const [tooltipTimer, setTooltipTimer] = useState(null);
 
   const stageLower = (stage || "flame").toLowerCase();
   const stageColors = STAGE_COLORS[stageLower] || STAGE_COLORS.flame;
@@ -117,6 +119,43 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
   // Check if we have a path to display
   const hasPath = path && path.trim() !== '';
+
+  // Tooltip descriptions (general, non-statistical)
+  const STAGE_DESCRIPTIONS = {
+    seedling: "Your journey is just beginning. This stage represents the planting of seeds of awareness.",
+    ember: "A spark of dedication has ignited. You're building the foundations of consistent practice.",
+    flame: "Your practice burns steady. Discipline and understanding are growing stronger.",
+    beacon: "You've become a light for yourself. Deep patterns of awareness are now established.",
+    stellar: "Mastery radiates from within. Your practice illuminates every aspect of life.",
+  };
+
+  const PATH_DESCRIPTIONS = {
+    soma: "The path of embodiment. Cultivating awareness through the body and senses.",
+    prana: "The path of breath. Using life force as the doorway to presence.",
+    dhyana: "The path of meditation. Training the mind through stillness and focus.",
+    drishti: "The path of vision. Developing clear seeing and insight.",
+    jnana: "The path of knowledge. Understanding through wisdom and inquiry.",
+    samyoga: "The path of integration. Unifying all aspects of self and practice.",
+  };
+
+  // Tooltip handlers with 2-second delay
+  const handleMouseEnter = (type) => {
+    const timer = setTimeout(() => {
+      setTooltip(type);
+    }, 2000);
+    setTooltipTimer(timer);
+  };
+
+  const handleMouseLeave = () => {
+    if (tooltipTimer) {
+      clearTimeout(tooltipTimer);
+      setTooltipTimer(null);
+    }
+    setTooltip(null);
+  };
+
+  const currentStageDescription = STAGE_DESCRIPTIONS[stageLower] || STAGE_DESCRIPTIONS.flame;
+  const currentPathDescription = pathLower ? PATH_DESCRIPTIONS[pathLower] : null;
 
   return (
     <div className="stage-title-container relative flex flex-col items-center justify-center overflow-visible">
@@ -176,56 +215,90 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
         {/* Composite: Stage Image + Separator + Path Image */}
         <div className="composite-title-row flex items-center justify-center gap-4 relative z-10">
-          {/* Stage image - centered when no path, left-aligned when path exists */}
-          <img
-            src={`${import.meta.env.BASE_URL}titles/stage-${stageLower}.png`}
-            alt={stageName}
-            className="stage-title-img h-16 w-auto object-contain transition-opacity duration-500"
-            style={{
-              // Stage-specific outlines + edge discipline
-              filter: (() => {
-                // Base effects
-                const base = 'drop-shadow(0 2px 3px rgba(0,0,0,0.5)) contrast(1.05)';
+          {/* Stage image - with hover tooltip */}
+          <div
+            className="relative cursor-help"
+            onMouseEnter={() => handleMouseEnter('stage')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}titles/stage-${stageLower}.png`}
+              alt={stageName}
+              className="stage-title-img h-16 w-auto object-contain transition-opacity duration-500"
+              style={{
+                // Stage-specific outlines + edge discipline
+                filter: (() => {
+                  // Base effects
+                  const base = 'drop-shadow(0 2px 3px rgba(0,0,0,0.5)) contrast(1.05)';
 
-                // Stage-specific outlines
-                if (stageLower === 'ember') {
-                  // Softer white 1px outline for EMBER (reduced 20%)
-                  return `
-                    drop-shadow(0 0 1px rgba(255,255,255,0.7))
-                    drop-shadow(0 0 1px rgba(255,255,255,0.5))
-                    ${base}
-                  `;
-                } else if (stageLower === 'flame') {
-                  // Balanced white outline for FLAME (77/57/37 for good visibility)
-                  return `
-                    drop-shadow(0 0 1px rgba(255,255,255,0.77))
-                    drop-shadow(0 0 2px rgba(255,255,255,0.57))
-                    drop-shadow(0 0 3px rgba(255,255,255,0.37))
-                    ${base}
-                  `;
-                } else if (stageLower === 'stellar') {
-                  // Darker gray 1px outline for STELLAR
-                  return `
-                    drop-shadow(0 0 1px rgba(120,120,120,0.9))
-                    drop-shadow(0 0 1px rgba(140,140,140,0.7))
-                    ${base}
-                  `;
-                }
-                // Default for SEEDLING, BEACON
-                return `drop-shadow(0 0 1px rgba(0,0,0,0.8)) ${base}`;
-              })(),
-              // Vertical luminance gradient: darker at base, brighter at top (silhouette authority)
-              maskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
-              WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
-              maxWidth: hasPath ? '200px' : '300px',
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              // Show text fallback if stage image fails
-              const fallback = e.currentTarget.closest('.relative')?.querySelector('.text-fallback');
-              if (fallback) fallback.style.display = 'flex';
-            }}
-          />
+                  // Stage-specific outlines
+                  if (stageLower === 'ember') {
+                    // Softer white 1px outline for EMBER (reduced 20%)
+                    return `
+                      drop-shadow(0 0 1px rgba(255,255,255,0.7))
+                      drop-shadow(0 0 1px rgba(255,255,255,0.5))
+                      ${base}
+                    `;
+                  } else if (stageLower === 'flame') {
+                    // Balanced white outline for FLAME (77/57/37 for good visibility)
+                    return `
+                      drop-shadow(0 0 1px rgba(255,255,255,0.77))
+                      drop-shadow(0 0 2px rgba(255,255,255,0.57))
+                      drop-shadow(0 0 3px rgba(255,255,255,0.37))
+                      ${base}
+                    `;
+                  } else if (stageLower === 'stellar') {
+                    // Darker gray 1px outline for STELLAR
+                    return `
+                      drop-shadow(0 0 1px rgba(120,120,120,0.9))
+                      drop-shadow(0 0 1px rgba(140,140,140,0.7))
+                      ${base}
+                    `;
+                  }
+                  // Default for SEEDLING, BEACON
+                  return `drop-shadow(0 0 1px rgba(0,0,0,0.8)) ${base}`;
+                })(),
+                // Vertical luminance gradient: darker at base, brighter at top (silhouette authority)
+                maskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
+                WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
+                maxWidth: hasPath ? '200px' : '300px',
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                // Show text fallback if stage image fails
+                const fallback = e.currentTarget.closest('.relative')?.querySelector('.text-fallback');
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+
+            {/* Stage Tooltip */}
+            {tooltip === 'stage' && (
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-50 animate-fade-in"
+                style={{
+                  background: 'rgba(0,0,0,0.9)',
+                  backdropFilter: 'blur(12px)',
+                  border: `1px solid ${stageColors.glow}40`,
+                  boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
+                  width: '260px',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: '12px',
+                    lineHeight: 1.6,
+                    color: 'rgba(253,251,245,0.85)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <span style={{ color: stageColors.glow, fontWeight: 600 }}>{stageName}</span>
+                  <br />
+                  {currentStageDescription}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Divider glyph - symbolic separator (Option C) */}
           {hasPath && (
@@ -253,9 +326,13 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
             </div>
           )}
 
-          {/* Path section - enhanced contrast with subtle halo (Option C) */}
+          {/* Path section - with hover tooltip */}
           {hasPath && (
-            <div className="path-section relative flex items-center justify-center">
+            <div
+              className="path-section relative flex items-center justify-center cursor-help"
+              onMouseEnter={() => handleMouseEnter('path')}
+              onMouseLeave={handleMouseLeave}
+            >
               {/* Subtle gold halo behind path */}
               <div
                 className="absolute pointer-events-none"
@@ -306,6 +383,34 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
               >
                 {pathName}
               </span>
+
+              {/* Path Tooltip */}
+              {tooltip === 'path' && currentPathDescription && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-50 animate-fade-in"
+                  style={{
+                    background: 'rgba(0,0,0,0.9)',
+                    backdropFilter: 'blur(12px)',
+                    border: `1px solid ${stageColors.glow}40`,
+                    boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
+                    width: '280px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: '12px',
+                      lineHeight: 1.6,
+                      color: 'rgba(253,251,245,0.85)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <span style={{ color: stageColors.glow, fontWeight: 600 }}>{pathName}</span>
+                    <br />
+                    {currentPathDescription}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
