@@ -29,7 +29,19 @@ export function VipassanaVisual({
     const timerRef = useRef(null);
     const audioRef = useRef(null);
 
-    const theme = VIPASSANA_THEMES[themeId] || VIPASSANA_THEMES.dawnSky;
+    // Get theme from themeId FIRST
+    const themeData = VIPASSANA_THEMES[themeId] || VIPASSANA_THEMES.dawnSky;
+
+    // Element type toggle (clouds, birds, leaves, lanterns)
+    const ELEMENT_TYPES = ['cloud', 'bird', 'leaf', 'lantern'];
+    const ELEMENT_ICONS = { cloud: '☁️', bird: '🐦', leaf: '🍂', lantern: '🏮' };
+    const [elementType, setElementType] = useState(themeData?.thoughtElement || 'cloud');
+
+    const cycleElementType = () => {
+        const currentIdx = ELEMENT_TYPES.indexOf(elementType);
+        const nextIdx = (currentIdx + 1) % ELEMENT_TYPES.length;
+        setElementType(ELEMENT_TYPES[nextIdx]);
+    };
 
     // Timer tick
     useEffect(() => {
@@ -98,7 +110,7 @@ export function VipassanaVisual({
             <div
                 className="absolute inset-0"
                 style={{
-                    backgroundImage: `url(${import.meta.env.BASE_URL}${theme.wallpaper})`,
+                    backgroundImage: `url(${import.meta.env.BASE_URL}${themeData.wallpaper})`,
                     backgroundSize: 'contain',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
@@ -118,7 +130,7 @@ export function VipassanaVisual({
 
             {/* Thought labeling layer */}
             <ThoughtLabeling
-                theme={theme}
+                theme={{ ...themeData, thoughtElement: elementType }}
                 onThoughtSpawn={handleThoughtSpawn}
                 onThoughtCountChange={handleThoughtCountChange}
                 audioEnabled={true}
@@ -142,6 +154,20 @@ export function VipassanaVisual({
                 className="fixed top-6 left-6 text-white/30 hover:text-white/50 transition-opacity text-sm z-20"
             >
                 ← Exit
+            </button>
+
+            {/* Element type toggle - top right, unobtrusive */}
+            <button
+                onClick={cycleElementType}
+                className="fixed top-6 right-6 text-white/40 hover:text-white/60 transition-all z-20 rounded-full px-2 py-1"
+                style={{
+                    fontSize: '14px',
+                    background: 'rgba(0,0,0,0.2)',
+                    backdropFilter: 'blur(4px)',
+                }}
+                title={`Switch element (${elementType})`}
+            >
+                {ELEMENT_ICONS[elementType]}
             </button>
 
             {/* Session summary overlay */}

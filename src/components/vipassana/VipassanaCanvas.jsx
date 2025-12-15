@@ -1,9 +1,9 @@
 // src/components/vipassana/VipassanaCanvas.jsx
 // Canvas-based renderer for Vipassana thoughts
-// Phase 1: Foundation with hit-testing and render loop
+// AA-Level: Stamp-based rendering with pre-baked tints
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { renderThought as renderThoughtFn } from '../../utils/thoughtRenderers.js';
+import { initializeStamps, getStamp, getHazeStamps } from '../../utils/stamps.js';
 
 export function VipassanaCanvas({
     thoughts = [],
@@ -22,6 +22,13 @@ export function VipassanaCanvas({
     const [fps, setFps] = useState(60);
     const lastFrameTimeRef = useRef(performance.now());
     const frameCountRef = useRef(0);
+    const stampsReadyRef = useRef(false);
+
+    // Initialize stamps once on mount
+    useEffect(() => {
+        initializeStamps();
+        stampsReadyRef.current = true;
+    }, []);
 
     // DPR calculation with battery awareness
     const getDPR = useCallback(() => {
@@ -233,16 +240,29 @@ export function VipassanaCanvas({
                     ctx.stroke();
                 }
 
-                // Apply scale at render position
+                // Apply scale at render position using setTransform (faster than save/restore)
                 ctx.translate(renderX, renderY);
                 ctx.scale(scale, scale);
                 ctx.translate(-renderX, -renderY);
 
-                // Render using theme-specific function (pass render position)
-                const renderThought = { ...thought, x: renderX, y: renderY };
-                renderThoughtFn(ctx, renderThought, theme);
+                // Render using stamp system
+                const themeElement = theme?.thoughtElement || 'cloud';
+                const variant = thought.variant || 0;
+                const stamp = getStamp(themeElement + 's', variant, thought.category, thought.animFrame || 0);
 
-                ctx.restore();
+                if (stamp) {
+                    // Draw pre-baked stamp (simple drawImage, no compositing)
+                    const stampSize = 72;
+                    ctx.drawImage(stamp, renderX - stampSize / 2, renderY - stampSize / 2, stampSize, stampSize);
+                } else {
+                    // Fallback: simple circle if stamps not loaded
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(renderX, renderY, 24, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity (faster than restore)
             });
 
             // Debug overlay

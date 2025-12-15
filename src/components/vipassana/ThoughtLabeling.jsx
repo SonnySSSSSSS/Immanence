@@ -80,9 +80,10 @@ export function ThoughtLabeling({
         }
     }, [audioEnabled]);
 
-    // Spawn thought at position with random drift behavior
+    // Spawn thought at position with random drift behavior and stamp variant
     const spawnThought = useCallback((x, y, category = 'neutral') => {
         const driftBehavior = DRIFT_BEHAVIORS[Math.floor(Math.random() * DRIFT_BEHAVIORS.length)];
+        const variant = Math.floor(Math.random() * 6); // 6 variants per theme
         const newThought = {
             id: `thought-${++thoughtIdCounter}`,
             x,
@@ -95,6 +96,8 @@ export function ThoughtLabeling({
             fadeModifier: 1.0,
             isSticky: false,
             driftBehavior,
+            variant,
+            animFrame: 0, // For bird animation
         };
 
         setThoughts((prev) => {
