@@ -165,6 +165,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const [practice, setPractice] = useState("Breath & Stillness");
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
+
+  // Animation states for selectable header affordance
+  const [chevronAngle, setChevronAngle] = useState(0);
+  const [haloPulse, setHaloPulse] = useState(0);
   const [duration, setDuration] = useState(10);
   const [preset, setPreset] = useState("Box");
   const [pattern, setPattern] = useState({
@@ -230,6 +234,33 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setTimeLeft(duration * 60);
     }
   }, [duration, isRunning]);
+
+  // Selectable header animation loop (chevron sway + halo pulse)
+  useEffect(() => {
+    if (practiceModalOpen) return; // Stop animations when modal is open
+
+    let animationId;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+
+      // Chevron sway: ±8 degrees over 3 second period
+      const chevronPhase = (elapsed % 3000) / 3000;
+      const angle = Math.sin(chevronPhase * Math.PI * 2) * 8;
+      setChevronAngle(angle);
+
+      // Halo pulse: 0-1 over 5 second period
+      const haloPhase = (elapsed % 5000) / 5000;
+      const pulse = (Math.sin(haloPhase * Math.PI * 2) + 1) / 2;
+      setHaloPulse(pulse);
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, [practiceModalOpen]);
 
   useEffect(() => {
     if (preset && BREATH_PRESETS[preset]) {
@@ -821,26 +852,59 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
 
         <div className="relative px-7 py-6">
-          {/* Practice selector - LEVEL 2: Primary Decision (Single Pill) */}
-          <div className="mb-6" style={{ display: 'flex', justifyContent: 'center' }}>
+          {/* Practice selector - LEVEL 2: Primary Decision (Selectable Header Pattern) */}
+          <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            {/* Text prompt above button */}
+            <div
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '11px',
+                letterSpacing: '0.15em',
+                color: 'rgba(253,251,245,0.5)',
+                textTransform: 'uppercase',
+              }}
+            >
+              Choose your practice mode..
+            </div>
             <button
               onClick={() => setPracticeModalOpen(true)}
-              className="px-6 py-3 rounded-full transition-all duration-200"
+              className="px-6 py-3 rounded-full"
               style={{
-                background: 'linear-gradient(135deg, var(--accent-10) 0%, transparent 100%)',
-                border: '1px solid var(--accent-20)',
                 fontFamily: 'Georgia, serif',
                 fontSize: '13px',
                 letterSpacing: '0.1em',
                 color: 'var(--accent-color)',
-                boxShadow: '0 0 20px var(--accent-08), inset 0 0 20px var(--accent-05)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
+                // State-driven background
+                background: practiceModalOpen
+                  ? 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                // Accent color border
+                border: '1px solid var(--accent-30)',
+                // State-driven halo pulse
+                boxShadow: practiceModalOpen
+                  ? '0 0 35px var(--accent-15), inset 0 0 25px var(--accent-08)'
+                  : `0 0 ${20 + haloPulse * 30}px var(--accent-${Math.round(5 + haloPulse * 8)}), inset 0 0 ${20 + haloPulse * 15}px var(--accent-${Math.round(3 + haloPulse * 5)})`,
+                // State-driven scale
+                transform: practiceModalOpen ? 'scale(1.06)' : 'scale(1)',
+                transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
               }}
             >
               <span>{practice}</span>
-              <span style={{ fontSize: '10px', opacity: 0.6 }}>▾</span>
+              {/* Chevron: static when closed, rotates 180° when open */}
+              <span
+                style={{
+                  display: 'inline-block',
+                  transition: 'transform 300ms ease-out',
+                  transform: practiceModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  fontSize: '14px',
+                  opacity: 0.85,
+                }}
+              >
+                ▾
+              </span>
             </button>
           </div>
 
