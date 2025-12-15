@@ -73,7 +73,7 @@ export function BreathConfig({
                                 textTransform: "uppercase",
                                 background: "transparent",
                                 border: `1px solid ${preset === name ? "var(--accent-color)" : "var(--accent-10)"}`,
-                                color: preset === name ? "var(--accent-color)" : "rgba(253,251,245,0.55)",
+                                color: preset === name ? "var(--accent-color)" : "rgba(253,251,245,0.35)",
                                 boxShadow: preset === name ? '0 0 12px var(--accent-15)' : "none",
                             }}
                         >
@@ -84,7 +84,7 @@ export function BreathConfig({
             </div>
 
             {/* Pattern Inputs */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-4 gap-3 mb-6">
                 {[
                     { label: "Inhale", key: "inhale" },
                     { label: "Hold 1", key: "hold1" },
@@ -121,24 +121,7 @@ export function BreathConfig({
                 ))}
             </div>
 
-            {/* Pattern Preview (trapezoid) */}
-            <div className="flex justify-center mb-4">
-                <svg
-                    width={width}
-                    height={height}
-                    viewBox={`0 0 ${width} ${height}`}
-                    style={{ opacity: 0.6 }}
-                >
-                    <path
-                        d={pathD}
-                        fill="none"
-                        stroke="var(--accent-color)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    />
-                </svg>
-            </div>
+
         </div>
     );
 }

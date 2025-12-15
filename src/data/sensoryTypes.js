@@ -18,15 +18,6 @@ export const SENSORY_TYPES = {
         pathContribution: 'Samyoga',
         promptInterval: 45,
     },
-    vipassana: {
-        id: 'vipassana',
-        label: 'Vipassana',
-        description: 'Observing the stream of mental events',
-        icon: '🌊',
-        pathContribution: 'Dhyana',
-        promptInterval: 60,
-        modes: ['noting', 'watching'],
-    },
     sakshi: {
         id: 'sakshi',
         label: 'Sakshi',

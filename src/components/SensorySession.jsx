@@ -4,11 +4,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PromptDisplay } from './PromptDisplay.jsx';
 import { SakshiVisual } from './SakshiVisual.jsx';
-import { VipassanaVisual } from './VipassanaVisual.jsx';
 import { BodyScanVisual } from './BodyScanVisual.jsx';
 import { SENSORY_TYPES } from '../data/sensoryTypes.js';
 import { SAKSHI_PROMPTS } from '../data/sakshiPrompts.js';
-import { VIPASSANA_PROMPTS } from '../data/vipassanaPrompts.js';
 import { BODY_SCAN_PROMPTS } from '../data/bodyScanPrompts.js';
 import { getAllRituals, getRitualById } from '../data/rituals/index.js';
 import RitualSession from './RitualSession.jsx';
@@ -25,7 +23,7 @@ export function SensorySession({
 }) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [currentPrompt, setCurrentPrompt] = useState('');
-    const [mode, setMode] = useState('noting'); // for vipassana
+    const [mode, setMode] = useState('noting'); // unused, kept for future
     const [selectedRitualId, setSelectedRitualId] = useState('standingMeditation'); // for bhakti default
     const [devPromptIndex, setDevPromptIndex] = useState(0); // DEV: manual prompt navigation
 
@@ -50,8 +48,6 @@ export function SensorySession({
         switch (sensoryType) {
             case 'sakshi':
                 return SAKSHI_PROMPTS;
-            case 'vipassana':
-                return VIPASSANA_PROMPTS[mode] || VIPASSANA_PROMPTS.noting;
             case 'bodyScan':
                 return BODY_SCAN_PROMPTS;
             default:
@@ -209,8 +205,6 @@ export function SensorySession({
         switch (sensoryType) {
             case 'sakshi':
                 return <SakshiVisual elapsedSeconds={elapsedSeconds} />;
-            case 'vipassana':
-                return <VipassanaVisual elapsedSeconds={elapsedSeconds} />;
             case 'bodyScan':
                 return <BodyScanVisual elapsedSeconds={elapsedSeconds} activePointId={currentPointId} />;
             default:
@@ -230,26 +224,7 @@ export function SensorySession({
                 </div>
             </div>
 
-            {/* Mode toggle for Vipassana */}
-            {sensoryType === 'vipassana' && (
-                <div className="flex gap-2">
-                    {['noting', 'watching'].map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => setMode(m)}
-                            className="px-3 py-1 rounded-full text-[10px] uppercase tracking-wider transition-all"
-                            style={{
-                                fontFamily: 'Georgia, serif',
-                                background: mode === m ? 'var(--accent-color)' : 'transparent',
-                                color: mode === m ? '#050508' : 'rgba(253,251,245,0.5)',
-                                border: `1px solid ${mode === m ? 'var(--accent-color)' : 'var(--accent-20)'}`,
-                            }}
-                        >
-                            {m}
-                        </button>
-                    ))}
-                </div>
-            )}
+
 
             {/* Visual */}
             <div className="w-full">

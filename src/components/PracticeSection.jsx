@@ -5,7 +5,6 @@ import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
 import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
-import { BhaktiVisual } from "./BhaktiVisual.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
@@ -14,11 +13,13 @@ import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
+import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
+import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
@@ -163,6 +164,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const instrumentation = useSessionInstrumentation();
 
   const [practice, setPractice] = useState("Breath & Stillness");
+  const [practiceModalOpen, setPracticeModalOpen] = useState(false);
   const [duration, setDuration] = useState(10);
   const [preset, setPreset] = useState("Box");
   const [pattern, setPattern] = useState({
@@ -771,7 +773,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
           {/* Mandala image - fairly visible, slightly scaled */}
           <img
-            src={`${import.meta.env.BASE_URL} bg / practice - breath - mandala.png`}
+            src={`${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`}
             alt="Breath mandala"
             className="object-contain w-full h-full"
             style={{
@@ -819,58 +821,27 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
 
         <div className="relative px-7 py-6">
-          {/* Practice selector - centered */}
-          <div className="mb-6">
-            <div
-              className="mb-3"
+          {/* Practice selector - LEVEL 2: Primary Decision (Single Pill) */}
+          <div className="mb-6" style={{ display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => setPracticeModalOpen(true)}
+              className="px-6 py-3 rounded-full transition-all duration-200"
               style={{
-                fontFamily: "Georgia, serif",
-                fontSize: "9px",
-                letterSpacing: "0.25em",
-                textTransform: "uppercase",
-                color: "rgba(253,251,245,0.55)",
-                textAlign: "center"
+                background: 'linear-gradient(135deg, var(--accent-10) 0%, transparent 100%)',
+                border: '1px solid var(--accent-20)',
+                fontFamily: 'Georgia, serif',
+                fontSize: '13px',
+                letterSpacing: '0.1em',
+                color: 'var(--accent-color)',
+                boxShadow: '0 0 20px var(--accent-08), inset 0 0 20px var(--accent-05)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
               }}
             >
-              Practice
-            </div>
-            <div
-              className="flex gap-1 p-1 rounded-full flex-wrap justify-center"
-              style={{
-                background: "rgba(0,0,0,0.3)",
-                border: "1px solid var(--accent-10)",
-              }}
-            >
-              {PRACTICES.map((name) => (
-                <button
-                  key={name}
-                  onClick={() => setPractice(name)}
-                  className={`rounded-full px-3 py-1.5 transition-all duration-200`}
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "9px",
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    background:
-                      practice === name
-                        ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
-                        : "transparent",
-                    color:
-                      practice === name
-                        ? "#050508"
-                        : "rgba(253,251,245,0.55)",
-                    boxShadow:
-                      practice === name
-                        ? '0 0 12px var(--accent-15)'
-                        : "none",
-                    transform: practice === name ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms',
-                  }}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
+              <span>{practice}</span>
+              <span style={{ fontSize: '10px', opacity: 0.6 }}>▾</span>
+            </button>
           </div>
 
           {/* RITUAL MODE: Show deck instead of duration/timer/start */}
@@ -1123,7 +1094,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
           {/* Divider - hide for Ritual since it has no pattern preview */}
           {practice !== "Ritual" && (
-            <div className="relative my-5">
+            <div className="relative my-8">
               <div
                 style={{
                   height: "1px",
@@ -1241,6 +1212,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           )}
         </div>
       </div>
+
+      {/* Practice Selection Modal */}
+      <PracticeSelectionModal
+        isOpen={practiceModalOpen}
+        onClose={() => setPracticeModalOpen(false)}
+        practices={PRACTICES}
+        currentPractice={practice}
+        onSelectPractice={setPractice}
+      />
     </section>
   );
 }
