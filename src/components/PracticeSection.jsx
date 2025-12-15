@@ -194,6 +194,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10 * 60);
 
+  // 3-tier card collapse states
+  const [tier2Expanded, setTier2Expanded] = useState(false);
+  const [tier3Expanded, setTier3Expanded] = useState(false);
+
+  // Lock & Begin transition state
+  const [isStarting, setIsStarting] = useState(false);
+
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
@@ -364,7 +371,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setTimeLeft(duration * 60);
   };
 
-  const handleStart = () => {
+  // The actual start logic (called after ceremony)
+  const executeStart = () => {
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
     setSessionStartTime(performance.now());
@@ -386,6 +394,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'sensory' ? sensoryType : null
     );
+  };
+
+  // Lock & Begin: ceremonial transition before start
+  const handleStart = () => {
+    // Trigger the "locking" animation
+    setIsStarting(true);
+
+    // After 1.4s pause, actually start
+    setTimeout(() => {
+      setIsStarting(false);
+      executeStart();
+    }, 1400);
   };
 
   // Ritual-specific handlers
@@ -790,14 +810,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // ───────────────────────────────────────────────────────────
   return (
     <section className="w-full flex flex-col items-center pt-16 pb-24">
+      {/* 3-TIER CEREMONIAL CARD */}
       <div
-        className="relative w-full max-w-3xl rounded-3xl overflow-hidden"
+        className="relative w-full max-w-[420px] overflow-hidden transition-all duration-300"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(22,22,37,0.95) 0%, rgba(15,15,26,0.98) 100%)",
-          border: '1px solid var(--accent-15)',
-          boxShadow:
-            "0 0 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03)",
+          background: 'rgba(10,14,18,0.78)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          border: 'none',
+          boxShadow: 'inset 0 0 0 1px rgba(120,255,190,0.06), 0 0 60px rgba(0,0,0,0.5)',
+          borderRadius: '18px',
+          opacity: isStarting ? 0.92 : 1,
+          transform: isStarting ? 'scale(1.02)' : 'scale(1)',
         }}
       >
         {/* Mandala background - dual mask for mid-radius emphasis */}
@@ -916,363 +940,341 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             />
           ) : (
             <>
-              {/* Duration wheel + Timer + Start button - horizontal layout */}
-              <div className="flex items-center justify-between mb-6">
-                {/* Duration wheel on left */}
-                <div className="flex flex-col items-center">
+              {/* ═══════════════════════════════════════════════════════════ */}
+              {/* TIER 1 — INTENTION (Always Visible, Ceremonial, Decisive)   */}
+              {/* ═══════════════════════════════════════════════════════════ */}
+              <div
+                className="mb-7"
+                style={{
+                  transition: 'opacity 200ms ease-out',
+                  opacity: isStarting ? 0.6 : 1,
+                }}
+              >
+                {/* Duration - centered, large */}
+                <div className="flex flex-col items-center mb-5">
                   <div
-                    className="mb-2"
                     style={{
                       fontFamily: "Georgia, serif",
-                      fontSize: "9px",
-                      letterSpacing: "0.25em",
+                      fontSize: "11px",
+                      letterSpacing: "0.18em",
                       textTransform: "uppercase",
                       color: "rgba(253,251,245,0.55)",
+                      marginBottom: '10px',
                     }}
                   >
                     Duration
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: "36px",
+                      fontWeight: 500,
+                      letterSpacing: "0.05em",
+                      color: "rgba(253,251,245,0.92)",
+                      textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
+                    }}
+                  >
+                    {formatTime(timeLeft)}
                   </div>
                   <ScrollingWheel
                     value={duration}
                     onChange={setDuration}
                     options={DURATIONS}
                   />
-                  <div
-                    className="mt-1"
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "8px",
-                      letterSpacing: "0.15em",
-                      textTransform: "uppercase",
-                      color: "rgba(253,251,245,0.45)",
-                    }}
-                  >
-                    minutes
-                  </div>
                 </div>
 
-                {/* Timer in center */}
-                <div
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "40px",
-                    fontWeight: 400,
-                    letterSpacing: "0.2em",
-                    color: "rgba(253,251,245,0.92)",
-                    textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
-                  }}
-                >
-                  {formatTime(timeLeft)}
-                </div>
-
-                {/* Start button on right */}
+                {/* START BUTTON — DOMINANT ANCHOR */}
                 <button
                   onClick={handleStart}
-                  className="rounded-full px-6 py-2.5 transition-all duration-200 hover:-translate-y-0.5 bg-accent"
+                  disabled={isStarting}
+                  className="w-full rounded-full py-3 transition-all duration-150"
                   style={{
                     fontFamily: "Georgia, serif",
-                    fontSize: "10px",
+                    fontSize: "11px",
                     letterSpacing: "0.2em",
                     textTransform: "uppercase",
-                    background:
-                      `linear - gradient(180deg, var(--accent - color) 0 %, var(--accent - color) 100 %)`,
-                    color: "#050508",
+                    height: '46px',
+                    background: isStarting
+                      ? 'rgba(120,255,190,0.4)'
+                      : 'var(--accent-color)',
+                    color: "#0B1F16",
                     border: "none",
-                    boxShadow:
-                      '0 0 24px var(--accent-30), inset 0 1px 0 rgba(255,255,255,0.3)',
+                    boxShadow: isStarting
+                      ? '0 0 30px rgba(120,255,190,0.5)'
+                      : '0 0 18px rgba(120,255,190,0.35)',
+                    transform: isStarting ? 'scale(1.015)' : 'scale(1)',
+                    cursor: isStarting ? 'default' : 'pointer',
                   }}
                 >
-                  Start
+                  {isStarting ? 'Initiating...' : 'Start'}
                 </button>
               </div>
 
-              {/* Divider */}
-              <div className="relative my-5">
-                <div
+              {/* ═══════════════════════════════════════════════════════════ */}
+              {/* TIER 2 — FORM (Collapsed by default, selection-focused)     */}
+              {/* ═══════════════════════════════════════════════════════════ */}
+              <div
+                style={{
+                  transition: 'opacity 200ms ease-out, max-height 260ms ease-in-out',
+                  opacity: isStarting ? 0 : 1,
+                  pointerEvents: isStarting ? 'none' : 'auto',
+                }}
+              >
+                {/* Collapsible Header */}
+                <button
+                  onClick={() => setTier2Expanded(!tier2Expanded)}
+                  className="w-full flex items-center justify-between py-2 mb-2"
                   style={{
-                    height: "1px",
-                    background:
-                      'linear-gradient(90deg, transparent 0%, var(--accent-15) 20%, var(--accent-30) 50%, var(--accent-15) 80%, transparent 100%)',
-                  }}
-                />
-                <div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
-                  style={{
-                    fontSize: "8px",
-                    color: 'var(--accent-70)',
-                    background: "rgba(15,15,26,1)",
+                    fontFamily: "Georgia, serif",
+                    fontSize: "12px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    color: "rgba(253,251,245,0.6)",
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
                   }}
                 >
-                  ✦
+                  <span>Options</span>
+                  <span style={{
+                    transition: 'transform 200ms ease-out',
+                    transform: tier2Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    opacity: 0.6,
+                  }}>▾</span>
+                </button>
+
+                {/* Collapsible Content */}
+                <div
+                  style={{
+                    maxHeight: tier2Expanded ? '600px' : '0',
+                    overflow: tier2Expanded ? 'visible' : 'hidden',
+                    opacity: tier2Expanded ? 1 : 0,
+                    transition: 'max-height 260ms ease-in-out, opacity 180ms ease-in-out',
+                  }}
+                >
+                  {/* Practice-specific config components */}
+                  {practice === "Breath & Stillness" && (
+                    <BreathConfig
+                      pattern={pattern}
+                      setPattern={setPattern}
+                      preset={preset}
+                      setPreset={setPreset}
+                    />
+                  )}
+
+                  {practice === "Sensory" && (
+                    <SensoryConfig
+                      sensoryType={sensoryType}
+                      setSensoryType={setSensoryType}
+                    />
+                  )}
+
+                  {practice === "Vipassana" && (
+                    <div className="mb-4">
+                      <div
+                        className="mb-3"
+                        style={{
+                          fontFamily: "Georgia, serif",
+                          fontSize: "9px",
+                          letterSpacing: "0.25em",
+                          textTransform: "uppercase",
+                          color: "rgba(253,251,245,0.55)",
+                          textAlign: "center"
+                        }}
+                      >
+                        Theme
+                      </div>
+                      <div
+                        className="flex gap-2 p-1 rounded-full flex-wrap justify-center"
+                        style={{
+                          background: "rgba(0,0,0,0.3)",
+                          border: "1px solid var(--accent-10)",
+                        }}
+                      >
+                        {Object.values(VIPASSANA_THEMES).map((theme) => (
+                          <button
+                            key={theme.id}
+                            onClick={() => setVipassanaTheme(theme.id)}
+                            className="rounded-full px-3 py-1.5 transition-all duration-200"
+                            style={{
+                              fontFamily: "Georgia, serif",
+                              fontSize: "9px",
+                              letterSpacing: "0.12em",
+                              textTransform: "uppercase",
+                              background:
+                                vipassanaTheme === theme.id
+                                  ? 'var(--accent-color)'
+                                  : "transparent",
+                              color:
+                                vipassanaTheme === theme.id
+                                  ? "#050508"
+                                  : "rgba(253,251,245,0.55)",
+                              opacity: vipassanaTheme && vipassanaTheme !== theme.id ? 0.35 : 1,
+                              boxShadow:
+                                vipassanaTheme === theme.id
+                                  ? '0 0 10px rgba(120,255,190,0.25)'
+                                  : "none",
+                              transform: vipassanaTheme === theme.id ? 'scale(1.05)' : 'scale(1)',
+                              transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms, opacity 200ms',
+                            }}
+                          >
+                            {theme.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {practice === "Sound" && (
+                    <SoundConfig
+                      soundType={soundType}
+                      setSoundType={setSoundType}
+                      binauralPreset={binauralPreset}
+                      setBinauralPreset={setBinauralPreset}
+                      isochronicPreset={isochronicPreset}
+                      setIsochronicPreset={setIsochronicPreset}
+                      mantraPreset={mantraPreset}
+                      setMantraPreset={setMantraPreset}
+                      naturePreset={naturePreset}
+                      setNaturePreset={setNaturePreset}
+                      carrierFrequency={carrierFrequency}
+                      setCarrierFrequency={setCarrierFrequency}
+                      volume={soundVolume}
+                      setVolume={setSoundVolume}
+                    />
+                  )}
+
+                  {practice === "Visualization" && (
+                    <VisualizationConfig
+                      geometry={geometry}
+                      setGeometry={setGeometry}
+                      fadeInDuration={fadeInDuration}
+                      setFadeInDuration={setFadeInDuration}
+                      displayDuration={displayDuration}
+                      setDisplayDuration={setDisplayDuration}
+                      fadeOutDuration={fadeOutDuration}
+                      setFadeOutDuration={setFadeOutDuration}
+                      voidDuration={voidDuration}
+                      setVoidDuration={setVoidDuration}
+                      duration={duration}
+                      setDuration={setDuration}
+                      audioEnabled={audioEnabled}
+                      setAudioEnabled={setAudioEnabled}
+                    />
+                  )}
+
+                  {practice === "Cymatics" && (
+                    <CymaticsConfig
+                      frequencySet={frequencySet}
+                      setFrequencySet={setFrequencySet}
+                      selectedFrequency={selectedFrequency}
+                      setSelectedFrequency={setSelectedFrequency}
+                      fadeInDuration={fadeInDuration}
+                      setFadeInDuration={setFadeInDuration}
+                      displayDuration={displayDuration}
+                      setDisplayDuration={setDisplayDuration}
+                      fadeOutDuration={fadeOutDuration}
+                      setFadeOutDuration={setFadeOutDuration}
+                      voidDuration={voidDuration}
+                      setVoidDuration={setVoidDuration}
+                      driftEnabled={driftEnabled}
+                      setDriftEnabled={setDriftEnabled}
+                      audioEnabled={audioEnabled}
+                      setAudioEnabled={setAudioEnabled}
+                    />
+                  )}
                 </div>
               </div>
-            </>
-          )}
 
-          {/* BREATH & STILLNESS: Config Component */}
-          {practice === "Breath & Stillness" && (
-            <BreathConfig
-              pattern={pattern}
-              setPattern={setPattern}
-              preset={preset}
-              setPreset={setPreset}
-            />
-          )}
-
-          {/* SENSORY: Config Component */}
-          {practice === "Sensory" && (
-            <SensoryConfig
-              sensoryType={sensoryType}
-              setSensoryType={setSensoryType}
-            />
-          )}
-
-          {/* VIPASSANA: Theme Selector */}
-          {practice === "Vipassana" && (
-            <div className="mb-6">
-              <div
-                className="mb-3"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "9px",
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.55)",
-                  textAlign: "center"
-                }}
-              >
-                Theme
-              </div>
-              <div
-                className="flex gap-2 p-1 rounded-full flex-wrap justify-center"
-                style={{
-                  background: "rgba(0,0,0,0.3)",
-                  border: "1px solid var(--accent-10)",
-                }}
-              >
-                {Object.values(VIPASSANA_THEMES).map((theme) => (
+              {/* ═══════════════════════════════════════════════════════════ */}
+              {/* TIER 3 — BREATH MECHANICS (Advanced, Collapsed)             */}
+              {/* ═══════════════════════════════════════════════════════════ */}
+              {practice === "Breath & Stillness" && (
+                <div
+                  style={{
+                    marginTop: '20px',
+                    transition: 'opacity 200ms ease-out',
+                    opacity: isStarting ? 0 : 1,
+                    pointerEvents: isStarting ? 'none' : 'auto',
+                  }}
+                >
+                  {/* Pattern preview collapsed header */}
                   <button
-                    key={theme.id}
-                    onClick={() => setVipassanaTheme(theme.id)}
-                    className="rounded-full px-3 py-1.5 transition-all duration-200"
+                    onClick={() => setTier3Expanded(!tier3Expanded)}
+                    className="w-full flex items-center justify-between py-2"
                     style={{
                       fontFamily: "Georgia, serif",
-                      fontSize: "9px",
-                      letterSpacing: "0.12em",
+                      fontSize: "10px",
+                      letterSpacing: "0.15em",
                       textTransform: "uppercase",
-                      background:
-                        vipassanaTheme === theme.id
-                          ? `linear-gradient(180deg, var(--accent-color) 0%, var(--accent-color) 100%)`
-                          : "transparent",
-                      color:
-                        vipassanaTheme === theme.id
-                          ? "#050508"
-                          : "rgba(253,251,245,0.55)",
-                      boxShadow:
-                        vipassanaTheme === theme.id
-                          ? '0 0 12px var(--accent-15)'
-                          : "none",
-                      transform: vipassanaTheme === theme.id ? 'scale(1.05)' : 'scale(1)',
-                      transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms',
+                      color: "rgba(253,251,245,0.45)",
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
                     }}
                   >
-                    {theme.name}
+                    <span>Pattern Preview</span>
+                    <span style={{
+                      transition: 'transform 200ms ease-out',
+                      transform: tier3Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                      opacity: 0.5,
+                    }}>▾</span>
                   </button>
-                ))}
-              </div>
-              <div
-                className="mt-2 text-center"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "8px",
-                  letterSpacing: "0.15em",
-                  color: "rgba(253,251,245,0.45)",
-                }}
-              >
-                {VIPASSANA_THEMES[vipassanaTheme]?.description}
-              </div>
-            </div>
-          )}
 
-          {/* SOUND: Full Config Panel */}
-          {practice === "Sound" && (
-            <SoundConfig
-              soundType={soundType}
-              setSoundType={setSoundType}
-              binauralPreset={binauralPreset}
-              setBinauralPreset={setBinauralPreset}
-              isochronicPreset={isochronicPreset}
-              setIsochronicPreset={setIsochronicPreset}
-              mantraPreset={mantraPreset}
-              setMantraPreset={setMantraPreset}
-              naturePreset={naturePreset}
-              setNaturePreset={setNaturePreset}
-              carrierFrequency={carrierFrequency}
-              setCarrierFrequency={setCarrierFrequency}
-              volume={soundVolume}
-              setVolume={setSoundVolume}
-            />
-          )}
-
-          {/* Visualization Config */}
-          {practice === "Visualization" && (
-            <VisualizationConfig
-              geometry={geometry}
-              setGeometry={setGeometry}
-              fadeInDuration={fadeInDuration}
-              setFadeInDuration={setFadeInDuration}
-              displayDuration={displayDuration}
-              setDisplayDuration={setDisplayDuration}
-              fadeOutDuration={fadeOutDuration}
-              setFadeOutDuration={setFadeOutDuration}
-              voidDuration={voidDuration}
-              setVoidDuration={setVoidDuration}
-              duration={duration}
-              setDuration={setDuration}
-              audioEnabled={audioEnabled}
-              setAudioEnabled={setAudioEnabled}
-            />
-          )}
-
-          {/* Cymatics Config */}
-          {practice === "Cymatics" && (
-            <CymaticsConfig
-              frequencySet={frequencySet}
-              setFrequencySet={setFrequencySet}
-              selectedFrequency={selectedFrequency}
-              setSelectedFrequency={setSelectedFrequency}
-              fadeInDuration={fadeInDuration}
-              setFadeInDuration={setFadeInDuration}
-              displayDuration={displayDuration}
-              setDisplayDuration={setDisplayDuration}
-              fadeOutDuration={fadeOutDuration}
-              setFadeOutDuration={setFadeOutDuration}
-              voidDuration={voidDuration}
-              setVoidDuration={setVoidDuration}
-              driftEnabled={driftEnabled}
-              setDriftEnabled={setDriftEnabled}
-              audioEnabled={audioEnabled}
-              setAudioEnabled={setAudioEnabled}
-            />
-          )}
-
-          {/* Divider - hide for Ritual since it has no pattern preview */}
-          {practice !== "Ritual" && (
-            <div className="relative my-8">
-              <div
-                style={{
-                  height: "1px",
-                  background:
-                    "linear-gradient(90deg, transparent 0%, var(--accent-15) 20%, var(--accent-40) 50%, var(--accent-15) 80%, transparent 100%)",
-                }}
-              />
-              <div
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2"
-                style={{
-                  fontSize: "8px",
-                  color: 'var(--accent-70)',
-                  background: "rgba(15,15,26,1)",
-                }}
-              >
-                ✦
-              </div>
-            </div>
-          )}
-
-          {/* Pattern preview (Only for Breath & Stillness) */}
-          {practice === "Breath & Stillness" && (
-            <div className="mb-2">
-              <div
-                className="mb-3 text-center"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "9px",
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "rgba(253,251,245,0.55)",
-                }}
-              >
-                Pattern Preview
-              </div>
-
-              <div className="relative w-full h-16">
-                <svg
-                  width="100%"
-                  height="100%"
-                  viewBox="0 0 100 40"
-                  preserveAspectRatio="none"
-                >
-                  <defs>
-                    <linearGradient
-                      id="patternGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="var(--accent-20)"
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor="transparent"
-                      />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={pathD}
-                    fill="url(#patternGradient)"
-                    stroke="var(--accent-primary)"
-                    strokeWidth="0.5"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
-
-                <div className="flex justify-between w-full px-1 mt-1">
-                  <span
+                  <div
                     style={{
-                      fontSize: "6px",
-                      color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.inhale / totalDuration) * 100}% `,
-                      textAlign: "center",
+                      maxHeight: tier3Expanded ? '200px' : '0',
+                      overflow: 'hidden',
+                      opacity: tier3Expanded ? 1 : 0,
+                      transition: 'max-height 260ms ease-in-out, opacity 180ms ease-in-out',
                     }}
                   >
-                    IN
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "6px",
-                      color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.hold1 / totalDuration) * 100}% `,
-                      textAlign: "center",
-                    }}
-                  >
-                    HOLD
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "6px",
-                      color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.exhale / totalDuration) * 100}% `,
-                      textAlign: "center",
-                    }}
-                  >
-                    OUT
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "6px",
-                      color: "rgba(253,251,245,0.45)",
-                      width: `${(pattern.hold2 / totalDuration) * 100}% `,
-                      textAlign: "center",
-                    }}
-                  >
-                    HOLD
-                  </span>
+                    {/* Pattern preview SVG */}
+                    <div className="relative w-full h-16 mt-2">
+                      <svg
+                        width="100%"
+                        height="100%"
+                        viewBox="0 0 100 40"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient
+                            id="patternGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="var(--accent-20)"
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="transparent"
+                            />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d={pathD}
+                          fill="url(#patternGradient)"
+                          stroke="var(--accent-primary)"
+                          strokeWidth="0.5"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
+
+                      <div className="flex justify-between w-full px-1 mt-1">
+                        <span style={{ fontSize: "6px", color: "rgba(253,251,245,0.45)", width: `${(pattern.inhale / totalDuration) * 100}%`, textAlign: "center" }}>IN</span>
+                        <span style={{ fontSize: "6px", color: "rgba(253,251,245,0.45)", width: `${(pattern.hold1 / totalDuration) * 100}%`, textAlign: "center" }}>HOLD</span>
+                        <span style={{ fontSize: "6px", color: "rgba(253,251,245,0.45)", width: `${(pattern.exhale / totalDuration) * 100}%`, textAlign: "center" }}>OUT</span>
+                        <span style={{ fontSize: "6px", color: "rgba(253,251,245,0.45)", width: `${(pattern.hold2 / totalDuration) * 100}%`, textAlign: "center" }}>HOLD</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
