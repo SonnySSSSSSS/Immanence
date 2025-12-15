@@ -10,6 +10,7 @@ export function VipassanaCanvas({
     theme,
     onThoughtTap,
     onThoughtLongPress,
+    atmosphericEvent = null,
 }) {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
@@ -180,12 +181,51 @@ export function VipassanaCanvas({
                 t.y < rect.height + margin
             );
 
-            // Draw thoughts using theme-specific motion
-            visibleThoughts.forEach(thought => {
+            // PHASE 3: Visual Budget - Tiered rendering
+            const totalThoughts = visibleThoughts.length;
+            const overflowCount = Math.max(0, totalThoughts - 22);
+
+            // Particle Haze: Draw first (behind thoughts)
+            if (overflowCount > 0) {
+                const hazeStamps = getHazeStamps();
+                const hazeAlpha = Math.min(overflowCount * 0.015, 0.2);
+
+                hazeStamps.forEach(stamp => {
+                    const hazeX = stamp.x * rect.width;
+                    const hazeY = stamp.y * rect.height;
+                    ctx.globalAlpha = hazeAlpha * stamp.variance;
+                    if (stamp.canvas) {
+                        ctx.drawImage(stamp.canvas, hazeX - 64, hazeY - 64);
+                    }
+                });
+                ctx.globalAlpha = 1.0; // Reset
+            }
+
+            // Draw thoughts with tiered quality
+            visibleThoughts.forEach((thought, index) => {
                 const now = Date.now();
                 const age = (now - thought.spawnTime) / 1000; // seconds
                 const lifetime = thought.baseDuration * thought.fadeModifier;
                 const progress = Math.min(age / lifetime, 1);
+
+                // Determine tier based on index
+                let tierAlphaModifier = 1.0;
+                let tierScaleModifier = 1.0;
+
+                if (index >= 22) {
+                    // Overflow: Skip rendering (already in haze)
+                    return;
+                } else if (index >= 18) {
+                    // Fading (19-22): Gradual fade to haze
+                    const fadingProgress = (index - 18) / 4; // 0 to 1
+                    tierAlphaModifier = 1.0 - fadingProgress * 0.7;
+                    tierScaleModifier = 1.0 - fadingProgress * 0.5;
+                } else if (index >= 12) {
+                    // Secondary (13-18): Reduced presence
+                    tierAlphaModifier = 0.4;
+                    tierScaleModifier = 0.7;
+                }
+                // Primary (1-12): Full render (no modifiers)
 
                 // Calculate position using per-thought motion parameters
                 const driftX = age * thought.vx * 15;
@@ -229,6 +269,10 @@ export function VipassanaCanvas({
                     scale = 1;
                 }
 
+                // Apply tier modifiers
+                opacity *= tierAlphaModifier;
+                scale *= tierScaleModifier;
+
                 // Bird animation: calculate current wing frame
                 let animFrame = 0;
                 if (thought.flapRate) {
@@ -261,7 +305,8 @@ export function VipassanaCanvas({
                 }
 
                 // Render using stamp system
-                const themeElement = theme?.thoughtElement || 'cloud';
+                // Use thought's stored elementType so old thoughts keep their shape
+                const themeElement = thought.elementType || theme?.thoughtElement || 'cloud';
                 const variant = thought.variant || 0;
                 const stamp = getStamp(themeElement + 's', variant, thought.category, animFrame);
                 const stampSize = 72;
@@ -289,6 +334,98 @@ export function VipassanaCanvas({
                     ctx.fill();
                 }
             });
+
+            // PHASE 5: Atmospheric Events rendering (after thoughts)
+            if (atmosphericEvent) {
+                const eventAge = (Date.now() - atmosphericEvent.startTime) / 1000;
+                const eventProgress = eventAge / (atmosphericEvent.type === 'ufo' ? 0.8 :
+                    atmosphericEvent.type === 'rainShimmer' ? 1.5 : 2.0);
+
+                ctx.save();
+
+                if (atmosphericEvent.type === 'rainShimmer') {
+                    // Subtle vertical shimmer lines across screen
+                    const lineCount = 40;
+                    ctx.strokeStyle = 'rgba(200, 220, 240, 0.15)';
+                    ctx.lineWidth = 1;
+
+                    for (let i = 0; i < lineCount; i++) {
+                        const x = (i / lineCount) * rect.width + (Math.sin(now / 300 + i) * 10);
+                        const offset = Math.sin(now / 200 + i * 0.5) * 50;
+                        ctx.globalAlpha = 0.1 + Math.sin(eventProgress * Math.PI) * 0.15;
+                        ctx.beginPath();
+                        ctx.moveTo(x, offset);
+                        ctx.lineTo(x, rect.height);
+                        ctx.stroke();
+                    }
+                } else if (atmosphericEvent.type === 'birdsDispersing') {
+                    // 30-50% of bird-type thoughts scatter outward
+                    const disperseCount = Math.floor(visibleThoughts.length * (0.3 + Math.random() * 0.2));
+                    const birdStamp = getStamp('birds', 0, 'neutral', 1);
+
+                    ctx.globalAlpha = 0.3 * (1 - eventProgress);
+
+                    for (let i = 0; i < disperseCount; i++) {
+                        const angle = (i / disperseCount) * Math.PI * 2 + eventProgress * Math.PI;
+                        const radius = 200 + eventProgress * 400;
+                        const x = rect.width / 2 + Math.cos(angle) * radius;
+                        const y = rect.height / 2 + Math.sin(angle) * radius;
+
+                        if (birdStamp) {
+                            ctx.drawImage(birdStamp, x - 36, y - 36, 48, 48);
+                        }
+                    }
+                } else if (atmosphericEvent.type === 'rainbow') {
+                    // Faint rainbow arc at top edge
+                    const arcCenterY = -200;
+                    const arcRadius = rect.width * 0.8;
+
+                    ctx.globalAlpha = 0.08 * Math.sin(eventProgress * Math.PI);
+
+                    const rainbowColors = [
+                        'rgba(255, 0, 0, 0.5)',
+                        'rgba(255, 127, 0, 0.5)',
+                        'rgba(255, 255, 0, 0.5)',
+                        'rgba(0, 255, 0, 0.5)',
+                        'rgba(0, 0, 255, 0.5)',
+                        'rgba(75, 0, 130, 0.5)',
+                        'rgba(148, 0, 211, 0.5)',
+                    ];
+
+                    rainbowColors.forEach((color, i) => {
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 20;
+                        ctx.beginPath();
+                        ctx.arc(rect.width / 2, arcCenterY, arcRadius + i * 22, 0, Math.PI);
+                        ctx.stroke();
+                    });
+                } else if (atmosphericEvent.type === 'ufo') {
+                    // Small ellipse crossing top-right periphery
+                    const pathProgress = eventProgress;
+                    const startX = rect.width * 1.1;
+                    const endX = rect.width * -0.1;
+                    const x = startX + (endX - startX) * pathProgress;
+                    const y = rect.height * 0.1 + Math.sin(pathProgress * Math.PI * 2) * 20;
+
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillStyle = 'rgba(200, 220, 255, 0.6)';
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, 30, 12, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Light beam
+                    ctx.fillStyle = 'rgba(200, 255, 255, 0.1)';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 10, y + 5);
+                    ctx.lineTo(x + 10, y + 5);
+                    ctx.lineTo(x + 30, y + 80);
+                    ctx.lineTo(x - 30, y + 80);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
 
             // Debug overlay
             if (showDebug) {

@@ -13,6 +13,7 @@ import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
+import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { syncFromProgressStore } from "../state/mandalaStore.js";

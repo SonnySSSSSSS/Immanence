@@ -13,26 +13,27 @@ let thoughtIdCounter = 0;
 const randomInRange = (min, max) => min + Math.random() * (max - min);
 
 // Theme-specific motion behaviors (AA-Level)
+// Widened ranges for more per-element variety
 const THEME_BEHAVIORS = {
     cloud: {
-        drift: { vx: [0.2, 0.4], vy: [-0.1, 0.1] },
-        bob: { amplitude: 0.3, frequency: 0.1 },
+        drift: { vx: [0.1, 0.5], vy: [-0.2, 0.15] },  // Some rise, some fall slightly
+        bob: { amplitude: [0.2, 0.5], frequency: [0.08, 0.15] },
         lifecycle: 'dissolve',
     },
     bird: {
-        drift: { vx: [0.3, 0.6], vy: [-0.05, 0.05] },
-        flap: { rate: [0.25, 0.45], poses: 3 },
+        drift: { vx: [0.2, 0.8], vy: [-0.15, 0.1] },  // Faster horizontal glide
+        flap: { rate: [0.2, 0.5], poses: 3 },
         tailWag: { angle: 4 },
         lifecycle: 'flyAway',
     },
     leaf: {
-        drift: { vx: [0.1, 0.3], vy: [0.3, 0.5] },
-        rotation: { speed: [0.02, 0.08] },
+        drift: { vx: [-0.3, 0.4], vy: [0.2, 0.6] },  // Fall down with varied horizontal
+        rotation: { speed: [0.03, 0.12] },
         lifecycle: 'settle',
     },
     lantern: {
-        drift: { vx: [-0.05, 0.05], vy: [-0.15, -0.25] },
-        flicker: { rate: 0.8, variance: 0.15 },
+        drift: { vx: [-0.1, 0.1], vy: [-0.3, -0.1] },  // Rise up
+        flicker: { rate: 0.8, variance: [0.1, 0.25] },
         lifecycle: 'fadeUp',
     },
 };
@@ -43,6 +44,7 @@ export function ThoughtLabeling({
     onThoughtComplete,
     onThoughtCountChange,
     audioEnabled = true,
+    atmosphericEvent = null,
 }) {
     const [thoughts, setThoughts] = useState([]);
     const [dialState, setDialState] = useState({ visible: false, x: 0, y: 0 });
@@ -115,12 +117,12 @@ export function ThoughtLabeling({
         const vy = randomInRange(behavior.drift.vy[0], behavior.drift.vy[1]);
         const phase = Math.random() * Math.PI * 2; // Random phase offset
 
-        // Theme-specific extras
+        // Theme-specific extras with per-thought randomization
         const flapRate = behavior.flap ? randomInRange(behavior.flap.rate[0], behavior.flap.rate[1]) : 0;
         const rotationSpeed = behavior.rotation ? randomInRange(behavior.rotation.speed[0], behavior.rotation.speed[1]) : 0;
-        const bobAmplitude = behavior.bob?.amplitude || 0;
-        const bobFrequency = behavior.bob?.frequency || 0;
-        const flickerVariance = behavior.flicker?.variance || 0;
+        const bobAmplitude = behavior.bob ? randomInRange(behavior.bob.amplitude[0], behavior.bob.amplitude[1]) : 0;
+        const bobFrequency = behavior.bob ? randomInRange(behavior.bob.frequency[0], behavior.bob.frequency[1]) : 0;
+        const flickerVariance = behavior.flicker ? randomInRange(behavior.flicker.variance[0], behavior.flicker.variance[1]) : 0;
 
         const newThought = {
             id: `thought-${++thoughtIdCounter}`,
@@ -129,18 +131,19 @@ export function ThoughtLabeling({
             originX: x,
             originY: y,
             category,
+            elementType, // Store element type so it persists when user switches
             spawnTime: Date.now(),
             baseDuration: PRACTICE_INVARIANT.thoughtLifetime,
             fadeModifier: 1.0,
             isSticky: false,
             variant,
-            // Motion parameters
+            // Motion parameters (randomized per thought)
             vx,
             vy,
             phase,
             flapRate,
             rotationSpeed,
-            rotation: 0, // Current rotation angle
+            rotation: 0,
             bobAmplitude,
             bobFrequency,
             flickerVariance,
@@ -157,7 +160,13 @@ export function ThoughtLabeling({
                     updated[oldestIdx] = { ...updated[oldestIdx], fadeModifier: updated[oldestIdx].fadeModifier * 0.3 };
                 }
             }
-            return [...updated, newThought];
+
+            // Add new thought
+            const withNew = [...updated, newThought];
+
+            // PHASE 4: Depth sorting - sort by Y position (back to front)
+            // Lower Y values render first (behind higher Y values)
+            return withNew.sort((a, b) => (a.originY || a.y) - (b.originY || b.y));
         });
 
         playAudio('thoughtNoticed');
@@ -272,6 +281,7 @@ export function ThoughtLabeling({
                 theme={theme}
                 onThoughtTap={handleThoughtTap}
                 onThoughtLongPress={handleThoughtLongPress}
+                atmosphericEvent={atmosphericEvent}
             />
 
             {/* Radial dial for classification */}

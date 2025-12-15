@@ -29,6 +29,12 @@ export function VipassanaVisual({
     const timerRef = useRef(null);
     const audioRef = useRef(null);
 
+    // PHASE 5: Atmospheric Events - Ultra-rare, strictly gated
+    const [atmosphericEvent, setAtmosphericEvent] = useState(null);
+    const eventTriggeredRef = useRef(false); // Max 1 event per session
+    const highAliveTimerRef = useRef(0); // Seconds with alive_rate >= 0.8
+    const lastAliveCheckRef = useRef(Date.now());
+
     // Get theme from themeId FIRST
     const themeData = VIPASSANA_THEMES[themeId] || VIPASSANA_THEMES.dawnSky;
 
@@ -93,7 +99,57 @@ export function VipassanaVisual({
     // Track active thought count for fog density
     const handleThoughtCountChange = useCallback((count) => {
         setActiveThoughtCount(count);
-    }, []);
+
+        // PHASE 5: Track alive_rate for event gating
+        const now = Date.now();
+        const deltaSeconds = (now - lastAliveCheckRef.current) / 1000;
+        lastAliveCheckRef.current = now;
+
+        // Calculate alive_rate (ratio of active thoughts to max)
+        const alive_rate = count / PRACTICE_INVARIANT.maxActiveThoughts;
+
+        // Accumulate time with high alive_rate
+        if (alive_rate >= 0.80) {
+            highAliveTimerRef.current += deltaSeconds;
+        }
+
+        // Event gating: trigger after 3min of high alive_rate, max 1 per session
+        if (!eventTriggeredRef.current &&
+            elapsedSeconds >= 180 &&
+            highAliveTimerRef.current >= 180) {
+
+            // 75% of sessions get no events
+            if (Math.random() < 0.75) return;
+
+            // Roll for event type
+            const roll = Math.random();
+            let eventType = null;
+
+            if (roll < 0.15) {
+                eventType = 'rainShimmer'; // 15%
+            } else if (roll < 0.20) {
+                eventType = 'birdsDispersing'; // 5%
+            } else if (roll < 0.24) {
+                eventType = 'rainbow'; // 4%
+            } else if (roll < 0.25 && eventTriggeredRef.current) {
+                eventType = 'ufo'; // 1%, only if event already occurred
+            }
+
+            if (eventType) {
+                eventTriggeredRef.current = true;
+                setAtmosphericEvent({ type: eventType, startTime: now });
+
+                // Clear event after duration
+                const durations = {
+                    rainShimmer: 1500,
+                    birdsDispersing: 2000,
+                    rainbow: 2000,
+                    ufo: 800,
+                };
+                setTimeout(() => setAtmosphericEvent(null), durations[eventType]);
+            }
+        }
+    }, [elapsedSeconds]);
 
     // Handle summary close
     const handleSummaryClose = () => {
@@ -134,6 +190,7 @@ export function VipassanaVisual({
                 onThoughtSpawn={handleThoughtSpawn}
                 onThoughtCountChange={handleThoughtCountChange}
                 audioEnabled={true}
+                atmosphericEvent={atmosphericEvent}
             />
 
             {/* Static timer - center */}
