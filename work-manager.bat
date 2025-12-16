@@ -147,10 +147,6 @@ goto MENU
 :: ============================================================================
 :DEPLOY_WEB
 :: ============================================================================
-echo.
-echo [DEBUG] Entered DEPLOY_WEB section
-echo Press any key to continue...
-pause >nul
 cls
 echo.
 echo ========================================
@@ -160,30 +156,33 @@ echo.
 echo SAFETY CHECKS:
 echo.
 
-echo [DEBUG] About to run git diff-index...
-pause
-
 :: Check 1: Is work saved?
 git diff-index --quiet HEAD --
 set GIT_RESULT=%errorlevel%
-echo [DEBUG] git diff-index returned: %GIT_RESULT%
-pause
 
 if %GIT_RESULT% NEQ 0 (
     echo [WARNING] You have unsaved changes
     echo.
-    echo You should save your work first [option 1].
+    echo You should save your work first using option 1.
     echo.
-    set /p "CONTINUE_DEPLOY=Continue anyway? (YES to continue): "
+    echo Type Y to continue anyway, or N to go back and save first.
+    echo.
+    set /p "CONTINUE_DEPLOY=Continue without saving? [Y/N]: "
 )
 
 if %GIT_RESULT% NEQ 0 (
-    if /i not "!CONTINUE_DEPLOY!"=="YES" (
-        echo Cancelled. Go save your work first.
-        pause
-        goto MENU
-    )
+    if /i "!CONTINUE_DEPLOY!"=="Y" goto DEPLOY_CONTINUE
+    if /i "!CONTINUE_DEPLOY!"=="YES" goto DEPLOY_CONTINUE
+    echo.
+    echo ----------------------------------------
+    echo CANCELLED - You typed: "!CONTINUE_DEPLOY!"
+    echo ----------------------------------------
+    echo Going back to menu. Use option 1 to save your work first.
+    echo.
+    pause
+    goto MENU
 )
+:DEPLOY_CONTINUE
 
 :: Check 2: Confirm deployment
 echo [OK] Ready to deploy
@@ -193,13 +192,23 @@ echo   1. Build your app (npm run build)
 echo   2. Deploy to https://sonnysssssss.github.io/Immanence/
 echo   3. Make your work publicly visible
 echo.
-set /p confirm="Deploy now? (YES to deploy): "
-if /i not "%confirm%"=="YES" (
-    echo Cancelled.
-    pause
-    goto MENU
-)
+echo Type Y and press Enter to deploy, or N to cancel.
+echo.
+set /p "CONFIRM_DEPLOY=Deploy now? [Y/N]: "
 
+if /i "!CONFIRM_DEPLOY!"=="Y" goto DO_DEPLOY_START
+if /i "!CONFIRM_DEPLOY!"=="YES" goto DO_DEPLOY_START
+
+echo.
+echo ----------------------------------------
+echo CANCELLED - You typed: "!CONFIRM_DEPLOY!"
+echo ----------------------------------------
+echo To deploy, type the letter Y and press Enter.
+echo.
+pause
+goto MENU
+
+:DO_DEPLOY_START
 call :DO_DEPLOY
 set DEPLOY_RESULT=!errorlevel!
 echo.
