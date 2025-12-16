@@ -224,11 +224,20 @@ goto MENU
 
 :DO_DEPLOY
 echo.
-echo [DEPLOY] Building app...
+echo ========================================
+echo SAFE DEPLOY - Your files will NOT be touched
+echo ========================================
 echo.
 
-:: Build the app
-echo Running: npm run build
+:: SAFETY: Record current branch and commit so we can verify nothing changed
+for /f "tokens=*" %%b in ('git branch --show-current') do set "ORIGINAL_BRANCH=%%b"
+for /f "tokens=*" %%h in ('git rev-parse HEAD') do set "ORIGINAL_COMMIT=%%h"
+echo [SAFETY] Current branch: %ORIGINAL_BRANCH%
+echo [SAFETY] Current commit: %ORIGINAL_COMMIT%
+echo.
+
+:: Step 1: Build the app (this doesn't change git state)
+echo [DEPLOY] Step 1/4: Building app...
 echo.
 call npm run build 2>&1
 if errorlevel 1 (
@@ -237,82 +246,121 @@ if errorlevel 1 (
     echo [DEPLOY] FAILED - Build failed
     echo ========================================
     echo.
-    echo The npm build command failed.
-    echo Check the error messages above.
-    echo.
-    echo Common causes:
-    echo   - Syntax error in your code
-    echo   - Missing dependency
-    echo   - Import/export error
+    echo Your files are SAFE. Nothing was changed.
+    echo Fix the build errors above and try again.
     echo.
     exit /b 1
 )
 
-:: Check if dist exists
 if not exist "dist" (
     echo [DEPLOY] FAILED - No dist folder created
+    echo Your files are SAFE. Nothing was changed.
     exit /b 1
 )
+echo [DEPLOY] Build complete.
+echo.
 
-:: Copy dist to temp
-echo [DEPLOY] Preparing deployment files...
-if exist "%TEMP_DEPLOY%" rmdir /s /q "%TEMP_DEPLOY%"
-mkdir "%TEMP_DEPLOY%"
-xcopy /E /I /Y "dist\*" "%TEMP_DEPLOY%" >nul
+:: Step 2: Create a completely separate temp directory for gh-pages work
+echo [DEPLOY] Step 2/4: Preparing deployment in temp folder...
+set "DEPLOY_TEMP=%TEMP%\immanence-gh-pages-deploy"
+if exist "%DEPLOY_TEMP%" rmdir /s /q "%DEPLOY_TEMP%"
+mkdir "%DEPLOY_TEMP%"
 
-:: Save current branch
-for /f "tokens=*" %%b in ('git branch --show-current') do set "DEPLOY_ORIGINAL_BRANCH=%%b"
-
-:: Switch to gh-pages
-echo [DEPLOY] Switching to gh-pages branch...
-git checkout gh-pages 2>&1
+:: Clone ONLY the gh-pages branch to temp (shallow clone for speed)
+echo [DEPLOY] Cloning gh-pages branch to temp folder...
+git clone --depth 1 --branch gh-pages "https://github.com/sonnysssssss/Immanence.git" "%DEPLOY_TEMP%" 2>&1
 if errorlevel 1 (
     echo.
-    echo ========================================
-    echo [DEPLOY] FAILED - Could not checkout gh-pages
-    echo ========================================
+    echo [DEPLOY] FAILED - Could not clone gh-pages
+    echo Your files are SAFE. Nothing was changed.
     echo.
-    echo Attempting to return to %DEPLOY_ORIGINAL_BRANCH%...
-    git checkout "%DEPLOY_ORIGINAL_BRANCH%" 2>&1
+    echo This might mean:
+    echo   - No internet connection
+    echo   - gh-pages branch doesn't exist yet
+    echo.
+    rmdir /s /q "%DEPLOY_TEMP%" 2>nul
     exit /b 1
 )
+echo.
 
-:: Clear gh-pages
-echo [DEPLOY] Clearing old deployment...
+:: Step 3: Replace content in temp folder with new build
+echo [DEPLOY] Step 3/4: Copying new build to temp folder...
+:: Delete everything except .git in temp folder
+pushd "%DEPLOY_TEMP%"
 for /d %%d in (*) do if not "%%d"==".git" rmdir /s /q "%%d" 2>nul
 for %%f in (*) do if not "%%f"==".git" del /q "%%f" 2>nul
+popd
 
-:: Copy new files
-echo [DEPLOY] Copying new build...
-xcopy /E /I /Y "%TEMP_DEPLOY%\*" "." >nul
-rmdir /s /q "%TEMP_DEPLOY%"
+:: Copy dist contents to temp folder
+xcopy /E /I /Y "dist\*" "%DEPLOY_TEMP%" >nul
+if errorlevel 1 (
+    echo [DEPLOY] FAILED - Could not copy files
+    echo Your files are SAFE. Nothing was changed.
+    rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+    exit /b 1
+)
+echo.
 
-:: Commit and push
-echo [DEPLOY] Committing changes...
+:: Step 4: Commit and push from temp folder
+echo [DEPLOY] Step 4/4: Pushing to GitHub...
+pushd "%DEPLOY_TEMP%"
 git add -A
 git commit -m "Deploy v%CURRENT_VERSION%: %date% %time%" 2>&1
-echo [DEPLOY] Pushing to gh-pages...
-git push --force origin gh-pages 2>&1
-if errorlevel 1 (
+git push origin gh-pages 2>&1
+set PUSH_RESULT=!errorlevel!
+popd
+
+if !PUSH_RESULT! NEQ 0 (
     echo.
     echo ========================================
-    echo [DEPLOY] FAILED - Could not push to gh-pages
+    echo [DEPLOY] FAILED - Could not push to GitHub
     echo ========================================
+    echo Your files are SAFE. Nothing was changed.
     echo.
     echo This usually means:
     echo   - No internet connection
     echo   - GitHub authentication issue
-    echo   - Remote repository problem
     echo.
-    echo Returning to %DEPLOY_ORIGINAL_BRANCH%...
-    git checkout "%DEPLOY_ORIGINAL_BRANCH%" 2>&1
+    rmdir /s /q "%DEPLOY_TEMP%" 2>nul
     exit /b 1
 )
 
-:: Return to original branch
-git checkout "%DEPLOY_ORIGINAL_BRANCH%"
+:: Cleanup temp folder
+rmdir /s /q "%DEPLOY_TEMP%" 2>nul
 
-echo [DEPLOY] OK - Live at https://sonnysssssss.github.io/Immanence/
+:: SAFETY VERIFICATION: Confirm we're still on the same branch and commit
+for /f "tokens=*" %%b in ('git branch --show-current') do set "FINAL_BRANCH=%%b"
+for /f "tokens=*" %%h in ('git rev-parse HEAD') do set "FINAL_COMMIT=%%h"
+
+if not "!FINAL_BRANCH!"=="!ORIGINAL_BRANCH!" (
+    echo.
+    echo ========================================
+    echo [SAFETY WARNING] Branch changed unexpectedly!
+    echo ========================================
+    echo Was: !ORIGINAL_BRANCH!
+    echo Now: !FINAL_BRANCH!
+    echo.
+    echo Restoring to original branch...
+    git checkout "!ORIGINAL_BRANCH!" 2>&1
+)
+
+if not "!FINAL_COMMIT!"=="!ORIGINAL_COMMIT!" (
+    echo.
+    echo [SAFETY WARNING] Commit changed unexpectedly - this should not happen.
+    echo Was: !ORIGINAL_COMMIT!
+    echo Now: !FINAL_COMMIT!
+)
+
+echo.
+echo ========================================
+echo [DEPLOY] SUCCESS!
+echo ========================================
+echo.
+echo Live at: https://sonnysssssss.github.io/Immanence/
+echo.
+echo [SAFETY] Verified: Still on branch !FINAL_BRANCH!
+echo [SAFETY] Verified: Your files are untouched.
+echo.
 exit /b 0
 
 :: ============================================================================

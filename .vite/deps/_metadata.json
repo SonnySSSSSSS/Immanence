@@ -1,0 +1,60 @@
+{
+  "hash": "d7dd9f0b",
+  "configHash": "bc796b22",
+  "lockfileHash": "febfb5da",
+  "browserHash": "6dede854",
+  "optimized": {
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "375d44fd",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "18f17261",
+      "needsInterop": true
+    },
+    "react-markdown": {
+      "src": "../../node_modules/react-markdown/index.js",
+      "file": "react-markdown.js",
+      "fileHash": "fadb111b",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "c850cf76",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "80dcc1d2",
+      "needsInterop": true
+    },
+    "zustand": {
+      "src": "../../node_modules/zustand/esm/index.mjs",
+      "file": "zustand.js",
+      "fileHash": "4f205d50",
+      "needsInterop": false
+    },
+    "zustand/middleware": {
+      "src": "../../node_modules/zustand/esm/middleware.mjs",
+      "file": "zustand_middleware.js",
+      "fileHash": "e4dc40cd",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "jsx-runtime-CuhP5zct": {
+      "file": "jsx-runtime-CuhP5zct.js",
+      "isDynamicEntry": false
+    },
+    "react-CQaMAW-R": {
+      "file": "react-CQaMAW-R.js",
+      "isDynamicEntry": false
+    }
+  }
+}
