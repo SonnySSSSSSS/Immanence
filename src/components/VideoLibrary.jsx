@@ -5,35 +5,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVideoStore } from '../state/videoStore.js';
 import { VIDEOS, getEmbedUrl } from '../data/videoData.js';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// IDLE HEARTH STATE - Embers animation when no video selected
-// ═══════════════════════════════════════════════════════════════════════════
-function IdleHearthState() {
-    return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-950 to-black">
-            {/* Animated ember glow */}
-            <div
-                className="w-16 h-16 rounded-full mb-6 animate-pulse"
-                style={{
-                    background: 'radial-gradient(circle, rgba(255,150,50,0.3) 0%, rgba(255,100,20,0.1) 50%, transparent 70%)',
-                    boxShadow: '0 0 60px rgba(255,120,40,0.2)',
-                }}
-            />
-            <p
-                className="text-[11px] uppercase tracking-[0.25em] text-neutral-600"
-                style={{ fontFamily: 'Georgia, serif' }}
-            >
-                Select a video to begin
-            </p>
-        </div>
-    );
-}
+import { IdleHearth } from './IdleHearth.jsx';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // VIDEO HEARTH - The active video player (fixed aspect ratio, centered)
 // ═══════════════════════════════════════════════════════════════════════════
-function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning }) {
+function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear }) {
     const videoRef = useRef(null);
     const { updateProgress, markCompleted } = useVideoStore();
 
@@ -59,25 +36,34 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning }) {
                 transition: 'background 0.5s ease',
             }}
         >
-            {/* Fixed aspect ratio container - MUST NOT change height */}
+            {/* Video frame with ember border glow when playing */}
             <div
                 className="w-full max-w-3xl rounded-xl overflow-hidden relative"
                 style={{
                     aspectRatio: '16 / 9',
                     background: '#0a0a0f',
-                    boxShadow: isPlaying
-                        ? '0 0 80px rgba(255,120,40,0.15), 0 25px 50px rgba(0,0,0,0.5)'
+                    boxShadow: video
+                        ? '0 0 60px rgba(255,100,30,0.25), 0 0 120px rgba(255,80,20,0.15), 0 25px 50px rgba(0,0,0,0.5)'
                         : '0 25px 50px rgba(0,0,0,0.5)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    transition: 'box-shadow 0.5s ease',
+                    border: video
+                        ? '2px solid rgba(255,120,40,0.4)'
+                        : '1px solid rgba(255,255,255,0.06)',
+                    transition: 'all 0.5s ease',
                 }}
             >
-                {/* Dissolve transition layer */}
-                <div
-                    className="absolute inset-0 transition-opacity duration-300"
-                    style={{ opacity: isTransitioning ? 0 : 1 }}
-                >
-                    {video ? (
+                {/* Idle embers inside frame when no video */}
+                {!video && (
+                    <div className="absolute inset-0">
+                        <IdleHearth />
+                    </div>
+                )}
+
+                {/* Video layer */}
+                {video && (
+                    <div
+                        className="absolute inset-0 z-10 transition-opacity duration-300"
+                        style={{ opacity: isTransitioning ? 0 : 1 }}
+                    >
                         <video
                             ref={videoRef}
                             key={video.id}
@@ -85,7 +71,7 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning }) {
                             className="w-full h-full object-contain"
                             style={{
                                 colorScheme: 'dark',
-                                backgroundColor: '#000'
+                                backgroundColor: '#0a0a0f'
                             }}
                             controls
                             onPlay={() => setIsPlaying(true)}
@@ -102,10 +88,23 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning }) {
                                 }
                             }}
                         />
-                    ) : (
-                        <IdleHearthState />
-                    )}
-                </div>
+                    </div>
+                )}
+
+                {/* Clear button - only when video is loaded */}
+                {video && !isTransitioning && (
+                    <button
+                        onClick={onClear}
+                        className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-40 hover:opacity-100"
+                        style={{
+                            background: 'rgba(0,0,0,0.6)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                        }}
+                        title="Clear video"
+                    >
+                        <span className="text-white text-sm">✕</span>
+                    </button>
+                )}
             </div>
 
             {/* Video metadata (only when video active) */}
@@ -354,6 +353,9 @@ export function VideoLibrary() {
         // Guard: don't reset if selecting same video
         if (activeVideo?.id === video.id) return;
 
+        // Trigger ember flare immediately on selection
+        if (window.flareEmbers) window.flareEmbers(35);
+
         // Dissolve out
         setIsTransitioning(true);
 
@@ -361,6 +363,21 @@ export function VideoLibrary() {
             setActiveVideo(video);
             setIsPlaying(false);
             // Dissolve in
+            setIsTransitioning(false);
+        }, 300);
+    };
+
+    // Clear video and return to idle embers
+    const clearVideo = () => {
+        if (!activeVideo) return;
+
+        // Trigger ember flare on clear too
+        if (window.flareEmbers) window.flareEmbers(25);
+
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setActiveVideo(null);
+            setIsPlaying(false);
             setIsTransitioning(false);
         }, 300);
     };
@@ -376,6 +393,7 @@ export function VideoLibrary() {
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
                 isTransitioning={isTransitioning}
+                onClear={clearVideo}
             />
 
             {/* THE OFFERINGS - Horizontal bands */}

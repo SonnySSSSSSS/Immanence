@@ -50,7 +50,14 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
             You'll track moments of awareness—when you catch yourself in old patterns.
           </p>
           <button
-            onClick={() => onNavigate?.('navigation')}
+            onClick={() => {
+              console.log('🔥 Go to Navigation clicked, onNavigate:', typeof onNavigate);
+              if (onNavigate) {
+                onNavigate('navigation');
+              } else {
+                console.error('❌ onNavigate is undefined!');
+              }
+            }}
             className="px-6 py-3 rounded-full text-[#050508] font-semibold text-sm"
             style={{ fontFamily: 'Cinzel, serif', background: 'var(--ui-button-gradient)' }}
           >
