@@ -69,7 +69,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
       <div className="w-full max-w-md flex-1" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
         {section === "wisdom" && <WisdomSection />}
-        {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} />}
+        {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />}
         {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />}
       </div>
     </div>
@@ -253,7 +253,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v2.84.0
+                  v2.85.0
                 </div>
                 {!isHub && (
                   <button

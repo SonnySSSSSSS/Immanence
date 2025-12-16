@@ -8,7 +8,7 @@ import { FourModesHome } from './FourModesHome.jsx';
 import { ModeDetail } from './ModeDetail.jsx';
 import { ApplicationSelectionModal } from './ApplicationSelectionModal.jsx';
 
-export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention }) {
+export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
   const { activePath } = useNavigationStore();
   const [activeSubView, setActiveSubView] = useState('tracking'); // 'tracking' | 'modes'
   const [selectedModeId, setSelectedModeId] = useState(null);
@@ -50,9 +50,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
             You'll track moments of awareness—when you catch yourself in old patterns.
           </p>
           <button
-            onClick={() => {
-              window.location.hash = 'navigation';
-            }}
+            onClick={() => onNavigate?.('navigation')}
             className="px-6 py-3 rounded-full text-[#050508] font-semibold text-sm"
             style={{ fontFamily: 'Cinzel, serif', background: 'var(--ui-button-gradient)' }}
           >
