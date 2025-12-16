@@ -87,7 +87,6 @@ export function IdleHearth({ flareIntensity = 0 }) {
 
         // Expose flare function globally for cross-component access
         window.flareEmbers = (intensity = 30) => {
-            console.log('🔥 Ember flare triggered:', intensity);
             createParticles(intensity);
         };
 

@@ -140,8 +140,12 @@ function VideoToken({ video, isSelected, onClick }) {
         foundations: '△',
         explorations: '◇',
         wisdom: '✦',
+        // Geometric types
+        circle: '◯',
+        triangle: '△',
+        hex: '⬡'
     };
-    const icon = icons[video.category] || '◆';
+    const icon = icons[video.iconType] || icons[video.category] || '◆';
 
     return (
         <button

@@ -49,6 +49,7 @@ export const VIDEOS = [
         isFeatured: true,
         pathId: null,
         week: null,
+        iconType: 'circle',
         embedOptions: {}
     },
     {
@@ -65,6 +66,7 @@ export const VIDEOS = [
         isFeatured: true,
         pathId: null,
         week: null,
+        iconType: 'hex',
         embedOptions: {}
     },
     {
@@ -81,6 +83,7 @@ export const VIDEOS = [
         isFeatured: true,
         pathId: null,
         week: null,
+        iconType: 'circle',
         embedOptions: {}
     },
     {
@@ -97,6 +100,7 @@ export const VIDEOS = [
         isFeatured: true,
         pathId: null,
         week: null,
+        iconType: 'triangle',
         embedOptions: {}
     },
     {
@@ -113,6 +117,7 @@ export const VIDEOS = [
         isFeatured: false,
         pathId: null,
         week: null,
+        iconType: 'circle',
         embedOptions: {}
     },
     {
@@ -129,6 +134,7 @@ export const VIDEOS = [
         isFeatured: false,
         pathId: null,
         week: null,
+        iconType: 'hex',
         embedOptions: {}
     },
     {
@@ -145,6 +151,7 @@ export const VIDEOS = [
         isFeatured: false,
         pathId: null,
         week: null,
+        iconType: 'triangle',
         embedOptions: {}
     },
     {
@@ -161,8 +168,9 @@ export const VIDEOS = [
         isFeatured: false,
         pathId: null,
         week: null,
+        iconType: 'hex',
         embedOptions: {}
-    }
+    },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
