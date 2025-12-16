@@ -1,12 +1,11 @@
 // src/components/SensoryConfig.jsx
 // Configuration panel for Sensory practice mode
-// Body Scan, Vipassana, Sakshi type selection
+// Body Scan, Sakshi type selection
 import React from 'react';
 
 // Sensory practice types
 export const SENSORY_TYPES = [
     { id: 'bodyScan', label: 'Body Scan', description: 'Progressive body awareness' },
-    { id: 'vipassana', label: 'Vipassana', description: 'Insight observation' },
     { id: 'sakshi', label: 'Sakshi', description: 'Witness consciousness' },
 ];
 
@@ -29,7 +28,7 @@ export function SensoryConfig({
             >
                 Sensory Focus
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
                 {SENSORY_TYPES.map((type) => (
                     <button
                         key={type.id}

@@ -33,110 +33,134 @@ export const VIDEO_CATEGORIES = [
  */
 export const VIDEOS = [
     // ═══════════════════════════════════════════════════════════════════════════
-    // FOUNDATION
+    // WISDOM - Philosophy & Teachings
     // ═══════════════════════════════════════════════════════════════════════════
     {
-        id: 'foundation-welcome',
-        provider: 'youtube',
-        externalId: 'PLACEHOLDER_ID_1', // Replace with real YouTube ID
-        title: 'Welcome to Immanence',
-        category: 'foundation',
-        duration: '8:00',
-        durationSec: 480,
-        description: 'An introduction to the practice system and what to expect on your journey.',
-        order: 1,
-        tags: ['intro', 'beginner', 'overview'],
-        isFeatured: true,
-        pathId: null,
-        week: null,
-        embedOptions: {}
-    },
-    {
-        id: 'foundation-how-to-practice',
-        provider: 'youtube',
-        externalId: 'PLACEHOLDER_ID_2',
-        title: 'How to Practice',
-        category: 'foundation',
-        duration: '12:00',
-        durationSec: 720,
-        description: 'Learn the basics of setting up your practice space and building a daily routine.',
-        order: 2,
-        tags: ['beginner', 'routine', 'setup'],
-        isFeatured: true,
-        pathId: null,
-        week: null,
-        embedOptions: {}
-    },
-    {
-        id: 'foundation-the-path-system',
-        provider: 'youtube',
-        externalId: 'PLACEHOLDER_ID_3',
-        title: 'Understanding the Paths',
-        category: 'foundation',
-        duration: '10:00',
+        id: 'music-transmission-consciousness',
+        provider: 'self',
+        externalId: 'videos/Music__A_Transmission_of_Consciousness.mp4',
+        title: 'Music: A Transmission of Consciousness',
+        category: 'wisdom',
+        duration: '~10:00',
         durationSec: 600,
-        description: 'An overview of the six paths and how to choose the right one for you.',
+        description: 'Exploring how music transmits and transforms consciousness.',
+        order: 1,
+        tags: ['music', 'consciousness', 'transmission'],
+        isFeatured: true,
+        pathId: null,
+        week: null,
+        embedOptions: {}
+    },
+    {
+        id: 'ai-oracle',
+        provider: 'self',
+        externalId: 'videos/The_AI_Oracle.mp4',
+        title: 'The AI Oracle',
+        category: 'wisdom',
+        duration: '~15:00',
+        durationSec: 900,
+        description: 'AI as a modern oracle and tool for consciousness exploration.',
+        order: 2,
+        tags: ['ai', 'oracle', 'technology', 'consciousness'],
+        isFeatured: true,
+        pathId: null,
+        week: null,
+        embedOptions: {}
+    },
+    {
+        id: 'cosmic-dance',
+        provider: 'self',
+        externalId: 'videos/The_Cosmic_Dance.mp4',
+        title: 'The Cosmic Dance',
+        category: 'wisdom',
+        duration: '~14:00',
+        durationSec: 840,
+        description: 'The universal dance of creation and dissolution.',
         order: 3,
-        tags: ['paths', 'beginner', 'overview'],
+        tags: ['cosmos', 'dance', 'creation', 'philosophy'],
+        isFeatured: true,
+        pathId: null,
+        week: null,
+        embedOptions: {}
+    },
+    {
+        id: 'map-of-self',
+        provider: 'self',
+        externalId: 'videos/The_Map_of_The_Self.mp4',
+        title: 'The Map of The Self',
+        category: 'wisdom',
+        duration: '~14:00',
+        durationSec: 840,
+        description: 'Understanding the layers and territories of self.',
+        order: 4,
+        tags: ['self', 'identity', 'psychology', 'map'],
+        isFeatured: true,
+        pathId: null,
+        week: null,
+        embedOptions: {}
+    },
+    {
+        id: 'mechanics-life-death',
+        provider: 'self',
+        externalId: 'videos/The_Mechanics_of_Life_&_Death.mp4',
+        title: 'The Mechanics of Life & Death',
+        category: 'wisdom',
+        duration: '~13:00',
+        durationSec: 780,
+        description: 'The fundamental mechanics underlying life and death.',
+        order: 5,
+        tags: ['life', 'death', 'mechanics', 'philosophy'],
         isFeatured: false,
         pathId: null,
         week: null,
         embedOptions: {}
     },
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // BREATHWORK
-    // ═══════════════════════════════════════════════════════════════════════════
     {
-        id: 'breathwork-box-breathing',
-        provider: 'youtube',
-        externalId: 'PLACEHOLDER_ID_4',
-        title: 'Box Breathing Explained',
-        category: 'breathwork',
-        duration: '6:00',
-        durationSec: 360,
-        description: 'Master the 4-4-4-4 box breathing pattern for calm and focus.',
-        order: 1,
-        tags: ['box', 'beginner', 'calm', 'focus'],
-        isFeatured: true,
-        pathId: 'prana',
-        week: 1,
-        embedOptions: {}
-    },
-    {
-        id: 'breathwork-478',
-        provider: 'youtube',
-        externalId: 'PLACEHOLDER_ID_5',
-        title: '4-7-8 Relaxation Breath',
-        category: 'breathwork',
-        duration: '7:00',
-        durationSec: 420,
-        description: 'The classic relaxation pattern for sleep and stress relief.',
-        order: 2,
-        tags: ['relaxation', 'sleep', 'stress'],
+        id: 'mechanics-meaning',
+        provider: 'self',
+        externalId: 'videos/The_Mechanics_of_Meaning.mp4',
+        title: 'The Mechanics of Meaning',
+        category: 'wisdom',
+        duration: '~12:00',
+        durationSec: 720,
+        description: 'How meaning arises and organizes experience.',
+        order: 6,
+        tags: ['meaning', 'mechanics', 'philosophy', 'semiotics'],
         isFeatured: false,
-        pathId: 'prana',
-        week: 2,
+        pathId: null,
+        week: null,
         embedOptions: {}
     },
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // VISUALIZATION
-    // ═══════════════════════════════════════════════════════════════════════════
     {
-        id: 'visualization-sacred-geometry',
-        provider: 'youtube',
-        externalId: 'PLACEHOLDER_ID_6',
-        title: 'Introduction to Sacred Geometry',
-        category: 'visualization',
-        duration: '15:00',
-        durationSec: 900,
-        description: 'Understanding the patterns that underlie reality and consciousness.',
-        order: 1,
-        tags: ['geometry', 'beginner', 'theory'],
-        isFeatured: true,
-        pathId: 'drishti',
-        week: 1,
+        id: 'souls-journey',
+        provider: 'self',
+        externalId: 'videos/The_Soul_s_Journey.mp4',
+        title: "The Soul's Journey",
+        category: 'wisdom',
+        duration: '~11:00',
+        durationSec: 660,
+        description: "The path of the soul through transformation.",
+        order: 7,
+        tags: ['soul', 'journey', 'transformation', 'spirituality'],
+        isFeatured: false,
+        pathId: null,
+        week: null,
+        embedOptions: {}
+    },
+    {
+        id: 'what-is-information',
+        provider: 'self',
+        externalId: 'videos/What_is_Information,_Really_.mp4',
+        title: 'What is Information, Really?',
+        category: 'wisdom',
+        duration: '~12:00',
+        durationSec: 720,
+        description: 'Deep exploration of the nature of information.',
+        order: 8,
+        tags: ['information', 'reality', 'physics', 'philosophy'],
+        isFeatured: false,
+        pathId: null,
+        week: null,
         embedOptions: {}
     }
 ];
@@ -224,7 +248,8 @@ export function getEmbedUrl(video, options = {}) {
             return `https://iframe.cloudflarestream.com/${video.externalId}`;
 
         case 'self':
-            return video.externalId; // Direct URL
+            // Local videos from public folder
+            return `${import.meta.env.BASE_URL}${video.externalId}`;
 
         default:
             console.warn(`Unknown video provider: ${video.provider}`);

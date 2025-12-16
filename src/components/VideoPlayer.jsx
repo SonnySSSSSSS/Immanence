@@ -164,29 +164,66 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
                             <p className="text-[rgba(253,251,245,0.7)] text-sm mb-3">
                                 Video failed to load
                             </p>
-                            <a
-                                href={`https://youtube.com/watch?v=${video.externalId}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-block px-4 py-2 rounded-full text-[11px] bg-[var(--accent-20)] text-[var(--accent-color)] hover:bg-[var(--accent-30)] transition-all"
-                            >
-                                Open on YouTube →
-                            </a>
+                            {video.provider === 'youtube' && (
+                                <a
+                                    href={`https://youtube.com/watch?v=${video.externalId}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block px-4 py-2 rounded-full text-[11px] bg-[var(--accent-20)] text-[var(--accent-color)] hover:bg-[var(--accent-30)] transition-all"
+                                >
+                                    Open on YouTube →
+                                </a>
+                            )}
                         </div>
                     </div>
                 )}
 
-                {/* YouTube iframe */}
-                <iframe
-                    ref={iframeRef}
-                    id={`youtube-player-${video.id}`}
-                    src={embedUrl}
-                    title={video.title}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    onLoad={handleIframeLoad}
-                />
+                {/* Local video (self provider) - HTML5 video element */}
+                {video.provider === 'self' && (
+                    <video
+                        ref={iframeRef}
+                        src={embedUrl}
+                        className="w-full h-full object-contain"
+                        style={{
+                            colorScheme: 'dark',
+                            backgroundColor: '#000'
+                        }}
+                        controls
+                        autoPlay={autoplay}
+                        onLoadedData={() => setIsLoading(false)}
+                        onError={() => { setHasError(true); setIsLoading(false); }}
+                        onTimeUpdate={(e) => {
+                            const current = e.target.currentTime;
+                            const duration = e.target.duration;
+                            if (duration > 0) {
+                                const progress = current / duration;
+                                updateProgress(video.id, progress, current);
+                                if (progress >= 0.9) {
+                                    markCompleted(video.id);
+                                    onComplete?.();
+                                }
+                            }
+                        }}
+                        onEnded={() => {
+                            markCompleted(video.id);
+                            onComplete?.();
+                        }}
+                    />
+                )}
+
+                {/* YouTube/External iframe */}
+                {video.provider !== 'self' && (
+                    <iframe
+                        ref={iframeRef}
+                        id={`youtube-player-${video.id}`}
+                        src={embedUrl}
+                        title={video.title}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        onLoad={handleIframeLoad}
+                    />
+                )}
             </div>
 
             {/* Video info bar */}
@@ -242,11 +279,16 @@ export function VideoPlayerModal({ video, isOpen, onClose }) {
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)' }}
+            style={{ background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(12px)' }}
             onClick={onClose}
         >
             <div
-                className="w-full max-w-3xl"
+                className="w-full max-w-4xl rounded-2xl overflow-hidden"
+                style={{
+                    background: 'rgba(10, 10, 18, 0.98)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+                }}
                 onClick={e => e.stopPropagation()}
             >
                 <VideoPlayer video={video} onClose={onClose} />

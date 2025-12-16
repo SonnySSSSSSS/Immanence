@@ -1,313 +1,408 @@
 // src/components/VideoLibrary.jsx
-// Browse and search video library with category filtering
+// FLAME Video Section - Single-focus hearth with horizontal offering bands
+// Selection replaces state, not layout. No modals.
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useVideoStore } from '../state/videoStore.js';
-import {
-    VIDEOS,
-    VIDEO_CATEGORIES,
-    getVideosByCategory,
-    getFeaturedVideos,
-    searchVideos
-} from '../data/videoData.js';
-import { VideoPlayerModal } from './VideoPlayer.jsx';
+import { VIDEOS, getEmbedUrl } from '../data/videoData.js';
 
-/**
- * VideoCard - Individual video card with watch status (wisdom-themed)
- */
-function VideoCard({ video, onClick }) {
-    const { getVideoState } = useVideoStore();
-    const state = getVideoState(video.id);
+// ═══════════════════════════════════════════════════════════════════════════
+// IDLE HEARTH STATE - Embers animation when no video selected
+// ═══════════════════════════════════════════════════════════════════════════
+function IdleHearthState() {
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-neutral-900 via-neutral-950 to-black">
+            {/* Animated ember glow */}
+            <div
+                className="w-16 h-16 rounded-full mb-6 animate-pulse"
+                style={{
+                    background: 'radial-gradient(circle, rgba(255,150,50,0.3) 0%, rgba(255,100,20,0.1) 50%, transparent 70%)',
+                    boxShadow: '0 0 60px rgba(255,120,40,0.2)',
+                }}
+            />
+            <p
+                className="text-[11px] uppercase tracking-[0.25em] text-neutral-600"
+                style={{ fontFamily: 'Georgia, serif' }}
+            >
+                Select a video to begin
+            </p>
+        </div>
+    );
+}
 
-    const thumbnailUrl = video.provider === 'youtube'
-        ? `https://img.youtube.com/vi/${video.externalId}/mqdefault.jpg`
-        : null;
+// ═══════════════════════════════════════════════════════════════════════════
+// VIDEO HEARTH - The active video player (fixed aspect ratio, centered)
+// ═══════════════════════════════════════════════════════════════════════════
+function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning }) {
+    const videoRef = useRef(null);
+    const { updateProgress, markCompleted } = useVideoStore();
+
+    // Reset video when source changes
+    useEffect(() => {
+        if (videoRef.current && video) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+            videoRef.current.load();
+        }
+    }, [video?.id]);
+
+    const videoUrl = video ? getEmbedUrl(video) : null;
+
+    return (
+        <section
+            className="w-full flex flex-col items-center px-4 pt-4 pb-8"
+            style={{
+                // Subtle warmth when playing
+                background: isPlaying
+                    ? 'radial-gradient(ellipse at center top, rgba(255,120,40,0.08) 0%, transparent 60%)'
+                    : 'transparent',
+                transition: 'background 0.5s ease',
+            }}
+        >
+            {/* Fixed aspect ratio container - MUST NOT change height */}
+            <div
+                className="w-full max-w-3xl rounded-xl overflow-hidden relative"
+                style={{
+                    aspectRatio: '16 / 9',
+                    background: '#0a0a0f',
+                    boxShadow: isPlaying
+                        ? '0 0 80px rgba(255,120,40,0.15), 0 25px 50px rgba(0,0,0,0.5)'
+                        : '0 25px 50px rgba(0,0,0,0.5)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    transition: 'box-shadow 0.5s ease',
+                }}
+            >
+                {/* Dissolve transition layer */}
+                <div
+                    className="absolute inset-0 transition-opacity duration-300"
+                    style={{ opacity: isTransitioning ? 0 : 1 }}
+                >
+                    {video ? (
+                        <video
+                            ref={videoRef}
+                            key={video.id}
+                            src={videoUrl}
+                            className="w-full h-full object-contain"
+                            style={{
+                                colorScheme: 'dark',
+                                backgroundColor: '#000'
+                            }}
+                            controls
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            onEnded={() => {
+                                setIsPlaying(false);
+                                markCompleted(video.id);
+                            }}
+                            onTimeUpdate={(e) => {
+                                const current = e.target.currentTime;
+                                const duration = e.target.duration;
+                                if (duration > 0) {
+                                    updateProgress(video.id, current / duration, current);
+                                }
+                            }}
+                        />
+                    ) : (
+                        <IdleHearthState />
+                    )}
+                </div>
+            </div>
+
+            {/* Video metadata (only when video active) */}
+            {video && !isTransitioning && (
+                <div className="mt-4 text-center max-w-2xl">
+                    <h2
+                        className="text-lg mb-1"
+                        style={{
+                            fontFamily: 'Cinzel, serif',
+                            color: 'var(--accent-color)',
+                        }}
+                    >
+                        {video.title}
+                    </h2>
+                    <div
+                        className="text-[11px] text-neutral-500"
+                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                    >
+                        {video.duration} • {video.description}
+                    </div>
+                </div>
+            )}
+        </section>
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIDEO TOKEN - Minimal selector (icon + title + duration, no thumbnail)
+// ═══════════════════════════════════════════════════════════════════════════
+function VideoToken({ video, isSelected, onClick }) {
+    const icons = {
+        featured: '◈',
+        foundations: '△',
+        explorations: '◇',
+        wisdom: '✦',
+    };
+    const icon = icons[video.category] || '◆';
 
     return (
         <button
             onClick={() => onClick(video)}
-            className="w-full text-left group transition-all duration-200"
+            className="flex-shrink-0 w-40 p-3 text-left transition-all duration-200 rounded-lg border"
             style={{
-                transform: 'translateY(0)',
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
+                background: isSelected
+                    ? 'rgba(255,140,50,0.1)'
+                    : 'rgba(255,255,255,0.02)',
+                borderColor: isSelected
+                    ? 'rgba(255,140,50,0.5)'
+                    : 'rgba(255,255,255,0.08)',
+                boxShadow: isSelected
+                    ? '0 0 20px rgba(255,120,40,0.2)'
+                    : 'none',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)',
             }}
         >
-            {/* Thumbnail Container - Wisdom styled */}
-            <div
-                className="relative aspect-video rounded-[14px] overflow-hidden mb-2"
-                style={{
-                    background: 'radial-gradient(circle at 20% 0%, rgba(255,186,120,0.22), transparent 55%), linear-gradient(180deg, rgba(20,15,18,0.95), rgba(10,8,10,0.98))',
-                    boxShadow: 'inset 0 0 0 2px rgba(243, 210, 130, 0.5)',
-                }}
-            >
-                {thumbnailUrl ? (
-                    <img
-                        src={thumbnailUrl}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl text-[var(--gold-80)]">
-                        🎬
-                    </div>
-                )}
-
-                {/* Play overlay on hover - Gold themed */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center"
-                        style={{
-                            background: 'rgba(237, 195, 101, 0.9)',
-                            boxShadow: '0 0 20px rgba(255,200,100,0.6)',
-                        }}
-                    >
-                        <span className="text-[#050508] ml-1 text-lg">▶</span>
-                    </div>
-                </div>
-
-                {/* Duration badge - Gold gradient */}
-                <div
-                    className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium"
-                    style={{
-                        background: 'linear-gradient(135deg, var(--gold-80) 0%, var(--gold-60) 100%)',
-                        color: '#050508',
-                    }}
+            {/* Icon + Duration row */}
+            <div className="flex justify-between items-center mb-2">
+                <span
+                    className="text-sm"
+                    style={{ color: isSelected ? 'rgba(255,180,100,0.9)' : 'rgba(255,255,255,0.3)' }}
+                >
+                    {icon}
+                </span>
+                <span
+                    className="text-[9px] font-mono"
+                    style={{ color: isSelected ? 'rgba(255,180,100,0.7)' : 'rgba(255,255,255,0.3)' }}
                 >
                     {video.duration}
-                </div>
-
-                {/* Watch status badge */}
-                {state.completed && (
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                        <span className="text-white text-[10px]">✓</span>
-                    </div>
-                )}
-                {!state.completed && state.progress > 0 && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-                        <div
-                            className="h-full"
-                            style={{
-                                width: `${state.progress * 100}%`,
-                                background: 'linear-gradient(90deg, var(--gold-60), var(--gold-80))',
-                            }}
-                        />
-                    </div>
-                )}
+                </span>
             </div>
-
-            {/* Title and description */}
-            <h4 className="text-[12px] font-medium text-white group-hover:text-[var(--gold-80)] transition-colors line-clamp-2 mb-1">
+            {/* Title */}
+            <h3
+                className="text-[11px] leading-tight line-clamp-2"
+                style={{
+                    color: isSelected ? 'rgba(255,220,180,0.95)' : 'rgba(255,255,255,0.6)',
+                    fontFamily: 'Georgia, serif',
+                }}
+            >
                 {video.title}
-            </h4>
-            <p className="text-[10px] text-[rgba(253,251,245,0.5)] line-clamp-2">
-                {video.description}
-            </p>
+            </h3>
         </button>
     );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// OFFERING BAND - Horizontal scrolling row with category label
+// ═══════════════════════════════════════════════════════════════════════════
+function OfferingBand({ label, videos, activeVideoId, onSelect }) {
+    const scrollRef = useRef(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
 
-/**
- * VideoLibrary - Full browse/search interface
- */
-export function VideoLibrary() {
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedVideo, setSelectedVideo] = useState(null);
-    const { getWatchStats } = useVideoStore();
+    // Check scroll state
+    const updateScrollState = () => {
+        if (!scrollRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        setCanScrollLeft(scrollLeft > 10);
+        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    };
 
-    const stats = getWatchStats();
-
-    // Filter videos based on category and search
-    const filteredVideos = useMemo(() => {
-        let videos = searchQuery ? searchVideos(searchQuery) : VIDEOS;
-
-        if (selectedCategory !== 'all') {
-            videos = videos.filter(v => v.category === selectedCategory);
+    useEffect(() => {
+        updateScrollState();
+        const el = scrollRef.current;
+        if (el) {
+            el.addEventListener('scroll', updateScrollState);
+            window.addEventListener('resize', updateScrollState);
         }
+        return () => {
+            if (el) el.removeEventListener('scroll', updateScrollState);
+            window.removeEventListener('resize', updateScrollState);
+        };
+    }, [videos]);
 
-        // Sort: in-progress first, then by order
-        return videos.sort((a, b) => a.order - b.order);
-    }, [selectedCategory, searchQuery]);
+    // Scroll by ~80% of visible width
+    const scroll = (direction) => {
+        if (!scrollRef.current) return;
+        const scrollAmount = scrollRef.current.clientWidth * 0.8;
+        scrollRef.current.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth',
+        });
+    };
 
-    const featuredVideos = useMemo(() => getFeaturedVideos(), []);
+    // Don't render empty bands
+    if (!videos || videos.length === 0) return null;
 
     return (
-        <div className="w-full">
-            {/* Header with stats */}
-            <div className="flex items-center justify-between mb-4">
-                <h2
-                    className="text-sm font-medium text-white"
-                    style={{ fontFamily: 'Georgia, serif' }}
+        <div className="mb-6">
+            {/* Label with scroll arrows */}
+            <div className="flex items-center justify-between mb-3 px-4">
+                <div
+                    className="text-[10px] uppercase tracking-[0.2em]"
+                    style={{
+                        color: 'rgba(255,200,120,0.6)',
+                        fontFamily: 'Georgia, serif',
+                    }}
                 >
-                    Video Library
-                </h2>
-                <div className="text-[9px] text-[rgba(253,251,245,0.5)]">
-                    {stats.completed}/{VIDEOS.length} completed
+                    ▶ {label}
+                </div>
+
+                {/* Arrow buttons */}
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => scroll('left')}
+                        disabled={!canScrollLeft}
+                        className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                            background: canScrollLeft ? 'rgba(255,180,100,0.15)' : 'transparent',
+                            color: canScrollLeft ? 'rgba(255,180,100,0.8)' : 'rgba(255,255,255,0.2)',
+                            cursor: canScrollLeft ? 'pointer' : 'default',
+                        }}
+                    >
+                        ←
+                    </button>
+                    <button
+                        onClick={() => scroll('right')}
+                        disabled={!canScrollRight}
+                        className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                            background: canScrollRight ? 'rgba(255,180,100,0.15)' : 'transparent',
+                            color: canScrollRight ? 'rgba(255,180,100,0.8)' : 'rgba(255,255,255,0.2)',
+                            cursor: canScrollRight ? 'pointer' : 'default',
+                        }}
+                    >
+                        →
+                    </button>
                 </div>
             </div>
 
-            {/* Search bar */}
-            <div className="relative mb-4">
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search videos..."
-                    className="wisdom-search w-full px-3 py-2 pl-8 text-white text-[11px] placeholder:text-[rgba(253,251,245,0.3)]"
-                />
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gold-60)] text-sm">
-                    🔍
-                </span>
-            </div>
+            {/* Horizontal scroll container */}
+            <div className="relative">
+                {/* Left fade */}
+                {canScrollLeft && (
+                    <div
+                        className="absolute left-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
+                        style={{ background: 'linear-gradient(to right, rgba(10,10,15,1), transparent)' }}
+                    />
+                )}
 
-            {/* Category chips */}
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-                <button
-                    onClick={() => setSelectedCategory('all')}
-                    className={`px-3 py-1.5 rounded-full text-[10px] whitespace-nowrap transition-all ${selectedCategory === 'all'
-                        ? 'bg-[var(--accent-color)] text-black font-medium'
-                        : 'bg-[rgba(253,251,245,0.08)] text-[rgba(253,251,245,0.7)] hover:bg-[rgba(253,251,245,0.12)]'
-                        }`}
+                {/* Scroll area */}
+                <div
+                    ref={scrollRef}
+                    className="flex gap-3 px-4 pb-2"
+                    style={{
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        scrollbarWidth: 'none', // Firefox
+                        msOverflowStyle: 'none', // IE
+                        WebkitOverflowScrolling: 'touch', // iOS momentum
+                    }}
                 >
-                    All ({VIDEOS.length})
-                </button>
-                {VIDEO_CATEGORIES.map(cat => {
-                    const count = VIDEOS.filter(v => v.category === cat.id).length;
-                    return (
-                        <button
-                            key={cat.id}
-                            onClick={() => setSelectedCategory(cat.id)}
-                            className={`px-3 py-1.5 rounded-full text-[10px] whitespace-nowrap transition-all ${selectedCategory === cat.id
-                                ? 'bg-[var(--accent-color)] text-black font-medium'
-                                : 'bg-[rgba(253,251,245,0.08)] text-[rgba(253,251,245,0.7)] hover:bg-[rgba(253,251,245,0.12)]'
-                                }`}
-                        >
-                            {cat.icon} {cat.label} ({count})
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Featured section (only when viewing all and no search) */}
-            {selectedCategory === 'all' && !searchQuery && featuredVideos.length > 0 && (
-                <div className="mb-6">
-                    <h3 className="text-[10px] uppercase tracking-wider text-[rgba(253,251,245,0.5)] mb-3">
-                        Featured
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        {featuredVideos.slice(0, 4).map(video => (
-                            <VideoCard
-                                key={video.id}
-                                video={video}
-                                onClick={setSelectedVideo}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Video grid */}
-            <div>
-                {selectedCategory !== 'all' || searchQuery ? (
-                    <h3 className="text-[10px] uppercase tracking-wider text-[rgba(253,251,245,0.5)] mb-3">
-                        {searchQuery
-                            ? `Search results (${filteredVideos.length})`
-                            : VIDEO_CATEGORIES.find(c => c.id === selectedCategory)?.label
-                        }
-                    </h3>
-                ) : (
-                    <h3 className="text-[10px] uppercase tracking-wider text-[rgba(253,251,245,0.5)] mb-3">
-                        All Videos
-                    </h3>
-                )}
-
-                {filteredVideos.length === 0 ? (
-                    <div className="py-8 text-center text-[rgba(253,251,245,0.4)] text-[11px]">
-                        No videos found
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                        {filteredVideos.map(video => (
-                            <VideoCard
-                                key={video.id}
-                                video={video}
-                                onClick={setSelectedVideo}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Video player modal */}
-            <VideoPlayerModal
-                video={selectedVideo}
-                isOpen={!!selectedVideo}
-                onClose={() => setSelectedVideo(null)}
-            />
-        </div>
-    );
-}
-
-/**
- * Compact video list for embedding in other sections
- */
-export function VideoListCompact({ videos, maxItems = 3 }) {
-    const [selectedVideo, setSelectedVideo] = useState(null);
-    const { getVideoState } = useVideoStore();
-
-    const displayVideos = videos.slice(0, maxItems);
-
-    return (
-        <div>
-            <div className="space-y-2">
-                {displayVideos.map(video => {
-                    const state = getVideoState(video.id);
-                    return (
-                        <button
+                    <style>{`
+                        .offering-scroll::-webkit-scrollbar { display: none; }
+                    `}</style>
+                    {videos.map(video => (
+                        <VideoToken
                             key={video.id}
-                            onClick={() => setSelectedVideo(video)}
-                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[rgba(253,251,245,0.05)] transition-colors text-left"
-                        >
-                            {/* Thumbnail */}
-                            <div className="w-16 h-9 rounded overflow-hidden bg-[rgba(0,0,0,0.3)] flex-shrink-0 relative">
-                                {video.provider === 'youtube' && (
-                                    <img
-                                        src={`https://img.youtube.com/vi/${video.externalId}/default.jpg`}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                                {state.completed && (
-                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                        <span className="text-green-400 text-xs">✓</span>
-                                    </div>
-                                )}
-                            </div>
+                            video={video}
+                            isSelected={video.id === activeVideoId}
+                            onClick={onSelect}
+                        />
+                    ))}
+                </div>
 
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[11px] text-white truncate">{video.title}</p>
-                                <p className="text-[9px] text-[rgba(253,251,245,0.4)]">{video.duration}</p>
-                            </div>
-
-                            {/* Play icon */}
-                            <span className="text-[rgba(253,251,245,0.4)]">▶</span>
-                        </button>
-                    );
-                })}
+                {/* Right fade */}
+                {canScrollRight && (
+                    <div
+                        className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
+                        style={{ background: 'linear-gradient(to left, rgba(10,10,15,1), transparent)' }}
+                    />
+                )}
             </div>
-
-            <VideoPlayerModal
-                video={selectedVideo}
-                isOpen={!!selectedVideo}
-                onClose={() => setSelectedVideo(null)}
-            />
         </div>
     );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ASH FADE BOUNDARY - Signals end of space
+// ═══════════════════════════════════════════════════════════════════════════
+function AshFadeBoundary() {
+    return (
+        <div
+            className="h-24 pointer-events-none"
+            style={{
+                background: 'linear-gradient(to top, rgba(20,15,12,0.8), transparent)',
+            }}
+        />
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIDEO LIBRARY - Main component (the Hearth)
+// ═══════════════════════════════════════════════════════════════════════════
+export function VideoLibrary() {
+    // Idle state by default (null = no video selected)
+    const [activeVideo, setActiveVideo] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+
+    // Group videos by category (meaningful bands only)
+    const featuredVideos = VIDEOS.filter(v => v.isFeatured);
+    const allVideos = VIDEOS; // For now, show all in one band since we only have wisdom category
+
+    // The "tending" handler with dissolve transition
+    const tendFire = (video) => {
+        // Guard: don't reset if selecting same video
+        if (activeVideo?.id === video.id) return;
+
+        // Dissolve out
+        setIsTransitioning(true);
+
+        setTimeout(() => {
+            setActiveVideo(video);
+            setIsPlaying(false);
+            // Dissolve in
+            setIsTransitioning(false);
+        }, 300);
+    };
+
+    return (
+        <div
+            className="w-full min-h-[70vh] flex flex-col"
+            style={{ background: 'rgba(10,10,15,0.95)' }}
+        >
+            {/* THE HEARTH - Always at top, fixed size */}
+            <VideoHearth
+                video={activeVideo}
+                isPlaying={isPlaying}
+                setIsPlaying={setIsPlaying}
+                isTransitioning={isTransitioning}
+            />
+
+            {/* THE OFFERINGS - Horizontal bands */}
+            <div className="flex-1 py-4">
+                {/* Featured band (if any) */}
+                {featuredVideos.length > 0 && (
+                    <OfferingBand
+                        label="Featured"
+                        videos={featuredVideos}
+                        activeVideoId={activeVideo?.id}
+                        onSelect={tendFire}
+                    />
+                )}
+
+                {/* All videos band (meaningful, not catalog) */}
+                <OfferingBand
+                    label="Library"
+                    videos={allVideos}
+                    activeVideoId={activeVideo?.id}
+                    onSelect={tendFire}
+                />
+            </div>
+
+            {/* ASH BOUNDARY - End of space */}
+            <AshFadeBoundary />
+        </div>
+    );
+}
+
+// Note: VideoListCompact is available from VideoPlayer.jsx if needed elsewhere
