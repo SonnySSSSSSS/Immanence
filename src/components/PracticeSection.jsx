@@ -181,6 +181,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0].id);
   const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
   const [vipassanaTheme, setVipassanaTheme] = useState('dawnSky');
+  const [vipassanaElement, setVipassanaElement] = useState('bird');
 
   // Sound configuration state
   const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
@@ -567,7 +568,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Vipassana") {
       return (
         <VipassanaVisual
-          themeId={vipassanaTheme}
+          wallpaperId={vipassanaTheme}
+          themeId={vipassanaElement}
           durationSeconds={duration * 60}
           stage={theme.stage || 'flame'}
           onComplete={handleStop}

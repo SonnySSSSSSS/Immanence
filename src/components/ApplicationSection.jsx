@@ -68,8 +68,15 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
     setSelectedModeId(modeId);
   };
 
-  const handleBackFromMode = () => {
-    setSelectedModeId(null);
+  // Handle back or switch to another mode
+  const handleBackFromMode = (nextModeId = null) => {
+    if (nextModeId && typeof nextModeId === 'string') {
+      // Switch to next mode directly
+      setSelectedModeId(nextModeId);
+    } else {
+      // Just go back to mode list
+      setSelectedModeId(null);
+    }
   };
 
   // Active path - show tracking / modes interface

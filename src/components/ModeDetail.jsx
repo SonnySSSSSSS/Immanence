@@ -6,12 +6,12 @@ import { FOUR_MODES_BY_ID } from '../data/fourModes.js';
 import { ModeTraining } from './Application/ModeTraining.jsx';
 import { PRACTICE_DEFINITIONS } from '../state/practiceConfig.js';
 
-// Mode-specific consequence anchors (gravity without authority)
+// Mode-specific consequence anchors (IE v1 - gravity without authority)
 const MODE_CONSEQUENCES = {
-    mirror: "What you can't see, you can't choose about.",
-    resonator: "Unfelt emotion doesn't disappear. It modulates behavior.",
+    mirror: "What you can't see accurately, you can't respond to accurately.",
     prism: "The story you tell yourself becomes the world you live in.",
-    sword: "Delayed action doesn't wait for you. It reshapes the field.",
+    wave: "Unfelt intensity doesn't disappear. It modulates behavior.",
+    sword: "Uncommitted action drifts. Named action can be tracked.",
 };
 
 // Responsive Beacon Component - Active field, not logo
@@ -226,19 +226,19 @@ export function ModeDetail({ modeId, onBack }) {
 
                 <CyclicStation title="How it announces itself" accent={practice?.accent} index={1}>
                     <p style={{ fontStyle: 'italic' }}>
-                        {modeId === 'mirror' && "When you need to see clearly without distortion. When reactions are running ahead of awareness."}
-                        {modeId === 'resonator' && "When emotions feel overwhelming or stuck. When the body holds tension you can't name."}
-                        {modeId === 'prism' && "When you're trapped in one interpretation. When the story feels fixed but doesn't serve you."}
-                        {modeId === 'sword' && "When clarity exists but action doesn't follow. When hesitation has become the pattern."}
+                        {modeId === 'mirror' && "When reactions are running ahead of awareness. When you don't have a neutral anchor."}
+                        {modeId === 'prism' && "When you catch yourself saying 'obviously' or 'clearly'. When the interpretation feels like fact."}
+                        {modeId === 'wave' && "When the urge to act is stronger than the clarity about what to do. When intensity needs to move but shouldn't discharge."}
+                        {modeId === 'sword' && "When clarity exists but action doesn't follow. When you know what's needed but haven't named it."}
                     </p>
                 </CyclicStation>
 
-                <CyclicStation title="How to stay with it" accent={practice?.accent} index={2}>
+                <CyclicStation title="The constraint" accent={practice?.accent} index={2}>
                     <p style={{ fontStyle: 'italic' }}>
-                        {modeId === 'mirror' && "90 seconds of stillness. Let what is be enough."}
-                        {modeId === 'resonator' && "5 steps through sensation, emotion, story, need, and back to sensation. Stay with what can't be named."}
-                        {modeId === 'prism' && "3 frames: what happened, what else could this mean, which frame gives you a next move."}
-                        {modeId === 'sword' && "3 prompts: what needs to stop, what needs to start, smallest real step today."}
+                        {modeId === 'mirror' && "No adjectives. No identity labels. No assumed intent. Would a camera capture this?"}
+                        {modeId === 'prism' && "Every thought must be categorized. Supported only if the Mirror text proves it explicitly."}
+                        {modeId === 'wave' && "You cannot act on impulses during the timer. Observe until it moves."}
+                        {modeId === 'sword' && "No vague intentions. Specific action, named cost, time-bound commitment."}
                     </p>
                 </CyclicStation>
             </div>
@@ -268,6 +268,20 @@ export function ModeDetail({ modeId, onBack }) {
                 mode={modeId}
                 isOpen={trainingOpen}
                 onClose={() => setTrainingOpen(false)}
+                onSwitchMode={(nextModeId) => {
+                    // Close current modal and navigate to next mode
+                    // This triggers the parent component to switch views
+                    setTrainingOpen(false);
+                    // Immediately re-open with the new mode
+                    setTimeout(() => {
+                        // Navigate to the new mode (the parent should handle this)
+                        // For now, we'll just re-open the modal - the parent needs to change modeId
+                        if (onBack) {
+                            // Signal to parent we want to switch to next mode
+                            onBack(nextModeId);
+                        }
+                    }, 100);
+                }}
             />
         </div>
     );

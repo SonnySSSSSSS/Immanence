@@ -44,8 +44,8 @@ export function VipassanaVisual({
     // Get wallpaper data (may be different from theme)
     const wallpaperData = VIPASSANA_THEMES[effectiveWallpaperId] || VIPASSANA_THEMES.dawnSky;
 
-    // Element type locked to theme (no manual override)
-    const elementType = themeData?.thoughtElement || 'cloud';
+    // Element type from themeId (bird, cloud, leaf, lantern)
+    const elementType = themeData?.thoughtElement || themeId || 'cloud';
 
     // Timer tick
     useEffect(() => {
@@ -204,13 +204,26 @@ export function VipassanaVisual({
                 opacity={0.3}
             />
 
-            {/* Exit button - subtle */}
+            {/* Exit button - improved visibility */}
             <button
                 onClick={onExit}
-                className="fixed top-6 left-6 text-white/30 hover:text-white/50 transition-opacity text-sm z-20"
+                className="fixed top-6 left-6 text-white/50 hover:text-white/80 transition-all text-sm z-20 flex items-center gap-2 group"
             >
-                ← Exit
+                <span>← Exit</span>
+                <span className="text-[10px] opacity-0 group-hover:opacity-60 transition-opacity">(ESC)</span>
             </button>
+
+            {/* Keyboard hints - subtle overlay */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                <div
+                    className="text-[10px] uppercase tracking-wider text-white/30 text-center"
+                    style={{
+                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                    }}
+                >
+                    Tap to notice • Long-press for details
+                </div>
+            </div>
 
 
 

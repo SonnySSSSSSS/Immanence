@@ -1,14 +1,24 @@
 // src/components/Application/ModeTraining.jsx
 // Modal container for mode-based training practices
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useModeTrainingStore, PRACTICE_STATES } from '../../state/modeTrainingStore.js';
 import { PRACTICE_DEFINITIONS, MODE_CHECK_OPTIONS } from '../../state/practiceConfig.js';
+import { useChainStore } from '../../state/chainStore.js';
+import { FOUR_MODES } from '../../data/fourModes.js';
 
-// Import practices
-import { MirrorStillness } from './practices/MirrorStillness.jsx';
-import { ResonatorChambering } from './practices/ResonatorChambering.jsx';
-import { PrismReframing } from './practices/PrismReframing.jsx';
-import { SwordCompression } from './practices/SwordCompression.jsx';
+// Import practices (IE v1)
+import { MirrorObservation } from './practices/MirrorObservation.jsx';
+import { WaveRide } from './practices/WaveRide.jsx';
+import { PrismSeparation } from './practices/PrismSeparation.jsx';
+import { SwordCommitment } from './practices/SwordCommitment.jsx';
+
+// Get next mode in chain sequence
+const MODE_SEQUENCE = ['mirror', 'prism', 'wave', 'sword'];
+const getNextMode = (currentMode) => {
+    const currentIndex = MODE_SEQUENCE.indexOf(currentMode);
+    if (currentIndex === -1 || currentIndex === MODE_SEQUENCE.length - 1) return null;
+    return MODE_SEQUENCE[currentIndex + 1];
+};
 
 // Mode Check (Harmony) component
 function ModeCheck({ onComplete }) {
@@ -61,7 +71,7 @@ function ModeCheck({ onComplete }) {
 }
 
 // Main ModeTraining modal
-export function ModeTraining({ mode, isOpen, onClose }) {
+export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
     const {
         practiceState,
         setPracticeState,
@@ -70,24 +80,65 @@ export function ModeTraining({ mode, isOpen, onClose }) {
         shouldTriggerHarmony,
     } = useModeTrainingStore();
 
+    const { activeChain, isModeAccessible } = useChainStore();
+
+    // Chain transition state - shown after completing a chain mode
+    const [showChainTransition, setShowChainTransition] = useState(false);
+    const [completedMode, setCompletedMode] = useState(null);
+
     const config = PRACTICE_DEFINITIONS[mode];
 
-    // Start session when modal opens
+    // Reset chain transition state when modal opens
     useEffect(() => {
-        if (isOpen && practiceState === PRACTICE_STATES.IDLE) {
-            startSession(mode);
+        if (isOpen) {
+            setShowChainTransition(false);
+            setCompletedMode(null);
         }
-    }, [isOpen, practiceState, mode, startSession]);
+    }, [isOpen]);
+
+    // Start session when modal opens
+    // Also reset if stuck in HANDOFF state from previous session
+    useEffect(() => {
+        if (isOpen && !showChainTransition) {
+            if (practiceState === PRACTICE_STATES.HANDOFF || practiceState === PRACTICE_STATES.REFLECTION) {
+                // Reset stuck state
+                endSession();
+            }
+            if (practiceState === PRACTICE_STATES.IDLE) {
+                startSession(mode);
+            }
+        }
+    }, [isOpen, practiceState, mode, startSession, endSession, showChainTransition]);
 
     // Handle practice complete → check for Harmony trigger
+    // Skip Harmony for chain-based modes (they use chainStore for progression)
+    const isChainMode = ['mirror', 'prism', 'wave', 'sword'].includes(mode);
+
     const handlePracticeComplete = useCallback(() => {
-        if (shouldTriggerHarmony()) {
+        if (isChainMode) {
+            // For chain modes: show transition screen
+            endSession();
+            setCompletedMode(mode);
+            setShowChainTransition(true);
+        } else if (shouldTriggerHarmony()) {
             setPracticeState(PRACTICE_STATES.HANDOFF);
         } else {
             endSession();
             onClose();
         }
-    }, [shouldTriggerHarmony, setPracticeState, endSession, onClose]);
+    }, [isChainMode, shouldTriggerHarmony, setPracticeState, endSession, onClose, mode]);
+
+    // Handle proceeding to next mode
+    const handleProceedToNextMode = () => {
+        const nextMode = getNextMode(completedMode);
+        if (nextMode && onSwitchMode) {
+            setShowChainTransition(false);
+            onSwitchMode(nextMode);
+        } else {
+            // No next mode or no handler, just close
+            onClose();
+        }
+    };
 
     // Handle mode check complete
     const handleModeCheckComplete = useCallback(() => {
@@ -118,6 +169,113 @@ export function ModeTraining({ mode, isOpen, onClose }) {
 
     // Render the appropriate practice component
     const renderPractice = () => {
+        // Chain transition screen - shown after completing a chain mode
+        if (showChainTransition) {
+            const nextMode = getNextMode(completedMode);
+            const nextModeData = nextMode ? FOUR_MODES.find(m => m.id === nextMode) : null;
+            const completedModeData = FOUR_MODES.find(m => m.id === completedMode);
+
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                    <p
+                        className="text-xs uppercase tracking-[0.2em] mb-4"
+                        style={{
+                            fontFamily: "'Outfit', sans-serif",
+                            color: 'rgba(147, 197, 253, 0.6)',
+                        }}
+                    >
+                        ✓ {completedModeData?.name || completedMode} Complete
+                    </p>
+
+                    {nextModeData ? (
+                        <>
+                            <p
+                                className="text-lg mb-6"
+                                style={{
+                                    fontFamily: "'Crimson Pro', serif",
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                }}
+                            >
+                                Proceed to {nextModeData.name}?
+                            </p>
+                            <p
+                                className="text-xs mb-8 max-w-xs"
+                                style={{
+                                    fontFamily: "'Crimson Pro', serif",
+                                    fontStyle: 'italic',
+                                    color: 'rgba(255, 255, 255, 0.5)',
+                                }}
+                            >
+                                {nextModeData.tagline}
+                            </p>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={onClose}
+                                    className="px-6 py-3 rounded border border-white/20 text-white/50 hover:text-white/70 hover:border-white/40 transition-all"
+                                    style={{
+                                        fontFamily: "'Outfit', sans-serif",
+                                        fontSize: '11px',
+                                        letterSpacing: '0.08em',
+                                    }}
+                                >
+                                    CLOSE
+                                </button>
+                                <button
+                                    onClick={handleProceedToNextMode}
+                                    className="px-8 py-3 rounded border transition-all"
+                                    style={{
+                                        fontFamily: "'Outfit', sans-serif",
+                                        fontSize: '11px',
+                                        letterSpacing: '0.08em',
+                                        borderColor: 'rgba(147, 197, 253, 0.5)',
+                                        color: 'rgba(147, 197, 253, 0.9)',
+                                        background: 'rgba(147, 197, 253, 0.1)',
+                                    }}
+                                >
+                                    CONTINUE TO {nextModeData.name.toUpperCase()}
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <p
+                                className="text-lg mb-6"
+                                style={{
+                                    fontFamily: "'Crimson Pro', serif",
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                }}
+                            >
+                                Chain Complete
+                            </p>
+                            <p
+                                className="text-xs mb-8 max-w-xs"
+                                style={{
+                                    fontFamily: "'Crimson Pro', serif",
+                                    fontStyle: 'italic',
+                                    color: 'rgba(255, 255, 255, 0.5)',
+                                }}
+                            >
+                                You have completed the full Immanence Chain.
+                            </p>
+                            <button
+                                onClick={onClose}
+                                className="px-8 py-3 rounded border transition-all"
+                                style={{
+                                    fontFamily: "'Outfit', sans-serif",
+                                    fontSize: '11px',
+                                    letterSpacing: '0.08em',
+                                    borderColor: 'rgba(147, 197, 253, 0.5)',
+                                    color: 'rgba(147, 197, 253, 0.9)',
+                                }}
+                            >
+                                DONE
+                            </button>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
         // Handoff state = Mode Check
         if (practiceState === PRACTICE_STATES.HANDOFF) {
             return <ModeCheck onComplete={handleModeCheckComplete} />;
@@ -125,13 +283,14 @@ export function ModeTraining({ mode, isOpen, onClose }) {
 
         switch (mode) {
             case 'mirror':
-                return <MirrorStillness onComplete={handlePracticeComplete} />;
-            case 'resonator':
-                return <ResonatorChambering onComplete={handlePracticeComplete} />;
+                return <MirrorObservation onComplete={handlePracticeComplete} />;
+            case 'wave':
+            case 'resonator': // Legacy support
+                return <WaveRide onComplete={handlePracticeComplete} />;
             case 'prism':
-                return <PrismReframing onComplete={handlePracticeComplete} />;
+                return <PrismSeparation onComplete={handlePracticeComplete} />;
             case 'sword':
-                return <SwordCompression onComplete={handlePracticeComplete} />;
+                return <SwordCommitment onComplete={handlePracticeComplete} />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-center">

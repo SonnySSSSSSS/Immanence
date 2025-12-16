@@ -14,24 +14,29 @@ export const PRACTICE_DEFINITIONS = {
             complete: 'What tried to change?',
         },
     },
-    resonator: {
-        type: 'iteration',
-        iterations: 5,
+    wave: {
+        type: 'capacity',
+        duration: 90, // seconds
         accent: 'rgba(167, 139, 250, 0.8)', // purple
-        whisper: "Feel it. Don't fix it.",
-        allowSkip: true,
-        steps: [
-            'What is the sensation?',
-            'What is the emotion?',
-            'What is the story?',
-            'What is it asking for?',
-            'What changed in the body?', // Bookend - return to sensation
-        ],
+        whisper: 'Ride the wave.',
+        phases: ['inventory', 'somatic', 'impulse', 'ride', 'complete'],
         reflectionPrompts: {
-            manySkips: 'What made words unavailable?',
-            fewSkips: 'What shifted when you named it?',
+            aborted: 'Capacity exceeded. This is data, not failure.',
+            complete: 'What moved when you held it?',
         },
-        antiInflation: 'Treat this as a fit for today, not a verdict.',
+        antiInflation: 'Endurance is not victory. Just presence.',
+    },
+    // Legacy alias for resonator
+    resonator: {
+        type: 'capacity',
+        duration: 90,
+        accent: 'rgba(167, 139, 250, 0.8)',
+        whisper: 'Ride the wave.',
+        phases: ['inventory', 'somatic', 'impulse', 'ride', 'complete'],
+        reflectionPrompts: {
+            aborted: 'Capacity exceeded. This is data, not failure.',
+            complete: 'What moved when you held it?',
+        },
     },
     prism: {
         type: 'frames',

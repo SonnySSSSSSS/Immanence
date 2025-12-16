@@ -2,6 +2,7 @@
 // State management for Mode Training practices in Application
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useChainStore } from './chainStore.js';
 
 // Practice states: intro → active → reflection → handoff → end
 export const PRACTICE_STATES = {
@@ -243,6 +244,13 @@ export const useModeTrainingStore = create(
 
             // Check if Harmony mode check should trigger
             shouldTriggerHarmony: () => {
+                // HARD BLOCK: chain-based modes bypass Harmony entirely
+                // This is the authoritative guard - if a chain is active, Harmony NEVER triggers
+                const chainState = useChainStore.getState();
+                if (chainState.activeChain !== null) {
+                    return false;
+                }
+
                 const session = get().currentSession;
                 const sessions = get().sessions;
 

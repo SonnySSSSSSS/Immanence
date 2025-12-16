@@ -30,7 +30,7 @@ export function SessionSummary({
             }}
         >
             <div
-                className="relative px-12 py-10 rounded-3xl text-center max-w-md"
+                className="relative px-12 py-12 rounded-3xl text-center max-w-md"
                 style={{
                     background: 'rgba(20, 15, 25, 0.9)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -39,7 +39,7 @@ export function SessionSummary({
             >
                 {/* Title - passive language */}
                 <h2
-                    className="text-lg uppercase tracking-[0.2em] mb-8"
+                    className="text-lg uppercase tracking-[0.2em] mb-10"
                     style={{
                         fontFamily: "'Cinzel', serif",
                         color: 'rgba(255, 255, 255, 0.6)',
@@ -49,9 +49,9 @@ export function SessionSummary({
                 </h2>
 
                 {/* Main stat - passive phrasing */}
-                <div className="mb-8">
+                <div className="mb-10">
                     <div
-                        className="text-sm mb-2"
+                        className="text-sm mb-3"
                         style={{ color: 'rgba(255, 255, 255, 0.5)' }}
                     >
                         Thinking was noticed
@@ -69,6 +69,34 @@ export function SessionSummary({
                         </span>
                     </div>
                 </div>
+
+                {/* Dominant thought pattern insight */}
+                {usedCategories.length > 0 && (() => {
+                    const [dominantCategory] = usedCategories[0]; // Already sorted by count
+                    const category = THOUGHT_CATEGORIES[dominantCategory];
+                    const percentage = Math.round((categoryCounts[dominantCategory] / totalNotices) * 100);
+
+                    return percentage > 30 ? (
+                        <div className="mb-10">
+                            <div
+                                className="text-xs uppercase tracking-wider mb-2"
+                                style={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                            >
+                                Pattern observed
+                            </div>
+                            <div
+                                className="text-sm px-4 py-2 rounded-full inline-block"
+                                style={{
+                                    background: `${category.tint}15`,
+                                    border: `1px solid ${category.tint}40`,
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                }}
+                            >
+                                Most thoughts were {category.label.toLowerCase()}-focused
+                            </div>
+                        </div>
+                    ) : null;
+                })()}
 
                 {/* Category breakdown - hidden by default */}
                 {usedCategories.length > 0 && (
