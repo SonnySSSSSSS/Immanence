@@ -239,6 +239,13 @@ echo.
 :: Step 1: Build the app (this doesn't change git state)
 echo [DEPLOY] Step 1/4: Building app...
 echo.
+
+:: Clear old dist folder to prevent stale cache
+if exist "dist" (
+    echo [DEPLOY] Clearing old dist folder...
+    rmdir /s /q "dist"
+)
+
 call npm run build 2>&1
 if errorlevel 1 (
     echo.
