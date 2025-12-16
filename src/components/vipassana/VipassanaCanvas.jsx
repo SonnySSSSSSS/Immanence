@@ -233,16 +233,23 @@ export function VipassanaCanvas({
 
                 // Theme-specific motion additions
                 let motionX = 0, motionY = 0;
+                let opacityModifier = 1; // For cloud drift opacity variation
 
-                // Clouds: gentle vertical bob
+                // Clouds: gentle vertical bob + drift opacity variation
                 if (thought.bobAmplitude) {
                     motionY = Math.sin(now / 1000 * thought.bobFrequency + thought.phase) * thought.bobAmplitude * 20;
+                    // Add gentle opacity drift (±10% over 6 second cycle)
+                    opacityModifier = 0.9 + Math.sin(now / 3000 + thought.phase) * 0.1;
                 }
 
-                // Lanterns: subtle horizontal flicker
+                // Lanterns: firefly-like glow pulse + subtle float
                 if (thought.flickerVariance) {
+                    // Horizontal drift
                     motionX = Math.sin(now / 200 + thought.phase) * thought.flickerVariance * 5;
+                    // Vertical float with secondary oscillation
                     motionY += Math.sin(now / 400 + thought.phase * 1.5) * thought.flickerVariance * 2;
+                    // Firefly glow pulse (stronger variation, slower cycle)
+                    opacityModifier = 0.7 + Math.sin(now / 800 + thought.phase) * 0.3;
                 }
 
                 const renderX = (thought.originX || thought.x) + driftX + motionX;
@@ -278,8 +285,8 @@ export function VipassanaCanvas({
                     scale = 1;
                 }
 
-                // Apply tier modifiers
-                opacity *= tierAlphaModifier;
+                // Apply tier modifiers and cloud/lantern opacity variation
+                opacity *= tierAlphaModifier * opacityModifier;
                 scale *= tierScaleModifier;
 
                 // Bird animation: calculate current wing frame
@@ -288,10 +295,15 @@ export function VipassanaCanvas({
                     animFrame = Math.floor((now / 1000 + thought.phase) * thought.flapRate * 3) % 3;
                 }
 
-                // Leaf rotation: accumulate over time
+                // Leaf rotation: tumbling motion (rotation + wobble)
                 let rotation = 0;
+                let leafWobbleX = 0, leafWobbleY = 0;
                 if (thought.rotationSpeed) {
+                    // Primary rotation
                     rotation = (age * thought.rotationSpeed + thought.phase) % (Math.PI * 2);
+                    // Add tumble wobble (secondary axis)
+                    leafWobbleX = Math.sin(age * thought.rotationSpeed * 0.7 + thought.phase) * 3;
+                    leafWobbleY = Math.cos(age * thought.rotationSpeed * 0.5 + thought.phase) * 2;
                 }
 
                 ctx.globalAlpha = opacity;
@@ -359,18 +371,33 @@ export function VipassanaCanvas({
                         ctx.shadowColor = glowColor;
                     }
 
-                    // For birds: flip horizontally if needed
+                    // For birds: flip horizontally if needed + wing shadow during flap
                     if (themeElement === 'bird' && shouldFlip) {
+                        // Add subtle wing shadow during mid-flap (frame 1)
+                        if (animFrame === 1) {
+                            ctx.shadowBlur = 8 * scale;
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                            ctx.shadowOffsetY = 2;
+                        }
                         ctx.scale(-scale, scale); // Flip horizontally
+                    } else if (themeElement === 'bird') {
+                        // Add subtle wing shadow during mid-flap (frame 1)
+                        if (animFrame === 1) {
+                            ctx.shadowBlur = 8 * scale;
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                            ctx.shadowOffsetY = 2;
+                        }
+                        ctx.scale(scale, scale);
                     } else if (themeElement === 'leaf' && rotation !== 0) {
-                        // For leaves: apply rotation
+                        // For leaves: apply rotation + wobble translation
+                        ctx.translate(leafWobbleX, leafWobbleY);
                         ctx.rotate(rotation);
                         ctx.scale(scale, scale);
                     } else if (themeElement === 'cloud') {
                         // For clouds: stretch horizontally 50%
                         ctx.scale(scale * 1.5, scale);
                     } else {
-                        // For lanterns and non-flipped birds
+                        // For lanterns and other elements
                         ctx.scale(scale, scale);
                     }
 

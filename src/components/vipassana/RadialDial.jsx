@@ -98,22 +98,22 @@ export function RadialDial({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
         >
-            {/* Background blur */}
+            {/* Background blur - larger and stronger */}
             <div
                 className="absolute inset-0 rounded-full"
                 style={{
-                    width: '140px',
-                    height: '140px',
-                    left: '-70px',
-                    top: '-70px',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    backdropFilter: 'blur(8px)',
-                    animation: 'dialFadeIn 0.2s ease-out',
+                    width: '150px',
+                    height: '150px',
+                    left: '-75px',
+                    top: '-75px',
+                    background: 'radial-gradient(circle, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%)',
+                    backdropFilter: 'blur(12px)',
+                    animation: 'dialFadeIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
             />
 
-            {/* Category segments */}
-            {DIAL_SEGMENTS.map((segment) => {
+            {/* Category segments with staggered animation */}
+            {DIAL_SEGMENTS.map((segment, index) => {
                 const category = THOUGHT_CATEGORIES[segment.id];
                 const isHovered = hoveredSegment === segment.id;
                 const rad = (segment.angle * Math.PI) / 180;
@@ -127,21 +127,24 @@ export function RadialDial({
                         style={{
                             left: segmentX,
                             top: segmentY,
-                            transform: 'translate(-50%, -50%)',
-                            width: '48px',
-                            height: '48px',
+                            transform: `translate(-50%, -50%) scale(${isHovered ? 1.1 : 1})`,
+                            width: '42px',
+                            height: '42px',
                             background: isHovered
-                                ? category.color
-                                : 'rgba(255, 255, 255, 0.08)',
-                            border: `1px solid ${isHovered ? category.tint : 'rgba(255, 255, 255, 0.15)'}`,
-                            opacity: isHovered ? 1 : 0.8,
+                                ? `linear-gradient(135deg, ${category.color}, rgba(0,0,0,0.3))`
+                                : 'rgba(255, 255, 255, 0.1)',
+                            border: `2px solid ${isHovered ? category.tint : 'rgba(255, 255, 255, 0.2)'}`,
+                            opacity: isHovered ? 1 : 0.85,
+                            boxShadow: isHovered ? `0 0 20px ${category.tint}` : 'none',
+                            animation: `segmentEntry 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s backwards`,
                         }}
                         onClick={() => handleSegmentClick(segment.id)}
                     >
                         <span
-                            className="text-[10px] uppercase tracking-wider"
+                            className="text-[11px] font-medium uppercase tracking-wider"
                             style={{
-                                color: isHovered ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+                                color: isHovered ? '#fff' : 'rgba(255, 255, 255, 0.75)',
+                                textShadow: isHovered ? '0 2px 4px rgba(0,0,0,0.5)' : 'none',
                             }}
                         >
                             {category.label}
@@ -165,8 +168,12 @@ export function RadialDial({
 
             <style>{`
         @keyframes dialFadeIn {
-          from { opacity: 0; transform: scale(0.8); }
+          from { opacity: 0; transform: scale(0.7); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes segmentEntry {
+          from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
       `}</style>
         </div>

@@ -23,6 +23,7 @@ export function VipassanaVisual({
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isActive, setIsActive] = useState(true);
     const [showSummary, setShowSummary] = useState(false);
+    const [wallpaperTransition, setWallpaperTransition] = useState(false);
     const [sessionStats, setSessionStats] = useState({
         totalNotices: 0,
         categoryCounts: {},
@@ -43,16 +44,8 @@ export function VipassanaVisual({
     // Get wallpaper data (may be different from theme)
     const wallpaperData = VIPASSANA_THEMES[effectiveWallpaperId] || VIPASSANA_THEMES.dawnSky;
 
-    // Element type toggle (clouds, birds, leaves, lanterns)
-    const ELEMENT_TYPES = ['cloud', 'bird', 'leaf', 'lantern'];
-    const ELEMENT_ICONS = { cloud: '☁️', bird: '🐦', leaf: '🍂', lantern: '🏮' };
-    const [elementType, setElementType] = useState(themeData?.thoughtElement || 'cloud');
-
-    const cycleElementType = () => {
-        const currentIdx = ELEMENT_TYPES.indexOf(elementType);
-        const nextIdx = (currentIdx + 1) % ELEMENT_TYPES.length;
-        setElementType(ELEMENT_TYPES[nextIdx]);
-    };
+    // Element type locked to theme (no manual override)
+    const elementType = themeData?.thoughtElement || 'cloud';
 
     // Timer tick
     useEffect(() => {
@@ -167,14 +160,15 @@ export function VipassanaVisual({
             {/* Solid black base - blocks main app wallpaper */}
             <div className="absolute inset-0 bg-black" />
 
-            {/* Background wallpaper - never degrades */}
+            {/* Background wallpaper with crossfade transition */}
             <div
-                className="absolute inset-0"
+                className="absolute inset-0 transition-opacity duration-300"
                 style={{
                     backgroundImage: `url(${import.meta.env.BASE_URL}${wallpaperData.wallpaper})`,
                     backgroundSize: 'contain',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
+                    opacity: wallpaperTransition ? 0 : 1,
                 }}
             />
 
@@ -194,14 +188,14 @@ export function VipassanaVisual({
                 theme={{ ...themeData, thoughtElement: elementType }}
                 onThoughtSpawn={handleThoughtSpawn}
                 onThoughtCountChange={handleThoughtCountChange}
-                audioEnabled={true}
+                audioEnabled={false}
                 atmosphericEvent={atmosphericEvent}
             />
 
             {/* Static timer - center */}
             <StaticTimer
                 elapsedSeconds={elapsedSeconds}
-                opacity={0.65}
+                opacity={0.85}
             />
 
             {/* Mini avatar - top right */}
@@ -218,19 +212,7 @@ export function VipassanaVisual({
                 ← Exit
             </button>
 
-            {/* Element type toggle - top right, unobtrusive */}
-            <button
-                onClick={cycleElementType}
-                className="fixed top-6 right-6 text-white/40 hover:text-white/60 transition-all z-20 rounded-full px-2 py-1"
-                style={{
-                    fontSize: '14px',
-                    background: 'rgba(0,0,0,0.2)',
-                    backdropFilter: 'blur(4px)',
-                }}
-                title={`Switch element (${elementType})`}
-            >
-                {ELEMENT_ICONS[elementType]}
-            </button>
+
 
             {/* Session summary overlay */}
             <SessionSummary

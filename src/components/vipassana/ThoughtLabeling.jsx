@@ -49,6 +49,7 @@ export function ThoughtLabeling({
     const [thoughts, setThoughts] = useState([]);
     const [dialState, setDialState] = useState({ visible: false, x: 0, y: 0 });
     const [stickyThoughtId, setStickyThoughtId] = useState(null);
+    const [ripples, setRipples] = useState([]);
 
     // Refractory period tracking - prevents rapid spawn clusters
     const lastSpawnTimeRef = useRef(0);
@@ -232,9 +233,15 @@ export function ThoughtLabeling({
         onThoughtSpawn?.(newThought);
     }, [theme, playAudio, onThoughtSpawn]);
 
-    // Handle tap on empty space - spawn neutral thought
+    // Handle tap on empty space - spawn neutral thought + ripple
     const handleEmptyTap = (x, y) => {
         spawnThought(x, y, 'neutral');
+        // Add tap ripple
+        const rippleId = Date.now();
+        setRipples(prev => [...prev, { id: rippleId, x, y }]);
+        setTimeout(() => {
+            setRipples(prev => prev.filter(r => r.id !== rippleId));
+        }, 600); // Remove after animation completes
     };
 
     // Handle long-press on empty space - open dial
@@ -345,6 +352,30 @@ export function ThoughtLabeling({
                 atmosphericEvent={atmosphericEvent}
             />
 
+            {/* Tap ripple effects */}
+            {ripples.map((ripple) => (
+                <div
+                    key={ripple.id}
+                    className="absolute pointer-events-none"
+                    style={{
+                        left: ripple.x,
+                        top: ripple.y,
+                        transform: 'translate(-50%, -50%)',
+                    }}
+                >
+                    <div
+                        className="absolute inset-0 rounded-full border-2 border-white/30"
+                        style={{
+                            width: '40px',
+                            height: '40px',
+                            left: '-20px',
+                            top: '-20px',
+                            animation: 'rippleExpand 0.6s ease-out forwards',
+                        }}
+                    />
+                </div>
+            ))}
+
             {/* Radial dial for classification */}
             <RadialDial
                 x={dialState.x}
@@ -353,6 +384,19 @@ export function ThoughtLabeling({
                 onSelect={handleDialSelect}
                 onDismiss={handleDialDismiss}
             />
+
+            <style>{`
+                @keyframes rippleExpand {
+                    from {
+                        transform: scale(0.5);
+                        opacity: 0.8;
+                    }
+                    to {
+                        transform: scale(2.5);
+                        opacity: 0;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

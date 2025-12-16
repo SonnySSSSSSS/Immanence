@@ -3,7 +3,7 @@
 
 import React from 'react';
 
-export function StaticTimer({ elapsedSeconds = 0, opacity = 0.35 }) {
+export function StaticTimer({ elapsedSeconds = 0, opacity = 0.75 }) {
     const minutes = Math.floor(elapsedSeconds / 60);
     const seconds = elapsedSeconds % 60;
 
@@ -40,8 +40,21 @@ export function StaticTimer({ elapsedSeconds = 0, opacity = 0.35 }) {
                         cy="60"
                         r="56"
                         fill="none"
-                        stroke="rgba(255, 255, 255, 0.1)"
+                        stroke="rgba(255, 255, 255, 0.15)"
+                        strokeWidth="1.5"
+                    />
+                    {/* Pulsing inner glow */}
+                    <circle
+                        cx="60"
+                        cy="60"
+                        r="56"
+                        fill="none"
+                        stroke="rgba(255, 255, 255, 0.2)"
                         strokeWidth="1"
+                        style={{
+                            animation: 'timerPulse 4s ease-in-out infinite',
+                            filter: 'blur(2px)',
+                        }}
                     />
                 </svg>
 
@@ -50,8 +63,8 @@ export function StaticTimer({ elapsedSeconds = 0, opacity = 0.35 }) {
                     className="text-2xl tracking-[0.15em]"
                     style={{
                         fontFamily: "'Outfit', sans-serif",
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textShadow: '0 2px 12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1)',
                     }}
                 >
                     {timeString}
@@ -62,3 +75,22 @@ export function StaticTimer({ elapsedSeconds = 0, opacity = 0.35 }) {
 }
 
 export default StaticTimer;
+
+// CSS for timer pulse animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes timerPulse {
+        0%, 100% {
+            opacity: 0.2;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.4;
+            transform: scale(1.02);
+        }
+    }
+`;
+if (typeof document !== 'undefined' && !document.getElementById('vipassana-timer-styles')) {
+    style.id = 'vipassana-timer-styles';
+    document.head.appendChild(style);
+}
