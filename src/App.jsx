@@ -11,6 +11,8 @@ import { IndrasNet } from "./components/IndrasNet.jsx";
 import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
 import { AvatarPreview } from "./components/AvatarPreview.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
+import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
+import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
 import "./App.css";
@@ -76,6 +78,9 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
 
 
 function App() {
+  // Display mode (sanctuary/hearth)
+  const displayMode = useDisplayModeStore((s) => s.mode);
+
   // Check if user has seen welcome screen
   const getHasSeenWelcome = () => {
     try {
@@ -194,11 +199,31 @@ function App() {
         setAvatarAttention={setPreviewAttention}
       />
 
-      {/* Outer Black Container (The "Theater") */}
-      <div className="min-h-screen w-full flex justify-center bg-black overflow-visible">
+      {/* Outer Layout Container - Adapts to display mode */}
+      <div
+        className="min-h-screen w-full flex justify-center overflow-visible"
+        style={{
+          background: displayMode === 'sanctuary'
+            ? 'linear-gradient(135deg, #0a0a12 0%, #050508 100%)'
+            : '#000',
+        }}
+      >
 
-        {/* Inner App Container (The "Screen") - 1080px for mobile-first (1080x1920) */}
-        <div className="relative w-full max-w-[1080px] min-h-screen flex flex-col items-center text-white shadow-2xl overflow-hidden">
+        {/* Inner App Container */}
+        <div
+          className="relative min-h-screen flex flex-col items-center text-white overflow-hidden transition-all duration-500"
+          style={displayMode === 'sanctuary' ? {
+            // Sanctuary: Full bleed, max width for large screens
+            width: '100%',
+            maxWidth: '1536px', // max-w-screen-2xl
+            boxShadow: 'none',
+          } : {
+            // Hearth: Fixed portrait canvas with ember glow
+            width: '100%',
+            maxWidth: '540px', // Mobile-friendly width
+            boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
+          }}
+        >
           <Background stage={previewStage} />
 
           <div className="relative z-10 w-full flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
@@ -215,7 +240,9 @@ function App() {
                 </div>
               )}
 
-              <div className="min-w-[120px] flex-shrink-0 flex justify-end items-center gap-3">
+              <div className="min-w-[140px] flex-shrink-0 flex justify-end items-center gap-2">
+                {/* Display Mode Toggle */}
+                <DisplayModeToggle />
                 <button
                   type="button"
                   onClick={() => setShowDevPanel(v => !v)}
@@ -226,7 +253,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v2.83.0
+                  v2.84.0
                 </div>
                 {!isHub && (
                   <button
