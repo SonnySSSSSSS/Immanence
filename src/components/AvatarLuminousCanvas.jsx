@@ -512,6 +512,10 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   const breathStateRef = useRef(breathState);
   const weeklyPracticeLogRef = useRef(weeklyPracticeLog);
 
+  // Interaction State
+  const ritualHoverRef = useRef(null);
+  const hoverIntensityRef = useRef(0);
+
   const theme = useTheme();
 
   // Default gold HSL for all stages except Flame
@@ -558,6 +562,24 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   useEffect(() => {
     weeklyPracticeLogRef.current = weeklyPracticeLog;
   }, [weeklyPracticeLog]);
+
+  // Setup Interaction Listeners
+  useEffect(() => {
+    const handleRitualHover = (e) => {
+      ritualHoverRef.current = e.detail?.id || 'hover';
+    };
+    const handleRitualLeave = () => {
+      ritualHoverRef.current = null;
+    };
+
+    window.addEventListener('ritual:hover', handleRitualHover);
+    window.addEventListener('ritual:leave', handleRitualLeave);
+
+    return () => {
+      window.removeEventListener('ritual:hover', handleRitualHover);
+      window.removeEventListener('ritual:leave', handleRitualLeave);
+    };
+  }, []);
 
   // Update particle colors when theme/stage changes
   useEffect(() => {
@@ -645,6 +667,16 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
           scaleMod = 1.0;
           glowMod = 1.0;
         }
+      }
+
+      // INTELLIGENT RITUAL RESPONSE
+      // Lerp intensity based on hover state
+      const targetIntensity = ritualHoverRef.current ? 1 : 0;
+      hoverIntensityRef.current += (targetIntensity - hoverIntensityRef.current) * 0.08;
+
+      if (hoverIntensityRef.current > 0.01) {
+        scaleMod += hoverIntensityRef.current * 0.12; // Slight expansion
+        glowMod += hoverIntensityRef.current * 0.6;   // Significant brightness
       }
 
       // 1. Clear & Background

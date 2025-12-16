@@ -24,7 +24,7 @@ import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
 
-const PRACTICES = ["Breath & Stillness", "Ritual", "Vipassana", "Sensory", "Sound", "Visualization", "Cymatics"];
+const PRACTICES = ["Breath & Stillness", "Ritual", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
 // Scrolling Wheel Component
@@ -320,7 +320,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     let subType = null;
-    if (practice === "Sensory") subType = sensoryType;
+    if (practice === "Somatic Vipassana") subType = sensoryType;
     if (practice === "Sound") subType = soundType;
     if (practice === "Visualization") subType = geometry;
     if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
@@ -341,7 +341,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       let domain = 'breathwork';
       const p = practice.toLowerCase();
       if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
-      else if (p === 'sensory') domain = sensoryType;
+      else if (p === 'somatic vipassana') domain = sensoryType;
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
@@ -393,7 +393,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     instrumentation.startSession(
       domain,
       activeRitual?.category || null,
-      p === 'sensory' ? sensoryType : null
+      p === 'somatic vipassana' ? sensoryType : null
     );
   };
 
@@ -564,8 +564,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    // VIPASSANA MODE - Thought labeling meditation
-    if (practice === "Vipassana") {
+    // Cognitive Vipassana MODE - Thought labeling meditation
+    if (practice === "Cognitive Vipassana") {
       return (
         <VipassanaVisual
           wallpaperId={vipassanaTheme}
@@ -702,7 +702,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 fxPreset={currentFxPreset}
               />
             </div>
-          ) : practice === "Sensory" ? (
+          ) : practice === "Somatic Vipassana" ? (
             <SensorySession
               sensoryType={sensoryType}
               duration={duration}
@@ -811,17 +811,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // CONFIG VIEW - OPTIMIZED LAYOUT
   // ───────────────────────────────────────────────────────────
   return (
-    <section className="w-full flex flex-col items-center pt-16 pb-24">
+    <section className="w-full flex flex-col items-center pt-8 pb-24">
       {/* 3-TIER CEREMONIAL CARD */}
       <div
         className="relative w-full max-w-[420px] overflow-hidden transition-all duration-300"
         style={{
-          background: 'rgba(10,14,18,0.78)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          border: 'none',
-          boxShadow: 'inset 0 0 0 1px rgba(120,255,190,0.06), 0 0 60px rgba(0,0,0,0.5)',
-          borderRadius: '18px',
+          // Softened background to let nebula bleed through
+          background: 'rgba(10,14,18,0.6)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          // Faint amber border instead of strict line
+          border: '1px solid rgba(255, 147, 0, 0.15)',
+          // Softer shadow
+          boxShadow: '0 20px 50px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.2)',
+          borderRadius: '32px',
           opacity: isStarting ? 0.92 : 1,
           transform: isStarting ? 'scale(1.02)' : 'scale(1)',
         }}
@@ -877,7 +880,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           ◆
         </div>
 
-        <div className="relative px-7 py-6">
+        <div className="relative px-8 py-10">
           {/* Practice selector - LEVEL 2: Primary Decision (Selectable Header Pattern) */}
           <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
             {/* Text prompt above button */}
@@ -1064,14 +1067,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     />
                   )}
 
-                  {practice === "Sensory" && (
+                  {practice === "Somatic Vipassana" && (
                     <SensoryConfig
                       sensoryType={sensoryType}
                       setSensoryType={setSensoryType}
                     />
                   )}
 
-                  {practice === "Vipassana" && (
+                  {practice === "Cognitive Vipassana" && (
                     <div className="mb-4">
                       <div
                         className="mb-3"
