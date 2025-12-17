@@ -16,7 +16,7 @@ import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
-import { syncFromProgressStore } from "../state/mandalaStore.js";
+import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
 import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
@@ -164,25 +164,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Attention path instrumentation
   const instrumentation = useSessionInstrumentation();
 
-  const [practice, setPractice] = useState("Breath & Stillness");
+  // Load saved preferences or use defaults
+  const savedPrefs = loadPreferences();
+
+  const [practice, setPractice] = useState(savedPrefs.practice);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
 
   // Animation states for selectable header affordance
   const [chevronAngle, setChevronAngle] = useState(0);
   const [haloPulse, setHaloPulse] = useState(0);
-  const [duration, setDuration] = useState(10);
-  const [preset, setPreset] = useState("Box");
-  const [pattern, setPattern] = useState({
-    inhale: 4,
-    hold1: 4,
-    exhale: 4,
-    hold2: 4,
-  });
+  const [duration, setDuration] = useState(savedPrefs.duration);
+  const [preset, setPreset] = useState(savedPrefs.preset);
+  const [pattern, setPattern] = useState(savedPrefs.pattern);
 
-  const [sensoryType, setSensoryType] = useState(SENSORY_TYPES[0].id);
-  const [soundType, setSoundType] = useState(SOUND_TYPES[0]);
-  const [vipassanaTheme, setVipassanaTheme] = useState('dawnSky');
-  const [vipassanaElement, setVipassanaElement] = useState('bird');
+  const [sensoryType, setSensoryType] = useState(savedPrefs.sensoryType || SENSORY_TYPES[0].id);
+  const [soundType, setSoundType] = useState(savedPrefs.soundType || SOUND_TYPES[0]);
+  const [vipassanaTheme, setVipassanaTheme] = useState(savedPrefs.vipassanaTheme);
+  const [vipassanaElement, setVipassanaElement] = useState(savedPrefs.vipassanaElement);
 
   // Sound configuration state
   const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
@@ -214,7 +212,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [breathCount, setBreathCount] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState(null);
 
-  const [geometry, setGeometry] = useState('enso');
+  const [geometry, setGeometry] = useState(savedPrefs.geometry);
   const [fadeInDuration, setFadeInDuration] = useState(2.5);
   const [displayDuration, setDisplayDuration] = useState(10);
   const [fadeOutDuration, setFadeOutDuration] = useState(2.5);
@@ -379,6 +377,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // The actual start logic (called after ceremony)
   const executeStart = () => {
+    // Save current preferences for next session
+    savePreferences({
+      practice,
+      duration,
+      preset,
+      pattern,
+      sensoryType,
+      vipassanaTheme,
+      vipassanaElement,
+      soundType,
+      geometry,
+    });
+
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
     setSessionStartTime(performance.now());
@@ -1110,12 +1121,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     cursor: 'pointer',
                   }}
                 >
-                  {/* Peripheral halo affordance */}
-                  <PeripheralHalo
-                    isExpanded={tier2Expanded}
-                    isHovered={tier2Hovered}
-                    phaseOffset={0}
-                  />
                   <span
                     style={{
                       animation: tier2Expanded || tier2Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
@@ -1142,7 +1147,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <div
                   style={{
                     maxHeight: tier2Expanded ? '600px' : '0',
-                    overflow: tier2Expanded ? 'visible' : 'hidden',
+                    overflow: 'hidden',
                     opacity: tier2Expanded ? 1 : 0,
                     transition: 'max-height 260ms ease-in-out, opacity 180ms ease-in-out',
                   }}
@@ -1296,6 +1301,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   {/* Pattern preview collapsed header */}
                   <button
                     onClick={() => setTier3Expanded(!tier3Expanded)}
+                    onMouseEnter={() => setTier3Hovered(true)}
+                    onMouseLeave={() => setTier3Hovered(false)}
                     className="w-full flex items-center justify-between py-2"
                     style={{
                       fontFamily: "Georgia, serif",
@@ -1308,7 +1315,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       cursor: 'pointer',
                     }}
                   >
-                    <span>Pattern Preview</span>
+                    <span
+                      style={{
+                        animation: tier3Expanded || tier3Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
+                        opacity: tier3Hovered ? 0.75 : undefined,
+                      }}
+                    >
+                      Pattern Preview
+                    </span>
                     <span style={{
                       transition: 'transform 200ms ease-out',
                       transform: tier3Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -1385,3 +1399,4 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     </section>
   );
 }
+
