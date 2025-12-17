@@ -109,34 +109,45 @@ export function VipassanaVideoLayer({
 
     return (
         <div
-            className="absolute inset-0 overflow-hidden pointer-events-none"
+            className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none"
             style={{
                 opacity: videoReady ? 1 : 0,
                 transition: 'opacity 2s ease-in',
             }}
         >
-            {/* Single video layer - positioned per video type */}
-            <video
-                ref={videoRef}
-                src={videoSrc}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                className="pointer-events-none"
+            {/* Container matching wallpaper aspect ratio (9:16 portrait) */}
+            <div
+                className="relative overflow-hidden"
                 style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    width: '100%',
+                    // Match portrait wallpaper aspect ratio
+                    aspectRatio: '9 / 16',
                     height: '100%',
-                    objectFit: 'contain', // Preserve aspect ratio without cropping
-                    transform: `translate(-50%, ${config.translateY}) scale(${config.scale})`,
-                    opacity: config.opacity,
-                    filter: 'blur(1px)', // Soft haze for depth
+                    maxWidth: '100%',
                 }}
-            />
+            >
+                {/* Video layer - positioned per video type within the wallpaper bounds */}
+                <video
+                    ref={videoRef}
+                    src={videoSrc}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="pointer-events-none"
+                    style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain', // Preserve aspect ratio without cropping
+                        transform: `translate(-50%, ${config.translateY}) scale(${config.scale})`,
+                        opacity: config.opacity,
+                        filter: 'blur(1px)', // Soft haze for depth
+                    }}
+                />
+            </div>
         </div>
     );
 }
