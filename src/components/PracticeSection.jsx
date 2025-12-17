@@ -897,7 +897,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             </div>
             <button
               onClick={() => setPracticeModalOpen(true)}
-              className="px-6 py-3 rounded-full"
+              className="px-6 py-3 rounded-full relative overflow-hidden"
               style={{
                 fontFamily: 'Georgia, serif',
                 fontSize: '13px',
@@ -912,14 +912,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
                 // Accent color border
                 border: '1px solid var(--accent-30)',
-                // State-driven halo pulse
+                // State-driven halo pulse + asymmetric inner shadow (ember core)
                 boxShadow: practiceModalOpen
-                  ? '0 0 35px var(--accent-15), inset 0 0 25px var(--accent-08)'
-                  : `0 0 ${20 + haloPulse * 30}px var(--accent-${Math.round(5 + haloPulse * 8)}), inset 0 0 ${20 + haloPulse * 15}px var(--accent-${Math.round(3 + haloPulse * 5)})`,
-                // State-driven scale
+                  ? `0 0 35px var(--accent-15), inset 0 0 25px var(--accent-08), inset 3px 4px 8px rgba(0,0,0,0.4), inset -2px -3px 6px var(--accent-20)`
+                  : `0 0 ${20 + haloPulse * 30}px var(--accent-${Math.round(5 + haloPulse * 8)}), inset 0 0 ${20 + haloPulse * 15}px var(--accent-${Math.round(3 + haloPulse * 5)}), inset 3px 4px 8px rgba(0,0,0,0.35), inset -2px -3px 6px var(--accent-15)`,
+                // State-driven scale + press feedback
                 transform: practiceModalOpen ? 'scale(1.06)' : 'scale(1)',
                 transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
               }}
+              onMouseDown={(e) => e.currentTarget.style.transform = practiceModalOpen ? 'scale(1.04)' : 'scale(0.97)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = practiceModalOpen ? 'scale(1.06)' : 'scale(1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = practiceModalOpen ? 'scale(1.06)' : 'scale(1)'}
             >
               <span>{practice}</span>
               {/* Chevron: static when closed, rotates 180° when open */}
@@ -934,6 +937,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               >
                 ▾
               </span>
+              {/* Radial gradient overlay for depth */}
+              <div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.12) 0%, transparent 60%)',
+                  mixBlendMode: 'soft-light',
+                }}
+              />
+              {/* Grain texture overlay */}
+              <div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                  opacity: 0.08,
+                  mixBlendMode: 'overlay',
+                }}
+              />
             </button>
           </div>
 
@@ -992,7 +1012,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <button
                   onClick={handleStart}
                   disabled={isStarting}
-                  className="w-full rounded-full py-3 transition-all duration-150"
+                  className="w-full rounded-full py-3 transition-all duration-150 relative overflow-hidden"
                   style={{
                     fontFamily: "Georgia, serif",
                     fontSize: "11px",
@@ -1004,14 +1024,35 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       : 'var(--accent-color)',
                     color: "#0B1F16",
                     border: "none",
+                    // Outer glow + asymmetric inner shadow (ember core from bottom-left)
                     boxShadow: isStarting
-                      ? '0 0 30px rgba(120,255,190,0.5)'
-                      : '0 0 18px rgba(120,255,190,0.35)',
+                      ? '0 0 30px rgba(120,255,190,0.5), inset 3px 4px 10px rgba(0,0,0,0.3), inset -2px -3px 8px rgba(255,255,255,0.25)'
+                      : '0 0 18px rgba(120,255,190,0.35), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.2)',
                     transform: isStarting ? 'scale(1.015)' : 'scale(1)',
                     cursor: isStarting ? 'default' : 'pointer',
                   }}
+                  onMouseDown={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(0.97)')}
+                  onMouseUp={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
+                  onMouseLeave={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
                 >
                   {isStarting ? 'Initiating...' : 'Start'}
+                  {/* Radial gradient overlay for depth */}
+                  <div
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)',
+                      mixBlendMode: 'soft-light',
+                    }}
+                  />
+                  {/* Grain texture overlay */}
+                  <div
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                      opacity: 0.06,
+                      mixBlendMode: 'overlay',
+                    }}
+                  />
                 </button>
               </div>
 
