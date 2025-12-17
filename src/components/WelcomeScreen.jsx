@@ -1,5 +1,6 @@
 // src/components/WelcomeScreen.jsx
 import React, { useState } from 'react';
+import { PillButton } from './ui/PillButton';
 
 export function WelcomeScreen({ onDismiss }) {
     const [layer, setLayer] = useState(1);
@@ -68,45 +69,21 @@ export function WelcomeScreen({ onDismiss }) {
 
                             {/* Buttons - Layer 1 */}
                             <div className="flex gap-4 justify-center pt-8">
-                                <button
+                                <PillButton
                                     onClick={() => setLayer(2)}
-                                    className="px-8 py-3 rounded-full text-[13px] font-medium uppercase tracking-[0.15em] transition-all duration-300 border"
-                                    style={{
-                                        background: 'transparent',
-                                        border: '1px solid var(--accent-40)',
-                                        color: 'var(--accent-color)',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.background = 'var(--accent-10)';
-                                        e.target.style.boxShadow = '0 0 20px var(--accent-20)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.background = 'transparent';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
+                                    variant="secondary"
+                                    size="md"
                                 >
                                     Tell Me More
-                                </button>
+                                </PillButton>
 
-                                <button
+                                <PillButton
                                     onClick={handleEnter}
-                                    className="px-8 py-3 rounded-full text-[13px] font-medium uppercase tracking-[0.15em] transition-all duration-300"
-                                    style={{
-                                        background: 'var(--ui-button-gradient)',
-                                        color: '#050508',
-                                        boxShadow: '0 4px 20px var(--accent-20)'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.transform = 'scale(1.05)';
-                                        e.target.style.boxShadow = '0 8px 30px var(--accent-30)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.transform = 'scale(1)';
-                                        e.target.style.boxShadow = '0 4px 20px var(--accent-20)';
-                                    }}
+                                    variant="primary"
+                                    size="md"
                                 >
                                     Enter
-                                </button>
+                                </PillButton>
                             </div>
                         </div>
                     ) : (
@@ -165,26 +142,14 @@ export function WelcomeScreen({ onDismiss }) {
 
                             {/* Button - Layer 2 */}
                             <div className="flex justify-center pt-8">
-                                <button
+                                <PillButton
                                     onClick={handleEnter}
-                                    className="px-12 py-4 rounded-full text-[14px] font-medium uppercase tracking-[0.2em] transition-all duration-300"
-                                    style={{
-                                        background: 'var(--ui-button-gradient)',
-                                        color: '#050508',
-                                        boxShadow: '0 4px 24px var(--accent-30)',
-                                        fontFamily: 'Cinzel, Georgia, serif'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.transform = 'scale(1.08)';
-                                        e.target.style.boxShadow = '0 8px 40px var(--accent-40)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.transform = 'scale(1)';
-                                        e.target.style.boxShadow = '0 4px 24px var(--accent-30)';
-                                    }}
+                                    variant="primary"
+                                    size="lg"
+                                    style={{ fontFamily: 'Cinzel, Georgia, serif' }}
                                 >
                                     Enter
-                                </button>
+                                </PillButton>
                             </div>
                         </div>
                     )}
@@ -215,3 +180,4 @@ export function WelcomeScreen({ onDismiss }) {
         </div>
     );
 }
+

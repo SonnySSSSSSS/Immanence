@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { THOUGHT_CATEGORIES } from '../../data/vipassanaThemes';
+import { PillButton } from '../ui/PillButton';
 
 export function SessionSummary({
     isVisible,
@@ -147,17 +148,13 @@ export function SessionSummary({
                 )}
 
                 {/* Continue button */}
-                <button
+                <PillButton
                     onClick={onContinue || onClose}
-                    className="px-8 py-3 rounded-full text-sm uppercase tracking-wider transition-all"
-                    style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: 'rgba(255, 255, 255, 0.7)',
-                    }}
+                    variant="secondary"
+                    size="md"
                 >
                     Continue
-                </button>
+                </PillButton>
             </div>
 
             <style>{`
