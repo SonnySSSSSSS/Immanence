@@ -103,6 +103,7 @@ export const VIPASSANA_THEMES = {
         elementVariants: ['bird-1', 'bird-2', 'bird-3'],
         driftDirection: { x: 0.3, y: -0.1 },  // rightward, slight up
         ambientColor: 'rgba(255, 200, 180, 0.1)',
+        videoType: 'birds',
     },
     autumnForest: {
         id: 'autumnForest',
@@ -113,6 +114,7 @@ export const VIPASSANA_THEMES = {
         elementVariants: ['leaf-oak', 'leaf-maple', 'leaf-birch'],
         driftDirection: { x: 0.1, y: 0.4 },   // slight right, downward
         ambientColor: 'rgba(200, 150, 100, 0.1)',
+        videoType: 'leaves',
     },
     oceanHorizon: {
         id: 'oceanHorizon',
@@ -123,6 +125,7 @@ export const VIPASSANA_THEMES = {
         elementVariants: ['cloud-wisp', 'cloud-puff', 'cloud-streak'],
         driftDirection: { x: 0.2, y: 0 },     // horizontal drift
         ambientColor: 'rgba(150, 200, 255, 0.1)',
+        videoType: null, // no video for ocean (keep clean horizon)
     },
     nightGarden: {
         id: 'nightGarden',
@@ -133,6 +136,7 @@ export const VIPASSANA_THEMES = {
         elementVariants: ['lantern-soft', 'firefly', 'orb'],
         driftDirection: { x: 0, y: -0.15 },   // gentle upward float
         ambientColor: 'rgba(100, 150, 200, 0.1)',
+        videoType: 'lanterns',
     },
 };
 

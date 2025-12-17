@@ -344,10 +344,12 @@ export function VipassanaCanvas({
                 // Pluralization map for irregular plurals (leaf → leaves, not leafs)
                 const pluralize = { cloud: 'clouds', bird: 'birds', leaf: 'leaves', lantern: 'lanterns' };
                 const stampKey = pluralize[themeElement] || (themeElement + 's');
-                const stamp = getStamp(stampKey, variant, thought.category);
+                const stampData = getStamp(stampKey, variant, thought.category);
                 const stampSize = 64; // Standardized size for all stamps
 
-                if (stamp) {
+                if (stampData) {
+                    const { element: stamp, type: stampType } = stampData;
+
                     // Determine if bird should be flipped (stored at spawn time)
                     const shouldFlip = thought.flipX || false;
 
@@ -379,7 +381,9 @@ export function VipassanaCanvas({
                             ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
                             ctx.shadowOffsetY = 2;
                         }
-                        ctx.scale(-scale, scale); // Flip horizontally
+                        // Video stamps are 2.6x larger (100% increase from base to make them visible)
+                        const xScale = stampType === 'video' ? scale * 2.6 : scale;
+                        ctx.scale(-xScale, scale); // Flip horizontally with expansion for video
                     } else if (themeElement === 'bird') {
                         // Add subtle wing shadow during mid-flap (frame 1)
                         if (animFrame === 1) {
@@ -387,7 +391,9 @@ export function VipassanaCanvas({
                             ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
                             ctx.shadowOffsetY = 2;
                         }
-                        ctx.scale(scale, scale);
+                        // Video stamps are 2.6x larger (100% increase from base to make them visible)
+                        const xScale = stampType === 'video' ? scale * 2.6 : scale;
+                        ctx.scale(xScale, scale);
                     } else if (themeElement === 'leaf' && rotation !== 0) {
                         // For leaves: apply rotation + wobble translation
                         ctx.translate(leafWobbleX, leafWobbleY);
@@ -401,7 +407,8 @@ export function VipassanaCanvas({
                         ctx.scale(scale, scale);
                     }
 
-                    // Draw the image centered
+                    // Draw the image/video centered
+                    // Note: drawImage works with both HTMLImageElement and HTMLVideoElement
                     ctx.drawImage(stamp, -stampSize / 2, -stampSize / 2, stampSize, stampSize);
                     ctx.restore();
                 } else {
@@ -439,7 +446,7 @@ export function VipassanaCanvas({
                 } else if (atmosphericEvent.type === 'birdsDispersing') {
                     // 30-50% of bird-type thoughts scatter outward
                     const disperseCount = Math.floor(visibleThoughts.length * (0.3 + Math.random() * 0.2));
-                    const birdStamp = getStamp('birds', 0, 'neutral', 1);
+                    const birdStampData = getStamp('birds', 0, 'neutral');
 
                     ctx.globalAlpha = 0.3 * (1 - eventProgress);
 
@@ -449,7 +456,8 @@ export function VipassanaCanvas({
                         const x = rect.width / 2 + Math.cos(angle) * radius;
                         const y = rect.height / 2 + Math.sin(angle) * radius;
 
-                        if (birdStamp) {
+                        if (birdStampData) {
+                            const { element: birdStamp } = birdStampData;
                             ctx.drawImage(birdStamp, x - 36, y - 36, 48, 48);
                         }
                     }

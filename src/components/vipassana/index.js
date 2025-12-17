@@ -8,3 +8,4 @@ export { RadialDial } from './RadialDial';
 export { MiniAvatar } from './MiniAvatar';
 export { StaticTimer } from './StaticTimer';
 export { SessionSummary } from './SessionSummary';
+export { VipassanaVideoLayer } from './VipassanaVideoLayer';

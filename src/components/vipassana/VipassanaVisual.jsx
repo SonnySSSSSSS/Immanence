@@ -9,6 +9,7 @@ import { StaticTimer } from './StaticTimer';
 import { SessionSummary } from './SessionSummary';
 import { DynamicClouds } from './DynamicClouds';
 import { ScrollingFog } from './ScrollingFog';
+import { VipassanaVideoLayer } from './VipassanaVideoLayer';
 
 export function VipassanaVisual({
     themeId = 'dawnSky',
@@ -18,8 +19,15 @@ export function VipassanaVisual({
     onComplete,
     onExit,
 }) {
-    // Use wallpaperId if provided, otherwise fall back to themeId
-    const effectiveWallpaperId = wallpaperId || themeId;
+    // Theme keys for cycling
+    const themeKeys = Object.keys(VIPASSANA_THEMES);
+
+    // State for current theme and wallpaper (can cycle independently)
+    const [currentThemeId, setCurrentThemeId] = useState(themeId);
+    const [currentWallpaperId, setCurrentWallpaperId] = useState(wallpaperId || themeId);
+
+    // Use wallpaperId if provided, otherwise fall back to currentWallpaperId
+    const effectiveWallpaperId = currentWallpaperId;
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isActive, setIsActive] = useState(true);
     const [showSummary, setShowSummary] = useState(false);
@@ -39,13 +47,13 @@ export function VipassanaVisual({
     const highAliveTimerRef = useRef(0); // Seconds with alive_rate >= 0.8
     const lastAliveCheckRef = useRef(Date.now());
 
-    // Get theme from themeId (for thought element type)
-    const themeData = VIPASSANA_THEMES[themeId] || VIPASSANA_THEMES.dawnSky;
+    // Get theme from currentThemeId (for thought element type)
+    const themeData = VIPASSANA_THEMES[currentThemeId] || VIPASSANA_THEMES.dawnSky;
     // Get wallpaper data (may be different from theme)
     const wallpaperData = VIPASSANA_THEMES[effectiveWallpaperId] || VIPASSANA_THEMES.dawnSky;
 
-    // Element type from themeId (bird, cloud, leaf, lantern)
-    const elementType = themeData?.thoughtElement || themeId || 'cloud';
+    // Element type from currentThemeId (bird, cloud, leaf, lantern)
+    const elementType = themeData?.thoughtElement || currentThemeId || 'cloud';
 
     // Timer tick
     useEffect(() => {
@@ -155,6 +163,37 @@ export function VipassanaVisual({
         onComplete?.(sessionStats);
     };
 
+    // Keyboard controls: W = cycle wallpaper, T = cycle theme/stamps
+    useEffect(() => {
+        const handleKeyPress = (e) => {
+            // Ignore if summary is showing
+            if (showSummary) return;
+
+            const key = e.key.toLowerCase();
+
+            if (key === 'escape') {
+                onExit?.();
+            } else if (key === 'w') {
+                // Cycle wallpaper
+                setCurrentWallpaperId(prev => {
+                    const currentIndex = themeKeys.indexOf(prev);
+                    const nextIndex = (currentIndex + 1) % themeKeys.length;
+                    return themeKeys[nextIndex];
+                });
+            } else if (key === 't') {
+                // Cycle theme (stamps/thought elements)
+                setCurrentThemeId(prev => {
+                    const currentIndex = themeKeys.indexOf(prev);
+                    const nextIndex = (currentIndex + 1) % themeKeys.length;
+                    return themeKeys[nextIndex];
+                });
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [showSummary, themeKeys, onExit]);
+
     return (
         <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 9999 }}>
             {/* Solid black base - blocks main app wallpaper */}
@@ -170,6 +209,12 @@ export function VipassanaVisual({
                     backgroundRepeat: 'no-repeat',
                     opacity: wallpaperTransition ? 0 : 1,
                 }}
+            />
+
+            {/* Video midground layer - transparent loops for depth */}
+            <VipassanaVideoLayer
+                videoType={themeData.videoType || 'leaves'}
+                enabled={!!themeData.videoType}
             />
 
             {/* Dynamic cloud layer - appears after first thought */}
@@ -216,12 +261,13 @@ export function VipassanaVisual({
             {/* Keyboard hints - subtle overlay */}
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                 <div
-                    className="text-[10px] uppercase tracking-wider text-white/30 text-center"
+                    className="text-[10px] uppercase tracking-wider text-white/30 text-center space-y-1"
                     style={{
                         textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                     }}
                 >
-                    Tap to notice • Long-press for details
+                    <div>Tap to notice • Long-press for details</div>
+                    <div className="text-[9px] text-white/20">W: Wallpaper • T: Stamps</div>
                 </div>
             </div>
 
