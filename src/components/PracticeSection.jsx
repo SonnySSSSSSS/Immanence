@@ -20,6 +20,7 @@ import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
 import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
+import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
@@ -201,6 +202,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Lock & Begin transition state
   const [isStarting, setIsStarting] = useState(false);
+
+  // Hover states for peripheral halos
+  const [tier2Hovered, setTier2Hovered] = useState(false);
+  const [tier3Hovered, setTier3Hovered] = useState(false);
 
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
@@ -1091,7 +1096,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 {/* Collapsible Header */}
                 <button
                   onClick={() => setTier2Expanded(!tier2Expanded)}
-                  className="w-full flex items-center justify-between py-2 mb-2"
+                  onMouseEnter={() => setTier2Hovered(true)}
+                  onMouseLeave={() => setTier2Hovered(false)}
+                  className="w-full flex items-center justify-between py-2 mb-2 relative"
                   style={{
                     fontFamily: "Georgia, serif",
                     fontSize: "12px",
@@ -1103,13 +1110,33 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     cursor: 'pointer',
                   }}
                 >
-                  <span>Options</span>
+                  {/* Peripheral halo affordance */}
+                  <PeripheralHalo
+                    isExpanded={tier2Expanded}
+                    isHovered={tier2Hovered}
+                    phaseOffset={0}
+                  />
+                  <span
+                    style={{
+                      animation: tier2Expanded || tier2Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
+                      opacity: tier2Hovered ? 0.85 : undefined,
+                    }}
+                  >
+                    Options
+                  </span>
                   <span style={{
                     transition: 'transform 200ms ease-out',
                     transform: tier2Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                     opacity: 0.6,
                   }}>▾</span>
                 </button>
+
+                <style>{`
+                  @keyframes text-pulse {
+                    0%, 100% { opacity: 0.5; }
+                    50% { opacity: 0.75; }
+                  }
+                `}</style>
 
                 {/* Collapsible Content */}
                 <div
