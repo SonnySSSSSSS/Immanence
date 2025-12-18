@@ -418,6 +418,60 @@ const DEITY_YOGA = {
     }
 };
 
+// ============ STORM ANCHOR ============
+const STORM_ANCHOR = {
+    id: 'stormAnchor',
+    name: 'The Storm Anchor',
+    tradition: 'Somatic / Neuroscience',
+    category: 'grounding',
+    icon: '⚓',
+    iconName: 'anchor',
+    unlockStage: 'seedling',
+    prerequisite: null,
+    duration: { min: 8, max: 12 },
+    recommendation: 'Practice while calm to train your nervous system for crisis.',
+    description: 'Prepare your nervous system for panic states through biological reset and cognitive rehearsal.',
+    history: `The Physiological Sigh is a scientifically validated technique to rapidly downregulate the sympathetic nervous system.`,
+    steps: [
+        {
+            id: 'sighting',
+            name: 'The Sighting',
+            duration: 120,
+            instruction: 'Recall the earliest signs of rising panic: tightening chest, racing thoughts, narrowing vision.',
+            sensoryCues: ['Feel the ghost of these sensations.', 'This is the signal, not the storm.'],
+            image: 'rituals/ritual_00031_.png',
+        },
+        {
+            id: 'sigh',
+            name: 'The Physiological Sigh',
+            duration: 180,
+            instruction: 'Double-inhale through the nose: first breath fills, second sips more air. Then one long, slow exhale through the mouth.',
+            sensoryCues: ['The double-inhale pops open collapsed alveoli.', 'The extended exhale activates the parasympathetic brake.'],
+            image: 'rituals/ritual_00032_.png',
+        },
+        {
+            id: 'weight',
+            name: 'The Weight of Being',
+            duration: 120,
+            instruction: 'Feel gravity pressing you into the earth. Name 5 physical points of contact.',
+            sensoryCues: ['Your body is a stone.', 'The ground does not move.'],
+            image: 'rituals/ritual_00033_.png',
+        },
+        {
+            id: 'triage',
+            name: 'The Triage Script',
+            duration: 120,
+            instruction: 'Mentally rehearse: "Right now, I am safe. What is the next small action?"',
+            sensoryCues: ['Future-you has this phrase memorized.', 'The crisis is not here yet.'],
+            image: 'rituals/ritual_00034_.png',
+        }
+    ],
+    completion: {
+        expectedOutput: ['Slower heart rate', 'Clearer mental field'],
+        closingInstruction: 'Place one hand on your chest. Say: "The anchor is set."'
+    }
+};
+
 // ============ UNION ============
 const UNION = {
     id: 'union',
@@ -473,6 +527,7 @@ export const RITUAL_REGISTRY = {
     deityYoga: DEITY_YOGA,
     forgiveness: FORGIVENESS,
     surrender: SURRENDER,
+    stormAnchor: STORM_ANCHOR,
     union: UNION,
     gratitude: GRATITUDE,
     metta: METTA,

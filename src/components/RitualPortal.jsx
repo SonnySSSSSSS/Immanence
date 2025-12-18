@@ -21,6 +21,7 @@ export function RitualPortal({
     const [stepTimeRemaining, setStepTimeRemaining] = useState(0);
     const [cueIndex, setCueIndex] = useState(0);
     const [imageLoaded, setImageLoaded] = useState(false);
+    const [canAdvance, setCanAdvance] = useState(false);
     const timerRef = useRef(null);
     const cueTimerRef = useRef(null);
 
@@ -35,6 +36,7 @@ export function RitualPortal({
         setStepTimeRemaining(currentStep.duration || 60);
         setCueIndex(0);
         setImageLoaded(false);
+        setCanAdvance(false); // Reset advance permission for new step
 
         // Clear existing timers
         if (timerRef.current) clearInterval(timerRef.current);
@@ -52,6 +54,14 @@ export function RitualPortal({
                     }
                     return 0;
                 }
+
+                // Enable advance button after 50% of duration has elapsed
+                const stepDuration = currentStep.duration || 60;
+                const halfwayPoint = stepDuration * 0.5;
+                if (!canAdvance && (stepDuration - prev) >= halfwayPoint) {
+                    setCanAdvance(true);
+                }
+
                 return prev - 1;
             });
         }, 1000);
@@ -271,6 +281,7 @@ export function RitualPortal({
                 {/* NEXT STEP / TRANSMUTE button - Gemstone PBR style */}
                 <button
                     onClick={() => {
+                        if (!canAdvance) return; // Prevent advance if not ready
                         // Track switch for attention path instrumentation
                         onSwitch?.();
                         onAliveSignal?.();
@@ -280,6 +291,7 @@ export function RitualPortal({
                             onNextStep?.();
                         }
                     }}
+                    disabled={!canAdvance}
                     className="px-7 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95"
                     style={{
                         fontFamily: 'Georgia, serif',
@@ -287,15 +299,20 @@ export function RitualPortal({
                         letterSpacing: '0.18em',
                         textTransform: 'uppercase',
                         fontWeight: 600,
-                        background: 'linear-gradient(180deg, #fcd34d 0%, #b45309 100%)',
-                        color: '#1a0a04',
-                        border: '1px solid #fef3c7',
-                        boxShadow: `
+                        background: canAdvance
+                            ? 'linear-gradient(180deg, #fcd34d 0%, #b45309 100%)'
+                            : 'linear-gradient(180deg, rgba(60,60,60,0.5) 0%, rgba(30,30,30,0.6) 100%)',
+                        color: canAdvance ? '#1a0a04' : 'rgba(253,251,245,0.3)',
+                        border: canAdvance ? '1px solid #fef3c7' : '1px solid rgba(253,251,245,0.1)',
+                        boxShadow: canAdvance ? `
               0 0 20px rgba(252, 211, 77, 0.5),
               0 0 40px rgba(252, 211, 77, 0.25),
               inset 0 2px 6px rgba(255, 255, 255, 0.6),
               inset 0 -2px 4px rgba(0, 0, 0, 0.2)
-            `,
+            ` : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                        cursor: canAdvance ? 'pointer' : 'not-allowed',
+                        opacity: canAdvance ? 1 : 0.5,
+                        pointerEvents: canAdvance ? 'auto' : 'none',
                     }}
                 >
                     {isLastStep ? '✦ TRANSMUTE' : 'NEXT STEP'}

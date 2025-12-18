@@ -201,6 +201,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Lock & Begin transition state
   const [isStarting, setIsStarting] = useState(false);
 
+  // Session summary state (Ritual Seal)
+  const [showSummary, setShowSummary] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState(null);
+
   // Hover states for peripheral halos
   const [tier2Hovered, setTier2Hovered] = useState(false);
   const [tier3Hovered, setTier3Hovered] = useState(false);
@@ -373,6 +377,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setActiveRitual(null);
     setCurrentStepIndex(0);
     setTimeLeft(duration * 60);
+
+    // Show summary if this was a completed session (for non-ritual practices)
+    // RitualPortal handles its own completion UI
+    if (exitType === 'completed' && practice !== 'Ritual') {
+      setSessionSummary({
+        practice,
+        duration,
+        tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+        breathCount,
+        exitType,
+      });
+      setShowSummary(true);
+    }
   };
 
   // The actual start logic (called after ceremony)
@@ -841,6 +858,170 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   animation: fade -in -up 0.2s ease - out forwards;
 }
 `}</style>
+      </section>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RITUAL SEAL - SESSION SUMMARY VIEW
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (showSummary && sessionSummary) {
+    return (
+      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
+        <div
+          className="rounded-[32px] relative overflow-hidden"
+          style={{
+            width: '460px',
+            ...plateauMaterial,
+            border: '1px solid var(--accent-20)',
+            boxShadow: '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}
+        >
+          {/* Inner glow */}
+          <div className="absolute inset-0 pointer-events-none" style={innerGlowStyle} />
+
+          <div className="relative px-8 py-10 text-center">
+            {/* Seal Icon */}
+            <div
+              style={{
+                fontSize: '48px',
+                marginBottom: '16px',
+                filter: 'drop-shadow(0 0 20px var(--accent-40))',
+              }}
+            >
+              ⚜
+            </div>
+
+            {/* Title */}
+            <div
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '18px',
+                letterSpacing: '0.15em',
+                color: 'rgba(253,251,245,0.9)',
+                marginBottom: '24px',
+                textShadow: '0 0 10px var(--accent-30)',
+              }}
+            >
+              SESSION COMPLETE
+            </div>
+
+            {/* Stats */}
+            <div
+              style={{
+                padding: '20px',
+                borderRadius: '16px',
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid var(--accent-10)',
+                marginBottom: '24px',
+              }}
+            >
+              <div style={{ marginBottom: '12px' }}>
+                <span style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '10px',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(253,251,245,0.5)',
+                }}>
+                  Practice
+                </span>
+                <div style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '14px',
+                  color: 'rgba(253,251,245,0.85)',
+                  marginTop: '4px',
+                }}>
+                  {sessionSummary.practice}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <span style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '10px',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(253,251,245,0.5)',
+                }}>
+                  Duration
+                </span>
+                <div style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '14px',
+                  color: 'rgba(253,251,245,0.85)',
+                  marginTop: '4px',
+                }}>
+                  {sessionSummary.duration} minutes
+                </div>
+              </div>
+
+              {sessionSummary.tapStats && (
+                <>
+                  <div style={{ marginBottom: '12px' }}>
+                    <span style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '10px',
+                      letterSpacing: '0.15em',
+                      textTransform: 'uppercase',
+                      color: 'rgba(253,251,245,0.5)',
+                    }}>
+                      Breath Count
+                    </span>
+                    <div style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '14px',
+                      color: 'rgba(253,251,245,0.85)',
+                      marginTop: '4px',
+                    }}>
+                      {sessionSummary.breathCount} cycles
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '10px',
+                      letterSpacing: '0.15em',
+                      textTransform: 'uppercase',
+                      color: 'rgba(253,251,245,0.5)',
+                    }}>
+                      Best Tap Accuracy
+                    </span>
+                    <div style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '14px',
+                      color: 'rgba(253,251,245,0.85)',
+                      marginTop: '4px',
+                    }}>
+                      ±{sessionSummary.tapStats.bestErrorMs}ms
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Seal & Return Button */}
+            <button
+              onClick={() => {
+                setShowSummary(false);
+                setSessionSummary(null);
+              }}
+              className="w-full rounded-full py-3 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '11px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                background: 'var(--accent-color)',
+                color: '#0B1F16',
+                boxShadow: '0 0 18px rgba(120,255,190,0.35), inset 0 2px 6px rgba(255,255,255,0.15)',
+              }}
+            >
+              Seal & Return
+            </button>
+          </div>
+        </div>
       </section>
     );
   }

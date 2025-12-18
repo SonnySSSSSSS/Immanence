@@ -6,30 +6,57 @@ import { StageTitle, STAGE_COLORS } from "./StageTitle.jsx";
 import { TrackingHub } from "./TrackingHub.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from "../styles/cardMaterial.js";
+import { useProgressStore } from "../state/progressStore.js";
+import { useLunarStore } from "../state/lunarStore.js";
+import { STAGES } from "../state/stageConfig.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
 
 function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention }) {
-  // Placeholder stats - wire to real data later
-  const [stats, setStats] = useState({
-    totalSessions: 24,
-    weeklyConsistency: 5, // days this week
-    avgAccuracy: 0.78,
-    currentStreak: 4, // consecutive days
-    lastPracticed: "2 hours ago",
-    nextStage: "Beacon",
-    progressToNextStage: 0.62, // 62% toward Beacon
-  });
+  // Real data from stores
+  const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
+  const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
 
-  const accuracyPct = Math.round(stats.avgAccuracy * 100);
-  const progressPct = Math.round(stats.progressToNextStage * 100);
+  const streakInfo = getStreakInfo();
+  const breathStats = getDomainStats('breathwork');
+  const weeklyPattern = getWeeklyPattern();
 
-  // Calculate stage score formula: (min(sessions, 150) / 150 × 0.35) + (accuracy × 0.65)
-  const sessionScore = (Math.min(stats.totalSessions, 150) / 150) * 0.35;
-  const accuracyScore = stats.avgAccuracy * 0.65;
-  const stageScore = sessionScore + accuracyScore;
+  // Derive stats from real data
+  const totalSessions = breathStats.totalSessions;
+  const weeklyConsistency = weeklyPattern.filter(Boolean).length;
+  const avgAccuracy = breathStats.avgAccuracy || 0;
+  const currentStreak = streakInfo.current;
+  const daysUntilNext = getDaysUntilNextStage() || 0;
+  const lunarStage = getCurrentStage();
+  const nextStage = STAGES[lunarStage]?.next || null;
+  const progressToNextStage = daysUntilNext > 0
+    ? (STAGES[lunarStage]?.duration - daysUntilNext) / STAGES[lunarStage]?.duration
+    : 0;
+
+  // Format last practiced time
+  const formatLastPracticed = (isoDate) => {
+    if (!isoDate) return 'Never';
+    const now = new Date();
+    const then = new Date(isoDate);
+    const diffMs = now - then;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
+  };
+
+  const lastPracticed = formatLastPracticed(breathStats.lastPracticed);
+
+  const accuracyPct = Math.round(avgAccuracy * 100);
+  const progressPct = Math.round(progressToNextStage * 100);
 
   return (
     <div className="w-full flex flex-col items-center gap-8 py-8 overflow-visible relative">
@@ -97,7 +124,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           >
             <div className="text-[11px] text-[rgba(253,251,245,0.4)] text-center mt-2">
-              Last practiced {stats.lastPracticed}
+              Last practiced {lastPracticed}
             </div>
           </div>
         </div>
@@ -220,13 +247,15 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
             }}
           >
-            {stats.currentStreak >= 7
+            {currentStreak >= 7
               ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
-              : stats.avgAccuracy < 0.5
+              : avgAccuracy < 0.5
                 ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
-                : stats.weeklyConsistency < 4
+                : weeklyConsistency < 4
                   ? "You're inconsistent this week. One practice per day keeps the alignment alive."
-                  : "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."}
+                  : totalSessions > 0
+                    ? "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."
+                    : "Welcome. Begin your practice to see your progress reflected here."}
           </div>
         </div>
       </div>
