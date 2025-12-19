@@ -24,29 +24,21 @@ const VALIDATION_RESULT = {
     SOFT_WARNING: 'soft_warning',
 };
 
-// Validate text for E-Prime violations (hard reject)
+// Validate text for E-Prime violations (now all soft - LLM does intelligent validation)
 function validateEPrime(text, fieldName) {
     const words = text.toLowerCase().split(/\s+/);
     const violations = [];
 
     for (const word of words) {
         // Check E-Prime violations (forms of "to be")
+        // Now soft only - LLM handles context like quoted speech
         if (E_PRIME_VIOLATIONS.includes(word)) {
-            // Only hard reject in action field (the core observation)
-            if (fieldName === 'action') {
-                violations.push({ word, type: 'e_prime', severity: 'hard' });
-            } else {
-                violations.push({ word, type: 'e_prime', severity: 'soft' });
-            }
+            violations.push({ word, type: 'e_prime', severity: 'soft' });
         }
 
-        // Check intent words (hard reject in action field)
+        // Check intent words - soft warning, LLM judges context
         if (INTENT_WORDS.includes(word)) {
-            if (fieldName === 'action') {
-                violations.push({ word, type: 'intent', severity: 'hard' });
-            } else {
-                violations.push({ word, type: 'intent', severity: 'soft' });
-            }
+            violations.push({ word, type: 'intent', severity: 'soft' });
         }
 
         // Check subjective modifiers (soft warning)
@@ -488,10 +480,22 @@ export function MirrorObservation({ onComplete }) {
 
                     {/* Success - show feedback */}
                     {llmValidation.status === 'success' && llmValidation.result && (
-                        <MirrorValidationFeedback
-                            result={llmValidation.result}
-                            onDismiss={() => setMirrorLLMValidation('idle')}
-                        />
+                        <>
+                            <MirrorValidationFeedback
+                                result={llmValidation.result}
+                                onDismiss={() => setMirrorLLMValidation('idle')}
+                            />
+                            <button
+                                onClick={handleValidateLLM}
+                                className="w-full px-4 py-2 rounded border transition-all text-xs mt-2"
+                                style={{
+                                    borderColor: 'rgba(255,255,255,0.2)',
+                                    color: 'rgba(255,255,255,0.5)',
+                                }}
+                            >
+                                ↻ Re-validate
+                            </button>
+                        </>
                     )}
 
                     {/* Error state */}
@@ -528,7 +532,10 @@ export function MirrorObservation({ onComplete }) {
                 {/* Navigation */}
                 <div className="flex gap-4">
                     <button
-                        onClick={() => setPhase('components')}
+                        onClick={() => {
+                            setMirrorLLMValidation('idle'); // Reset validation when editing
+                            setPhase('components');
+                        }}
                         className="px-4 py-2 rounded border border-white/20 text-white/50 hover:text-white/70 transition-all text-xs"
                     >
                         EDIT
