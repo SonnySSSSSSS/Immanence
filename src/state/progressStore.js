@@ -63,6 +63,51 @@ export const useProgressStore = create(
             // === Export Version ===
             exportVersion: 1,
 
+            // === Cycle & Consistency System ===
+            // Benchmark tracking (self-reported metrics)
+            benchmarks: {
+                breath: {
+                    holdDuration: [], // [{ date, value, cycleDay, cycleType }]
+                    cycleConsistency: [],
+                    lastMeasured: null,
+                },
+                focus: {
+                    flameDuration: [],
+                    distractionCount: [],
+                    lastMeasured: null,
+                },
+                body: {
+                    scanCompletionTime: [],
+                    awarenessResolution: [],
+                    lastMeasured: null,
+                },
+            },
+
+            // Detailed practice history (for circuits & consistency)
+            practiceHistory: [],
+            /* Structure:
+            [{
+                date: timestamp,
+                type: 'breath' | 'flame' | 'body' | 'circuit',
+                duration: number, // minutes
+                timeOfDay: 'HH:MM',
+                exercises: [], // for circuits
+                contributions: { // for multi-path tracking
+                    breath: 5, // minutes
+                    flame: 5,
+                    body: 5
+                }
+            }]
+            */
+
+            // Consistency metrics
+            consistencyMetrics: {
+                averageTimeOfDay: null,
+                timeConsistencyScore: 0,
+                durationConsistency: 0,
+                frequencyPattern: 'irregular', // 'daily' | 'flexible' | 'irregular'
+            },
+
             // ========================================
             // ACTIONS
             // ========================================
