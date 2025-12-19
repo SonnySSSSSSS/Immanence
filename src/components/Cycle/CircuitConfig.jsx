@@ -14,27 +14,39 @@ const AVAILABLE_EXERCISES = [
     },
     {
         id: 'cognitive',
-        name: 'Thought Labeling',
+        name: 'Cognitive Vipassana',
         type: 'focus',
         icon: '🔥',
-        practiceType: 'Somatic Vipassana',
-        sensoryType: 'cognitive',
+        practiceType: 'Cognitive Vipassana',
     },
     {
-        id: 'body',
-        name: 'Body Scan',
+        id: 'somatic',
+        name: 'Somatic Vipassana',
         type: 'body',
         icon: '✨',
         practiceType: 'Somatic Vipassana',
         sensoryType: 'body',
     },
     {
+        id: 'visualization',
+        name: 'Visualization',
+        type: 'focus',
+        icon: '🔮',
+        practiceType: 'Visualization',
+    },
+    {
+        id: 'cymatics',
+        name: 'Cymatics',
+        type: 'focus',
+        icon: '〰️',
+        practiceType: 'Cymatics',
+    },
+    {
         id: 'sound',
         name: 'Sound Bath',
         type: 'body',
         icon: '🎵',
-        practiceType: 'Somatic Vipassana',
-        sensoryType: 'sound',
+        practiceType: 'Sound',
     },
 ];
 
@@ -105,8 +117,8 @@ export function CircuitConfig({ value, onChange }) {
                                 key={exercise.id}
                                 onClick={() => handleToggleExercise(exercise)}
                                 className={`p-3 rounded border transition-all ${isSelected
-                                        ? 'bg-[#fcd34d]/20 border-[#fcd34d]/40'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                                    ? 'bg-[#fcd34d]/20 border-[#fcd34d]/40'
+                                    : 'bg-white/5 border-white/10 hover:border-white/20'
                                     }`}
                                 whileTap={{ scale: 0.98 }}
                             >
