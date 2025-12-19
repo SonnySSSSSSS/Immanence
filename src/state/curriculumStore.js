@@ -20,18 +20,24 @@ export const FOUNDATION_CIRCUIT = {
             name: 'Box Breathing',
             duration: 5,
             instructions: '4 counts in, 4 hold, 4 out, 4 hold',
+            practiceType: 'Breath & Stillness', // Maps to PracticeSection
+            preset: 'box', // Box breathing preset
         },
         {
             type: 'focus',
-            name: 'Candle Gaze (Flame)',
+            name: 'Cognitive Vipassana',
             duration: 5,
-            instructions: 'Steady focus on a single point',
+            instructions: 'Label and observe thoughts as they arise',
+            practiceType: 'Somatic Vipassana', // Maps to PracticeSection
+            sensoryType: 'cognitive', // cognitive vipassana
         },
         {
             type: 'body',
             name: 'Body Scan',
             duration: 5,
-            instructions: 'Awareness from crown to toes',
+            instructions: 'Systematic awareness from crown to toes',
+            practiceType: 'Somatic Vipassana', // Maps to PracticeSection
+            sensoryType: 'body', // body sensations
         },
     ],
     recommendedFor: 'foundation_cycle',

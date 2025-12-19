@@ -7,6 +7,7 @@ import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
+import { CircuitSession } from "./Cycle/CircuitSession.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
@@ -20,6 +21,9 @@ import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
+import { logPractice } from '../services/cycleManager.js';
+import { useCurriculumStore } from '../state/curriculumStore.js';
+import { logCircuitCompletion } from '../services/circuitManager.js';
 import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
 import { plateauMaterial, innerGlowStyle } from "../styles/cardMaterial.js";
@@ -27,7 +31,7 @@ import { plateauMaterial, innerGlowStyle } from "../styles/cardMaterial.js";
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
 
-const PRACTICES = ["Breath & Stillness", "Ritual", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
+const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
 // Scrolling Wheel Component
@@ -211,6 +215,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [tier2Hovered, setTier2Hovered] = useState(false);
   const [tier3Hovered, setTier3Hovered] = useState(false);
 
+  // Circuit training state (minimal - CircuitSession handles execution)
+  const [activeCircuitId, setActiveCircuitId] = useState(null);
+
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
@@ -368,6 +375,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         // Pass instrumentation data for attention path calculation
         instrumentation: instrumentationData,
       });
+
+      // Log to cycle system (if 10+ minutes)
+      if (duration >= 10) {
+        const now = new Date();
+        const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        logPractice({
+          type: domain === 'breathwork' ? 'breath' : domain === 'visualization' ? 'focus' : 'body',
+          duration: duration,
+          timeOfDay: timeOfDay,
+        });
+      }
 
       // Sync mandala store
       syncFromProgressStore();
@@ -659,8 +678,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     return (
-      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12" style={{ overflow: 'visible' }}>
-        <div className="flex items-center justify-center w-full mb-16" style={{ overflow: 'visible' }}>
+      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
+        <div className="flex-1 flex items-center justify-center w-full">
           {practice === "Visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
@@ -762,7 +781,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               </div>
             </div>
           )}
-        </div>
+        </div >
 
         <div className="flex flex-col items-center z-50">
           <div className="h-6 mb-3 flex items-center justify-center">
@@ -860,7 +879,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   animation: fade -in -up 0.2s ease - out forwards;
 }
 `}</style>
-      </section>
+      </section >
     );
   }
 

@@ -10,6 +10,8 @@ import { CodexChamber } from './Codex/CodexChamber.jsx';
 import { Avatar } from './Avatar.jsx';
 import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
+import { ConsistencyFoundation } from './Cycle/ConsistencyFoundation.jsx';
+import { CircuitTrainer } from './Cycle/CircuitTrainer.jsx';
 
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
   const { selectedPathId, activePath } = useNavigationStore();
@@ -38,6 +40,12 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         <div className="mt-4">
           <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
         </div>
+      </div>
+
+      {/* Cycle & Consistency System */}
+      <div className="space-y-4 pt-4">
+        <ConsistencyFoundation />
+        <CircuitTrainer />
       </div>
 
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
