@@ -1263,38 +1263,40 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   opacity: isStarting ? 0.6 : 1,
                 }}
               >
-                {/* Duration - centered, large */}
-                <div className="flex flex-col items-center mb-5">
-                  <div
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "11px",
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      color: "rgba(253,251,245,0.55)",
-                      marginBottom: '10px',
-                    }}
-                  >
-                    Duration
+                {/* Duration - centered, large - HIDE FOR CIRCUIT MODE */}
+                {practice !== "Circuit" && (
+                  <div className="flex flex-col items-center mb-5">
+                    <div
+                      style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: "11px",
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "rgba(253,251,245,0.55)",
+                        marginBottom: '10px',
+                      }}
+                    >
+                      Duration
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: "36px",
+                        fontWeight: 500,
+                        letterSpacing: "0.05em",
+                        color: "rgba(253,251,245,0.92)",
+                        textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
+                      }}
+                    >
+                      {formatTime(timeLeft)}
+                    </div>
+                    <ScrollingWheel
+                      value={duration}
+                      onChange={setDuration}
+                      options={DURATIONS}
+                    />
                   </div>
-                  <div
-                    style={{
-                      fontFamily: "Georgia, serif",
-                      fontSize: "36px",
-                      fontWeight: 500,
-                      letterSpacing: "0.05em",
-                      color: "rgba(253,251,245,0.92)",
-                      textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
-                    }}
-                  >
-                    {formatTime(timeLeft)}
-                  </div>
-                  <ScrollingWheel
-                    value={duration}
-                    onChange={setDuration}
-                    options={DURATIONS}
-                  />
-                </div>
+                )}
 
                 {/* START BUTTON — DOMINANT ANCHOR */}
                 <button
