@@ -22,7 +22,7 @@ wrangler login
 
 ```bash
 cd worker
-wrangler kv:namespace create RATE_LIMIT_KV
+wrangler kv namespace create RATE_LIMIT_KV
 ```
 
 Copy the output ID and update `wrangler.toml`:

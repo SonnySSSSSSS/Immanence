@@ -13,6 +13,7 @@ import { calculatePathProbabilities, getDominantPath, determinePathState } from 
 import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
+import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
@@ -51,6 +52,7 @@ export function DevPanel({
         path: false,
         attention: false,
         tracking: false,
+        llm: false,
         data: false
     });
 
@@ -433,6 +435,17 @@ export function DevPanel({
                         expanded={expandedSections.tracking}
                         onToggle={() => toggleSection('tracking')}
                     />
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* LLM TEST SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="LLM Service (Gemini)"
+                        expanded={expandedSections.llm}
+                        onToggle={() => toggleSection('llm')}
+                    >
+                        <LLMTestPanel />
+                    </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* DATA SECTION */}
