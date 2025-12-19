@@ -5,8 +5,9 @@ import { PracticeSection } from "./components/PracticeSection.jsx";
 import { HomeHub } from "./components/HomeHub.jsx";
 
 // Lazy load heavy sections for better initial performance
-const WisdomSection = lazy(() => import("./components/WisdomSection.jsx"));
-const ApplicationSection = lazy(() => import("./components/ApplicationSection.jsx"));
+// Named exports need to be wrapped for React.lazy
+const WisdomSection = lazy(() => import("./components/WisdomSection.jsx").then(m => ({ default: m.WisdomSection })));
+const ApplicationSection = lazy(() => import("./components/ApplicationSection.jsx").then(m => ({ default: m.ApplicationSection })));
 import { NavigationSection } from "./components/NavigationSection.jsx";
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
