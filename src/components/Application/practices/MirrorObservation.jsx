@@ -4,6 +4,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useChainStore } from '../../../state/chainStore.js';
+import { validateMirrorEntry } from '../../../services/llmService.js';
+import {
+    MirrorValidationFeedback,
+    MirrorValidationError,
+    MirrorValidationLoading
+} from './MirrorValidationFeedback.jsx';
 import {
     E_PRIME_VIOLATIONS,
     SUBJECTIVE_MODIFIERS,
@@ -78,6 +84,7 @@ export function MirrorObservation({ onComplete }) {
         updateMirrorData,
         updateMirrorContext,
         lockMirror,
+        setMirrorLLMValidation,
     } = useChainStore();
 
     const [phase, setPhase] = useState('context'); // context | components | review | confirm
@@ -126,8 +133,41 @@ export function MirrorObservation({ onComplete }) {
     const contextComplete = context.date || context.time || context.location;
     const componentsComplete = mirrorData.actor && mirrorData.action;
 
-    // Handle lock
-    const handleLock = () => {
+    // LLM validation state
+    const llmValidation = mirrorData.llmValidation || { status: 'idle', result: null };
+
+    // Handle LLM validation
+    const handleValidateLLM = async () => {
+        setMirrorLLMValidation('validating');
+
+        try {
+            const result = await validateMirrorEntry({
+                context: {
+                    date: context.date || '',
+                    time: context.time || '',
+                    location: context.location || '',
+                },
+                actor: mirrorData.actor || '',
+                action: mirrorData.action || '',
+                recipient: mirrorData.recipient || '',
+            });
+
+            if (result.success && result.data) {
+                setMirrorLLMValidation('success', result.data);
+            } else {
+                setMirrorLLMValidation('error', { message: result.error || 'Validation failed' });
+            }
+        } catch (error) {
+            setMirrorLLMValidation('error', { message: error.message });
+        }
+    };
+
+    // Handle lock (with or without LLM validation)
+    const handleLock = (skipLLM = false) => {
+        if (skipLLM) {
+            setMirrorLLMValidation('skipped');
+        }
+
         const warnings = validation.allViolations
             .filter(v => v.severity === 'soft')
             .map(v => `${v.word} (${v.type})`);
@@ -413,7 +453,7 @@ export function MirrorObservation({ onComplete }) {
                 {validation.hasSoftWarning && (
                     <div className="w-full max-w-md mb-4 p-3 rounded-lg bg-yellow-400/10 border border-yellow-400/30">
                         <p className="text-xs text-yellow-400/90 text-center">
-                            ⚠ Soft warnings: {validation.allViolations
+                            ⚠ Word-list warnings: {validation.allViolations
                                 .filter(v => v.severity === 'soft')
                                 .map(v => v.word)
                                 .join(', ')}
@@ -424,18 +464,66 @@ export function MirrorObservation({ onComplete }) {
                     </div>
                 )}
 
-                {/* Confirmation checkbox */}
-                <label className="flex items-center gap-3 mb-6 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={neutralSentenceConfirmed}
-                        onChange={(e) => setNeutralSentenceConfirmed(e.target.checked)}
-                        className="w-4 h-4 accent-blue-400"
-                    />
-                    <span className="text-sm text-white/70">
-                        I confirm this describes what happened, not what I think about it.
-                    </span>
-                </label>
+                {/* LLM Validation Section */}
+                <div className="w-full max-w-md mb-4">
+                    {/* Validate button - show when idle or success with clean result */}
+                    {llmValidation.status === 'idle' && (
+                        <button
+                            onClick={handleValidateLLM}
+                            className="w-full px-4 py-2.5 rounded border transition-all text-sm"
+                            style={{
+                                borderColor: 'rgba(147, 197, 253, 0.4)',
+                                color: 'rgba(147, 197, 253, 0.9)',
+                                background: 'rgba(147, 197, 253, 0.08)',
+                            }}
+                        >
+                            ✨ Validate with AI
+                        </button>
+                    )}
+
+                    {/* Loading state */}
+                    {llmValidation.status === 'validating' && (
+                        <MirrorValidationLoading />
+                    )}
+
+                    {/* Success - show feedback */}
+                    {llmValidation.status === 'success' && llmValidation.result && (
+                        <MirrorValidationFeedback
+                            result={llmValidation.result}
+                            onDismiss={() => setMirrorLLMValidation('idle')}
+                        />
+                    )}
+
+                    {/* Error state */}
+                    {llmValidation.status === 'error' && (
+                        <MirrorValidationError
+                            onRetry={handleValidateLLM}
+                            onSkip={() => handleLock(true)}
+                        />
+                    )}
+
+                    {/* Skipped indicator */}
+                    {llmValidation.status === 'skipped' && (
+                        <div className="text-xs text-white/40 text-center">
+                            AI validation skipped
+                        </div>
+                    )}
+                </div>
+
+                {/* Confirmation checkbox - show after validation or if skipped */}
+                {(llmValidation.status === 'success' || llmValidation.status === 'skipped' || llmValidation.status === 'idle') && (
+                    <label className="flex items-center gap-3 mb-6 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={neutralSentenceConfirmed}
+                            onChange={(e) => setNeutralSentenceConfirmed(e.target.checked)}
+                            className="w-4 h-4 accent-blue-400"
+                        />
+                        <span className="text-sm text-white/70">
+                            I confirm this describes what happened, not what I think about it.
+                        </span>
+                    </label>
+                )}
 
                 {/* Navigation */}
                 <div className="flex gap-4">
@@ -445,24 +533,28 @@ export function MirrorObservation({ onComplete }) {
                     >
                         EDIT
                     </button>
-                    <button
-                        onClick={handleLock}
-                        disabled={!neutralSentenceConfirmed}
-                        className="px-6 py-2 rounded border transition-all"
-                        style={{
-                            borderColor: neutralSentenceConfirmed
-                                ? 'rgba(147, 197, 253, 0.7)'
-                                : 'rgba(255,255,255,0.2)',
-                            color: neutralSentenceConfirmed
-                                ? 'rgba(147, 197, 253, 1)'
-                                : 'rgba(255,255,255,0.4)',
-                            background: neutralSentenceConfirmed
-                                ? 'rgba(147, 197, 253, 0.15)'
-                                : 'transparent',
-                        }}
-                    >
-                        LOCK MIRROR
-                    </button>
+
+                    {/* Lock button - enabled when confirmed AND (validated clean OR validation skipped/idle) */}
+                    {(llmValidation.status !== 'validating') && (
+                        <button
+                            onClick={() => handleLock(false)}
+                            disabled={!neutralSentenceConfirmed}
+                            className="px-6 py-2 rounded border transition-all"
+                            style={{
+                                borderColor: neutralSentenceConfirmed
+                                    ? 'rgba(147, 197, 253, 0.7)'
+                                    : 'rgba(255,255,255,0.2)',
+                                color: neutralSentenceConfirmed
+                                    ? 'rgba(147, 197, 253, 1)'
+                                    : 'rgba(255,255,255,0.4)',
+                                background: neutralSentenceConfirmed
+                                    ? 'rgba(147, 197, 253, 0.15)'
+                                    : 'transparent',
+                            }}
+                        >
+                            LOCK MIRROR
+                        </button>
+                    )}
                 </div>
             </div>
         );

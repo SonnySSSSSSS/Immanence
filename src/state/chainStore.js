@@ -31,6 +31,12 @@ const createEmptyChain = () => ({
         recipient: '',
         neutralSentence: '',
         validationWarnings: [],
+        // LLM validation state
+        llmValidation: {
+            status: 'idle', // 'idle' | 'validating' | 'success' | 'error' | 'skipped'
+            result: null,   // { verdict, issues, overall_note }
+            lastAttempt: null,
+        },
     },
 
     // Prism data (Separation)
@@ -188,6 +194,23 @@ export const useChainStore = create(
                             lockedAt: new Date().toISOString(),
                             neutralSentence,
                             validationWarnings: warnings,
+                        },
+                    } : null,
+                }));
+            },
+
+            // Set LLM validation state
+            setMirrorLLMValidation: (status, result = null) => {
+                set((state) => ({
+                    activeChain: state.activeChain ? {
+                        ...state.activeChain,
+                        mirror: {
+                            ...state.activeChain.mirror,
+                            llmValidation: {
+                                status,
+                                result,
+                                lastAttempt: new Date().toISOString(),
+                            },
                         },
                     } : null,
                 }));
