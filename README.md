@@ -83,6 +83,7 @@ public/
 
 - [Philosophy & Design](docs/PHILOSOPHY.md)
 - [Avatar System](docs/AVATAR_SYSTEM.md)
+- [Cycle & Consistency System](docs/CYCLE_SYSTEM.md)
 - [Architecture Overview](docs/ARCHITECTURE.md)
 - [User Manual](documentation/4%20Modes%20User%20Manual.md)
 - [Design Philosophy](documentation/attention-axis-logic.md)

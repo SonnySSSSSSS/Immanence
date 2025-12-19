@@ -327,3 +327,7 @@ Attention paths (Ekagrata, Sahaja, Vigilance) require sustained behavioral signa
 ### 5. AI as Validator, Not Advisor
 
 LLM validates neutral language, checks interpretations, confirms commitment clarity. It does not suggest what to think or do.
+
+### 6. Cycle-Based Progression
+
+Avatar advancement requires both cycle completion and demonstrated capacity (see [Cycle & Consistency System](CYCLE_SYSTEM.md)).
