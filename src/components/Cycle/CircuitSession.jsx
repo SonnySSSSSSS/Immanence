@@ -9,7 +9,7 @@ import { VipassanaVisual } from '../vipassana/VipassanaVisual';
 import { BREATH_PRESETS } from '../BreathConfig';
 import { SENSORY_TYPES } from '../SensoryConfig';
 
-export function CircuitSession({ circuitId, onComplete, onCancel, avatarPath, showCore }) {
+export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, onCancel, avatarPath, showCore }) {
     const getCircuit = useCurriculumStore((state) => state.getCircuit);
 
     const [circuit, setCircuit] = useState(null);
@@ -17,15 +17,21 @@ export function CircuitSession({ circuitId, onComplete, onCancel, avatarPath, sh
     const [completedExercises, setCompletedExercises] = useState([]);
     const [isExerciseRunning, setIsExerciseRunning] = useState(false);
 
-    // Load circuit on mount
+    // Load circuit on mount - use customCircuit if provided, otherwise load by ID
     useEffect(() => {
-        const loadedCircuit = getCircuit(circuitId);
-        if (loadedCircuit) {
-            setCircuit(loadedCircuit);
+        if (customCircuit) {
+            setCircuit(customCircuit);
             setCurrentExerciseIndex(0);
             setCompletedExercises([]);
+        } else if (circuitId) {
+            const loadedCircuit = getCircuit(circuitId);
+            if (loadedCircuit) {
+                setCircuit(loadedCircuit);
+                setCurrentExerciseIndex(0);
+                setCompletedExercises([]);
+            }
         }
-    }, [circuitId, getCircuit]);
+    }, [circuitId, customCircuit, getCircuit]);
 
     if (!circuit) {
         return (
@@ -206,10 +212,10 @@ export function CircuitSession({ circuitId, onComplete, onCancel, avatarPath, sh
                             <div
                                 key={idx}
                                 className={`flex-1 p-2 rounded text-center text-xs font-[Outfit] transition-all ${isCurrent
-                                        ? 'bg-[#fcd34d]/20 border border-[#fcd34d]/40 text-white/90'
-                                        : isComplete
-                                            ? 'bg-white/5 border border-white/10 text-white/40'
-                                            : 'bg-white/5 border border-white/10 text-white/30'
+                                    ? 'bg-[#fcd34d]/20 border border-[#fcd34d]/40 text-white/90'
+                                    : isComplete
+                                        ? 'bg-white/5 border border-white/10 text-white/40'
+                                        : 'bg-white/5 border border-white/10 text-white/30'
                                     }`}
                             >
                                 {isComplete && '✓ '}

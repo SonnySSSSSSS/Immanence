@@ -8,6 +8,7 @@ import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { CircuitSession } from "./Cycle/CircuitSession.jsx";
+import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
@@ -217,6 +218,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Circuit training state (minimal - CircuitSession handles execution)
   const [activeCircuitId, setActiveCircuitId] = useState(null);
+  const [circuitConfig, setCircuitConfig] = useState(null); // User's custom circuit configuration
 
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
@@ -427,6 +429,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       soundType,
       geometry,
     });
+
+    // For Circuit practice, just set the active circuit and return
+    // CircuitSession handles everything else
+    if (practice === "Circuit") {
+      if (!circuitConfig || circuitConfig.exercises.length === 0) {
+        // No exercises configured, don't start
+        return;
+      }
+      setActiveCircuitId('custom');
+      onPracticingChange && onPracticingChange(true);
+      return;
+    }
 
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
@@ -680,7 +694,41 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return (
       <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
         <div className="flex-1 flex items-center justify-center w-full">
-          {practice === "Visualization" ? (
+          {practice === "Circuit" && activeCircuitId ? (
+            <CircuitSession
+              circuitId={activeCircuitId !== 'custom' ? activeCircuitId : undefined}
+              circuit={activeCircuitId === 'custom' && circuitConfig ? {
+                id: 'custom_circuit',
+                name: 'Custom Circuit',
+                description: 'Your personalized training sequence',
+                totalDuration: circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0),
+                exercises: circuitConfig.exercises.map((item) => ({
+                  type: item.exercise.type,
+                  name: item.exercise.name,
+                  duration: item.duration,
+                  instructions: `${item.duration}-minute ${item.exercise.name.toLowerCase()}`,
+                  practiceType: item.exercise.practiceType,
+                  preset: item.exercise.preset,
+                  sensoryType: item.exercise.sensoryType,
+                })),
+              } : undefined}
+              avatarPath={avatarPath}
+              showCore={showCore}
+              onComplete={(result) => {
+                setActiveCircuitId(null);
+                setShowSummary(true);
+                setSessionSummary({
+                  type: 'circuit',
+                  circuitName: result.circuitId || 'Custom Circuit',
+                  exercisesCompleted: result.exercisesCompleted?.length || 0,
+                  totalDuration: result.totalDuration,
+                });
+              }}
+              onCancel={() => {
+                setActiveCircuitId(null);
+              }}
+            />
+          ) : practice === "Visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
               fadeInDuration={fadeInDuration}
@@ -1368,6 +1416,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     <SensoryConfig
                       sensoryType={sensoryType}
                       setSensoryType={setSensoryType}
+                    />
+                  )}
+
+                  {practice === "Circuit" && (
+                    <CircuitConfig
+                      value={circuitConfig}
+                      onChange={setCircuitConfig}
                     />
                   )}
 
