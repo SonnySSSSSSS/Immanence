@@ -1,9 +1,9 @@
 // src/services/llmService.js
-// Client for Immanence LLM Proxy (Cloudflare Worker)
-// Handles communication with Gemini API through secure proxy
+// Client for Immanence LLM - supports both Ollama (local) and Gemini API (cloud)
 
-// Worker URL - update after deployment
-const WORKER_URL = import.meta.env.VITE_LLM_PROXY_URL || 'http://localhost:8787';
+// Configuration
+const USE_OLLAMA = true; // Set to false to use Cloudflare Worker/Gemini instead
+const WORKER_URL = USE_OLLAMA ? '/api/ollama' : (import.meta.env.VITE_LLM_PROXY_URL || 'http://localhost:8787');
 
 // Default generation config
 const DEFAULT_CONFIG = {
@@ -20,60 +20,67 @@ const DEFAULT_CONFIG = {
  */
 export async function sendToLLM(systemPrompt, userPrompt, options = {}) {
     const {
-        model = 'gemini-1.5-flash',
+        model = USE_OLLAMA ? 'gemma3:1b' : 'gemini-1.5-flash',
         temperature = DEFAULT_CONFIG.temperature,
         maxOutputTokens = DEFAULT_CONFIG.maxOutputTokens,
     } = options;
 
     try {
-        const response = await fetch(WORKER_URL, {
+        // Ollama uses different API format than Gemini
+        const requestBody = USE_OLLAMA ? {
+            model,
+            prompt: `${systemPrompt}\n\n---\n\n${userPrompt}`,
+            stream: false,
+            options: {
+                temperature,
+                num_predict: maxOutputTokens,
+            }
+        } : {
+            model,
+            contents: [
+                {
+                    role: 'user',
+                    parts: [
+                        { text: `${systemPrompt}\n\n---\n\n${userPrompt}` }
+                    ]
+                }
+            ],
+            generationConfig: {
+                temperature,
+                maxOutputTokens,
+            },
+        };
+
+        const endpoint = USE_OLLAMA ? `${WORKER_URL}/api/generate` : WORKER_URL;
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Client-Version': '2.94.0',
+                'X-Client-Version': '2.96.0',
             },
-            body: JSON.stringify({
-                model,
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            { text: `${systemPrompt}\n\n---\n\n${userPrompt}` }
-                        ]
-                    }
-                ],
-                generationConfig: {
-                    temperature,
-                    maxOutputTokens,
-                },
-            }),
+            body: JSON.stringify(requestBody),
         });
 
-        // Handle rate limiting
-        if (response.status === 429) {
-            const data = await response.json();
-            return {
-                success: false,
-                error: 'rate_limited',
-                message: data.message || 'Too many requests. Please try again later.',
-                retryAfter: data.retryAfter,
-            };
-        }
-
-        // Handle other errors
+        // Handle errors
         if (!response.ok) {
             const data = await response.json().catch(() => ({}));
             return {
                 success: false,
                 error: 'api_error',
-                message: data.message || `Request failed with status ${response.status}`,
+                message: data.message || data.error || `Request failed with status ${response.status}`,
             };
         }
 
         const data = await response.json();
 
-        // Extract text from Gemini response
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        // Extract text based on API type
+        let text;
+        if (USE_OLLAMA) {
+            text = data.response; // Ollama format
+        } else {
+            text = data.candidates?.[0]?.content?.parts?.[0]?.text; // Gemini format
+        }
 
         if (!text) {
             return {
@@ -148,10 +155,17 @@ export async function sendToLLMForJSON(systemPrompt, userPrompt, options = {}) {
  */
 export async function checkLLMAvailability() {
     try {
-        const response = await fetch(WORKER_URL, {
-            method: 'OPTIONS',
-        });
-        return response.ok;
+        if (USE_OLLAMA) {
+            // Check Ollama health - just try to reach the server
+            const response = await fetch(`${WORKER_URL}/api/version`, {
+                method: 'GET',
+            });
+            return response.ok;
+        } else {
+            // Check Cloudflare Worker
+            const response = await fetch(WORKER_URL, { method: 'OPTIONS' });
+            return response.ok;
+        }
     } catch {
         return false;
     }

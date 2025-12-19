@@ -105,6 +105,13 @@ export default {
             // Build Gemini API URL
             const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${body.model}:generateContent?key=${apiKey}`;
 
+            // Debug logging
+            console.log('Making request to:', geminiUrl.replace(apiKey, 'REDACTED'));
+            console.log('Request body:', JSON.stringify({
+                contents: body.contents,
+                generationConfig: body.generationConfig || { temperature: 0.7, maxOutputTokens: 2048 }
+            }, null, 2));
+
             // Forward request to Gemini
             const geminiResponse = await fetch(geminiUrl, {
                 method: 'POST',
