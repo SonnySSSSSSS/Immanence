@@ -3,11 +3,11 @@
 // Loads PNG assets and WebM videos from public/vipassana/stamps/
 
 // Image file mappings (based on actual files in public/vipassana/stamps/)
-const STAMP_FILES = {
-    birds: ['03', '05', '06', '08', '09', '10', '11', '15', '16'],
-    clouds: ['03', '04', '05', '09', '10', '14', '15'],
-    lanterns: ['03', '04', '05', '06', '08', '09', '10', '11', '12', '13', '14', '15'],
-    leaves: ['03', '05', '08', '13', '16', '18', '21', '25', '28', '34', '36', '39', '41'],
+export const STAMP_FILES = {
+    birds: ['birds1', 'birds2', 'birds3', 'birds4', 'birds5', 'birds6', 'birds8', 'bird7', 'birds no watermark'],
+    clouds: ['cloud2', 'cloud3', 'cloud4', 'cloud5', 'cloud6', 'cloud7', 'cloud8', 'cloud9', 'Untitled', 'clouds no watermark'],
+    lanterns: ['lanterns1', 'lantern2', 'lantern3', 'lantern4', 'lantern5', 'lantern6', 'lantern8', 'lantern9', 'lanterns s no watermark'],
+    leaves: ['leaves1', 'leaves2', 'leaves3', 'leaves4', 'leaves2 no watermark'],
 };
 
 // Video stamp mappings (WebM files with alpha transparency)
@@ -46,19 +46,19 @@ export function initializeStamps() {
     stampCache = new Map();
     const loadPromises = [];
 
-    // Load all PNG stamp images
+    // Load all GIF stamp images
     for (const [type, fileNumbers] of Object.entries(STAMP_FILES)) {
-        for (const num of fileNumbers) {
+        for (const fileName of fileNumbers) {
             const img = new Image();
-            const path = `${import.meta.env.BASE_URL}vipassana/stamps/${type}/all ${type}_${num}.png`;
+            const path = `${import.meta.env.BASE_URL}vipassana/stamps/${type}/${fileName}.gif`;
 
             const promise = new Promise((resolve) => {
                 img.onload = () => {
-                    stampCache.set(`${type}-${num}`, { element: img, type: 'image' });
+                    stampCache.set(`${type}-${fileName}`, { element: img, type: 'image' });
                     resolve();
                 };
                 img.onerror = () => {
-                    console.warn(`[Stamps] Failed to load image: ${path}`);
+                    console.warn(`[Stamps] Failed to load GIF: ${path}`);
                     resolve(); // Don't reject, just skip this stamp
                 };
             });
@@ -140,8 +140,8 @@ export function getStamp(theme, variant, category = 'neutral') {
 
     // This is an image stamp
     if (!fileNumbers || variant >= fileNumbers.length) return null;
-    const fileNum = fileNumbers[variant];
-    return stampCache.get(`${theme}-${fileNum}`);
+    const fileName = fileNumbers[variant];
+    return stampCache.get(`${theme}-${fileName}`);
 }
 
 /**

@@ -7,10 +7,10 @@ import React, { useRef, useEffect, useState } from 'react';
 // WebM with alpha transparency (VP9 codec) - the only browser-supported transparent video format
 // Updated with new clean alpha channel videos
 const VIDEO_SOURCES = {
-    leaves: 'vipassana/background videos/leaves.webm',
-    birds: 'vipassana/background videos/birds.webm',
-    lanterns: 'vipassana/background videos/lanterns.webm',
-    clouds: 'vipassana/background videos/clouds.webm',
+    leaves: 'vipassana/background videos/assets/Gentle_Leaf_Movement_in_Dense_Air no watermark.mp4',
+    birds: 'vipassana/background videos/assets/Distant_Birds_Silhouettes_Ambient_Motion no watermark.mp4',
+    lanterns: 'vipassana/background videos/assets/Ambient_Sky_Lanterns_Video_Generation no watermark.mp4',
+    clouds: 'vipassana/background videos/assets/clouds.mov',
 };
 
 // Per-video-type positioning to fit portrait wallpaper

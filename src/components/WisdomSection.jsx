@@ -7,8 +7,9 @@ import { treatiseParts, getChaptersForPart } from "../data/treatiseParts.js";
 import { wisdomCategories, getAllCategories } from "../data/wisdomRecommendations.js";
 import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
+import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
 
-const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos"];
+const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos", "Self-Knowledge"];
 import { useWisdomStore } from "../state/wisdomStore.js";
 
 
@@ -1045,6 +1046,7 @@ export function WisdomSection() {
             {activeTab === "Treatise" && renderTreatiseView()}
             {activeTab === "Bookmarks" && renderBookmarksView()}
             {activeTab === "Videos" && renderVideosView()}
+            {activeTab === "Self-Knowledge" && <SelfKnowledgeView />}
           </section>
         </div>
       </div>

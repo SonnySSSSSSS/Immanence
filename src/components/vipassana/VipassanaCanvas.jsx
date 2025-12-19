@@ -11,6 +11,7 @@ export function VipassanaCanvas({
     onThoughtTap,
     onThoughtLongPress,
     atmosphericEvent = null,
+    showStamps = true,
 }) {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
@@ -203,6 +204,8 @@ export function VipassanaCanvas({
 
             // Draw thoughts with tiered quality
             visibleThoughts.forEach((thought, index) => {
+                if (!showStamps) return;
+
                 const now = Date.now();
                 const age = (now - thought.spawnTime) / 1000; // seconds
                 const lifetime = thought.baseDuration * thought.fadeModifier;

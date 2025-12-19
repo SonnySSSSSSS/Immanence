@@ -3,7 +3,7 @@
 
 import React, { useEffect } from 'react';
 
-const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos"];
+const TABS = ["Recommendations", "Treatise", "Bookmarks", "Videos", "Self-Knowledge"];
 
 export function WisdomSelectionModal({
     isOpen,

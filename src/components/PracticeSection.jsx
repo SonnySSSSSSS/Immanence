@@ -16,11 +16,13 @@ import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { useProgressStore } from "../state/progressStore.js";
+import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
 import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
+import { plateauMaterial, innerGlowStyle } from "../styles/cardMaterial.js";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed

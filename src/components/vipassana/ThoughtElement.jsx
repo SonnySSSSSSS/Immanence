@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { THOUGHT_CATEGORIES, PRACTICE_INVARIANT } from '../../data/vipassanaThemes';
+import { STAMP_FILES } from '../../utils/stamps';
 
 export function ThoughtElement({
     id,
@@ -13,64 +14,114 @@ export function ThoughtElement({
     baseDuration = PRACTICE_INVARIANT.thoughtLifetime,
     fadeModifier = 1.0,
     isSticky = false,
-    driftDirection = { x: 0.2, y: 0 },
+    driftDirection = { x: 0, y: 0 }, // Not used directly anymore, using vx/vy from thought object
+    vx = 0,
+    vy = 0,
+    phase = 0,
+    bobAmplitude = 0,
+    bobFrequency = 0,
+    flickerVariance = 0,
+    rotationSpeed = 0,
+    flipX = false,
+    variant = 0,
     elementType = 'cloud',
     onComplete,
     onTap,
     onLongPress,
 }) {
-    const [phase, setPhase] = useState('appearing'); // appearing | present | dissolving | dispersing
-    const [opacity, setOpacity] = useState(0);
-    const [scale, setScale] = useState(0.95);
-    const [position, setPosition] = useState({ x, y });
-    const [coherence, setCoherence] = useState(1.0);
-    const [showSymbol, setShowSymbol] = useState(false);
+    const [renderState, setRenderState] = useState({
+        opacity: 0,
+        scale: 0.95,
+        x: x,
+        y: y,
+        rotation: 0,
+        filter: 'none'
+    });
 
     const elementRef = useRef(null);
     const longPressTimer = useRef(null);
     const animationRef = useRef(null);
 
     const categoryData = THOUGHT_CATEGORIES[category] || THOUGHT_CATEGORIES.neutral;
-    const effectiveDuration = baseDuration * fadeModifier * 1000; // to ms
 
-    // Main lifecycle animation - uses spawnTime from props, not local startTime
+    // Naming map for folders
+    const pluralize = { cloud: 'clouds', bird: 'birds', leaf: 'leaves', lantern: 'lanterns' };
+    const folder = pluralize[elementType] || (elementType + 's');
+    const fileNumbers = STAMP_FILES[folder] || [];
+    const fileName = fileNumbers[variant] || fileNumbers[0];
+    const assetPath = `${import.meta.env.BASE_URL}vipassana/stamps/${folder}/${fileName}.gif`;
+
     useEffect(() => {
-        // Use refs to access latest values without causing re-runs
         const animate = () => {
-            const elapsed = Date.now() - spawnTime;
+            const now = Date.now();
+            const elapsed = now - spawnTime;
             const duration = baseDuration * fadeModifier * 1000;
             const progress = Math.min(elapsed / duration, 1);
+            const ageSec = elapsed / 1000;
 
-            // Phase transitions
-            if (progress < 0.045) {
-                // Appearance phase (0-1s of 22s)
-                setPhase('appearing');
-                setOpacity(progress / 0.045);
-                setScale(0.95 + (progress / 0.045) * 0.05);
-            } else if (progress < PRACTICE_INVARIANT.dissolutionStart) {
-                // Present phase
-                setPhase('present');
-                setOpacity(1);
-                setScale(1);
-            } else if (progress < 0.9) {
-                // Loosening phase - edges feather
-                setPhase('dissolving');
-                const dissolveProgress = (progress - 0.75) / 0.15;
-                setCoherence(1 - dissolveProgress * 0.4);
-                setOpacity(1 - dissolveProgress * 0.3);
+            // Phase A/B/C logic from VipassanaCanvas
+            let opacity = 1;
+            let scale = 1;
+
+            if (ageSec < 2.5) {
+                opacity = Math.min(1, ageSec / 0.5);
+                scale = 0.95 + (opacity * 0.05);
+            } else if (ageSec < 8) {
+                const releaseProgress = (ageSec - 2.5) / 5.5;
+                opacity = 1 - (releaseProgress * 0.75);
+                scale = 1;
             } else {
-                // Dispersing phase - shape breaks apart
-                setPhase('dispersing');
-                const disperseProgress = (progress - 0.9) / 0.1;
-                setCoherence(0.6 - disperseProgress * 0.6);
-                setOpacity(0.7 - disperseProgress * 0.7);
+                const ghostProgress = Math.min(1, (ageSec - 8) / 5);
+                opacity = 0.25 - (ghostProgress * 0.10);
+                opacity = Math.max(0.15, opacity);
+                scale = 1 + (ghostProgress * 0.1);
             }
 
-            // Gentle drift
-            const driftAmount = progress * 40; // max 40px drift
-            setPosition({
-                x: x + driftDirection.x * driftAmount + Math.sin(elapsed / 2000) * 3,
-                y: y + driftDirection.y * driftAmount + Math.cos(elapsed / 3000) * 2,
+            if (isSticky) {
+                opacity = 1;
+                scale = 1;
+            }
+
+            // Motion logic
+            const driftX = ageSec * vx * 15;
+            const driftY = ageSec * vy * 15;
+
+            let motionX = 0, motionY = 0;
+            let opacityModifier = 1;
+
+            if (bobAmplitude) {
+                motionY = Math.sin(now / 1000 * bobFrequency + phase) * bobAmplitude * 20;
+                opacityModifier = 0.9 + Math.sin(now / 3000 + phase) * 0.1;
+            }
+
+            if (flickerVariance) {
+                motionX = Math.sin(now / 200 + phase) * flickerVariance * 5;
+                motionY += Math.sin(now / 400 + phase * 1.5) * flickerVariance * 2;
+                opacityModifier = 0.7 + Math.sin(now / 800 + phase) * 0.3;
+            }
+
+            let rotation = 0;
+            if (rotationSpeed) {
+                rotation = (ageSec * rotationSpeed + phase) * (180 / Math.PI); // DOM uses degrees for CSS transform
+            }
+
+            const currentX = x + driftX + motionX;
+            const currentY = y + driftY + motionY;
+
+            // Dissolution filter
+            let blur = 0;
+            if (progress > PRACTICE_INVARIANT.dissolutionStart) {
+                const dissolveProgress = (progress - 0.75) / 0.25;
+                blur = dissolveProgress * 4;
+            }
+
+            setRenderState({
+                opacity: opacity * opacityModifier,
+                scale,
+                x: currentX,
+                y: currentY,
+                rotation,
+                filter: blur > 0 ? `blur(${blur}px)` : 'none'
             });
 
             if (progress < 1) {
@@ -81,152 +132,65 @@ export function ThoughtElement({
         };
 
         animationRef.current = requestAnimationFrame(animate);
-
-        return () => {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current);
-            }
-        };
-    }, [id]); // Only depend on id - animation should not restart
-
-    // Show symbol briefly on category change
-    useEffect(() => {
-        if (category !== 'neutral' && categoryData.symbol) {
-            setShowSymbol(true);
-            const timer = setTimeout(() => setShowSymbol(false), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [category, categoryData.symbol]);
+        return () => cancelAnimationFrame(animationRef.current);
+    }, [id, vx, vy, bobAmplitude, flickerVariance, rotationSpeed, isSticky, fadeModifier]);
 
     // Gesture handlers
-    const handlePointerDown = () => {
+    const handlePointerDown = (e) => {
+        e.stopPropagation();
         longPressTimer.current = setTimeout(() => {
             onLongPress?.(id);
+            longPressTimer.current = null;
         }, PRACTICE_INVARIANT.longPressThreshold);
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e) => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
-            // Short tap - accelerate fade
             onTap?.(id);
         }
     };
-
-    const handlePointerLeave = () => {
-        if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current);
-            longPressTimer.current = null;
-        }
-    };
-
-    // Dissolution filter based on coherence
-    const filterStyle = phase === 'dissolving' || phase === 'dispersing'
-        ? `blur(${(1 - coherence) * 4}px)`
-        : 'none';
 
     return (
         <div
             ref={elementRef}
             className="absolute pointer-events-auto cursor-pointer select-none"
             style={{
-                left: position.x,
-                top: position.y,
-                transform: `translate(-50%, -50%) scale(${scale})`,
-                opacity,
-                filter: filterStyle,
+                left: renderState.x,
+                top: renderState.y,
+                transform: `translate(-50%, -50%) scale(${renderState.scale}) rotate(${renderState.rotation}deg) ${flipX ? 'scaleX(-1)' : ''}`,
+                opacity: renderState.opacity,
+                filter: renderState.filter,
                 transition: 'filter 0.5s ease-out',
-                zIndex: 10,
+                zIndex: isSticky ? 20 : 10,
             }}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerLeave}
         >
-            {/* Thought element visual */}
-            <div
-                className="relative"
-                style={{
-                    width: '72px',
-                    height: '72px',
-                }}
-            >
-                {/* Main element - cloud/bird/leaf/lantern shape */}
-                <svg
-                    width="72"
-                    height="72"
-                    viewBox="0 0 72 72"
+            <div className="relative group">
+                {/* GIF Image */}
+                <img
+                    src={assetPath}
+                    alt=""
                     style={{
-                        filter: `drop-shadow(0 4px 12px ${categoryData.color}) drop-shadow(0 0 8px rgba(0,0,0,0.8))`,
+                        width: '72px',
+                        height: '72px',
+                        display: 'block',
+                        filter: category !== 'neutral'
+                            ? `drop-shadow(0 0 12px ${categoryData.color})`
+                            : 'none',
+                        // Special cloud stretching
+                        transform: elementType === 'cloud' ? 'scaleX(1.5)' : 'none'
                     }}
-                >
-                    {elementType === 'cloud' && (
-                        <circle
-                            cx="36"
-                            cy="36"
-                            r="24"
-                            fill={categoryData.color}
-                            style={{ opacity: coherence }}
-                        />
-                    )}
-                    {elementType === 'bird' && (
-                        <path
-                            d="M6 36 Q18 24 36 36 Q54 24 66 36 Q54 42 36 33 Q18 42 6 36"
-                            fill={categoryData.color}
-                            style={{ opacity: coherence }}
-                        />
-                    )}
-                    {elementType === 'leaf' && (
-                        <path
-                            d="M36 6 Q60 30 36 66 Q12 30 36 6"
-                            fill={categoryData.color}
-                            style={{ opacity: coherence }}
-                        />
-                    )}
-                    {elementType === 'lantern' && (
-                        <ellipse
-                            cx="36"
-                            cy="36"
-                            rx="30"
-                            ry="21"
-                            fill={categoryData.color}
-                            style={{ opacity: coherence }}
-                        />
-                    )}
-                </svg>
+                    draggable={false}
+                />
 
-                {/* Category symbol (brief display) */}
-                {showSymbol && categoryData.symbol && (
-                    <div
-                        className="absolute inset-0 flex items-center justify-center text-white text-xs font-medium"
-                        style={{
-                            animation: 'fadeInOut 1s ease-out forwards',
-                        }}
-                    >
-                        {categoryData.symbol}
-                    </div>
-                )}
-
-                {/* Sticky marker - thin ring */}
+                {/* Sticky Ring */}
                 {isSticky && (
-                    <div
-                        className="absolute inset-0 rounded-full border pointer-events-none"
-                        style={{
-                            borderColor: 'rgba(255, 255, 255, 0.25)',
-                            borderWidth: '1px',
-                        }}
-                    />
+                    <div className="absolute inset-0 -m-2 rounded-full border-2 border-amber-300/40 animate-pulse" />
                 )}
             </div>
-
-            <style>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: scale(0.8); }
-          20% { opacity: 1; transform: scale(1); }
-          80% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
         </div>
     );
 }
