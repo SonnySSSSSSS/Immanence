@@ -1,5 +1,5 @@
 // src/components/Cycle/CircuitConfig.jsx
-// Circuit configuration UI for customizing exercises and durations
+// Circuit configuration UI - Refined as "digital talisman"
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -11,6 +11,7 @@ const AVAILABLE_EXERCISES = [
         icon: '🌬️',
         practiceType: 'Breath & Stillness',
         preset: 'box',
+        glow: 'rgba(147, 197, 253, 0.4)', // Blue glow
     },
     {
         id: 'cognitive',
@@ -18,6 +19,7 @@ const AVAILABLE_EXERCISES = [
         type: 'focus',
         icon: '🔥',
         practiceType: 'Cognitive Vipassana',
+        glow: 'rgba(251, 146, 60, 0.4)', // Orange glow
     },
     {
         id: 'somatic',
@@ -26,6 +28,7 @@ const AVAILABLE_EXERCISES = [
         icon: '✨',
         practiceType: 'Somatic Vipassana',
         sensoryType: 'body',
+        glow: 'rgba(196, 181, 253, 0.4)', // Purple glow
     },
     {
         id: 'visualization',
@@ -33,6 +36,7 @@ const AVAILABLE_EXERCISES = [
         type: 'focus',
         icon: '🔮',
         practiceType: 'Visualization',
+        glow: 'rgba(167, 139, 250, 0.4)', // Deep purple
     },
     {
         id: 'cymatics',
@@ -40,6 +44,7 @@ const AVAILABLE_EXERCISES = [
         type: 'focus',
         icon: '〰️',
         practiceType: 'Cymatics',
+        glow: 'rgba(129, 140, 248, 0.4)', // Indigo
     },
     {
         id: 'sound',
@@ -47,13 +52,13 @@ const AVAILABLE_EXERCISES = [
         type: 'body',
         icon: '🎵',
         practiceType: 'Sound',
+        glow: 'rgba(192, 132, 252, 0.4)', // Violet
     },
 ];
 
 const DURATION_OPTIONS = [3, 5, 7, 10, 12, 15, 20];
 
 export function CircuitConfig({ value, onChange }) {
-    // value = { exercises: [{ exercise, duration }], name }
     const [selectedExercises, setSelectedExercises] = useState(
         value?.exercises || [
             { exercise: AVAILABLE_EXERCISES[0], duration: 5 },
@@ -66,12 +71,10 @@ export function CircuitConfig({ value, onChange }) {
         const exists = selectedExercises.find((e) => e.exercise.id === exercise.id);
 
         if (exists) {
-            // Remove if already selected
             const updated = selectedExercises.filter((e) => e.exercise.id !== exercise.id);
             setSelectedExercises(updated);
             if (onChange) onChange({ exercises: updated });
         } else {
-            // Add with default 5 min duration
             const updated = [...selectedExercises, { exercise, duration: 5 }];
             setSelectedExercises(updated);
             if (onChange) onChange({ exercises: updated });
@@ -97,37 +100,94 @@ export function CircuitConfig({ value, onChange }) {
     const totalDuration = selectedExercises.reduce((sum, e) => sum + e.duration, 0);
 
     return (
-        <div className="space-y-4">
-            {/* Total Duration Display */}
-            <div className="p-4 bg-[#fcd34d]/10 border border-[#fcd34d]/20 rounded">
-                <div className="text-xs text-[#fcd34d]/60 font-[Outfit] mb-1">Total Circuit Duration</div>
-                <div className="text-2xl font-[Cinzel] text-white/90">{totalDuration} minutes</div>
+        <div className="space-y-6">
+            {/* Total Duration - Glassmorphic */}
+            <div
+                className="p-4 rounded"
+                style={{
+                    background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                    boxShadow: 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1)',
+                }}
+            >
+                <div
+                    className="text-xs font-[Outfit] mb-1 tracking-wider uppercase"
+                    style={{
+                        color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
+                    }}
+                >
+                    Circuit Duration
+                </div>
+                <div className="text-3xl font-[Cinzel] text-white/95 font-light tracking-wide">
+                    {totalDuration} <span className="text-lg text-white/50">min</span>
+                </div>
             </div>
 
-            {/* Exercise Selection */}
+            {/* Horizontal Exercise Ribbon */}
             <div>
-                <div className="text-xs text-white/50 font-[Outfit] mb-2 uppercase tracking-wider">
-                    Select Exercises
+                <div className="text-xs text-white/40 font-[Outfit] mb-3 uppercase tracking-[0.15em]">
+                    Select Practices
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div
+                    className="flex gap-3 pb-2"
+                    style={{
+                        width: '100%',
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        scrollSnapType: 'x mandatory',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3) rgba(255,255,255,0.05)',
+                    }}
+                >
                     {AVAILABLE_EXERCISES.map((exercise) => {
                         const isSelected = selectedExercises.some((e) => e.exercise.id === exercise.id);
                         return (
                             <motion.button
                                 key={exercise.id}
                                 onClick={() => handleToggleExercise(exercise)}
-                                className={`p-3 rounded border transition-all ${isSelected
-                                    ? 'bg-[#fcd34d]/20 border-[#fcd34d]/40'
-                                    : 'bg-white/5 border-white/10 hover:border-white/20'
-                                    }`}
+                                className="flex-shrink-0"
+                                style={{
+                                    width: '120px',
+                                    padding: '14px 10px',
+                                    borderRadius: '8px',
+                                    border: isSelected
+                                        ? '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.4)'
+                                        : '1px solid rgba(255,255,255,0.08)',
+                                    background: isSelected
+                                        ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.12)'
+                                        : 'rgba(255,255,255,0.03)',
+                                    backdropFilter: 'blur(8px)',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: isSelected
+                                        ? `0 0 20px ${exercise.glow}, inset 0 0 15px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1)`
+                                        : 'none',
+                                    scrollSnapAlign: 'start',
+                                }}
+                                whileHover={{ scale: 1.05, y: -2 }}
                                 whileTap={{ scale: 0.98 }}
                             >
-                                <div className="flex items-center gap-2">
-                                    <div className="text-2xl">{exercise.icon}</div>
-                                    <div className="flex-1 text-left">
-                                        <div className="text-sm font-[Outfit] text-white/80">{exercise.name}</div>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div
+                                        className="text-3xl"
+                                        style={{
+                                            filter: `drop-shadow(0 0 8px ${exercise.glow})`,
+                                        }}
+                                    >
+                                        {exercise.icon}
                                     </div>
-                                    {isSelected && <div className="text-[#fcd34d]">✓</div>}
+                                    <div
+                                        className="text-xs font-[Outfit] text-center leading-tight"
+                                        style={{
+                                            color: isSelected ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)',
+                                        }}
+                                    >
+                                        {exercise.name}
+                                    </div>
+                                    {isSelected && (
+                                        <div className="text-sm" style={{ color: 'var(--accent-color)' }}>✓</div>
+                                    )}
                                 </div>
                             </motion.button>
                         );
@@ -135,24 +195,32 @@ export function CircuitConfig({ value, onChange }) {
                 </div>
             </div>
 
-            {/* Selected Exercises with Duration */}
+            {/* Selected Exercises Sequence */}
             {selectedExercises.length > 0 && (
                 <div>
-                    <div className="text-xs text-white/50 font-[Outfit] mb-2 uppercase tracking-wider">
-                        Circuit Sequence ({selectedExercises.length} exercises)
+                    <div className="text-xs text-white/40 font-[Outfit] mb-3 uppercase tracking-[0.15em]">
+                        Circuit Sequence · {selectedExercises.length} Practices
                     </div>
                     <div className="space-y-2">
                         {selectedExercises.map((item, index) => (
-                            <div
+                            <motion.div
                                 key={item.exercise.id}
-                                className="p-3 bg-white/5 border border-white/10 rounded flex items-center gap-3"
+                                className="p-3 rounded flex items-center gap-3"
+                                style={{
+                                    background: 'rgba(255,255,255,0.04)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    backdropFilter: 'blur(5px)',
+                                }}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05 }}
                             >
                                 {/* Reorder buttons */}
-                                <div className="flex flex-col gap-1">
+                                <div className="flex flex-col gap-0.5">
                                     <button
                                         onClick={() => index > 0 && handleReorder(index, index - 1)}
                                         disabled={index === 0}
-                                        className={`text-xs ${index === 0 ? 'text-white/20' : 'text-white/50 hover:text-white/80'
+                                        className={`text-[10px] ${index === 0 ? 'text-white/10' : 'text-white/40 hover:text-white/70'
                                             }`}
                                     >
                                         ▲
@@ -160,7 +228,7 @@ export function CircuitConfig({ value, onChange }) {
                                     <button
                                         onClick={() => index < selectedExercises.length - 1 && handleReorder(index, index + 1)}
                                         disabled={index === selectedExercises.length - 1}
-                                        className={`text-xs ${index === selectedExercises.length - 1 ? 'text-white/20' : 'text-white/50 hover:text-white/80'
+                                        className={`text-[10px] ${index === selectedExercises.length - 1 ? 'text-white/10' : 'text-white/40 hover:text-white/70'
                                             }`}
                                     >
                                         ▼
@@ -168,19 +236,33 @@ export function CircuitConfig({ value, onChange }) {
                                 </div>
 
                                 {/* Exercise info */}
-                                <div className="text-xl">{item.exercise.icon}</div>
+                                <div
+                                    className="text-2xl"
+                                    style={{
+                                        filter: `drop-shadow(0 0 6px ${item.exercise.glow})`,
+                                    }}
+                                >
+                                    {item.exercise.icon}
+                                </div>
                                 <div className="flex-1">
-                                    <div className="text-sm font-[Outfit] text-white/80">{item.exercise.name}</div>
+                                    <div className="text-sm font-[Outfit] text-white/80">
+                                        {item.exercise.name}
+                                    </div>
                                 </div>
 
                                 {/* Duration selector */}
                                 <select
                                     value={item.duration}
                                     onChange={(e) => handleDurationChange(item.exercise.id, parseInt(e.target.value))}
-                                    className="px-2 py-1 bg-white/10 border border-white/20 rounded text-sm font-[Outfit] text-white/90 focus:outline-none focus:border-[#fcd34d]/50"
+                                    className="px-2 py-1 text-sm font-[Outfit] text-white/90 rounded"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.08)',
+                                        border: '1px solid rgba(255,255,255,0.15)',
+                                        backdropFilter: 'blur(5px)',
+                                    }}
                                 >
                                     {DURATION_OPTIONS.map((dur) => (
-                                        <option key={dur} value={dur}>
+                                        <option key={dur} value={dur} style={{ background: '#1a1a2e' }}>
                                             {dur} min
                                         </option>
                                     ))}
@@ -189,19 +271,27 @@ export function CircuitConfig({ value, onChange }) {
                                 {/* Remove button */}
                                 <button
                                     onClick={() => handleToggleExercise(item.exercise)}
-                                    className="text-white/40 hover:text-white/80 text-sm"
+                                    className="text-white/30 hover:text-white/70 text-sm transition-colors"
                                 >
                                     ✕
                                 </button>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
             )}
 
             {selectedExercises.length === 0 && (
-                <div className="p-6 text-center text-white/50 font-[Outfit] text-sm">
-                    Select at least one exercise to create a circuit
+                <div
+                    className="p-8 text-center rounded"
+                    style={{
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                    }}
+                >
+                    <p className="text-sm text-white/40 font-[Outfit]">
+                        Select practices above to build your circuit
+                    </p>
                 </div>
             )}
         </div>

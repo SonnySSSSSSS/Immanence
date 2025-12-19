@@ -2,7 +2,7 @@
 
 A constraint-based practice instrument for contemplative technology.
 
-![Version](https://img.shields.io/badge/version-2.96.0-blue)
+![Version](https://img.shields.io/badge/version-3.01.0-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![License](https://img.shields.io/badge/license-Private-red)
 
@@ -18,7 +18,8 @@ Immanence OS is a local-first meditation and self-regulation application. It pro
 - **Breathing practices** with configurable patterns (Box, 4-7-8, Resonance, Custom)
 - **Tap timing accuracy** tracking with visual feedback
 - **Visualization** with sacred geometry options
-- **Vipassana** thought labeling practice
+- **Vipassana** (Cognitive & Somatic) thought/sensation observation
+- **Circuit Training** — Multi-path sequential sessions with custom configurations
 
 ### 🔄 Four Modes (Cognitive Processing)
 Sequential cognitive practice chain:
@@ -27,11 +28,20 @@ Sequential cognitive practice chain:
 - **Wave** — Emotional capacity training
 - **Sword** — Committed action definition
 
-### 📊 Progress Tracking
+### 📊 Cycle & Consistency System
+- **Foundation/Advanced** cycle types (21/42 days)
+- **Consecutive/Flexible** modes with different consistency requirements
+- Practice logging with 10+ minute threshold
+- Checkpoint reviews every 2 weeks
+- Benchmark tracking for breath, focus, body capacity
+- Circuit training across multiple paths
+
+### 📈 Progress Tracking
 - 5-stage progression system (Seedling → Ember → Flame → Beacon → Stellar)
-- 6 path variants per stage
+- 6 path variants per stage (Soma, Prana, Dhyana, Drishti, Jnana, Samyoga)
 - Streak tracking and weekly review
 - Lunar cycle integration
+- Consistency metrics and effective progress calculation
 
 ### 🎨 Avatar System
 - Dynamic avatar with rune ring, sigil core, and particles

@@ -30,10 +30,11 @@ Immanence OS is a **local-first, constraint-based practice instrument**. The sys
 │                                                              │
 ├─────────────────────────────────────────────────────────────┤
 │                    Zustand State Layer                       │
-│  progressStore | chainStore | waveStore | lunarStore | ...   │
+│  progressStore | chainStore | cycleStore | settingsStore |  │
+│  historyStore | curriculumStore | waveStore | lunarStore    │
 ├─────────────────────────────────────────────────────────────┤
 │                    Service Layer                             │
-│           llmService (Ollama) | imagePreloader               │
+│  llmService | cycleManager | benchmarkManager | circuitMgr  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -47,8 +48,12 @@ All state is managed with Zustand stores, persisted to localStorage.
 
 | Store | Purpose | Key Data |
 |-------|---------|----------|
-| `progressStore` | Session tracking, streaks | sessions[], streaks, honor/dishonor logs |
+| `progressStore` | Session tracking, streaks | sessions[], streaks, benchmarks, practiceHistory |
 | `chainStore` | Four Modes chains | activeChain, completedChains |
+| `cycleStore` | Cycle & consistency tracking | currentCycle, history, checkpoints, modeHistory |
+| `settingsStore` | App settings & preferences | displayMode, llmModel, themeStageOverride, volume |
+| `historyStore` | Undo/redo for modes | histories{}, positions{}, snapshots |
+| `curriculumStore` | Circuit definitions | circuits, exercises |
 | `waveStore` | Personality profile (Big Five) | traits, assessmentHistory |
 | `lunarStore` | Lunar cycle tracking | currentPhase, ritualCompletions |
 | `attentionStore` | Attention path inference | weeklyData, dominantPath |
@@ -129,6 +134,44 @@ All state is managed with Zustand stores, persisted to localStorage.
 }
 ```
 
+### Cycle (Consistency System)
+
+```javascript
+{
+  id: 'cycle_1702...xxx',
+  type: 'foundation',  // 21 days | 'advanced' = 42 days
+  mode: 'consecutive', // or 'flexible' (67% baseline)
+  startDate: '2024-12-19T...',
+  
+  practiceDays: [
+    { date: '...', type: 'breath', duration: 12, sessionId: '...' }
+  ],
+  
+  checkpoints: [
+    {
+      date: '...',
+      dayNumber: 14,
+      consistencyRate: 0.85,
+      effectiveDays: 12,
+      canSwitchMode: true,
+      modeLockUntil: '...'
+    }
+  ],
+  
+  consistencyMetrics: {
+    rate: 0.82,
+    effectiveDays: 17,
+    projectedCompletion: '...',
+    timeOfDayConsistency: 0.75,
+    durationConsistency: 0.6
+  },
+  
+  modeHistory: [
+    { switchedAt: '...', from: 'consecutive', to: 'flexible', reason: '...' }
+  ]
+}
+```
+
 ---
 
 ## Component Hierarchy
@@ -187,6 +230,28 @@ export async function validateSwordCommitment(...)
 ```javascript
 const USE_OLLAMA = true;  // Toggle between Ollama and Gemini API
 const WORKER_URL = '/api/ollama';  // Vite proxy
+```
+
+### Cycle Services
+
+**cycleManager.js** - Practice logging, consistency calculation, mode switching
+**benchmarkManager.js** - Self-reported metrics, stage requirements
+**circuitManager.js** - Multi-path circuit training management
+
+```javascript
+// cycleManager
+export function logPractice(type, durationMin, sessionData)
+export function calculateConsistency(cycle)
+export function switchMode(newMode, reason)
+
+// benchmarkManager
+export function logBenchmark(path, value, notes)
+export function checkStageRequirements(stage, benchmarks)
+
+// circuitManager
+export function getAvailableCircuits()
+export function startCircuit(circuitId)
+export function logCircuitCompletion(circuitId, exercises)
 ```
 
 ---
@@ -274,6 +339,15 @@ src/
 ├── components/
 │   ├── Application/          # Four Modes
 │   │   └── practices/        # Mirror, Prism, Wave, Sword
+│   ├── Cycle/                # NEW: Cycle & Circuit components
+│   │   ├── CircuitTrainer.jsx
+│   │   ├── CircuitSession.jsx
+│   │   ├── CircuitConfig.jsx
+│   │   ├── ConsistencyFoundation.jsx
+│   │   ├── CycleChoiceModal.jsx
+│   │   ├── CheckpointReview.jsx
+│   │   ├── ModeSwitchDialog.jsx
+│   │   └── BenchmarkInput.jsx
 │   ├── Avatar.jsx            # Main avatar
 │   ├── BreathingRing.jsx     # Breathing visualization
 │   ├── HomeHub.jsx           # Dashboard
@@ -281,10 +355,17 @@ src/
 ├── state/
 │   ├── progressStore.js      # Sessions, streaks
 │   ├── chainStore.js         # Four Modes
+│   ├── cycleStore.js         # NEW: Cycle state
+│   ├── settingsStore.js      # NEW: App settings
+│   ├── historyStore.js       # NEW: Undo/redo
+│   ├── curriculumStore.js    # NEW: Circuits
 │   ├── waveStore.js          # Big Five personality
 │   └── ...
 ├── services/
-│   └── llmService.js         # Ollama integration
+│   ├── llmService.js         # Ollama integration
+│   ├── cycleManager.js       # NEW: Cycle logic
+│   ├── benchmarkManager.js   # NEW: Metrics
+│   └── circuitManager.js     # NEW: Circuits
 ├── data/
 │   ├── fourModes.js          # Mode definitions
 │   ├── rituals/              # Ritual definitions
@@ -296,6 +377,7 @@ src/
 
 docs/
 ├── ARCHITECTURE.md           # This file
+├── CYCLE_SYSTEM.md           # NEW: Cycle system docs
 ├── LLM_INTEGRATION.md        # Ollama setup
 └── DEVELOPMENT.md            # Dev guide
 

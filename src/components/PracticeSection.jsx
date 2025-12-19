@@ -1307,15 +1307,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     letterSpacing: "0.2em",
                     textTransform: "uppercase",
                     height: '46px',
-                    background: isStarting
-                      ? 'rgba(120,255,190,0.4)'
-                      : 'var(--accent-color)',
-                    color: "#0B1F16",
-                    border: "none",
-                    // Outer glow + asymmetric inner shadow (ember core from bottom-left)
-                    boxShadow: isStarting
-                      ? '0 0 30px rgba(120,255,190,0.5), inset 3px 4px 10px rgba(0,0,0,0.3), inset -2px -3px 8px rgba(255,255,255,0.25)'
-                      : '0 0 18px rgba(120,255,190,0.35), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.2)',
+                    // Circuit mode: glassmorphic pulsing
+                    ...(practice === "Circuit" ? {
+                      background: isStarting
+                        ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25)'
+                        : 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                      backdropFilter: 'blur(10px)',
+                      color: "var(--accent-color)",
+                      border: "1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)",
+                      boxShadow: isStarting
+                        ? 'inset 0 0 25px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.35), 0 0 50px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)'
+                        : 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25), 0 0 40px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.2)',
+                      animation: isStarting ? 'none' : 'heartbeat 1s ease-in-out infinite',
+                    } : {
+                      // Default styling for other practices
+                      background: isStarting
+                        ? 'rgba(120,255,190,0.4)'
+                        : 'var(--accent-color)',
+                      color: "#0B1F16",
+                      border: "none",
+                      boxShadow: isStarting
+                        ? '0 0 30px rgba(120,255,190,0.5), inset 3px 4px 10px rgba(0,0,0,0.3), inset -2px -3px 8px rgba(255,255,255,0.25)'
+                        : '0 0 18px rgba(120,255,190,0.35), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.2)',
+                    }),
                     transform: isStarting ? 'scale(1.015)' : 'scale(1)',
                     cursor: isStarting ? 'default' : 'pointer',
                   }}
@@ -1396,8 +1410,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 {/* Collapsible Content */}
                 <div
                   style={{
-                    maxHeight: tier2Expanded ? '600px' : '0',
-                    overflow: 'hidden',
+                    maxHeight: tier2Expanded ? '800px' : '0',
+                    overflow: tier2Expanded ? 'auto' : 'hidden',
                     opacity: tier2Expanded ? 1 : 0,
                     transition: 'max-height 260ms ease-in-out, opacity 180ms ease-in-out',
                   }}

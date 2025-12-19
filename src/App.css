@@ -15,6 +15,34 @@
   animation: sectionEnter 300ms ease-out;
 }
 
+/* Heartbeat pulse for living buttons */
+@keyframes heartbeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.015);
+    opacity: 0.95;
+  }
+}
+
+/* Text pulse for subtle affordance */
+@keyframes text-pulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
 /* Dynamic Theme Variables */
 :root {
   --brand-gold: #fcd34d;

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Avatar } from "./components/Avatar.jsx";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
 import { HomeHub } from "./components/HomeHub.jsx";
-import { WisdomSection } from "./components/WisdomSection.jsx";
-import { ApplicationSection } from "./components/ApplicationSection.jsx";
+
+// Lazy load heavy sections for better initial performance
+const WisdomSection = lazy(() => import("./components/WisdomSection.jsx"));
+const ApplicationSection = lazy(() => import("./components/ApplicationSection.jsx"));
 import { NavigationSection } from "./components/NavigationSection.jsx";
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
@@ -68,8 +70,27 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
 
       <div className="w-full max-w-md flex-1" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
-        {section === "wisdom" && <WisdomSection />}
-        {section === "application" && <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />}
+
+        {section === "wisdom" && (
+          <Suspense fallback={
+            <div className="flex items-center justify-center p-12">
+              <div className="text-white/50 font-[Outfit] text-sm">Loading Wisdom...</div>
+            </div>
+          }>
+            <WisdomSection />
+          </Suspense>
+        )}
+
+        {section === "application" && (
+          <Suspense fallback={
+            <div className="flex items-center justify-center p-12">
+              <div className="text-white/50 font-[Outfit] text-sm">Loading Application...</div>
+            </div>
+          }>
+            <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
+          </Suspense>
+        )}
+
         {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />}
       </div>
     </div>
@@ -253,7 +274,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v3.00.0
+                  v3.05.0
                 </div>
                 {!isHub && (
                   <button
