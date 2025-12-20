@@ -877,11 +877,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
           ) : practice === "Breath & Stillness" ? (
-            <div className="flex flex-col items-center" style={{ overflow: 'visible', padding: '40px 0' }}>
+            <div className="flex flex-col items-center justify-center" style={{ overflow: 'visible' }}>
+              <BreathingRing
+                breathPattern={breathingPatternForRing}
+                onTap={handleAccuracyTap}
+                onCycleComplete={() => setBreathCount(prev => prev + 1)}
+                startTime={sessionStartTime}
+                pathId={showCore ? null : avatarPath}
+                fxPreset={currentFxPreset}
+              />
               {/* FX GALLERY SWITCHER - controlled by prop */}
               {showFxGallery && (
                 <div
-                  className="flex items-center gap-3 mb-4 px-4 py-2 rounded-full"
+                  className="flex items-center gap-3 mt-4 px-4 py-2 rounded-full"
                   style={{
                     background: 'rgba(0,0,0,0.5)',
                     border: '1px solid var(--accent-20)',
@@ -920,14 +928,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   </button>
                 </div>
               )}
-              <BreathingRing
-                breathPattern={breathingPatternForRing}
-                onTap={handleAccuracyTap}
-                onCycleComplete={() => setBreathCount(prev => prev + 1)}
-                startTime={sessionStartTime}
-                pathId={showCore ? null : avatarPath}
-                fxPreset={currentFxPreset}
-              />
             </div>
           ) : practice === "Somatic Vipassana" ? (
             <SensorySession
