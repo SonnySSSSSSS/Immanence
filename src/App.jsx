@@ -233,7 +233,7 @@ function App() {
 
         {/* Inner App Container */}
         <div
-          className="relative min-h-screen flex flex-col items-center text-white overflow-hidden transition-all duration-500"
+          className="relative min-h-screen flex flex-col items-center text-white overflow-visible transition-all duration-500"
           style={displayMode === 'sanctuary' ? {
             // Sanctuary: Full bleed, max width for large screens
             width: '100%',
@@ -275,7 +275,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v3.08.5
+                  v3.08.9
                 </div>
                 {!isHub && (
                   <button

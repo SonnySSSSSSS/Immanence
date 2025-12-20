@@ -1,7 +1,51 @@
 # Immanence OS - Session Summary
 
-**Last Updated:** 2025-12-15  
-**Current Version:** v2.50.0
+**Last Updated:** 2025-12-20  
+**Current Version:** v3.08.8
+
+---
+
+## Session: December 20, 2025
+
+### What Was Accomplished
+
+#### Circuit Configuration Enhancements ✅
+- ✅ Removed "energy thread" (Nadi) visual as not interesting enough
+- ✅ Set OPTIONS sections to default expanded state
+- ✅ Enhanced total duration display with pulsing glow
+
+#### Sound Frequency Mapping (Phase 4) ✅
+- ✅ Implemented fader-style sliders (20x40px thumb, analog mixer aesthetic)
+- ✅ Frequency-to-color mapping:
+  - 100-200 Hz → Orange (grounding)
+  - 200-300 Hz → Yellow (energizing)
+  - 300-400 Hz → Green (balance)
+  - 400-500 Hz → Blue (ethereal)
+- ✅ Slider thumb, track, and Hz text dynamically change color
+- ✅ Added volume slider to Sound practice session
+- ✅ Fixed volume slider color inheritance (isolated from Hz slider)
+
+#### Golden Ring Soul Sigil (Phase 5) ✅
+- ✅ Added `practiceEnergy` prop to BreathingRing (0.3-1.0)
+- ✅ PathParticles intensity blends breath phase (60%) + practice energy (40%)
+- ✅ Fixed particle clipping (container 320→400, overflow visible)
+- ✅ Documented global ALPHA UI architecture
+
+#### Video Library Fixes ✅
+- ✅ Removed PathParticles stroke decorations behind video player
+- ✅ Centered video player in frame
+- ✅ Isolated VideoLibrary with z-index: 50 and opaque background
+
+#### UI Polish ✅
+- ✅ Increased StageTitle tooltip z-index (z-50 → z-[9999])
+- ✅ Tooltips now appear above all UI panels
+
+#### Architecture Documentation ✅
+- ✅ Added BreathingRing ALPHA UI section
+- ✅ Added PathParticles FX system documentation
+- ✅ Added Sound Practice details
+- ✅ Added Wisdom Section structure
+- ✅ Updated version increment reminder in immanence-rules.md
 
 ---
 
@@ -49,103 +93,37 @@
 - Mock profile testing with pass/fail validation
 - Reset attention data action
 
-
----
-
-## Session: December 13, 2025
-
-### What Was Accomplished
-
-#### Navigation & Icons
-- ✅ Fixed "Begin Practice" button to navigate to Application section
-- ✅ Made Compass title dynamic (shows active mode name)
-- ✅ Generated geometric sacred icons for Compass anchors (mirror, sword, prism, resonator)
-
-#### Four Modes Section
-- ✅ Generated **field-based graphics** following HUB grammar
-  - Mirror: concentric rings (still pond)
-  - Resonator: wave rings (rippling field)
-  - Prism: overlapping planes (refractive space)
-  - Sword: vertical axis with arcs (decision line)
-- ✅ Integrated as full card backgrounds (fields you enter, not emblems you select)
-- ✅ Cards now match HUB visual language
-
-#### Mode Detail Page
-- ✅ Complete redesign as **threshold experience**
-- ✅ Temporal arc: Orientation → Engagement → Integration
-- ✅ Responsive `ModeBeacon` with phase modulation
-- ✅ Cyclic sections with glyph markers (◇ ○ △)
-- ✅ Consequence anchors for each mode
-
-#### Tracking Section
-- ✅ Redesigned as **Mirror of Momentum**
-- ✅ Vertical flow: Gesture → Trace → Pattern → Direction
-- ✅ Orienting line: "This space reflects how you are showing up — not how well."
-- ✅ Sacred glow behind Quick Log gesture pad
-- ✅ Closing anchor with encouragement
-
-#### Stage Title
-- ✅ Added floating sparkle particles (8 particles, 4 animation variations)
-
 ---
 
 ## Next Session Priorities
 
-### 1. Vipassana Section
-- [ ] Enhance thought labeling UI/UX
-- [ ] Refine bird animations and visual feedback
-- [ ] Improve timer visibility and controls
-- [ ] Polish wallpaper integration
-
-### 2. Four Modes Practices
-- [ ] Build practice flows for Mirror mode
-- [ ] Build practice flows for Resonator mode
-- [ ] Build practice flows for Prism mode
-- [ ] Build practice flows for Sword mode
-- [ ] Integrate with existing practice infrastructure
-
-### 3. Wisdom Section
-- [ ] Design wisdom content structure
-- [ ] Implement wisdom UI components
-- [ ] Integrate with navigation system
+### Wisdom Section Sacred Redesign
+1. **Phase 2: The Stars** (Bookmarks) - Dark sky constellation builder
+2. **Phase 1: The Compass** (Recommendations) - Radial menu with archetypal icons
+3. **Phase 3: The Wave** (Self-Knowledge) - Living personality wave + rune tags
+4. **Phase 4: The Beacon** (Treatise) - Visual journey map with illuminated path
 
 ---
 
-## Files Modified This Session
+## Key Design Principles
 
-| File | Summary |
-|------|---------|
-| `src/components/Codex/CodexTablet.jsx` | Begin Practice button navigation |
-| `src/components/Codex/CodexChamber.jsx` | Dynamic title, navigation prop chain |
-| `src/components/FourModesHome.jsx` | Field-based card backgrounds |
-| `src/components/ModeDetail.jsx` | Threshold design, temporal arc |
-| `src/components/TrackingView.jsx` | Mirror of Momentum flow structure |
-| `src/components/StageTitle.jsx` | Floating sparkle particles |
-| `src/components/NavigationSection.jsx` | onNavigate prop passthrough |
-| `src/App.jsx` | Version updates, navigation prop |
+### BreathingRing (ALPHA UI)
+- Global overlay element, not practice-specific
+- Central onboarding teacher traversing all sections
+- Practice energy controls particle intensity (0.3=stillness, 1.0=intense)
 
-## Assets Added
+### PathParticles FX System
+- 12+ motion patterns (ember, electric, plasma, starfield, etc.)
+- Breath-synced animations
+- Path-specific visual presets
+- Container: 400x400px (prevents clipping)
 
-| Path | Description |
-|------|-------------|
-| `public/modes/mode-mirror.png` | Field graphic - concentric rings |
-| `public/modes/mode-resonator.png` | Field graphic - wave rings |
-| `public/modes/mode-prism.png` | Field graphic - overlapping planes |
-| `public/modes/mode-sword.png` | Field graphic - vertical axis |
+### Sound Frequency Mapping
+- Synesthetic: frequency changes = color shifts
+- Analog mixer aesthetic: thick handles, gradients, glow
+- Distinct from volume controls (accent color)
 
----
-
-## Design Principles Established
-
-### HUB Grammar (For Field Graphics)
-1. Single dominant geometry
-2. Continuous lines, no sharp terminations
-3. Depth via opacity, not color
-4. Glow originates from within
-5. Center-weighted, edges dissolve
-
-### Section Design Philosophy
-- **HUB** = World
-- **Four Modes** = Regions of the same world (not menu items)
-- **Mode Detail** = Threshold to cross (not feature to select)
-- **Tracking** = Mirror of momentum (not dashboard)
+### Wisdom Section Philosophy
+- "Data entry" → "Sacred calibration"
+- Empty states as poetic invitations
+- Visual metaphors (compass, constellation, wave, journey map)

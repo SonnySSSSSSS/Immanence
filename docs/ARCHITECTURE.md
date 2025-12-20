@@ -172,6 +172,53 @@ All state is managed with Zustand stores, persisted to localStorage.
 }
 ```
 
+### Wisdom Section
+
+`WisdomSection.jsx` serves as the "Akashic Record" - the library and reflection space.
+
+**Structure:**
+```
+WisdomSection.jsx
+├── Recommendations         # Needs-based wisdom (8 categories)
+├── Treatise               # Full text with parts/chapters
+├── Bookmarks              # User-saved chapters
+├── Videos                 # VideoLibrary component
+└── Self-Knowledge         # Big Five + self-described patterns
+```
+
+**Video Library** (`VideoLibrary.jsx`):
+- "Flame" metaphor - idle hearth with embers
+- Featured + Library bands (horizontal scroll)
+- Video hearth with ember glow when playing
+- Isolated with `z-index: 50` to hide PathParticles decorations
+
+**Components:**
+- `ChapterModal` - Full-screen chapter reading
+- `PartAccordion` - Collapsible treatise sections
+- `CategoryCard` - Needs assessment cards
+- `SelfKnowledgeView` - Wave Function personality viz
+- `VideoToken` - Minimal video selector
+
+### Sound Practice
+
+Sound-based practices use binaural beats and isochronic tones.
+
+**Frequency-to-Color Mapping:**
+- 100-200 Hz → Warm Orange #FF8C42 (grounding)
+- 200-300 Hz → Yellow #FFD93D (energizing)
+- 300-400 Hz → Green #6BCF7F (balance)
+- 400-500 Hz → Blue #4A90E2 (ethereal)
+
+**UI Features:**
+- Analog mixer-style fader slider (20x40px thumb)
+- Dynamic color mapping for thumb, track, Hz text
+- Gradient track showing full spectrum
+- Volume slider in practice session (uses avatar accent color)
+
+**Components:**
+- `SoundConfig.jsx` - Hz selector, sound type
+- Rendered in `PracticeSection.jsx` with volume control
+
 ---
 
 ## Component Hierarchy
@@ -204,6 +251,56 @@ ApplicationSection.jsx
     ├── WaveCapacity.jsx
     └── SwordCommitment.jsx
 ```
+
+### ALPHA UI Element: BreathingRing
+
+`BreathingRing.jsx` is the **central onboarding teacher** — a global overlay element that can appear across all sections, not tied to specific practice components.
+
+**Key Architecture:**
+- Independent component, not embedded in Avatar
+- Can be invoked globally for onboarding/teaching
+- Syncs with breath patterns (inhale/exhale/hold phases)
+- Integrated PathParticles for visual energy feedback
+- `practiceEnergy` prop (0.3-1.0) controls particle intensity based on context
+
+**Props:**
+```javascript
+<BreathingRing 
+  breathPattern={{inhale, holdTop, exhale, holdBottom}}
+  practiceEnergy={0.5}  // 0.3=stillness, 0.5=active, 1.0=intense
+  pathId="prana"        // Path-specific FX
+  fxPreset={preset}     // Custom particle behavior
+  onTap={handleTap}     // Accuracy feedback
+  onCycleComplete={fn}  // Breath cycle callback
+  startTime={timestamp}
+/>
+```
+
+### Visual FX System: PathParticles
+
+`PathParticles.jsx` is a canvas-based particle system with 12+ motion patterns synced to breath phases.
+
+**Motion Patterns:**
+- `ember-mixed` - Rising fire particles
+- `electric-varied` - Plasma conduit (continuous noise ring)
+- `plasma-directional` - Sci-fi directional flow
+- `starfield-smooth` - Radiating bursts with breath sync
+- `hyperspace-rays` - Dual-layer rays with shimmer
+- `snowglobe-active` - Parallax layers with swirl
+- `meteor-cycle` - 3-layer streaks
+- `wisp-drift`, `ribbon-flow`, `circuit-pulse`, etc.
+
+**Integration:** Rendered inside BreathingRing, responds to:
+- Breath phase (`inhale`/`hold`/`exhale`/`rest`)
+- Ring scale (breath-driven expansion)
+- Practice energy (intensity modifier)
+- Path-specific presets (via `pathFX.js`)
+
+**Key Props:**
+- `intensity` (0-1) - Particle visibility/activity
+- `phase` - Current breath phase
+- `ringScale` - Dynamic ring size
+- `pathId` / `fxPreset` - Visual style
 
 ---
 

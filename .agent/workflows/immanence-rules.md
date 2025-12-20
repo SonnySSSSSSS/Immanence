@@ -2,6 +2,14 @@
 description: Rules for working on Immanence OS
 ---
 
+## ⚠️ CRITICAL: INCREMENT BUILD VERSION AFTER EVERY CODE CHANGE ⚠️
+
+**Location**: `src/App.jsx` line ~278
+**Current format**: `v3.08.5`
+**Action**: Increment the patch number (last digit) after ANY code modification
+
+---
+
 ## EXISTING ANTIGRAVITY RULES
 
 1. Avoid multi-line replacements.
