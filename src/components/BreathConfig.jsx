@@ -28,59 +28,32 @@ export function BreathConfig({
         setPreset(null);
     };
 
-    // Pattern preview calculations
-    const totalDuration = pattern.inhale + pattern.hold1 + pattern.exhale + pattern.hold2 || 1;
-    const width = 100;
-    const height = 40;
-    const iW = (pattern.inhale / totalDuration) * width;
-    const h1W = (pattern.hold1 / totalDuration) * width;
-    const eW = (pattern.exhale / totalDuration) * width;
-
-    const pathD = `
-        M 0 ${height}
-        L ${iW} 0
-        L ${iW + h1W} 0
-        L ${iW + h1W + eW} ${height}
-        L ${width} ${height}
-    `;
-
     return (
         <div className="breath-config">
-            {/* Pattern Presets */}
-            <div className="flex items-center justify-between mb-4">
-                <div
-                    style={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: "9px",
-                        letterSpacing: "0.25em",
-                        textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.55)",
-                    }}
-                >
-                    Pattern
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                    {PRESET_NAMES.map((name) => (
-                        <button
-                            key={name}
-                            onClick={() => setPreset(name)}
-                            className="rounded-full px-2.5 py-1 transition-all duration-200"
-                            style={{
-                                fontFamily: "Georgia, serif",
-                                fontSize: "8px",
-                                letterSpacing: "0.15em",
-                                textTransform: "uppercase",
-                                background: "transparent",
-                                border: `1px solid ${preset === name ? "var(--accent-color)" : "var(--accent-10)"}`,
-                                color: preset === name ? "var(--accent-color)" : "rgba(253,251,245,0.35)",
-                                boxShadow: preset === name ? '0 0 12px var(--accent-15)' : "none",
-                            }}
-                        >
-                            {name}
-                        </button>
-                    ))}
-                </div>
+            {/* Pattern Presets - centered, no label */}
+            <div className="flex flex-wrap gap-2 mb-4 justify-center">
+                {PRESET_NAMES.map((name) => (
+                    <button
+                        key={name}
+                        onClick={() => {
+                            setPattern(BREATH_PRESETS[name]);
+                            setPreset(name);
+                        }}
+                        className="rounded-full px-2.5 py-1 transition-all duration-200"
+                        style={{
+                            fontFamily: "Georgia, serif",
+                            fontSize: "8px",
+                            letterSpacing: "0.15em",
+                            textTransform: "uppercase",
+                            background: "transparent",
+                            border: `1px solid ${preset === name ? "var(--accent-color)" : "var(--accent-10)"}`,
+                            color: preset === name ? "var(--accent-color)" : "rgba(253,251,245,0.35)",
+                            boxShadow: preset === name ? '0 0 12px var(--accent-15)' : "none",
+                        }}
+                    >
+                        {name}
+                    </button>
+                ))}
             </div>
 
             {/* Pattern Inputs */}
@@ -120,8 +93,6 @@ export function BreathConfig({
                     </div>
                 ))}
             </div>
-
-
         </div>
     );
 }
