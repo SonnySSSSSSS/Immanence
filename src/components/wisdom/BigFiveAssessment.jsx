@@ -53,16 +53,18 @@ function calculateScores(responses) {
     // Average each dimension and normalize to 0-1
     const scores = {};
     for (const [dim, values] of Object.entries(dimensions)) {
-        if (values.length === 2) {
-            const avg = (values[0] + values[1]) / 2;
+        if (values.length > 0) {
+            const avg = values.reduce((a, b) => a + b, 0) / values.length;
             scores[dim] = (avg - 1) / 6; // Normalize from 1-7 to 0-1
+        } else {
+            scores[dim] = 0.5; // Default for missing data during live update
         }
     }
 
     return scores;
 }
 
-export function BigFiveAssessment({ onComplete, onCancel }) {
+export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [responses, setResponses] = useState({});
     const [showResults, setShowResults] = useState(false);
@@ -76,7 +78,12 @@ export function BigFiveAssessment({ onComplete, onCancel }) {
     const isComplete = Object.keys(responses).length === TIPI_ITEMS.length;
 
     const handleResponse = (value) => {
-        setResponses(prev => ({ ...prev, [currentItem.id]: value }));
+        const newResponses = { ...responses, [currentItem.id]: value };
+        setResponses(newResponses);
+
+        // Calculate live scores and notify parent
+        const liveScores = calculateScores(newResponses);
+        onUpdate?.(liveScores);
 
         // Auto-advance after slight delay
         setTimeout(() => {

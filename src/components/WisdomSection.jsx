@@ -689,11 +689,24 @@ export function WisdomSection() {
   const getChapterById = (id) => treatiseChapters.find(ch => ch.id === id);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // RECOMMENDATIONS VIEW
+  // RECOMMENDATIONS VIEW - "The Compass" Radial Navigation
   // ─────────────────────────────────────────────────────────────────────────
   const renderRecommendationsView = () => {
     const categories = getAllCategories();
     const currentCategory = selectedCategory ? wisdomCategories[selectedCategory] : null;
+
+    // Archetypal icons for each category (image assets)
+    // Mapping keys to match wisdomRecommendations.js exactly
+    const categoryIcons = {
+      'focus-presence': `${import.meta.env.BASE_URL}icons/compass/eye.png`,
+      'emotional-regulation': `${import.meta.env.BASE_URL}icons/compass/balance.png`,
+      'shadow-integration': `${import.meta.env.BASE_URL}icons/compass/moon.png`,
+      'heart-connection': `${import.meta.env.BASE_URL}icons/compass/heart.png`,
+      'grounding-safety': `${import.meta.env.BASE_URL}icons/compass/mountain.png`,
+      'expression-voice': `${import.meta.env.BASE_URL}icons/compass/wave.png`,
+      'resonance-alignment': `${import.meta.env.BASE_URL}icons/compass/star.png`,
+      'self-knowledge': `${import.meta.env.BASE_URL}icons/compass/fire.png`,
+    };
 
     if (currentCategory) {
       // Expanded view - show back button and recommendations
@@ -751,48 +764,118 @@ export function WisdomSection() {
       );
     }
 
-    // Category selection grid - transformed into symbolic field
+    // Compass layout - radial arrangement around center
     return (
       <div className="space-y-6">
-        {/* Ritual threshold - invocation framing */}
-        <div className="flex items-center justify-center gap-3 px-8">
-          {/* Left sigil divider */}
-          <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-40">
-            <circle cx="5" cy="5" r="1.5" fill="var(--accent-color)" />
-            <path d="M5 0 L5 3 M5 7 L5 10 M0 5 L3 5 M7 5 L10 5" stroke="var(--accent-color)" strokeWidth="0.5" opacity="0.5" />
-          </svg>
-
-          {/* Question as invocation */}
-          <h2 className="text-[15px] uppercase tracking-[0.28em] px-2" style={{ color: 'rgba(253,251,245,0.62)', letterSpacing: '0.28em' }}>
-            What Do You Need?
+        {/* Central question */}
+        <div className="text-center mb-2">
+          <h2
+            className="text-[15px] uppercase tracking-[0.28em]"
+            style={{ color: 'rgba(253,251,245,0.62)', letterSpacing: '0.28em' }}
+          >
+            What Do You Seek?
           </h2>
-
-          {/* Right sigil divider */}
-          <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-40">
-            <circle cx="5" cy="5" r="1.5" fill="var(--accent-color)" />
-            <path d="M5 0 L5 3 M5 7 L5 10 M0 5 L3 5 M7 5 L10 5" stroke="var(--accent-color)" strokeWidth="0.5" opacity="0.5" />
-          </svg>
         </div>
 
-        {/* Card grid as field - subtle vertical gradient */}
+        {/* Compass container */}
         <div
-          className="p-4 rounded-3xl"
+          className="relative mx-auto rounded-full"
           style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.15) 100%)',
-            border: '1px solid rgba(198, 90, 255, 0.08)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)'
+            width: '320px',
+            height: '320px',
+            background: 'radial-gradient(circle, rgba(15,10,25,0.9) 0%, rgba(5,2,10,0.95) 70%, rgba(0,0,0,0.98) 100%)',
+            border: '1px solid rgba(100,80,150,0.2)',
+            boxShadow: '0 0 60px rgba(100,80,150,0.1), inset 0 0 40px rgba(0,0,0,0.3)',
           }}
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {categories.map((cat) => (
-              <CategoryCard
-                key={cat.key}
-                category={cat}
-                isSelected={selectedCategory === cat.key}
-                onClick={() => setSelectedCategory(cat.key)}
+          {/* Compass center point */}
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(var(--accent-color-rgb),0.3) 0%, transparent 70%)',
+              border: '1px solid rgba(200,180,255,0.2)',
+            }}
+          >
+            <div
+              className="absolute inset-0 flex items-center justify-center text-xs"
+              style={{ color: 'rgba(200,180,255,0.5)' }}
+            >
+              ✧
+            </div>
+          </div>
+
+          {/* Compass rose lines */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+            {[0, 45, 90, 135].map(angle => (
+              <line
+                key={angle}
+                x1="50%"
+                y1="10%"
+                x2="50%"
+                y2="90%"
+                stroke="var(--accent-30)"
+                strokeWidth="1"
+                transform={`rotate(${angle} 160 160)`}
               />
             ))}
-          </div>
+            {/* Concentric circles */}
+            <circle cx="50%" cy="50%" r="35%" fill="none" stroke="var(--accent-20)" strokeWidth="1" />
+            <circle cx="50%" cy="50%" r="25%" fill="none" stroke="var(--accent-15)" strokeWidth="1" />
+          </svg>
+
+          {/* Category nodes positioned radially */}
+          {categories.map((cat, index) => {
+            const total = categories.length;
+            const angle = (index / total) * 2 * Math.PI - Math.PI / 2; // Start from top
+            const radius = 120; // Distance from center
+            const x = Math.cos(angle) * radius + 160; // Center is at 160,160
+            const y = Math.sin(angle) * radius + 160;
+            const icon = categoryIcons[cat.key] || '◆';
+
+            return (
+              <button
+                key={cat.key}
+                onClick={() => setSelectedCategory(cat.key)}
+                className="absolute flex flex-col items-center justify-center transition-all hover:scale-110 group"
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  left: x - 32 + 'px',
+                  top: y - 32 + 'px',
+                  zIndex: 10,
+                }}
+              >
+                {/* Icon circle */}
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center mb-1 transition-all group-hover:shadow-lg overflow-hidden"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(30,20,50,0.9) 0%, rgba(15,10,25,1) 100%)',
+                    border: '1px solid var(--accent-30)',
+                    boxShadow: '0 0 15px var(--accent-10)',
+                  }}
+                >
+                  <img
+                    src={icon}
+                    alt={cat.label}
+                    className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+                    style={{ filter: 'drop-shadow(0 0 4px var(--accent-glow))' }}
+                  />
+                </div>
+                {/* Label on hover */}
+                <span
+                  className="absolute -bottom-5 text-[9px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+                  style={{ color: 'rgba(200,180,255,0.7)' }}
+                >
+                  {cat.label.split(' ')[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Instruction text */}
+        <div className="text-center text-[11px]" style={{ color: 'rgba(253,251,245,0.4)' }}>
+          Tap a symbol to explore its wisdom
         </div>
       </div>
     );
@@ -908,46 +991,198 @@ export function WisdomSection() {
   };
 
   // ─────────────────────────────────────────────────────────────────────────
-  // BOOKMARKS VIEW
+  // BOOKMARKS VIEW - "The Stars" Constellation Builder
   // ─────────────────────────────────────────────────────────────────────────
   const renderBookmarksView = () => {
     const bookmarkedChapters = treatiseChapters.filter(ch => bookmarkedIds.includes(ch.id));
 
+    // Empty state: Dark sky awaiting stars
     if (bookmarkedChapters.length === 0) {
       return (
-        <div className="text-center py-12" style={{ color: 'rgba(253,251,245,0.5)' }}>
-          <div className="text-2xl mb-3">☆</div>
-          <div className="text-[13px]">No bookmarked chapters yet</div>
-          <div className="text-[11px] mt-1">Click the star on any chapter to bookmark it</div>
+        <div
+          className="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(10,5,20,0.95) 0%, rgba(5,2,10,1) 100%)',
+            border: '1px solid rgba(100,80,150,0.15)',
+          }}
+        >
+          {/* Distant stars background */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(30)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: Math.random() * 2 + 1 + 'px',
+                  height: Math.random() * 2 + 1 + 'px',
+                  left: Math.random() * 100 + '%',
+                  top: Math.random() * 100 + '%',
+                  background: 'rgba(255,255,255,0.3)',
+                  animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
+                  animationDelay: Math.random() * 2 + 's',
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Central message */}
+          <div className="relative z-10 text-center">
+            <div
+              className="text-4xl mb-4"
+              style={{
+                filter: 'drop-shadow(0 0 8px rgba(200,180,255,0.4))',
+                animation: 'pulse 3s ease-in-out infinite'
+              }}
+            >
+              ✧
+            </div>
+            <div
+              className="text-[14px] italic mb-2"
+              style={{
+                fontFamily: 'Georgia, serif',
+                color: 'rgba(200,180,255,0.7)',
+                letterSpacing: '0.05em'
+              }}
+            >
+              The sky is waiting for your stars
+            </div>
+            <div
+              className="text-[11px]"
+              style={{ color: 'rgba(253,251,245,0.4)' }}
+            >
+              Bookmark chapters to build your constellation
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes twinkle {
+              0%, 100% { opacity: 0.3; }
+              50% { opacity: 0.8; }
+            }
+          `}</style>
         </div>
       );
     }
 
+    // Constellation view: Stars with connecting lines
     return (
-      <div className="space-y-3 max-h-[450px] overflow-y-auto">
-        {bookmarkedChapters.map(ch => (
-          <button
-            key={ch.id}
-            onClick={() => openChapterModal(ch)}
-            className="w-full text-left px-4 py-3 rounded-xl border transition-all group"
-            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--accent-15)' }}
+      <div
+        className="relative min-h-[350px] rounded-2xl p-6 overflow-hidden"
+        style={{
+          background: 'radial-gradient(ellipse at center top, rgba(15,10,30,0.95) 0%, rgba(5,2,10,1) 100%)',
+          border: '1px solid rgba(100,80,150,0.2)',
+        }}
+      >
+        {/* Distant stars background */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: Math.random() * 1.5 + 0.5 + 'px',
+                height: Math.random() * 1.5 + 0.5 + 'px',
+                left: Math.random() * 100 + '%',
+                top: Math.random() * 100 + '%',
+                background: 'rgba(255,255,255,0.2)',
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Constellation lines (SVG connecting first few stars) */}
+        {bookmarkedChapters.length > 1 && (
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ zIndex: 1 }}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[13px] font-medium group-hover:text-white transition-colors" style={{ color: 'rgba(253,251,245,0.85)' }}>
-                  {sanitizeText(ch.title)}
-                </div>
-                {ch.subtitle && <div className="text-[11px] mt-1" style={{ color: 'rgba(253,251,245,0.5)' }}>{sanitizeText(ch.subtitle)}</div>}
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleBookmark(ch.id); }}
-                style={{ color: 'var(--accent-color)' }}
+            <defs>
+              <linearGradient id="constellationLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgba(200,180,255,0.1)" />
+                <stop offset="50%" stopColor="rgba(200,180,255,0.3)" />
+                <stop offset="100%" stopColor="rgba(200,180,255,0.1)" />
+              </linearGradient>
+            </defs>
+            {bookmarkedChapters.slice(0, -1).map((_, i) => {
+              const y1 = 60 + i * 70;
+              const y2 = 60 + (i + 1) * 70;
+              const x1 = 20 + (i % 2) * 15;
+              const x2 = 20 + ((i + 1) % 2) * 15;
+              return (
+                <line
+                  key={i}
+                  x1={`${x1}%`}
+                  y1={y1}
+                  x2={`${x2}%`}
+                  y2={y2}
+                  stroke="url(#constellationLine)"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                />
+              );
+            })}
+          </svg>
+        )}
+
+        {/* Stars (bookmarked chapters) */}
+        <div className="relative z-10 space-y-4">
+          {bookmarkedChapters.map((ch, index) => (
+            <button
+              key={ch.id}
+              onClick={() => openChapterModal(ch)}
+              className="w-full text-left px-4 py-3 rounded-xl transition-all group relative"
+              style={{
+                background: 'rgba(20,15,40,0.6)',
+                border: '1px solid rgba(200,180,255,0.15)',
+                marginLeft: (index % 2) * 20 + 'px',
+                maxWidth: 'calc(100% - 20px)',
+              }}
+            >
+              {/* Star glow */}
+              <div
+                className="absolute -left-3 top-1/2 -translate-y-1/2 text-lg"
+                style={{
+                  color: 'var(--accent-color)',
+                  filter: 'drop-shadow(0 0 6px var(--accent-glow))',
+                }}
               >
                 ★
-              </button>
-            </div>
-          </button>
-        ))}
+              </div>
+
+              <div className="flex items-start justify-between gap-3 pl-4">
+                <div>
+                  <div
+                    className="text-[13px] font-medium group-hover:text-white transition-colors"
+                    style={{ color: 'rgba(253,251,245,0.85)' }}
+                  >
+                    {sanitizeText(ch.title)}
+                  </div>
+                  {ch.subtitle && (
+                    <div className="text-[11px] mt-1" style={{ color: 'rgba(253,251,245,0.5)' }}>
+                      {sanitizeText(ch.subtitle)}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleBookmark(ch.id); }}
+                  className="text-sm transition-opacity hover:opacity-70"
+                  style={{ color: 'rgba(255,200,200,0.8)' }}
+                  title="Remove from constellation"
+                >
+                  ✕
+                </button>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Constellation count */}
+        <div
+          className="absolute bottom-4 right-4 text-[10px] uppercase tracking-wider"
+          style={{ color: 'rgba(200,180,255,0.4)' }}
+        >
+          {bookmarkedChapters.length} star{bookmarkedChapters.length !== 1 ? 's' : ''} in your sky
+        </div>
       </div>
     );
   };
