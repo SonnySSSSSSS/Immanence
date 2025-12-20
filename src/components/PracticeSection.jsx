@@ -7,7 +7,6 @@ import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
-import { CircuitSession } from "./Cycle/CircuitSession.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
@@ -216,9 +215,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [tier2Hovered, setTier2Hovered] = useState(false);
   const [tier3Hovered, setTier3Hovered] = useState(false);
 
-  // Circuit training state (minimal - CircuitSession handles execution)
+  // Circuit training state - PracticeSection orchestrates the circuit internally
   const [activeCircuitId, setActiveCircuitId] = useState(null);
   const [circuitConfig, setCircuitConfig] = useState(null); // User's custom circuit configuration
+  const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0); // Current exercise in circuit
+  const [circuitSavedPractice, setCircuitSavedPractice] = useState(null); // Original practice before circuit started
 
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
@@ -293,6 +294,97 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setPattern(BREATH_PRESETS[preset]);
     }
   }, [preset]);
+
+  // Initialize circuitConfig when switching to Circuit practice
+  // This ensures START works even if Options panel hasn't been expanded
+  useEffect(() => {
+    if (practice === "Circuit" && !circuitConfig) {
+      // Default exercises matching CircuitConfig.jsx defaults
+      const defaultExercises = [
+        { exercise: { id: 'breath', name: 'Breath Training', type: 'breath', practiceType: 'Breath & Stillness', preset: 'box' }, duration: 5 },
+        { exercise: { id: 'cognitive', name: 'Cognitive Vipassana', type: 'focus', practiceType: 'Cognitive Vipassana' }, duration: 5 },
+        { exercise: { id: 'somatic', name: 'Somatic Vipassana', type: 'body', practiceType: 'Somatic Vipassana', sensoryType: 'body' }, duration: 5 },
+      ];
+      setCircuitConfig({ exercises: defaultExercises, exerciseDuration: 5 });
+    }
+  }, [practice, circuitConfig]);
+
+  // Set up a circuit exercise - configure practice settings and start
+  const setupCircuitExercise = (exerciseItem) => {
+    const { exercise, duration: exDuration } = exerciseItem;
+
+    // Map exercise to practice type and configure settings
+    if (exercise.practiceType === 'Breath & Stillness') {
+      setPractice('Breath & Stillness');
+      // Set breath pattern from preset if provided
+      if (exercise.preset && BREATH_PRESETS[exercise.preset]) {
+        setPattern(BREATH_PRESETS[exercise.preset]);
+        setPreset(exercise.preset);
+      }
+    } else if (exercise.practiceType === 'Cognitive Vipassana') {
+      setPractice('Cognitive Vipassana');
+    } else if (exercise.practiceType === 'Somatic Vipassana') {
+      setPractice('Somatic Vipassana');
+      if (exercise.sensoryType) {
+        setSensoryType(exercise.sensoryType);
+      }
+    } else {
+      // Fallback - use the practiceType directly if recognized
+      setPractice(exercise.practiceType || 'Breath & Stillness');
+    }
+
+    // Set duration for this exercise
+    setDuration(exDuration);
+    setTimeLeft(exDuration * 60);
+
+    // Start running
+    setIsRunning(true);
+    onPracticingChange && onPracticingChange(true);
+    setSessionStartTime(performance.now());
+    setTapErrors([]);
+    setLastErrorMs(null);
+    setLastSignedErrorMs(null);
+    setBreathCount(0);
+  };
+
+  // Advance to next circuit exercise or complete circuit
+  const advanceCircuitExercise = () => {
+    if (!activeCircuitId || !circuitConfig) return;
+
+    const nextIndex = circuitExerciseIndex + 1;
+    if (nextIndex < circuitConfig.exercises.length) {
+      // More exercises remain
+      setCircuitExerciseIndex(nextIndex);
+      const nextExercise = circuitConfig.exercises[nextIndex];
+      setupCircuitExercise(nextExercise);
+    } else {
+      // Circuit complete!
+      handleCircuitComplete();
+    }
+  };
+
+  // Circuit completion handler
+  const handleCircuitComplete = () => {
+    setIsRunning(false);
+    onPracticingChange && onPracticingChange(false);
+
+    // Log completion
+    logCircuitCompletion('custom', circuitConfig.exercises);
+
+    // Show summary
+    setSessionSummary({
+      type: 'circuit',
+      circuitName: 'Custom Circuit',
+      exercisesCompleted: circuitConfig.exercises.length,
+      totalDuration: circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0),
+    });
+    setShowSummary(true);
+
+    // Reset circuit state
+    setActiveCircuitId(null);
+    setCircuitExerciseIndex(0);
+    setPractice('Circuit'); // Restore to Circuit selection
+  };
 
   const handlePatternChange = (key, value) => {
     setPattern((prev) => ({
@@ -430,15 +522,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       geometry,
     });
 
-    // For Circuit practice, just set the active circuit and return
-    // CircuitSession handles everything else
+    // For Circuit practice, set up the first exercise and run it using existing practice UI
     if (practice === "Circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {
         // No exercises configured, don't start
         return;
       }
+      // Save original practice so we can restore after circuit ends
+      setCircuitSavedPractice(practice);
       setActiveCircuitId('custom');
-      onPracticingChange && onPracticingChange(true);
+      setCircuitExerciseIndex(0);
+
+      // Set up the first exercise
+      const firstExercise = circuitConfig.exercises[0];
+      setupCircuitExercise(firstExercise);
       return;
     }
 
@@ -528,13 +625,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-      handleStop();
+      // If in circuit mode, advance to next exercise instead of stopping
+      if (activeCircuitId && circuitConfig) {
+        advanceCircuitExercise();
+      } else {
+        handleStop();
+      }
     }
     return () => {
       if (interval) clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRunning, timeLeft, practice]);
+  }, [isRunning, timeLeft, practice, activeCircuitId]);
 
   useEffect(() => {
     if (!onBreathStateChange) return;
@@ -693,42 +795,41 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     return (
       <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
+        {/* Circuit Progress Indicator */}
+        {activeCircuitId && circuitConfig && (
+          <div
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
+            style={{
+              background: 'rgba(0,0,0,0.7)',
+              border: '1px solid var(--accent-30)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: '10px', letterSpacing: '0.15em', color: 'rgba(253,251,245,0.6)', textTransform: 'uppercase' }}>
+              Circuit
+            </span>
+            <div className="flex gap-1">
+              {circuitConfig.exercises.map((_, idx) => (
+                <div
+                  key={idx}
+                  className="w-2 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    background: idx < circuitExerciseIndex ? 'var(--accent-color)'
+                      : idx === circuitExerciseIndex ? '#fff'
+                        : 'rgba(253,251,245,0.2)',
+                    boxShadow: idx === circuitExerciseIndex ? '0 0 8px rgba(255,255,255,0.6)' : 'none',
+                  }}
+                />
+              ))}
+            </div>
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: '10px', color: 'rgba(253,251,245,0.5)' }}>
+              {circuitExerciseIndex + 1}/{circuitConfig.exercises.length}
+            </span>
+          </div>
+        )}
+
         <div className="flex-1 flex items-center justify-center w-full">
-          {practice === "Circuit" && activeCircuitId ? (
-            <CircuitSession
-              circuitId={activeCircuitId !== 'custom' ? activeCircuitId : undefined}
-              circuit={activeCircuitId === 'custom' && circuitConfig ? {
-                id: 'custom_circuit',
-                name: 'Custom Circuit',
-                description: 'Your personalized training sequence',
-                totalDuration: circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0),
-                exercises: circuitConfig.exercises.map((item) => ({
-                  type: item.exercise.type,
-                  name: item.exercise.name,
-                  duration: item.duration,
-                  instructions: `${item.duration}-minute ${item.exercise.name.toLowerCase()}`,
-                  practiceType: item.exercise.practiceType,
-                  preset: item.exercise.preset,
-                  sensoryType: item.exercise.sensoryType,
-                })),
-              } : undefined}
-              avatarPath={avatarPath}
-              showCore={showCore}
-              onComplete={(result) => {
-                setActiveCircuitId(null);
-                setShowSummary(true);
-                setSessionSummary({
-                  type: 'circuit',
-                  circuitName: result.circuitId || 'Custom Circuit',
-                  exercisesCompleted: result.exercisesCompleted?.length || 0,
-                  totalDuration: result.totalDuration,
-                });
-              }}
-              onCancel={() => {
-                setActiveCircuitId(null);
-              }}
-            />
-          ) : practice === "Visualization" ? (
+          {practice === "Visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
               fadeInDuration={fadeInDuration}

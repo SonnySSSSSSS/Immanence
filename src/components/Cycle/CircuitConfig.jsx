@@ -1,6 +1,6 @@
 // src/components/Cycle/CircuitConfig.jsx
 // Circuit configuration UI - Refined as "digital talisman"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const AVAILABLE_EXERCISES = [
@@ -69,6 +69,13 @@ export function CircuitConfig({ value, onChange }) {
             { exercise: AVAILABLE_EXERCISES[2], duration: 5 },
         ]
     );
+
+    // Notify parent of initial state on mount (fixes Circuit START bug)
+    useEffect(() => {
+        if (onChange && !value) {
+            onChange({ exercises: selectedExercises, exerciseDuration });
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Update all exercises when duration changes
     const handleExerciseDurationChange = (newDuration) => {

@@ -124,9 +124,10 @@ export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, 
         switch (currentExercise.type) {
             case 'breath':
                 // Use BreathingRing for breath exercises
-                const breathPreset = currentExercise.preset
-                    ? BREATH_PRESETS.find(p => p.id === currentExercise.preset)
-                    : BREATH_PRESETS[0]; // Default box breathing
+                // BREATH_PRESETS is an object keyed by preset name (e.g., "Box", "4-7-8")
+                const breathPreset = currentExercise.preset && BREATH_PRESETS[currentExercise.preset]
+                    ? BREATH_PRESETS[currentExercise.preset]
+                    : BREATH_PRESETS.Box; // Default box breathing
 
                 return (
                     <div className="relative">
