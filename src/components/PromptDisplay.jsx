@@ -32,10 +32,8 @@ export function PromptDisplay({ text, onAudioPlay, fadeMs = 500 }) {
 
     return (
         <div
-            className="w-full max-w-md mx-auto px-6 py-4 rounded-2xl text-center"
+            className="w-full max-w-md mx-auto px-6 py-4 text-center"
             style={{
-                background: 'linear-gradient(180deg, rgba(22,22,37,0.9) 0%, rgba(15,15,26,0.95) 100%)',
-                border: '1px solid var(--accent-15)',
                 opacity,
                 transition: `opacity ${fadeMs}ms ease-in-out`,
             }}
@@ -45,9 +43,10 @@ export function PromptDisplay({ text, onAudioPlay, fadeMs = 500 }) {
                     fontFamily: 'Georgia, serif',
                     fontSize: '15px',
                     lineHeight: 1.7,
-                    color: 'rgba(253,251,245,0.85)',
+                    color: 'rgba(253,251,245,0.95)',
                     fontStyle: 'italic',
                     margin: 0,
+                    textShadow: '0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.6)',
                 }}
             >
                 "{displayedText}"

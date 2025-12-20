@@ -46,169 +46,113 @@ export function OculusRing({
             className="relative flex items-center justify-center"
             style={{ width: size, height: size }}
         >
-            {/* The HUD Layer - SVG Overlay */}
-            <svg
-                className="absolute inset-0 w-full h-full pointer-events-none"
-                viewBox="0 0 100 100"
+            {/* ═══════════════════════════════════════════════════════════════
+                ECLIPSE RIM - Ancient Artifact Physical Ring
+                Using CSS shadows for volume instead of flat SVG lines
+            ═══════════════════════════════════════════════════════════════ */}
+
+            {/* Base "Obsidian" Ring Body */}
+            <div
+                className="absolute rounded-full"
                 style={{
+                    width: '92%',
+                    height: '92%',
+                    background: 'linear-gradient(135deg, rgba(20,20,30,0.4) 0%, rgba(5,5,10,0.6) 100%)',
+                    border: '1px solid rgba(255,215,0,0.1)',
+                    boxShadow: `
+                        0 0 0 1px rgba(0,0,0,0.8),                /* Outer edge definition */
+                        inset 0 0 20px rgba(0,0,0,0.9),           /* Inner depth */
+                        0 0 ${20 * glowIntensity}px rgba(255, 200, 100, ${0.1 * breathPhase}) /* Breathing subtle ambient glow */
+                    `,
+                    backdropFilter: 'blur(4px)',
+                    transform: `scale(${breathScale})`,
+                    transition: 'transform 0.1s ease-out, box-shadow 0.1s ease-out',
+                }}
+            />
+
+            {/* The "Golden Wire" - Fine metal rim */}
+            <div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                    width: '92%',
+                    height: '92%',
+                    border: '1px solid rgba(253, 224, 71, 0.4)', // Amber-gold
+                    boxShadow: `
+                        inset 0 0 10px rgba(253, 224, 71, 0.2),
+                        0 0 ${10 * glowIntensity}px rgba(253, 224, 71, ${0.3 * breathOpacity})
+                    `,
+                    opacity: 0.8,
+                    transform: `scale(${breathScale})`,
+                    transition: 'all 0.1s ease-out',
+                }}
+            />
+
+            {/* Inner "Void" Bezel - Creates the recessed lens look */}
+            <div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                    width: '84%',
+                    height: '84%',
+                    boxShadow: 'inset 0 0 20px 5px rgba(0,0,0,0.9)', // Deep inner shadow
+                    border: '1px solid rgba(255,255,255,0.05)',
                     transform: `scale(${breathScale})`,
                     transition: 'transform 0.1s ease-out',
                 }}
-            >
-                <defs>
-                    {/* Gold glow filter - intensity varies with breath */}
-                    <filter id="oculus-glow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur stdDeviation={1.5 * glowIntensity} result="coloredBlur" />
-                        <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
+            />
 
-                    {/* Stronger glow for active elements */}
-                    <filter id="oculus-glow-strong" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur stdDeviation={2.5 * glowIntensity} result="coloredBlur" />
-                        <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
-
-                    {/* Radial mask for center content */}
-                    <radialGradient id="center-fade" cx="50%" cy="50%" r="50%">
-                        <stop offset="70%" stopColor="black" stopOpacity="1" />
-                        <stop offset="100%" stopColor="black" stopOpacity="0" />
-                    </radialGradient>
-                </defs>
-
-                {/* Outer Thick Ring - BREATHING */}
-                <circle
-                    cx="50" cy="50" r="46"
-                    fill="none"
-                    stroke="var(--accent-color)"
-                    strokeWidth="1.5"
-                    filter="url(#oculus-glow)"
-                    opacity={breathOpacity}
-                />
-
-                {/* Inner Thin Ring */}
-                <circle
-                    cx="50" cy="50" r="42"
-                    fill="none"
-                    stroke="var(--accent-secondary)"
-                    strokeWidth="0.5"
-                    opacity={0.4 + breathPhase * 0.3}
-                />
-
-                {/* Innermost decorative ring */}
-                <circle
-                    cx="50" cy="50" r="38"
-                    fill="none"
-                    stroke="var(--accent-color)"
-                    strokeWidth="0.3"
-                    opacity={0.2 + breathPhase * 0.2}
-                    strokeDasharray="2 4"
-                />
-
-                {/* Cardinal Crosshairs (Tick Marks) - Top, Bottom, Left, Right */}
-                <g stroke="var(--accent-color)" strokeWidth="2" filter="url(#oculus-glow)" opacity={breathOpacity}>
-                    {/* Top */}
-                    <path d="M50 2 V10" />
-                    {/* Bottom */}
-                    <path d="M50 90 V98" />
-                    {/* Left */}
-                    <path d="M2 50 H10" />
-                    {/* Right */}
-                    <path d="M90 50 H98" />
-                </g>
-
-                {/* Secondary tick marks (45-degree angles) */}
-                <g stroke="var(--accent-color)" strokeWidth="1" opacity={0.3 + breathPhase * 0.3}>
-                    {/* Top-Right */}
-                    <path d="M83 17 L88 12" />
-                    {/* Bottom-Right */}
-                    <path d="M83 83 L88 88" />
-                    {/* Bottom-Left */}
-                    <path d="M17 83 L12 88" />
-                    {/* Top-Left */}
-                    <path d="M17 17 L12 12" />
-                </g>
-
-                {/* Step progress indicators around the ring */}
+            {/* ═══════════════════════════════════════════════════════════════
+                 GEMSTONE INDICATORS - Physical Step Markers
+            ═══════════════════════════════════════════════════════════════ */}
+            <div className="absolute inset-0 pointer-events-none" style={{ transform: `scale(${breathScale})`, transition: 'transform 0.1s ease-out' }}>
                 {stepAngles.map((angle, i) => {
                     const radian = (angle * Math.PI) / 180;
-                    const radius = 46;
-                    const x = 50 + Math.cos(radian) * radius;
-                    const y = 50 + Math.sin(radian) * radius;
+                    const radiusPercent = 46; // Matches the 92% width ring (46% radius)
+                    const xPercent = 50 + Math.cos(radian) * radiusPercent;
+                    const yPercent = 50 + Math.sin(radian) * radiusPercent;
+
                     const isCompleted = i < currentStep;
                     const isCurrent = i === currentStep;
 
                     return (
-                        <g key={i}>
-                            {/* Step indicator dot */}
-                            <circle
-                                cx={x}
-                                cy={y}
-                                r={isCurrent ? 3 : 2}
-                                fill={isCompleted || isCurrent ? 'var(--accent-color)' : 'transparent'}
-                                stroke="var(--accent-color)"
-                                strokeWidth={isCurrent ? 1 : 0.5}
-                                opacity={isCompleted ? 1 : isCurrent ? breathOpacity : 0.4}
-                                filter={isCurrent ? 'url(#oculus-glow-strong)' : 'none'}
-                            />
-
-                            {/* Connecting arc to next step (if completed) */}
-                            {isCompleted && i < totalSteps - 1 && (
-                                <path
-                                    d={arcPath(50, 50, 46, angle, stepAngles[i + 1])}
-                                    fill="none"
-                                    stroke="var(--accent-color)"
-                                    strokeWidth="2"
-                                    opacity="0.8"
-                                    filter="url(#oculus-glow)"
-                                />
-                            )}
-                        </g>
+                        <div
+                            key={i}
+                            className="absolute rounded-full flex items-center justify-center"
+                            style={{
+                                left: `${xPercent}%`,
+                                top: `${yPercent}%`,
+                                width: isCurrent ? '12px' : '8px',
+                                height: isCurrent ? '12px' : '8px',
+                                transform: 'translate(-50%, -50%)',
+                                background: isCompleted || isCurrent
+                                    ? 'radial-gradient(circle at 30% 30%, #fff 0%, #fbbf24 30%, #92400e 100%)' // PBR Gold Gem
+                                    : 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, rgba(100,100,100,0.2) 100%)', // Dull Glass
+                                boxShadow: isCurrent
+                                    ? `0 0 10px #fbbf24, 0 0 20px rgba(251, 191, 36, 0.4)` // Active Glow
+                                    : 'inset 0 1px 2px rgba(0,0,0,0.5)',
+                                border: '1px solid rgba(0,0,0,0.5)',
+                                zIndex: 10,
+                                transition: 'all 0.5s ease-out'
+                            }}
+                        />
                     );
                 })}
+            </div>
 
-                {/* Decorative corner glyphs */}
-                <g fill="var(--accent-color)" opacity={0.3 + breathPhase * 0.2} fontSize="4" fontFamily="Georgia, serif">
-                    <text x="15" y="15" textAnchor="middle">◆</text>
-                    <text x="85" y="15" textAnchor="middle">◆</text>
-                    <text x="15" y="88" textAnchor="middle">◆</text>
-                    <text x="85" y="88" textAnchor="middle">◆</text>
-                </g>
-            </svg>
-
-            {/* The Content Layer (Image/Icon goes here) */}
+            {/* The Content Layer (Image/Icon goes here) - NOW TRANSPARENT */}
             <div
                 className="relative z-10 rounded-full overflow-hidden flex items-center justify-center"
                 style={{
-                    width: '76%',
+                    width: '76%', // Matches inner void
                     height: '76%',
-                    background: 'radial-gradient(circle at center, rgba(15,15,26,0.95) 0%, rgba(5,5,10,0.98) 70%, transparent 100%)',
+                    pointerEvents: 'none', // Let clicks pass through
                 }}
             >
-                {children}
+                <div style={{ pointerEvents: 'auto', width: '100%', height: '100%' }}>
+                    {children}
+                </div>
             </div>
         </div>
     );
 }
 
-// Helper function to create SVG arc path
-function arcPath(cx, cy, r, startAngle, endAngle) {
-    const start = polarToCartesian(cx, cy, r, startAngle);
-    const end = polarToCartesian(cx, cy, r, endAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
-}
 
-function polarToCartesian(cx, cy, r, angleInDegrees) {
-    const angleInRadians = (angleInDegrees * Math.PI) / 180;
-    return {
-        x: cx + r * Math.cos(angleInRadians),
-        y: cy + r * Math.sin(angleInRadians),
-    };
-}
