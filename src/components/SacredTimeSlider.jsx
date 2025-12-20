@@ -22,11 +22,45 @@ export function SacredTimeSlider({ value, onChange, options }) {
     const containerRef = useRef(null);
     const trackRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [pulseActive, setPulseActive] = useState(false);
+    const audioContextRef = useRef(null);
 
     const currentIndex = options.indexOf(value);
 
     // Calculate thumb position as percentage (0-100)
     const thumbPercent = options.length > 1 ? (currentIndex / (options.length - 1)) * 100 : 0;
+
+    // Play subtle click sound
+    const playClick = () => {
+        try {
+            if (!audioContextRef.current) {
+                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const ctx = audioContextRef.current;
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.05);
+
+            gainNode.gain.setValueAtTime(0.08, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + 0.05);
+        } catch (e) {
+            // Audio not available, silent fail
+        }
+    };
+
+    // Trigger pulse animation
+    const triggerPulse = () => {
+        setPulseActive(true);
+        setTimeout(() => setPulseActive(false), 200);
+    };
 
     const handleInteraction = (clientX) => {
         if (!trackRef.current) return;
@@ -38,6 +72,8 @@ export function SacredTimeSlider({ value, onChange, options }) {
         const clampedIndex = Math.max(0, Math.min(index, options.length - 1));
         const newValue = options[clampedIndex];
         if (newValue !== value) {
+            playClick();
+            triggerPulse();
             onChange(newValue);
         }
     };
@@ -163,21 +199,23 @@ export function SacredTimeSlider({ value, onChange, options }) {
 
                 {/* Thumb */}
                 <div
-                    className="absolute pointer-events-none"
+                    className="absolute pointer-events-none transition-transform duration-100"
                     style={{
                         left: `${thumbPercent}%`,
                         top: '50%',
-                        transform: 'translate(-50%, -50%)',
+                        transform: `translate(-50%, -50%) scale(${pulseActive ? 1.3 : 1})`,
                         width: '28px',
                         height: '28px',
                         zIndex: 10
                     }}
                 >
                     <div
-                        className="w-full h-full rounded-full"
+                        className="w-full h-full rounded-full transition-all duration-100"
                         style={{
                             background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, var(--accent-color) 50%, transparent 70%)',
-                            boxShadow: '0 0 16px var(--accent-50), 0 0 32px var(--accent-30)',
+                            boxShadow: pulseActive
+                                ? '0 0 28px var(--accent-color), 0 0 48px var(--accent-50), 0 0 64px var(--accent-30)'
+                                : '0 0 16px var(--accent-50), 0 0 32px var(--accent-30)',
                             border: '2px solid var(--accent-color)'
                         }}
                     />

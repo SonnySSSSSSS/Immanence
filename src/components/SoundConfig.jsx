@@ -171,7 +171,7 @@ export function SoundConfig({
                         </p>
                     )}
 
-                    {/* Carrier Frequency */}
+                    {/* Carrier Frequency - Enhanced Fader */}
                     <div className="mt-4">
                         <div
                             className="mb-2 flex items-center justify-between"
@@ -184,20 +184,123 @@ export function SoundConfig({
                             }}
                         >
                             <span>Base Frequency</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{carrierFrequency} Hz</span>
+                            <span style={{
+                                color: (() => {
+                                    const freq = carrierFrequency;
+                                    if (freq < 200) return '#FF8C42'; // Orange
+                                    if (freq < 300) return '#FFD93D'; // Yellow
+                                    if (freq < 400) return '#6BCF7F'; // Green
+                                    return '#4A90E2'; // Blue
+                                })(),
+                                fontWeight: 'bold',
+                                fontSize: '10px'
+                            }}>
+                                {carrierFrequency} Hz
+                            </span>
                         </div>
-                        <input
-                            type="range"
-                            min="100"
-                            max="500"
-                            step="10"
-                            value={carrierFrequency}
-                            onChange={(e) => setCarrierFrequency(Number(e.target.value))}
-                            className="w-full accent-slider"
-                            style={{
-                                accentColor: 'var(--accent-color)',
-                            }}
-                        />
+
+                        {/* Custom Fader Track */}
+                        <div className="relative w-full h-12 flex items-center">
+                            {/* Gradient Track */}
+                            <div
+                                className="absolute w-full h-2 rounded-full"
+                                style={{
+                                    background: 'linear-gradient(to right, #FF8C42 0%, #FFD93D 33%, #6BCF7F 66%, #4A90E2 100%)',
+                                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+                                    opacity: 0.6
+                                }}
+                            />
+
+                            {/* Frequency Markers */}
+                            <div className="absolute w-full flex justify-between px-1" style={{ top: '20px' }}>
+                                {[100, 200, 300, 400, 500].map(freq => (
+                                    <div key={freq} style={{
+                                        fontSize: '7px',
+                                        color: 'rgba(255,255,255,0.3)',
+                                        fontFamily: 'monospace'
+                                    }}>
+                                        {freq}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Enhanced Slider Input */}
+                            <input
+                                type="range"
+                                min="100"
+                                max="500"
+                                step="10"
+                                value={carrierFrequency}
+                                onChange={(e) => setCarrierFrequency(Number(e.target.value))}
+                                className="absolute w-full cursor-pointer frequency-fader"
+                                style={{
+                                    appearance: 'none',
+                                    background: 'transparent',
+                                    height: '100%',
+                                    zIndex: 2
+                                }}
+                            />
+                        </div>
+
+                        <style>{`
+                            /* Enhanced Fader Thumb */
+                            .frequency-fader::-webkit-slider-thumb {
+                                appearance: none;
+                                width: 20px;
+                                height: 40px;
+                                border-radius: 4px;
+                                background: linear-gradient(135deg, 
+                                    ${carrierFrequency < 200 ? '#FF8C42' :
+                                carrierFrequency < 300 ? '#FFD93D' :
+                                    carrierFrequency < 400 ? '#6BCF7F' : '#4A90E2'}, 
+                                    ${carrierFrequency < 200 ? '#FF6B1A' :
+                                carrierFrequency < 300 ? '#FFC700' :
+                                    carrierFrequency < 400 ? '#4CAF50' : '#2E7BC4'});
+                                border: 2px solid rgba(255,255,255,0.3);
+                                box-shadow: 0 0 15px ${carrierFrequency < 200 ? 'rgba(255, 140, 66, 0.6)' :
+                                carrierFrequency < 300 ? 'rgba(255, 217, 61, 0.6)' :
+                                    carrierFrequency < 400 ? 'rgba(107, 207, 127, 0.6)' :
+                                        'rgba(74, 144, 226, 0.6)'
+                            }, 0 2px 8px rgba(0,0,0,0.4);
+                                cursor: grab;
+                                transition: transform 0.1s ease, box-shadow 0.2s ease;
+                            }
+                            
+                            .frequency-fader::-webkit-slider-thumb:hover {
+                                transform: scaleY(1.1);
+                                box-shadow: 0 0 20px ${carrierFrequency < 200 ? 'rgba(255, 140, 66, 0.8)' :
+                                carrierFrequency < 300 ? 'rgba(255, 217, 61, 0.8)' :
+                                    carrierFrequency < 400 ? 'rgba(107, 207, 127, 0.8)' :
+                                        'rgba(74, 144, 226, 0.8)'
+                            }, 0 3px 10px rgba(0,0,0,0.5);
+                            }
+                            
+                            .frequency-fader::-webkit-slider-thumb:active {
+                                cursor: grabbing;
+                                transform: scaleY(1.05);
+                            }
+                            
+                            /* Firefox */
+                            .frequency-fader::-moz-range-thumb {
+                                width: 20px;
+                                height: 40px;
+                                border-radius: 4px;
+                                background: linear-gradient(135deg, 
+                                    ${carrierFrequency < 200 ? '#FF8C42' :
+                                carrierFrequency < 300 ? '#FFD93D' :
+                                    carrierFrequency < 400 ? '#6BCF7F' : '#4A90E2'}, 
+                                    ${carrierFrequency < 200 ? '#FF6B1A' :
+                                carrierFrequency < 300 ? '#FFC700' :
+                                    carrierFrequency < 400 ? '#4CAF50' : '#2E7BC4'});
+                                border: 2px solid rgba(255,255,255,0.3);
+                                box-shadow: 0 0 15px ${carrierFrequency < 200 ? 'rgba(255, 140, 66, 0.6)' :
+                                carrierFrequency < 300 ? 'rgba(255, 217, 61, 0.6)' :
+                                    carrierFrequency < 400 ? 'rgba(107, 207, 127, 0.6)' :
+                                        'rgba(74, 144, 226, 0.6)'
+                            }, 0 2px 8px rgba(0,0,0,0.4);
+                                cursor: grab;
+                            }
+                        `}</style>
                     </div>
                 </div>
             )}

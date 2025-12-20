@@ -274,7 +274,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
             {/* Stage Tooltip */}
             {tooltip === 'stage' && (
               <div
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-50 animate-fade-in"
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
                 style={{
                   background: 'rgba(0,0,0,0.9)',
                   backdropFilter: 'blur(12px)',
@@ -387,7 +387,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
               {/* Path Tooltip */}
               {tooltip === 'path' && currentPathDescription && (
                 <div
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-50 animate-fade-in"
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
                   style={{
                     background: 'rgba(0,0,0,0.9)',
                     backdropFilter: 'blur(12px)',

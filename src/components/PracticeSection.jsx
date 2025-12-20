@@ -202,9 +202,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10 * 60);
 
-  // 3-tier card collapse states
-  const [tier2Expanded, setTier2Expanded] = useState(false);
-  const [tier3Expanded, setTier3Expanded] = useState(false);
+  // 3-tier card collapse states (default expanded)
+  const [tier2Expanded, setTier2Expanded] = useState(true);
+  const [tier3Expanded, setTier3Expanded] = useState(true);
 
   // Lock & Begin transition state
   const [isStarting, setIsStarting] = useState(false);
@@ -954,6 +954,62 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <div className="absolute inset-0 rounded-full animate-pulse opacity-20 bg-[var(--accent-color)] blur-xl"></div>
                 <div className="text-4xl opacity-80">✦</div>
               </div>
+
+              {/* Volume Control */}
+              <div className="mt-6 w-64">
+                <div
+                  className="mb-2 flex items-center justify-between"
+                  style={{
+                    fontFamily: "Georgia, serif",
+                    fontSize: "8px",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                    color: "rgba(253,251,245,0.5)",
+                  }}
+                >
+                  <span>Volume</span>
+                  <span style={{ color: 'var(--accent-color)' }}>{Math.round(soundVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={soundVolume}
+                  onChange={(e) => setSoundVolume(Number(e.target.value))}
+                  className="w-full sound-volume-slider"
+                />
+                <style>{`
+                  .sound-volume-slider::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: var(--accent-color);
+                    cursor: pointer;
+                    box-shadow: 0 0 8px var(--accent-50);
+                  }
+                  .sound-volume-slider::-webkit-slider-runnable-track {
+                    height: 4px;
+                    border-radius: 2px;
+                    background: rgba(255, 255, 255, 0.2);
+                  }
+                  .sound-volume-slider::-moz-range-thumb {
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: var(--accent-color);
+                    cursor: pointer;
+                    border: none;
+                    box-shadow: 0 0 8px var(--accent-50);
+                  }
+                  .sound-volume-slider::-moz-range-track {
+                    height: 4px;
+                    border-radius: 2px;
+                    background: rgba(255, 255, 255, 0.2);
+                  }
+                `}</style>
+              </div>
             </div>
           )}
         </div >
@@ -1478,10 +1534,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 {/* Collapsible Content */}
                 <div
                   style={{
-                    maxHeight: tier2Expanded ? '800px' : '0',
-                    overflow: tier2Expanded ? 'auto' : 'hidden',
+                    overflow: tier2Expanded ? 'visible' : 'hidden',
                     opacity: tier2Expanded ? 1 : 0,
-                    transition: 'max-height 260ms ease-in-out, opacity 180ms ease-in-out',
+                    transition: 'opacity 180ms ease-in-out',
+                    paddingBottom: tier2Expanded ? '12px' : '0',
                   }}
                 >
                   {/* Practice-specific config components */}

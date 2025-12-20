@@ -27,13 +27,15 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear 
 
     return (
         <section
-            className="w-full flex flex-col items-center px-4 pt-4 pb-8"
+            className="w-full flex flex-col items-center justify-center px-4 pt-4 pb-8 relative z-10"
             style={{
+                // Solid dark background to hide decorative elements
+                background: 'rgba(10,10,15,0.98)',
                 // Subtle warmth when playing
-                background: isPlaying
-                    ? 'radial-gradient(ellipse at center top, rgba(255,120,40,0.08) 0%, transparent 60%)'
-                    : 'transparent',
-                transition: 'background 0.5s ease',
+                boxShadow: isPlaying
+                    ? 'inset 0 0 80px rgba(255,120,40,0.08)'
+                    : 'none',
+                transition: 'all 0.5s ease',
             }}
         >
             {/* Video frame with ember border glow when playing */}
@@ -388,8 +390,11 @@ export function VideoLibrary() {
 
     return (
         <div
-            className="w-full min-h-[70vh] flex flex-col"
-            style={{ background: 'rgba(10,10,15,0.95)' }}
+            className="w-full min-h-[70vh] flex flex-col relative"
+            style={{
+                background: 'rgba(10,10,15,1)', // Fully opaque
+                zIndex: 50 // Above PathParticles and other decorations
+            }}
         >
             {/* THE HEARTH - Always at top, fixed size */}
             <VideoHearth

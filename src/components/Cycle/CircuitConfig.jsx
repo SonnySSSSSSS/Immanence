@@ -129,9 +129,9 @@ export function CircuitConfig({ value, onChange }) {
 
     return (
         <div className="space-y-6">
-            {/* Total Duration - Glassmorphic */}
+            {/* Total Duration - Hero Number with Pulse */}
             <div
-                className="p-4 rounded"
+                className="p-4 rounded relative"
                 style={{
                     background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
                     backdropFilter: 'blur(10px)',
@@ -139,6 +139,18 @@ export function CircuitConfig({ value, onChange }) {
                     boxShadow: 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1)',
                 }}
             >
+                <style>{`
+                    @keyframes energy-pulse {
+                        0%, 100% { 
+                            filter: drop-shadow(0 0 8px var(--accent-color)) drop-shadow(0 0 16px var(--accent-30));
+                            transform: scale(1);
+                        }
+                        50% { 
+                            filter: drop-shadow(0 0 16px var(--accent-color)) drop-shadow(0 0 32px var(--accent-50));
+                            transform: scale(1.02);
+                        }
+                    }
+                `}</style>
                 <div className="flex justify-between items-center">
                     <div>
                         <div
@@ -149,7 +161,12 @@ export function CircuitConfig({ value, onChange }) {
                         >
                             Total Circuit
                         </div>
-                        <div className="text-3xl font-[Cinzel] text-white/95 font-light tracking-wide">
+                        <div
+                            className="text-3xl font-[Cinzel] text-white/95 font-light tracking-wide"
+                            style={{
+                                animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none'
+                            }}
+                        >
                             {totalDuration} <span className="text-lg text-white/50">min</span>
                         </div>
                     </div>
@@ -191,11 +208,11 @@ export function CircuitConfig({ value, onChange }) {
                     </span>
                 </div>
                 <div
-                    className="flex gap-3 pb-2"
+                    className="flex gap-3 pb-2 py-2"
                     style={{
                         width: '100%',
                         overflowX: 'auto',
-                        overflowY: 'hidden',
+                        overflowY: 'visible',
                         scrollSnapType: 'x mandatory',
                         WebkitOverflowScrolling: 'touch',
                         scrollbarWidth: 'thin',
@@ -260,68 +277,87 @@ export function CircuitConfig({ value, onChange }) {
                 </div>
             </div>
 
-            {/* Circuit Sequence - Clean List */}
+            {/* Circuit Sequence - Energy Pathway */}
             {selectedExercises.length > 0 && (
                 <div>
                     <div className="text-xs text-white/40 font-[Outfit] mb-3 uppercase tracking-[0.15em]">
-                        Circuit Sequence · {selectedExercises.length} Paths
+                        Energy Pathway · {selectedExercises.length} Nodes
                     </div>
-                    <div className="space-y-2">
-                        {selectedExercises.map((item, index) => (
-                            <div
-                                key={`${item.exercise.id}-${index}`}
-                                className="p-3 rounded flex items-center gap-3"
-                                style={{
-                                    background: 'rgba(255,255,255,0.04)',
-                                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                    backdropFilter: 'blur(5px)',
-                                }}
-                            >
-                                {/* Sequence Number */}
+                    <div className="relative">
+                        <div className="space-y-2 relative" style={{ zIndex: 1 }}>
+                            {selectedExercises.map((item, index) => (
                                 <div
-                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                                    key={`${item.exercise.id}-${index}`}
+                                    className="p-3 rounded flex items-center gap-3"
                                     style={{
-                                        background: 'var(--accent-color)',
-                                        color: '#000',
+                                        background: 'rgba(255,255,255,0.04)',
+                                        border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                        backdropFilter: 'blur(5px)',
                                     }}
                                 >
-                                    {index + 1}
-                                </div>
-
-                                {/* Exercise Icon */}
-                                <div
-                                    className="text-2xl"
-                                    style={{
-                                        filter: `drop-shadow(0 0 6px ${item.exercise.glow})`,
-                                    }}
-                                >
-                                    {item.exercise.icon}
-                                </div>
-
-                                {/* Exercise Name */}
-                                <div className="flex-1">
-                                    <div className="text-sm font-[Outfit] text-white/80">
-                                        {item.exercise.name}
+                                    {/* Energy Node Number */}
+                                    <div className="relative" style={{ width: '32px', height: '32px' }}>
+                                        <div
+                                            className="w-full h-full rounded-full flex items-center justify-center text-xs font-bold"
+                                            style={{
+                                                background: 'var(--accent-color)',
+                                                color: '#000',
+                                                boxShadow: '0 0 12px var(--accent-50), 0 0 24px var(--accent-30)',
+                                                border: '2px solid var(--accent-color)',
+                                                position: 'relative',
+                                                zIndex: 2
+                                            }}
+                                        >
+                                            {index + 1}
+                                        </div>
+                                        {/* Outer energy ring */}
+                                        <div
+                                            className="absolute inset-0 rounded-full"
+                                            style={{
+                                                border: '1px solid var(--accent-40)',
+                                                transform: 'scale(1.4)',
+                                                opacity: 0.4,
+                                                animation: 'energy-pulse 2s ease-in-out infinite',
+                                                animationDelay: `${index * 0.2}s`
+                                            }}
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Duration */}
-                                <div
-                                    className="text-sm font-[Outfit]"
-                                    style={{ color: 'var(--accent-color)' }}
-                                >
-                                    {item.duration}m
-                                </div>
+                                    {/* Exercise Icon */}
+                                    <div
+                                        className="text-2xl"
+                                        style={{
+                                            filter: `drop-shadow(0 0 6px ${item.exercise.glow})`,
+                                        }}
+                                    >
+                                        {item.exercise.icon}
+                                    </div>
 
-                                {/* Remove button */}
-                                <button
-                                    onClick={() => handleRemoveExercise(index)}
-                                    className="text-white/30 hover:text-white/70 text-sm transition-colors"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        ))}
+                                    {/* Exercise Name */}
+                                    <div className="flex-1">
+                                        <div className="text-sm font-[Outfit] text-white/80">
+                                            {item.exercise.name}
+                                        </div>
+                                    </div>
+
+                                    {/* Duration */}
+                                    <div
+                                        className="text-sm font-[Outfit]"
+                                        style={{ color: 'var(--accent-color)' }}
+                                    >
+                                        {item.duration}m
+                                    </div>
+
+                                    {/* Remove button */}
+                                    <button
+                                        onClick={() => handleRemoveExercise(index)}
+                                        className="text-white/30 hover:text-white/70 text-sm transition-colors"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

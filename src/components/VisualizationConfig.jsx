@@ -2,6 +2,7 @@
 // Config panel for Visualization practice
 
 import React from 'react';
+import { CycleRingControl } from './CycleRingControl.jsx';
 
 export function VisualizationConfig({
     geometry,
@@ -88,7 +89,7 @@ export function VisualizationConfig({
                 </div>
             </div>
 
-            {/* Timing Controls */}
+            {/* Timing Controls - Cycle Ring */}
             <div>
                 <div
                     className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
@@ -96,91 +97,16 @@ export function VisualizationConfig({
                 >
                     Phase Durations
                 </div>
-                <div className="space-y-3">
-                    {/* Fade In */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-[rgba(253,251,245,0.7)]">Fade In</span>
-                            <span className="text-xs text-[var(--accent-color)]">{fadeInDuration}s</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="5"
-                            step="0.5"
-                            value={fadeInDuration}
-                            onChange={(e) => setFadeInDuration(parseFloat(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((fadeInDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) ${((fadeInDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
-
-                    {/* Display */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-[rgba(253,251,245,0.7)]">Display</span>
-                            <span className="text-xs text-[var(--accent-color)]">{displayDuration}s</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="5"
-                            max="30"
-                            step="1"
-                            value={displayDuration}
-                            onChange={(e) => setDisplayDuration(parseInt(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((displayDuration - 5) / 25) * 100}%, rgba(255,255,255,0.1) ${((displayDuration - 5) / 25) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
-
-                    {/* Fade Out */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-[rgba(253,251,245,0.7)]">Fade Out</span>
-                            <span className="text-xs text-[var(--accent-color)]">{fadeOutDuration}s</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="5"
-                            step="0.5"
-                            value={fadeOutDuration}
-                            onChange={(e) => setFadeOutDuration(parseFloat(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((fadeOutDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) ${((fadeOutDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
-
-                    {/* Void */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-[rgba(253,251,245,0.7)]">Void</span>
-                            <span className="text-xs text-[var(--accent-color)]">{voidDuration}s</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="5"
-                            max="30"
-                            step="1"
-                            value={voidDuration}
-                            onChange={(e) => setVoidDuration(parseInt(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((voidDuration - 5) / 25) * 100}%, rgba(255,255,255,0.1) ${((voidDuration - 5) / 25) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
-                </div>
-
-                <div className="mt-3 text-center text-xs text-[rgba(253,251,245,0.5)]">
-                    Total Cycle: {totalCycleDuration}s
-                </div>
+                <CycleRingControl
+                    fadeInDuration={fadeInDuration}
+                    setFadeInDuration={setFadeInDuration}
+                    displayDuration={displayDuration}
+                    setDisplayDuration={setDisplayDuration}
+                    fadeOutDuration={fadeOutDuration}
+                    setFadeOutDuration={setFadeOutDuration}
+                    voidDuration={voidDuration}
+                    setVoidDuration={setVoidDuration}
+                />
             </div>
 
             {/* Audio Toggle */}
