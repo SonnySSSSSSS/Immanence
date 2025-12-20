@@ -18,6 +18,57 @@ const DOMAINS = [
     { id: 'wisdom', label: 'Wisdom', iconName: 'wisdom' }
 ];
 
+// Cymatic glyphs - sacred geometry for each domain
+const CYMATIC_GLYPHS = {
+    // BREATHWORK (Wave) - Concentric circles: rhythmic flow of life-force
+    breathwork: (isActive) => (
+        <svg width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="7" fill="none"
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)'}
+                strokeWidth={isActive ? "1.2" : "0.8"} opacity="0.4" />
+            <circle cx="10" cy="10" r="5" fill="none"
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.25)'}
+                strokeWidth={isActive ? "1.5" : "1"} opacity="0.7" />
+            <circle cx="10" cy="10" r="2.5"
+                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)'}
+                opacity={isActive ? "0.6" : "0.3"} />
+        </svg>
+    ),
+
+    // VISUALIZATION (Sword) - Hexagon: precision of directed consciousness
+    visualization: (isActive) => (
+        <svg width="20" height="20" viewBox="0 0 20 20">
+            <path
+                d="M10 2 L16.33 6 L16.33 14 L10 18 L3.67 14 L3.67 6 Z"
+                fill="none"
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.25)'}
+                strokeWidth={isActive ? "1.5" : "1"}
+                style={{
+                    transition: 'all 0.4s ease',
+                    transform: isActive ? 'rotate(30deg)' : 'rotate(0deg)',
+                    transformOrigin: 'center'
+                }}
+            />
+            {isActive && (
+                <circle cx="10" cy="10" r="1.5" fill="var(--accent-color)" opacity="0.5" />
+            )}
+        </svg>
+    ),
+
+    // WISDOM (Mirror) - Square: stable foundation of recognition
+    wisdom: (isActive) => (
+        <svg width="20" height="20" viewBox="0 0 20 20">
+            <rect x="5" y="5" width="10" height="10"
+                fill="none"
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.25)'}
+                strokeWidth={isActive ? "1.5" : "1"} />
+            <rect x="7.5" y="7.5" width="5" height="5"
+                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
+                opacity="0.3" />
+        </svg>
+    )
+};
+
 /**
  * Domain-specific insights component
  * Always renders with appropriate content for each domain
@@ -255,18 +306,20 @@ export function TrackingHub() {
                     </div>
                 </div>
 
-                {/* Pagination dots - moved to header */}
-                <div className="flex items-center justify-center gap-2">
-                    {orderedDomains.map((_, index) => (
+                {/* Cymatic pagination glyphs */}
+                <div className="flex items-center justify-center gap-3">
+                    {orderedDomains.map((domain, index) => (
                         <button
                             key={index}
                             onClick={() => setCurrentIndex(index)}
-                            className="w-2 h-2 rounded-full transition-all duration-200"
+                            className="transition-all duration-300"
                             style={{
-                                background: index === currentIndex ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)',
+                                opacity: index === currentIndex ? 1 : 0.4,
                                 transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
                             }}
-                        />
+                        >
+                            {CYMATIC_GLYPHS[domain.id](index === currentIndex)}
+                        </button>
                     ))}
                 </div>
 

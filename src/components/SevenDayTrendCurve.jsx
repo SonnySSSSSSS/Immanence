@@ -18,6 +18,35 @@ function catmullRom(t, p0, p1, p2, p3, tension = 0.5) {
 }
 
 /**
+ * Get intensity-based color for heat-map effect
+ * Cool amber (low) → warm orange (medium) → white-hot (peak)
+ */
+function getIntensityColor(normalizedValue, isPeak) {
+    if (isPeak) {
+        // White-hot peak
+        return {
+            start: 'rgba(255, 245, 220, 1)',
+            end: 'rgba(255, 255, 255, 0.95)'
+        };
+    }
+
+    // Heat map gradient based on intensity
+    if (normalizedValue < 0.3) {
+        // Cool amber - low intensity
+        return { start: 'rgba(180, 140, 90, 0.6)', end: 'rgba(200, 160, 110, 0.7)' };
+    } else if (normalizedValue < 0.6) {
+        // Warm orange - medium intensity
+        return { start: 'rgba(220, 170, 100, 0.7)', end: 'rgba(240, 190, 120, 0.8)' };
+    } else if (normalizedValue < 0.9) {
+        // Hot gold - high intensity
+        return { start: 'rgba(255, 200, 120, 0.85)', end: 'rgba(255, 220, 150, 0.9)' };
+    } else {
+        // Very hot - near peak
+        return { start: 'rgba(255, 235, 180, 0.95)', end: 'rgba(255, 245, 220, 1)' };
+    }
+}
+
+/**
  * Generate curve with directional flow and peak emphasis
  */
 function generateCurve(data, width, height, tension = 0.3) {
@@ -67,13 +96,16 @@ function generateCurve(data, width, height, tension = 0.3) {
         const baseOpacity = 0.25 + (i / (points.length - 1)) * 0.25; // 0.25 → 0.5 L→R
         const opacity = isPeakSegment ? 0.9 : (baseOpacity + avgNorm * 0.3);
 
+        // Get intensity color for this segment
+        const colors = getIntensityColor(avgNorm, isPeakSegment);
+
         segments.push({
             path: segPath,
             strokeWidth,
             opacity,
             isPeak: isPeakSegment,
-            // Color temperature: cooler left (past) → warmer right (present)
-            colorIndex: i
+            colorIndex: i,
+            colors // Add color data for rendering
         });
     }
 
@@ -129,19 +161,13 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
             }}
         >
             <defs>
-                {/* Directional gradient: cool past (left) → warm present (right) */}
-                <linearGradient id="timelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(180, 160, 120, 0.3)" />
-                    <stop offset="40%" stopColor="rgba(220, 190, 130, 0.5)" />
-                    <stop offset="70%" stopColor="rgba(255, 210, 140, 0.7)" />
-                    <stop offset="100%" stopColor="rgba(255, 230, 170, 0.85)" />
-                </linearGradient>
-
-                {/* Hot peak gradient */}
-                <linearGradient id="peakHot" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="rgba(255, 180, 80, 0.6)" />
-                    <stop offset="100%" stopColor="rgba(255, 220, 130, 0.95)" />
-                </linearGradient>
+                {/* Per-segment gradients for heat-map effect */}
+                {segments.map((seg, i) => (
+                    <linearGradient key={`grad-${i}`} id={`segment-${i}`} x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor={seg.colors.start} />
+                        <stop offset="100%" stopColor={seg.colors.end} />
+                    </linearGradient>
+                ))}
 
                 {/* Area fill with directional fade */}
                 <linearGradient id="areaFill" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -150,10 +176,10 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
                     <stop offset="100%" stopColor="rgba(255, 235, 180, 0.08)" />
                 </linearGradient>
 
-                {/* Peak bloom */}
+                {/* White-hot peak glow */}
                 <filter id="peakGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
-                    <feFlood floodColor="rgba(255, 200, 100, 0.5)" result="color" />
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                    <feFlood floodColor="rgba(255, 245, 220, 0.7)" result="color" />
                     <feComposite in="color" in2="blur" operator="in" result="glow" />
                     <feMerge>
                         <feMergeNode in="glow" />
@@ -170,13 +196,13 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
             {/* Area fill */}
             <path d={areaPath} fill="url(#areaFill)" />
 
-            {/* Curve segments with directional flow */}
+            {/* Curve segments with intensity-based heat-map colors */}
             {segments.map((seg, i) => (
                 <path
                     key={i}
                     d={seg.path}
                     fill="none"
-                    stroke={seg.isPeak ? "url(#peakHot)" : "url(#timelineGradient)"}
+                    stroke={`url(#segment-${i})`}
                     strokeWidth={seg.strokeWidth}
                     strokeLinecap="round"
                     strokeLinejoin="round"

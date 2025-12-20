@@ -35,6 +35,36 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     ? (STAGES[lunarStage]?.duration - daysUntilNext) / STAGES[lunarStage]?.duration
     : 0;
 
+  // Determine insight state for contextual colors
+  const insightState =
+    currentStreak >= 7 ? 'achievement' :
+      avgAccuracy < 0.5 ? 'caution' :
+        weeklyConsistency < 4 ? 'warning' :
+          'neutral';
+
+  const insightColors = {
+    achievement: {
+      border: 'rgba(255, 215, 0, 0.3)',
+      glow: 'rgba(255, 215, 0, 0.2)',
+      accent: 'rgba(255, 215, 0, 0.9)',
+    },
+    caution: {
+      border: 'rgba(255, 145, 0, 0.3)',
+      glow: 'rgba(255, 145, 0, 0.2)',
+      accent: 'rgba(255, 145, 0, 0.9)',
+    },
+    warning: {
+      border: 'rgba(100, 150, 255, 0.3)', // Calming blue for drop-off
+      glow: 'rgba(100, 150, 255, 0.2)',
+      accent: 'rgba(150, 180, 255, 0.9)',
+    },
+    neutral: {
+      border: 'var(--accent-40)',
+      glow: 'var(--accent-20)',
+      accent: 'var(--accent-color)',
+    }
+  };
+
   // Format last practiced time
   const formatLastPracticed = (isoDate) => {
     if (!isoDate) return 'Never';
@@ -203,24 +233,32 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           QUICK INSIGHTS - Small contextual suggestions
           ────────────────────────────────────────────────────────────────────── */}
       <div
-        className="w-full max-w-2xl rounded-3xl px-5 py-4 relative"
+        className="w-full max-w-2xl rounded-3xl px-5 py-4 relative overflow-hidden"
         style={{
           background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-          border: '1px solid transparent',
-          backgroundImage: `
-            linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-            linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)
-          `,
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'padding-box, border-box',
+          border: `1px solid ${insightColors[insightState].border}`,
           boxShadow: `
             0 8px 32px rgba(0, 0, 0, 0.6),
-            0 2px 8px var(--accent-15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.08),
-            inset 0 -3px 12px rgba(0, 0, 0, 0.4)
+            0 2px 8px ${insightColors[insightState].glow},
+            inset 0 1px 0 rgba(255, 255, 255, 0.08)
           `,
+          transition: 'all 0.6s ease',
         }}
       >
+        {/* Scan-line animation overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `linear-gradient(180deg, 
+              transparent 0%, 
+              ${insightColors[insightState].glow} 50%, 
+              transparent 100%
+            )`,
+            animation: 'scan-line 3s ease-in-out infinite',
+            opacity: 0.3,
+          }}
+        />
+
         {/* Inner glow */}
         <div style={innerGlowStyle} />
 
@@ -234,16 +272,18 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div
             className="text-[10px] mb-2 uppercase tracking-[0.15em]"
             style={{
-              color: 'var(--accent-color)',
+              color: insightColors[insightState].accent,
               textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
             }}
           >
-            Quick Insight
+            ⟨ Transmission ⟩
           </div>
           <div
             className="text-[11px] leading-relaxed"
             style={{
               color: 'rgba(253, 251, 245, 0.85)',
+              fontFamily: "'Courier New', monospace",
+              letterSpacing: '0.02em',
               textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
             }}
           >
@@ -388,19 +428,21 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
           {title}
         </div>
         <div
-          className="text-[11px] mt-1"
           style={{
-            color: 'rgba(253, 251, 245, 0.85)',
-            textShadow: '0 2px 6px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(0, 0, 0, 0.6)',
+            color: 'rgba(253, 251, 245, 0.92)', // Increased from 0.85
+            fontSize: '0.75rem', // Increased from 0.6875rem (11px → 12px)
+            marginTop: '0.25rem',
+            textShadow: '0 2px 8px rgba(0, 0, 0, 0.95)', // Stronger shadow for legibility
           }}
         >
           {description}
         </div>
         <div
-          className="text-[9px] mt-2 group-hover:text-[rgba(253,251,245,0.7)] transition-colors"
           style={{
-            color: 'rgba(253, 251, 245, 0.5)',
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.7), 0 1px 2px rgba(0, 0, 0, 0.5)',
+            color: 'rgba(253, 251, 245, 0.65)', // Increased from 0.5
+            fontSize: '0.625rem', // Increased from 0.5625rem (9px → 10px)
+            marginTop: '0.5rem',
+            textShadow: '0 2px 6px rgba(0, 0, 0, 0.9)',
           }}
         >
           {subtext}

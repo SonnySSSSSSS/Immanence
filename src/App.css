@@ -15,6 +15,17 @@
   animation: sectionEnter 300ms ease-out;
 }
 
+/* Scan-line animation for Quick Insight transmission */
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(200%);
+  }
+}
+
 /* Heartbeat pulse for living buttons */
 @keyframes heartbeat {
 
