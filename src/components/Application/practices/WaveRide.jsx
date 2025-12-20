@@ -86,10 +86,15 @@ export function WaveRide({ onComplete }) {
     };
 
     const handleComplete = () => {
-        if (endIntensity !== null) {
-            updateWaveData('endIntensity', endIntensity);
+        try {
+            if (endIntensity !== null) {
+                updateWaveData('endIntensity', endIntensity);
+            }
+            lockWave();
+        } catch (err) {
+            console.error('Error locking wave:', err);
         }
-        lockWave();
+        // Always call onComplete to progress
         onComplete?.();
     };
 

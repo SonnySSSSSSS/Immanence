@@ -73,7 +73,11 @@ export function PrismSeparation({ onComplete }) {
 
     // Handle lock
     const handleLock = () => {
-        lockPrism();
+        try {
+            lockPrism();
+        } catch (err) {
+            console.error('Error locking prism:', err);
+        }
         onComplete?.();
     };
 

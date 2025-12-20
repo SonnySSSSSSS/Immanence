@@ -3,8 +3,7 @@
 // Flow: Gesture → Trace → Pattern → Direction
 
 import React from 'react';
-import { ActiveTrackingItems } from './ActiveTrackingItems.jsx';
-import { QuickLogGesturePad } from './QuickLogGesturePad.jsx';
+import { AwarenessCompass } from './AwarenessCompass.jsx';
 import { TodayAwarenessLog } from './TodayAwarenessLog.jsx';
 import { WeeklyReview } from './WeeklyReview.jsx';
 import { PathJourneyLog } from './PathJourneyLog.jsx';
@@ -54,29 +53,12 @@ function FlowSection({ label, sublabel, children, isGesture = false }) {
 export function TrackingView() {
     return (
         <div className="space-y-2">
-            {/* ═══════════════════════════════════════════════════════════════
-                ORIENTING LINE — Reframes everything below
-                ═══════════════════════════════════════════════════════════════ */}
-            <div className="text-center py-4 mb-2">
-                <p
-                    className="text-[11px] italic max-w-xs mx-auto"
-                    style={{
-                        fontFamily: 'Crimson Pro, serif',
-                        color: 'rgba(253,251,245,0.5)',
-                        lineHeight: 1.6,
-                    }}
-                >
-                    This space reflects how you are showing up — not how well.
-                </p>
-            </div>
-
-            {/* ═══════════════════════════════════════════════════════════════
-                1. GESTURE — A small act (Quick Log)
+            {/* 1. GESTURE — A small act (Awareness Compass)
                 "You touch the field. The field responds."
                 ═══════════════════════════════════════════════════════════════ */}
             <FlowSection label="Gesture" sublabel="a small act" isGesture>
                 <div className="relative">
-                    {/* Sacred glow behind gesture pad */}
+                    {/* Sacred glow behind compass */}
                     <div
                         className="absolute inset-0 pointer-events-none"
                         style={{
@@ -84,18 +66,15 @@ export function TrackingView() {
                             filter: 'blur(30px)',
                         }}
                     />
-                    <QuickLogGesturePad />
+                    <AwarenessCompass />
                 </div>
             </FlowSection>
 
             {/* ═══════════════════════════════════════════════════════════════
-                2. TRACE — Immediate echo (Today's Log + This Week Items)
+                2. TRACE — Immediate echo (Today's Log)
                 ═══════════════════════════════════════════════════════════════ */}
             <FlowSection label="Trace" sublabel="immediate echo">
-                <div className="space-y-4">
-                    <TodayAwarenessLog />
-                    <ActiveTrackingItems />
-                </div>
+                <TodayAwarenessLog />
             </FlowSection>
 
             {/* ═══════════════════════════════════════════════════════════════

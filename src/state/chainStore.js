@@ -255,7 +255,7 @@ export const useChainStore = create(
                 set((state) => {
                     if (!state.activeChain) return state;
 
-                    const interpretations = state.activeChain.prism.interpretations;
+                    const interpretations = state.activeChain.prism?.interpretations || [];
                     const supportedCount = interpretations.filter(i => i.isSupported === true).length;
                     const unsupportedCount = interpretations.filter(i => i.isSupported === false).length;
                     const total = supportedCount + unsupportedCount;
@@ -335,7 +335,9 @@ export const useChainStore = create(
             lockWave: () => {
                 set((state) => {
                     if (!state.activeChain) return state;
-                    const impulsesActedOn = state.activeChain.wave.impulses.some(i => i.actedOn);
+                    // Safety check for impulses array
+                    const impulses = state.activeChain.wave?.impulses || [];
+                    const impulsesActedOn = impulses.some(i => i.actedOn);
                     return {
                         activeChain: {
                             ...state.activeChain,

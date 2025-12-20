@@ -1,54 +1,14 @@
 // src/components/Application/practices/MirrorObservation.jsx
 // Mirror Mode: Observation - Establish a neutral, immutable anchor
-// IE v1 Spec: Form-based input with E-Prime validation (hard reject structural violations)
+// Redesigned: Full-screen immersive "Tunnel of Truth" experience
+// Uses sentence builders instead of form fields
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useChainStore } from '../../../state/chainStore.js';
 import { validateMirrorEntry } from '../../../services/llmService.js';
-import {
-    MirrorValidationFeedback,
-    MirrorValidationError,
-    MirrorValidationLoading
-} from './MirrorValidationFeedback.jsx';
-import {
-    E_PRIME_VIOLATIONS,
-    SUBJECTIVE_MODIFIERS,
-    INTENT_WORDS,
-    CONTEXT_CATEGORIES
-} from '../../../data/fourModes.js';
-
-// Validation result types
-const VALIDATION_RESULT = {
-    VALID: 'valid',
-    HARD_REJECT: 'hard_reject',
-    SOFT_WARNING: 'soft_warning',
-};
-
-// Validate text for E-Prime violations (now all soft - LLM does intelligent validation)
-function validateEPrime(text, fieldName) {
-    const words = text.toLowerCase().split(/\s+/);
-    const violations = [];
-
-    for (const word of words) {
-        // Check E-Prime violations (forms of "to be")
-        // Now soft only - LLM handles context like quoted speech
-        if (E_PRIME_VIOLATIONS.includes(word)) {
-            violations.push({ word, type: 'e_prime', severity: 'soft' });
-        }
-
-        // Check intent words - soft warning, LLM judges context
-        if (INTENT_WORDS.includes(word)) {
-            violations.push({ word, type: 'intent', severity: 'soft' });
-        }
-
-        // Check subjective modifiers (soft warning)
-        if (SUBJECTIVE_MODIFIERS.includes(word)) {
-            violations.push({ word, type: 'subjective', severity: 'soft' });
-        }
-    }
-
-    return violations;
-}
+import { SentenceBuilder, ActorActionBuilder } from '../SentenceBuilder.jsx';
+import { MirrorSeal } from '../MirrorSeal.jsx';
 
 // Build neutral sentence from components
 function buildNeutralSentence(context, actor, action, recipient) {
@@ -59,14 +19,52 @@ function buildNeutralSentence(context, actor, action, recipient) {
     if (context.location) parts.push(`at ${context.location}`);
 
     const contextStr = parts.join(', ');
-    const actorStr = actor || '[Actor]';
-    const actionStr = action || '[Action]';
-    const recipientStr = recipient ? ` ${recipient}` : '';
+    const actorStr = actor || '[Someone]';
+    const actionStr = action || '[did something]';
+    const recipientStr = recipient ? ` to ${recipient}` : '';
 
     if (contextStr) {
         return `${contextStr}, ${actorStr} ${actionStr}${recipientStr}.`;
     }
     return `${actorStr} ${actionStr}${recipientStr}.`;
+}
+
+// Build the "original" sentence with more narrative (for transformation effect)
+function buildOriginalSentence(context, actor, action, recipient) {
+    const parts = [];
+
+    if (context.date) parts.push(context.date);
+    if (context.time) parts.push(`around ${context.time}`);
+    if (context.location) parts.push(`in ${context.location}`);
+
+    const when = parts.length > 0 ? parts.join(', ') + ' — ' : '';
+    const who = actor || 'Someone';
+    const what = action || 'did something';
+    const toWhom = recipient ? ` to ${recipient}` : '';
+
+    return `${when}${who} ${what}${toWhom}.`;
+}
+
+// Phase indicator
+function PhaseIndicator({ current, total }) {
+    return (
+        <div className="flex justify-center gap-2 items-center mb-4">
+            {Array.from({ length: total }, (_, i) => (
+                <motion.div
+                    key={i}
+                    className="w-2 h-2 rounded-full"
+                    animate={{
+                        scale: i === current ? 1.3 : 1,
+                        background: i < current
+                            ? 'var(--accent-color)'
+                            : i === current
+                                ? 'rgba(255,220,120,0.7)'
+                                : 'rgba(255,255,255,0.2)',
+                    }}
+                />
+            ))}
+        </div>
+    );
 }
 
 export function MirrorObservation({ onComplete }) {
@@ -79,8 +77,7 @@ export function MirrorObservation({ onComplete }) {
         setMirrorLLMValidation,
     } = useChainStore();
 
-    const [phase, setPhase] = useState('context'); // context | components | review | confirm
-    const [neutralSentenceConfirmed, setNeutralSentenceConfirmed] = useState(false);
+    const [phase, setPhase] = useState(0); // 0: context, 1: action, 2: seal
 
     // Auto-start chain if none exists
     useEffect(() => {
@@ -92,480 +89,208 @@ export function MirrorObservation({ onComplete }) {
     const mirrorData = activeChain?.mirror || {};
     const context = mirrorData.context || {};
 
-    // Validate all fields
-    const validation = useMemo(() => {
-        const actorViolations = validateEPrime(mirrorData.actor || '', 'actor');
-        const actionViolations = validateEPrime(mirrorData.action || '', 'action');
-        const recipientViolations = validateEPrime(mirrorData.recipient || '', 'recipient');
-
-        const allViolations = [...actorViolations, ...actionViolations, ...recipientViolations];
-        const hasHardReject = allViolations.some(v => v.severity === 'hard');
-        const hasSoftWarning = allViolations.some(v => v.severity === 'soft');
-
-        return {
-            actorViolations,
-            actionViolations,
-            recipientViolations,
-            allViolations,
-            hasHardReject,
-            hasSoftWarning,
-            result: hasHardReject ? VALIDATION_RESULT.HARD_REJECT
-                : hasSoftWarning ? VALIDATION_RESULT.SOFT_WARNING
-                    : VALIDATION_RESULT.VALID,
-        };
-    }, [mirrorData.actor, mirrorData.action, mirrorData.recipient]);
-
-    // Build the neutral sentence
+    // Build sentences
     const neutralSentence = useMemo(() =>
         buildNeutralSentence(context, mirrorData.actor, mirrorData.action, mirrorData.recipient),
         [context, mirrorData.actor, mirrorData.action, mirrorData.recipient]
     );
 
-    // Check if required fields are filled
+    const originalSentence = useMemo(() =>
+        buildOriginalSentence(context, mirrorData.actor, mirrorData.action, mirrorData.recipient),
+        [context, mirrorData.actor, mirrorData.action, mirrorData.recipient]
+    );
+
+    // Check if phases are complete
     const contextComplete = context.date || context.time || context.location;
-    const componentsComplete = mirrorData.actor && mirrorData.action;
+    const actionComplete = mirrorData.actor && mirrorData.action;
 
-    // LLM validation state
-    const llmValidation = mirrorData.llmValidation || { status: 'idle', result: null };
-
-    // Handle LLM validation
-    const handleValidateLLM = async () => {
-        setMirrorLLMValidation('validating');
-
-        try {
-            const result = await validateMirrorEntry({
-                context: {
-                    date: context.date || '',
-                    time: context.time || '',
-                    location: context.location || '',
-                },
-                actor: mirrorData.actor || '',
-                action: mirrorData.action || '',
-                recipient: mirrorData.recipient || '',
-            });
-
-            if (result.success && result.data) {
-                setMirrorLLMValidation('success', result.data);
-            } else {
-                setMirrorLLMValidation('error', { message: result.error || 'Validation failed' });
-            }
-        } catch (error) {
-            setMirrorLLMValidation('error', { message: error.message });
-        }
+    // Handle context update from SentenceBuilder
+    const handleContextChange = (field, value) => {
+        updateMirrorContext(field, value);
     };
 
-    // Handle lock (with or without LLM validation)
-    const handleLock = (skipLLM = false) => {
-        if (skipLLM) {
-            setMirrorLLMValidation('skipped');
-        }
+    // Handle actor/action update
+    const handleActionChange = (field, value) => {
+        updateMirrorData(field, value);
+    };
 
-        const warnings = validation.allViolations
-            .filter(v => v.severity === 'soft')
-            .map(v => `${v.word} (${v.type})`);
-
-        lockMirror(neutralSentence, warnings);
+    // Handle lock
+    const handleLock = () => {
+        lockMirror(neutralSentence, []);
         onComplete?.();
     };
 
-    // ══════════════════════════════════════════════════════════════════
-    // PHASE 1: Context
-    // ══════════════════════════════════════════════════════════════════
-    if (phase === 'context') {
-        return (
-            <div className="flex flex-col items-center h-full px-6 py-8 overflow-y-auto">
-                <p
-                    className="text-xs uppercase tracking-[0.2em] mb-2"
+    // Navigation
+    const canProceed = phase === 0 ? contextComplete : actionComplete;
+
+    const goNext = () => {
+        if (phase < 2) setPhase(phase + 1);
+    };
+
+    const goBack = () => {
+        if (phase > 0) setPhase(phase - 1);
+    };
+
+    return (
+        <motion.div
+            className="h-full flex flex-col overflow-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+        >
+            {/* Header - Minimal */}
+            <div className="text-center pt-6 pb-4">
+                <motion.div
+                    className="text-[10px] uppercase tracking-[0.25em] mb-1"
                     style={{ color: 'rgba(255,255,255,0.4)' }}
                 >
-                    Mirror — Step 1 of 3
-                </p>
-                <h2
-                    className="text-lg mb-2 text-center"
-                    style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        color: 'rgba(255,255,255,0.9)',
-                    }}
-                >
-                    When and where did this happen?
-                </h2>
-                <p
-                    className="text-xs mb-6 text-center max-w-sm"
-                    style={{ color: 'rgba(255,255,255,0.5)' }}
-                >
-                    Ground the observation in time and space.
-                </p>
+                    Mirror · Observation
+                </motion.div>
+                <PhaseIndicator current={phase} total={3} />
+            </div>
 
-                {/* Date input */}
-                <div className="w-full max-w-sm mb-4">
-                    <label className="text-xs text-white/40 block mb-1">Date</label>
-                    <input
-                        type="date"
-                        value={context.date || ''}
-                        onChange={(e) => updateMirrorContext('date', e.target.value)}
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-blue-400/50"
-                    />
-                </div>
-
-                {/* Time input */}
-                <div className="w-full max-w-sm mb-4">
-                    <label className="text-xs text-white/40 block mb-1">Time</label>
-                    <input
-                        type="time"
-                        value={context.time || ''}
-                        onChange={(e) => updateMirrorContext('time', e.target.value)}
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-blue-400/50"
-                    />
-                </div>
-
-                {/* Location input */}
-                <div className="w-full max-w-sm mb-4">
-                    <label className="text-xs text-white/40 block mb-1">Location</label>
-                    <input
-                        type="text"
-                        value={context.location || ''}
-                        onChange={(e) => updateMirrorContext('location', e.target.value)}
-                        placeholder="E.g., Office, Home, Coffee shop..."
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-blue-400/50"
-                    />
-                </div>
-
-                {/* Context category */}
-                <div className="w-full max-w-sm mb-6">
-                    <label className="text-xs text-white/40 block mb-1">Category</label>
-                    <div className="grid grid-cols-4 gap-2">
-                        {CONTEXT_CATEGORIES.map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => updateMirrorContext('category', cat)}
-                                className="px-2 py-1.5 rounded text-xs capitalize transition-all"
+            {/* Content Area - Full height */}
+            <div className="flex-1 flex flex-col justify-center px-4">
+                <AnimatePresence mode="wait">
+                    {/* Phase 0: Context - When/Where */}
+                    {phase === 0 && (
+                        <motion.div
+                            key="context"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="text-center"
+                        >
+                            <h2
+                                className="text-xl mb-2"
                                 style={{
-                                    background: context.category === cat
-                                        ? 'rgba(147, 197, 253, 0.3)'
-                                        : 'rgba(255,255,255,0.05)',
-                                    color: context.category === cat
-                                        ? 'rgba(255,255,255,0.95)'
-                                        : 'rgba(255,255,255,0.6)',
-                                    border: `1px solid ${context.category === cat ? 'rgba(147, 197, 253, 0.5)' : 'rgba(255,255,255,0.1)'}`,
+                                    fontFamily: "'Crimson Pro', serif",
+                                    color: 'rgba(255,255,255,0.9)',
                                 }}
                             >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Next */}
-                <button
-                    onClick={() => setPhase('components')}
-                    className="px-6 py-2 rounded border transition-all"
-                    style={{
-                        borderColor: 'rgba(147, 197, 253, 0.5)',
-                        color: 'rgba(147, 197, 253, 0.9)',
-                    }}
-                >
-                    NEXT
-                </button>
-            </div>
-        );
-    }
-
-    // ══════════════════════════════════════════════════════════════════
-    // PHASE 2: Components (Actor, Action, Recipient)
-    // ══════════════════════════════════════════════════════════════════
-    if (phase === 'components') {
-        return (
-            <div className="flex flex-col items-center h-full px-6 py-8 overflow-y-auto">
-                <p
-                    className="text-xs uppercase tracking-[0.2em] mb-2"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
-                >
-                    Mirror — Step 2 of 3
-                </p>
-                <h2
-                    className="text-lg mb-2 text-center"
-                    style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        color: 'rgba(255,255,255,0.9)',
-                    }}
-                >
-                    What physically happened?
-                </h2>
-                <p
-                    className="text-xs mb-6 text-center max-w-sm"
-                    style={{ color: 'rgba(255,255,255,0.5)' }}
-                >
-                    Would a video camera capture this?
-                </p>
-
-                {/* Actor */}
-                <div className="w-full max-w-sm mb-4">
-                    <label className="text-xs text-white/40 block mb-1">
-                        Actor <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        value={mirrorData.actor || ''}
-                        onChange={(e) => updateMirrorData('actor', e.target.value)}
-                        placeholder="Who took the action? (Use names, not labels)"
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-blue-400/50"
-                    />
-                    {validation.actorViolations.length > 0 && (
-                        <p className="text-xs mt-1 text-yellow-400/80">
-                            ⚠ {validation.actorViolations.map(v => v.word).join(', ')} — consider simplifying
-                        </p>
-                    )}
-                </div>
-
-                {/* Action */}
-                <div className="w-full max-w-sm mb-4">
-                    <label className="text-xs text-white/40 block mb-1">
-                        Action <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        value={mirrorData.action || ''}
-                        onChange={(e) => updateMirrorData('action', e.target.value)}
-                        placeholder="What did they do? (Said, Walked, Sent...)"
-                        className={`w-full px-3 py-2 rounded bg-white/5 border text-white text-sm placeholder-white/30 focus:outline-none ${validation.actionViolations.some(v => v.severity === 'hard')
-                            ? 'border-red-400/50 focus:border-red-400'
-                            : 'border-white/10 focus:border-blue-400/50'
-                            }`}
-                    />
-                    {validation.actionViolations.filter(v => v.severity === 'hard').length > 0 && (
-                        <p className="text-xs mt-1 text-red-400">
-                            ✕ Rejected: "{validation.actionViolations.filter(v => v.severity === 'hard').map(v => v.word).join(', ')}" implies judgment or intent. Use observable verbs.
-                        </p>
-                    )}
-                    {validation.actionViolations.filter(v => v.severity === 'soft').length > 0 &&
-                        validation.actionViolations.filter(v => v.severity === 'hard').length === 0 && (
-                            <p className="text-xs mt-1 text-yellow-400/80">
-                                ⚠ This appears interpretive. Consider simplifying.
+                                Ground the moment
+                            </h2>
+                            <p
+                                className="text-[12px] mb-6"
+                                style={{ color: 'rgba(255,255,255,0.5)' }}
+                            >
+                                Place this observation in time and space.
                             </p>
-                        )}
-                </div>
 
-                {/* Recipient */}
-                <div className="w-full max-w-sm mb-6">
-                    <label className="text-xs text-white/40 block mb-1">Recipient (optional)</label>
-                    <input
-                        type="text"
-                        value={mirrorData.recipient || ''}
-                        onChange={(e) => updateMirrorData('recipient', e.target.value)}
-                        placeholder="Who or what received the action?"
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-blue-400/50"
-                    />
-                </div>
-
-                {/* Navigation */}
-                <div className="flex gap-4">
-                    <button
-                        onClick={() => setPhase('context')}
-                        className="px-4 py-2 rounded border border-white/20 text-white/50 hover:text-white/70 transition-all text-xs"
-                    >
-                        BACK
-                    </button>
-                    <button
-                        onClick={() => setPhase('review')}
-                        disabled={!componentsComplete || validation.hasHardReject}
-                        className="px-6 py-2 rounded border transition-all"
-                        style={{
-                            borderColor: (!componentsComplete || validation.hasHardReject)
-                                ? 'rgba(255,255,255,0.2)'
-                                : 'rgba(147, 197, 253, 0.5)',
-                            color: (!componentsComplete || validation.hasHardReject)
-                                ? 'rgba(255,255,255,0.4)'
-                                : 'rgba(147, 197, 253, 0.9)',
-                            opacity: (!componentsComplete || validation.hasHardReject) ? 0.5 : 1,
-                        }}
-                    >
-                        NEXT
-                    </button>
-                </div>
-
-                {validation.hasHardReject && (
-                    <p className="text-xs mt-4 text-red-400/80 text-center max-w-sm">
-                        Cannot proceed until structural violations are resolved.
-                    </p>
-                )}
-            </div>
-        );
-    }
-
-    // ══════════════════════════════════════════════════════════════════
-    // PHASE 3: Review & Confirm
-    // ══════════════════════════════════════════════════════════════════
-    if (phase === 'review') {
-        return (
-            <div className="flex flex-col items-center h-full px-6 py-8 overflow-y-auto">
-                <p
-                    className="text-xs uppercase tracking-[0.2em] mb-2"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
-                >
-                    Mirror — Step 3 of 3
-                </p>
-                <h2
-                    className="text-lg mb-2 text-center"
-                    style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        color: 'rgba(255,255,255,0.9)',
-                    }}
-                >
-                    The Neutral Sentence
-                </h2>
-                <p
-                    className="text-xs mb-6 text-center max-w-sm"
-                    style={{ color: 'rgba(255,255,255,0.5)' }}
-                >
-                    This will become the immutable anchor for this chain.
-                </p>
-
-                {/* The neutral sentence */}
-                <div
-                    className="w-full max-w-md mb-6 p-4 rounded-lg"
-                    style={{
-                        background: 'rgba(147, 197, 253, 0.1)',
-                        border: '1px solid rgba(147, 197, 253, 0.3)',
-                    }}
-                >
-                    <p
-                        className="text-center"
-                        style={{
-                            fontFamily: "'Crimson Pro', serif",
-                            fontSize: '16px',
-                            color: 'rgba(255,255,255,0.95)',
-                            lineHeight: 1.6,
-                        }}
-                    >
-                        "{neutralSentence}"
-                    </p>
-                </div>
-
-                {/* Warnings (if any) */}
-                {validation.hasSoftWarning && (
-                    <div className="w-full max-w-md mb-4 p-3 rounded-lg bg-yellow-400/10 border border-yellow-400/30">
-                        <p className="text-xs text-yellow-400/90 text-center">
-                            ⚠ Word-list warnings: {validation.allViolations
-                                .filter(v => v.severity === 'soft')
-                                .map(v => v.word)
-                                .join(', ')}
-                        </p>
-                        <p className="text-xs text-white/50 text-center mt-1">
-                            You may proceed, but consider whether these are observable facts.
-                        </p>
-                    </div>
-                )}
-
-                {/* LLM Validation Section */}
-                <div className="w-full max-w-md mb-4">
-                    {/* Validate button - show when idle or success with clean result */}
-                    {llmValidation.status === 'idle' && (
-                        <button
-                            onClick={handleValidateLLM}
-                            className="w-full px-4 py-2.5 rounded border transition-all text-sm"
-                            style={{
-                                borderColor: 'rgba(147, 197, 253, 0.4)',
-                                color: 'rgba(147, 197, 253, 0.9)',
-                                background: 'rgba(147, 197, 253, 0.08)',
-                            }}
-                        >
-                            ✨ Validate with AI
-                        </button>
-                    )}
-
-                    {/* Loading state */}
-                    {llmValidation.status === 'validating' && (
-                        <MirrorValidationLoading />
-                    )}
-
-                    {/* Success - show feedback */}
-                    {llmValidation.status === 'success' && llmValidation.result && (
-                        <>
-                            <MirrorValidationFeedback
-                                result={llmValidation.result}
-                                onDismiss={() => setMirrorLLMValidation('idle')}
+                            <SentenceBuilder
+                                values={context}
+                                onChange={handleContextChange}
                             />
-                            <button
-                                onClick={handleValidateLLM}
-                                className="w-full px-4 py-2 rounded border transition-all text-xs mt-2"
+                        </motion.div>
+                    )}
+
+                    {/* Phase 1: Actor/Action */}
+                    {phase === 1 && (
+                        <motion.div
+                            key="action"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="text-center"
+                        >
+                            <h2
+                                className="text-xl mb-2"
                                 style={{
-                                    borderColor: 'rgba(255,255,255,0.2)',
-                                    color: 'rgba(255,255,255,0.5)',
+                                    fontFamily: "'Crimson Pro', serif",
+                                    color: 'rgba(255,255,255,0.9)',
                                 }}
                             >
-                                ↻ Re-validate
-                            </button>
-                        </>
+                                What happened?
+                            </h2>
+                            <p
+                                className="text-[12px] mb-4"
+                                style={{ color: 'rgba(255,255,255,0.5)' }}
+                            >
+                                Describe only what a camera would capture.
+                            </p>
+
+                            <ActorActionBuilder
+                                values={{
+                                    actor: mirrorData.actor,
+                                    action: mirrorData.action,
+                                    recipient: mirrorData.recipient,
+                                }}
+                                onChange={handleActionChange}
+                            />
+                        </motion.div>
                     )}
 
-                    {/* Error state */}
-                    {llmValidation.status === 'error' && (
-                        <MirrorValidationError
-                            onRetry={handleValidateLLM}
-                            onSkip={() => handleLock(true)}
-                        />
+                    {/* Phase 2: Seal */}
+                    {phase === 2 && (
+                        <motion.div
+                            key="seal"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                        >
+                            <MirrorSeal
+                                originalSentence={originalSentence}
+                                neutralSentence={neutralSentence}
+                                onLock={handleLock}
+                            />
+                        </motion.div>
                     )}
+                </AnimatePresence>
+            </div>
 
-                    {/* Skipped indicator */}
-                    {llmValidation.status === 'skipped' && (
-                        <div className="text-xs text-white/40 text-center">
-                            AI validation skipped
-                        </div>
-                    )}
-                </div>
-
-                {/* Confirmation checkbox - show after validation or if skipped */}
-                {(llmValidation.status === 'success' || llmValidation.status === 'skipped' || llmValidation.status === 'idle') && (
-                    <label className="flex items-center gap-3 mb-6 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={neutralSentenceConfirmed}
-                            onChange={(e) => setNeutralSentenceConfirmed(e.target.checked)}
-                            className="w-4 h-4 accent-blue-400"
-                        />
-                        <span className="text-sm text-white/70">
-                            I confirm this describes what happened, not what I think about it.
-                        </span>
-                    </label>
-                )}
-
-                {/* Navigation */}
-                <div className="flex gap-4">
-                    <button
-                        onClick={() => {
-                            setMirrorLLMValidation('idle'); // Reset validation when editing
-                            setPhase('components');
-                        }}
-                        className="px-4 py-2 rounded border border-white/20 text-white/50 hover:text-white/70 transition-all text-xs"
-                    >
-                        EDIT
-                    </button>
-
-                    {/* Lock button - enabled when confirmed AND (validated clean OR validation skipped/idle) */}
-                    {(llmValidation.status !== 'validating') && (
-                        <button
-                            onClick={() => handleLock(false)}
-                            disabled={!neutralSentenceConfirmed}
-                            className="px-6 py-2 rounded border transition-all"
+            {/* Navigation Footer */}
+            <div className="py-6 px-4">
+                <div className="flex justify-center gap-4 items-center">
+                    {/* Back button */}
+                    {phase > 0 && phase < 2 && (
+                        <motion.button
+                            onClick={goBack}
+                            className="px-5 py-2 rounded-full text-sm"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             style={{
-                                borderColor: neutralSentenceConfirmed
-                                    ? 'rgba(147, 197, 253, 0.7)'
-                                    : 'rgba(255,255,255,0.2)',
-                                color: neutralSentenceConfirmed
-                                    ? 'rgba(147, 197, 253, 1)'
-                                    : 'rgba(255,255,255,0.4)',
-                                background: neutralSentenceConfirmed
-                                    ? 'rgba(147, 197, 253, 0.15)'
-                                    : 'transparent',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                color: 'rgba(255,255,255,0.5)',
                             }}
                         >
-                            LOCK MIRROR
-                        </button>
+                            ← Back
+                        </motion.button>
+                    )}
+
+                    {/* Next button */}
+                    {phase < 2 && (
+                        <motion.button
+                            onClick={goNext}
+                            disabled={!canProceed}
+                            className="px-6 py-2.5 rounded-full text-sm"
+                            whileHover={canProceed ? { scale: 1.05 } : {}}
+                            whileTap={canProceed ? { scale: 0.95 } : {}}
+                            style={{
+                                background: canProceed
+                                    ? 'linear-gradient(135deg, rgba(255,220,120,0.2) 0%, rgba(255,220,120,0.1) 100%)'
+                                    : 'rgba(255,255,255,0.05)',
+                                border: `1px solid ${canProceed ? 'var(--accent-40)' : 'rgba(255,255,255,0.1)'}`,
+                                color: canProceed ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
+                                cursor: canProceed ? 'pointer' : 'not-allowed',
+                            }}
+                        >
+                            {phase === 1 ? 'Review →' : 'Continue →'}
+                        </motion.button>
                     )}
                 </div>
-            </div>
-        );
-    }
 
-    return null;
+                {/* Skip option for context phase */}
+                {phase === 0 && !contextComplete && (
+                    <div className="text-center mt-3">
+                        <button
+                            onClick={goNext}
+                            className="text-[10px] italic"
+                            style={{ color: 'rgba(255,255,255,0.3)' }}
+                        >
+                            Skip context →
+                        </button>
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    );
 }
