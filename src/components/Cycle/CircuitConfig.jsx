@@ -88,19 +88,18 @@ export function CircuitConfig({ value, onChange }) {
         if (onChange) onChange({ exercises: updated, exerciseDuration: newDuration });
     };
 
-    const handleToggleExercise = (exercise) => {
-        const exists = selectedExercises.find((e) => e.exercise.id === exercise.id);
+    const MAX_EXERCISES = 6;
 
-        if (exists) {
-            const updated = selectedExercises.filter((e) => e.exercise.id !== exercise.id);
-            setSelectedExercises(updated);
-            if (onChange) onChange({ exercises: updated, exerciseDuration });
-        } else {
-            // Add with the current exerciseDuration
-            const updated = [...selectedExercises, { exercise, duration: exerciseDuration }];
-            setSelectedExercises(updated);
-            if (onChange) onChange({ exercises: updated, exerciseDuration });
+    const handleToggleExercise = (exercise) => {
+        // Check if at max capacity
+        if (selectedExercises.length >= MAX_EXERCISES) {
+            return; // Can't add more
         }
+
+        // Always add a new instance of the exercise (allow duplicates)
+        const updated = [...selectedExercises, { exercise, duration: exerciseDuration }];
+        setSelectedExercises(updated);
+        if (onChange) onChange({ exercises: updated, exerciseDuration });
     };
 
     const handleDurationChange = (exerciseId, duration) => {
@@ -109,6 +108,13 @@ export function CircuitConfig({ value, onChange }) {
         );
         setSelectedExercises(updated);
         if (onChange) onChange({ exercises: updated });
+    };
+
+    // Remove exercise by index (needed for duplicates)
+    const handleRemoveExercise = (indexToRemove) => {
+        const updated = selectedExercises.filter((_, idx) => idx !== indexToRemove);
+        setSelectedExercises(updated);
+        if (onChange) onChange({ exercises: updated, exerciseDuration });
     };
 
     const handleReorder = (fromIndex, toIndex) => {
@@ -178,8 +184,11 @@ export function CircuitConfig({ value, onChange }) {
 
             {/* Horizontal Exercise Ribbon */}
             <div>
-                <div className="text-xs text-white/40 font-[Outfit] mb-3 uppercase tracking-[0.15em]">
-                    Select Practices
+                <div className="text-xs text-white/40 font-[Outfit] mb-3 uppercase tracking-[0.15em] flex justify-between">
+                    <span>Select Practices</span>
+                    <span style={{ color: selectedExercises.length >= MAX_EXERCISES ? 'var(--accent-color)' : 'inherit' }}>
+                        {selectedExercises.length}/{MAX_EXERCISES}
+                    </span>
                 </div>
                 <div
                     className="flex gap-3 pb-2"
@@ -195,11 +204,13 @@ export function CircuitConfig({ value, onChange }) {
                 >
                     {AVAILABLE_EXERCISES.map((exercise) => {
                         const isSelected = selectedExercises.some((e) => e.exercise.id === exercise.id);
+                        const isAtMax = selectedExercises.length >= MAX_EXERCISES;
                         return (
                             <motion.button
                                 key={exercise.id}
                                 onClick={() => handleToggleExercise(exercise)}
                                 className="flex-shrink-0"
+                                disabled={isAtMax}
                                 style={{
                                     width: '120px',
                                     padding: '14px 10px',
@@ -216,9 +227,11 @@ export function CircuitConfig({ value, onChange }) {
                                         ? `0 0 20px ${exercise.glow}, inset 0 0 15px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1)`
                                         : 'none',
                                     scrollSnapAlign: 'start',
+                                    opacity: isAtMax ? 0.4 : 1,
+                                    cursor: isAtMax ? 'not-allowed' : 'pointer',
                                 }}
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.98 }}
+                                whileHover={isAtMax ? {} : { scale: 1.05, y: -2 }}
+                                whileTap={isAtMax ? {} : { scale: 0.98 }}
                             >
                                 <div className="flex flex-col items-center gap-2">
                                     <div
@@ -256,7 +269,7 @@ export function CircuitConfig({ value, onChange }) {
                     <div className="space-y-2">
                         {selectedExercises.map((item, index) => (
                             <div
-                                key={item.exercise.id}
+                                key={`${item.exercise.id}-${index}`}
                                 className="p-3 rounded flex items-center gap-3"
                                 style={{
                                     background: 'rgba(255,255,255,0.04)',
@@ -302,7 +315,7 @@ export function CircuitConfig({ value, onChange }) {
 
                                 {/* Remove button */}
                                 <button
-                                    onClick={() => handleToggleExercise(item.exercise)}
+                                    onClick={() => handleRemoveExercise(index)}
                                     className="text-white/30 hover:text-white/70 text-sm transition-colors"
                                 >
                                     ✕
