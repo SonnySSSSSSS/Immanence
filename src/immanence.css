@@ -191,6 +191,13 @@
   will-change: transform;
 }
 
+/* Avatar Sigil: Quarter speed (25%), counter-clockwise */
+.avatar-sigil-rotate {
+  animation: rune-ring-counterclockwise 249.6s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    MOBILE LABEL SOFTENING
    Reduces text glow/opacity on small screens for accessibility

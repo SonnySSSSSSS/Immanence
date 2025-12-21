@@ -101,6 +101,11 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
                 label={`BodyScan:${image || 'full'}`}
             >
                 <div className="relative w-full h-full" style={{ aspectRatio: '1/1' }}>
+                    {/* Top Decorative Bar (Ember FX) */}
+                    <div
+                        className="absolute -top-4 left-0 right-0 h-[2px] ember-fx-bar z-10 pointer-events-none"
+                        style={{ opacity: 0.6 }}
+                    />
                     {/* Body silhouette image */}
                     <img
                         key={image || 'default'}

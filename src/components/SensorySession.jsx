@@ -241,7 +241,14 @@ export function SensorySession({
                 {/* Body Scan Sub-Selector */}
                 {sensoryType === 'bodyScan' && (
                     <div className="w-full flex justify-center mb-2 px-4">
-                        <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 border border-white/5 flex gap-1 overflow-x-auto scrollbar-hide max-w-full">
+                        <div
+                            ref={scrollContainerRef}
+                            onMouseDown={handleMouseDown}
+                            onMouseMove={handleMouseMove}
+                            onMouseUp={handleMouseUp}
+                            onMouseLeave={handleMouseLeave}
+                            className="bg-black/20 backdrop-blur-sm rounded-full p-1 border border-white/5 flex gap-1 overflow-x-auto scrollbar-hide max-w-full cursor-grab active:cursor-grabbing"
+                        >
                             {getAllBodyScans().map(scan => (
                                 <button
                                     key={scan.id}

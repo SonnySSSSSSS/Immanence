@@ -39,7 +39,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
   return (
     <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       {showAvatar && (
-        <div className="w-full flex flex-col items-center mt-6 mb-4">
+        <div className="w-full flex flex-col items-center mt-6 mb-4 relative z-20">
           {/* Avatar with scale/fade during practice */}
           <div
             className="transition-all duration-500"
@@ -73,7 +73,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         </div>
       )}
 
-      <div className="w-full max-w-md flex-1" style={{ overflow: 'visible' }}>
+      <div className="w-full max-w-md flex-1 relative z-10" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
 
         {section === "wisdom" && (
@@ -322,7 +322,7 @@ function App() {
                   className="text-[8px] uppercase tracking-[0.15em] text-white/30"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.10.6
+                  v3.10.7
                 </div>
                 {!isHub && (
                   <button

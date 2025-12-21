@@ -305,7 +305,7 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
 
       {/* Stage Avatar Core Image */}
       <div
-        className="relative pointer-events-none select-none"
+        className="relative pointer-events-none select-none avatar-sigil-rotate"
         style={{
           width: "46%",
           height: "46%",

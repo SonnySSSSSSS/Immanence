@@ -105,3 +105,36 @@
 .progress-accent {
   transition: background 2s ease;
 }
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+@keyframes ember-flicker {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scaleX(0.95);
+    filter: brightness(1) drop-shadow(0 0 2px rgba(249, 115, 22, 0.4));
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scaleX(1.05);
+    filter: brightness(1.4) drop-shadow(0 0 10px rgba(249, 115, 22, 0.8));
+  }
+}
+
+.ember-fx-bar {
+  background: radial-gradient(circle at center, #fb923c 0%, #f97316 40%, transparent 80%);
+  animation: ember-flicker 4s ease-in-out infinite;
+}
