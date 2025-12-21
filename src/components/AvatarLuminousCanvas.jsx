@@ -8,16 +8,16 @@ import React, { useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext.jsx";
 
 // CONFIGURATION
-const CANVAS_SCALE = 1.5; // Used for DOM size (150%)
-const VIRTUAL_RADIUS = 350; // The "World" radius in virtual units
+const CANVAS_SCALE = 3.0; // Increased to 300% to cover the whole screen/neighbor area
+const VIRTUAL_RADIUS = 1000; // Deep space radius in virtual units
 const VIRTUAL_SIZE = VIRTUAL_RADIUS * 2;
 
-// Geometry constants (relative to VIRTUAL_SIZE)
-// Adjusted to maintain proportions in the larger virtual world
-const RUNE_RING_RADIUS_PCT = 0.295; // ~206 units
-const INNER_BOUNDARY_PCT = 0.32;    // ~224 units
-const MAX_RADIUS_PCT = 0.35;        // ~245 units
-const FLAME_RADIUS_PCT = 0.36;      // ~252 units
+// Geometry constants scaled to new 1000 radius (VIRTUAL_SIZE = 2000)
+// These maintain the same pixel size at center
+const RUNE_RING_RADIUS_PCT = 0.103; // ~206 units
+const INNER_BOUNDARY_PCT = 0.112;    // ~224 units
+const MAX_RADIUS_PCT = 0.122;        // ~245 units
+const FLAME_RADIUS_PCT = 0.126;      // ~252 units
 
 const WEEK_NODES = [
   { day: 'Mon', angle: -Math.PI * 0.5 },
@@ -34,10 +34,10 @@ const WEEK_NODES = [
 // Trail lengths follow Fibonacci: 34, 55, 89, 144 (increased for visibility)
 const PHI = 1.618033988749895; // Golden ratio
 const PARTICLE_LANES = {
-  short: { count: 5, speedMod: 1.0, sizeMod: 0.9, trailLen: 34 },      // Fibonacci (increased from 21)
-  medium: { count: 3, speedMod: PHI * 0.5, sizeMod: 1.0, trailLen: 55 }, // Fibonacci
-  long: { count: 2, speedMod: PHI * 0.4, sizeMod: 1.1, trailLen: 89 },   // Fibonacci
-  vast: { count: 1, speedMod: PHI * 0.3, sizeMod: 1.2, trailLen: 144 },  // Fibonacci, majestic long trail
+  short: { count: 5, speedMod: 1.0, sizeMod: 0.9, trailLen: 68 },      // Doubled from 34
+  medium: { count: 3, speedMod: PHI * 0.5, sizeMod: 1.0, trailLen: 110 }, // Doubled from 55
+  long: { count: 2, speedMod: PHI * 0.4, sizeMod: 1.1, trailLen: 178 },   // Doubled from 89
+  vast: { count: 1, speedMod: PHI * 0.3, sizeMod: 1.2, trailLen: 288 },  // Doubled from 144
 };
 
 // UTILS
@@ -75,8 +75,8 @@ class Particle {
 
   reset() {
     // Spawn strictly outside inner boundary
-    const minSpawn = this.innerBoundary * 1.3;
-    const range = this.innerBoundary * 0.7;
+    const minSpawn = this.innerBoundary * 1.43; // Spread outwards 30% from 1.1
+    const range = this.innerBoundary * 0.52;    // Spread outwards 30% from 0.4
     this.radius = minSpawn + Math.random() * range;
 
     // Random starting angle
@@ -300,33 +300,33 @@ function drawUnifyingGlow(ctx) {
   ctx.globalCompositeOperation = 'lighter'; // Additive blending for true glow
 
   // Layer 1: Innermost core halo - very tight, warm white
-  const core = ctx.createRadialGradient(0, 0, 60, 0, 0, 120);
+  const core = ctx.createRadialGradient(0, 0, 60, 0, 0, 160);
   core.addColorStop(0, 'rgba(255, 250, 240, 0.19)');
   core.addColorStop(0.5, 'rgba(253, 224, 71, 0.15)');
   core.addColorStop(1, 'transparent');
   ctx.fillStyle = core;
   ctx.beginPath();
-  ctx.arc(0, 0, 120, 0, Math.PI * 2);
+  ctx.arc(0, 0, 160, 0, Math.PI * 2);
   ctx.fill();
 
   // Layer 2: Mid bloom - starts at rune ring edge
-  const mid = ctx.createRadialGradient(0, 0, 140, 0, 0, 220);
+  const mid = ctx.createRadialGradient(0, 0, 140, 0, 0, 320);
   mid.addColorStop(0, 'rgba(253, 224, 71, 0.13)');
   mid.addColorStop(0.6, 'rgba(220, 180, 60, 0.10)');
   mid.addColorStop(1, 'transparent');
   ctx.fillStyle = mid;
   ctx.beginPath();
-  ctx.arc(0, 0, 220, 0, Math.PI * 2);
+  ctx.arc(0, 0, 320, 0, Math.PI * 2);
   ctx.fill();
 
   // Layer 3: Outer atmospheric bloom - soft but visible
-  const outer = ctx.createRadialGradient(0, 0, 180, 0, 0, 320);
+  const outer = ctx.createRadialGradient(0, 0, 180, 0, 0, 600);
   outer.addColorStop(0, 'rgba(200, 160, 80, 0.08)');
   outer.addColorStop(0.5, 'rgba(180, 140, 60, 0.06)');
   outer.addColorStop(1, 'transparent');
   ctx.fillStyle = outer;
   ctx.beginPath();
-  ctx.arc(0, 0, 320, 0, Math.PI * 2);
+  ctx.arc(0, 0, 600, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -334,10 +334,10 @@ function drawUnifyingGlow(ctx) {
 
 function drawAtmosphericHaze(ctx, time) {
   const hazePoints = [
-    { angle: time * 0.00008, dist: 190, size: 95 },
-    { angle: time * 0.00012 + 2, dist: 220, size: 80 },
-    { angle: time * 0.0001 + 4, dist: 170, size: 110 },
-    { angle: time * 0.00009 + 1, dist: 150, size: 90 },
+    { angle: time * 0.00008, dist: 390, size: 195 },
+    { angle: time * 0.00012 + 2, dist: 420, size: 180 },
+    { angle: time * 0.0001 + 4, dist: 370, size: 210 },
+    { angle: time * 0.00009 + 1, dist: 350, size: 190 },
   ];
 
   hazePoints.forEach(h => {
@@ -702,7 +702,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       drawUnifyingGlow(ctx);
 
       // INTEGRATION LAYER 2: Light rays
-      drawLightRays(ctx, 110, 300);
+      drawLightRays(ctx, 110, 800);
 
       // INTEGRATION LAYER 3: Atmospheric haze
       drawAtmosphericHaze(ctx, time);
@@ -772,7 +772,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   return (
     <canvas
       ref={canvasRef}
-      className="absolute w-[150%] h-[150%] -left-[25%] -top-[25%] pointer-events-none"
+      className="absolute w-[300%] h-[300%] -left-[100%] -top-[100%] pointer-events-none"
       style={{ zIndex: 5 }}
     />
   );

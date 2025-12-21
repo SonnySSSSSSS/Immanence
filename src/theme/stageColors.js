@@ -8,6 +8,7 @@ export const STAGE_THEMES = {
             secondary: '#22c55e',    // Medium green
             muted: '#166534',        // Dark green
             glow: 'rgba(74, 222, 128, 0.4)',
+            particleColor: '#86efac',
         },
         text: {
             accent: '#4ade80',
@@ -29,6 +30,7 @@ export const STAGE_THEMES = {
             secondary: '#ea580c',    // Deep orange
             muted: '#9a3412',        // Dark orange
             glow: 'rgba(249, 115, 22, 0.4)',
+            particleColor: '#fb923c',
         },
         text: {
             accent: '#fb923c',
@@ -72,6 +74,7 @@ export const STAGE_THEMES = {
             secondary: '#06b6d4',    // Teal
             muted: '#0e7490',        // Dark cyan
             glow: 'rgba(34, 211, 238, 0.4)',
+            particleColor: '#67e8f9',
         },
         text: {
             accent: '#22d3ee',
@@ -93,6 +96,7 @@ export const STAGE_THEMES = {
             secondary: '#8b5cf6',    // Purple
             muted: '#5b21b6',        // Dark purple
             glow: 'rgba(167, 139, 250, 0.4)',
+            particleColor: '#c084fc',
         },
         text: {
             accent: '#a78bfa',

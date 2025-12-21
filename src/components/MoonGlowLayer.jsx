@@ -4,6 +4,7 @@ import React from 'react';
 
 export function MoonGlowLayer({ progress = 0, centerX, centerY, orbitRadius }) {
     // Position on orbit
+    const isDormant = progress === 0;
     const angle = (progress / 12) * Math.PI * 2 - Math.PI / 2;
     const moonX = centerX + Math.cos(angle) * orbitRadius;
     const moonY = centerY + Math.sin(angle) * orbitRadius;
@@ -11,24 +12,28 @@ export function MoonGlowLayer({ progress = 0, centerX, centerY, orbitRadius }) {
     return (
         <g transform={`translate(${moonX} ${moonY})`}>
             {/* soft outer aura */}
-            <circle
-                r={32}
-                fill="rgba(255, 220, 140, 0.16)"
-                style={{ filter: "blur(12px)" }}
-            />
+            {!isDormant && (
+                <circle
+                    r={32}
+                    fill="rgba(255, 220, 140, 0.16)"
+                    style={{ filter: "blur(12px)" }}
+                />
+            )}
 
             {/* mid halo */}
-            <circle
-                r={20}
-                fill="rgba(255, 220, 140, 0.35)"
-                style={{ filter: "blur(6px)" }}
-            />
+            {!isDormant && (
+                <circle
+                    r={20}
+                    fill="rgba(255, 220, 140, 0.35)"
+                    style={{ filter: "blur(6px)" }}
+                />
+            )}
 
             {/* bright core */}
             <circle
                 r={9}
-                fill="#FFECC0"
-                stroke="#F7C35F"
+                fill={isDormant ? "rgba(255, 236, 192, 0.15)" : "#FFECC0"}
+                stroke={isDormant ? "rgba(247, 195, 95, 0.2)" : "#F7C35F"}
                 strokeWidth={1.4}
             />
         </g>

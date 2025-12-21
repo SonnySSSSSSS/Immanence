@@ -68,8 +68,9 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
     const moonY = centerY + Math.sin(moonAngle) * orbitRadius;
 
     // Halo properties - SUBTLE, not dominant
+    const isDormant = progress === 0;
     const haloRadius = moonRadius * (1.5 + illumination * 0.5); // Much smaller: 12-16px
-    const haloOpacity = 0.12 + illumination * 0.08; // Subtle: 0.12-0.20
+    const haloOpacity = isDormant ? 0 : (0.12 + illumination * 0.08); // Subtle: 0.12-0.20
 
     // Rimlight properties
     const rimlightWidth = 0.5 + illumination * 2;
@@ -160,16 +161,18 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* LAYER 4: Phase Rimlight (edge glow) */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <circle
-                cx={moonX}
-                cy={moonY}
-                r={moonRadius + 1}
-                fill="none"
-                stroke="rgba(255, 250, 240, 0.7)"
-                strokeWidth={rimlightWidth}
-                strokeOpacity={rimlightOpacity}
-                filter="url(#rimlightBlur)"
-            />
+            {!isDormant && (
+                <circle
+                    cx={moonX}
+                    cy={moonY}
+                    r={moonRadius + 1}
+                    fill="none"
+                    stroke="rgba(255, 250, 240, 0.7)"
+                    strokeWidth={rimlightWidth}
+                    strokeOpacity={rimlightOpacity}
+                    filter="url(#rimlightBlur)"
+                />
+            )}
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* LAYER 5: Evolving Moon (MoonGlowLayer component) */}
