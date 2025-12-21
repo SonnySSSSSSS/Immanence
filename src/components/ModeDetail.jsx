@@ -112,11 +112,18 @@ function CyclicStation({ title, children, accent, index }) {
     );
 }
 
-export function ModeDetail({ modeId, onBack }) {
+export function ModeDetail({ modeId, onBack, autoStartTraining = false }) {
     const [trainingOpen, setTrainingOpen] = useState(false);
     const [ctaHovered, setCtaHovered] = useState(false);
     const mode = FOUR_MODES_BY_ID[modeId];
     const practice = PRACTICE_DEFINITIONS[modeId];
+
+    // Handle auto-start from chain transitions
+    useEffect(() => {
+        if (autoStartTraining) {
+            setTrainingOpen(true);
+        }
+    }, [autoStartTraining, modeId]);
 
     if (!mode) {
         return (
@@ -269,18 +276,11 @@ export function ModeDetail({ modeId, onBack }) {
                 isOpen={trainingOpen}
                 onClose={() => setTrainingOpen(false)}
                 onSwitchMode={(nextModeId) => {
-                    // Close current modal and navigate to next mode
-                    // This triggers the parent component to switch views
-                    setTrainingOpen(false);
-                    // Immediately re-open with the new mode
-                    setTimeout(() => {
-                        // Navigate to the new mode (the parent should handle this)
-                        // For now, we'll just re-open the modal - the parent needs to change modeId
-                        if (onBack) {
-                            // Signal to parent we want to switch to next mode
-                            onBack(nextModeId);
-                        }
-                    }, 100);
+                    // Signal to parent we want to switch to next mode
+                    // The parent will set the new mode and we'll auto-open via useEffect
+                    if (onBack) {
+                        onBack(nextModeId);
+                    }
                 }}
             />
         </div>

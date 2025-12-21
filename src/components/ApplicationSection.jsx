@@ -68,9 +68,12 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
     );
   }
 
+  const [autoOpenTraining, setAutoOpenTraining] = useState(false);
+
   // Handle mode detail view
   const handleSelectMode = (modeId) => {
     setSelectedModeId(modeId);
+    setAutoOpenTraining(false);
   };
 
   // Handle back or switch to another mode
@@ -78,9 +81,11 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
     if (nextModeId && typeof nextModeId === 'string') {
       // Switch to next mode directly
       setSelectedModeId(nextModeId);
+      setAutoOpenTraining(true);
     } else {
       // Just go back to mode list
       setSelectedModeId(null);
+      setAutoOpenTraining(false);
     }
   };
 
@@ -154,7 +159,12 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
       )}
 
       {activeSubView === 'modes' && selectedModeId && (
-        <ModeDetail modeId={selectedModeId} onBack={handleBackFromMode} />
+        <ModeDetail
+          key={selectedModeId}
+          modeId={selectedModeId}
+          onBack={handleBackFromMode}
+          autoStartTraining={autoOpenTraining}
+        />
       )}
 
       {/* Application Selection Modal */}

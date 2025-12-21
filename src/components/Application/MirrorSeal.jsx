@@ -179,9 +179,11 @@ export function MirrorSeal({
 
     const handleLock = () => {
         setIsSealed(true);
+        // Fire the callback slightly faster to feel more responsive
+        // but still allow the initial lock animation state to register
         setTimeout(() => {
             onLock?.();
-        }, 600);
+        }, 400);
     };
 
     return (

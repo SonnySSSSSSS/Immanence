@@ -5,6 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { useChainStore } from '../../../state/chainStore.js';
 import { ACTION_TYPES } from '../../../data/fourModes.js';
+import { VoiceInput } from '../VoiceInput.jsx';
 
 // Vague intention patterns to reject
 const VAGUE_PATTERNS = [
@@ -135,13 +136,16 @@ export function SwordCommitment({ onComplete }) {
                     Name the value this situation touches.
                 </p>
 
-                <input
-                    type="text"
-                    value={swordData.value || ''}
-                    onChange={(e) => updateSwordData('value', e.target.value)}
-                    placeholder="E.g., Professionalism, Autonomy, Honesty, Self-respect..."
-                    className="w-full max-w-sm px-3 py-2 mb-6 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
-                />
+                <div className="flex gap-2 items-center w-full max-w-sm mb-6">
+                    <input
+                        type="text"
+                        value={swordData.value || ''}
+                        onChange={(e) => updateSwordData('value', e.target.value)}
+                        placeholder="E.g., Professionalism, Autonomy, Honesty, Self-respect..."
+                        className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
+                    />
+                    <VoiceInput onTranscription={(text) => updateSwordData('value', text)} />
+                </div>
 
                 <button
                     onClick={() => setPhase('action')}
@@ -217,23 +221,26 @@ export function SwordCommitment({ onComplete }) {
                     ))}
                 </div>
 
-                {/* Action input */}
-                <input
-                    type="text"
-                    value={swordData.action || ''}
-                    onChange={(e) => updateSwordData('action', e.target.value)}
-                    placeholder={
-                        swordData.actionType === ACTION_TYPES.RESTRAINT
-                            ? 'E.g., I will not send a reply email before the meeting'
-                            : swordData.actionType === ACTION_TYPES.NON_ACTION
-                                ? 'E.g., I will wait and observe without intervention'
-                                : 'E.g., I will attend the meeting at 2:00 PM'
-                    }
-                    className={`w-full max-w-sm px-3 py-2 mb-2 rounded bg-white/5 border text-white text-sm placeholder-white/30 focus:outline-none ${!actionValidation.isValid && swordData.action
-                        ? 'border-red-400/50 focus:border-red-400'
-                        : 'border-white/10 focus:border-red-400/50'
-                        }`}
-                />
+                {/* Action input with voice */}
+                <div className="flex gap-2 items-center w-full max-w-sm mb-2">
+                    <input
+                        type="text"
+                        value={swordData.action || ''}
+                        onChange={(e) => updateSwordData('action', e.target.value)}
+                        placeholder={
+                            swordData.actionType === ACTION_TYPES.RESTRAINT
+                                ? 'E.g., I will not send a reply email before the meeting'
+                                : swordData.actionType === ACTION_TYPES.NON_ACTION
+                                    ? 'E.g., I will wait and observe without intervention'
+                                    : 'E.g., I will attend the meeting at 2:00 PM'
+                        }
+                        className={`flex-1 px-3 py-2 rounded bg-white/5 border text-white text-sm placeholder-white/30 focus:outline-none ${!actionValidation.isValid && swordData.action
+                            ? 'border-red-400/50 focus:border-red-400'
+                            : 'border-white/10 focus:border-red-400/50'
+                            }`}
+                    />
+                    <VoiceInput onTranscription={(text) => updateSwordData('action', text)} />
+                </div>
 
                 {/* Validation error */}
                 {!actionValidation.isValid && swordData.action && (
@@ -242,28 +249,34 @@ export function SwordCommitment({ onComplete }) {
                     </p>
                 )}
 
-                {/* Time bound */}
+                {/* Time bound with voice */}
                 <div className="w-full max-w-sm mb-4">
                     <label className="text-xs text-white/40 block mb-1">Time Bound</label>
-                    <input
-                        type="text"
-                        value={swordData.timeBound || ''}
-                        onChange={(e) => updateSwordData('timeBound', e.target.value)}
-                        placeholder="E.g., Until 2:00 PM, For the next 24 hours, By Friday..."
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
-                    />
+                    <div className="flex gap-2 items-center">
+                        <input
+                            type="text"
+                            value={swordData.timeBound || ''}
+                            onChange={(e) => updateSwordData('timeBound', e.target.value)}
+                            placeholder="E.g., Until 2:00 PM, For the next 24 hours, By Friday..."
+                            className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
+                        />
+                        <VoiceInput onTranscription={(text) => updateSwordData('timeBound', text)} />
+                    </div>
                 </div>
 
-                {/* Obstacle (optional) */}
+                {/* Obstacle with voice (optional) */}
                 <div className="w-full max-w-sm mb-6">
                     <label className="text-xs text-white/40 block mb-1">Primary Obstacle (optional)</label>
-                    <input
-                        type="text"
-                        value={swordData.obstacle || ''}
-                        onChange={(e) => updateSwordData('obstacle', e.target.value)}
-                        placeholder="E.g., The urge to 'fix' this now, Fear of confrontation..."
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
-                    />
+                    <div className="flex gap-2 items-center">
+                        <input
+                            type="text"
+                            value={swordData.obstacle || ''}
+                            onChange={(e) => updateSwordData('obstacle', e.target.value)}
+                            placeholder="E.g., The urge to 'fix' this now, Fear of confrontation..."
+                            className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
+                        />
+                        <VoiceInput onTranscription={(text) => updateSwordData('obstacle', text)} />
+                    </div>
                 </div>
 
                 {/* Navigation */}
@@ -323,15 +336,18 @@ export function SwordCommitment({ onComplete }) {
                     All actions have a cost. Denying it weakens commitment.
                 </p>
 
-                {/* Cost input */}
+                {/* Cost input with voice */}
                 <div className="w-full max-w-sm mb-6">
-                    <input
-                        type="text"
-                        value={swordData.cost || ''}
-                        onChange={(e) => updateSwordData('cost', e.target.value)}
-                        placeholder="E.g., Sitting with uncertainty, Loss of 30 minutes, Potential awkwardness..."
-                        className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
-                    />
+                    <div className="flex gap-2 items-center">
+                        <input
+                            type="text"
+                            value={swordData.cost || ''}
+                            onChange={(e) => updateSwordData('cost', e.target.value)}
+                            placeholder="E.g., Sitting with uncertainty, Loss of 30 minutes, Potential awkwardness..."
+                            className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-red-400/50"
+                        />
+                        <VoiceInput onTranscription={(text) => updateSwordData('cost', text)} />
+                    </div>
                     <div className="text-xs text-white/40 mt-2">
                         Examples: Time • Social discomfort • Ego • Energy • Opportunity cost
                     </div>

@@ -28,9 +28,10 @@ export const useModeTrainingStore = create(
             // Exposure tracking (internal only - never shown to user)
             modeStats: {
                 mirror: { count: 0, lastUsed: null },
-                resonator: { count: 0, lastUsed: null },
                 prism: { count: 0, lastUsed: null },
+                wave: { count: 0, lastUsed: null },
                 sword: { count: 0, lastUsed: null },
+                resonator: { count: 0, lastUsed: null }, // Legacy support
             },
 
             // Start a new training session
@@ -225,10 +226,17 @@ export const useModeTrainingStore = create(
 
                     // Update mode stats (quiet tracking)
                     const modeStats = { ...get().modeStats };
-                    modeStats[session.mode] = {
-                        count: modeStats[session.mode].count + 1,
-                        lastUsed: Date.now(),
-                    };
+                    const mode = session.mode;
+
+                    if (modeStats[mode]) {
+                        modeStats[mode] = {
+                            count: (modeStats[mode].count || 0) + 1,
+                            lastUsed: Date.now(),
+                        };
+                    } else {
+                        // Dynamically add mode if missing (defensive)
+                        modeStats[mode] = { count: 1, lastUsed: Date.now() };
+                    }
 
                     set({
                         currentSession: null,

@@ -49,6 +49,7 @@ All state is managed with Zustand stores, persisted to localStorage.
 | Store | Purpose | Key Data |
 |-------|---------|----------|
 | `progressStore` | Session tracking, streaks | sessions[], streaks, benchmarks, practiceHistory |
+| `applicationStore` | Awareness tracking & Intention | awarenessLogs[], intention, getWeekLogs() |
 | `chainStore` | Four Modes chains | activeChain, completedChains |
 | `cycleStore` | Cycle & consistency tracking | currentCycle, history, checkpoints, modeHistory |
 | `settingsStore` | App settings & preferences | displayMode, llmModel, themeStageOverride, volume |
@@ -233,10 +234,16 @@ App.jsx
 │   ├── Avatar.jsx          # Central avatar with effects
 │   ├── StageTitle.jsx      # Stage/path display
 │   └── [Section Content]
-│       ├── HomeHub.jsx             # Dashboard + TrackingHub
+│       ├── HomeHub.jsx             # Dashboard
 │       ├── PracticeSection.jsx     # Breathing, visualization
 │       ├── WisdomSection.jsx       # Reading content
 │       ├── ApplicationSection.jsx  # Four Modes training
+│       │   ├── TrackingView.jsx    # Gesture → Trace → Pattern → Direction
+│       │   │   ├── AwarenessCompass.jsx
+│       │   │   ├── TodayAwarenessLog.jsx
+│       │   │   ├── WeeklyReview.jsx
+│       │   │   └── PathJourneyLog.jsx
+│       │   └── FourModesHome.jsx   # 2x2 Mode Grid
 │       └── NavigationSection.jsx   # Settings, profile
 └── DevPanel.jsx            # Developer tools
 ```
@@ -398,6 +405,18 @@ Chain state: MIRROR_LOCKED
     ↓
 chainStore.lockSword() → Chain archived to completedChains
 ```
+
+### Awareness Tracking Flow
+
+Tracking in Immanence OS follows a temporal resonance model: **Gesture → Trace → Pattern → Direction**.
+
+1.  **Gesture** (`AwarenessCompass.jsx`): A rapid, somatic act (swipe) to log a moment of captured pattern. 
+2.  **Trace** (`TodayAwarenessLog.jsx`): The immediate temporal echo of recent gestures, visualized as a chronological list.
+3.  **Pattern** (`WeeklyReview.jsx`): A medium-term aggregation showing emerging clusters and frequency.
+4.  **Direction** (`PathJourneyLog.jsx`): Long-term narrative alignment, where tracking stats meet the user's defined "Path".
+
+**The Intention "Seal":**
+Intentions are not just text fields; they are "sealed" commitments. The transition from editing to "Sealed" state represents a small ritual of commitment, moving from potentiality to enacted direction.
 
 ---
 

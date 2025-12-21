@@ -2,7 +2,7 @@
   "homepage": "https://SonnySSSSSSS.github.io/Immanence",
   "name": "immanence-os",
   "private": true,
-  "version": "1.5.2",
+  "version": "1.5.3",
   "type": "module",
   "scripts": {
     "predeploy": "npm run build",

@@ -88,13 +88,13 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
 
     const config = PRACTICE_DEFINITIONS[mode];
 
-    // Reset chain transition state when modal opens
+    // Reset chain transition state when modal opens or mode changes
     useEffect(() => {
         if (isOpen) {
             setShowChainTransition(false);
             setCompletedMode(null);
         }
-    }, [isOpen]);
+    }, [isOpen, mode]);
 
     // Start session when modal opens
     // Also reset if stuck in HANDOFF state from previous session
@@ -132,10 +132,10 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
     const handleProceedToNextMode = () => {
         const nextMode = getNextMode(completedMode);
         if (nextMode && onSwitchMode) {
-            setShowChainTransition(false);
             onSwitchMode(nextMode);
+            // Don't close immediately here, the parent will handle the switch
+            // and re-open the modal with the new mode.
         } else {
-            // No next mode or no handler, just close
             onClose();
         }
     };

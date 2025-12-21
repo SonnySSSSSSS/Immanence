@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { useChainStore } from '../../../state/chainStore.js';
+import { VoiceInput } from '../VoiceInput.jsx';
 
 // Interpretation categories
 const INTERPRETATION_CATEGORIES = [
@@ -160,7 +161,7 @@ export function PrismSeparation({ onComplete }) {
                     ))}
                 </div>
 
-                {/* Add input */}
+                {/* Add input with voice */}
                 <div className="flex gap-2 mb-4">
                     <input
                         type="text"
@@ -170,6 +171,7 @@ export function PrismSeparation({ onComplete }) {
                         placeholder="E.g., 'I am going to be fired'"
                         className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-amber-400/50"
                     />
+                    <VoiceInput onTranscription={(text) => setCurrentInput(text)} />
                     <button
                         onClick={handleAdd}
                         className="px-4 py-2 rounded bg-white/10 text-white/60 hover:text-white transition-all text-sm"

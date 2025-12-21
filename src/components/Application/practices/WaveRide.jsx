@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useChainStore } from '../../../state/chainStore.js';
+import { VoiceInput } from '../VoiceInput.jsx';
 
 // Common emotion labels (user can type custom)
 const EMOTION_PRESETS = [
@@ -167,7 +168,7 @@ export function WaveRide({ onComplete }) {
                     ))}
                 </div>
 
-                {/* Custom input */}
+                {/* Custom input with voice */}
                 <div className="flex gap-2 mb-6 w-full max-w-sm">
                     <input
                         type="text"
@@ -177,6 +178,7 @@ export function WaveRide({ onComplete }) {
                         placeholder="Or type your own..."
                         className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-purple-400/50"
                     />
+                    <VoiceInput onTranscription={(text) => setCustomEmotion(text)} />
                     <button
                         onClick={() => handleAddEmotion(customEmotion)}
                         className="px-4 py-2 rounded bg-white/10 text-white/60 hover:text-white transition-all"
@@ -321,7 +323,7 @@ export function WaveRide({ onComplete }) {
                     ))}
                 </div>
 
-                {/* Add impulse */}
+                {/* Add impulse with voice */}
                 <div className="flex gap-2 mb-6 w-full max-w-sm">
                     <input
                         type="text"
@@ -331,6 +333,7 @@ export function WaveRide({ onComplete }) {
                         placeholder="E.g., Urge to send a text..."
                         className="flex-1 px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-purple-400/50"
                     />
+                    <VoiceInput onTranscription={(text) => setCustomImpulse(text)} />
                     <button
                         onClick={handleAddImpulse}
                         className="px-4 py-2 rounded bg-white/10 text-white/60 hover:text-white transition-all"

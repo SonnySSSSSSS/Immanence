@@ -4,6 +4,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { VoiceInput } from './VoiceInput.jsx';
 
 // Bottom Sheet Modal for token editing - compact and mystical
 function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
@@ -33,15 +34,17 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
 
                     {/* Sheet - Compact */}
                     <motion.div
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
+                        initial={{ y: '100%', x: '-50%' }}
+                        animate={{ y: 0, x: '-50%' }}
+                        exit={{ y: '100%', x: '-50%' }}
                         transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-                        className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-6"
+                        className="fixed bottom-0 left-1/2 z-50 p-4 pb-6 w-full max-w-lg"
                         style={{
                             maxHeight: '40vh',
                             background: 'linear-gradient(180deg, rgba(15,15,26,0.98) 0%, rgba(10,10,18,0.99) 100%)',
                             borderTop: '1px solid var(--accent-20)',
+                            borderLeft: '1px solid var(--accent-20)',
+                            borderRight: '1px solid var(--accent-20)',
                             borderRadius: '20px 20px 0 0',
                         }}
                     >
@@ -78,19 +81,22 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
                             ))}
                         </div>
 
-                        {/* Custom input - minimal */}
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            value={value || ''}
-                            onChange={(e) => onChange(e.target.value)}
-                            placeholder={`Or type custom ${type}...`}
-                            className="w-full px-3 py-2 rounded-lg text-center text-sm bg-white/5 border border-white/10 focus:border-[var(--accent-30)] focus:outline-none mb-3"
-                            style={{
-                                fontFamily: 'Crimson Pro, serif',
-                                color: 'rgba(255,255,255,0.85)',
-                            }}
-                        />
+                        {/* Custom input with voice - minimal */}
+                        <div className="flex gap-2 items-center mb-3">
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={value || ''}
+                                onChange={(e) => onChange(e.target.value)}
+                                placeholder={`Or type custom ${type}...`}
+                                className="flex-1 px-3 py-2 rounded-lg text-center text-sm bg-white/5 border border-white/10 focus:border-[var(--accent-30)] focus:outline-none"
+                                style={{
+                                    fontFamily: 'Crimson Pro, serif',
+                                    color: 'rgba(255,255,255,0.85)',
+                                }}
+                            />
+                            <VoiceInput onTranscription={(text) => onChange(text)} />
+                        </div>
 
                         {/* Done button - subtle */}
                         <button
@@ -238,26 +244,29 @@ export function ActorActionBuilder({ values = {}, onChange }) {
                         {field.prompt}
                     </div>
 
-                    {/* Input - styled as typography, not form */}
-                    <input
-                        type="text"
-                        value={values[field.key] || ''}
-                        onChange={(e) => onChange(field.key, e.target.value)}
-                        onFocus={() => setActiveField(field.key)}
-                        onBlur={() => setActiveField(null)}
-                        placeholder={field.placeholder}
-                        className="w-full max-w-xs mx-auto bg-transparent text-center text-2xl focus:outline-none border-b-2 pb-2 transition-all"
-                        style={{
-                            fontFamily: "'Crimson Pro', serif",
-                            fontWeight: 500,
-                            color: values[field.key] ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.3)',
-                            borderColor: activeField === field.key
-                                ? 'var(--accent-50)'
-                                : values[field.key]
-                                    ? 'var(--accent-20)'
-                                    : 'rgba(255,255,255,0.1)',
-                        }}
-                    />
+                    {/* Input with voice - styled as typography, not form */}
+                    <div className="flex items-center gap-2 justify-center">
+                        <input
+                            type="text"
+                            value={values[field.key] || ''}
+                            onChange={(e) => onChange(field.key, e.target.value)}
+                            onFocus={() => setActiveField(field.key)}
+                            onBlur={() => setActiveField(null)}
+                            placeholder={field.placeholder}
+                            className="w-full max-w-xs bg-transparent text-center text-2xl focus:outline-none border-b-2 pb-2 transition-all"
+                            style={{
+                                fontFamily: "'Crimson Pro', serif",
+                                fontWeight: 500,
+                                color: values[field.key] ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.3)',
+                                borderColor: activeField === field.key
+                                    ? 'var(--accent-50)'
+                                    : values[field.key]
+                                        ? 'var(--accent-20)'
+                                        : 'rgba(255,255,255,0.1)',
+                            }}
+                        />
+                        <VoiceInput onTranscription={(text) => onChange(field.key, text)} />
+                    </div>
 
                     {/* Optional indicator */}
                     {field.optional && !values[field.key] && (
