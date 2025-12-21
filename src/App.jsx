@@ -18,6 +18,10 @@ import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
+import { InstallPrompt } from "./components/InstallPrompt.jsx";
+import { PresenceSigil } from "./components/PresenceSigil.jsx";
+import { SigilTracker } from "./components/SigilTracker.jsx";
+import { useWakeLock } from "./hooks/useWakeLock.js";
 import "./App.css";
 
 const SECTION_LABELS = {
@@ -135,7 +139,11 @@ function App() {
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [showFxGallery, setShowFxGallery] = useState(true); // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
+  const [isSigilTrackerOpen, setIsSigilTrackerOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
+  // Screen Wake Lock when in Vigilance Mode
+  useWakeLock(isMinimized);
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Flame');
   const [previewPath, setPreviewPath] = useState('Soma');
@@ -269,6 +277,15 @@ function App() {
 
               <div className="min-w-[140px] flex-shrink-0 flex justify-end items-center gap-2">
                 {/* Display Mode Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsMinimized(v => !v)}
+                  className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
+                  title="Vigilance Mode"
+                  style={{ color: isMinimized ? 'var(--accent-color)' : undefined }}
+                >
+                  👁️
+                </button>
                 <DisplayModeToggle />
                 <button
                   type="button"
@@ -298,11 +315,37 @@ function App() {
               </div>
             </header>
 
-            {/* Main content */}
-            {isHub ? (
-              <div key="hub" className="section-enter">
-                <HomeHub
-                  onSelectSection={setActiveSection}
+            {/* Main content - hide when minimized */}
+            <div
+              style={{
+                opacity: isMinimized ? 0 : 1,
+                pointerEvents: isMinimized ? 'none' : 'auto',
+                transition: 'opacity 0.7s ease'
+              }}
+              inert={isMinimized ? "" : undefined}
+            >
+              {isHub ? (
+                <div key="hub" className="section-enter">
+                  <HomeHub
+                    onSelectSection={setActiveSection}
+                    onStageChange={(hsl, stageName) => {
+                      setAvatarStage(stageName);
+                      setPreviewStage(stageName);
+                    }}
+                    currentStage={previewStage}
+                    previewPath={previewPath}
+                    previewShowCore={previewShowCore}
+                    previewAttention={previewAttention}
+                  />
+                </div>
+              ) : (
+                <SectionView
+                  key={activeSection}
+                  section={activeSection}
+                  isPracticing={isPracticing}
+                  onPracticingChange={setIsPracticing}
+                  breathState={breathState}
+                  onBreathStateChange={setBreathState}
                   onStageChange={(hsl, stageName) => {
                     setAvatarStage(stageName);
                     setPreviewStage(stageName);
@@ -311,29 +354,32 @@ function App() {
                   previewPath={previewPath}
                   previewShowCore={previewShowCore}
                   previewAttention={previewAttention}
+                  showFxGallery={showFxGallery}
+                  onNavigate={setActiveSection}
                 />
-              </div>
-            ) : (
-              <SectionView
-                key={activeSection}
-                section={activeSection}
-                isPracticing={isPracticing}
-                onPracticingChange={setIsPracticing}
-                breathState={breathState}
-                onBreathStateChange={setBreathState}
-                onStageChange={(hsl, stageName) => {
-                  setAvatarStage(stageName);
-                  setPreviewStage(stageName);
-                }}
-                currentStage={previewStage}
-                previewPath={previewPath}
-                previewShowCore={previewShowCore}
-                previewAttention={previewAttention}
-                showFxGallery={showFxGallery}
-                onNavigate={setActiveSection}
-              />
-            )}
+              )}
+            </div>
           </div>
+
+          <PresenceSigil
+            onLongPress={() => setIsSigilTrackerOpen(true)}
+            onTap={() => {
+              if (isMinimized) {
+                setIsMinimized(false);
+              } else {
+                setActiveSection(null);
+              }
+            }}
+            stage={previewStage}
+          />
+
+          <SigilTracker
+            isOpen={isSigilTrackerOpen}
+            onClose={() => setIsSigilTrackerOpen(false)}
+            stage={previewStage}
+          />
+
+          <InstallPrompt />
 
           {/* Indra's Net - animated web at bottom */}
           <IndrasNet stage={previewStage} />
