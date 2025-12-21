@@ -90,7 +90,9 @@ export function ExportDataButton({ variant = 'button' }) {
                     background: showSuccess ? 'rgba(34,197,94,0.2)' : 'rgba(253,251,245,0.08)',
                     border: `1px solid ${showSuccess ? 'rgba(34,197,94,0.4)' : 'rgba(253,251,245,0.15)'}`,
                     color: showSuccess ? '#22c55e' : 'rgba(253,251,245,0.8)',
-                    fontFamily: 'var(--font-ui, Outfit, sans-serif)'
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
                 }}
             >
                 {showSuccess ? (

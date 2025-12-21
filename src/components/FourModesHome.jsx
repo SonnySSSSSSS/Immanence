@@ -79,9 +79,9 @@ function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
 
             {/* Mode name - always visible */}
             <motion.span
-                className="mt-2 text-[10px] uppercase tracking-widest"
+                className="mt-2 text-[10px] uppercase tracking-[0.2em] font-bold"
                 style={{
-                    fontFamily: 'Cinzel, serif',
+                    fontFamily: 'var(--font-display)',
                     color: isActive ? 'var(--accent-color)' : isLocked ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)',
                 }}
                 animate={{ y: isActive ? -2 : 0 }}
@@ -98,8 +98,10 @@ function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
                         exit={{ opacity: 0, y: -5 }}
                         className="text-[9px] italic mt-0.5"
                         style={{
-                            fontFamily: 'Crimson Pro, serif',
+                            fontFamily: 'var(--font-body)',
                             color: 'rgba(255,220,120,0.6)',
+                            letterSpacing: '0.02em',
+                            fontWeight: 500
                         }}
                     >
                         {metaphor.state} · {metaphor.essence}
@@ -174,14 +176,14 @@ export function FourModesHome({ onSelectMode }) {
             {/* Header */}
             <div className="text-center">
                 <h2
-                    className="text-[14px] uppercase tracking-[0.2em] mb-2"
-                    style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
+                    className="text-[14px] uppercase tracking-[0.25em] font-bold mb-2"
+                    style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-color)' }}
                 >
                     The Transmutation Chain
                 </h2>
                 <p
-                    className="text-[11px] italic"
-                    style={{ fontFamily: 'Crimson Pro, serif', color: 'rgba(253,251,245,0.5)' }}
+                    className="text-[11px] italic font-medium"
+                    style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.5)', letterSpacing: '0.05em' }}
                 >
                     Observation → Separation → Capacity → Commitment
                 </p>
@@ -198,9 +200,10 @@ export function FourModesHome({ onSelectMode }) {
                         style={{
                             borderColor: 'var(--accent-color)',
                             color: 'var(--accent-color)',
-                            fontFamily: 'Outfit, sans-serif',
-                            fontSize: '12px',
-                            letterSpacing: '0.1em',
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '11px',
+                            letterSpacing: 'var(--tracking-mythic)',
+                            fontWeight: 700,
                             background: 'rgba(255,220,120,0.05)',
                         }}
                     >
@@ -256,8 +259,10 @@ export function FourModesHome({ onSelectMode }) {
                         <p
                             className="text-[12px] italic max-w-sm mx-auto"
                             style={{
-                                fontFamily: 'Crimson Pro, serif',
+                                fontFamily: 'var(--font-body)',
                                 color: 'rgba(253,251,245,0.7)',
+                                letterSpacing: '0.01em',
+                                fontWeight: 500
                             }}
                         >
                             {FOUR_MODES.find(m => m.id === hoveredMode)?.tagline}

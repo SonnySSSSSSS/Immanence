@@ -108,8 +108,8 @@ export function QuickLogGesturePad() {
 
                 {/* Header */}
                 <h3
-                    className="application-card-label text-[var(--accent-70)] mb-4 text-center relative z-10"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="application-card-label text-[var(--accent-70)] mb-4 text-center relative z-10 font-bold tracking-[0.25em]"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     QUICK LOG
                 </h3>
@@ -142,7 +142,7 @@ export function QuickLogGesturePad() {
                             <div
                                 className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'up' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
-                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}
                             >
                                 <div className="text-xl mb-0.5">↑</div>
                                 <div className="text-[11px] line-clamp-2 leading-tight">{trackingItems.up}</div>
@@ -153,7 +153,7 @@ export function QuickLogGesturePad() {
                             <div
                                 className={`text-sm text-left transition-all max-w-[100px] ${justLogged === 'left' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
-                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}
                             >
                                 <div className="flex items-center gap-1">
                                     <span className="text-xl flex-shrink-0">←</span>
@@ -166,7 +166,7 @@ export function QuickLogGesturePad() {
                             <div
                                 className={`text-sm text-center transition-all max-w-[100px] ${justLogged === 'down' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
-                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}
                             >
                                 <div className="text-[11px] line-clamp-2 leading-tight mb-0.5">{trackingItems.down}</div>
                                 <div className="text-xl">↓</div>
@@ -177,7 +177,7 @@ export function QuickLogGesturePad() {
                             <div
                                 className={`text-sm text-right transition-all max-w-[100px] ${justLogged === 'right' ? 'text-[var(--accent-color)] scale-110' : 'text-[var(--accent-70)]'
                                     }`}
-                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}
                             >
                                 <div className="flex items-center gap-1 justify-end">
                                     <span className="text-[11px] line-clamp-2 leading-tight text-right">{trackingItems.right}</span>
@@ -202,7 +202,7 @@ export function QuickLogGesturePad() {
                     {/* Instruction */}
                     <p
                         className="text-xs text-center text-[rgba(253,251,245,0.5)] mt-4"
-                        style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
+                        style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontWeight: 500, letterSpacing: '0.01em' }}
                     >
                         Tap direction or swipe
                     </p>

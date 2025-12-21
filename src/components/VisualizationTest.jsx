@@ -38,7 +38,9 @@ export function VisualizationTest() {
                     borderRadius: '20px',
                     color: 'white',
                     cursor: 'pointer',
-                    fontFamily: 'Cinzel, serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    letterSpacing: 'var(--tracking-wide)'
                 }}
             >
                 CLOSE TEST
@@ -65,7 +67,9 @@ export function VisualizationTest() {
                             borderRadius: '15px',
                             color: geometry === g ? '#050508' : 'white',
                             cursor: 'pointer',
-                            fontFamily: 'Cinzel, serif',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 700,
+                            letterSpacing: 'var(--tracking-wide)',
                             fontSize: '12px',
                         }}
                     >
@@ -98,7 +102,9 @@ export function VisualizationTest() {
                 bottom: '40px',
                 textAlign: 'center',
                 color: 'rgba(255,255,255,0.5)',
-                fontFamily: 'Crimson Pro, serif',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+                letterSpacing: '0.01em',
                 fontSize: '14px',
             }}>
                 <div>Watch the geometry draw itself (fadeIn), stay visible (display),</div>

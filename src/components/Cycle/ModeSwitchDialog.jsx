@@ -49,18 +49,18 @@ export function ModeSwitchDialog({ isOpen, onClose, onConfirm }) {
                 >
                     {/* Header */}
                     <div className="mb-4">
-                        <h3 className="text-xl font-[Cinzel] text-white/90 mb-2">
+                        <h3 className="text-xl font-bold text-white/90 mb-2 tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                             Switch to {newMode}?
                         </h3>
-                        <p className="text-sm text-white/60 font-[Outfit]">
+                        <p className="text-sm text-white/60 font-medium tracking-tight" style={{ fontFamily: 'var(--font-ui)' }}>
                             This will recalibrate your timeline based on the new standard.
                         </p>
                     </div>
 
                     {/* Current Progress */}
                     <div className="mb-4 p-4 bg-white/5 rounded border border-white/10">
-                        <div className="text-xs text-white/50 font-[Outfit] mb-2">Current Progress</div>
-                        <div className="space-y-2 text-sm text-white/70 font-[Outfit]">
+                        <div className="text-xs text-white/50 mb-2 font-bold tracking-[0.1em] uppercase" style={{ fontFamily: 'var(--font-ui)' }}>Current Progress</div>
+                        <div className="space-y-2 text-sm text-white/70 font-medium" style={{ fontFamily: 'var(--font-ui)' }}>
                             <div>· {info.practiceDays} practice days over {info.currentDay} elapsed</div>
                             <div>· Effective progress: {currentEffective} days toward goal</div>
                         </div>
@@ -68,8 +68,8 @@ export function ModeSwitchDialog({ isOpen, onClose, onConfirm }) {
 
                     {/* After Switch */}
                     <div className="mb-4 p-4 bg-[#fcd34d]/10 border border-[#fcd34d]/20 rounded">
-                        <div className="text-xs text-[#fcd34d]/80 font-[Outfit] mb-2">After Switch</div>
-                        <div className="space-y-2 text-sm text-white/70 font-[Outfit]">
+                        <div className="text-xs text-[#fcd34d]/80 mb-2 font-bold tracking-[0.1em] uppercase" style={{ fontFamily: 'var(--font-ui)' }}>After Switch</div>
+                        <div className="space-y-2 text-sm text-white/70 font-medium" style={{ fontFamily: 'var(--font-ui)' }}>
                             <div>· Same {info.practiceDays} practice days</div>
                             <div>
                                 · New effective progress: {recalibratedDays} days
@@ -83,7 +83,7 @@ export function ModeSwitchDialog({ isOpen, onClose, onConfirm }) {
 
                     {/* Warning */}
                     <div className="mb-6 p-3 bg-orange-500/10 border border-orange-500/20 rounded">
-                        <p className="text-xs text-orange-200/80 font-[Outfit]">
+                        <p className="text-xs text-orange-200/80 font-medium italic" style={{ fontFamily: 'var(--font-ui)' }}>
                             This change locks for 2 weeks. You won't be able to switch again
                             until the next checkpoint.
                         </p>
@@ -93,13 +93,15 @@ export function ModeSwitchDialog({ isOpen, onClose, onConfirm }) {
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white/80 rounded font-[Outfit] transition-colors"
+                            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white/80 rounded transition-colors font-bold tracking-wide"
+                            style={{ fontFamily: 'var(--font-ui)' }}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className="flex-1 px-4 py-2 bg-[#fcd34d] text-black rounded font-[Outfit] hover:bg-[#fcd34d]/90 transition-colors"
+                            className="flex-1 px-4 py-2 bg-[#fcd34d] text-black rounded hover:bg-[#fcd34d]/90 transition-colors font-bold tracking-wide"
+                            style={{ fontFamily: 'var(--font-ui)' }}
                         >
                             Confirm Switch
                         </button>

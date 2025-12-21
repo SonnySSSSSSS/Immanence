@@ -27,9 +27,10 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
             <div
                 className="mb-4 text-center"
                 style={{
-                    fontFamily: 'Georgia, serif',
+                    fontFamily: 'var(--font-display)',
                     fontSize: '9px',
-                    letterSpacing: '0.25em',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
                     textTransform: 'uppercase',
                     color: 'rgba(253,251,245,0.4)',
                 }}
@@ -50,7 +51,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                     <div
                         className="col-span-2 text-center py-8"
                         style={{
-                            fontFamily: 'Georgia, serif',
+                            fontFamily: 'var(--font-body)',
                             fontSize: '11px',
                             color: 'rgba(253,251,245,0.5)',
                         }}
@@ -96,11 +97,11 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                 <div
                                     className="mb-1.5"
                                     style={{
-                                        fontFamily: 'Georgia, serif',
+                                        fontFamily: 'var(--font-display)',
                                         fontSize: '11px',
-                                        letterSpacing: '0.08em',
+                                        letterSpacing: 'var(--tracking-wide)',
                                         textTransform: 'uppercase',
-                                        fontWeight: 500,
+                                        fontWeight: 600,
                                         color: isSelected ? '#fff' : 'rgba(253,251,245,0.85)',
                                         lineHeight: 1.4,
                                     }}
@@ -111,7 +112,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                 {/* Duration - Subordinate */}
                                 <div
                                     style={{
-                                        fontFamily: 'Georgia, serif',
+                                        fontFamily: 'var(--font-display)',
                                         fontSize: '9px',
                                         letterSpacing: '0.05em',
                                         color: 'rgba(253,251,245,0.4)',

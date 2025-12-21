@@ -79,7 +79,9 @@ function VoicePreviewModal({ isOpen, transcript, onConfirm, onEdit, onCancel, on
                                     onChange={(e) => setEditedText(e.target.value)}
                                     className="w-full px-3 py-3 rounded-lg text-base bg-white/5 border border-white/20 focus:border-[var(--accent-40)] focus:outline-none resize-none"
                                     style={{
-                                        fontFamily: "'Crimson Pro', serif",
+                                        fontFamily: "var(--font-body)",
+                                        fontWeight: 500,
+                                        letterSpacing: '0.01em',
                                         color: 'rgba(255,255,255,0.9)',
                                         minHeight: '80px',
                                     }}
@@ -93,9 +95,10 @@ function VoicePreviewModal({ isOpen, transcript, onConfirm, onEdit, onCancel, on
                                     }}
                                 >
                                     <p
-                                        className="text-base"
+                                        className="text-base font-medium"
                                         style={{
-                                            fontFamily: "'Crimson Pro', serif",
+                                            fontFamily: "var(--font-body)",
+                                            letterSpacing: '0.01em',
                                             color: transcript ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)',
                                             fontStyle: transcript ? 'normal' : 'italic',
                                         }}

@@ -114,8 +114,12 @@ export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
                 <div className="text-center">
                     <div className="text-2xl mb-2">✦</div>
                     <h3
-                        className="text-[16px] uppercase tracking-[0.2em] mb-2"
-                        style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'var(--accent-color)' }}
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
+                            color: 'var(--accent-color)'
+                        }}
                     >
                         Wave Function Established
                     </h3>
@@ -214,8 +218,12 @@ export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
             {/* Header */}
             <div className="text-center">
                 <h3
-                    className="text-[14px] uppercase tracking-[0.2em] mb-1"
-                    style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'var(--accent-color)' }}
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
+                        color: 'var(--accent-color)'
+                    }}
                 >
                     Wave Function Setup
                 </h3>
@@ -254,7 +262,7 @@ export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
                 <div
                     className="text-[18px] font-medium"
                     style={{
-                        fontFamily: 'Crimson Pro, Georgia, serif',
+                        fontFamily: 'var(--font-body)',
                         color: 'rgba(253,251,245,0.95)',
                     }}
                 >

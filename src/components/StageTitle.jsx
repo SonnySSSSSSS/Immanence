@@ -285,7 +285,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
               >
                 <div
                   style={{
-                    fontFamily: "'Outfit', sans-serif",
+                    fontFamily: "var(--font-ui)",
                     fontSize: '12px',
                     lineHeight: 1.6,
                     color: 'rgba(253,251,245,0.85)',
@@ -372,13 +372,13 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                 onClick={() => setShowEnglish(!showEnglish)}
                 style={{
                   display: 'none',
-                  fontFamily: "'Crimson Pro', 'Cormorant Garamond', Georgia, serif",
+                  fontFamily: "var(--font-body)",
                   fontStyle: 'italic',
                   fontWeight: 500,
                   color: `${stageColors.gradient[1]}dd`,
                   textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                   cursor: 'pointer',
-                  letterSpacing: '0.08em',
+                  letterSpacing: 'var(--tracking-wide)',
                 }}
               >
                 {pathName}
@@ -398,7 +398,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                 >
                   <div
                     style={{
-                      fontFamily: "'Outfit', sans-serif",
+                      fontFamily: "var(--font-ui)",
                       fontSize: '12px',
                       lineHeight: 1.6,
                       color: 'rgba(253,251,245,0.85)',
@@ -425,15 +425,15 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         >
           {/* Stage name */}
           <span
-            className="stage-name text-[1.75rem] font-medium uppercase tracking-[0.08em]"
+            className="stage-name text-[1.75rem] font-medium uppercase"
             style={{
-              fontFamily: "'Playfair Display', 'Cinzel', Georgia, serif",
+              fontFamily: "var(--font-display)",
               color: '#fdfbf5',
               textShadow: `
                 0 0 20px rgba(253,251,245,0.3),
                 0 0 40px rgba(253,251,245,0.15)
               `,
-              letterSpacing: '0.02em',
+              letterSpacing: 'var(--tracking-tight)',
             }}
           >
             {stageName}
@@ -455,11 +455,11 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
           {/* Path name */}
           {hasPath && (
             <span
-              className="stage-path text-[1.6rem] font-normal uppercase tracking-[0.1em]"
+              className="stage-path text-[1.6rem] font-normal uppercase"
               onClick={() => setShowEnglish(!showEnglish)}
               title={showEnglish ? "Click for Sanskrit" : "Click for English"}
               style={{
-                fontFamily: "'Cinzel', Georgia, serif",
+                fontFamily: "var(--font-display)",
                 backgroundImage: `linear-gradient(135deg, ${stageColors.gradient[0]} 0%, ${stageColors.gradient[1]} 50%, ${stageColors.gradient[2]} 100%)`,
                 backgroundSize: '200% 200%',
                 WebkitBackgroundClip: 'text',
@@ -469,6 +469,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                 filter: `drop-shadow(0 0 15px ${stageColors.glow}40)`,
                 cursor: 'pointer',
                 transition: 'transform 0.15s ease',
+                letterSpacing: 'var(--tracking-normal)',
               }}
             >
               {pathName}
@@ -560,7 +561,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         <div
           className="attention-row relative flex items-center justify-center gap-2 -mt-1 mb-3"
           style={{
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "var(--font-ui)",
           }}
         >
           {/* Subtle bloom background for legibility */}
@@ -583,11 +584,11 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
           {/* Attention text - enhanced contrast */}
           <span
-            className="text-[11px] uppercase tracking-[0.25em] relative z-10"
+            className="text-[11px] uppercase relative z-10"
             style={{
               color: stageColors.gradient[1],
               opacity: 0.78,
-              letterSpacing: '0.24em',
+              letterSpacing: 'var(--tracking-mythic)',
               textShadow: `0 1px 6px rgba(0,0,0,0.35), 0 0 12px ${stageColors.glow}30`,
             }}
           >

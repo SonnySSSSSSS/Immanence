@@ -36,7 +36,12 @@ export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, 
     if (!circuit) {
         return (
             <div className="p-6 text-center">
-                <p className="text-white/50 font-[Outfit]">Circuit not found</p>
+                <p
+                    className="text-white/50 font-medium"
+                    style={{ fontFamily: 'var(--font-body)' }}
+                >
+                    Circuit not found
+                </p>
             </div>
         );
     }
@@ -98,21 +103,31 @@ export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, 
                         {currentExercise.type === 'body' && '✨'}
                     </div>
 
-                    <h3 className="text-2xl font-[Cinzel] text-white/90 mb-3 text-center">
+                    <h3
+                        className="text-2xl font-bold tracking-wide text-white/90 mb-3 text-center"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         {currentExercise.name}
                     </h3>
 
-                    <p className="text-white/60 font-[Outfit] mb-6 text-center max-w-md">
+                    <p
+                        className="text-white/60 font-medium mb-6 text-center max-w-md"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         {currentExercise.instructions}
                     </p>
 
-                    <div className="text-white/50 font-[Outfit] mb-8">
+                    <div
+                        className="text-white/50 font-bold"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         Duration: {currentExercise.duration} minutes
                     </div>
 
                     <button
                         onClick={handleStartExercise}
-                        className="px-8 py-3 bg-[#fcd34d] text-black rounded font-[Outfit] hover:bg-[#fcd34d]/90 transition-colors text-lg"
+                        className="px-8 py-3 bg-[#fcd34d] text-black rounded font-bold tracking-wide hover:bg-[#fcd34d]/90 transition-colors text-lg"
+                        style={{ fontFamily: 'var(--font-body)' }}
                     >
                         Begin Exercise
                     </button>
@@ -161,7 +176,10 @@ export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, 
             default:
                 return (
                     <div className="p-6 text-center">
-                        <p className="text-white/50 font-[Outfit]">
+                        <p
+                            className="text-white/50 font-medium"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             Exercise type not supported yet
                         </p>
                     </div>
@@ -175,17 +193,24 @@ export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, 
             <div className="mb-6 p-6 bg-gradient-to-br from-[#161625] to-[#1a1a2e] border border-white/10 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
                     <div>
-                        <h2 className="text-2xl font-[Cinzel] text-white/90 mb-1">
+                        <h2
+                            className="text-2xl font-bold tracking-wide text-white/90 mb-1"
+                            style={{ fontFamily: 'var(--font-display)' }}
+                        >
                             {circuit.name}
                         </h2>
-                        <div className="text-sm text-white/60 font-[Outfit]">
+                        <div
+                            className="text-sm text-white/60 font-medium"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             Exercise {currentExerciseIndex + 1} of {circuit.exercises.length}
                         </div>
                     </div>
 
                     <button
                         onClick={handleCancelCircuit}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white/60 rounded font-[Outfit] text-sm transition-colors"
+                        className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white/60 rounded font-bold tracking-wide text-sm transition-colors"
+                        style={{ fontFamily: 'var(--font-body)' }}
                     >
                         Exit Circuit
                     </button>
@@ -212,12 +237,13 @@ export function CircuitSession({ circuitId, circuit: customCircuit, onComplete, 
                         return (
                             <div
                                 key={idx}
-                                className={`flex-1 p-2 rounded text-center text-xs font-[Outfit] transition-all ${isCurrent
+                                className={`flex-1 p-2 rounded text-center text-xs font-bold transition-all ${isCurrent
                                     ? 'bg-[#fcd34d]/20 border border-[#fcd34d]/40 text-white/90'
                                     : isComplete
                                         ? 'bg-white/5 border border-white/10 text-white/40'
                                         : 'bg-white/5 border border-white/10 text-white/30'
                                     }`}
+                                style={{ fontFamily: 'var(--font-body)' }}
                             >
                                 {isComplete && '✓ '}
                                 {ex.name}

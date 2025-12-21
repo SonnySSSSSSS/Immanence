@@ -145,11 +145,9 @@ function ScrollingWheel({ value, onChange, options }) {
               key={option}
               className="flex items-center justify-center"
               style={{
-                height: `${itemHeight} px`,
-                fontFamily: "Georgia, serif",
-                fontSize: "24px",
-                fontWeight: 400,
-                letterSpacing: "0.1em",
+                fontSize: "22px",
+                fontWeight: 600,
+                letterSpacing: "var(--tracking-wide)",
                 color: "rgba(253,251,245,0.9)",
                 opacity,
                 transform: `scale(${scale})`,
@@ -822,7 +820,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               backdropFilter: 'blur(8px)',
             }}
           >
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: '10px', letterSpacing: '0.15em', color: 'rgba(253,251,245,0.6)', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '10px', letterSpacing: 'var(--tracking-mythic)', color: 'rgba(253,251,245,0.6)', textTransform: 'uppercase' }}>
               Circuit
             </span>
             <div className="flex gap-1">
@@ -839,7 +837,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 />
               ))}
             </div>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: '10px', color: 'rgba(253,251,245,0.5)' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'rgba(253,251,245,0.5)' }}>
               {circuitExerciseIndex + 1}/{circuitConfig.exercises.length}
             </span>
           </div>
@@ -891,16 +889,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   <button
                     onClick={handlePrevFx}
                     className="text-white/60 hover:text-white transition-colors px-2 py-1"
-                    style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}
+                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px' }}
                   >
                     ◀
                   </button>
                   <div
                     className="text-center min-w-[200px]"
                     style={{
-                      fontFamily: 'Georgia, serif',
-                      fontSize: '10px',
-                      letterSpacing: '0.1em',
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      letterSpacing: 'var(--tracking-wide)',
                       color: 'var(--accent-color)',
                     }}
                   >
@@ -915,7 +914,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   <button
                     onClick={handleNextFx}
                     className="text-white/60 hover:text-white transition-colors px-2 py-1"
-                    style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}
+                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px' }}
                   >
                     ▶
                   </button>
@@ -934,7 +933,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               <div
                 className="text-2xl mb-4 text-center"
                 style={{
-                  fontFamily: "Georgia, serif",
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 600,
+                  letterSpacing: "var(--tracking-mythic)",
                   color: "var(--accent-color)",
                   textShadow: "0 0 20px var(--accent-30)"
                 }}
@@ -951,9 +952,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <div
                   className="mb-2 flex items-center justify-between"
                   style={{
-                    fontFamily: "Georgia, serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "8px",
-                    letterSpacing: "0.2em",
+                    fontWeight: 600,
+                    letterSpacing: "var(--tracking-wide)",
                     textTransform: "uppercase",
                     color: "rgba(253,251,245,0.5)",
                   }}
@@ -1012,7 +1014,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 key={lastSignedErrorMs}
                 className="text-[11px] font-medium tracking-[0.15em] uppercase animate-fade-in-up"
                 style={{
-                  fontFamily: "Georgia, serif",
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 600,
+                  letterSpacing: "var(--tracking-wide)",
                   color: feedbackColor,
                   textShadow: feedbackShadow
                 }}
@@ -1026,10 +1030,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             onClick={handleStop}
             className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
             style={{
-              fontFamily: "Georgia, serif",
-              fontSize: "10px",
-              letterSpacing: "0.2em",
+              fontFamily: "var(--font-display)",
+              fontSize: "11px",
+              letterSpacing: "var(--tracking-mythic)",
               textTransform: "uppercase",
+              fontWeight: 600,
               background: buttonBg,
               color: "#050508",
               boxShadow: radialGlow
@@ -1066,9 +1071,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           <div
             className="mt-5"
             style={{
-              fontFamily: "Georgia, serif",
-              fontSize: "11px",
-              letterSpacing: "0.2em",
+              fontFamily: "var(--font-display)",
+              fontSize: "12px",
+              fontWeight: 600,
+              letterSpacing: "var(--tracking-mythic)",
               textTransform: "uppercase",
               color: "rgba(253,251,245,0.6)",
             }}
@@ -1080,9 +1086,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             <div
               className="mt-2"
               style={{
-                fontFamily: "Georgia, serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "9px",
-                letterSpacing: "0.15em",
+                fontWeight: 600,
+                letterSpacing: "var(--tracking-wide)",
                 textTransform: "uppercase",
                 color: 'var(--accent-50)',
               }}
@@ -1138,9 +1145,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             {/* Title */}
             <div
               style={{
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 fontSize: '18px',
-                letterSpacing: '0.15em',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
                 color: 'rgba(253,251,245,0.9)',
                 marginBottom: '24px',
                 textShadow: '0 0 10px var(--accent-30)',
@@ -1161,17 +1169,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             >
               <div style={{ marginBottom: '12px' }}>
                 <span style={{
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '10px',
-                  letterSpacing: '0.15em',
+                  fontWeight: 600,
+                  letterSpacing: 'var(--tracking-mythic)',
                   textTransform: 'uppercase',
                   color: 'rgba(253,251,245,0.5)',
                 }}>
                   Practice
                 </span>
                 <div style={{
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'var(--font-display)',
                   fontSize: '14px',
+                  fontWeight: 600,
                   color: 'rgba(253,251,245,0.85)',
                   marginTop: '4px',
                 }}>
@@ -1181,17 +1191,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
               <div style={{ marginBottom: '12px' }}>
                 <span style={{
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '10px',
-                  letterSpacing: '0.15em',
+                  fontWeight: 600,
+                  letterSpacing: 'var(--tracking-mythic)',
                   textTransform: 'uppercase',
                   color: 'rgba(253,251,245,0.5)',
                 }}>
                   Duration
                 </span>
                 <div style={{
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'var(--font-display)',
                   fontSize: '14px',
+                  fontWeight: 600,
                   color: 'rgba(253,251,245,0.85)',
                   marginTop: '4px',
                 }}>
@@ -1203,17 +1215,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <>
                   <div style={{ marginBottom: '12px' }}>
                     <span style={{
-                      fontFamily: 'Georgia, serif',
+                      fontFamily: 'var(--font-body)',
                       fontSize: '10px',
-                      letterSpacing: '0.15em',
+                      fontWeight: 600,
+                      letterSpacing: 'var(--tracking-mythic)',
                       textTransform: 'uppercase',
                       color: 'rgba(253,251,245,0.5)',
                     }}>
                       Breath Count
                     </span>
                     <div style={{
-                      fontFamily: 'Georgia, serif',
+                      fontFamily: 'var(--font-display)',
                       fontSize: '14px',
+                      fontWeight: 600,
                       color: 'rgba(253,251,245,0.85)',
                       marginTop: '4px',
                     }}>
@@ -1223,17 +1237,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
                   <div>
                     <span style={{
-                      fontFamily: 'Georgia, serif',
+                      fontFamily: 'var(--font-body)',
                       fontSize: '10px',
-                      letterSpacing: '0.15em',
+                      fontWeight: 600,
+                      letterSpacing: 'var(--tracking-mythic)',
                       textTransform: 'uppercase',
                       color: 'rgba(253,251,245,0.5)',
                     }}>
                       Best Tap Accuracy
                     </span>
                     <div style={{
-                      fontFamily: 'Georgia, serif',
+                      fontFamily: 'var(--font-display)',
                       fontSize: '14px',
+                      fontWeight: 600,
                       color: 'rgba(253,251,245,0.85)',
                       marginTop: '4px',
                     }}>
@@ -1252,9 +1268,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               }}
               className="w-full rounded-full py-3 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               style={{
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 fontSize: '11px',
-                letterSpacing: '0.2em',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
                 textTransform: 'uppercase',
                 background: 'var(--accent-color)',
                 color: '#0B1F16',
@@ -1348,11 +1365,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             {/* Text prompt above button */}
             <div
               style={{
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-body)',
                 fontSize: '11px',
-                letterSpacing: '0.15em',
-                color: 'rgba(253,251,245,0.5)',
+                letterSpacing: 'var(--tracking-mythic)',
+                color: 'rgba(253,251,245,0.4)',
                 textTransform: 'uppercase',
+                fontStyle: 'italic'
               }}
             >
               Choose your practice mode..
@@ -1361,9 +1379,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               onClick={() => setPracticeModalOpen(true)}
               className="px-6 py-3 rounded-full relative overflow-hidden"
               style={{
-                fontFamily: 'Georgia, serif',
-                fontSize: '13px',
-                letterSpacing: '0.1em',
+                fontFamily: 'var(--font-display)',
+                fontSize: '12px',
+                fontWeight: 500,
+                letterSpacing: 'var(--tracking-wide)',
                 color: 'var(--accent-color)',
                 display: 'flex',
                 alignItems: 'center',
@@ -1442,11 +1461,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   <div className="flex flex-col items-center mb-5">
                     <div
                       style={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: "11px",
-                        letterSpacing: "0.18em",
+                        fontFamily: "var(--font-display)",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        letterSpacing: "var(--tracking-mythic)",
                         textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.55)",
+                        color: "rgba(253,251,245,0.45)",
                         marginBottom: '10px',
                       }}
                     >
@@ -1454,10 +1474,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     </div>
                     <div
                       style={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: "36px",
+                        fontFamily: "var(--font-display)",
+                        fontSize: "38px",
                         fontWeight: 500,
-                        letterSpacing: "0.05em",
+                        letterSpacing: "0.08em",
                         color: "rgba(253,251,245,0.92)",
                         textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
                       }}
@@ -1490,9 +1510,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   onMouseLeave={() => setTier2Hovered(false)}
                   className="w-full flex items-center justify-between py-2 mb-2 relative"
                   style={{
-                    fontFamily: "Georgia, serif",
+                    fontFamily: "var(--font-display)",
                     fontSize: "12px",
-                    letterSpacing: "0.15em",
+                    fontWeight: 600,
+                    letterSpacing: "var(--tracking-mythic)",
                     textTransform: "uppercase",
                     color: "rgba(253,251,245,0.6)",
                     background: 'transparent',
@@ -1502,13 +1523,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 >
                   <span
                     style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 600,
+                      letterSpacing: 'var(--tracking-mythic)',
                       animation: tier2Expanded || tier2Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
-                      opacity: tier2Hovered ? 0.85 : undefined,
+                      opacity: tier2Hovered ? 0.85 : 0.6,
                     }}
                   >
                     Options
                   </span>
                   <span style={{
+                    fontFamily: 'var(--font-display)',
                     transition: 'transform 200ms ease-out',
                     transform: tier2Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                     opacity: 0.6,
@@ -1560,11 +1585,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       <div
                         className="mb-3"
                         style={{
-                          fontFamily: "Georgia, serif",
+                          fontFamily: "var(--font-display)",
+                          fontWeight: 600,
                           fontSize: "9px",
-                          letterSpacing: "0.25em",
+                          letterSpacing: "var(--tracking-mythic)",
                           textTransform: "uppercase",
-                          color: "rgba(253,251,245,0.55)",
+                          color: "rgba(253,251,245,0.45)",
                           textAlign: "center"
                         }}
                       >
@@ -1583,9 +1609,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                             onClick={() => setVipassanaTheme(theme.id)}
                             className="rounded-full px-3 py-1.5 transition-all duration-200"
                             style={{
-                              fontFamily: "Georgia, serif",
-                              fontSize: "9px",
-                              letterSpacing: "0.12em",
+                              fontFamily: "var(--font-display)",
+                              fontWeight: 500,
+                              fontSize: "10px",
+                              letterSpacing: "var(--tracking-wide)",
                               textTransform: "uppercase",
                               background:
                                 vipassanaTheme === theme.id
@@ -1691,9 +1718,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     onMouseLeave={() => setTier3Hovered(false)}
                     className="w-full flex items-center justify-between py-2"
                     style={{
-                      fontFamily: "Georgia, serif",
+                      fontFamily: "var(--font-display)",
                       fontSize: "10px",
-                      letterSpacing: "0.15em",
+                      fontWeight: 600,
+                      letterSpacing: "var(--tracking-mythic)",
                       textTransform: "uppercase",
                       color: "rgba(253,251,245,0.45)",
                       background: 'transparent',
@@ -1703,6 +1731,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   >
                     <span
                       style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         animation: tier3Expanded || tier3Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
                         opacity: tier3Hovered ? 0.75 : undefined,
                       }}
@@ -1739,9 +1770,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 disabled={isStarting}
                 className="w-full rounded-full py-3 transition-all duration-150 relative overflow-hidden mt-6"
                 style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "11px",
-                  letterSpacing: "0.2em",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  letterSpacing: "var(--tracking-mythic)",
                   textTransform: "uppercase",
                   height: '46px',
                   // Circuit mode: glassmorphic pulsing

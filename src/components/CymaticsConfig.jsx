@@ -36,9 +36,11 @@ export function CymaticsConfig({
             {/* Frequency Set Selector */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3"
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'rgba(253,251,245,0.4)'
                     }}
                 >
@@ -60,7 +62,9 @@ export function CymaticsConfig({
                                 border: frequencySet === set.id ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                                 background: frequencySet === set.id ? 'var(--accent-10)' : 'transparent',
                                 color: frequencySet === set.id ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
-                                fontFamily: 'Georgia, serif',
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: 'var(--tracking-wide)',
+                                fontWeight: 500,
                             }}
                         >
                             {set.name.toUpperCase()}
@@ -72,9 +76,11 @@ export function CymaticsConfig({
             {/* Frequency Grid Selector */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3"
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'rgba(253,251,245,0.4)'
                     }}
                 >
@@ -96,7 +102,9 @@ export function CymaticsConfig({
                                 color: selectedFrequency?.hz === freq.hz
                                     ? 'var(--accent-color)'
                                     : 'rgba(253,251,245,0.6)',
-                                fontFamily: 'Georgia, serif',
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: 'var(--tracking-wide)',
+                                fontWeight: 500,
                                 animation: selectedFrequency?.hz === freq.hz
                                     ? 'cymaticRipple 2s ease-out infinite'
                                     : 'none',
@@ -121,10 +129,11 @@ export function CymaticsConfig({
                         }}
                     >
                         <div
-                            className="text-sm mb-1"
+                            className="text-sm mb-1 font-semibold"
                             style={{
-                                fontFamily: 'Georgia, serif',
-                                color: 'var(--accent-color)'
+                                fontFamily: 'var(--font-display)',
+                                color: 'var(--accent-color)',
+                                letterSpacing: 'var(--tracking-wide)'
                             }}
                         >
                             {selectedFrequency.name}
@@ -142,9 +151,11 @@ export function CymaticsConfig({
             {/* Timing Controls */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3"
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'rgba(253,251,245,0.4)'
                     }}
                 >
@@ -283,9 +294,11 @@ export function CymaticsConfig({
             {/* Options */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3"
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'rgba(253,251,245,0.4)'
                     }}
                 >
@@ -300,7 +313,9 @@ export function CymaticsConfig({
                             border: driftEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                             background: driftEnabled ? 'var(--accent-10)' : 'transparent',
                             color: driftEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
-                            fontFamily: 'Georgia, serif',
+                            fontFamily: 'var(--font-display)',
+                            letterSpacing: 'var(--tracking-wide)',
+                            fontWeight: 500,
                         }}
                     >
                         <span>Drift (Micro-variations)</span>
@@ -315,7 +330,9 @@ export function CymaticsConfig({
                             border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                             background: audioEnabled ? 'var(--accent-10)' : 'transparent',
                             color: audioEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
-                            fontFamily: 'Georgia, serif',
+                            fontFamily: 'var(--font-display)',
+                            letterSpacing: 'var(--tracking-wide)',
+                            fontWeight: 500,
                         }}
                     >
                         <span>Audio</span>

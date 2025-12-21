@@ -192,16 +192,16 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allC
           <h2
             className="text-2xl font-semibold mb-2"
             style={{
-              fontFamily: 'Cinzel, Georgia, serif',
+              fontFamily: 'var(--font-display)',
               color: 'var(--accent-color)',
-              letterSpacing: '0.03em',
+              letterSpacing: 'var(--tracking-tight)',
               textShadow: '0 1px 4px rgba(0,0,0,0.65)',
             }}
           >
             {sanitizedTitle}
           </h2>
           {sanitizedSubtitle && (
-            <p className="text-sm italic" style={{ color: 'rgba(253,251,245,0.6)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+            <p className="text-sm italic" style={{ color: 'rgba(253,251,245,0.6)', fontFamily: 'var(--font-body)' }}>
               {sanitizedSubtitle}
             </p>
           )}
@@ -222,7 +222,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allC
           ref={contentRef}
           className="flex-1 overflow-y-auto px-12 py-8 prose-content"
           style={{
-            fontFamily: 'Crimson Pro, Georgia, serif',
+            fontFamily: 'var(--font-body)',
             fontSize: '17px',
             lineHeight: '1.7',
             color: 'rgba(253,251,245,0.92)',
@@ -308,7 +308,7 @@ function ChapterModal({ chapter, isOpen, onClose, onBookmark, isBookmarked, allC
 
 /* Enhanced markdown styling with custom dividers and list styles */
 .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-  font-family: 'Cinzel', Georgia, serif;
+  font-family: var(--font-display);
   color: var(--accent-color);
   margin-top: 2.5em;
   margin-bottom: 0.9em;
@@ -432,12 +432,12 @@ function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, b
                   Part {part.number}
                 </span>
               )}
-              <span className="text-[13px] font-medium" style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'rgba(253,251,245,0.9)' }}>
+              <span className="text-[13px] font-medium" style={{ fontFamily: 'var(--font-display)', color: 'rgba(253,251,245,0.9)' }}>
                 {part.title}
               </span>
             </div>
             {part.subtitle && (
-              <div className="text-[11px] mt-0.5" style={{ color: 'rgba(253,251,245,0.5)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+              <div className="text-[11px] mt-0.5" style={{ color: 'rgba(253,251,245,0.5)', fontFamily: 'var(--font-body)' }}>
                 {part.subtitle}
               </div>
             )}
@@ -469,7 +469,7 @@ function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, b
                       <span className="text-[11px]" style={{ color: 'var(--accent-color)' }}>
                         {typeof ch.order === 'number' ? ch.order : ch.order}
                       </span>
-                      <span className="text-[13px] font-medium group-hover:text-white transition-colors" style={{ color: 'rgba(253,251,245,0.85)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+                      <span className="text-[13px] font-medium group-hover:text-white transition-colors" style={{ color: 'rgba(253,251,245,0.85)', fontFamily: 'var(--font-body)' }}>
                         {sanitizeText(ch.title)}
                       </span>
                     </div>
@@ -721,7 +721,7 @@ export function WisdomSection() {
             <span className="uppercase tracking-[0.15em]">{currentCategory.label}</span>
           </button>
 
-          <div className="text-[14px] italic leading-relaxed" style={{ color: 'rgba(253,251,245,0.7)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+          <div className="text-[14px] italic leading-relaxed" style={{ color: 'rgba(253,251,245,0.7)', fontFamily: 'var(--font-body)' }}>
             {currentCategory.description}
           </div>
 
@@ -738,7 +738,7 @@ export function WisdomSection() {
                   onClick={() => chapter && openChapterModal(chapter)}
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="text-[15px] font-semibold group-hover:text-white transition-colors" style={{ fontFamily: 'Crimson Pro, Georgia, serif', color: 'rgba(253,251,245,0.9)' }}>
+                    <h3 className="text-[15px] font-semibold group-hover:text-white transition-colors" style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.9)' }}>
                       {sanitizeText(rec.title)}
                     </h3>
                     {chapter && (
@@ -948,7 +948,7 @@ export function WisdomSection() {
       <div className="space-y-4">
         {/* Header */}
         <div className="text-center pb-4 border-b border-[var(--accent-10)]">
-          <h2 className="text-[16px] uppercase tracking-[0.3em] mb-1" style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'var(--accent-color)' }}>
+          <h2 className="text-[16px] uppercase mb-1" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-mythic)', color: 'var(--accent-color)' }}>
             The Treatise
           </h2>
           <p className="text-[12px] italic" style={{ color: 'rgba(253,251,245,0.5)' }}>
@@ -1039,7 +1039,7 @@ export function WisdomSection() {
             <div
               className="text-[14px] italic mb-2"
               style={{
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-body)',
                 color: 'rgba(200,180,255,0.7)',
                 letterSpacing: '0.05em'
               }}
@@ -1234,9 +1234,10 @@ export function WisdomSection() {
             {/* Text prompt above button */}
             <div
               style={{
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 fontSize: '11px',
-                letterSpacing: '0.15em',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
                 color: 'rgba(253,251,245,0.5)',
                 textTransform: 'uppercase',
               }}
@@ -1247,9 +1248,10 @@ export function WisdomSection() {
               onClick={() => setWisdomModalOpen(true)}
               className="px-6 py-3 rounded-full"
               style={{
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 fontSize: '13px',
-                letterSpacing: '0.1em',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
                 color: 'var(--accent-color)',
                 display: 'flex',
                 alignItems: 'center',

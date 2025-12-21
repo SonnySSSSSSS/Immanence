@@ -7,7 +7,10 @@ export function OrbitalSequence({ selectedExercises, onRemove }) {
 
     return (
         <div>
-            <div className="text-xs text-white/40 font-[Outfit] mb-4 uppercase tracking-[0.15em] text-center">
+            <div
+                className="text-xs text-white/40 mb-4 uppercase tracking-[0.15em] text-center font-bold"
+                style={{ fontFamily: 'var(--font-body)' }}
+            >
                 Circuit Sequence · {selectedExercises.length} Paths
             </div>
 
@@ -27,14 +30,14 @@ export function OrbitalSequence({ selectedExercises, onRemove }) {
                 >
                     <div className="text-center">
                         <div
-                            className="text-2xl font-[Cinzel] font-light"
-                            style={{ color: 'var(--accent-color)' }}
+                            className="text-2xl font-bold tracking-wide"
+                            style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-color)' }}
                         >
                             {selectedExercises.length}
                         </div>
                         <div
-                            className="text-[8px] font-[Outfit] uppercase tracking-wider"
-                            style={{ color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)' }}
+                            className="text-[8px] uppercase tracking-wider font-bold"
+                            style={{ fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)' }}
                         >
                             Paths
                         </div>
@@ -100,11 +103,12 @@ export function OrbitalSequence({ selectedExercises, onRemove }) {
 
                                     {/* Duration Badge */}
                                     <div
-                                        className="absolute -bottom-2 px-2 py-0.5 rounded-full text-[9px] font-[Outfit]"
+                                        className="absolute -bottom-2 px-2 py-0.5 rounded-full text-[9px]"
                                         style={{
+                                            fontFamily: 'var(--font-body)',
                                             background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.9)',
                                             color: '#000',
-                                            fontWeight: '600',
+                                            fontWeight: '700',
                                         }}
                                     >
                                         {item.duration}m
@@ -112,13 +116,14 @@ export function OrbitalSequence({ selectedExercises, onRemove }) {
 
                                     {/* Sequence Number */}
                                     <div
-                                        className="absolute -top-2 -right-2 rounded-full text-[10px] font-[Outfit] flex items-center justify-center"
+                                        className="absolute -top-2 -right-2 rounded-full text-[10px] flex items-center justify-center"
                                         style={{
+                                            fontFamily: 'var(--font-body)',
                                             background: 'var(--accent-color)',
                                             color: '#000',
                                             width: '18px',
                                             height: '18px',
-                                            fontWeight: '700',
+                                            fontWeight: '900',
                                         }}
                                     >
                                         {index + 1}
@@ -144,8 +149,8 @@ export function OrbitalSequence({ selectedExercises, onRemove }) {
 
                             {/* Exercise Name Tooltip */}
                             <div
-                                className="absolute top-full mt-2 text-[10px] font-[Outfit] text-white/60 text-center whitespace-nowrap"
-                                style={{ left: '50%', transform: 'translateX(-50%)' }}
+                                className="absolute top-full mt-2 text-[10px] text-white/60 text-center whitespace-nowrap font-medium"
+                                style={{ fontFamily: 'var(--font-body)', left: '50%', transform: 'translateX(-50%)' }}
                             >
                                 {item.exercise.name}
                             </div>
@@ -155,7 +160,10 @@ export function OrbitalSequence({ selectedExercises, onRemove }) {
             </div>
 
             {/* Instructions */}
-            <div className="text-center mt-4 text-[10px] text-white/30 font-[Outfit]">
+            <div
+                className="text-center mt-4 text-[10px] text-white/30 font-medium"
+                style={{ fontFamily: 'var(--font-body)' }}
+            >
                 Tap × to remove · Exercises run clockwise from top
             </div>
         </div>

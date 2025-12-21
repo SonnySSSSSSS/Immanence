@@ -79,8 +79,8 @@ export function HonorLogModal({ isOpen, onClose }) {
                 <div className="flex items-center justify-between mb-5">
                     <div>
                         <h2
-                            className="text-sm font-medium"
-                            style={{ color: 'var(--accent-color)', fontFamily: 'Georgia, serif' }}
+                            className="text-sm font-semibold"
+                            style={{ color: 'var(--accent-color)', fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)' }}
                         >
                             Log Off-App Practice
                         </h2>
@@ -197,9 +197,10 @@ export function HonorLogModal({ isOpen, onClose }) {
                     style={{
                         background: 'linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)',
                         color: '#050508',
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
                         fontSize: '11px',
-                        letterSpacing: '0.1em',
+                        letterSpacing: 'var(--tracking-mythic)',
                         textTransform: 'uppercase',
                         boxShadow: '0 0 20px var(--accent-20)'
                     }}

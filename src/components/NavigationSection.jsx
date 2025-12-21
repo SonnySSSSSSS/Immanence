@@ -71,11 +71,12 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         {/* Text prompt above button */}
         <div
           style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'var(--font-body)',
             fontSize: '11px',
-            letterSpacing: '0.15em',
-            color: 'rgba(253,251,245,0.5)',
+            letterSpacing: 'var(--tracking-wide)',
+            color: 'rgba(253,251,245,0.4)',
             textTransform: 'uppercase',
+            fontStyle: 'italic'
           }}
         >
           Choose direction. Progress deliberately.
@@ -84,9 +85,10 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
           onClick={() => setNavModalOpen(true)}
           className="px-6 py-3 rounded-full"
           style={{
-            fontFamily: 'Georgia, serif',
-            fontSize: '13px',
-            letterSpacing: '0.1em',
+            fontFamily: 'var(--font-display)',
+            fontSize: '12px',
+            fontWeight: 500,
+            letterSpacing: 'var(--tracking-wide)',
             color: showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A',
             display: 'flex',
             alignItems: 'center',
@@ -132,8 +134,8 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             ) : (
               <div className="text-center py-12">
                 <p
-                  className="text-sm text-[rgba(253,251,245,0.5)] italic"
-                  style={{ fontFamily: 'Crimson Pro, serif' }}
+                  className="text-sm text-[rgba(253,251,245,0.5)] italic font-medium"
+                  style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                 >
                   Select a path to view details and begin your journey
                 </p>

@@ -61,8 +61,8 @@ export function WeeklyReview() {
 
                 {/* Header */}
                 <h3
-                    className="application-card-label text-[var(--accent-70)] text-center relative z-10"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="application-card-label text-[var(--accent-70)] text-center relative z-10 font-bold tracking-[0.25em]"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     THIS WEEK
                 </h3>
@@ -70,7 +70,7 @@ export function WeeklyReview() {
                 {/* PRIMARY: Practice Consistency - Big & Clear */}
                 <div className="relative" style={{ zIndex: 10 }}>
                     <div className="text-center mb-6">
-                        <div className="text-4xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}>
+                        <div className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: 'var(--tracking-wide)', color: 'var(--accent-color)' }}>
                             {practiceDays}/{totalDays}
                         </div>
                         <div className="text-xs uppercase tracking-wider text-[var(--accent-60)] mb-3">
@@ -114,7 +114,7 @@ export function WeeklyReview() {
                         <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-2">
                             Awareness
                         </div>
-                        <div className="text-3xl text-[var(--accent-color)] mb-1" style={{ fontFamily: 'Cinzel, serif' }}>
+                        <div className="text-3xl text-[var(--accent-color)] mb-1 font-bold tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                             {weekStats.total}
                         </div>
                         <div className="text-[10px] text-[rgba(253,251,245,0.5)]">
@@ -128,7 +128,7 @@ export function WeeklyReview() {
                             Agency
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-3xl text-[var(--accent-color)]" style={{ fontFamily: 'Cinzel, serif' }}>
+                            <span className="text-3xl text-[var(--accent-color)] font-bold tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                                 {weekStats.respondedDifferently}
                             </span>
                             <span className="text-lg text-[var(--accent-80)]">
@@ -184,8 +184,8 @@ export function WeeklyReview() {
                 {/* Insight */}
                 <div className="border-t border-[var(--accent-10)] pt-4">
                     <p
-                        className="text-sm text-[rgba(253,251,245,0.7)] italic text-center leading-relaxed"
-                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                        className="text-sm text-[rgba(253,251,245,0.7)] italic text-center leading-relaxed font-medium"
+                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                     >
                         {weekStats.total > 0 ? (
                             weekStats.total > 30 ? (

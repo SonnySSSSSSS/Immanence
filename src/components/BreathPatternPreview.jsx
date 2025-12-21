@@ -140,8 +140,8 @@ export function BreathPatternPreview({ pattern }) {
 
             {/* Cycle duration label */}
             <div
-                className="absolute bottom-2 left-3 text-[9px] font-[Georgia] tracking-wider uppercase"
-                style={{ color: 'rgba(255,255,255,0.3)' }}
+                className="absolute bottom-2 left-3 text-[9px] font-semibold tracking-widest uppercase"
+                style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.3)' }}
             >
                 {totalDuration}s Cycle
             </div>

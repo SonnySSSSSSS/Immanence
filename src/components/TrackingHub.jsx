@@ -277,8 +277,8 @@ export function TrackingHub() {
             <div className="mb-3">
                 <div className="flex items-center justify-between mb-2">
                     <div
-                        className="text-[10px] uppercase tracking-[0.2em] text-[rgba(253,251,245,0.65)]"
-                        style={{ fontFamily: 'var(--font-ui, Outfit, sans-serif)' }}
+                        className="text-[10px] uppercase font-bold"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', color: 'rgba(253,251,245,0.65)' }}
                     >
                         Your Progress
                     </div>
@@ -326,8 +326,8 @@ export function TrackingHub() {
                 {/* Swipe hint */}
                 {currentIndex === 0 && (
                     <div
-                        className="text-center mt-1 text-[8px] text-[rgba(253,251,245,0.3)]"
-                        style={{ fontFamily: 'var(--font-ui, Outfit, sans-serif)' }}
+                        className="text-center mt-1 text-[8px] font-bold"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', color: 'rgba(253,251,245,0.3)' }}
                     >
                         ← Swipe to see other domains →
                     </div>
@@ -412,10 +412,11 @@ export function TrackingHub() {
                                                 <Icon name={domain.iconName} size={22} />
                                             </span>
                                             <span
-                                                className="text-sm font-medium"
+                                                className="text-sm font-semibold"
                                                 style={{
                                                     color: 'var(--accent-color)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)'
+                                                    fontFamily: 'var(--font-display)',
+                                                    letterSpacing: 'var(--tracking-wide)'
                                                 }}
                                             >
                                                 {domain.label}
@@ -431,7 +432,7 @@ export function TrackingHub() {
                                                 className="text-[0.55rem] font-light"
                                                 style={{
                                                     color: 'rgba(255, 255, 255, 0.50)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)',
+                                                    fontFamily: 'var(--font-ui)',
                                                     lineHeight: '1.2',
                                                 }}
                                             >
@@ -441,7 +442,7 @@ export function TrackingHub() {
                                                 className="text-[0.55rem] font-light"
                                                 style={{
                                                     color: 'rgba(255, 255, 255, 0.45)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)',
+                                                    fontFamily: 'var(--font-ui)',
                                                     lineHeight: '1.2',
                                                 }}
                                             >
@@ -470,11 +471,11 @@ export function TrackingHub() {
                                                 {stats.totalSessions}
                                             </div>
                                             <div
-                                                className="text-[0.65rem] font-normal"
+                                                className="text-[0.65rem] font-bold"
                                                 style={{
                                                     color: 'rgba(255, 255, 255, 0.35)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)',
-                                                    letterSpacing: '0.03em',
+                                                    fontFamily: 'var(--font-display)',
+                                                    letterSpacing: 'var(--tracking-mythic)',
                                                 }}
                                             >
                                                 SESSIONS
@@ -500,11 +501,11 @@ export function TrackingHub() {
                                                 {stats.totalMinutes}
                                             </div>
                                             <div
-                                                className="text-[0.7rem] font-semibold"
+                                                className="text-[0.7rem] font-bold"
                                                 style={{
                                                     color: 'rgba(255, 248, 230, 0.85)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)',
-                                                    letterSpacing: '0.05em',
+                                                    fontFamily: 'var(--font-display)',
+                                                    letterSpacing: 'var(--tracking-wide)',
                                                     textShadow: '0 0 8px rgba(255, 235, 200, 0.3)',
                                                 }}
                                             >
@@ -530,11 +531,11 @@ export function TrackingHub() {
                                                 {stats.totalHonor}
                                             </div>
                                             <div
-                                                className="text-[0.65rem] font-normal"
+                                                className="text-[0.65rem] font-bold"
                                                 style={{
                                                     color: 'rgba(255, 255, 255, 0.4)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)',
-                                                    letterSpacing: '0.03em',
+                                                    fontFamily: 'var(--font-display)',
+                                                    letterSpacing: 'var(--tracking-mythic)',
                                                 }}
                                             >
                                                 HONOR
@@ -555,11 +556,11 @@ export function TrackingHub() {
 
                                         {/* Semantic label - floats cleanly between numbers and curve */}
                                         <div
-                                            className="text-[10px] font-light mb-4 text-center -mt-5 relative"
+                                            className="text-[10px] font-bold mb-4 text-center -mt-5 relative"
                                             style={{
-                                                color: 'rgba(255, 255, 255, 0.65)',
-                                                fontFamily: 'var(--font-ui, Outfit, sans-serif)',
-                                                letterSpacing: '0.5px',
+                                                color: 'rgba(255, 255, 255, 0.45)',
+                                                fontFamily: 'var(--font-display)',
+                                                letterSpacing: 'var(--tracking-mythic)',
                                                 zIndex: 11,
                                             }}
                                         >
@@ -670,11 +671,11 @@ export function TrackingHub() {
 
                                             {/* DAYS PRACTICED label - 8px below dots */}
                                             <div
-                                                className="text-[10px] font-light text-center mt-2"
+                                                className="text-[10px] font-bold text-center mt-2"
                                                 style={{
-                                                    color: 'rgba(255, 255, 255, 0.6)',
-                                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)',
-                                                    letterSpacing: '0.5px',
+                                                    color: 'rgba(255, 255, 255, 0.4)',
+                                                    fontFamily: 'var(--font-display)',
+                                                    letterSpacing: 'var(--tracking-mythic)',
                                                 }}
                                             >
                                                 DAYS PRACTICED
@@ -697,14 +698,14 @@ export function TrackingHub() {
                             </div>
                         );
                     })}
-                </div >
-            </div >
+                </div>
+            </div>
 
             {/* Dishonor Badge - only shows when ratio > 50% and ≥10 practices */}
-            < div className="mt-4" >
+            <div className="mt-4">
                 <DishonorBadge />
-            </div >
+            </div>
 
-        </div >
+        </div>
     );
 }

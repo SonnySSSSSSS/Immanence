@@ -62,7 +62,8 @@ export function StaticTimer({ elapsedSeconds = 0, opacity = 0.75 }) {
                 <div
                     className="text-2xl tracking-[0.15em]"
                     style={{
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
                         color: 'rgba(255, 255, 255, 0.85)',
                         textShadow: '0 2px 12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1)',
                     }}

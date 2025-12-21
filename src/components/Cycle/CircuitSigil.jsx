@@ -192,14 +192,14 @@ export function CircuitSigil({ selectedExercises = [], totalExercises = 6 }) {
                     transition={{ duration: 0.5 }}
                 >
                     <div
-                        className="text-3xl font-[Cinzel] font-light"
-                        style={{ color: 'var(--accent-color)' }}
+                        className="text-3xl font-bold tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-color)' }}
                     >
                         {selectedExercises.length}
                     </div>
                     <div
-                        className="text-[9px] font-[Outfit] uppercase tracking-wider"
-                        style={{ color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)' }}
+                        className="text-[9px] uppercase tracking-wider font-bold"
+                        style={{ fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)' }}
                     >
                         Paths
                     </div>

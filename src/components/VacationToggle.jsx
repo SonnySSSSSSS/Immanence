@@ -33,8 +33,8 @@ export function VacationToggle({ compact = false }) {
             <button
                 onClick={handleToggle}
                 className={`px-3 py-1.5 rounded-full text-[10px] transition-all ${vacation.active
-                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                        : 'bg-[rgba(253,251,245,0.05)] border-[rgba(253,251,245,0.15)] text-[rgba(253,251,245,0.6)]'
+                    ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                    : 'bg-[rgba(253,251,245,0.05)] border-[rgba(253,251,245,0.15)] text-[rgba(253,251,245,0.6)]'
                     }`}
                 style={{ border: '1px solid' }}
                 title={vacation.active ? 'End vacation mode' : 'Enable vacation mode'}
@@ -63,7 +63,9 @@ export function VacationToggle({ compact = false }) {
                                 className="text-sm font-medium"
                                 style={{
                                     color: vacation.active ? '#3b82f6' : 'rgba(253,251,245,0.8)',
-                                    fontFamily: 'var(--font-ui, Outfit, sans-serif)'
+                                    fontFamily: 'var(--font-display)',
+                                    fontWeight: 600,
+                                    letterSpacing: 'var(--tracking-wide)',
                                 }}
                             >
                                 Vacation Mode
@@ -80,10 +82,10 @@ export function VacationToggle({ compact = false }) {
                     <button
                         onClick={handleToggle}
                         className={`px-4 py-2 rounded-full text-[11px] font-medium transition-all ${vacation.active
-                                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                : 'bg-[rgba(253,251,245,0.1)] text-[rgba(253,251,245,0.8)] hover:bg-[rgba(253,251,245,0.15)]'
+                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-[rgba(253,251,245,0.1)] text-[rgba(253,251,245,0.8)] hover:bg-[rgba(253,251,245,0.15)]'
                             }`}
-                        style={{ fontFamily: 'var(--font-ui, Outfit, sans-serif)' }}
+                        style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-wide)' }}
                     >
                         {vacation.active ? 'End Vacation' : 'Start Vacation'}
                     </button>
@@ -108,8 +110,8 @@ export function VacationToggle({ compact = false }) {
                         <div className="text-center mb-4">
                             <div className="text-3xl mb-2">❄️</div>
                             <h3
-                                className="text-base font-medium mb-1"
-                                style={{ color: '#3b82f6', fontFamily: 'Georgia, serif' }}
+                                className="text-base font-semibold mb-1"
+                                style={{ color: '#3b82f6', fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                             >
                                 Freeze Your Streak?
                             </h3>

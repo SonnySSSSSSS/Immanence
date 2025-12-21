@@ -123,7 +123,9 @@ export function SwordCommitment({ onComplete }) {
                 <h2
                     className="text-lg mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -182,7 +184,9 @@ export function SwordCommitment({ onComplete }) {
                 <h2
                     className="text-lg mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -323,7 +327,9 @@ export function SwordCommitment({ onComplete }) {
                 <h2
                     className="text-lg mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -365,7 +371,9 @@ export function SwordCommitment({ onComplete }) {
                     <p
                         className="text-sm mb-3"
                         style={{
-                            fontFamily: "'Crimson Pro', serif",
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             color: 'rgba(255,255,255,0.95)',
                         }}
                     >
@@ -374,7 +382,9 @@ export function SwordCommitment({ onComplete }) {
                     <p
                         className="text-sm mb-3"
                         style={{
-                            fontFamily: "'Crimson Pro', serif",
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             color: 'rgba(255,255,255,0.95)',
                         }}
                     >
@@ -386,7 +396,9 @@ export function SwordCommitment({ onComplete }) {
                     <p
                         className="text-sm mb-3"
                         style={{
-                            fontFamily: "'Crimson Pro', serif",
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             color: 'rgba(255,255,255,0.95)',
                         }}
                     >
@@ -396,7 +408,9 @@ export function SwordCommitment({ onComplete }) {
                         <p
                             className="text-sm"
                             style={{
-                                fontFamily: "'Crimson Pro', serif",
+                                fontFamily: "var(--font-body)",
+                                fontWeight: 500,
+                                letterSpacing: '0.01em',
                                 color: 'rgba(255,255,255,0.95)',
                             }}
                         >

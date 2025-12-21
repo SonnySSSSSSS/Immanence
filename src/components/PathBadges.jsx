@@ -81,7 +81,9 @@ export function PathSymbol({ path, size = 'normal', showLabel = false }) {
             {showLabel && (
                 <span
                     style={{
-                        fontFamily: 'Outfit, sans-serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         fontSize: size === 'small' ? '0.75rem' : '0.875rem',
                         color: 'rgba(255, 255, 255, 0.7)',
                     }}

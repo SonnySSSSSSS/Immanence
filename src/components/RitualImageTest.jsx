@@ -12,10 +12,10 @@ export function RitualImageTest() {
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
+                    <h1 className="text-3xl font-bold mb-2 tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                         {ritual.icon} {ritual.name}
                     </h1>
-                    <p className="text-sm text-[rgba(253,251,245,0.7)]" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                    <p className="text-sm text-[rgba(253,251,245,0.7)] font-medium" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}>
                         {ritual.tradition}
                     </p>
                 </div>
@@ -27,10 +27,10 @@ export function RitualImageTest() {
                             key={s.id}
                             onClick={() => setCurrentStep(idx)}
                             className={`px-4 py-2 rounded-lg transition-all ${idx === currentStep
-                                    ? 'bg-[var(--accent-primary)] text-[#050508]'
-                                    : 'bg-[#0f0f1a] text-[rgba(253,251,245,0.7)] hover:bg-[#1a1a2e]'
+                                ? 'bg-[var(--accent-primary)] text-[#050508]'
+                                : 'bg-[#0f0f1a] text-[rgba(253,251,245,0.7)] hover:bg-[#1a1a2e]'
                                 }`}
-                            style={{ fontFamily: 'Cinzel, serif', fontSize: '0.875rem' }}
+                            style={{ fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 600, letterSpacing: '0.05em' }}
                         >
                             Step {idx + 1}
                         </button>
@@ -40,7 +40,7 @@ export function RitualImageTest() {
                 {/* Current Step Display */}
                 <div className="bg-[#0f0f1a] rounded-2xl p-8 border border-[rgba(253,195,77,0.15)]">
                     {/* Step Title */}
-                    <h2 className="text-2xl mb-2" style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-primary)' }}>
+                    <h2 className="text-2xl mb-2 font-bold tracking-wide" style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-primary)' }}>
                         {step.name}
                     </h2>
                     <p className="text-sm text-[rgba(253,251,245,0.5)] mb-6">{step.duration}s ({Math.floor(step.duration / 60)} min)</p>
@@ -66,24 +66,24 @@ export function RitualImageTest() {
 
                     {/* Instruction */}
                     <div className="mb-6">
-                        <h3 className="text-sm uppercase tracking-wider mb-2" style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-secondary)' }}>
+                        <h3 className="text-sm uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-wide)', color: 'var(--accent-secondary)' }}>
                             Instruction
                         </h3>
-                        <p className="text-base leading-relaxed" style={{ fontFamily: 'Crimson Pro, serif', color: 'rgba(253,251,245,0.85)' }}>
+                        <p className="text-base leading-relaxed font-medium" style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.85)', letterSpacing: '0.01em' }}>
                             {step.instruction}
                         </p>
                     </div>
 
                     {/* Sensory Cues */}
                     <div>
-                        <h3 className="text-sm uppercase tracking-wider mb-2" style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-secondary)' }}>
+                        <h3 className="text-sm uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-wide)', color: 'var(--accent-secondary)' }}>
                             Sensory Cues
                         </h3>
                         <ul className="space-y-2">
                             {step.sensoryCues.map((cue, idx) => (
                                 <li key={idx} className="flex items-start gap-2">
                                     <span className="text-[var(--accent-primary)] mt-1">•</span>
-                                    <span className="text-sm leading-relaxed" style={{ fontFamily: 'Crimson Pro, serif', color: 'rgba(253,251,245,0.75)' }}>
+                                    <span className="text-sm leading-relaxed font-medium" style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.75)', letterSpacing: '0.01em' }}>
                                         {cue}
                                     </span>
                                 </li>
@@ -98,7 +98,7 @@ export function RitualImageTest() {
                         onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
                         disabled={currentStep === 0}
                         className="px-6 py-3 rounded-lg bg-[#0f0f1a] text-[rgba(253,251,245,0.7)] hover:bg-[#1a1a2e] disabled:opacity-30 disabled:cursor-not-allowed"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.05em' }}
                     >
                         ← Previous
                     </button>
@@ -106,7 +106,7 @@ export function RitualImageTest() {
                         onClick={() => setCurrentStep(Math.min(ritual.steps.length - 1, currentStep + 1))}
                         disabled={currentStep === ritual.steps.length - 1}
                         className="px-6 py-3 rounded-lg bg-[#0f0f1a] text-[rgba(253,251,245,0.7)] hover:bg-[#1a1a2e] disabled:opacity-30 disabled:cursor-not-allowed"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.05em' }}
                     >
                         Next →
                     </button>

@@ -151,7 +151,10 @@ export function LivingBreathWave({ pattern }) {
             <canvas ref={canvasRef} className="block w-full h-full" />
 
             {/* Labels overlay */}
-            <div className="absolute bottom-3 left-3 text-[9px] text-white/30 font-[Georgia] tracking-wider uppercase">
+            <div
+                className="absolute bottom-3 left-3 text-[9px] text-white/30 font-semibold tracking-widest uppercase"
+                style={{ fontFamily: 'var(--font-display)' }}
+            >
                 {totalDuration}s Cycle
             </div>
         </div>

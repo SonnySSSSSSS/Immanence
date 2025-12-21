@@ -196,10 +196,10 @@ export function CodexChamber({ onClose, onNavigate }) {
                 <h1
                     className="transition-all duration-500"
                     style={{
-                        fontFamily: "'Cinzel', serif",
+                        fontFamily: "var(--font-display)",
                         fontSize: '14px',
-                        fontWeight: 300,
-                        letterSpacing: '0.3em',
+                        fontWeight: 700,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: activeQuestion
                             ? CODEX_MODES[activeQuestion]?.color || 'rgba(245, 209, 138, 0.5)'
                             : 'rgba(245, 209, 138, 0.3)',
@@ -323,7 +323,9 @@ export function CodexChamber({ onClose, onNavigate }) {
                 <p
                     className="mb-4 text-center relative z-10"
                     style={{
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 600,
+                        letterSpacing: "var(--tracking-mythic)",
                         fontSize: '10px',
                         letterSpacing: '0.1em',
                         color: 'rgba(253, 251, 245, 0.3)',
@@ -386,9 +388,10 @@ export function CodexChamber({ onClose, onNavigate }) {
                             >
                                 <p
                                     style={{
-                                        fontFamily: "'Crimson Pro', serif",
+                                        fontFamily: "var(--font-body)",
                                         fontSize: isActive ? '18px' : '16px',
-                                        fontWeight: 400,
+                                        fontWeight: 500,
+                                        letterSpacing: '0.01em',
                                         lineHeight: 1.35,
                                         color: isActive
                                             ? modeColor
@@ -417,7 +420,9 @@ export function CodexChamber({ onClose, onNavigate }) {
                         <p
                             className="mt-3 text-center"
                             style={{
-                                fontFamily: "'Outfit', sans-serif",
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 700,
+                                letterSpacing: "var(--tracking-mythic)",
                                 fontSize: '9px',
                                 letterSpacing: '0.08em',
                                 color: CODEX_MODES[activeQuestion]?.color || 'rgba(253, 251, 245, 0.4)',
@@ -431,7 +436,9 @@ export function CodexChamber({ onClose, onNavigate }) {
                         <p
                             className="mt-2 text-center"
                             style={{
-                                fontFamily: "'Outfit', sans-serif",
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 700,
+                                letterSpacing: "var(--tracking-mythic)",
                                 fontSize: '8px',
                                 letterSpacing: '0.12em',
                                 color: 'rgba(253, 251, 245, 0.3)',
@@ -537,7 +544,9 @@ export function CodexChamber({ onClose, onNavigate }) {
                         onClick={onClose}
                         className="transition-colors hover:text-white/40"
                         style={{
-                            fontFamily: "'Outfit', sans-serif",
+                            fontFamily: "var(--font-display)",
+                            fontWeight: 700,
+                            letterSpacing: "var(--tracking-mythic)",
                             fontSize: '9px',
                             letterSpacing: '0.1em',
                             color: 'rgba(253, 251, 245, 0.2)',

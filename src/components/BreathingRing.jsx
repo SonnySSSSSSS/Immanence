@@ -417,8 +417,9 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           letterSpacing: "0.25em",
           textTransform: "uppercase",
           color: 'var(--accent-primary)',
-          fontFamily: "Cinzel, serif",
-          fontWeight: "500",
+          fontFamily: "var(--font-display)",
+          fontWeight: "700",
+          letterSpacing: "var(--tracking-mythic)",
           zIndex: 10,
           pointerEvents: "none",
           textShadow: '0 0 10px var(--accent-glow)'

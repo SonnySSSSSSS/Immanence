@@ -87,24 +87,24 @@ export function PathSelectionGrid() {
                             <div className="relative z-10">
                                 {/* Glyph */}
                                 <div
-                                    className="text-3xl mb-3 text-[var(--accent-70)]"
-                                    style={{ fontFamily: 'Cinzel, serif' }}
+                                    className="text-3xl mb-3 text-[var(--accent-70)] font-bold tracking-wide"
+                                    style={{ fontFamily: 'var(--font-display)' }}
                                 >
                                     {path.glyph}
                                 </div>
 
                                 {/* Title */}
                                 <h3
-                                    className="text-sm font-semibold text-[rgba(253,251,245,0.92)] mb-1.5 leading-tight line-clamp-2"
-                                    style={{ fontFamily: 'Cinzel, serif' }}
+                                    className="text-sm font-bold text-[rgba(253,251,245,0.92)] mb-1.5 leading-tight line-clamp-2 tracking-wide"
+                                    style={{ fontFamily: 'var(--font-display)' }}
                                 >
                                     {path.title}
                                 </h3>
 
                                 {/* Subtitle */}
                                 <p
-                                    className="text-[11px] text-[rgba(253,251,245,0.65)] mb-2.5 leading-snug line-clamp-2"
-                                    style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
+                                    className="text-[11px] text-[rgba(253,251,245,0.65)] mb-2.5 leading-snug line-clamp-2 font-medium"
+                                    style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', letterSpacing: '0.01em' }}
                                 >
                                     {path.subtitle}
                                 </p>

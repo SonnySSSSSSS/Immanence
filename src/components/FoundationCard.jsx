@@ -78,8 +78,8 @@ export function FoundationCard() {
                 {/* Header */}
                 <div className="relative z-10">
                     <h2
-                        className="text-sm uppercase tracking-[0.3em] text-[var(--accent-70)] mb-6"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-sm uppercase tracking-[0.3em] text-[var(--accent-70)] mb-6 font-bold"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         THE FOUNDATION
                     </h2>
@@ -124,8 +124,8 @@ export function FoundationCard() {
 
                     {/* Subtitle */}
                     <p
-                        className="text-base text-[rgba(253,251,245,0.65)] mb-2 italic"
-                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                        className="text-base text-[rgba(253,251,245,0.65)] mb-2 italic font-medium"
+                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                     >
                         Before you choose a path
                     </p>
@@ -149,7 +149,9 @@ export function FoundationCard() {
                                 }
             `}
                             style={{
-                                fontFamily: 'Cinzel, serif',
+                                fontFamily: 'var(--font-display)',
+                                fontWeight: 700,
+                                letterSpacing: 'var(--tracking-wide)',
                                 background: isPlaying ? undefined : 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))'
                             }}
                         >
@@ -158,8 +160,8 @@ export function FoundationCard() {
                     ) : (
                         <button
                             onClick={handleRevisit}
-                            className="text-sm text-[var(--accent-50)] hover:text-[var(--accent-80)] transition-colors"
-                            style={{ fontFamily: 'Crimson Pro, serif' }}
+                            className="text-sm text-[var(--accent-50)] hover:text-[var(--accent-80)] transition-colors font-medium"
+                            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                         >
                             Revisit
                         </button>

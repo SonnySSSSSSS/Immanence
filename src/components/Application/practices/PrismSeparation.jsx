@@ -120,7 +120,9 @@ export function PrismSeparation({ onComplete }) {
                     <p
                         className="text-sm"
                         style={{
-                            fontFamily: "'Crimson Pro', serif",
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             color: 'rgba(255,255,255,0.85)',
                         }}
                     >
@@ -131,7 +133,9 @@ export function PrismSeparation({ onComplete }) {
                 <h2
                     className="text-base mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -246,7 +250,9 @@ export function PrismSeparation({ onComplete }) {
                     <p
                         className="text-center"
                         style={{
-                            fontFamily: "'Crimson Pro', serif",
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             fontSize: '16px',
                             color: 'rgba(255,255,255,0.95)',
                         }}
@@ -259,7 +265,9 @@ export function PrismSeparation({ onComplete }) {
                 <h2
                     className="text-base mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -344,7 +352,9 @@ export function PrismSeparation({ onComplete }) {
                 <h2
                     className="text-lg mb-6 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >

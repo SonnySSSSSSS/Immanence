@@ -34,7 +34,8 @@ function ModeCheck({ onComplete }) {
             <p
                 className="text-xs uppercase tracking-[0.2em] mb-4"
                 style={{
-                    fontFamily: "'Outfit', sans-serif",
+                    fontFamily: "var(--font-ui)",
+                    fontWeight: 600,
                     color: 'rgba(255, 255, 255, 0.4)',
                 }}
             >
@@ -43,7 +44,9 @@ function ModeCheck({ onComplete }) {
             <p
                 className="text-xl mb-8"
                 style={{
-                    fontFamily: "'Crimson Pro', serif",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontStyle: 'italic',
                     color: 'rgba(255, 255, 255, 0.9)',
                 }}
@@ -57,8 +60,9 @@ function ModeCheck({ onComplete }) {
                         onClick={() => handleResponse(option.id)}
                         className="w-full px-6 py-3 rounded border border-white/20 text-white/70 hover:text-white hover:border-white/40 transition-all"
                         style={{
-                            fontFamily: "'Outfit', sans-serif",
+                            fontFamily: "var(--font-ui)",
                             fontSize: '12px',
+                            fontWeight: 600,
                             letterSpacing: '0.05em',
                         }}
                     >
@@ -180,7 +184,8 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                     <p
                         className="text-xs uppercase tracking-[0.2em] mb-4"
                         style={{
-                            fontFamily: "'Outfit', sans-serif",
+                            fontFamily: "var(--font-ui)",
+                            fontWeight: 600,
                             color: 'rgba(147, 197, 253, 0.6)',
                         }}
                     >
@@ -192,7 +197,9 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                             <p
                                 className="text-lg mb-6"
                                 style={{
-                                    fontFamily: "'Crimson Pro', serif",
+                                    fontFamily: "var(--font-body)",
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
                                     color: 'rgba(255, 255, 255, 0.9)',
                                 }}
                             >
@@ -201,7 +208,9 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                             <p
                                 className="text-xs mb-8 max-w-xs"
                                 style={{
-                                    fontFamily: "'Crimson Pro', serif",
+                                    fontFamily: "var(--font-body)",
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
                                     fontStyle: 'italic',
                                     color: 'rgba(255, 255, 255, 0.5)',
                                 }}
@@ -213,7 +222,8 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                                     onClick={onClose}
                                     className="px-6 py-3 rounded border border-white/20 text-white/50 hover:text-white/70 hover:border-white/40 transition-all"
                                     style={{
-                                        fontFamily: "'Outfit', sans-serif",
+                                        fontFamily: "var(--font-ui)",
+                                        fontWeight: 600,
                                         fontSize: '11px',
                                         letterSpacing: '0.08em',
                                     }}
@@ -224,7 +234,8 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                                     onClick={handleProceedToNextMode}
                                     className="px-8 py-3 rounded border transition-all"
                                     style={{
-                                        fontFamily: "'Outfit', sans-serif",
+                                        fontFamily: "var(--font-ui)",
+                                        fontWeight: 600,
                                         fontSize: '11px',
                                         letterSpacing: '0.08em',
                                         borderColor: 'rgba(147, 197, 253, 0.5)',
@@ -241,7 +252,9 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                             <p
                                 className="text-lg mb-6"
                                 style={{
-                                    fontFamily: "'Crimson Pro', serif",
+                                    fontFamily: "var(--font-body)",
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
                                     color: 'rgba(255, 255, 255, 0.9)',
                                 }}
                             >
@@ -250,7 +263,9 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                             <p
                                 className="text-xs mb-8 max-w-xs"
                                 style={{
-                                    fontFamily: "'Crimson Pro', serif",
+                                    fontFamily: "var(--font-body)",
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
                                     fontStyle: 'italic',
                                     color: 'rgba(255, 255, 255, 0.5)',
                                 }}
@@ -261,7 +276,8 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                                 onClick={onClose}
                                 className="px-8 py-3 rounded border transition-all"
                                 style={{
-                                    fontFamily: "'Outfit', sans-serif",
+                                    fontFamily: "var(--font-ui)",
+                                    fontWeight: 600,
                                     fontSize: '11px',
                                     letterSpacing: '0.08em',
                                     borderColor: 'rgba(147, 197, 253, 0.5)',
@@ -294,13 +310,13 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                        <p style={{ fontFamily: "'Crimson Pro', serif", color: 'rgba(255,255,255,0.6)' }}>
+                        <p style={{ fontFamily: "var(--font-body)", fontWeight: 500, letterSpacing: '0.01em', color: 'rgba(255,255,255,0.6)' }}>
                             Practice not found for {mode}
                         </p>
                         <button
                             onClick={handleClose}
                             className="mt-4 px-4 py-2 text-white/50 hover:text-white/80 transition-colors"
-                            style={{ fontFamily: "'Outfit', sans-serif", fontSize: '11px' }}
+                            style={{ fontFamily: "var(--font-ui)", fontWeight: 600, fontSize: '11px' }}
                         >
                             CLOSE
                         </button>
@@ -344,7 +360,8 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                 <div className="absolute top-6 left-6">
                     <span
                         style={{
-                            fontFamily: "'Outfit', sans-serif",
+                            fontFamily: "var(--font-ui)",
+                            fontWeight: 600,
                             fontSize: '10px',
                             letterSpacing: '0.15em',
                             color: config?.accent || 'rgba(255,255,255,0.5)',
@@ -359,7 +376,8 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                 <div
                     className="absolute top-6 left-1/2 transform -translate-x-1/2"
                     style={{
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "var(--font-ui)",
+                        fontWeight: 600,
                         fontSize: '10px',
                         letterSpacing: '0.2em',
                         textTransform: 'uppercase',

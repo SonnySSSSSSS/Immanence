@@ -33,19 +33,19 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
         <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
           <h2
             className="text-lg mb-4"
-            style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
+            style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: 'var(--tracking-mythic)', color: 'var(--accent-color)' }}
           >
             Application
           </h2>
           <p
             className="text-base text-[rgba(253,251,245,0.7)] mb-2 leading-relaxed"
-            style={{ fontFamily: 'Crimson Pro, serif' }}
+            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.02em' }}
           >
             This is where practice meets life.
           </p>
           <p
             className="text-sm text-[rgba(253,251,245,0.6)] mb-6 leading-relaxed italic"
-            style={{ fontFamily: 'Crimson Pro, serif' }}
+            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.02em' }}
           >
             You'll track moments of awareness—when you catch yourself in old patterns.
           </p>
@@ -59,7 +59,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
               }
             }}
             className="px-6 py-3 rounded-full text-[#050508] font-semibold text-sm"
-            style={{ fontFamily: 'Cinzel, serif', background: 'var(--ui-button-gradient)' }}
+            style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', background: 'var(--ui-button-gradient)' }}
           >
             GO TO NAVIGATION
           </button>
@@ -108,9 +108,10 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
         {/* Text prompt above button */}
         <div
           style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'var(--font-display)',
             fontSize: '11px',
-            letterSpacing: '0.15em',
+            fontWeight: 600,
+            letterSpacing: 'var(--tracking-mythic)',
             color: 'rgba(253,251,245,0.5)',
             textTransform: 'uppercase',
           }}
@@ -121,9 +122,10 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
           onClick={() => setAppModalOpen(true)}
           className="px-6 py-3 rounded-full"
           style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 600,
             fontSize: '13px',
-            letterSpacing: '0.1em',
+            letterSpacing: 'var(--tracking-mythic)',
             color: 'var(--gold-100)',
             display: 'flex',
             alignItems: 'center',

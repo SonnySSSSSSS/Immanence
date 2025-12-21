@@ -121,7 +121,9 @@ export function WaveRide({ onComplete }) {
                 <h2
                     className="text-lg mb-6 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -219,7 +221,9 @@ export function WaveRide({ onComplete }) {
                 <h2
                     className="text-lg mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -293,7 +297,9 @@ export function WaveRide({ onComplete }) {
                 <h2
                     className="text-lg mb-2 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >
@@ -418,8 +424,10 @@ export function WaveRide({ onComplete }) {
                         <span
                             className="text-3xl"
                             style={{
-                                fontFamily: "'Outfit', sans-serif",
+                                fontFamily: "var(--font-ui)",
+                                fontWeight: 700,
                                 color: 'rgba(255,255,255,0.9)',
+                                letterSpacing: 'var(--tracking-wide)',
                             }}
                         >
                             {formatTime(timeRemaining)}
@@ -431,7 +439,9 @@ export function WaveRide({ onComplete }) {
                 <p
                     className="text-sm text-center mb-8 max-w-xs"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         fontStyle: 'italic',
                         color: 'rgba(255,255,255,0.6)',
                     }}
@@ -466,7 +476,9 @@ export function WaveRide({ onComplete }) {
                 <h2
                     className="text-lg mb-6 text-center"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.9)',
                     }}
                 >

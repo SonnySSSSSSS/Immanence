@@ -22,19 +22,26 @@ export function ConsistencyFoundation() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-[Cinzel] text-white/90">
+                        <h3
+                            className="text-lg font-bold tracking-wide text-white/90"
+                            style={{ fontFamily: 'var(--font-display)' }}
+                        >
                             Consistency Foundation
                         </h3>
                         <div className="text-2xl">◯</div>
                     </div>
 
-                    <p className="text-sm text-white/60 font-[Outfit] mb-4 leading-relaxed">
+                    <p
+                        className="text-sm text-white/60 font-medium mb-4 leading-relaxed"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         Ready to establish your practice foundation? Choose your commitment structure.
                     </p>
 
                     <button
                         onClick={() => setShowCycleChoice(true)}
-                        className="w-full px-4 py-2 bg-[#fcd34d] text-black rounded font-[Outfit] hover:bg-[#fcd34d]/90 transition-colors"
+                        className="w-full px-4 py-2 bg-[#fcd34d] text-black rounded font-bold tracking-wide hover:bg-[#fcd34d]/90 transition-colors"
+                        style={{ fontFamily: 'var(--font-body)' }}
                     >
                         Begin Foundation Cycle
                     </button>
@@ -64,10 +71,16 @@ export function ConsistencyFoundation() {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-lg font-[Cinzel] text-white/90 capitalize">
+                    <h3
+                        className="text-lg font-bold tracking-wide text-white/90 capitalize"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         {info.type} Cycle
                     </h3>
-                    <div className="text-xs text-white/50 font-[Outfit]">
+                    <div
+                        className="text-xs text-white/50 font-medium"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         Day {info.currentDay} of {info.targetDays} · {info.mode}
                     </div>
                 </div>
@@ -93,29 +106,61 @@ export function ConsistencyFoundation() {
             {/* Metrics Grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="p-3 bg-white/5 rounded border border-white/10">
-                    <div className="text-xs text-white/50 font-[Outfit] mb-1">Practice Days</div>
-                    <div className="text-lg font-[Cinzel] text-white/90">
+                    <div
+                        className="text-xs text-white/50 font-medium mb-1"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                        Practice Days
+                    </div>
+                    <div
+                        className="text-lg font-bold text-white/90"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         {info.practiceDays} / {Math.ceil(info.targetDays * (info.baseline / 100))}
                     </div>
                 </div>
 
                 <div className="p-3 bg-white/5 rounded border border-white/10">
-                    <div className="text-xs text-white/50 font-[Outfit] mb-1">Consistency</div>
-                    <div className="text-lg font-[Cinzel] text-white/90">
+                    <div
+                        className="text-xs text-white/50 font-medium mb-1"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                        Consistency
+                    </div>
+                    <div
+                        className="text-lg font-bold text-white/90"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         {info.consistencyRate}%
                     </div>
                 </div>
 
                 <div className="p-3 bg-white/5 rounded border border-white/10">
-                    <div className="text-xs text-white/50 font-[Outfit] mb-1">Effective Days</div>
-                    <div className="text-lg font-[Cinzel] text-white/90">
+                    <div
+                        className="text-xs text-white/50 font-medium mb-1"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                        Effective Days
+                    </div>
+                    <div
+                        className="text-lg font-bold text-white/90"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         {info.effectiveDays}
                     </div>
                 </div>
 
                 <div className="p-3 bg-white/5 rounded border border-white/10">
-                    <div className="text-xs text-white/50 font-[Outfit] mb-1">Projected</div>
-                    <div className="text-lg font-[Cinzel] text-white/90">
+                    <div
+                        className="text-xs text-white/50 font-medium mb-1"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                        Projected
+                    </div>
+                    <div
+                        className="text-lg font-bold text-white/90"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         Day {info.projectedCompletion}
                     </div>
                 </div>
@@ -124,10 +169,16 @@ export function ConsistencyFoundation() {
             {/* Next Checkpoint */}
             {info.nextCheckpoint && (
                 <div className="p-3 bg-[#fcd34d]/10 border border-[#fcd34d]/20 rounded">
-                    <div className="text-xs text-[#fcd34d]/80 font-[Outfit] mb-1">
+                    <div
+                        className="text-xs text-[#fcd34d]/80 font-bold mb-1"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         Next Checkpoint
                     </div>
-                    <div className="text-sm text-[#fcd34d] font-[Outfit]">
+                    <div
+                        className="text-sm text-[#fcd34d] font-bold"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         {new Date(info.nextCheckpoint).toLocaleDateString()}
                         {canSwitchMode && ' · Mode change available'}
                     </div>

@@ -47,8 +47,9 @@ export function PrismReframing({ onComplete }) {
                 <p
                     className="text-2xl"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        fontStyle: 'italic',
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.8)',
                         opacity: 0,
                         animation: 'fadeIn 2s ease-out forwards',
@@ -74,8 +75,9 @@ export function PrismReframing({ onComplete }) {
                 <p
                     className="text-xl mb-8"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        fontStyle: 'italic',
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.9)',
                     }}
                 >
@@ -84,7 +86,9 @@ export function PrismReframing({ onComplete }) {
                 <p
                     className="text-sm mb-8 max-w-xs"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.5)',
                     }}
                 >
@@ -94,7 +98,9 @@ export function PrismReframing({ onComplete }) {
                 <p
                     className="text-xs mb-8 max-w-sm"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         fontStyle: 'italic',
                         color: 'rgba(251, 191, 36, 0.6)',
                     }}
@@ -104,7 +110,7 @@ export function PrismReframing({ onComplete }) {
                 <button
                     onClick={onComplete}
                     className="px-6 py-2 rounded border border-white/30 text-white/70 hover:text-white hover:border-white/50 transition-all"
-                    style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', letterSpacing: '0.1em' }}
+                    style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: '11px', letterSpacing: 'var(--tracking-wide)' }}
                 >
                     END PRACTICE
                 </button>
@@ -140,7 +146,9 @@ export function PrismReframing({ onComplete }) {
             <p
                 className="text-lg mb-2 text-center"
                 style={{
-                    fontFamily: "'Crimson Pro', serif",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontStyle: 'italic',
                     color: 'rgba(255, 255, 255, 0.9)',
                 }}
@@ -153,9 +161,10 @@ export function PrismReframing({ onComplete }) {
                 <p
                     className="text-xs mb-6 text-center max-w-sm"
                     style={{
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "var(--font-ui)",
+                        fontWeight: 600,
                         color: 'rgba(251, 191, 36, 0.5)',
-                        letterSpacing: '0.05em',
+                        letterSpacing: 'var(--tracking-wide)',
                     }}
                 >
                     {constraints[currentFrame]}
@@ -171,7 +180,9 @@ export function PrismReframing({ onComplete }) {
                 placeholder="Type your response..."
                 className="w-full max-w-sm h-24 px-4 py-3 mb-6 rounded bg-white/5 border border-white/10 text-white placeholder-white/30 resize-none focus:outline-none focus:border-amber-400/50"
                 style={{
-                    fontFamily: "'Crimson Pro', serif",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontSize: '14px',
                 }}
             />
@@ -181,7 +192,7 @@ export function PrismReframing({ onComplete }) {
                 onClick={handleNextFrame}
                 disabled={!currentInput.trim()}
                 className="px-6 py-2 rounded border border-amber-400/30 text-amber-300/70 hover:text-amber-200 hover:border-amber-400/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', letterSpacing: '0.1em' }}
+                style={{ fontFamily: "var(--font-ui)", fontWeight: 600, fontSize: '12px', letterSpacing: '0.1em' }}
             >
                 {currentFrame < frames.length - 1 ? 'NEXT FRAME' : 'COMPLETE'}
             </button>

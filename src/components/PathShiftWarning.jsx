@@ -64,7 +64,9 @@ export function PathShiftWarning({ compact = false }) {
             {/* Message */}
             <div
                 style={{
-                    fontFamily: 'Crimson Pro, serif',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontSize: compact ? '0.8125rem' : '0.9375rem',
                     color: 'rgba(255, 255, 255, 0.7)',
                     textAlign: 'center',
@@ -99,7 +101,9 @@ export function PathShiftWarning({ compact = false }) {
             {/* Days remaining */}
             <div
                 style={{
-                    fontFamily: 'Outfit, sans-serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
                     fontSize: compact ? '0.6875rem' : '0.75rem',
                     color: 'rgba(255, 255, 255, 0.5)',
                 }}

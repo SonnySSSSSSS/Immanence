@@ -25,8 +25,10 @@ function FlowSection({ label, sublabel, children, isGesture = false }) {
                         <span
                             className="text-[9px] ml-2 italic"
                             style={{
-                                fontFamily: 'Crimson Pro, serif',
+                                fontFamily: 'var(--font-body)',
                                 color: 'rgba(253,251,245,0.35)',
+                                fontWeight: 500,
+                                letterSpacing: '0.02em'
                             }}
                         >
                             — {sublabel}
@@ -107,8 +109,10 @@ export function TrackingView() {
                     <span
                         className="text-[9px] ml-2 italic"
                         style={{
-                            fontFamily: 'Crimson Pro, serif',
+                            fontFamily: 'var(--font-body)',
                             color: 'rgba(253,251,245,0.35)',
+                            fontWeight: 500,
+                            letterSpacing: '0.02em'
                         }}
                     >
                         — the story forming
@@ -125,10 +129,12 @@ export function TrackingView() {
                 <p
                     className="text-[10px] italic max-w-xs mx-auto"
                     style={{
-                        fontFamily: 'Crimson Pro, serif',
+                        fontFamily: 'var(--font-body)',
                         color: 'var(--accent-40)',
                         opacity: 0.6,
                         lineHeight: 1.6,
+                        fontWeight: 500,
+                        letterSpacing: '0.01em'
                     }}
                 >
                     Small gestures count. You're not stuck — you're forming a direction.

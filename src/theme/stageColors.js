@@ -123,9 +123,9 @@ export const BASE_THEME = {
         label: 'rgba(255, 255, 255, 0.5)',
     },
     fonts: {
-        heading: "'Cinzel', serif",
-        body: "'Crimson Pro', serif",
-        ui: "'Outfit', sans-serif",
+        heading: "var(--font-display)",
+        body: "var(--font-body)",
+        ui: "var(--font-ui)",
     }
 };
 

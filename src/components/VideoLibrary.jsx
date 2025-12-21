@@ -115,15 +115,17 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear 
                     <h2
                         className="text-lg mb-1"
                         style={{
-                            fontFamily: 'Cinzel, serif',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-wide)',
                             color: 'var(--accent-color)',
                         }}
                     >
                         {video.title}
                     </h2>
                     <div
-                        className="text-[11px] text-neutral-500"
-                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                        className="text-[11px] text-neutral-500 font-medium"
+                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                     >
                         {video.duration} • {video.description}
                     </div>
@@ -186,7 +188,9 @@ function VideoToken({ video, isSelected, onClick }) {
                 className="text-[11px] leading-tight line-clamp-2"
                 style={{
                     color: isSelected ? 'rgba(255,220,180,0.95)' : 'rgba(255,255,255,0.6)',
-                    fontFamily: 'Georgia, serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-wide)',
                 }}
             >
                 {video.title}
@@ -245,7 +249,9 @@ function OfferingBand({ label, videos, activeVideoId, onSelect }) {
                     className="text-[10px] uppercase tracking-[0.2em]"
                     style={{
                         color: 'rgba(255,200,120,0.6)',
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                     }}
                 >
                     ▶ {label}

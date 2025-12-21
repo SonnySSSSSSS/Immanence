@@ -88,8 +88,9 @@ export function SwordCompression({ onComplete }) {
                 <p
                     className="text-2xl"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        fontStyle: 'italic',
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.8)',
                         opacity: 0,
                         animation: 'fadeIn 2s ease-out forwards',
@@ -115,8 +116,9 @@ export function SwordCompression({ onComplete }) {
                 <p
                     className="text-xl mb-8"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        fontStyle: 'italic',
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.9)',
                     }}
                 >
@@ -125,7 +127,9 @@ export function SwordCompression({ onComplete }) {
                 <p
                     className="text-sm mb-8 max-w-xs"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.5)',
                     }}
                 >
@@ -136,7 +140,9 @@ export function SwordCompression({ onComplete }) {
                     <p
                         className="text-xs mb-8 max-w-sm"
                         style={{
-                            fontFamily: "'Crimson Pro', serif",
+                            fontFamily: "var(--font-body)",
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             fontStyle: 'italic',
                             color: 'rgba(248, 113, 113, 0.6)',
                         }}
@@ -147,7 +153,7 @@ export function SwordCompression({ onComplete }) {
                 <button
                     onClick={onComplete}
                     className="px-6 py-2 rounded border border-white/30 text-white/70 hover:text-white hover:border-white/50 transition-all"
-                    style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', letterSpacing: '0.1em' }}
+                    style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: '11px', letterSpacing: 'var(--tracking-wide)' }}
                 >
                     END PRACTICE
                 </button>
@@ -164,7 +170,7 @@ export function SwordCompression({ onComplete }) {
                     <button
                         onClick={toggleTimer}
                         className="text-xs text-white/40 hover:text-white/60 transition-colors"
-                        style={{ fontFamily: "'Outfit', sans-serif", letterSpacing: '0.05em' }}
+                        style={{ fontFamily: "var(--font-ui)", fontWeight: 600, letterSpacing: '0.05em' }}
                     >
                         {timerEnabled ? '⏱ TIMED (60s)' : '⏱ UNTIMED'}
                     </button>
@@ -193,7 +199,9 @@ export function SwordCompression({ onComplete }) {
             <p
                 className="text-lg mb-4 text-center"
                 style={{
-                    fontFamily: "'Crimson Pro', serif",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontStyle: 'italic',
                     color: 'rgba(255, 255, 255, 0.9)',
                 }}
@@ -210,7 +218,9 @@ export function SwordCompression({ onComplete }) {
                 placeholder="Type here..."
                 className="w-full max-w-sm px-4 py-2 mb-6 rounded bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-red-400/50"
                 style={{
-                    fontFamily: "'Crimson Pro', serif",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontSize: '14px',
                 }}
             />
@@ -220,7 +230,7 @@ export function SwordCompression({ onComplete }) {
                 onClick={handleNext}
                 disabled={!currentInput.trim()}
                 className="px-6 py-2 rounded border border-red-400/30 text-red-300/70 hover:text-red-200 hover:border-red-400/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', letterSpacing: '0.1em' }}
+                style={{ fontFamily: "var(--font-ui)", fontWeight: 600, fontSize: '12px', letterSpacing: '0.1em' }}
             >
                 {currentStep < steps.length - 1 ? 'NEXT' : 'COMMIT'}
             </button>

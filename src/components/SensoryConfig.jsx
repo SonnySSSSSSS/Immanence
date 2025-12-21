@@ -18,11 +18,12 @@ export function SensoryConfig({
             <div
                 className="mb-3"
                 style={{
-                    fontFamily: "Georgia, serif",
+                    fontFamily: "var(--font-display)",
                     fontSize: "9px",
-                    letterSpacing: "0.25em",
+                    fontWeight: 600,
+                    letterSpacing: "var(--tracking-mythic)",
                     textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.55)",
+                    color: "rgba(253,251,245,0.45)",
                     textAlign: "center"
                 }}
             >
@@ -35,9 +36,10 @@ export function SensoryConfig({
                         onClick={() => setSensoryType(type.id)}
                         className="rounded-xl px-3 py-3 transition-all duration-200 text-center flex flex-col items-center gap-1"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "11px",
-                            letterSpacing: "0.05em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-wide)",
                             background: sensoryType === type.id ? "rgba(255,255,255,0.05)" : "transparent",
                             border: `1px solid ${sensoryType === type.id ? "var(--accent-color)" : "var(--accent-10)"}`,
                             boxShadow: sensoryType === type.id ? "0 0 15px var(--accent-10)" : "none"

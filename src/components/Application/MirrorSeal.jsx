@@ -109,9 +109,10 @@ function MintedCard({ sentence, isSealed }) {
                 <motion.p
                     className="text-center leading-relaxed"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
                         fontSize: '18px',
                         fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.95)',
                         lineHeight: 1.6,
                     }}
@@ -209,7 +210,9 @@ export function MirrorSeal({
                         <motion.p
                             className="text-lg italic max-w-md mx-auto mb-8 leading-relaxed"
                             style={{
-                                fontFamily: "'Crimson Pro', serif",
+                                fontFamily: "var(--font-body)",
+                                fontWeight: 500,
+                                letterSpacing: '0.01em',
                                 color: 'rgba(255,255,255,0.6)',
                             }}
                         >
@@ -226,7 +229,7 @@ export function MirrorSeal({
                                 background: 'linear-gradient(135deg, rgba(255,220,120,0.2) 0%, rgba(255,220,120,0.1) 100%)',
                                 border: '1px solid var(--accent-40)',
                                 color: 'var(--accent-color)',
-                                fontFamily: 'Outfit, sans-serif',
+                                fontFamily: 'var(--font-ui)',
                                 fontSize: '12px',
                                 letterSpacing: '0.15em',
                             }}
@@ -268,7 +271,9 @@ export function MirrorSeal({
                             transition={{ duration: 1.5 }}
                             className="text-lg italic max-w-md mx-auto"
                             style={{
-                                fontFamily: "'Crimson Pro', serif",
+                                fontFamily: "var(--font-body)",
+                                fontWeight: 500,
+                                letterSpacing: '0.01em',
                                 color: 'rgba(255,255,255,0.6)',
                             }}
                         >
@@ -336,7 +341,7 @@ export function MirrorSeal({
                                         background: 'linear-gradient(135deg, var(--accent-30) 0%, var(--accent-20) 100%)',
                                         border: '1px solid var(--accent-50)',
                                         color: 'var(--accent-color)',
-                                        fontFamily: 'Outfit, sans-serif',
+                                        fontFamily: 'var(--font-ui)',
                                         fontSize: '13px',
                                         letterSpacing: '0.12em',
                                         opacity: isValidating ? 0.5 : 1,

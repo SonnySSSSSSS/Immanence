@@ -54,7 +54,7 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
                         {/* Title */}
                         <h3
                             className="text-xs uppercase tracking-[0.2em] text-center mb-3"
-                            style={{ fontFamily: 'Outfit, sans-serif', color: 'var(--accent-color)', opacity: 0.8 }}
+                            style={{ fontFamily: 'var(--font-ui)', fontWeight: 700, color: 'var(--accent-color)', opacity: 0.8 }}
                         >
                             {type === 'date' ? 'When?' : type === 'time' ? 'What time?' : 'Where?'}
                         </h3>
@@ -72,8 +72,9 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
                                             : 'rgba(255,255,255,0.03)',
                                         border: `1px solid ${value === opt ? 'var(--accent-40)' : 'rgba(255,255,255,0.08)'}`,
                                         color: value === opt ? 'var(--accent-color)' : 'rgba(255,255,255,0.6)',
-                                        fontFamily: 'Crimson Pro, serif',
-                                        letterSpacing: '0.02em',
+                                        fontFamily: 'var(--font-body)',
+                                        fontWeight: 500,
+                                        letterSpacing: '0.01em',
                                     }}
                                 >
                                     {opt}
@@ -91,7 +92,9 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
                                 placeholder={`Or type custom ${type}...`}
                                 className="flex-1 px-3 py-2 rounded-lg text-center text-sm bg-white/5 border border-white/10 focus:border-[var(--accent-30)] focus:outline-none"
                                 style={{
-                                    fontFamily: 'Crimson Pro, serif',
+                                    fontFamily: 'var(--font-body)',
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
                                     color: 'rgba(255,255,255,0.85)',
                                 }}
                             />
@@ -106,7 +109,8 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
                                 background: 'transparent',
                                 border: '1px solid var(--accent-30)',
                                 color: 'var(--accent-color)',
-                                fontFamily: 'Outfit, sans-serif',
+                                fontFamily: 'var(--font-ui)',
+                                fontWeight: 700,
                             }}
                         >
                             Done
@@ -136,8 +140,9 @@ function Token({ value, placeholder, type, onClick, isActive }) {
             <span
                 className="text-lg"
                 style={{
-                    fontFamily: 'Crimson Pro, serif',
+                    fontFamily: 'var(--font-body)',
                     fontWeight: 500,
+                    letterSpacing: '0.01em',
                     color: value ? 'var(--accent-color)' : 'rgba(255,220,120,0.5)',
                     fontStyle: value ? 'normal' : 'italic',
                 }}
@@ -169,7 +174,9 @@ export function SentenceBuilder({ values = {}, onChange }) {
             <div
                 className="text-center py-6 px-4 leading-relaxed"
                 style={{
-                    fontFamily: 'Crimson Pro, serif',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontSize: '18px',
                     color: 'rgba(253,251,245,0.85)',
                 }}
@@ -238,7 +245,8 @@ export function ActorActionBuilder({ values = {}, onChange }) {
                         className="text-[11px] uppercase tracking-[0.2em] mb-2"
                         style={{
                             color: 'rgba(255,255,255,0.4)',
-                            fontFamily: 'Outfit, sans-serif',
+                            fontFamily: 'var(--font-ui)',
+                            fontWeight: 600,
                         }}
                     >
                         {field.prompt}
@@ -255,8 +263,9 @@ export function ActorActionBuilder({ values = {}, onChange }) {
                             placeholder={field.placeholder}
                             className="w-full max-w-xs bg-transparent text-center text-2xl focus:outline-none border-b-2 pb-2 transition-all"
                             style={{
-                                fontFamily: "'Crimson Pro', serif",
+                                fontFamily: "var(--font-body)",
                                 fontWeight: 500,
+                                letterSpacing: '0.01em',
                                 color: values[field.key] ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.3)',
                                 borderColor: activeField === field.key
                                     ? 'var(--accent-50)'

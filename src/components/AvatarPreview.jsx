@@ -68,7 +68,12 @@ export function AvatarPreview({
             <div className="text-center mb-6">
                 <h2
                     className="text-2xl font-medium tracking-wide"
-                    style={{ fontFamily: 'Cinzel, Georgia, serif', color: stageColor }}
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
+                        color: stageColor
+                    }}
                 >
                     {stage} · {showCore ? 'Core' : path}
                 </h2>

@@ -73,8 +73,9 @@ export function MirrorStillness({ onComplete }) {
                 <p
                     className="text-2xl"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        fontStyle: 'italic',
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.8)',
                         opacity: 0,
                         animation: 'fadeIn 2s ease-out forwards',
@@ -98,8 +99,9 @@ export function MirrorStillness({ onComplete }) {
                 <p
                     className="text-xl mb-8"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
-                        fontStyle: 'italic',
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.9)',
                     }}
                 >
@@ -108,7 +110,9 @@ export function MirrorStillness({ onComplete }) {
                 <p
                     className="text-sm mb-8 max-w-xs"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255, 255, 255, 0.5)',
                     }}
                 >
@@ -117,7 +121,7 @@ export function MirrorStillness({ onComplete }) {
                 <button
                     onClick={onComplete}
                     className="px-6 py-2 rounded border border-white/30 text-white/70 hover:text-white hover:border-white/50 transition-all"
-                    style={{ fontFamily: "'Outfit', sans-serif", fontSize: '12px', letterSpacing: '0.1em' }}
+                    style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: '11px', letterSpacing: 'var(--tracking-wide)' }}
                 >
                     END PRACTICE
                 </button>
@@ -160,9 +164,10 @@ export function MirrorStillness({ onComplete }) {
                     <span
                         className="text-4xl font-light"
                         style={{
-                            fontFamily: "'Outfit', sans-serif",
+                            fontFamily: "var(--font-ui)",
+                            fontWeight: 700,
                             color: 'rgba(255, 255, 255, 0.9)',
-                            letterSpacing: '0.05em',
+                            letterSpacing: 'var(--tracking-wide)',
                         }}
                     >
                         {timeDisplay}
@@ -174,7 +179,7 @@ export function MirrorStillness({ onComplete }) {
             <button
                 onClick={handleEndEarly}
                 className="px-4 py-2 text-white/40 hover:text-white/60 transition-colors"
-                style={{ fontFamily: "'Outfit', sans-serif", fontSize: '11px', letterSpacing: '0.1em' }}
+                style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: '10px', letterSpacing: 'var(--tracking-wide)' }}
             >
                 END EARLY
             </button>

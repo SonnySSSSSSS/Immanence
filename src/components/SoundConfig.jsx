@@ -72,11 +72,12 @@ export function SoundConfig({
                 <div
                     className="mb-3"
                     style={{
-                        fontFamily: "Georgia, serif",
+                        fontFamily: "var(--font-display)",
                         fontSize: "9px",
-                        letterSpacing: "0.25em",
+                        fontWeight: 600,
+                        letterSpacing: "var(--tracking-mythic)",
                         textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.55)",
+                        color: "rgba(253,251,245,0.45)",
                         textAlign: "center"
                     }}
                 >
@@ -89,9 +90,10 @@ export function SoundConfig({
                             onClick={() => setSoundType(type)}
                             className="rounded-xl px-3 py-2.5 transition-all duration-200 text-center"
                             style={{
-                                fontFamily: "Georgia, serif",
-                                fontSize: "10px",
-                                letterSpacing: "0.05em",
+                                fontFamily: "var(--font-display)",
+                                fontSize: "11px",
+                                fontWeight: 500,
+                                letterSpacing: "var(--tracking-wide)",
                                 background: soundType === type ? "rgba(255,255,255,0.05)" : "transparent",
                                 border: `1px solid ${soundType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
                                 color: soundType === type ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
@@ -111,9 +113,10 @@ export function SoundConfig({
                     <div
                         className="mb-3"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "9px",
-                            letterSpacing: "0.25em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
                             color: "rgba(253,251,245,0.55)",
                             textAlign: "center"
@@ -137,9 +140,9 @@ export function SoundConfig({
                             >
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-display)",
                                         fontSize: "11px",
-                                        fontWeight: 500,
+                                        fontWeight: 600,
                                         color: binauralPreset?.id === preset.id ? preset.color : "rgba(253,251,245,0.7)",
                                     }}
                                 >
@@ -147,7 +150,7 @@ export function SoundConfig({
                                 </span>
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-body)",
                                         fontSize: "8px",
                                         color: "rgba(253,251,245,0.4)",
                                     }}
@@ -161,7 +164,7 @@ export function SoundConfig({
                         <p
                             className="mt-3 text-center"
                             style={{
-                                fontFamily: "Georgia, serif",
+                                fontFamily: "var(--font-body)",
                                 fontSize: "10px",
                                 fontStyle: "italic",
                                 color: "rgba(253,251,245,0.5)",
@@ -176,11 +179,12 @@ export function SoundConfig({
                         <div
                             className="mb-2 flex items-center justify-between"
                             style={{
-                                fontFamily: "Georgia, serif",
+                                fontFamily: "var(--font-display)",
                                 fontSize: "8px",
-                                letterSpacing: "0.2em",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
                                 textTransform: "uppercase",
-                                color: "rgba(253,251,245,0.5)",
+                                color: "rgba(253,251,245,0.45)",
                             }}
                         >
                             <span>Base Frequency</span>
@@ -311,9 +315,10 @@ export function SoundConfig({
                     <div
                         className="mb-3"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "9px",
-                            letterSpacing: "0.25em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
                             color: "rgba(253,251,245,0.55)",
                             textAlign: "center"
@@ -337,9 +342,9 @@ export function SoundConfig({
                             >
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-display)",
                                         fontSize: "11px",
-                                        fontWeight: 500,
+                                        fontWeight: 600,
                                         color: isochronicPreset?.id === preset.id ? preset.color : "rgba(253,251,245,0.7)",
                                     }}
                                 >
@@ -347,7 +352,7 @@ export function SoundConfig({
                                 </span>
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-body)",
                                         fontSize: "8px",
                                         color: "rgba(253,251,245,0.4)",
                                     }}
@@ -361,7 +366,7 @@ export function SoundConfig({
                         <p
                             className="mt-3 text-center"
                             style={{
-                                fontFamily: "Georgia, serif",
+                                fontFamily: "var(--font-body)",
                                 fontSize: "10px",
                                 fontStyle: "italic",
                                 color: "rgba(253,251,245,0.5)",
@@ -379,11 +384,12 @@ export function SoundConfig({
                     <div
                         className="mb-3"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "9px",
-                            letterSpacing: "0.25em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.55)",
+                            color: "rgba(253,251,245,0.45)",
                             textAlign: "center"
                         }}
                     >
@@ -405,9 +411,9 @@ export function SoundConfig({
                             >
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-display)",
                                         fontSize: "12px",
-                                        fontWeight: 500,
+                                        fontWeight: 600,
                                         color: mantraPreset?.id === preset.id ? "var(--accent-color)" : "rgba(253,251,245,0.7)",
                                     }}
                                 >
@@ -415,7 +421,7 @@ export function SoundConfig({
                                 </span>
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-body)",
                                         fontSize: "9px",
                                         display: "block",
                                         marginTop: "2px",
@@ -437,11 +443,12 @@ export function SoundConfig({
                     <div
                         className="mb-3"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "9px",
-                            letterSpacing: "0.25em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.55)",
+                            color: "rgba(253,251,245,0.45)",
                             textAlign: "center"
                         }}
                     >
@@ -463,9 +470,9 @@ export function SoundConfig({
                             >
                                 <span
                                     style={{
-                                        fontFamily: "Georgia, serif",
+                                        fontFamily: "var(--font-display)",
                                         fontSize: "11px",
-                                        fontWeight: 500,
+                                        fontWeight: 600,
                                         color: naturePreset?.id === preset.id ? "var(--accent-color)" : "rgba(253,251,245,0.7)",
                                     }}
                                 >
@@ -482,7 +489,7 @@ export function SoundConfig({
                 <div className="animate-fade-in text-center py-4">
                     <p
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-body)",
                             fontSize: "11px",
                             fontStyle: "italic",
                             color: "rgba(253,251,245,0.5)",
@@ -500,11 +507,12 @@ export function SoundConfig({
                     <div
                         className="mb-2 flex items-center justify-between"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "8px",
-                            letterSpacing: "0.2em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.5)",
+                            color: "rgba(253,251,245,0.45)",
                         }}
                     >
                         <span>Volume</span>
@@ -529,7 +537,7 @@ export function SoundConfig({
             <div
                 className="text-center pt-2"
                 style={{
-                    fontFamily: "Georgia, serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "9px",
                     color: "rgba(253,251,245,0.35)",
                     fontStyle: "italic",

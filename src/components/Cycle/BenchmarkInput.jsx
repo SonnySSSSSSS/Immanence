@@ -64,17 +64,28 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
                 >
                     {/* Header */}
                     <div className="mb-6">
-                        <h3 className="text-xl font-[Cinzel] text-white/90 mb-2">
+                        <h3
+                            className="text-xl tracking-wide font-bold text-white/90 mb-2"
+                            style={{ fontFamily: 'var(--font-display)' }}
+                        >
                             Log Benchmark
                         </h3>
-                        <p className="text-sm text-white/60 font-[Outfit]">
+                        <p
+                            className="text-sm text-white/60 tracking-tight font-medium"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             Self-report your current capacity metrics
                         </p>
                     </div>
 
                     {/* Path Selection */}
                     <div className="mb-6">
-                        <div className="text-xs text-white/50 font-[Outfit] mb-2">Select Path</div>
+                        <div
+                            className="text-xs text-white/50 tracking-tight font-medium mb-2"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
+                            Select Path
+                        </div>
                         <div className="flex gap-2">
                             {['breath', 'focus', 'body'].map((path) => (
                                 <button
@@ -83,10 +94,11 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
                                         setSelectedPath(path);
                                         setValues({});
                                     }}
-                                    className={`flex-1 px-3 py-2 rounded font-[Outfit] text-sm capitalize transition-all ${selectedPath === path
-                                            ? 'bg-[#fcd34d] text-black'
-                                            : 'bg-white/10 text-white/60 hover:bg-white/15'
+                                    className={`flex-1 px-3 py-2 rounded tracking-tight font-medium text-sm capitalize transition-all ${selectedPath === path
+                                        ? 'bg-[#fcd34d] text-black'
+                                        : 'bg-white/10 text-white/60 hover:bg-white/15'
                                         }`}
+                                    style={{ fontFamily: 'var(--font-body)' }}
                                 >
                                     {path}
                                 </button>
@@ -98,7 +110,10 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
                     <div className="mb-6 space-y-4">
                         {fields.map((field) => (
                             <div key={field.key}>
-                                <label className="block text-xs text-white/50 font-[Outfit] mb-2">
+                                <label
+                                    className="block text-xs text-white/50 tracking-tight font-medium mb-2"
+                                    style={{ fontFamily: 'var(--font-body)' }}
+                                >
                                     {field.label} <span className="text-white/30">({field.unit})</span>
                                 </label>
                                 <input
@@ -110,7 +125,8 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
                                     onChange={(e) =>
                                         setValues({ ...values, [field.key]: e.target.value })
                                     }
-                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white/90 font-[Outfit] focus:outline-none focus:border-[#fcd34d]/50"
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white/90 tracking-tight font-medium focus:outline-none focus:border-[#fcd34d]/50"
+                                    style={{ fontFamily: 'var(--font-body)' }}
                                     placeholder={`Enter ${field.label.toLowerCase()}`}
                                 />
                             </div>
@@ -119,13 +135,17 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
 
                     {/* Notes */}
                     <div className="mb-6">
-                        <label className="block text-xs text-white/50 font-[Outfit] mb-2">
+                        <label
+                            className="block text-xs text-white/50 tracking-tight font-medium mb-2"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             Notes (optional)
                         </label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white/90 font-[Outfit] focus:outline-none focus:border-[#fcd34d]/50 resize-none"
+                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white/90 tracking-tight font-medium focus:outline-none focus:border-[#fcd34d]/50 resize-none"
+                            style={{ fontFamily: 'var(--font-body)' }}
                             rows="3"
                             placeholder="Any observations..."
                         />
@@ -133,7 +153,10 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
 
                     {/* Info */}
                     <div className="mb-6 p-3 bg-white/5 rounded border border-white/10">
-                        <p className="text-xs text-white/50 font-[Outfit] leading-relaxed">
+                        <p
+                            className="text-xs text-white/50 tracking-tight font-medium leading-relaxed"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             These metrics are self-reported and optional. They help track capacity
                             development and inform avatar stage advancement.
                         </p>
@@ -143,17 +166,19 @@ export function BenchmarkInput({ isOpen, onClose, initialPath = 'breath' }) {
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white/80 rounded font-[Outfit] transition-colors"
+                            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white/80 rounded tracking-tight font-medium transition-colors"
+                            style={{ fontFamily: 'var(--font-body)' }}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSubmit}
                             disabled={!hasAnyValue}
-                            className={`flex-1 px-4 py-2 rounded font-[Outfit] transition-all ${hasAnyValue
-                                    ? 'bg-[#fcd34d] text-black hover:bg-[#fcd34d]/90'
-                                    : 'bg-white/10 text-white/30 cursor-not-allowed'
+                            className={`flex-1 px-4 py-2 rounded tracking-tight font-medium transition-all ${hasAnyValue
+                                ? 'bg-[#fcd34d] text-black hover:bg-[#fcd34d]/90'
+                                : 'bg-white/10 text-white/30 cursor-not-allowed'
                                 }`}
+                            style={{ fontFamily: 'var(--font-body)' }}
                         >
                             Log Metrics
                         </button>

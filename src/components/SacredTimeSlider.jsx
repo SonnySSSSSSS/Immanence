@@ -239,8 +239,9 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     return (
                         <div
                             key={opt}
-                            className="absolute font-[Georgia] tracking-widest"
+                            className="absolute font-semibold tracking-widest"
                             style={{
+                                fontFamily: 'var(--font-display)',
                                 left: `${percent}%`,
                                 transform: 'translateX(-50%)',
                                 fontSize: '10px',

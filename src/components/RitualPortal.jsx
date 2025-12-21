@@ -187,10 +187,10 @@ export function RitualPortal({
                         >
                             <span
                                 style={{
-                                    fontFamily: 'Georgia, serif',
+                                    fontFamily: 'var(--font-display)',
                                     fontSize: '20px',
-                                    fontWeight: 500,
-                                    letterSpacing: '0.12em',
+                                    fontWeight: 600,
+                                    letterSpacing: 'var(--tracking-wide)',
                                     color: stepTimeRemaining < 30 ? '#fcd34d' : '#fefce8',
                                     textShadow: '0 0 10px var(--accent-60)',
                                 }}
@@ -221,8 +221,8 @@ export function RitualPortal({
                 <div
                     className="max-w-sm mx-auto mb-3"
                     style={{
-                        fontFamily: 'Georgia, serif',
-                        fontSize: '13px',
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '14px',
                         lineHeight: 1.7,
                         color: 'rgba(253,251,245,0.9)',
                     }}
@@ -239,7 +239,7 @@ export function RitualPortal({
                     key={cueIndex}
                     className="text-center mb-3 px-6 max-w-sm animate-fade-in"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-body)',
                         fontSize: '11px',
                         fontStyle: 'italic',
                         color: 'var(--accent-70)',
@@ -265,9 +265,10 @@ export function RitualPortal({
                     }}
                     className="px-5 py-2.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
                         fontSize: '10px',
-                        letterSpacing: '0.15em',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         textTransform: 'uppercase',
                         background: 'linear-gradient(180deg, rgba(60,60,60,0.8) 0%, rgba(30,30,30,0.9) 100%)',
                         color: 'rgba(253,251,245,0.5)',
@@ -294,9 +295,9 @@ export function RitualPortal({
                     disabled={!canAdvance}
                     className="px-7 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
                         fontSize: '11px',
-                        letterSpacing: '0.18em',
+                        letterSpacing: 'var(--tracking-mythic)',
                         textTransform: 'uppercase',
                         fontWeight: 600,
                         background: canAdvance
@@ -325,9 +326,10 @@ export function RitualPortal({
             <div
                 className="mt-4 text-center"
                 style={{
-                    fontFamily: 'Georgia, serif',
+                    fontFamily: 'var(--font-display)',
                     fontSize: '9px',
-                    letterSpacing: '0.18em',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
                     textTransform: 'uppercase',
                     color: 'var(--accent-30)',
                 }}

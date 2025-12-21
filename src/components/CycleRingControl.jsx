@@ -152,7 +152,7 @@ export function CycleRingControl({
                                     dominantBaseline="middle"
                                     fill={arc.key === 'void' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.6)'}
                                     fontSize="9"
-                                    fontFamily="Georgia, serif"
+                                    fontFamily="var(--font-display)"
                                     fontWeight="bold"
                                     style={{ pointerEvents: 'none' }}
                                 >
@@ -170,7 +170,8 @@ export function CycleRingControl({
                     textAnchor="middle"
                     fill="rgba(255,255,255,0.5)"
                     fontSize="9"
-                    fontFamily="Georgia, serif"
+                    fontFamily="var(--font-display)"
+                    fontWeight="600"
                     letterSpacing="0.1em"
                 >
                     CYCLE
@@ -181,7 +182,7 @@ export function CycleRingControl({
                     textAnchor="middle"
                     fill="var(--accent-color)"
                     fontSize="18"
-                    fontFamily="Georgia, serif"
+                    fontFamily="var(--font-display)"
                     fontWeight="bold"
                 >
                     {total}s

@@ -56,7 +56,9 @@ export function PatternReview() {
                 <p
                     className="text-lg mb-4"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.6)',
                     }}
                 >
@@ -65,7 +67,9 @@ export function PatternReview() {
                 <p
                     className="text-sm max-w-sm"
                     style={{
-                        fontFamily: "'Crimson Pro', serif",
+                        fontFamily: "var(--font-body)",
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         color: 'rgba(255,255,255,0.4)',
                     }}
                 >

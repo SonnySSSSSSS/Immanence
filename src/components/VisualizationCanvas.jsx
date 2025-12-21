@@ -122,7 +122,8 @@ export function VisualizationCanvas({
         if (phase === 'void') {
             ctx.save();
             ctx.fillStyle = 'rgba(253,251,245,0.3)';
-            ctx.font = '14px Cinzel, serif';
+            const displayFont = getAccentColor('--font-display');
+            ctx.font = `700 14px ${displayFont}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('VISUALIZE', width / 2, height / 2);

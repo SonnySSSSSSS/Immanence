@@ -42,7 +42,9 @@ export function SessionSummary({
                 <h2
                     className="text-lg uppercase tracking-[0.2em] mb-10"
                     style={{
-                        fontFamily: "'Cinzel', serif",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'rgba(255, 255, 255, 0.6)',
                     }}
                 >
@@ -60,7 +62,8 @@ export function SessionSummary({
                     <div
                         className="text-3xl"
                         style={{
-                            fontFamily: "'Outfit', sans-serif",
+                            fontFamily: "var(--font-display)",
+                            fontWeight: 700,
                             color: 'rgba(255, 255, 255, 0.8)',
                         }}
                     >

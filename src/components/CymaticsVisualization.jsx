@@ -144,8 +144,9 @@ export function CymaticsVisualization({
                     >
                         <div
                             style={{
-                                fontFamily: 'Georgia, serif',
+                                fontFamily: 'var(--font-display)',
                                 fontSize: '18px',
+                                fontWeight: 700,
                                 letterSpacing: '0.3em',
                                 textTransform: 'uppercase',
                                 color: 'rgba(253,251,245,0.3)',
@@ -156,9 +157,10 @@ export function CymaticsVisualization({
                         </div>
                         <div
                             style={{
-                                fontFamily: 'Georgia, serif',
+                                fontFamily: 'var(--font-display)',
                                 fontSize: '14px',
-                                letterSpacing: '0.15em',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
                                 color: 'var(--accent-color)',
                             }}
                         >
@@ -200,9 +202,10 @@ export function CymaticsVisualization({
                 >
                     <span
                         style={{
-                            fontFamily: 'Georgia, serif',
+                            fontFamily: 'var(--font-display)',
                             fontSize: '10px',
-                            letterSpacing: '0.15em',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
                             textTransform: 'uppercase',
                             color: 'rgba(253,251,245,0.6)',
                         }}
@@ -211,8 +214,9 @@ export function CymaticsVisualization({
                     </span>
                     <span
                         style={{
-                            fontFamily: 'Georgia, serif',
+                            fontFamily: 'var(--font-display)',
                             fontSize: '10px',
+                            fontWeight: 600,
                             color: 'var(--accent-color)',
                         }}
                     >

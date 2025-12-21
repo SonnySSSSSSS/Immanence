@@ -231,7 +231,10 @@ export function SensorySession({
                 <div className="flex items-center justify-center mb-1" style={{ color: 'var(--accent-color)' }}>
                     <Icon name={sensoryType} size={32} />
                 </div>
-                <div className="text-sm font-[Georgia] text-[var(--accent-color)] tracking-widest mb-4">
+                <div
+                    className="text-sm font-semibold text-[var(--accent-color)] tracking-widest mb-4"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                >
                     {config?.label}
                 </div>
 
@@ -273,7 +276,10 @@ export function SensorySession({
                     >
                         ← Prev
                     </button>
-                    <div className="text-center flex-1 font-[Georgia] text-[10px] text-[var(--accent-color)]">
+                    <div
+                        className="text-center flex-1 font-semibold text-[10px] text-[var(--accent-color)]"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
                         {devPromptIndex + 1} / {allPrompts.length}
                         <div style={{ fontSize: '8px', opacity: 0.5 }}>
                             @{allPrompts[devPromptIndex]?.timing || 0}s

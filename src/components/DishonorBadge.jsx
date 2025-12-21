@@ -59,11 +59,11 @@ export function DishonorBadge({ showAlways = false }) {
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                         <h3
-                            className="text-sm font-medium"
+                            className="text-sm font-semibold"
                             style={{
                                 color: '#d97706',
-                                fontFamily: 'Georgia, serif',
-                                letterSpacing: '0.02em'
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: 'var(--tracking-mythic)'
                             }}
                         >
                             The Unwitnessed Path
@@ -105,7 +105,7 @@ export function DishonorBadge({ showAlways = false }) {
             {/* Wisdom quote */}
             <div
                 className="mt-3 pt-3 border-t border-[rgba(253,251,245,0.08)] text-[9px] italic text-[rgba(253,251,245,0.4)] text-center"
-                style={{ fontFamily: 'Georgia, serif' }}
+                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.05em' }}
             >
                 "The path walked in silence still leads somewhere."
             </div>

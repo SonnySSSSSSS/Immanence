@@ -62,7 +62,8 @@ export function SigilSlider({
                                 <div
                                     className="relative transition-all duration-500"
                                     style={{
-                                        fontFamily: 'Georgia, serif',
+                                        fontFamily: 'var(--font-display)',
+                                        fontWeight: 600,
                                         fontSize: isCurrent ? '20px' : '16px',
                                         color: isCompleted
                                             ? '#fefce8' // Bright white-gold for completed
@@ -100,10 +101,10 @@ export function SigilSlider({
                 <div
                     className="text-center mt-2"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
                         fontSize: '10px',
-                        letterSpacing: '0.15em',
-                        textTransform: 'uppercase',
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'var(--accent-color)',
                         textShadow: '0 0 10px var(--accent-30)',
                     }}

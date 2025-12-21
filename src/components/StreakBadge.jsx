@@ -85,7 +85,7 @@ export function StreakBadge({ size = 'normal', showLabel = true }) {
             <div className="flex flex-col">
                 <span
                     className={`font-semibold ${isLarge ? 'text-base' : 'text-[11px]'}`}
-                    style={{ color: style.color, fontFamily: 'var(--font-ui, Outfit, sans-serif)' }}
+                    style={{ color: style.color, fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                 >
                     {onVacation ? (
                         `${current} day${current !== 1 ? 's' : ''} frozen`
@@ -98,8 +98,8 @@ export function StreakBadge({ size = 'normal', showLabel = true }) {
 
                 {showLabel && (
                     <span
-                        className="text-[8px] uppercase tracking-wider"
-                        style={{ color: `${style.color}80` }}
+                        className="text-[8px] uppercase font-bold"
+                        style={{ color: `${style.color}80`, letterSpacing: 'var(--tracking-mythic)' }}
                     >
                         {state === 'fire' ? 'On fire!' :
                             state === 'warning' ? 'Practice today!' :
@@ -192,9 +192,10 @@ export function StreakRing({ size = 60 }) {
                 className="absolute inset-0 flex items-center justify-center"
                 style={{
                     color: streakInfo.current > 0 ? 'var(--accent-color)' : 'rgba(253,251,245,0.5)',
-                    fontFamily: 'Georgia, serif',
+                    fontFamily: 'var(--font-display)',
                     fontSize: size > 50 ? '16px' : '12px',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    letterSpacing: '0.05em'
                 }}
             >
                 {streakInfo.current}

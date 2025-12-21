@@ -105,8 +105,9 @@ export function PillButton({
 
     // Merge all styles
     const buttonStyle = {
-        fontFamily: 'Georgia, serif',
-        letterSpacing: '0.15em',
+        fontFamily: 'var(--font-display)',
+        fontWeight: 600,
+        letterSpacing: 'var(--tracking-mythic)',
         textTransform: 'uppercase',
         borderRadius: '999px',
         cursor: disabled ? 'not-allowed' : 'pointer',

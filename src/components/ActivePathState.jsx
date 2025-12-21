@@ -50,8 +50,8 @@ export function ActivePathState() {
             {/* Header */}
             <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
-                    className="text-2xl font-semibold text-[var(--accent-color)] mb-2"
-                    style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
+                    className="text-2xl font-bold text-[var(--accent-color)] mb-2"
+                    style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)' }}
                 >
                     {path.title}
                 </h2>
@@ -66,8 +66,8 @@ export function ActivePathState() {
             {/* Progress Timeline */}
             <div>
                 <h3
-                    className="text-base font-semibold text-[var(--accent-color)] mb-3"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="text-base font-bold text-[var(--accent-color)] mb-3"
+                    style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                 >
                     Progress
                 </h3>
@@ -117,8 +117,8 @@ export function ActivePathState() {
             {currentWeekData && !isPathComplete && (
                 <div className="border border-[var(--accent-20)] rounded-2xl p-4 bg-[var(--accent-10)]">
                     <h3
-                        className="text-lg font-semibold text-[var(--accent-color)] mb-3"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-lg font-bold text-[var(--accent-color)] mb-3"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                     >
                         Week {currentWeekData.number}: {currentWeekData.title}
                     </h3>
@@ -129,7 +129,7 @@ export function ActivePathState() {
                             <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>
                             <p
                                 className="text-sm text-[rgba(253,251,245,0.85)] italic leading-relaxed"
-                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                             >
                                 {currentWeekData.focus}
                             </p>
@@ -139,7 +139,7 @@ export function ActivePathState() {
                         {currentWeekData.practices.length > 0 && (
                             <div>
                                 <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Practices</div>
-                                <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                                <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}>
                                     {currentWeekData.practices.map((practice, idx) => (
                                         <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-start gap-2">
                                             <span className="text-[var(--accent-50)] mt-0.5">•</span>
@@ -154,7 +154,7 @@ export function ActivePathState() {
                         {currentWeekData.reading.length > 0 && (
                             <div>
                                 <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Reading</div>
-                                <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                                <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}>
                                     {currentWeekData.reading.map((chapterId, idx) => (
                                         <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-start gap-2">
                                             <span className="text-[var(--accent-50)] mt-0.5">•</span>
@@ -171,7 +171,7 @@ export function ActivePathState() {
                                 <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Tracking Focus</div>
                                 <p
                                     className="text-sm text-[rgba(253,251,245,0.8)]"
-                                    style={{ fontFamily: 'Crimson Pro, serif' }}
+                                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                 >
                                     {currentWeekData.tracking}
                                 </p>
@@ -185,14 +185,14 @@ export function ActivePathState() {
             {isPathComplete && (
                 <div className="text-center py-8">
                     <p
-                        className="text-lg text-[var(--accent-color)] mb-2"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-lg text-[var(--accent-color)] mb-2 font-bold"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                     >
                         You've completed this path!
                     </p>
                     <p
                         className="text-sm text-[rgba(253,251,245,0.7)] mb-4"
-                        style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
+                        style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', letterSpacing: '0.01em' }}
                     >
                         {path.duration} weeks of practice integrated.
                     </p>
@@ -203,8 +203,8 @@ export function ActivePathState() {
             {!isPathComplete && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[var(--accent-color)] mb-3"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-base font-bold text-[var(--accent-color)] mb-3"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                     >
                         Quick Actions
                     </h3>
@@ -237,8 +237,8 @@ export function ActivePathState() {
                     <>
                         <button
                             onClick={handleCompleteWeek}
-                            className="flex-1 px-6 py-3 rounded-full text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
-                            style={{ fontFamily: 'Cinzel, serif', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
+                            className="flex-1 px-6 py-3 rounded-full text-[#050508] font-bold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
+                            style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
                         >
                             COMPLETE WEEK {activePath.currentWeek}
                         </button>
@@ -271,7 +271,7 @@ export function ActivePathState() {
                     <button
                         onClick={handleAbandon}
                         className="flex-1 px-6 py-3 rounded-full border border-[var(--accent-30)] text-[rgba(253,251,245,0.8)] hover:border-[var(--accent-50)] hover:bg-[var(--accent-10)] transition-all"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)' }}
                     >
                         SELECT NEW PATH
                     </button>

@@ -103,7 +103,7 @@ function CyclicStation({ title, children, accent, index }) {
                 </h3>
                 <div
                     className="text-[13px] leading-relaxed"
-                    style={{ fontFamily: 'Crimson Pro, serif', color: 'rgba(253,251,245,0.65)' }}
+                    style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.65)', letterSpacing: '0.01em' }}
                 >
                     {children}
                 </div>
@@ -157,14 +157,14 @@ export function ModeDetail({ modeId, onBack, autoStartTraining = false }) {
             {/* Mode identity */}
             <div className="text-center space-y-2">
                 <h2
-                    className="text-[20px] uppercase tracking-[0.18em]"
-                    style={{ fontFamily: 'Cinzel, serif', color: 'var(--accent-color)' }}
+                    className="text-[20px] uppercase tracking-[0.2em] font-bold"
+                    style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-color)' }}
                 >
                     {mode.name}
                 </h2>
                 <p
-                    className="text-[13px] italic"
-                    style={{ fontFamily: 'Crimson Pro, serif', color: 'rgba(253,251,245,0.6)' }}
+                    className="text-[13px] italic font-medium"
+                    style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.6)', letterSpacing: '0.01em' }}
                 >
                     "{mode.tagline}"
                 </p>
@@ -204,9 +204,9 @@ export function ModeDetail({ modeId, onBack, autoStartTraining = false }) {
                     }}
                 >
                     <span
-                        className="text-[11px] uppercase tracking-[0.18em]"
+                        className="text-[11px] uppercase tracking-[0.2em] font-bold"
                         style={{
-                            fontFamily: 'Outfit, sans-serif',
+                            fontFamily: 'var(--font-display)',
                             color: practice?.accent,
                             opacity: ctaHovered ? 1 : 0.8,
                         }}
@@ -258,12 +258,13 @@ export function ModeDetail({ modeId, onBack, autoStartTraining = false }) {
                 }}
             >
                 <p
-                    className="text-[12px] italic max-w-xs mx-auto"
+                    className="text-[12px] italic max-w-xs mx-auto font-medium"
                     style={{
-                        fontFamily: 'Crimson Pro, serif',
+                        fontFamily: 'var(--font-body)',
                         color: practice?.accent,
                         opacity: 0.7,
                         lineHeight: 1.6,
+                        letterSpacing: '0.01em'
                     }}
                 >
                     {MODE_CONSEQUENCES[modeId]}

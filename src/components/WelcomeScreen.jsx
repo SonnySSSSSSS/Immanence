@@ -44,7 +44,9 @@ export function WelcomeScreen({ onDismiss }) {
                                 <p
                                     className="text-[22px] font-semibold tracking-wide"
                                     style={{
-                                        fontFamily: 'Cinzel, Georgia, serif',
+                                        fontFamily: 'var(--font-display)',
+                                        fontWeight: 600,
+                                        letterSpacing: 'var(--tracking-mythic)',
                                         color: 'var(--accent-color)',
                                         textShadow: '0 0 20px var(--accent-20)'
                                     }}
@@ -117,7 +119,7 @@ export function WelcomeScreen({ onDismiss }) {
 
                                 <div className="w-32 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
-                                <p className="text-[15px] leading-relaxed italic" style={{ color: 'rgba(253,251,245,0.85)', fontFamily: 'Crimson Pro, Georgia, serif' }}>
+                                <p className="text-[15px] leading-relaxed italic" style={{ color: 'rgba(253,251,245,0.85)', fontFamily: 'var(--font-body)' }}>
                                     Immanence OS is the dojo I built for myself after twenty years of practice — a complete, modern system that fuses the deepest principles of science, mythology, and direct experience into daily, progressive training of mind, body, and spirit.
                                 </p>
 
@@ -146,7 +148,7 @@ export function WelcomeScreen({ onDismiss }) {
                                     onClick={handleEnter}
                                     variant="primary"
                                     size="lg"
-                                    style={{ fontFamily: 'Cinzel, Georgia, serif' }}
+                                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-mythic)' }}
                                 >
                                     Enter
                                 </PillButton>

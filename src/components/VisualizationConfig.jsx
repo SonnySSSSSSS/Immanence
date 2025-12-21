@@ -33,8 +33,8 @@ export function VisualizationConfig({
             {/* Geometry Selector */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     Shapes
                 </div>
@@ -52,7 +52,9 @@ export function VisualizationConfig({
               `}
                             style={{
                                 border: geometry === g ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                                fontFamily: 'Cinzel, serif',
+                                fontFamily: 'var(--font-display)',
+                                fontWeight: 700,
+                                letterSpacing: '0.05em'
                             }}
                         >
                             {g.toUpperCase()}
@@ -61,8 +63,8 @@ export function VisualizationConfig({
                 </div>
 
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     Sacred Symbols
                 </div>
@@ -80,7 +82,9 @@ export function VisualizationConfig({
               `}
                             style={{
                                 border: geometry === g ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                                fontFamily: 'Cinzel, serif',
+                                fontFamily: 'var(--font-display)',
+                                fontWeight: 600,
+                                letterSpacing: '0.02em',
                             }}
                         >
                             {g.replace(/-/g, ' ').toUpperCase()}
@@ -92,8 +96,8 @@ export function VisualizationConfig({
             {/* Timing Controls - Cycle Ring */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     Phase Durations
                 </div>
@@ -112,8 +116,8 @@ export function VisualizationConfig({
             {/* Audio Toggle */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.2em] mb-3 text-[var(--accent-60)]"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     Audio Cues
                 </div>

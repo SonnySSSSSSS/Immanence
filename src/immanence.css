@@ -36,8 +36,16 @@
   /* ─── Typography ─── */
   --font-display: 'Cinzel', serif;
   --font-body: 'Crimson Pro', serif;
-  --font-ui: 'Outfit', sans-serif;
+  --font-ui: 'Crimson Pro', serif;
+  /* Shifted from Outfit to Serif for mythic feel */
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* ─── Tracking (Letter Spacing) ─── */
+  --tracking-tight: 0.02em;
+  --tracking-normal: 0.05em;
+  --tracking-wide: 0.15em;
+  --tracking-mythic: 0.25em;
+  --tracking-ultra: 0.4em;
 
   /* ─── Wisdom Section: Gold Scale ─── */
   --gold-100: #F9E4A8;
@@ -283,15 +291,15 @@
   background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-mid) 100%);
   color: var(--bg-void);
   font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.2em;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-mythic);
   text-transform: uppercase;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 2rem;
   border: none;
   border-radius: 9999px;
   cursor: pointer;
-  box-shadow: 0 0 24px rgba(251, 191, 36, 0.2);
+  box-shadow: 0 0 32px rgba(251, 191, 36, 0.15);
   position: relative;
   overflow: hidden;
   transition: all 200ms ease-out;
@@ -333,11 +341,11 @@
   color: var(--text-secondary);
   font-family: var(--font-display);
   font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.2em;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 200ms ease-out;
+  transition: all 250ms ease-out;
 }
 
 .pill-option:hover {
@@ -359,11 +367,11 @@
   color: var(--text-secondary);
   font-family: var(--font-display);
   font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.15em;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 150ms ease-out;
+  transition: all 200ms ease-out;
 }
 
 .preset-chip:hover {
@@ -470,8 +478,8 @@
 .label-uppercase {
   font-family: var(--font-display);
   font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.25em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-mythic);
   text-transform: uppercase;
   color: var(--text-muted);
 }

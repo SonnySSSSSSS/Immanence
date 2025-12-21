@@ -42,8 +42,8 @@ export function TodayAwarenessLog() {
             <div className="w-full">
                 <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-8 text-center">
                     <p
-                        className="text-sm text-[rgba(253,251,245,0.5)] italic"
-                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                        className="text-sm text-[rgba(253,251,245,0.5)] italic font-medium"
+                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                     >
                         Nothing logged yet today.<br />
                         When you notice a pattern, use the gesture pad above.
@@ -58,8 +58,8 @@ export function TodayAwarenessLog() {
             <div className="bg-[#0f0f1a] border border-[var(--accent-15)] rounded-3xl p-6">
                 {/* Header */}
                 <h3
-                    className="text-sm uppercase tracking-[0.2em] text-[var(--accent-70)] mb-4"
-                    style={{ fontFamily: 'Cinzel, serif' }}
+                    className="text-sm uppercase tracking-[0.25em] text-[var(--accent-70)] mb-4 font-bold"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     TODAY
                 </h3>
@@ -100,15 +100,15 @@ export function TodayAwarenessLog() {
                                     {/* Category & Note */}
                                     <div className="flex-1">
                                         <div
-                                            className="text-sm text-[rgba(253,251,245,0.85)] font-semibold mb-0.5"
-                                            style={{ fontFamily: 'Crimson Pro, serif' }}
+                                            className="text-sm text-[rgba(253,251,245,0.85)] font-bold mb-0.5"
+                                            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                         >
                                             {log.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                                         </div>
                                         {log.note && (
                                             <div
-                                                className="text-xs text-[rgba(253,251,245,0.5)] italic"
-                                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                                className="text-xs text-[rgba(253,251,245,0.5)] italic font-medium"
+                                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                             >
                                                 "{log.note}"
                                             </div>
@@ -135,7 +135,7 @@ export function TodayAwarenessLog() {
                                                 onChange={(e) => setNoteInput(e.target.value)}
                                                 placeholder="Quick note..."
                                                 className="w-full bg-[var(--accent-10)] border border-[var(--accent-15)] rounded-lg px-3 py-2 text-sm text-[rgba(253,251,245,0.9)] placeholder:text-[rgba(253,251,245,0.3)] focus:outline-none focus:border-[var(--accent-30)]"
-                                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                                style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}
                                             />
                                         </div>
 
@@ -176,8 +176,8 @@ export function TodayAwarenessLog() {
                 {/* Summary */}
                 <div className="mt-4 pt-4 border-t border-[var(--accent-10)] text-center">
                     <p
-                        className="text-xs text-[rgba(253,251,245,0.5)]"
-                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                        className="text-xs text-[rgba(253,251,245,0.5)] font-medium"
+                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.02em' }}
                     >
                         {todayLogs.length} moment{todayLogs.length === 1 ? '' : 's'} of awareness today
                     </p>

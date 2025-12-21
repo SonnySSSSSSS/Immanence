@@ -155,14 +155,16 @@ export function PathCeremony({ stage = 'flame' }) {
             {/* Title */}
             <h1
                 style={{
-                    fontFamily: 'Cinzel, serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
                     fontSize: '1.25rem',
-                    letterSpacing: '0.3em',
+                    letterSpacing: 'var(--tracking-mythic)',
                     color: 'var(--accent-color, #fcd34d)',
                     marginBottom: '2rem',
                     opacity: animationPhase === 'entering' ? 0 : 1,
                     transform: animationPhase === 'entering' ? 'translateY(-20px)' : 'translateY(0)',
                     transition: 'all 0.8s ease-out 0.2s',
+                    textTransform: 'uppercase'
                 }}
             >
                 {title}
@@ -196,9 +198,10 @@ export function PathCeremony({ stage = 'flame' }) {
             >
                 <div
                     style={{
-                        fontFamily: 'Cinzel, serif',
+                        fontFamily: 'var(--font-display)',
                         fontSize: '1.5rem',
-                        fontWeight: 600,
+                        fontWeight: 700,
+                        letterSpacing: 'var(--tracking-wide)',
                         color: 'var(--accent-color, #fcd34d)',
                         marginBottom: '0.25rem',
                     }}
@@ -207,7 +210,9 @@ export function PathCeremony({ stage = 'flame' }) {
                 </div>
                 <div
                     style={{
-                        fontFamily: 'Outfit, sans-serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         fontSize: '1.125rem',
                         color: 'rgba(255, 255, 255, 0.8)',
                         display: 'flex',
@@ -229,7 +234,9 @@ export function PathCeremony({ stage = 'flame' }) {
                         alignItems: 'center',
                         gap: '1rem',
                         marginBottom: '1.5rem',
-                        fontFamily: 'Outfit, sans-serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         color: 'rgba(255, 255, 255, 0.6)',
                         fontSize: '1rem',
                         opacity: animationPhase === 'entering' ? 0 : 1,
@@ -260,7 +267,9 @@ export function PathCeremony({ stage = 'flame' }) {
                 style={{
                     maxWidth: '500px',
                     textAlign: 'center',
-                    fontFamily: 'Crimson Pro, serif',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontSize: '1rem',
                     lineHeight: 1.8,
                     color: 'rgba(255, 255, 255, 0.85)',
@@ -287,7 +296,9 @@ export function PathCeremony({ stage = 'flame' }) {
                         onClick={handleShare}
                         style={{
                             padding: '0.75rem 1.5rem',
-                            fontFamily: 'Outfit, sans-serif',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 700,
+                            letterSpacing: 'var(--tracking-mythic)',
                             fontSize: '0.875rem',
                             background: 'transparent',
                             border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -312,13 +323,14 @@ export function PathCeremony({ stage = 'flame' }) {
                     onClick={handleContinue}
                     style={{
                         padding: '0.75rem 2rem',
-                        fontFamily: 'Cinzel, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        letterSpacing: 'var(--tracking-wide)',
                         fontSize: '0.875rem',
                         background: 'var(--ui-button-gradient, linear-gradient(135deg, #fcd34d, #f59e0b))',
                         border: 'none',
                         borderRadius: '2rem',
                         color: '#050508',
-                        fontWeight: 600,
                         cursor: 'pointer',
                         transition: 'transform 0.2s ease',
                     }}

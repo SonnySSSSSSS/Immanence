@@ -41,10 +41,16 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                 >
                     {/* Header */}
                     <div className="mb-6">
-                        <h2 className="text-2xl font-[Cinzel] text-white/90 mb-2">
+                        <h2
+                            className="text-2xl font-bold tracking-wide text-white/90 mb-2"
+                            style={{ fontFamily: 'var(--font-display)' }}
+                        >
                             Choose Your Path
                         </h2>
-                        <p className="text-white/60 font-[Outfit]">
+                        <p
+                            className="text-white/60 font-medium"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             {cycleType === 'foundation' && 'Establish your baseline consistency over 14 days'}
                             {cycleType === 'transformation' && 'Deepen your practice over 90 days'}
                             {cycleType === 'integration' && 'Sustain long-term commitment over 180 days'}
@@ -56,20 +62,28 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                         {/* Consecutive Mode */}
                         <motion.button
                             className={`p-6 border-2 rounded-lg text-left transition-all ${selectedMode === CYCLE_MODES.CONSECUTIVE
-                                    ? 'border-[#fcd34d] bg-[#fcd34d]/10'
-                                    : 'border-white/10 hover:border-white/20'
+                                ? 'border-[#fcd34d] bg-[#fcd34d]/10'
+                                : 'border-white/10 hover:border-white/20'
                                 }`}
                             onClick={() => setSelectedMode(CYCLE_MODES.CONSECUTIVE)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-lg font-[Cinzel] text-white/90">Consecutive</h3>
+                                <h3
+                                    className="text-lg font-bold tracking-wide text-white/90"
+                                    style={{ fontFamily: 'var(--font-display)' }}
+                                >
+                                    Consecutive
+                                </h3>
                                 <div className="text-2xl">⚡</div>
                             </div>
 
                             <div className="mb-3">
-                                <div className="text-sm text-white/50 font-[Outfit] mb-1">
+                                <div
+                                    className="text-sm text-white/50 font-medium mb-1"
+                                    style={{ fontFamily: 'var(--font-body)' }}
+                                >
                                     {cycleType === 'foundation' && '14 days unbroken'}
                                     {cycleType === 'transformation' && '90 days unbroken'}
                                     {cycleType === 'integration' && '180 days unbroken'}
@@ -77,7 +91,10 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                                 <div className="text-xs text-white/40">100% required</div>
                             </div>
 
-                            <p className="text-sm text-white/60 font-[Outfit] leading-relaxed">
+                            <p
+                                className="text-sm text-white/60 leading-relaxed font-medium"
+                                style={{ fontFamily: 'var(--font-body)' }}
+                            >
                                 Unbroken discipline. Every day counts. Rewards consistency over flexibility.
                                 Higher bar, faster recognition.
                             </p>
@@ -86,20 +103,28 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                         {/* Flexible Mode */}
                         <motion.button
                             className={`p-6 border-2 rounded-lg text-left transition-all ${selectedMode === CYCLE_MODES.FLEXIBLE
-                                    ? 'border-[#22d3ee] bg-[#22d3ee]/10'
-                                    : 'border-white/10 hover:border-white/20'
+                                ? 'border-[#22d3ee] bg-[#22d3ee]/10'
+                                : 'border-white/10 hover:border-white/20'
                                 }`}
                             onClick={() => setSelectedMode(CYCLE_MODES.FLEXIBLE)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-lg font-[Cinzel] text-white/90">Flexible</h3>
+                                <h3
+                                    className="text-lg font-bold tracking-wide text-white/90"
+                                    style={{ fontFamily: 'var(--font-display)' }}
+                                >
+                                    Flexible
+                                </h3>
                                 <div className="text-2xl">🌊</div>
                             </div>
 
                             <div className="mb-3">
-                                <div className="text-sm text-white/50 font-[Outfit] mb-1">
+                                <div
+                                    className="text-sm text-white/50 font-medium mb-1"
+                                    style={{ fontFamily: 'var(--font-body)' }}
+                                >
                                     {cycleType === 'foundation' && '14 of 21 days'}
                                     {cycleType === 'transformation' && '60 of 90 days'}
                                     {cycleType === 'integration' && '120 of 180 days'}
@@ -107,7 +132,10 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                                 <div className="text-xs text-white/40">67% required</div>
                             </div>
 
-                            <p className="text-sm text-white/60 font-[Outfit] leading-relaxed">
+                            <p
+                                className="text-sm text-white/60 leading-relaxed font-medium"
+                                style={{ fontFamily: 'var(--font-body)' }}
+                            >
                                 Life happens, you adapt. Rewards persistence over perfection.
                                 Sustainable for real-world commitments.
                             </p>
@@ -116,7 +144,10 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
 
                     {/* Footer Note */}
                     <div className="mb-6 p-4 bg-white/5 rounded border border-white/10">
-                        <p className="text-xs text-white/50 font-[Outfit] leading-relaxed">
+                        <p
+                            className="text-xs text-white/50 leading-relaxed font-medium"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                        >
                             No judgment. Your choice reflects your current capacity.
                             We use this to calibrate your journey. You can switch modes
                             at 2-week checkpoints.
@@ -127,17 +158,19 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                     <div className="flex gap-3 justify-end">
                         <button
                             onClick={onClose}
-                            className="px-6 py-2 text-white/60 hover:text-white/80 font-[Outfit] transition-colors"
+                            className="px-6 py-2 text-white/60 hover:text-white/80 font-bold tracking-wide transition-colors"
+                            style={{ fontFamily: 'var(--font-body)' }}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleStartCycle}
                             disabled={!selectedMode}
-                            className={`px-6 py-2 rounded font-[Outfit] transition-all ${selectedMode
-                                    ? 'bg-[#fcd34d] text-black hover:bg-[#fcd34d]/90'
-                                    : 'bg-white/10 text-white/30 cursor-not-allowed'
+                            className={`px-6 py-2 rounded font-bold tracking-wide transition-all ${selectedMode
+                                ? 'bg-[#fcd34d] text-black hover:bg-[#fcd34d]/90'
+                                : 'bg-white/10 text-white/30 cursor-not-allowed'
                                 }`}
+                            style={{ fontFamily: 'var(--font-body)' }}
                         >
                             Begin Cycle
                         </button>

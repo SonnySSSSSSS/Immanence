@@ -59,7 +59,9 @@ export function MirrorValidationFeedback({ result, onDismiss }) {
                             <div
                                 className="text-sm mb-1"
                                 style={{
-                                    fontFamily: "'Crimson Pro', serif",
+                                    fontFamily: "var(--font-body)",
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
                                     color: 'rgba(255,255,255,0.8)',
                                 }}
                             >

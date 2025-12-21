@@ -99,9 +99,10 @@ export function CodexTablet({ card, isExpanded = false, isFocused = false, isDim
             {/* Title */}
             <h3
                 style={{
-                    fontFamily: "'Cinzel', serif",
+                    fontFamily: "var(--font-display)",
                     fontSize: '12px',
                     fontWeight: 600,
+                    letterSpacing: 'var(--tracking-wide)',
                     color: 'rgba(253, 251, 245, 0.9)',
                     textAlign: 'center',
                     lineHeight: 1.3,
@@ -115,8 +116,10 @@ export function CodexTablet({ card, isExpanded = false, isFocused = false, isDim
             <p
                 className="flex-1"
                 style={{
-                    fontFamily: "'Crimson Pro', serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: '11px',
+                    fontWeight: 500,
+                    letterSpacing: '0.01em',
                     fontStyle: 'italic',
                     color: isHighlighted ? 'rgba(253, 251, 245, 0.7)' : 'rgba(253, 251, 245, 0.5)',
                     textAlign: 'center',
@@ -133,7 +136,9 @@ export function CodexTablet({ card, isExpanded = false, isFocused = false, isDim
                     onClick={handleBeginPractice}
                     className="w-full text-center hover:opacity-100 transition-opacity"
                     style={{
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 600,
+                        letterSpacing: "var(--tracking-mythic)",
                         fontSize: '10px',
                         color: mode.color,
                         textTransform: 'uppercase',

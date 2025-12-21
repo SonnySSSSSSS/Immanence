@@ -48,7 +48,9 @@ export function PathFormingIndicator({ compact = false }) {
             {/* Title */}
             <div
                 style={{
-                    fontFamily: 'Outfit, sans-serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    letterSpacing: 'var(--tracking-mythic)',
                     fontSize: compact ? '0.75rem' : '0.875rem',
                     color: 'rgba(255, 255, 255, 0.6)',
                     letterSpacing: '0.1em',
@@ -110,7 +112,9 @@ export function PathFormingIndicator({ compact = false }) {
             {/* Days until emergence */}
             <div
                 style={{
-                    fontFamily: 'Outfit, sans-serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
                     fontSize: compact ? '0.875rem' : '1rem',
                     color: 'rgba(255, 255, 255, 0.8)',
                 }}
@@ -130,7 +134,9 @@ export function PathFormingIndicator({ compact = false }) {
                 >
                     <div
                         style={{
-                            fontFamily: 'Outfit, sans-serif',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
                             fontSize: compact ? '0.75rem' : '0.8125rem',
                             color: 'rgba(255, 255, 255, 0.5)',
                         }}
@@ -139,7 +145,9 @@ export function PathFormingIndicator({ compact = false }) {
                     </div>
                     <div
                         style={{
-                            fontFamily: 'Crimson Pro, serif',
+                            fontFamily: 'var(--font-body)',
+                            fontWeight: 500,
+                            letterSpacing: '0.01em',
                             fontSize: compact ? '0.6875rem' : '0.75rem',
                             color: 'rgba(255, 255, 255, 0.4)',
                             fontStyle: 'italic',

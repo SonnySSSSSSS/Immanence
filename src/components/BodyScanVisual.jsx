@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CoordinateHelper } from './dev/CoordinateHelper';
 export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanPoints = [], scanPrompts = [], image = null }) {
     const [activePoint, setActivePoint] = useState(scanPoints[0] || { id: 'default', x: 50, y: 50, name: 'Center' });
+    const [hoveredPoint, setHoveredPoint] = useState(null);
     const [breathPhase, setBreathPhase] = useState(0);
     const animationRef = useRef(null);
 
@@ -172,16 +173,99 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
                     </svg>
                 </div>
 
-                {/* Point name display */}
+                {/* Interaction layer for hovering points */}
+                <svg
+                    viewBox="0 0 100 100"
+                    className="absolute inset-0 w-full h-full"
+                    style={{ overflow: 'visible', pointerEvents: 'none' }}
+                >
+                    {scanPoints.map((point) => (
+                        <circle
+                            key={`hit-${point.id}`}
+                            cx={point.x}
+                            cy={point.y}
+                            r={4}
+                            fill="transparent"
+                            className="pointer-events-auto cursor-help"
+                            onMouseEnter={() => setHoveredPoint(point)}
+                            onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                    ))}
+                </svg>
+
+                {/* Info Card Overlay (Hover) */}
+                <AnimatePresence>
+                    {hoveredPoint && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                            className="absolute left-1/2 bottom-[-10%] -translate-x-1/2 w-full max-w-[280px] z-[200] pointer-events-none"
+                        >
+                            <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+                                {/* Hybrid Labels Header */}
+                                <div className="flex flex-col gap-0.5 mb-3 border-b border-white/5 pb-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-bold">
+                                            {hoveredPoint.label_functional || 'Primary Node'}
+                                        </span>
+                                        <span className="text-[9px] text-[var(--accent-color)] font-mono opacity-60">
+                                            {hoveredPoint.type}
+                                        </span>
+                                    </div>
+                                    <h4 className="text-sm text-white/90 font-medium tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                                        {hoveredPoint.name}
+                                    </h4>
+                                    <div className="text-[10px] text-white/60">
+                                        {hoveredPoint.label_anatomical && `${hoveredPoint.label_anatomical} • `}{hoveredPoint.location}
+                                    </div>
+                                </div>
+
+                                {/* Content Body */}
+                                <div className="space-y-2.5">
+                                    {hoveredPoint.function && (
+                                        <div>
+                                            <div className="text-[8px] uppercase tracking-wider text-white/30 mb-0.5">Function</div>
+                                            <p className="text-[10px] leading-relaxed text-white/80 italic">
+                                                {hoveredPoint.function}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {(hoveredPoint.physical || hoveredPoint.sensory) && (
+                                        <div className="grid grid-cols-2 gap-3 pt-1 border-t border-white/5">
+                                            {hoveredPoint.physical && (
+                                                <div>
+                                                    <div className="text-[8px] uppercase tracking-wider text-white/30 mb-0.5">Physical</div>
+                                                    <div className="text-[9px] text-white/60 font-mono leading-tight">{hoveredPoint.physical}</div>
+                                                </div>
+                                            )}
+                                            {hoveredPoint.sensory && (
+                                                <div>
+                                                    <div className="text-[8px] uppercase tracking-wider text-white/30 mb-0.5">Sensory</div>
+                                                    <div className="text-[9px] text-white/60 font-mono leading-tight">{hoveredPoint.sensory}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Point name label (Static/Active) */}
                 <div
-                    className="absolute bottom-0 left-0 right-0 text-center"
+                    className="absolute left-1/2 bottom-6 -translate-x-1/2 pointer-events-none"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
                         fontSize: '10px',
-                        letterSpacing: '0.15em',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         textTransform: 'uppercase',
                         color: 'var(--accent-color)',
-                        opacity: 0.7,
+                        opacity: hoveredPoint ? 0 : 0.7, // Hide regular label when hovering
+                        transition: 'opacity 0.3s'
                     }}
                 >
                     {activePoint.name}

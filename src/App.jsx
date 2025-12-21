@@ -75,7 +75,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         {section === "wisdom" && (
           <Suspense fallback={
             <div className="flex items-center justify-center p-12">
-              <div className="text-white/50 font-[Outfit] text-sm">Loading Wisdom...</div>
+              <div className="text-white/50 font-bold text-sm tracking-wide" style={{ fontFamily: 'var(--font-ui)' }}>Loading Wisdom...</div>
             </div>
           }>
             <WisdomSection />
@@ -85,7 +85,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         {section === "application" && (
           <Suspense fallback={
             <div className="flex items-center justify-center p-12">
-              <div className="text-white/50 font-[Outfit] text-sm">Loading Application...</div>
+              <div className="text-white/50 font-bold text-sm tracking-wide" style={{ fontFamily: 'var(--font-ui)' }}>Loading Application...</div>
             </div>
           }>
             <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
@@ -250,13 +250,19 @@ function App() {
           <div className="relative z-10 w-full flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
             {/* Header */}
             <header className="flex items-center justify-between mb-4">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-white/70">
+              <div
+                className="text-[9px] uppercase tracking-[0.25em] text-white/50"
+                style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}
+              >
                 Immanence OS
               </div>
 
               {/* Center label - only show when in a section, not on hub */}
               {!isHub && (
-                <div className="text-sm font-medium text-white/80">
+                <div
+                  className="text-sm font-medium text-white/90"
+                  style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
+                >
                   {currentLabel}
                 </div>
               )}
@@ -273,14 +279,18 @@ function App() {
                 >
                   🎨
                 </button>
-                <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
+                <div
+                  className="text-[8px] uppercase tracking-[0.15em] text-white/30"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
                   v3.10.6
                 </div>
                 {!isHub && (
                   <button
                     type="button"
                     onClick={() => setActiveSection(null)}
-                    className="text-[11px] uppercase tracking-[0.18em] text-white/70 hover:text-white transition-colors"
+                    className="text-[11px] uppercase tracking-[0.15em] text-white/70 hover:text-white transition-colors"
+                    style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
                   >
                     Home
                   </button>

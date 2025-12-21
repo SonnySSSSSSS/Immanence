@@ -128,8 +128,8 @@ export function IdleHearth({ flareIntensity = 0 }) {
 
             {/* Centered text */}
             <p
-                className="relative z-10 text-[11px] uppercase tracking-[0.3em] text-neutral-500"
-                style={{ fontFamily: 'Georgia, serif' }}
+                className="relative z-10 text-[11px] uppercase text-neutral-500"
+                style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-mythic)' }}
             >
                 Select a video to tend the fire
             </p>

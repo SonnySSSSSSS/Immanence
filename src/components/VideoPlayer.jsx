@@ -230,8 +230,8 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
             <div className="mt-3 flex items-start justify-between">
                 <div className="flex-1">
                     <h3
-                        className="text-sm font-medium text-white mb-1"
-                        style={{ fontFamily: 'Georgia, serif' }}
+                        className="text-sm font-semibold text-white mb-1"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                     >
                         {video.title}
                     </h3>

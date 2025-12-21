@@ -55,14 +55,14 @@ export function PathOverviewPanel({ pathId }) {
             {/* Header */}
             <div className="border-b border-[var(--accent-15)] pb-4">
                 <h2
-                    className="text-2xl font-semibold text-[var(--accent-color)] mb-2"
-                    style={{ fontFamily: 'Cinzel, serif', letterSpacing: '0.02em' }}
+                    className="text-2xl font-bold text-[var(--accent-color)] mb-2 tracking-wide"
+                    style={{ fontFamily: 'var(--font-display)' }}
                 >
                     {path.title}
                 </h2>
                 <p
-                    className="text-base text-[rgba(253,251,245,0.75)] italic mb-2"
-                    style={{ fontFamily: 'Crimson Pro, serif' }}
+                    className="text-base text-[rgba(253,251,245,0.75)] italic mb-2 font-medium"
+                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                 >
                     {path.subtitle}
                 </p>
@@ -75,12 +75,12 @@ export function PathOverviewPanel({ pathId }) {
             {path.practices.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[var(--accent-color)] mb-2"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         Practice
                     </h3>
-                    <ul className="space-y-1.5" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                    <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                         {path.practices.map((practice, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
                                 <span className="text-[var(--accent-50)]">•</span>
@@ -97,12 +97,12 @@ export function PathOverviewPanel({ pathId }) {
             {path.chapters.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[var(--accent-color)] mb-2"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         Wisdom
                     </h3>
-                    <ul className="space-y-1.5" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                    <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                         {path.chapters.map((chapterId, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
                                 <span className="text-[var(--accent-50)]">•</span>
@@ -117,12 +117,12 @@ export function PathOverviewPanel({ pathId }) {
             {path.applicationItems.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[var(--accent-color)] mb-2"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         Application
                     </h3>
-                    <ul className="space-y-1.5" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                    <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                         {path.applicationItems.map((item, idx) => (
                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
                                 <span className="text-[var(--accent-50)]">□</span>
@@ -137,8 +137,8 @@ export function PathOverviewPanel({ pathId }) {
             {path.weeks.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[var(--accent-color)] mb-3"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-base font-bold text-[var(--accent-color)] mb-3 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         Weekly Timeline
                     </h3>
@@ -165,8 +165,8 @@ export function PathOverviewPanel({ pathId }) {
             {path.weeks.length > 0 && (
                 <div>
                     <h3
-                        className="text-base font-semibold text-[var(--accent-color)] mb-3"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-base font-bold text-[var(--accent-color)] mb-3 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         Weekly Breakdown
                     </h3>
@@ -187,14 +187,14 @@ export function PathOverviewPanel({ pathId }) {
                                             ▾
                                         </span>
                                         <span
-                                            className="text-xs text-[var(--accent-60)] uppercase tracking-wider"
-                                            style={{ fontFamily: 'Cinzel, serif' }}
+                                            className="text-xs text-[var(--accent-60)] uppercase tracking-[0.15em] font-bold"
+                                            style={{ fontFamily: 'var(--font-display)' }}
                                         >
                                             Week {week.number}
                                         </span>
                                         <span
-                                            className="flex-1 text-sm text-[rgba(253,251,245,0.85)]"
-                                            style={{ fontFamily: 'Crimson Pro, serif' }}
+                                            className="flex-1 text-sm text-[rgba(253,251,245,0.85)] font-medium"
+                                            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                         >
                                             {week.title}
                                         </span>
@@ -206,8 +206,8 @@ export function PathOverviewPanel({ pathId }) {
                                             <div>
                                                 <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>
                                                 <p
-                                                    className="text-sm text-[rgba(253,251,245,0.8)] italic leading-relaxed"
-                                                    style={{ fontFamily: 'Crimson Pro, serif' }}
+                                                    className="text-sm text-[rgba(253,251,245,0.8)] italic leading-relaxed font-medium"
+                                                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                                 >
                                                     {week.focus}
                                                 </p>
@@ -217,7 +217,7 @@ export function PathOverviewPanel({ pathId }) {
                                             {week.practices.length > 0 && (
                                                 <div>
                                                     <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Practices</div>
-                                                    <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                                                    <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                                                         {week.practices.map((practice, idx) => (
                                                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
                                                                 <span className="text-[var(--accent-40)] mt-0.5">•</span>
@@ -232,7 +232,7 @@ export function PathOverviewPanel({ pathId }) {
                                             {week.reading.length > 0 && (
                                                 <div>
                                                     <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Reading</div>
-                                                    <ul className="space-y-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                                                    <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                                                         {week.reading.map((chapterId, idx) => (
                                                             <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
                                                                 <span className="text-[var(--accent-40)] mt-0.5">•</span>
@@ -248,8 +248,8 @@ export function PathOverviewPanel({ pathId }) {
                                                 <div>
                                                     <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Tracking Focus</div>
                                                     <p
-                                                        className="text-sm text-[rgba(253,251,245,0.75)]"
-                                                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                                                        className="text-sm text-[rgba(253,251,245,0.75)] font-medium"
+                                                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                                     >
                                                         {week.tracking}
                                                     </p>
@@ -278,7 +278,7 @@ export function PathOverviewPanel({ pathId }) {
                 <button
                     onClick={handleBegin}
                     className="px-8 py-3 rounded-full text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
-                    style={{ fontFamily: 'Cinzel, serif', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
+                    style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: 'var(--tracking-wide)', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
                 >
                     BEGIN PATH
                 </button>

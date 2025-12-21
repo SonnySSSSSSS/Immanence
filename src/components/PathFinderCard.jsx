@@ -102,16 +102,16 @@ export function PathFinderCard({ onPathRecommended }) {
                 <div className="relative z-10">
                     {/* Header */}
                     <h2
-                        className="text-lg uppercase tracking-[0.2em] text-[var(--accent-80)] mb-4 text-center"
-                        style={{ fontFamily: 'Cinzel, serif' }}
+                        className="text-lg uppercase tracking-[0.25em] text-[var(--accent-80)] mb-4 text-center font-bold"
+                        style={{ fontFamily: 'var(--font-display)' }}
                     >
                         FIND YOUR PATH
                     </h2>
 
                     {/* Prompt */}
                     <p
-                        className="text-base text-[rgba(253,251,245,0.75)] mb-6 text-center"
-                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                        className="text-base text-[rgba(253,251,245,0.75)] mb-6 text-center font-medium"
+                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                     >
                         What brings you here today?
                     </p>
@@ -162,7 +162,7 @@ export function PathFinderCard({ onPathRecommended }) {
                                                 : 'text-[rgba(253,251,245,0.7)]'
                                             }
                   `}
-                                        style={{ fontFamily: 'Crimson Pro, serif' }}
+                                        style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}
                                     >
                                         {prompt.label}
                                     </span>
@@ -179,12 +179,12 @@ export function PathFinderCard({ onPathRecommended }) {
                         >
                             <p
                                 className="text-sm text-[var(--accent-80)]"
-                                style={{ fontFamily: 'Crimson Pro, serif' }}
+                                style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}
                             >
                                 → Suggested:{' '}
                                 <span
-                                    className="font-semibold text-[var(--accent-color)]"
-                                    style={{ fontFamily: 'Cinzel, serif' }}
+                                    className="font-bold text-[var(--accent-color)] tracking-wide"
+                                    style={{ fontFamily: 'var(--font-display)' }}
                                 >
                                     {selectedPrompt.recommendedPath === 'shadow-work' && 'Integrate Shadow Work'}
                                     {selectedPrompt.recommendedPath === 'consistency' && 'Build Consistency'}
@@ -201,7 +201,7 @@ export function PathFinderCard({ onPathRecommended }) {
                         <button
                             onClick={handleSkip}
                             className="text-xs text-[rgba(253,251,245,0.4)] hover:text-[rgba(253,251,245,0.7)] transition-colors"
-                            style={{ fontFamily: 'Crimson Pro, serif' }}
+                            style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}
                         >
                             Skip assessment
                         </button>
@@ -215,6 +215,6 @@ export function PathFinderCard({ onPathRecommended }) {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-        </div>
+        </div >
     );
 }

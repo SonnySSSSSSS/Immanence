@@ -36,7 +36,9 @@ export function PathJourneyLog() {
             >
                 <h3
                     style={{
-                        fontFamily: 'Cinzel, serif',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        letterSpacing: 'var(--tracking-wide)',
                         fontSize: '1rem',
                         color: 'var(--accent-color, #fcd34d)',
                         marginBottom: '1rem',
@@ -47,7 +49,9 @@ export function PathJourneyLog() {
                 </h3>
                 <p
                     style={{
-                        fontFamily: 'Crimson Pro, serif',
+                        fontFamily: 'var(--font-body)',
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
                         fontSize: '0.9375rem',
                         color: 'rgba(255, 255, 255, 0.6)',
                         textAlign: 'center',
@@ -72,7 +76,9 @@ export function PathJourneyLog() {
         >
             <h3
                 style={{
-                    fontFamily: 'Cinzel, serif',
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    letterSpacing: 'var(--tracking-wide)',
                     fontSize: '1rem',
                     color: 'var(--accent-color, #fcd34d)',
                     marginBottom: '1.5rem',
@@ -100,7 +106,9 @@ export function PathJourneyLog() {
                     <div>
                         <div
                             style={{
-                                fontFamily: 'Outfit, sans-serif',
+                                fontFamily: 'var(--font-display)',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
                                 fontSize: '1.125rem',
                                 color: 'var(--accent-color, #fcd34d)',
                                 fontWeight: 600,
@@ -111,7 +119,9 @@ export function PathJourneyLog() {
                         {pathEmergenceDate && (
                             <div
                                 style={{
-                                    fontFamily: 'Outfit, sans-serif',
+                                    fontFamily: 'var(--font-display)',
+                                    fontWeight: 600,
+                                    letterSpacing: 'var(--tracking-mythic)',
                                     fontSize: '0.75rem',
                                     color: 'rgba(255, 255, 255, 0.5)',
                                 }}
@@ -128,7 +138,9 @@ export function PathJourneyLog() {
                 <div style={{ marginBottom: '1.5rem' }}>
                     <h4
                         style={{
-                            fontFamily: 'Outfit, sans-serif',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
                             fontSize: '0.75rem',
                             color: 'rgba(255, 255, 255, 0.5)',
                             textTransform: 'uppercase',
@@ -174,7 +186,9 @@ export function PathJourneyLog() {
                                     </div>
                                     <div
                                         style={{
-                                            fontFamily: 'Outfit, sans-serif',
+                                            fontFamily: 'var(--font-display)',
+                                            fontWeight: 600,
+                                            letterSpacing: 'var(--tracking-mythic)',
                                             fontSize: '0.6875rem',
                                             color: 'rgba(255, 255, 255, 0.6)',
                                             width: '3rem',
@@ -194,7 +208,9 @@ export function PathJourneyLog() {
                 <div>
                     <h4
                         style={{
-                            fontFamily: 'Outfit, sans-serif',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
                             fontSize: '0.75rem',
                             color: 'rgba(255, 255, 255, 0.5)',
                             textTransform: 'uppercase',
@@ -228,7 +244,9 @@ export function PathJourneyLog() {
                                 <div style={{ flex: 1 }}>
                                     <div
                                         style={{
-                                            fontFamily: 'Outfit, sans-serif',
+                                            fontFamily: 'var(--font-display)',
+                                            fontWeight: 600,
+                                            letterSpacing: 'var(--tracking-mythic)',
                                             fontSize: '0.875rem',
                                             color: 'rgba(255, 255, 255, 0.8)',
                                         }}
@@ -241,7 +259,9 @@ export function PathJourneyLog() {
                                     </div>
                                     <div
                                         style={{
-                                            fontFamily: 'Outfit, sans-serif',
+                                            fontFamily: 'var(--font-display)',
+                                            fontWeight: 600,
+                                            letterSpacing: 'var(--tracking-mythic)',
                                             fontSize: '0.6875rem',
                                             color: 'rgba(255, 255, 255, 0.4)',
                                         }}

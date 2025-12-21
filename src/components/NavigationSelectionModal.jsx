@@ -52,9 +52,10 @@ export function NavigationSelectionModal({
                 <div
                     className="mb-6 text-center"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-display)',
                         fontSize: '11px',
-                        letterSpacing: '0.3em',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
                         textTransform: 'uppercase',
                         color: 'rgba(253, 251, 245, 0.4)',
                     }}
@@ -84,9 +85,10 @@ export function NavigationSelectionModal({
                                     border: isSelected
                                         ? `1px solid ${isCompass ? 'rgba(220, 210, 180, 0.4)' : 'rgba(250, 208, 120, 0.4)'}`
                                         : '1px solid rgba(253, 251, 245, 0.05)',
-                                    fontFamily: 'Georgia, serif',
-                                    fontSize: '14px',
-                                    letterSpacing: '0.08em',
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '13px',
+                                    fontWeight: 500,
+                                    letterSpacing: 'var(--tracking-wide)',
                                     color: isSelected ? goldColor : 'rgba(253, 251, 245, 0.7)',
                                     boxShadow: isSelected
                                         ? `0 0 20px ${isCompass ? 'rgba(220, 210, 180, 0.15)' : 'rgba(250, 208, 120, 0.15)'}, inset 0 0 20px ${isCompass ? 'rgba(220, 210, 180, 0.08)' : 'rgba(250, 208, 120, 0.08)'}`
@@ -108,9 +110,9 @@ export function NavigationSelectionModal({
                 <div
                     className="mt-6 text-center"
                     style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-body)',
                         fontSize: '9px',
-                        letterSpacing: '0.2em',
+                        letterSpacing: 'var(--tracking-wide)',
                         color: 'rgba(253, 251, 245, 0.3)',
                     }}
                 >

@@ -40,7 +40,7 @@ export function PromptDisplay({ text, onAudioPlay, fadeMs = 500 }) {
         >
             <p
                 style={{
-                    fontFamily: 'Georgia, serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '15px',
                     lineHeight: 1.7,
                     color: 'rgba(253,251,245,0.95)',

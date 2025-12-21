@@ -68,8 +68,13 @@ export function SelfKnowledgeView() {
             <div className="relative pt-2 pb-6">
                 <div className="text-center mb-6">
                     <h2
-                        className="text-[16px] uppercase tracking-[0.3em] mb-1"
-                        style={{ fontFamily: 'Cinzel, Georgia, serif', color: 'var(--accent-color)' }}
+                        className="text-[16px] uppercase mb-1"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
+                            color: 'var(--accent-color)'
+                        }}
                     >
                         Wave Function
                     </h2>
@@ -320,7 +325,7 @@ export function SelfKnowledgeView() {
                                     border: '1px solid rgba(200,180,255,0.15)',
                                     boxShadow: 'inset 2px 2px 10px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)',
                                     transform: `rotate(${(i % 2 === 0 ? 1 : -1) * (i % 3)}deg)`,
-                                    fontFamily: 'Crimson Pro, Georgia, serif'
+                                    fontFamily: 'var(--font-body)'
                                 }}
                             >
                                 {/* Stone texture overlay */}

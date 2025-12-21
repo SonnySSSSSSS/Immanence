@@ -202,7 +202,7 @@ export function AwarenessCompass() {
                         <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: 'rgba(253,251,245,0.5)' }}>
                             ▲ {trackingItems.north.count > 0 && <span className="ml-1 opacity-70">({trackingItems.north.count})</span>}
                         </div>
-                        <div className="text-[11px] leading-tight" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                        <div className="text-[11px] leading-tight" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}>
                             {trackingItems.north.name}
                         </div>
                     </motion.div>
@@ -215,7 +215,7 @@ export function AwarenessCompass() {
                             color: activeDirection === 'south' ? DIRECTIONS.south.color : 'rgba(253,251,245,0.7)'
                         }}
                     >
-                        <div className="text-[11px] leading-tight mb-1" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                        <div className="text-[11px] leading-tight mb-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}>
                             {trackingItems.south.name}
                         </div>
                         <div className="text-[10px] uppercase tracking-wider" style={{ color: 'rgba(253,251,245,0.5)' }}>
@@ -234,7 +234,7 @@ export function AwarenessCompass() {
                         <div className="text-[10px] mb-0.5" style={{ color: 'rgba(253,251,245,0.5)' }}>
                             ◀ {trackingItems.west.count > 0 && <span className="ml-0.5 opacity-70">({trackingItems.west.count})</span>}
                         </div>
-                        <div className="text-[11px] leading-tight" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                        <div className="text-[11px] leading-tight" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}>
                             {trackingItems.west.name}
                         </div>
                     </motion.div>
@@ -247,7 +247,7 @@ export function AwarenessCompass() {
                             color: activeDirection === 'east' ? DIRECTIONS.east.color : 'rgba(253,251,245,0.7)'
                         }}
                     >
-                        <div className="text-[11px] leading-tight" style={{ fontFamily: 'Crimson Pro, serif' }}>
+                        <div className="text-[11px] leading-tight" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}>
                             {trackingItems.east.name}
                         </div>
                         <div className="text-[10px] mt-0.5" style={{ color: 'rgba(253,251,245,0.5)' }}>
@@ -288,7 +288,7 @@ export function AwarenessCompass() {
                             onChange={(e) => setIntentionInput(e.target.value)}
                             placeholder="When I notice [pattern], I will..."
                             className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-sm text-white/90 placeholder:text-white/20 focus:outline-none focus:border-white/20 resize-none text-center transition-all shadow-inner"
-                            style={{ fontFamily: 'Crimson Pro, serif', fontStyle: 'italic' }}
+                            style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', letterSpacing: '0.01em' }}
                             rows={3}
                         />
                         <div className="flex justify-center gap-4">
@@ -298,7 +298,7 @@ export function AwarenessCompass() {
                                     setIsEditingIntention(false);
                                 }}
                                 className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
-                                style={{ fontFamily: 'Cinzel, serif' }}
+                                style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)' }}
                             >
                                 Cancel
                             </button>
@@ -308,7 +308,7 @@ export function AwarenessCompass() {
                                     setIsEditingIntention(false);
                                 }}
                                 className="text-[10px] uppercase tracking-widest text-[#050508] bg-white/80 hover:bg-white px-4 py-1 rounded-full transition-all"
-                                style={{ fontFamily: 'Cinzel, serif' }}
+                                style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)' }}
                             >
                                 Seal
                             </button>
@@ -323,14 +323,14 @@ export function AwarenessCompass() {
                             {intention ? (
                                 <p
                                     className="text-[13px] text-center text-white/70 italic leading-relaxed"
-                                    style={{ fontFamily: 'Crimson Pro, serif' }}
+                                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                 >
                                     "{intention}"
                                 </p>
                             ) : (
                                 <p
                                     className="text-xs text-center text-white/20 italic"
-                                    style={{ fontFamily: 'Crimson Pro, serif' }}
+                                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                                 >
                                     Tap to define your intention...
                                 </p>

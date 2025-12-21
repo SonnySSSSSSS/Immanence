@@ -41,9 +41,10 @@ export function BreathConfig({
                         }}
                         className="rounded-full px-2.5 py-1 transition-all duration-200"
                         style={{
-                            fontFamily: "Georgia, serif",
+                            fontFamily: "var(--font-display)",
                             fontSize: "8px",
-                            letterSpacing: "0.15em",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
                             background: "transparent",
                             border: `1px solid ${preset === name ? "var(--accent-color)" : "var(--accent-10)"}`,
@@ -67,9 +68,10 @@ export function BreathConfig({
                     <div key={key} className="flex flex-col gap-1">
                         <label
                             style={{
-                                fontFamily: "Georgia, serif",
+                                fontFamily: "var(--font-body)",
                                 fontSize: "8px",
-                                letterSpacing: "0.25em",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-wide)",
                                 textTransform: "uppercase",
                                 color: "rgba(253,251,245,0.55)",
                                 textAlign: "center"
@@ -83,8 +85,9 @@ export function BreathConfig({
                             onChange={(e) => handlePatternChange(key, e.target.value)}
                             className="text-center rounded-xl px-2 py-2 outline-none transition-all duration-200"
                             style={{
-                                fontFamily: "Georgia, serif",
+                                fontFamily: "var(--font-display)",
                                 fontSize: "14px",
+                                fontWeight: 600,
                                 background: "rgba(0,0,0,0.4)",
                                 border: "1px solid var(--accent-10)",
                                 color: "rgba(253,251,245,0.9)",
