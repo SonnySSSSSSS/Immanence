@@ -231,11 +231,12 @@ App.jsx
 ├── Background.jsx          # Cosmic background
 ├── IndrasNet.jsx           # Particle system
 ├── SectionView
-│   ├── Avatar.jsx          # Central avatar with effects
-│   ├── StageTitle.jsx      # Stage/path display
+│   ├── Avatar.jsx          # Central multi-layer avatar (Canvas + PNGs)
+│   ├── StageTitle.jsx      # Stage/path display with hover tooltips
 │   └── [Section Content]
 │       ├── HomeHub.jsx             # Dashboard
-│       ├── PracticeSection.jsx     # Breathing, visualization
+│       ├── PracticeSection.jsx     # Breathing, visualization, Ember FX
+│       │   └── BodyScanVisual.jsx  # Body scan silhouette + Ember FX bar
 │       ├── WisdomSection.jsx       # Reading content
 │       ├── ApplicationSection.jsx  # Four Modes training
 │       │   ├── TrackingView.jsx    # Gesture → Trace → Pattern → Direction
@@ -302,6 +303,11 @@ ApplicationSection.jsx
 - Ring scale (breath-driven expansion)
 - Practice energy (intensity modifier)
 - Path-specific presets (via `pathFX.js`)
+
+### Ember FX & Decorative Layers
+- **Ember FX Bar**: A horizontal, glowing, flickering bar added to the top of the `BodyScanVisual` container.
+- **Avatar Rotation**: The central avatar sigil rotates counter-clockwise at 25% the speed of the outer rune ring (62.4s CW vs 249.6s CCW).
+- **Z-Index Stacking**: Header section (`z-20`) is strictly above content (`z-10`) to prevent tooltip occlusion.
 
 **Key Props:**
 - `intensity` (0-1) - Particle visibility/activity

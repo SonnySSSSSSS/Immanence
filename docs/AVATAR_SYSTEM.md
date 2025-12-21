@@ -12,6 +12,14 @@ Both dimensions are behavior-based. Both are honest. Neither makes claims about 
 
 ## Philosophical Foundation
 
+### The Five-Layer Stack
+The Avatar is constructed as a temporal composite of five distinct visual layers, ordered by depth (back to front):
+0. **Luminous Field** (`AvatarLuminousCanvas.jsx`): Sacred geometry, particles, and atmospheric nebula.
+1. **Breathing Aura**: Dynamic glow syncing with practice breath patterns.
+2. **Rune Ring**: Rotating outer glyph circle (Clockwise, 62.4s period).
+3. **Inner Sigil Core**: The central stage/path-aware PNG (Counter-clockwise, 249.6s period - 25% speed).
+4. **Metrics/Labels**: UI text and path identifiers.
+
 ### Core Principle: "Existence as Participation"
 
 The avatar doesn't represent "your level of enlightenment." It represents **your practice participation over time**.
@@ -115,6 +123,12 @@ When crossing a stage threshold:
 1. Pulse outward from center (bright, brief)
 2. Rotation surge (rings spin faster momentarily)
 3. Both happen together over ~1.5 seconds
+
+### Harmonic Rotation
+The avatar uses **counter-rotation** to create visual depth and a "locked center" effect:
+- **Outer Rune Ring**: 62.4s clockwise.
+- **Inner Sigil Core**: 249.6s counter-clockwise.
+- The 1:4 ratio (25%) ensures the core remains anchored even while in motion.
 
 ### Hint/Morph System
 
