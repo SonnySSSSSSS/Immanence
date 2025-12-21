@@ -208,12 +208,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     const absError = Math.abs(errorMs);
 
     // Trigger enso feedback (once per phase)
-    console.log('🎯 Tap debug:', { currentPhase, lastTapPhase: lastTapPhaseRef.current, absError });
-
     if (currentPhase && lastTapPhaseRef.current !== currentPhase) {
       const accuracy = absError < 50 ? 'perfect' : absError < 200 ? 'good' : 'loose';
-
-      console.log('✨ Triggering enso:', { accuracy, currentPhase });
 
       setEnsoFeedback(prev => ({
         active: true,
@@ -225,11 +221,9 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
       // Clear enso after animation completes
       setTimeout(() => setEnsoFeedback(prev => ({ ...prev, active: false })), 1400);
-    } else {
-      console.log('❌ Enso NOT triggered - already tapped this phase or no phase');
     }
 
-    console.log('✅ Tap accepted:', errorMs, 'ms from', closestPeak.name, 'peak');
+
     onTap(errorMs);
   };
 
@@ -407,11 +401,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
                   'rest'
           }
           size={400}
-          accentColor={(() => {
-            const color = theme.accent.particleColor || primary;
-            console.log('🎨 PathParticles color:', color, 'stage:', theme.stage, 'has particleColor:', !!theme.accent.particleColor);
-            return color;
-          })()}
+          accentColor={theme.accent.particleColor || primary}
           isActive={true}
         />
       </div>

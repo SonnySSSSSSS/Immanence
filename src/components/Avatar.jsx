@@ -87,15 +87,11 @@ function BreathingAura({ breathPattern }) {
 
   // Read colors directly from theme context (bypasses CSS variable issues)
   const theme = useTheme();
-  console.log('🎨 BreathingAura theme:', theme);
 
   const { primary, secondary, muted } = theme.accent;
-  console.log('🎨 BreathingAura accent colors:', { primary, secondary, muted });
 
   // Create gradient using pre-computed alpha variants
   const gradient = 'radial-gradient(circle, var(--accent-80) 0%, var(--accent-40) 32%, var(--accent-20) 58%, rgba(248,250,252,0.02) 75%, transparent 100%)';
-
-  console.log('🎨 BreathingAura gradient:', gradient);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -242,8 +238,6 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
   const stageLower = stage.toLowerCase();
   const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
 
-  console.log('🎭 StaticSigilCore props:', { stage, path, showCore, attention, variationIndex, hasVariations });
-
   // Get stage-specific color (hardcoded to avoid import issues)
   const stageColors = {
     'seedling': '#4ade80',
@@ -271,7 +265,6 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
     const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1).toLowerCase();
     src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
   }
-  console.log('🎭 StaticSigilCore using image:', src);
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center">
@@ -494,7 +487,6 @@ function AvatarContainer({
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
 export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true, attention = 'vigilance' }) {
-  console.log('🎭 Avatar received props:', { controlledStage, path, showCore, attention });
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
@@ -538,7 +530,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
         const foundCount = results.filter(Boolean).length;
         setMaxVariations(foundCount > 0 ? foundCount : 1);
         setVariationIndex(0);
-        console.log(`🎭 Found ${foundCount} variations for ${stageLower}-${pathLower}-${attentionLower}`);
       });
   }, [currentStage, path, attention, showCore]);
 
@@ -548,7 +539,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
       const stageColors = STAGE_GLOW_COLORS[currentStage];
       // Capitalize first letter for theme system: "seedling" -> "Seedling"
       const stageName = currentStage.charAt(0).toUpperCase() + currentStage.slice(1);
-      console.log('🔄 Avatar stage changed to:', stageName, 'with colors:', stageColors);
       onStageChange(stageColors, stageName);
     }
   }, [stageIndex, currentStage, onStageChange]);
@@ -602,7 +592,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
     // If variations exist, cycle through them
     if (maxVariations > 1) {
       setVariationIndex((prev) => (prev + 1) % maxVariations);
-      console.log(`🎭 Cycling to variation ${(variationIndex + 1) % maxVariations + 1}/${maxVariations}`);
     } else if (controlledStage && onStageChange) {
       // Controlled mode - calculate next stage and notify parent
       const currentIndex = STAGE_NAMES.indexOf(currentStage);
@@ -610,7 +599,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
       const nextStage = STAGE_NAMES[nextIndex];
       const stageColors = STAGE_GLOW_COLORS[nextStage];
       const stageName = nextStage.charAt(0).toUpperCase() + nextStage.slice(1);
-      console.log('🖱️ Avatar clicked - next stage:', stageName);
       onStageChange(stageColors, stageName);
     } else {
       // Uncontrolled mode - use internal state

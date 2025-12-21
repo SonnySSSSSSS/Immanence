@@ -13,6 +13,7 @@ import { calculatePathProbabilities, getDominantPath, determinePathState } from 
 import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
+import { useSettingsStore } from '../state/settingsStore';
 import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 
 // Available stages and paths for dropdowns
@@ -44,6 +45,10 @@ export function DevPanel({
     const currentPath = usePathStore(s => s.currentPath);
     const pathStatus = usePathStore(s => s.pathStatus);
     const pendingCeremony = usePathStore(s => s.pendingCeremony);
+
+    // Settings store state
+    const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
+    const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -445,6 +450,31 @@ export function DevPanel({
                         onToggle={() => toggleSection('llm')}
                     >
                         <LLMTestPanel />
+                    </Section>
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* DESIGN & DIAGNOSTIC SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="Design & Diagnostic"
+                        expanded={expandedSections.design || false}
+                        onToggle={() => toggleSection('design')}
+                    >
+                        <div className="flex items-center justify-between mb-4 bg-white/5 rounded-lg px-3 py-2">
+                            <div className="flex flex-col">
+                                <span className="text-xs text-white/90">Coordinate Helper</span>
+                                <span className="text-[10px] text-white/40">Logs X,Y % on click</span>
+                            </div>
+                            <button
+                                onClick={() => setCoordinateHelper(!showCoordinateHelper)}
+                                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${showCoordinateHelper
+                                    ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-500/50'
+                                    : 'bg-white/5 text-white/50 border border-white/10'
+                                    }`}
+                            >
+                                {showCoordinateHelper ? 'ACTIVE' : 'OFF'}
+                            </button>
+                        </div>
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}

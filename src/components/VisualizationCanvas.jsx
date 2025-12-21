@@ -30,7 +30,6 @@ export function VisualizationCanvas({
         fadeOutDuration,
         voidDuration,
         onPhaseChange: (newPhase, oldPhase) => {
-            console.log('Phase:', oldPhase, '->', newPhase);
 
             if (!audioEnabled) return;
 
@@ -51,7 +50,6 @@ export function VisualizationCanvas({
             }
         },
         onCycleComplete: (cycle) => {
-            console.log('Cycle', cycle, 'complete');
             if (onCycleComplete) onCycleComplete(cycle);
         },
     });

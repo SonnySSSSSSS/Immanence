@@ -7,7 +7,7 @@ import { SakshiVisual } from './SakshiVisual.jsx';
 import { BodyScanVisual } from './BodyScanVisual.jsx';
 import { SENSORY_TYPES } from '../data/sensoryTypes.js';
 import { SAKSHI_PROMPTS } from '../data/sakshiPrompts.js';
-import { BODY_SCAN_PROMPTS } from '../data/bodyScanPrompts.js';
+import { BODY_SCANS, getAllBodyScans } from '../data/bodyScanPrompts.js';
 import { getAllRituals, getRitualById } from '../data/rituals/index.js';
 import RitualSession from './RitualSession.jsx';
 import { Icon } from '../icons/Icon.jsx';
@@ -25,6 +25,7 @@ export function SensorySession({
     const [currentPrompt, setCurrentPrompt] = useState('');
     const [mode, setMode] = useState('noting'); // unused, kept for future
     const [selectedRitualId, setSelectedRitualId] = useState('standingMeditation'); // for bhakti default
+    const [selectedScanId, setSelectedScanId] = useState('full'); // for bodyScan localized scans
     const [devPromptIndex, setDevPromptIndex] = useState(0); // DEV: manual prompt navigation
 
     // Timer Refs
@@ -49,7 +50,7 @@ export function SensorySession({
             case 'sakshi':
                 return SAKSHI_PROMPTS;
             case 'bodyScan':
-                return BODY_SCAN_PROMPTS;
+                return BODY_SCANS[selectedScanId]?.prompts || BODY_SCANS.full.prompts;
             default:
                 return [];
         }
@@ -109,10 +110,12 @@ export function SensorySession({
         }
     }, [elapsedSeconds, sensoryType, mode, allPrompts]);
 
-    // Reset devPromptIndex when practice/mode changes
+    // Reset when practice/mode/scan changes
     useEffect(() => {
         setDevPromptIndex(0);
-    }, [sensoryType, mode]);
+        setElapsedSeconds(0);
+        startTimeRef.current = performance.now();
+    }, [sensoryType, mode, selectedScanId]);
 
     // Drag handlers
     const handleMouseDown = (e) => {
@@ -206,7 +209,16 @@ export function SensorySession({
             case 'sakshi':
                 return <SakshiVisual elapsedSeconds={elapsedSeconds} />;
             case 'bodyScan':
-                return <BodyScanVisual elapsedSeconds={elapsedSeconds} activePointId={currentPointId} />;
+                const activeScan = BODY_SCANS[selectedScanId] || BODY_SCANS.full;
+                return (
+                    <BodyScanVisual
+                        elapsedSeconds={elapsedSeconds}
+                        activePointId={currentPointId}
+                        scanPoints={activeScan.points}
+                        scanPrompts={activeScan.prompts}
+                        image={activeScan.image}
+                    />
+                );
             default:
                 return null;
         }
@@ -215,13 +227,33 @@ export function SensorySession({
     return (
         <div className="w-full flex flex-col items-center gap-6">
             {/* Header */}
-            <div className="flex flex-col items-center text-center">
+            <div className="flex flex-col items-center text-center relative w-full">
                 <div className="flex items-center justify-center mb-1" style={{ color: 'var(--accent-color)' }}>
                     <Icon name={sensoryType} size={32} />
                 </div>
-                <div className="text-sm font-[Georgia] text-[var(--accent-color)] tracking-widest">
+                <div className="text-sm font-[Georgia] text-[var(--accent-color)] tracking-widest mb-4">
                     {config?.label}
                 </div>
+
+                {/* Body Scan Sub-Selector */}
+                {sensoryType === 'bodyScan' && (
+                    <div className="w-full flex justify-center mb-2 px-4">
+                        <div className="bg-black/20 backdrop-blur-sm rounded-full p-1 border border-white/5 flex gap-1 overflow-x-auto scrollbar-hide max-w-full">
+                            {getAllBodyScans().map(scan => (
+                                <button
+                                    key={scan.id}
+                                    onClick={() => setSelectedScanId(scan.id)}
+                                    className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 ${selectedScanId === scan.id
+                                        ? 'bg-[var(--accent-primary)] text-black font-bold'
+                                        : 'text-white/40 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {scan.icon} {scan.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
 

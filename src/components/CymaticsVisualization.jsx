@@ -55,11 +55,9 @@ export function CymaticsVisualization({
         fadeOutDuration,
         voidDuration,
         onPhaseChange: (newPhase, oldPhase) => {
-            console.log('[Cymatics] Phase:', oldPhase, '->', newPhase);
             // Audio continues through all phases, no changes needed here
         },
         onCycleComplete: (cycle) => {
-            console.log('[Cymatics] Cycle', cycle, 'complete');
             if (onCycleComplete) onCycleComplete(cycle);
         },
     });
@@ -78,7 +76,6 @@ export function CymaticsVisualization({
     // Initialize audio when isRunning becomes true
     useEffect(() => {
         if (isRunning && audioEnabled && !audioInitializedRef.current) {
-            console.log('[Cymatics] Initializing audio with frequency:', frequency);
 
             // Start audio
             const initAudio = async () => {
@@ -86,7 +83,6 @@ export function CymaticsVisualization({
                 await addInterval(1.0); // Add root oscillator
                 await audioFadeIn(fadeInDuration * 1000, volume);
                 audioInitializedRef.current = true;
-                console.log('[Cymatics] Audio initialized and playing');
             };
 
             initAudio();

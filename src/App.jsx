@@ -189,7 +189,6 @@ function App() {
 
   return (
     <ThemeProvider currentStage={avatarStage}>
-      {console.log('🔄 App rendering with avatarStage:', avatarStage)}
 
       {/* Show welcome screen on first visit */}
       {showWelcome && <WelcomeScreen onDismiss={handleDismissWelcome} />}
@@ -275,7 +274,7 @@ function App() {
                   🎨
                 </button>
                 <div className="text-[8px] uppercase tracking-[0.15em] text-white/40">
-                  v3.10.5
+                  v3.10.6
                 </div>
                 {!isHub && (
                   <button
@@ -295,7 +294,6 @@ function App() {
                 <HomeHub
                   onSelectSection={setActiveSection}
                   onStageChange={(hsl, stageName) => {
-                    console.log('📱 App received stage change:', stageName);
                     setAvatarStage(stageName);
                     setPreviewStage(stageName);
                   }}
@@ -314,7 +312,6 @@ function App() {
                 breathState={breathState}
                 onBreathStateChange={setBreathState}
                 onStageChange={(hsl, stageName) => {
-                  console.log('📱 SectionView received stage change:', stageName);
                   setAvatarStage(stageName);
                   setPreviewStage(stageName);
                 }}

@@ -26,8 +26,10 @@ export const useSettingsStore = create(
             // Developer settings
             devPanelOpen: false,
             showFxGallery: false,
+            showCoordinateHelper: false,
 
             // Actions
+            setCoordinateHelper: (show) => set({ showCoordinateHelper: show }),
             setDisplayMode: (mode) => set({ displayMode: mode }),
 
             setLlmModel: (model) => set({ llmModel: model }),

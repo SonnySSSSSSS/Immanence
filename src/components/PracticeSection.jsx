@@ -311,11 +311,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [practice, circuitConfig]);
 
-  // Set up a circuit exercise - configure practice settings and start
   const setupCircuitExercise = (exerciseItem) => {
     const { exercise, duration: exDuration } = exerciseItem;
-
-    console.log('[Circuit] Setting up exercise:', exercise.name, 'practiceType:', exercise.practiceType);
 
     // Map exercise to practice type and configure settings
     if (exercise.practiceType === 'Breath & Stillness') {
@@ -329,7 +326,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         if (presetKey && BREATH_PRESETS[presetKey]) {
           setPattern(BREATH_PRESETS[presetKey]);
           setPreset(presetKey);
-          console.log('[Circuit] Set breath pattern:', presetKey);
         }
       }
     } else if (exercise.practiceType === 'Cognitive Vipassana') {
@@ -356,16 +352,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
     setBreathCount(0);
-
-    console.log('[Circuit] Exercise setup complete, practice now:', exercise.practiceType);
   };
 
-  // Handle exercise completion - circuit-aware
-  // This is used as onComplete callback for practice components
   const handleExerciseComplete = () => {
     if (activeCircuitId && circuitConfig) {
       // In circuit mode - advance to next exercise
-      console.log('[Circuit] Exercise completed, advancing...');
       advanceCircuitExercise();
     } else {
       // Normal mode - stop the session
