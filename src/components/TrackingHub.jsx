@@ -174,7 +174,7 @@ function DomainInsights({ domain, stats }) {
     );
 }
 
-export function TrackingHub() {
+export function TrackingHub({ onOpenHardwareGuide }) {
     const {
         getStreakInfo,
         getDomainStats,
@@ -301,12 +301,25 @@ export function TrackingHub() {
                         {/* Vacation toggle (compact) */}
                         <VacationToggle compact />
 
+                        {/* Physical Bind guide button */}
+                        <button
+                            onClick={onOpenHardwareGuide}
+                            className="px-2 py-1 rounded-full text-[9px] transition-all hover:bg-amber-500/10"
+                            style={{
+                                color: 'rgba(253,190,105,0.6)',
+                                border: '1px solid rgba(253,190,105,0.2)'
+                            }}
+                            title="Hardware Button Setup"
+                        >
+                            Physical ⚡
+                        </button>
+
                         {/* Streak Badge */}
                         <StreakBadge showLabel={false} />
                     </div>
                 </div>
 
-                {/* Cymatic pagination glyphs */}
+                {/* Cymatic pagination glyphs (moved inside mb-3) */}
                 <div className="flex items-center justify-center gap-3">
                     {orderedDomains.map((domain, index) => (
                         <button

@@ -12,7 +12,7 @@ import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 import { ConsistencyFoundation } from './Cycle/ConsistencyFoundation.jsx';
 
-export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
+export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);

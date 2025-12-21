@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Avatar } from "./components/Avatar.jsx";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
@@ -19,8 +19,8 @@ import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
 import { InstallPrompt } from "./components/InstallPrompt.jsx";
-import { PresenceSigil } from "./components/PresenceSigil.jsx";
 import { SigilTracker } from "./components/SigilTracker.jsx";
+import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import "./App.css";
 
@@ -32,7 +32,7 @@ const SECTION_LABELS = {
 };
 
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide }) {
   // Navigation and Application sections handle their own avatars and stage titles
   const showAvatar = section !== 'navigation' && section !== 'application';
 
@@ -96,7 +96,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
           </Suspense>
         )}
 
-        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />}
+        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} />}
       </div>
     </div>
   );
@@ -140,10 +140,22 @@ function App() {
   const [showFxGallery, setShowFxGallery] = useState(true); // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
   const [isSigilTrackerOpen, setIsSigilTrackerOpen] = useState(false);
+  const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const lastTapRef = useRef(0);
 
   // Screen Wake Lock when in Vigilance Mode
   useWakeLock(isMinimized);
+
+  const handleDoubleTap = (e) => {
+    const now = Date.now();
+    const delay = now - lastTapRef.current;
+    if (delay < 300 && delay > 0) {
+      // Double tap detected
+      setIsSigilTrackerOpen(true);
+    }
+    lastTapRef.current = now;
+  };
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Flame');
   const [previewPath, setPreviewPath] = useState('Soma');
@@ -241,6 +253,7 @@ function App() {
         {/* Inner App Container */}
         <div
           className="relative min-h-screen flex flex-col items-center text-white overflow-visible transition-all duration-500"
+          onPointerDown={handleDoubleTap}
           style={displayMode === 'sanctuary' ? {
             // Sanctuary: Full bleed, max width for large screens
             width: '100%',
@@ -265,27 +278,36 @@ function App() {
                 Immanence OS
               </div>
 
-              {/* Center label - only show when in a section, not on hub */}
-              {!isHub && (
-                <div
-                  className="text-sm font-medium text-white/90"
-                  style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
-                >
-                  {currentLabel}
-                </div>
-              )}
+              {/* Center Element: Label or Heartbeat Sigil */}
+              <div className="flex-1 flex justify-center">
+                {!isHub ? (
+                  <div
+                    className="text-sm font-medium text-white/90"
+                    style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
+                  >
+                    {currentLabel}
+                  </div>
+                ) : (
+                  <div
+                    className="relative w-6 h-6 flex items-center justify-center cursor-pointer select-none"
+                    onPointerDown={(e) => {
+                      const timer = setTimeout(() => setIsSigilTrackerOpen(true), 600);
+                      const cancel = () => {
+                        clearTimeout(timer);
+                        window.removeEventListener('pointerup', cancel);
+                      };
+                      window.addEventListener('pointerup', cancel);
+                    }}
+                  >
+                    {/* Pulsing Core */}
+                    <div className="absolute inset-0 rounded-full bg-amber-500/10 blur-sm animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500/40 shadow-[0_0_8px_var(--accent-color)]" />
+                  </div>
+                )}
+              </div>
 
               <div className="min-w-[140px] flex-shrink-0 flex justify-end items-center gap-2">
                 {/* Display Mode Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setIsMinimized(v => !v)}
-                  className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
-                  title="Vigilance Mode"
-                  style={{ color: isMinimized ? 'var(--accent-color)' : undefined }}
-                >
-                  👁️
-                </button>
                 <DisplayModeToggle />
                 <button
                   type="button"
@@ -336,6 +358,7 @@ function App() {
                     previewPath={previewPath}
                     previewShowCore={previewShowCore}
                     previewAttention={previewAttention}
+                    onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                   />
                 </div>
               ) : (
@@ -356,27 +379,21 @@ function App() {
                   previewAttention={previewAttention}
                   showFxGallery={showFxGallery}
                   onNavigate={setActiveSection}
+                  onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                 />
               )}
             </div>
           </div>
 
-          <PresenceSigil
-            onLongPress={() => setIsSigilTrackerOpen(true)}
-            onTap={() => {
-              if (isMinimized) {
-                setIsMinimized(false);
-              } else {
-                setActiveSection(null);
-              }
-            }}
-            stage={previewStage}
-          />
-
           <SigilTracker
             isOpen={isSigilTrackerOpen}
             onClose={() => setIsSigilTrackerOpen(false)}
             stage={previewStage}
+          />
+
+          <HardwareGuide
+            isOpen={isHardwareGuideOpen}
+            onClose={() => setIsHardwareGuideOpen(false)}
           />
 
           <InstallPrompt />

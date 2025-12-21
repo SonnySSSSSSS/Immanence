@@ -42,8 +42,13 @@ export function PresenceSigil({ onLongPress, onTap, stage = 'flame' }) {
 
     return (
         <div
-            className="fixed top-0 left-1/2 -translate-x-1/2 z-[3000] flex flex-col items-center"
-            style={{ top: 'env(safe-area-inset-top, 0px)' }}
+            className="fixed top-0 right-0 z-[3000] flex flex-col items-center"
+            style={{
+                top: 'env(safe-area-inset-top, 0px)',
+                right: 'env(safe-area-inset-right, 8px)',
+                paddingTop: '8px',
+                paddingRight: '8px'
+            }}
         >
             <motion.div
                 animate={controls}

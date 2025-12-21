@@ -44,7 +44,20 @@ export function SigilTracker({ isOpen, onClose, stage = 'flame' }) {
         addSigil(d, intention);
         setCurrentPath([]);
         setIntention('');
-        onClose();
+
+        // Auto-close logic for quick entry
+        const isTraceRoute = window.location.pathname.endsWith('/trace') || window.location.pathname.endsWith('/trace/');
+
+        if (isTraceRoute) {
+            setTimeout(() => {
+                window.close();
+                setTimeout(() => {
+                    window.location.href = 'about:blank';
+                }, 100);
+            }, 1000); // 1s delay to see the seal success
+        } else {
+            onClose();
+        }
     };
 
     const handleClear = () => {

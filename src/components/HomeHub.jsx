@@ -14,7 +14,7 @@ import { STAGES } from "../state/stageConfig.js";
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
 
-function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention }) {
+function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
@@ -163,7 +163,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           STATS DASHBOARD - TrackingHub with live progress data
           ────────────────────────────────────────────────────────────────────── */}
-      <TrackingHub />
+      <TrackingHub onOpenHardwareGuide={onOpenHardwareGuide} />
 
       {/* ──────────────────────────────────────────────────────────────────────
           MODES SECTION - Mode selection buttons
