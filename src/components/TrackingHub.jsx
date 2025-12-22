@@ -186,7 +186,10 @@ export function TrackingHub({ onOpenHardwareGuide }) {
         userSelectedDomain
     } = useProgressStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
+    const isSanctuary = displayMode === 'sanctuary';
+    const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-2xl';
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -269,7 +272,7 @@ export function TrackingHub({ onOpenHardwareGuide }) {
     };
 
     return (
-        <div className="w-full max-w-2xl">
+        <div className={`w-full ${contentMaxWidth} transition-all duration-500`}>
             {/* Honor Log Modal */}
             <HonorLogModal
                 isOpen={showHonorModal}

@@ -20,7 +20,12 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
+  const isSanctuary = displayMode === 'sanctuary';
+
+  // Dynamic max-width based on display mode: sanctuary=1024px, hearth=672px
+  const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-2xl';
 
   const streakInfo = getStreakInfo();
   const breathStats = getDomainStats('breathwork');
@@ -98,7 +103,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR SECTION - Primary focal point
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full max-w-2xl flex flex-col items-center gap-4">
+      <div className={`w-full ${contentMaxWidth} flex flex-col items-center gap-4 transition-all duration-500`}>
         <div className="relative w-full flex items-center justify-center overflow-visible">
           {/* Bloom halo - atmospheric radial glow behind avatar */}
           <div
@@ -184,23 +189,25 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           MODES SECTION - Mode selection buttons
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full max-w-2xl">
+      <div className={`w-full ${contentMaxWidth} transition-all duration-500`}>
         <div
           className="relative text-[10px] uppercase tracking-[0.2em] mb-4 text-suspended"
           style={{
-            color: 'rgba(253, 251, 245, 0.7)',
-            textShadow: '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
+            color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.7)',
+            textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
           }}
         >
-          {/* Dark backing */}
-          <div
-            className="absolute inset-x-0 -inset-y-2"
-            style={{
-              background: 'radial-gradient(ellipse 60% 100% at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%)',
-              filter: 'blur(10px)',
-              zIndex: -1,
-            }}
-          />
+          {/* Dark backing (dark mode only) */}
+          {!isLight && (
+            <div
+              className="absolute inset-x-0 -inset-y-2"
+              style={{
+                background: 'radial-gradient(ellipse 60% 100% at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%)',
+                filter: 'blur(10px)',
+                zIndex: -1,
+              }}
+            />
+          )}
           Explore Modes
         </div>
 
@@ -249,15 +256,21 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           QUICK INSIGHTS - Small contextual suggestions
           ────────────────────────────────────────────────────────────────────── */}
       <div
-        className="w-full max-w-2xl rounded-3xl px-5 py-4 relative overflow-hidden"
+        className={`w-full ${contentMaxWidth} rounded-3xl px-5 py-4 relative overflow-hidden transition-all duration-500`}
         style={{
-          background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-          border: `1px solid ${insightColors[insightState].border}`,
-          boxShadow: `
-            0 8px 32px rgba(0, 0, 0, 0.6),
-            0 2px 8px ${insightColors[insightState].glow},
-            inset 0 1px 0 rgba(255, 255, 255, 0.08)
-          `,
+          background: isLight
+            ? 'linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%)'
+            : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+          border: isLight
+            ? `1px solid var(--light-border)`
+            : `1px solid ${insightColors[insightState].border}`,
+          boxShadow: isLight
+            ? `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`
+            : `
+              0 8px 32px rgba(0, 0, 0, 0.6),
+              0 2px 8px ${insightColors[insightState].glow},
+              inset 0 1px 0 rgba(255, 255, 255, 0.08)
+            `,
           transition: 'all 0.6s ease',
         }}
       >
@@ -288,8 +301,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div
             className="text-[10px] mb-2 uppercase tracking-[0.15em]"
             style={{
-              color: insightColors[insightState].accent,
-              textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+              color: isLight ? 'var(--light-accent)' : insightColors[insightState].accent,
+              textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
             }}
           >
             ⟨ Transmission ⟩
@@ -297,10 +310,10 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div
             className="text-[11px] leading-relaxed"
             style={{
-              color: 'rgba(253, 251, 245, 0.85)',
+              color: isLight ? 'var(--light-text-primary)' : 'rgba(253, 251, 245, 0.85)',
               fontFamily: "'Courier New', monospace",
               letterSpacing: '0.02em',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+              textShadow: isLight ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.4)',
             }}
           >
             {currentStreak >= 7
@@ -320,12 +333,15 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 }
 
 function ModeButton({ title, description, subtext, onClick, image, colorGrade = 'gold' }) {
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+
   // Per-mode color grading for subtle identity
   const colorGrades = {
-    gold: 'rgba(255, 191, 0, 0.08)', // warm gold - Practice
-    amberViolet: 'rgba(180, 120, 200, 0.06)', // amber-violet - Wisdom
-    indigo: 'rgba(100, 130, 220, 0.06)', // cool indigo - Application
-    goldBlue: 'rgba(180, 190, 220, 0.05)', // neutral gold-blue - Navigation
+    gold: isLight ? 'rgba(180, 140, 60, 0.03)' : 'rgba(255, 191, 0, 0.08)', // warm gold - Practice
+    amberViolet: isLight ? 'rgba(124, 92, 174, 0.03)' : 'rgba(180, 120, 200, 0.06)', // amber-violet - Wisdom
+    indigo: isLight ? 'rgba(14, 116, 144, 0.03)' : 'rgba(100, 130, 220, 0.06)', // cool indigo - Application
+    goldBlue: isLight ? 'rgba(100, 110, 140, 0.03)' : 'rgba(180, 190, 220, 0.05)', // neutral gold-blue - Navigation
   };
   const gradeOverlay = colorGrades[colorGrade] || colorGrades.gold;
 
@@ -336,41 +352,55 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
       className="group relative rounded-3xl text-left transition-all duration-300 flex flex-col items-start justify-end overflow-hidden"
       style={{
         minHeight: '200px',
-        background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-        border: '1px solid transparent',
-        backgroundImage: `
+        background: isLight ? 'var(--light-bg-surface)' : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+        border: isLight ? '1px solid var(--light-border)' : '1px solid transparent',
+        backgroundImage: isLight ? 'none' : `
           linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
           linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)
         `,
         backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
-        boxShadow: `
-          0 8px 32px rgba(0, 0, 0, 0.6),
-          0 2px 8px var(--accent-15),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          inset 0 -3px 12px rgba(0, 0, 0, 0.4),
-          inset 0 0 40px rgba(0, 0, 0, 0.25)
-        `,
+        boxShadow: isLight
+          ? `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`
+          : `
+            0 8px 32px rgba(0, 0, 0, 0.6),
+            0 2px 8px var(--accent-15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            inset 0 -3px 12px rgba(0, 0, 0, 0.4),
+            inset 0 0 40px rgba(0, 0, 0, 0.25)
+          `,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `
-          0 12px 40px rgba(0, 0, 0, 0.7),
-          0 0 40px var(--accent-25),
-          0 0 80px var(--accent-10),
-          inset 0 1px 0 rgba(255, 255, 255, 0.12),
-          inset 0 -3px 12px rgba(0, 0, 0, 0.4),
-          inset 0 0 40px rgba(0, 0, 0, 0.25)
-        `;
+        if (isLight) {
+          e.currentTarget.style.boxShadow = `
+            0 8px 30px var(--light-shadow-tint),
+            0 0 10px var(--light-accent-muted),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9)
+          `;
+        } else {
+          e.currentTarget.style.boxShadow = `
+            0 12px 40px rgba(0, 0, 0, 0.7),
+            0 0 40px var(--accent-25),
+            0 0 80px var(--accent-10),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            inset 0 -3px 12px rgba(0, 0, 0, 0.4),
+            inset 0 0 40px rgba(0, 0, 0, 0.25)
+          `;
+        }
         e.currentTarget.style.transform = 'translateY(-3px)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = `
-          0 8px 32px rgba(0, 0, 0, 0.6),
-          0 2px 8px var(--accent-15),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          inset 0 -3px 12px rgba(0, 0, 0, 0.4),
-          inset 0 0 40px rgba(0, 0, 0, 0.25)
-        `;
+        if (isLight) {
+          e.currentTarget.style.boxShadow = `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`;
+        } else {
+          e.currentTarget.style.boxShadow = `
+            0 8px 32px rgba(0, 0, 0, 0.6),
+            0 2px 8px var(--accent-15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            inset 0 -3px 12px rgba(0, 0, 0, 0.4),
+            inset 0 0 40px rgba(0, 0, 0, 0.25)
+          `;
+        }
         e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
@@ -382,30 +412,40 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
             backgroundImage: `url(${image})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.55,
+            opacity: isLight ? 0.25 : 0.55,
+            mixBlendMode: isLight ? 'multiply' : 'normal',
           }}
         />
       )}
 
-      {/* Dark gradient overlay for text legibility */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            linear-gradient(to bottom, 
-              rgba(0, 0, 0, 0.1) 0%, 
-              rgba(0, 0, 0, 0.4) 40%, 
-              rgba(0, 0, 0, 0.8) 100%
-            )
-          `,
-        }}
-      />
+      {/* Dark gradient overlay for text legibility (dark mode only) */}
+      {!isLight && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `
+              linear-gradient(to bottom, 
+                rgba(0, 0, 0, 0.1) 0%, 
+                rgba(0, 0, 0, 0.4) 40%, 
+                rgba(0, 0, 0, 0.8) 100%
+              )
+            `,
+          }}
+        />
+      )}
 
       {/* Noise texture overlay - enhanced visibility */}
-      <div style={{ ...noiseOverlayStyle, opacity: 0.05 }} />
+      <div style={{ ...noiseOverlayStyle, opacity: isLight ? 0.015 : 0.05 }} />
 
-      {/* Sheen overlay */}
-      <div style={sheenOverlayStyle} />
+      {/* Sheen overlay (dark mode) / Inset shadow (light mode) */}
+      {isLight ? (
+        <div
+          className="absolute inset-0 pointer-events-none rounded-3xl"
+          style={{ boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.03)' }}
+        />
+      ) : (
+        <div style={sheenOverlayStyle} />
+      )}
 
       {/* Color grade overlay - per-mode identity */}
       <div
@@ -413,52 +453,33 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
         style={{ background: gradeOverlay }}
       />
 
-      {/* Carved inner shadow - concavity effect */}
-      <div
-        className="absolute inset-0 pointer-events-none rounded-3xl"
-        style={{
-          boxShadow: `
-            inset 0 3px 8px rgba(0, 0, 0, 0.4),
-            inset 0 -2px 6px rgba(255, 255, 255, 0.02)
-          `,
-        }}
-      />
-
-      {/* Inner glow layer */}
-      <div
-        className="absolute inset-0 pointer-events-none rounded-3xl"
-        style={{
-          background: `radial-gradient(circle at 50% 0%, var(--accent-glow)12 0%, transparent 60%)`,
-        }}
-      />
-
       {/* Text Content - positioned at bottom with proper z-index */}
       <div className="relative z-10 px-5 py-5 w-full">
         <div
           className="text-sm font-semibold tracking-wide transition-colors"
           style={{
-            color: 'var(--accent-color)',
-            textShadow: '0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8)',
+            color: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
+            textShadow: isLight ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8)',
           }}
         >
           {title}
         </div>
         <div
           style={{
-            color: 'rgba(253, 251, 245, 0.92)', // Increased from 0.85
-            fontSize: '0.75rem', // Increased from 0.6875rem (11px → 12px)
+            color: isLight ? 'var(--light-text-primary)' : 'rgba(253, 251, 245, 0.92)',
+            fontSize: '0.75rem',
             marginTop: '0.25rem',
-            textShadow: '0 2px 8px rgba(0, 0, 0, 0.95)', // Stronger shadow for legibility
+            textShadow: isLight ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.95)',
           }}
         >
           {description}
         </div>
         <div
           style={{
-            color: 'rgba(253, 251, 245, 0.65)', // Increased from 0.5
-            fontSize: '0.625rem', // Increased from 0.5625rem (9px → 10px)
+            color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.65)',
+            fontSize: '0.625rem',
             marginTop: '0.5rem',
-            textShadow: '0 2px 6px rgba(0, 0, 0, 0.9)',
+            textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.9)',
           }}
         >
           {subtext}

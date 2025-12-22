@@ -62,6 +62,14 @@ export function Background({ stage = 'flame' }) {
             background: `radial-gradient(ellipse 50% 40% at 50% 30%, transparent 50%, ${vignetteColor} 100%)`,
           }}
         />
+
+        {/* Horizontal vignette - darkens sides for mobile focus */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(90deg, rgba(40, 35, 30, 0.25) 0%, transparent 15%, transparent 85%, rgba(40, 35, 30, 0.25) 100%)',
+          }}
+        />
       </div>
     );
   }

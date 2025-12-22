@@ -20,6 +20,16 @@ export const STAGE_THEMES = {
             hoverBg: 'rgba(74, 222, 128, 0.08)',
             progressBar: '#4ade80',
             buttonGradient: 'linear-gradient(135deg, #4ade80, #22c55e)',
+        },
+        light: {
+            bgBase: '#F5F8F2',          // Sage cream
+            bgSurface: '#FFFDF9',       // Soft white
+            textPrimary: '#2D3D2A',     // Forest
+            textSecondary: '#4A6B41',   // Moss
+            accent: '#4A6B41',          // Moss green
+            accentMuted: '#8BA888',     // Light sage
+            border: 'rgba(74,107,65,0.25)',
+            shadowTint: 'rgba(45,61,42,0.12)',
         }
     },
 
@@ -42,6 +52,16 @@ export const STAGE_THEMES = {
             hoverBg: 'rgba(249, 115, 22, 0.08)',
             progressBar: '#f97316',
             buttonGradient: 'linear-gradient(135deg, #fb923c, #ea580c)',
+        },
+        light: {
+            bgBase: '#FDF6F0',          // Warm cream
+            bgSurface: '#FFFEFC',       // Pure warm white
+            textPrimary: '#4A3B32',     // Burnt umber
+            textSecondary: '#8B4513',   // Saddle brown
+            accent: '#B8654A',          // Terra cotta
+            accentMuted: '#D99F8B',     // Faded clay
+            border: 'rgba(184,101,74,0.25)',
+            shadowTint: 'rgba(184,101,74,0.12)',
         }
     },
 
@@ -64,6 +84,16 @@ export const STAGE_THEMES = {
             hoverBg: 'rgba(252, 211, 77, 0.08)',
             progressBar: '#fcd34d',
             buttonGradient: 'linear-gradient(135deg, #fcd34d, #f59e0b)',
+        },
+        light: {
+            bgBase: '#F5F0E6',          // Papyrus
+            bgSurface: '#F8F3EB',       // Refined parchment
+            textPrimary: '#3D3425',     // Ink brown
+            textSecondary: '#6B5E43',   // Deep bronze
+            accent: '#D4AF37',          // Classic gold
+            accentMuted: '#E5D38A',     // Pale gold
+            border: 'rgba(180,155,110,0.25)',
+            shadowTint: 'rgba(100,70,50,0.15)',
         }
     },
 
@@ -86,6 +116,16 @@ export const STAGE_THEMES = {
             hoverBg: 'rgba(34, 211, 238, 0.08)',
             progressBar: '#22d3ee',
             buttonGradient: 'linear-gradient(135deg, #22d3ee, #06b6d4)',
+        },
+        light: {
+            bgBase: '#F0F5F7',          // Arctic cream
+            bgSurface: '#F9FCFD',       // Pure snow
+            textPrimary: '#2A3B4A',     // Deep slate
+            textSecondary: '#4A6175',   // Steel blue
+            accent: '#0E7490',          // Deep cyan
+            accentMuted: '#5EA9C0',     // Soft teal
+            border: 'rgba(14,116,144,0.25)',
+            shadowTint: 'rgba(14,116,144,0.12)',
         }
     },
 
@@ -108,6 +148,16 @@ export const STAGE_THEMES = {
             hoverBg: 'rgba(167, 139, 250, 0.08)',
             progressBar: '#a78bfa',
             buttonGradient: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+        },
+        light: {
+            bgBase: '#F5F2F8',          // Lavender cream
+            bgSurface: '#FCFBFE',       // Pure lilac white
+            textPrimary: '#3D2A4A',     // Deep amethyst
+            textSecondary: '#624A75',   // Muted violet
+            accent: '#7C5CAE',          // Royal purple
+            accentMuted: '#A792C9',     // Soft lavender
+            border: 'rgba(124,92,174,0.25)',
+            shadowTint: 'rgba(124,92,174,0.12)',
         }
     },
 };

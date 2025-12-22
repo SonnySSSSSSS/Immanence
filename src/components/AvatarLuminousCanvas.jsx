@@ -694,8 +694,8 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       // 1. Clear & Background
       ctx.clearRect(0, 0, width, height);
 
-      // Noise Overlay (Screen Space)
-      if (noiseCanvasRef.current) {
+      // Noise Overlay (Screen Space) - only in dark mode
+      if (noiseCanvasRef.current && !isLightRef.current) {
         ctx.drawImage(noiseCanvasRef.current, 0, 0, width, height);
       }
 

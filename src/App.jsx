@@ -15,6 +15,7 @@ import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
 import { AvatarPreview } from "./components/AvatarPreview.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
+import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
@@ -35,6 +36,9 @@ const SECTION_LABELS = {
 function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide }) {
   // Navigation and Application sections handle their own avatars and stage titles
   const showAvatar = section !== 'navigation' && section !== 'application';
+  const displayMode = useDisplayModeStore((s) => s.mode);
+  const isSanctuary = displayMode === 'sanctuary';
+  const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-2xl';
 
   return (
     <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
@@ -74,7 +78,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         </div>
       )}
 
-      <div className="w-full max-w-2xl flex-1 relative z-10 px-4" style={{ overflow: 'visible' }}>
+      <div className={`w-full ${contentMaxWidth} flex-1 relative z-10 px-4 transition-all duration-500`} style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
 
         {section === "wisdom" && (
@@ -245,7 +249,7 @@ function App() {
 
       {/* Outer Layout Container - Adapts to display mode */}
       <div
-        className="min-h-screen w-full flex justify-center overflow-visible transition-colors duration-500"
+        className="min-h-screen w-full flex justify-center overflow-visible transition-colors duration-500 relative"
         style={{
           background: isLight
             ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
@@ -254,20 +258,41 @@ function App() {
               : '#000'),
         }}
       >
+        {/* Side mask - left side (dynamic based on display mode) */}
+        <div
+          className="fixed inset-y-0 left-0 pointer-events-none z-50 transition-all duration-500"
+          style={{
+            width: displayMode === 'sanctuary'
+              ? 'calc((100vw - min(100vw, 1366px)) / 2)'
+              : 'calc((100vw - min(100vw, 1080px)) / 2)',
+            background: isLight ? '#E8DFD0' : '#000',
+          }}
+        />
+
+        {/* Side mask - right side (dynamic based on display mode) */}
+        <div
+          className="fixed inset-y-0 right-0 pointer-events-none z-50 transition-all duration-500"
+          style={{
+            width: displayMode === 'sanctuary'
+              ? 'calc((100vw - min(100vw, 1366px)) / 2)'
+              : 'calc((100vw - min(100vw, 1080px)) / 2)',
+            background: isLight ? '#E8DFD0' : '#000',
+          }}
+        />
 
         {/* Inner App Container */}
         <div
           className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
           onPointerDown={handleDoubleTap}
           style={displayMode === 'sanctuary' ? {
-            // Sanctuary: Full bleed, max width for large screens
+            // Sanctuary: iPad landscape width (1366px)
             width: '100%',
-            maxWidth: '1536px', // max-w-screen-2xl
+            maxWidth: '1366px',
             boxShadow: 'none',
           } : {
-            // Hearth: Fixed portrait canvas with ember glow
+            // Hearth: Standard desktop width (1080px)
             width: '100%',
-            maxWidth: '540px', // Mobile-friendly width
+            maxWidth: '1080px',
             boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
           }}
         >
@@ -324,7 +349,9 @@ function App() {
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Display Mode Toggle */}
+                {/* Width Toggle (Sanctuary/Hearth) */}
+                <WidthToggle />
+                {/* Color Scheme Toggle (Dark/Light) */}
                 <DisplayModeToggle />
                 <button
                   type="button"

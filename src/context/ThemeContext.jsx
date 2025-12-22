@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import { STAGE_THEMES, BASE_THEME, STAGE_NAME_MAP } from '../theme/stageColors';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 const ThemeContext = createContext(null);
 
@@ -118,6 +119,18 @@ export function ThemeProvider({ children, currentStage = 'Flame' }) {
         // Text
         root.style.setProperty('--text-accent', stageTheme.text.accent);
         root.style.setProperty('--text-accent-muted', stageTheme.text.accentMuted);
+
+        // Light mode specific stage variables (for adaptive manuscript look)
+        if (stageTheme.light) {
+            root.style.setProperty('--light-bg-base', stageTheme.light.bgBase);
+            root.style.setProperty('--light-bg-surface', stageTheme.light.bgSurface);
+            root.style.setProperty('--light-text-primary', stageTheme.light.textPrimary);
+            root.style.setProperty('--light-text-secondary', stageTheme.light.textSecondary);
+            root.style.setProperty('--light-accent', stageTheme.light.accent);
+            root.style.setProperty('--light-accent-muted', stageTheme.light.accentMuted);
+            root.style.setProperty('--light-border', stageTheme.light.border);
+            root.style.setProperty('--light-shadow-tint', stageTheme.light.shadowTint);
+        }
 
     }, [stageKey, currentStage]);
 

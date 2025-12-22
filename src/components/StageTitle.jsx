@@ -1,6 +1,7 @@
 // src/components/StageTitle.jsx
 // Shared Stage Title component for displaying current stage and path across all sections
 import React, { useState } from "react";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 // Sanskrit path names with their closest one-word English translations
 const PATH_TRANSLATIONS = {
@@ -103,6 +104,8 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
   const [showEnglish, setShowEnglish] = useState(false);
   const [tooltip, setTooltip] = useState(null); // 'stage', 'path', or null
   const [tooltipTimer, setTooltipTimer] = useState(null);
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
 
   const stageLower = (stage || "flame").toLowerCase();
   const stageColors = STAGE_COLORS[stageLower] || STAGE_COLORS.flame;
@@ -201,17 +204,19 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
       {/* Title container - Composite Image based with text fallback */}
       <div className="relative flex items-center justify-center -mt-2">
-        {/* Background separation - dark backing for contrast */}
-        <div
-          className="absolute -inset-x-8 -inset-y-4 rounded-xl"
-          style={{
-            background: 'radial-gradient(ellipse 100% 100% at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            filter: 'blur(12px)',
-            pointerEvents: 'none',
-          }}
-        />
+        {/* Background separation - dark backing for contrast (dark mode only) */}
+        {!isLight && (
+          <div
+            className="absolute -inset-x-8 -inset-y-4 rounded-xl"
+            style={{
+              background: 'radial-gradient(ellipse 100% 100% at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              filter: 'blur(12px)',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
 
         {/* Composite: Stage Image + Separator + Path Image */}
         <div className="composite-title-row flex items-center justify-center gap-4 relative z-10">

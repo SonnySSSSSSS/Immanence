@@ -177,13 +177,17 @@ const STAGE_RUNE_COLORS = {
   stellar: "rgba(200, 150, 255, 0.6)", // purple
 };
 
+import { useDisplayModeStore } from "../state/displayModeStore.js";
+
 function RuneRingLayer({ stage = "flame", isPracticing = false }) {
   const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {/* Dark backdrop for Flame stage only - improves rune contrast */}
-      {stage === "flame" && (
+      {/* Dark backdrop for Flame stage only - improves rune contrast (dark mode only) */}
+      {stage === "flame" && !isLight && (
         <div
           className="absolute w-[88%] h-[88%]"
           style={{
