@@ -29,6 +29,7 @@ import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
 import { BreathPatternPreview } from "./BreathPatternPreview.jsx";
 import { plateauMaterial, innerGlowStyle } from "../styles/cardMaterial.js";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
@@ -169,6 +170,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Attention path instrumentation
   const instrumentation = useSessionInstrumentation();
+
+  // Get color scheme for light mode support
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
 
   // Load saved preferences or use defaults
   const savedPrefs = loadPreferences();
@@ -1310,41 +1315,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       >
         {/* Mandala background - dual mask for mid-radius emphasis */}
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-          {/* Mandala image - fairly visible, slightly scaled */}
+          {/* Mandala image - light/dark mode aware */}
           <img
-            src={`${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`}
+            src={`${import.meta.env.BASE_URL}bg/practice-${isLight ? 'light' : 'breath'}-mandala.png`}
             alt="Breath mandala"
             className="object-contain w-full h-full"
             style={{
-              opacity: 0.2,
+              opacity: isLight ? 0.15 : 0.2,
               transform: 'scale(1.25) translateY(-8%)',
               transformOrigin: 'center',
             }}
           />
-
-          {/* INNER mask: darken the very center behind the timer */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'radial-gradient(circle, rgba(0,0,0,0.55) 0%, transparent 42%)',
-            }}
-          />
-
-          {/* OUTER mask: soften edges so lines near panel border don't compete */}
-          <div
-            className="absolute inset-0 rounded-[32px]"
-            style={{
-              background: 'radial-gradient(circle, transparent 60%, rgba(0,0,0,0.45) 100%)',
-            }}
-          />
         </div>
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse 80% 40% at 50% 0%, var(--accent-10) 0%, transparent 70%)',
-          }}
-        />
 
         <div
           className="absolute top-3 left-4"

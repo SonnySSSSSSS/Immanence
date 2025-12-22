@@ -366,7 +366,7 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.13.0
+                  v3.13.5
                 </div>
                 {!isHub && (
                   <button

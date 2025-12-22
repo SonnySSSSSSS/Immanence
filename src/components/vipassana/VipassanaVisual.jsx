@@ -7,7 +7,6 @@ import { ThoughtLabeling } from './ThoughtLabeling';
 import { MiniAvatar } from './MiniAvatar';
 import { StaticTimer } from './StaticTimer';
 import { SessionSummary } from './SessionSummary';
-import { DynamicClouds } from './DynamicClouds';
 import { ScrollingFog } from './ScrollingFog';
 import { VipassanaVideoLayer } from './VipassanaVideoLayer';
 
@@ -215,12 +214,6 @@ export function VipassanaVisual({
             <VipassanaVideoLayer
                 videoType={themeData.videoType || 'leaves'}
                 enabled={!!themeData.videoType}
-            />
-
-            {/* Dynamic cloud layer - appears after first thought */}
-            <DynamicClouds
-                isVisible={sessionStats.totalNotices > 0}
-                opacity={0.08}
             />
 
             {/* Scrolling fog - lower third, mirrors thought density */}

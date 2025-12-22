@@ -120,20 +120,6 @@ export function IndrasNet({ stage = 'flame', isPracticing = false }) {
                 }}
             />
 
-            {/* 2. Blur Shadow Underneath */}
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: "50%",
-                    transform: "translateX(-50%) scale(1.05)",
-                    width: "60%",
-                    height: "100%",
-                    background: "radial-gradient(ellipse at bottom center, rgba(0, 0, 0, 0.2) 0%, transparent 70%)",
-                    filter: "blur(15px)",
-                    opacity: 0.2,
-                }}
-            />
 
             {/* 3. Breathing Pulse Center with stage color */}
             <div

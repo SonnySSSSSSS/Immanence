@@ -8,6 +8,23 @@ Immanence OS is a **local-first, constraint-based practice instrument**. The sys
 - Provides structure without judgment
 - Uses AI for validation, not recommendation
 
+### UI/UX Design Principles (Meditative Practice)
+
+The interface follows a **"high-tech HUD over cosmic chaos"** philosophy, where the cosmology bows during practice:
+
+1. **One Dominant Visual Anchor** - Each screen has one clear focus
+2. **Local Quiet Zones** - Islands of calm within the cosmic background
+3. **Compressed Luminance** - Softer contrasts during active practice (lifted blacks, capped highlights)
+4. **Motion Transfers** - Animation flows, doesn't stack; freeze everything except the locus of attention
+5. **UI Waits for User** - Interface that listens, not demands; text appears after visuals settle
+
+**Key Aesthetic Choices:**
+- Glass capsule containers with thin white strokes and backdrop blur
+- Serif fonts (Cinzel, Playfair Display) for headers with wide letter-spacing
+- Fine gold hairline rules instead of thick glows
+- Defined frames with rounded corners for visualizations
+- Text pulsing effects for collapsible affordances (pulse when idle, stop on hover/expand)
+
 ---
 
 ## High-Level Architecture
@@ -173,6 +190,28 @@ All state is managed with Zustand stores, persisted to localStorage.
 }
 ```
 
+### Circuit Configuration
+
+**Circuit Mode** allows chaining multiple practice types in sequence.
+
+**Key Features:**
+- Horizontal scrolling exercise selection ribbon (6 exercises: Breath, Cognitive Vipassana, Somatic Vipassana, Cymatics, Sound Bath, Visualization)
+- Per-exercise duration dropdown (3, 5, 7, 10, 12, 15, 20 min)
+- Auto-calculated total circuit duration
+- Clean linear sequence display with numbered badges
+- Dynamic accent color integration based on stage/path
+- Heartbeat pulse animation on START button (~60 BPM)
+
+**Duration Control:**
+- Main duration selector hidden for Circuit mode
+- Per-exercise dropdown updates ALL exercises simultaneously
+- Total circuit time displayed in OPTIONS panel
+
+**Components:**
+- `CircuitConfig.jsx` - Main configuration component
+- `OrbitalSequence.jsx` - Unused orbital layout (reference)
+- `CircuitSigil.jsx` - Unused charging ring (reference)
+
 ### Wisdom Section
 
 `WisdomSection.jsx` serves as the "Akashic Record" - the library and reflection space.
@@ -220,6 +259,26 @@ Sound-based practices use binaural beats and isochronic tones.
 - `SoundConfig.jsx` - Hz selector, sound type
 - Rendered in `PracticeSection.jsx` with volume control
 
+### Ritual System
+
+Rituals are structured, multi-step meditative practices with specific friction mappings.
+
+**Key Features:**
+- **Minimum Dwell Time Enforcement:** Users must spend 50% of step duration before "NEXT STEP" unlocks
+- **Visual Feedback:** Button transitions from grey to golden glow when enabled
+- **Ritual Seal:** Post-session summary card for non-ritual practices showing duration, breath count, accuracy
+- **Crisis Preparation Suite:** Rituals targeting specific emotional states (Agitation, Shame, Overwhelm, Numbness)
+
+**Storm Anchor Ritual** (Crisis Preparation):
+- Category: `grounding` → `SETTLE` family
+- 4 steps: Sighting, Physiological Sigh, Weight of Being, Triage Script
+- Friction Mapping: Targets **Agitation** via parasympathetic reset
+- Path Impact: Pre-path foundational work, contributes to Ekagrata path signal
+
+**Components:**
+- `RitualPortal.jsx` - Main ritual interface with dwell time enforcement
+- `PracticeSection.jsx` - Ritual Seal summary display
+
 ---
 
 ## Component Hierarchy
@@ -240,7 +299,7 @@ App.jsx
 │       ├── WisdomSection.jsx       # Reading content
 │       ├── ApplicationSection.jsx  # Four Modes training
 │       │   ├── TrackingView.jsx    # Gesture → Trace → Pattern → Direction
-│       │   │   ├── AwarenessCompass.jsx
+│       │   │   ├── AwarenessCompass.jsx        # Includes tracking stats & intention
 │       │   │   ├── TodayAwarenessLog.jsx
 │       │   │   ├── WeeklyReview.jsx
 │       │   │   └── PathJourneyLog.jsx
@@ -255,10 +314,18 @@ App.jsx
 ApplicationSection.jsx
 └── ModeTraining.jsx
     ├── MirrorObservation.jsx      # + MirrorValidationFeedback
-    ├── PrismSeparation.jsx
-    ├── WaveCapacity.jsx
-    └── SwordCommitment.jsx
+    │   └── VoiceInput.jsx         # Speech-to-text with preview modal
+    ├── PrismSeparation.jsx        # + VoiceInput per field
+    ├── WaveCapacity.jsx           # + VoiceInput per field
+    └── SwordCommitment.jsx        # + VoiceInput per field
 ```
+
+**Voice Input System:**
+- Uses Web Speech API for speech-to-text
+- "Confirm-first" preview modal pattern
+- Per-field mic buttons with glassmorphic styling
+- Real-time transcription with manual confirmation
+- Fallback messaging for unsupported browsers
 
 ### ALPHA UI Element: BreathingRing
 
@@ -416,13 +483,18 @@ chainStore.lockSword() → Chain archived to completedChains
 
 Tracking in Immanence OS follows a temporal resonance model: **Gesture → Trace → Pattern → Direction**.
 
-1.  **Gesture** (`AwarenessCompass.jsx`): A rapid, somatic act (swipe) to log a moment of captured pattern. 
+1.  **Gesture** (`AwarenessCompass.jsx`): A rapid, somatic act (swipe) to log a moment of captured pattern. Now includes:
+    - Integrated tracking statistics (count of logged items per direction)
+    - Intention statement display with edit functionality
+    - Direct access to state via `useApplicationStore`
 2.  **Trace** (`TodayAwarenessLog.jsx`): The immediate temporal echo of recent gestures, visualized as a chronological list.
 3.  **Pattern** (`WeeklyReview.jsx`): A medium-term aggregation showing emerging clusters and frequency.
 4.  **Direction** (`PathJourneyLog.jsx`): Long-term narrative alignment, where tracking stats meet the user's defined "Path".
 
 **The Intention "Seal":**
 Intentions are not just text fields; they are "sealed" commitments. The transition from editing to "Sealed" state represents a small ritual of commitment, moving from potentiality to enacted direction.
+
+**Note:** `ActiveTrackingItems` component has been deprecated and removed; `AwarenessCompass` now handles all tracking display functionality.
 
 ---
 
@@ -535,3 +607,27 @@ LLM validates neutral language, checks interpretations, confirms commitment clar
 ### 6. Cycle-Based Progression
 
 Avatar advancement requires both cycle completion and demonstrated capacity (see [Cycle & Consistency System](CYCLE_SYSTEM.md)).
+
+### 7. Dashboard Real Data Integration
+
+**Home Hub** displays live user statistics:
+- Total Sessions, Streak, Accuracy from `progressStore`
+- Last Practiced, Next Stage, Progress % from `lunarStore`
+- Quick Insights respond to real user behavior patterns
+- All placeholder data removed in favor of actual tracked metrics
+
+### 8. Practice Settings Persistence
+
+User's last-used practice settings persist between sessions via `localStorage`:
+- Practice type, duration, breath pattern
+- Vipassana theme/element, sound type, geometry
+- Loaded on component mount, saved when session begins
+- Implemented via `loadPreferences()` and `savePreferences()` in `practiceStore.js`
+
+### 9. Accessibility & Input Methods
+
+Multiple input methods supported for inclusive access:
+- Traditional keyboard/mouse input
+- Voice input via Web Speech API (with browser fallbacks)
+- Touch gestures for mobile (swiping for awareness logging)
+- All critical workflows remain accessible without speech

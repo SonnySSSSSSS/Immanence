@@ -279,56 +279,69 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                 onClose={() => setShowHonorModal(false)}
             />
 
-            {/* Header with action buttons and pagination */}
+            {/* "YOUR PROGRESS" header - moved ABOVE the stats section */}
+            <div
+                className="text-[10px] uppercase font-bold mb-2"
+                style={{
+                    fontFamily: 'var(--font-display)',
+                    letterSpacing: 'var(--tracking-mythic)',
+                    color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.65)'
+                }}
+            >
+                Your Progress
+            </div>
+
+            {/* Header section with centered badges */}
             <div className="mb-3">
-                <div className="flex items-center justify-between mb-2">
-                    <div
-                        className="text-[10px] uppercase font-bold"
+                {/* Action buttons row - centered */}
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    {/* Log Honor button */}
+                    <button
+                        onClick={() => setShowHonorModal(true)}
+                        className="px-2 py-1 rounded-full text-[9px] transition-all"
                         style={{
-                            fontFamily: 'var(--font-display)',
-                            letterSpacing: 'var(--tracking-mythic)',
-                            color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.65)'
+                            color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.6)',
+                            border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(253,251,245,0.2)',
+                            background: isLight ? 'rgba(255, 252, 245, 0.6)' : 'transparent'
                         }}
+                        title="Log off-app practice"
                     >
-                        Your Progress
-                    </div>
+                        + Honor
+                    </button>
 
-                    {/* Action buttons row - moved to header */}
-                    <div className="flex items-center gap-2">
-                        {/* Log Honor button */}
-                        <button
-                            onClick={() => setShowHonorModal(true)}
-                            className="px-2 py-1 rounded-full text-[9px] transition-all"
+                    {/* Vacation toggle (compact) */}
+                    <VacationToggle compact />
+
+                    {/* Physical Bind guide button */}
+                    <button
+                        onClick={onOpenHardwareGuide}
+                        className="px-2 py-1 rounded-full text-[9px] transition-all"
+                        style={{
+                            color: isLight ? 'rgba(160, 120, 48, 0.85)' : 'rgba(253,190,105,0.6)',
+                            border: isLight ? '1px solid rgba(180, 145, 80, 0.35)' : '1px solid rgba(253,190,105,0.2)',
+                            background: isLight ? 'rgba(255, 250, 240, 0.6)' : 'transparent'
+                        }}
+                        title="Hardware Button Setup"
+                    >
+                        Physical ⚡
+                    </button>
+
+                    {/* Streak Badge - moved to end */}
+                    <StreakBadge showLabel={false} />
+
+                    {/* 1 DAY Streak count display next to badge */}
+                    {streakInfo.current > 0 && (
+                        <div
+                            className="px-2 py-1 rounded-full text-[9px] font-bold"
                             style={{
-                                color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.6)',
-                                border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(253,251,245,0.2)',
-                                background: isLight ? 'rgba(255, 252, 245, 0.6)' : 'transparent'
+                                color: isLight ? 'rgba(100, 80, 40, 0.85)' : 'rgba(253,220,145,0.8)',
+                                border: isLight ? '1px solid rgba(180, 145, 80, 0.35)' : '1px solid rgba(253,220,145,0.2)',
+                                background: isLight ? 'rgba(255, 250, 235, 0.6)' : 'rgba(253,220,145,0.05)'
                             }}
-                            title="Log off-app practice"
                         >
-                            + Honor
-                        </button>
-
-                        {/* Vacation toggle (compact) */}
-                        <VacationToggle compact />
-
-                        {/* Physical Bind guide button */}
-                        <button
-                            onClick={onOpenHardwareGuide}
-                            className="px-2 py-1 rounded-full text-[9px] transition-all"
-                            style={{
-                                color: isLight ? 'rgba(160, 120, 48, 0.85)' : 'rgba(253,190,105,0.6)',
-                                border: isLight ? '1px solid rgba(180, 145, 80, 0.35)' : '1px solid rgba(253,190,105,0.2)',
-                                background: isLight ? 'rgba(255, 250, 240, 0.6)' : 'transparent'
-                            }}
-                            title="Hardware Button Setup"
-                        >
-                            Physical ⚡
-                        </button>
-
-                        {/* Streak Badge */}
-                        <StreakBadge showLabel={false} />
-                    </div>
+                            {streakInfo.current} DAY{streakInfo.current > 1 ? 'S' : ''}
+                        </div>
+                    )}
                 </div>
 
                 {/* Cymatic pagination glyphs (moved inside mb-3) */}
