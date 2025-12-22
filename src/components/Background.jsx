@@ -67,7 +67,7 @@ export function Background({ stage = 'flame' }) {
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(90deg, rgba(40, 35, 30, 0.25) 0%, transparent 15%, transparent 85%, rgba(40, 35, 30, 0.25) 100%)',
+            background: 'linear-gradient(90deg, rgba(200, 185, 160, 0.08) 0%, transparent 15%, transparent 85%, rgba(200, 185, 160, 0.08) 100%)',
           }}
         />
       </div>

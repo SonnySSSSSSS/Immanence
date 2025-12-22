@@ -23,7 +23,7 @@ export function SensoryConfig({
                     fontWeight: 600,
                     letterSpacing: "var(--tracking-mythic)",
                     textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.45)",
+                    color: "var(--text-muted)",
                     textAlign: "center"
                 }}
             >
@@ -47,7 +47,7 @@ export function SensoryConfig({
                     >
                         <span
                             style={{
-                                color: sensoryType === type.id ? "var(--accent-color)" : "rgba(253,251,245,0.7)",
+                                color: sensoryType === type.id ? "var(--accent-color)" : "var(--text-secondary)",
                                 fontWeight: 500,
                             }}
                         >
@@ -56,7 +56,7 @@ export function SensoryConfig({
                         <span
                             style={{
                                 fontSize: "8px",
-                                color: "rgba(253,251,245,0.4)",
+                                color: "var(--text-muted)",
                             }}
                         >
                             {type.description}

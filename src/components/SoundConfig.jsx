@@ -64,7 +64,18 @@ export function SoundConfig({
     setCarrierFrequency,
     volume,
     setVolume,
+    isLight = false, // Accept isLight as prop from parent
 }) {
+    // Light-mode-aware text colors
+    const textColors = {
+        primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.7)',
+        secondary: isLight ? '#5A4D3C' : 'rgba(253,251,245,0.55)',
+        muted: isLight ? '#7A6D58' : 'rgba(253,251,245,0.45)',
+        faint: isLight ? '#9A8D78' : 'rgba(253,251,245,0.4)',
+        ghost: isLight ? '#AA9D88' : 'rgba(253,251,245,0.35)',
+        description: isLight ? '#6B5E4A' : 'rgba(253,251,245,0.5)',
+    };
+
     return (
         <div className="sound-config space-y-6">
             {/* Sound Type Selection */}
@@ -77,7 +88,7 @@ export function SoundConfig({
                         fontWeight: 600,
                         letterSpacing: "var(--tracking-mythic)",
                         textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.45)",
+                        color: textColors.muted,
                         textAlign: "center"
                     }}
                 >
@@ -96,7 +107,7 @@ export function SoundConfig({
                                 letterSpacing: "var(--tracking-wide)",
                                 background: soundType === type ? "rgba(255,255,255,0.05)" : "transparent",
                                 border: `1px solid ${soundType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
-                                color: soundType === type ? "var(--accent-color)" : "rgba(253,251,245,0.6)",
+                                color: soundType === type ? "var(--accent-color)" : textColors.secondary,
                                 boxShadow: soundType === type ? "0 0 15px var(--accent-10)" : "none",
                                 gridColumn: type === 'Silence' ? 'span 3' : 'auto',
                             }}
@@ -118,7 +129,7 @@ export function SoundConfig({
                             fontWeight: 600,
                             letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.55)",
+                            color: textColors.secondary,
                             textAlign: "center"
                         }}
                     >
@@ -143,7 +154,7 @@ export function SoundConfig({
                                         fontFamily: "var(--font-display)",
                                         fontSize: "11px",
                                         fontWeight: 600,
-                                        color: binauralPreset?.id === preset.id ? preset.color : "rgba(253,251,245,0.7)",
+                                        color: binauralPreset?.id === preset.id ? preset.color : textColors.primary,
                                     }}
                                 >
                                     {preset.name}
@@ -152,7 +163,7 @@ export function SoundConfig({
                                     style={{
                                         fontFamily: "var(--font-body)",
                                         fontSize: "8px",
-                                        color: "rgba(253,251,245,0.4)",
+                                        color: textColors.faint,
                                     }}
                                 >
                                     {preset.hz} Hz
@@ -167,7 +178,7 @@ export function SoundConfig({
                                 fontFamily: "var(--font-body)",
                                 fontSize: "10px",
                                 fontStyle: "italic",
-                                color: "rgba(253,251,245,0.5)",
+                                color: textColors.description,
                             }}
                         >
                             {binauralPreset.description}
@@ -320,7 +331,7 @@ export function SoundConfig({
                             fontWeight: 600,
                             letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.55)",
+                            color: textColors.secondary,
                             textAlign: "center"
                         }}
                     >
@@ -345,7 +356,7 @@ export function SoundConfig({
                                         fontFamily: "var(--font-display)",
                                         fontSize: "11px",
                                         fontWeight: 600,
-                                        color: isochronicPreset?.id === preset.id ? preset.color : "rgba(253,251,245,0.7)",
+                                        color: isochronicPreset?.id === preset.id ? preset.color : textColors.primary,
                                     }}
                                 >
                                     {preset.name}
@@ -354,7 +365,7 @@ export function SoundConfig({
                                     style={{
                                         fontFamily: "var(--font-body)",
                                         fontSize: "8px",
-                                        color: "rgba(253,251,245,0.4)",
+                                        color: textColors.faint,
                                     }}
                                 >
                                     {preset.hz} Hz
@@ -389,7 +400,7 @@ export function SoundConfig({
                             fontWeight: 600,
                             letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.45)",
+                            color: textColors.muted,
                             textAlign: "center"
                         }}
                     >
@@ -414,7 +425,7 @@ export function SoundConfig({
                                         fontFamily: "var(--font-display)",
                                         fontSize: "12px",
                                         fontWeight: 600,
-                                        color: mantraPreset?.id === preset.id ? "var(--accent-color)" : "rgba(253,251,245,0.7)",
+                                        color: mantraPreset?.id === preset.id ? "var(--accent-color)" : textColors.primary,
                                     }}
                                 >
                                     {preset.name}
@@ -425,7 +436,7 @@ export function SoundConfig({
                                         fontSize: "9px",
                                         display: "block",
                                         marginTop: "2px",
-                                        color: "rgba(253,251,245,0.4)",
+                                        color: textColors.faint,
                                         fontStyle: "italic",
                                     }}
                                 >
@@ -448,7 +459,7 @@ export function SoundConfig({
                             fontWeight: 600,
                             letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.45)",
+                            color: textColors.muted,
                             textAlign: "center"
                         }}
                     >
@@ -473,7 +484,7 @@ export function SoundConfig({
                                         fontFamily: "var(--font-display)",
                                         fontSize: "11px",
                                         fontWeight: 600,
-                                        color: naturePreset?.id === preset.id ? "var(--accent-color)" : "rgba(253,251,245,0.7)",
+                                        color: naturePreset?.id === preset.id ? "var(--accent-color)" : textColors.primary,
                                     }}
                                 >
                                     {preset.name}
@@ -492,7 +503,7 @@ export function SoundConfig({
                             fontFamily: "var(--font-body)",
                             fontSize: "11px",
                             fontStyle: "italic",
-                            color: "rgba(253,251,245,0.5)",
+                            color: textColors.description,
                         }}
                     >
                         Practice in intentional silence.<br />
@@ -512,7 +523,7 @@ export function SoundConfig({
                             fontWeight: 600,
                             letterSpacing: "var(--tracking-mythic)",
                             textTransform: "uppercase",
-                            color: "rgba(253,251,245,0.45)",
+                            color: textColors.muted,
                         }}
                     >
                         <span>Volume</span>

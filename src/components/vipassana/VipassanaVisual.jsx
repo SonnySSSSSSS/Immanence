@@ -18,6 +18,10 @@ export function VipassanaVisual({
     onComplete,
     onExit,
 }) {
+    // Get color scheme
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
+
     // Theme keys for cycling
     const themeKeys = Object.keys(VIPASSANA_THEMES);
 
@@ -195,8 +199,8 @@ export function VipassanaVisual({
 
     return (
         <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 9999 }}>
-            {/* Solid black base - blocks main app wallpaper */}
-            <div className="absolute inset-0 bg-black" />
+            {/* Solid background base - blocks main app wallpaper */}
+            <div className="absolute inset-0" style={{ background: isLight ? 'var(--light-bg-base)' : '#000000' }} />
 
             {/* Background wallpaper with crossfade transition */}
             <div

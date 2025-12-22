@@ -28,7 +28,7 @@ import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
 import { BreathPatternPreview } from "./BreathPatternPreview.jsx";
-import { plateauMaterial, innerGlowStyle } from "../styles/cardMaterial.js";
+import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
@@ -38,7 +38,8 @@ const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassa
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
 // Scrolling Wheel Component
-function ScrollingWheel({ value, onChange, options }) {
+function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
+  const isLight = colorScheme === 'light';
   const wheelRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -106,7 +107,9 @@ function ScrollingWheel({ value, onChange, options }) {
         className="absolute top-0 left-0 right-0 pointer-events-none z-10"
         style={{
           height: `${itemHeight} px`,
-          background: "linear-gradient(180deg, rgba(15,15,26,1) 0%, transparent 100%)"
+          background: isLight
+            ? "linear-gradient(180deg, var(--light-bg-surface) 0%, transparent 100%)"
+            : "linear-gradient(180deg, rgba(15,15,26,1) 0%, transparent 100%)"
         }}
       />
 
@@ -114,7 +117,9 @@ function ScrollingWheel({ value, onChange, options }) {
         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
         style={{
           height: `${itemHeight} px`,
-          background: "linear-gradient(0deg, rgba(15,15,26,1) 0%, transparent 100%)"
+          background: isLight
+            ? "linear-gradient(0deg, var(--light-bg-surface) 0%, transparent 100%)"
+            : "linear-gradient(0deg, rgba(15,15,26,1) 0%, transparent 100%)"
         }}
       />
 
@@ -825,7 +830,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               backdropFilter: 'blur(8px)',
             }}
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '10px', letterSpacing: 'var(--tracking-mythic)', color: 'rgba(253,251,245,0.6)', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '10px', letterSpacing: 'var(--tracking-mythic)', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
               Circuit
             </span>
             <div className="flex gap-1">
@@ -842,7 +847,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 />
               ))}
             </div>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'rgba(253,251,245,0.5)' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--text-muted)' }}>
               {circuitExerciseIndex + 1}/{circuitConfig.exercises.length}
             </span>
           </div>
@@ -908,11 +913,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       color: 'var(--accent-color)',
                     }}
                   >
-                    <div style={{ color: 'rgba(253,251,245,0.55)', fontSize: '8px', marginBottom: '2px' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '8px', marginBottom: '2px' }}>
                       {currentFxPreset?.category}
                     </div>
                     <div>{currentFxPreset?.name}</div>
-                    <div style={{ color: 'rgba(253,251,245,0.55)', fontSize: '8px', marginTop: '2px' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '8px', marginTop: '2px' }}>
                       {currentFxIndex + 1} / {ringFXPresets.length}
                     </div>
                   </div>
@@ -962,7 +967,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     fontWeight: 600,
                     letterSpacing: "var(--tracking-wide)",
                     textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.5)",
+                    color: "var(--text-muted)",
                   }}
                 >
                   <span>Volume</span>
@@ -1081,7 +1086,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               fontWeight: 600,
               letterSpacing: "var(--tracking-mythic)",
               textTransform: "uppercase",
-              color: "rgba(253,251,245,0.6)",
+              color: "var(--text-primary)",
             }}
           >
             {formatTime(timeLeft)}
@@ -1127,13 +1132,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           className="rounded-[32px] relative overflow-hidden"
           style={{
             width: '460px',
-            ...plateauMaterial,
-            border: '1px solid var(--accent-20)',
-            boxShadow: '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+            ...(isLight ? getCardMaterial(true) : plateauMaterial),
+            border: isLight ? '1px solid var(--light-border, rgba(60,50,35,0.15))' : '1px solid var(--accent-20)',
+            boxShadow: isLight
+              ? '0 4px 24px rgba(60,50,35,0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
+              : '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
           }}
         >
           {/* Inner glow */}
-          <div className="absolute inset-0 pointer-events-none" style={innerGlowStyle} />
+          <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
 
           <div className="relative px-8 py-10 text-center">
             {/* Seal Icon */}
@@ -1179,7 +1186,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   fontWeight: 600,
                   letterSpacing: 'var(--tracking-mythic)',
                   textTransform: 'uppercase',
-                  color: 'rgba(253,251,245,0.5)',
+                  color: 'var(--text-muted)',
                 }}>
                   Practice
                 </span>
@@ -1187,7 +1194,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   fontFamily: 'var(--font-display)',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: 'rgba(253,251,245,0.85)',
+                  color: 'var(--text-primary)',
                   marginTop: '4px',
                 }}>
                   {sessionSummary.practice}
@@ -1201,7 +1208,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   fontWeight: 600,
                   letterSpacing: 'var(--tracking-mythic)',
                   textTransform: 'uppercase',
-                  color: 'rgba(253,251,245,0.5)',
+                  color: 'var(--text-muted)',
                 }}>
                   Duration
                 </span>
@@ -1209,7 +1216,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   fontFamily: 'var(--font-display)',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: 'rgba(253,251,245,0.85)',
+                  color: 'var(--text-primary)',
                   marginTop: '4px',
                 }}>
                   {sessionSummary.duration} minutes
@@ -1225,7 +1232,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       fontWeight: 600,
                       letterSpacing: 'var(--tracking-mythic)',
                       textTransform: 'uppercase',
-                      color: 'rgba(253,251,245,0.5)',
+                      color: 'var(--text-muted)',
                     }}>
                       Breath Count
                     </span>
@@ -1233,7 +1240,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       fontFamily: 'var(--font-display)',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: 'rgba(253,251,245,0.85)',
+                      color: 'var(--text-primary)',
                       marginTop: '4px',
                     }}>
                       {sessionSummary.breathCount} cycles
@@ -1247,7 +1254,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       fontWeight: 600,
                       letterSpacing: 'var(--tracking-mythic)',
                       textTransform: 'uppercase',
-                      color: 'rgba(253,251,245,0.5)',
+                      color: 'var(--text-muted)',
                     }}>
                       Best Tap Accuracy
                     </span>
@@ -1255,7 +1262,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       fontFamily: 'var(--font-display)',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: 'rgba(253,251,245,0.85)',
+                      color: 'var(--text-primary)',
                       marginTop: '4px',
                     }}>
                       ±{sessionSummary.tapStats.bestErrorMs}ms
@@ -1300,33 +1307,37 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       <div
         className="relative w-full max-w-[420px] overflow-hidden transition-all duration-300"
         style={{
-          // Softened background to let nebula bleed through
-          background: 'rgba(10,14,18,0.6)',
+          // Stage-adaptive background for light/dark mode
+          background: isLight ? 'var(--light-bg-surface)' : 'rgba(10,14,18,0.6)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          // Faint amber border instead of strict line
-          border: '1px solid rgba(255, 147, 0, 0.15)',
-          // Softer shadow
-          boxShadow: '0 20px 50px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.2)',
+          // Stage-adaptive border
+          border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255, 147, 0, 0.15)',
+          // Stage-adaptive shadow
+          boxShadow: isLight
+            ? '0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+            : '0 20px 50px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.2)',
           borderRadius: '32px',
           opacity: isStarting ? 0.92 : 1,
           transform: isStarting ? 'scale(1.02)' : 'scale(1)',
         }}
       >
-        {/* Mandala background - dual mask for mid-radius emphasis */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-          {/* Mandala image - light/dark mode aware */}
-          <img
-            src={`${import.meta.env.BASE_URL}bg/practice-${isLight ? 'light' : 'breath'}-mandala.png`}
-            alt="Breath mandala"
-            className="object-contain w-full h-full"
-            style={{
-              opacity: isLight ? 0.15 : 0.2,
-              transform: 'scale(1.25) translateY(-8%)',
-              transformOrigin: 'center',
-            }}
-          />
-        </div>
+        {/* Mandala background - hidden in light mode to avoid broken image edge */}
+        {!isLight && (
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+            {/* Mandala image - dark mode only */}
+            <img
+              src={`${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`}
+              alt="Breath mandala"
+              className="object-contain w-full h-full"
+              style={{
+                opacity: 0.2,
+                transform: 'scale(1.25) translateY(-8%)',
+                transformOrigin: 'center',
+              }}
+            />
+          </div>
+        )}
 
         <div
           className="absolute top-3 left-4"
@@ -1350,7 +1361,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 fontFamily: 'var(--font-body)',
                 fontSize: '11px',
                 letterSpacing: 'var(--tracking-mythic)',
-                color: 'rgba(253,251,245,0.4)',
+                color: 'var(--text-muted)',
                 textTransform: 'uppercase',
                 fontStyle: 'italic'
               }}
@@ -1448,7 +1459,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                         fontWeight: 600,
                         letterSpacing: "var(--tracking-mythic)",
                         textTransform: "uppercase",
-                        color: "rgba(253,251,245,0.45)",
+                        color: "var(--text-muted)",
                         marginBottom: '10px',
                       }}
                     >
@@ -1460,8 +1471,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                         fontSize: "38px",
                         fontWeight: 500,
                         letterSpacing: "0.08em",
-                        color: "rgba(253,251,245,0.92)",
-                        textShadow: '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
+                        color: "var(--text-primary)",
+                        textShadow: isLight ? 'none' : '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
                       }}
                     >
                       {formatTime(timeLeft)}
@@ -1497,7 +1508,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     fontWeight: 600,
                     letterSpacing: "var(--tracking-mythic)",
                     textTransform: "uppercase",
-                    color: "rgba(253,251,245,0.6)",
+                    color: "var(--text-secondary)",
                     background: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
@@ -1572,7 +1583,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                           fontSize: "9px",
                           letterSpacing: "var(--tracking-mythic)",
                           textTransform: "uppercase",
-                          color: "rgba(253,251,245,0.45)",
+                          color: "var(--text-muted)",
                           textAlign: "center"
                         }}
                       >
@@ -1603,7 +1614,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                               color:
                                 vipassanaTheme === theme.id
                                   ? "#050508"
-                                  : "rgba(253,251,245,0.55)",
+                                  : "var(--text-muted)",
                               opacity: vipassanaTheme && vipassanaTheme !== theme.id ? 0.35 : 1,
                               boxShadow:
                                 vipassanaTheme === theme.id
@@ -1636,6 +1647,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       setCarrierFrequency={setCarrierFrequency}
                       volume={soundVolume}
                       setVolume={setSoundVolume}
+                      isLight={isLight}
                     />
                   )}
 
@@ -1705,7 +1717,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       fontWeight: 600,
                       letterSpacing: "var(--tracking-mythic)",
                       textTransform: "uppercase",
-                      color: "rgba(253,251,245,0.45)",
+                      color: "var(--text-muted)",
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',

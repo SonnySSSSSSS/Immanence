@@ -111,3 +111,47 @@ export const plateauMaterialClear = {
     inset 0 -1px 0 rgba(0, 0, 0, 0.25)
   `,
 };
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE VARIANTS — Manuscript Aesthetic
+   Use these in light mode for paper-like appearance
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Light mode card material - subtle paper/parchment look
+ */
+export const plateauMaterialLight = {
+  background: 'rgba(255, 255, 255, 0.85)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  border: '1px solid var(--light-border, rgba(60, 50, 35, 0.15))',
+  boxShadow: `
+    0 4px 16px rgba(60, 50, 35, 0.08),
+    0 1px 3px rgba(60, 50, 35, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(60, 50, 35, 0.05)
+  `,
+};
+
+/**
+ * Light mode inner glow - subtle top highlight
+ */
+export const innerGlowStyleLight = {
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+  background: `radial-gradient(ellipse 80% 30% at 50% 0%, rgba(255, 255, 255, 0.3) 0%, transparent 60%)`,
+  borderRadius: 'inherit',
+};
+
+/**
+ * Helper function to get appropriate material based on color scheme
+ */
+export function getCardMaterial(isLight) {
+  return isLight ? plateauMaterialLight : plateauMaterial;
+}
+
+export function getInnerGlowStyle(isLight) {
+  return isLight ? innerGlowStyleLight : innerGlowStyle;
+}
+

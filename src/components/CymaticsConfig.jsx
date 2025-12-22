@@ -59,7 +59,7 @@ export function CymaticsConfig({
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
                         letterSpacing: 'var(--tracking-mythic)',
-                        color: 'rgba(253,251,245,0.4)'
+                        color: 'var(--text-muted)'
                     }}
                 >
                     Frequency Set
@@ -81,7 +81,7 @@ export function CymaticsConfig({
                             style={{
                                 border: frequencySet === set.id ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                                 background: frequencySet === set.id ? 'var(--accent-10)' : 'transparent',
-                                color: frequencySet === set.id ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
+                                color: frequencySet === set.id ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 fontFamily: 'var(--font-display)',
                                 letterSpacing: 'var(--tracking-wide)',
                                 fontWeight: 500,
@@ -101,7 +101,7 @@ export function CymaticsConfig({
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
                         letterSpacing: 'var(--tracking-mythic)',
-                        color: 'rgba(253,251,245,0.4)'
+                        color: 'var(--text-muted)'
                     }}
                 >
                     Frequency
@@ -137,7 +137,7 @@ export function CymaticsConfig({
                     </div>
                     <div
                         className="text-[10px]"
-                        style={{ color: 'rgba(253,251,245,0.5)' }}
+                        style={{ color: 'var(--text-muted)' }}
                     >
                         {selectedFrequency?.quality || 'Tap to choose'}
                     </div>
@@ -163,7 +163,7 @@ export function CymaticsConfig({
                                         : 'rgba(0,0,0,0.2)',
                                     color: selectedFrequency?.hz === freq.hz
                                         ? 'var(--accent-color)'
-                                        : 'rgba(253,251,245,0.6)',
+                                        : 'var(--text-secondary)',
                                     fontFamily: 'var(--font-display)',
                                     letterSpacing: 'var(--tracking-wide)',
                                     fontWeight: 500,
