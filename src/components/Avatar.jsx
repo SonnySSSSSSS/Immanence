@@ -507,11 +507,6 @@ function AvatarContainer({
           <MoonOrbit avatarRadius={100} centerX={144} centerY={144} />
         </svg>
       </div>
-
-      {/* Label to the right */}
-      <div className="absolute left-[calc(100%+1rem)] top-1/2 -translate-y-1/2 text-xs tracking-[0.25em] text-white/90 uppercase whitespace-nowrap">
-        {label}
-      </div>
     </div>
   );
 }

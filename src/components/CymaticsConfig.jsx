@@ -69,14 +69,13 @@ export function CymaticsConfig({
                         <button
                             key={set.id}
                             onClick={() => {
-                                const isSameSet = frequencySet === set.id;
                                 setFrequencySet(set.id);
                                 // Auto-select first frequency in new set
-                                if (!isSameSet && set.frequencies.length > 0) {
+                                if (set.frequencies.length > 0) {
                                     setSelectedFrequency(set.frequencies[0]);
                                 }
-                                // Toggle modal: if same set clicked, toggle; if different set, open
-                                setShowFrequencyModal(isSameSet ? !showFrequencyModal : true);
+                                // Collapse the frequency modal when switching sets
+                                setShowFrequencyModal(false);
                             }}
                             className="flex-1 px-3 py-2 rounded-full text-[10px] transition-all"
                             style={{
