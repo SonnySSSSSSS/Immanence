@@ -216,7 +216,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             title="Practice"
             description="Breathing & timing"
             subtext="Build consistency"
-            image={`${import.meta.env.BASE_URL}modes/mode-practice.png`}
+            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-practice.png` : `${import.meta.env.BASE_URL}modes/darkmode-practice.png`}
             colorGrade="gold"
             onClick={() => onSelectSection("practice")}
           />
@@ -224,7 +224,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             title="Wisdom"
             description="Treatise & teachings"
             subtext="Deepen understanding"
-            image={`${import.meta.env.BASE_URL}modes/mode-wisdom.png`}
+            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-wisdom.png` : `${import.meta.env.BASE_URL}modes/darkmode-wisdom.png`}
             colorGrade="amberViolet"
             onClick={() => onSelectSection("wisdom")}
           />
@@ -232,7 +232,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             title="Application"
             description="Track gestures"
             subtext="Embody practice"
-            image={`${import.meta.env.BASE_URL}modes/mode-application.png`}
+            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-application.png` : `${import.meta.env.BASE_URL}modes/darkmode-application.png`}
             colorGrade="indigo"
             onClick={() => onSelectSection("application")}
           />
@@ -240,7 +240,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             title="Navigation"
             description="Roadmap & goals"
             subtext="Set intentions"
-            image={`${import.meta.env.BASE_URL}modes/mode-navigation.png`}
+            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-navigation.png` : `${import.meta.env.BASE_URL}modes/darkmode-navigation.png`}
             colorGrade="goldBlue"
             onClick={() => onSelectSection("navigation")}
           />

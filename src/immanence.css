@@ -83,43 +83,43 @@
   /* ─── Color Scheme Flag ─── */
   --color-scheme: light;
 
-  /* ─── Background Palette (Warm Cream) ─── */
-  --bg-void: #F5F0E6;
-  --bg-deep: #EDE5D8;
-  --bg-surface: #F8F3EB;
-  --bg-elevated: #FFFCF7;
+  /* ─── Background Palette (Lighter & More Ethereal) ─── */
+  --bg-void: #FAF7F2;
+  --bg-deep: #F5F0E8;
+  --bg-surface: #FDFCFA;
+  --bg-elevated: #FFFFFF;
 
-  /* ─── Text Colors (Dark on Light) ─── */
-  --text-primary: rgba(61, 52, 37, 0.95);
-  --text-secondary: rgba(90, 77, 60, 0.75);
-  --text-muted: rgba(90, 77, 60, 0.5);
-  --text-ghost: rgba(90, 77, 60, 0.25);
+  /* ─── Text Colors (Softer Contrast) ─── */
+  --text-primary: rgba(80, 70, 55, 0.75);
+  --text-secondary: rgba(105, 95, 80, 0.60);
+  --text-muted: rgba(120, 110, 95, 0.45);
+  --text-ghost: rgba(140, 130, 115, 0.30);
 
-  /* ─── Border Colors (Warm, Subtle) ─── */
-  --border-subtle: rgba(180, 155, 110, 0.12);
-  --border-visible: rgba(180, 155, 110, 0.25);
-  --border-active: rgba(180, 155, 110, 0.45);
-  --border-glow: rgba(180, 155, 110, 0.6);
+  /* ─── Border Colors (Very Subtle) ─── */
+  --border-subtle: rgba(200, 185, 160, 0.08);
+  --border-visible: rgba(200, 185, 160, 0.15);
+  --border-active: rgba(200, 185, 160, 0.30);
+  --border-glow: rgba(200, 185, 160, 0.40);
 
-  /* ─── Gold Accent (Deeper for Light BG) ─── */
-  --gold-bright: #D4A84B;
-  --gold-mid: #C19A40;
-  --gold-deep: #A07830;
-  --gold-strong: #B8923A;
+  /* ─── Gold Accent (Pastel Gold/Cream) ─── */
+  --gold-bright: #E8D4A0;
+  --gold-mid: #DCC998;
+  --gold-deep: #C4AC7A;
+  --gold-strong: #D9C292;
 
-  /* ─── Shadow Tokens (Drop Shadows instead of Glows) ─── */
-  --shadow-panel: 0 8px 32px rgba(100, 80, 50, 0.12);
-  --glow-gold: 0 4px 16px rgba(180, 145, 80, 0.2);
+  /* ─── Shadow Tokens (Gentle Glows) ─── */
+  --shadow-panel: 0 4px 20px rgba(120, 100, 70, 0.06);
+  --glow-gold: 0 2px 12px rgba(200, 175, 130, 0.12);
 
   /* ─── Wisdom Section: Cosmic Tones → Warm Light ─── */
-  --cosmic-900: #F5F0E6;
-  --cosmic-800: #EDE5D8;
-  --cosmic-700: #E5DCC8;
+  --cosmic-900: #FAF7F2;
+  --cosmic-800: #F5F0E8;
+  --cosmic-700: #EFEBE0;
 
   /* ─── Light Mode Specific ─── */
-  --card-bg: rgba(255, 252, 245, 0.85);
-  --card-border: rgba(180, 155, 110, 0.2);
-  --overlay-bg: rgba(245, 240, 230, 0.95);
+  --card-bg: rgba(255, 255, 255, 0.70);
+  --card-border: rgba(200, 185, 160, 0.12);
+  --overlay-bg: rgba(250, 247, 242, 0.95);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@
 
 /* Force text color inheritance in light mode for better contrast */
 .light-mode {
-  color: rgba(61, 52, 37, 0.95);
+  color: rgba(80, 70, 55, 0.75);
 }
 
 /* Utility classes that adapt to color scheme */
@@ -158,45 +158,45 @@
 /* Light mode specific fixes for common patterns */
 .light-mode .text-white,
 .light-mode [class*="text-white/"] {
-  color: rgba(61, 52, 37, 0.85) !important;
+  color: rgba(80, 70, 55, 0.70) !important;
 }
 
 .light-mode .text-white\/90 {
-  color: rgba(61, 52, 37, 0.9) !important;
+  color: rgba(80, 70, 55, 0.75) !important;
 }
 
 .light-mode .text-white\/80 {
-  color: rgba(61, 52, 37, 0.8) !important;
+  color: rgba(90, 80, 65, 0.65) !important;
 }
 
 .light-mode .text-white\/70 {
-  color: rgba(61, 52, 37, 0.7) !important;
+  color: rgba(100, 90, 75, 0.60) !important;
 }
 
 .light-mode .text-white\/60 {
-  color: rgba(90, 77, 60, 0.75) !important;
+  color: rgba(105, 95, 80, 0.55) !important;
 }
 
 .light-mode .text-white\/50 {
-  color: rgba(90, 77, 60, 0.65) !important;
+  color: rgba(120, 110, 95, 0.50) !important;
 }
 
 .light-mode .text-white\/40 {
-  color: rgba(90, 77, 60, 0.55) !important;
+  color: rgba(130, 120, 105, 0.45) !important;
 }
 
 .light-mode .text-white\/30 {
-  color: rgba(90, 77, 60, 0.45) !important;
+  color: rgba(140, 130, 115, 0.40) !important;
 }
 
 .light-mode .text-white\/20 {
-  color: rgba(90, 77, 60, 0.35) !important;
+  color: rgba(150, 140, 125, 0.35) !important;
 }
 
 /* Light mode border adjustments */
 .light-mode .border-white\/10,
 .light-mode .border-white\/20 {
-  border-color: rgba(180, 155, 110, 0.2) !important;
+  border-color: rgba(200, 185, 160, 0.12) !important;
 }
 
 /* Light mode background adjustments for dark overlays */
@@ -204,7 +204,7 @@
 .light-mode .bg-black\/30,
 .light-mode .bg-black\/40,
 .light-mode .bg-black\/50 {
-  background-color: rgba(180, 155, 110, 0.08) !important;
+  background-color: rgba(200, 185, 160, 0.05) !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
