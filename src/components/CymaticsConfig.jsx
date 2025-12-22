@@ -186,7 +186,7 @@ export function CymaticsConfig({
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
                         letterSpacing: 'var(--tracking-mythic)',
-                        color: 'rgba(253,251,245,0.4)'
+                        color: 'var(--text-muted)'
                     }}
                 >
                     Phase Cycle
@@ -206,7 +206,7 @@ export function CymaticsConfig({
                                     : 'rgba(0,0,0,0.2)',
                                 color: totalCycleDuration === preset.total
                                     ? 'var(--accent-color)'
-                                    : 'rgba(253,251,245,0.6)',
+                                    : 'var(--text-secondary)',
                                 fontFamily: 'var(--font-display)',
                                 fontWeight: 600,
                                 fontSize: '11px',
@@ -227,7 +227,7 @@ export function CymaticsConfig({
                                 width: `${(fadeInDuration / totalCycleDuration) * 100}%`,
                                 background: 'rgba(253,220,145,0.2)',
                                 borderRight: '1px solid rgba(253,220,145,0.3)',
-                                color: 'rgba(253,251,245,0.5)',
+                                color: 'var(--text-muted)',
                                 fontFamily: 'var(--font-display)',
                             }}
                             title={`Fade In: ${fadeInDuration}s`}
@@ -253,7 +253,7 @@ export function CymaticsConfig({
                                 width: `${(fadeOutDuration / totalCycleDuration) * 100}%`,
                                 background: 'rgba(253,220,145,0.2)',
                                 borderRight: '1px solid rgba(253,220,145,0.3)',
-                                color: 'rgba(253,251,245,0.5)',
+                                color: 'var(--text-muted)',
                                 fontFamily: 'var(--font-display)',
                             }}
                             title={`Fade Out: ${fadeOutDuration}s`}
@@ -265,7 +265,7 @@ export function CymaticsConfig({
                             style={{
                                 width: `${(voidDuration / totalCycleDuration) * 100}%`,
                                 background: 'rgba(0,0,0,0.4)',
-                                color: 'rgba(253,251,245,0.4)',
+                                color: 'var(--text-muted)',
                                 fontFamily: 'var(--font-display)',
                             }}
                             title={`Void: ${voidDuration}s`}
@@ -276,7 +276,7 @@ export function CymaticsConfig({
                 </div>
                 <div
                     className="mt-1 text-center text-[9px]"
-                    style={{ color: 'rgba(253,251,245,0.4)' }}
+                    style={{ color: 'var(--text-muted)' }}
                 >
                     In → Hold → Out → Void
                 </div>
@@ -290,7 +290,7 @@ export function CymaticsConfig({
                     style={{
                         border: driftEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                         background: driftEnabled ? 'var(--accent-10)' : 'transparent',
-                        color: driftEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
+                        color: driftEnabled ? 'var(--text-primary)' : 'var(--text-secondary)',
                         fontFamily: 'var(--font-display)',
                         letterSpacing: 'var(--tracking-wide)',
                         fontWeight: 500,
@@ -306,7 +306,7 @@ export function CymaticsConfig({
                     style={{
                         border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                         background: audioEnabled ? 'var(--accent-10)' : 'transparent',
-                        color: audioEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
+                        color: audioEnabled ? 'var(--text-primary)' : 'var(--text-secondary)',
                         fontFamily: 'var(--font-display)',
                         letterSpacing: 'var(--tracking-wide)',
                         fontWeight: 500,

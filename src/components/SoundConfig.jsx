@@ -195,7 +195,7 @@ export function SoundConfig({
                                 fontWeight: 600,
                                 letterSpacing: "var(--tracking-mythic)",
                                 textTransform: "uppercase",
-                                color: "rgba(253,251,245,0.45)",
+                                color: textColors.muted,
                             }}
                         >
                             <span>Base Frequency</span>
@@ -380,7 +380,7 @@ export function SoundConfig({
                                 fontFamily: "var(--font-body)",
                                 fontSize: "10px",
                                 fontStyle: "italic",
-                                color: "rgba(253,251,245,0.5)",
+                                color: textColors.description,
                             }}
                         >
                             {isochronicPreset.description}
@@ -550,7 +550,7 @@ export function SoundConfig({
                 style={{
                     fontFamily: "var(--font-body)",
                     fontSize: "9px",
-                    color: "rgba(253,251,245,0.35)",
+                    color: textColors.ghost,
                     fontStyle: "italic",
                 }}
             >

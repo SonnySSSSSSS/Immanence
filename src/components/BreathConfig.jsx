@@ -48,7 +48,7 @@ export function BreathConfig({
                             textTransform: "uppercase",
                             background: "transparent",
                             border: `1px solid ${preset === name ? "var(--accent-color)" : "var(--accent-10)"}`,
-                            color: preset === name ? "var(--accent-color)" : "rgba(253,251,245,0.35)",
+                            color: preset === name ? "var(--accent-color)" : "var(--text-muted)",
                             boxShadow: preset === name ? '0 0 12px var(--accent-15)' : "none",
                         }}
                     >
@@ -73,7 +73,7 @@ export function BreathConfig({
                                 fontWeight: 600,
                                 letterSpacing: "var(--tracking-wide)",
                                 textTransform: "uppercase",
-                                color: "rgba(253,251,245,0.55)",
+                                color: "var(--text-muted)",
                                 textAlign: "center"
                             }}
                         >
@@ -90,7 +90,7 @@ export function BreathConfig({
                                 fontWeight: 600,
                                 background: "rgba(0,0,0,0.4)",
                                 border: "1px solid var(--accent-10)",
-                                color: "rgba(253,251,245,0.9)",
+                                color: "var(--text-primary)",
                             }}
                         />
                     </div>

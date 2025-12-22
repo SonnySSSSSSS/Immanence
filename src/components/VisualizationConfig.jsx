@@ -46,8 +46,8 @@ export function VisualizationConfig({
                             className={`
                 flex-1 px-3 py-2 rounded-xl text-xs transition-all
                 ${geometry === g
-                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[rgba(253,251,245,0.9)]'
-                                    : 'border-[var(--accent-15)] text-[rgba(253,251,245,0.6)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
+                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[var(--text-primary)]'
+                                    : 'border-[var(--accent-15)] text-[var(--text-secondary)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
                                 }
               `}
                             style={{
@@ -76,8 +76,8 @@ export function VisualizationConfig({
                             className={`
                 px-3 py-2 rounded-xl text-xs transition-all
                 ${geometry === g
-                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[rgba(253,251,245,0.9)]'
-                                    : 'border-[var(--accent-15)] text-[rgba(253,251,245,0.6)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
+                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[var(--text-primary)]'
+                                    : 'border-[var(--accent-15)] text-[var(--text-secondary)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
                                 }
               `}
                             style={{
@@ -127,7 +127,7 @@ export function VisualizationConfig({
                     style={{
                         border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                         background: audioEnabled ? 'var(--accent-10)' : 'transparent',
-                        color: audioEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
+                        color: audioEnabled ? 'var(--text-primary)' : 'var(--text-secondary)',
                     }}
                 >
                     {audioEnabled ? 'ON' : 'OFF'}
