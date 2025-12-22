@@ -12,7 +12,7 @@ const STAGE_PARTICLE_COLORS = {
     stellar: { primary: 'rgba(192, 132, 252, ', glow: 'rgba(168, 85, 247, ' },   // Purple
 };
 
-export function IndrasNet({ stage = 'flame' }) {
+export function IndrasNet({ stage = 'flame', isPracticing = false }) {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -80,6 +80,7 @@ export function IndrasNet({ stage = 'flame' }) {
                 ctx.fill();
             });
 
+            if (isPracticing) return;
             animationFrame = requestAnimationFrame(draw);
         }
 
@@ -91,7 +92,7 @@ export function IndrasNet({ stage = 'flame' }) {
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationFrame);
         };
-    }, [stage]);
+    }, [stage, isPracticing]);
 
     return (
         <div
@@ -114,7 +115,8 @@ export function IndrasNet({ stage = 'flame' }) {
                     backgroundPosition: "bottom center",
                     backgroundSize: "cover",
                     animation: "indrasNetDrift 120s ease-in-out infinite alternate",
-                    opacity: 0.284,
+                    animationPlayState: isPracticing ? 'paused' : 'running',
+                    opacity: isPracticing ? 0.15 : 0.284, // Fade out even more during practice
                 }}
             />
 
@@ -145,7 +147,8 @@ export function IndrasNet({ stage = 'flame' }) {
                     background: `radial-gradient(ellipse at bottom center, var(--accent-glow)15 0%, transparent 60%)`,
                     mixBlendMode: "overlay",
                     filter: "blur(40px)",
-                    animation: "indrasPulse 4s ease-in-out infinite",
+                    animation: "indrasPulse 8s ease-in-out infinite", // Slowed down from 4s
+                    animationPlayState: isPracticing ? 'paused' : 'running',
                 }}
             />
 

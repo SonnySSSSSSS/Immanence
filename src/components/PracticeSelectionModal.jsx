@@ -35,11 +35,8 @@ export function PracticeSelectionModal({
             onClick={onClose}
         >
             <div
-                className="relative p-6 rounded-2xl max-w-md w-full mx-4"
+                className="relative p-8 rounded-[2rem] max-w-md w-full mx-4 glass-capsule"
                 style={{
-                    background: 'linear-gradient(180deg, rgba(20, 20, 25, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%)',
-                    border: '1px solid var(--accent-15)',
-                    boxShadow: '0 0 40px rgba(0, 0, 0, 0.5), 0 0 80px var(--accent-10)',
                     animation: 'slideUp 300ms ease-out',
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -71,29 +68,22 @@ export function PracticeSelectionModal({
                                     onSelectPractice(practice);
                                     onClose();
                                 }}
-                                className="w-full px-6 py-4 rounded-xl transition-all duration-200"
+                                className={`w-full px-6 py-4 rounded-full transition-all duration-300 group relative overflow-hidden ${isSelected ? 'glass-capsule' : 'hover:bg-white/5'}`}
                                 style={{
-                                    background: isSelected
-                                        ? 'linear-gradient(135deg, var(--accent-10) 0%, transparent 100%)'
-                                        : 'rgba(253, 251, 245, 0.02)',
                                     border: isSelected
-                                        ? '1px solid var(--accent-20)'
-                                        : '1px solid rgba(253, 251, 245, 0.05)',
+                                        ? '0.5px solid var(--accent-40)'
+                                        : '0.5px solid transparent',
                                     fontFamily: 'var(--font-display)',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    letterSpacing: 'var(--tracking-wide)',
+                                    fontSize: '12px',
+                                    letterSpacing: 'var(--tracking-mythic)',
                                     color: isSelected
                                         ? 'var(--accent-color)'
-                                        : 'rgba(253, 251, 245, 0.7)',
-                                    boxShadow: isSelected
-                                        ? '0 0 20px var(--accent-08), inset 0 0 20px var(--accent-05)'
-                                        : 'none',
-                                    textAlign: 'left',
-                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                                        : 'rgba(253, 251, 245, 0.5)',
+                                    textAlign: 'center',
+                                    background: isSelected ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                                 }}
                             >
-                                {practice}
+                                <span className="relative z-10">{practice}</span>
                             </button>
                         );
                     })}

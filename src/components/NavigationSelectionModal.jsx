@@ -39,11 +39,8 @@ export function NavigationSelectionModal({
             onClick={onClose}
         >
             <div
-                className="relative p-6 rounded-2xl max-w-md w-full mx-4"
+                className="relative p-8 rounded-[2rem] max-w-md w-full mx-4 glass-capsule"
                 style={{
-                    background: 'linear-gradient(180deg, rgba(20, 20, 25, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%)',
-                    border: '1px solid rgba(250, 208, 120, 0.2)',
-                    boxShadow: '0 0 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(250, 208, 120, 0.1)',
                     animation: 'slideUp 300ms ease-out',
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -77,29 +74,24 @@ export function NavigationSelectionModal({
                                     onSelectView(option.id);
                                     onClose();
                                 }}
-                                className="w-full px-6 py-4 rounded-xl transition-all duration-200"
+                                className={`w-full px-6 py-4 rounded-full transition-all duration-300 group relative overflow-hidden ${isSelected ? 'glass-capsule' : 'hover:bg-white/5'}`}
                                 style={{
-                                    background: isSelected
-                                        ? `linear-gradient(135deg, ${isCompass ? 'rgba(220, 210, 180, 0.1)' : 'rgba(250, 208, 120, 0.1)'} 0%, transparent 100%)`
-                                        : 'rgba(253, 251, 245, 0.02)',
                                     border: isSelected
-                                        ? `1px solid ${isCompass ? 'rgba(220, 210, 180, 0.4)' : 'rgba(250, 208, 120, 0.4)'}`
-                                        : '1px solid rgba(253, 251, 245, 0.05)',
+                                        ? `0.5px solid ${isCompass ? 'rgba(220, 210, 180, 0.4)' : 'var(--accent-40)'}`
+                                        : '0.5px solid transparent',
                                     fontFamily: 'var(--font-display)',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    letterSpacing: 'var(--tracking-wide)',
-                                    color: isSelected ? goldColor : 'rgba(253, 251, 245, 0.7)',
-                                    boxShadow: isSelected
-                                        ? `0 0 20px ${isCompass ? 'rgba(220, 210, 180, 0.15)' : 'rgba(250, 208, 120, 0.15)'}, inset 0 0 20px ${isCompass ? 'rgba(220, 210, 180, 0.08)' : 'rgba(250, 208, 120, 0.08)'}`
-                                        : 'none',
-                                    textAlign: 'left',
-                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                                    fontSize: '12px',
+                                    letterSpacing: 'var(--tracking-mythic)',
+                                    color: isSelected ? goldColor : 'rgba(253, 251, 245, 0.5)',
+                                    textAlign: 'center',
+                                    background: isSelected ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                                 }}
                             >
-                                <div>{option.label}</div>
-                                <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '4px', fontStyle: 'italic' }}>
-                                    {option.description}
+                                <div className="relative z-10">
+                                    <div className="text-sm">{option.label}</div>
+                                    <div style={{ fontSize: '9px', opacity: 0.5, marginTop: '2px', fontStyle: 'italic', letterSpacing: 'var(--tracking-wide)' }}>
+                                        {option.description}
+                                    </div>
                                 </div>
                             </button>
                         );

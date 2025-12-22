@@ -177,7 +177,7 @@ const STAGE_RUNE_COLORS = {
   stellar: "rgba(200, 150, 255, 0.6)", // purple
 };
 
-function RuneRingLayer({ stage = "flame" }) {
+function RuneRingLayer({ stage = "flame", isPracticing = false }) {
   const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
 
   return (
@@ -204,16 +204,40 @@ function RuneRingLayer({ stage = "flame" }) {
         }}
       />
 
-      {/* Wrapper div rotates, img stays still inside */}
-      <div className="rune-ring-wrapper w-[88%] h-[88%]">
+      <div
+        className="rune-ring-wrapper w-[88%] h-[88%] relative flex items-center justify-center"
+        style={{ animationPlayState: isPracticing ? 'paused' : 'running' }}
+      >
+        {/* Hairline trace behind the image */}
+        <div className="absolute inset-0 hairline-ring opacity-40 scale-[1.005]" />
+
         <img
           src={`${import.meta.env.BASE_URL}sigils/${stage === 'flame' ? 'rune-ring2.png' : 'rune-ring.png'}`}
           alt="Rune ring"
           className="w-full h-full object-contain"
           style={{
-            filter: `brightness(1.1) saturate(1.2) drop-shadow(0 0 12px ${glowColor}) drop-shadow(0 0 24px ${glowColor}) drop-shadow(0 0 48px rgba(253, 224, 71, 0.4))`,
+            filter: `brightness(1.05) saturate(1.1) drop-shadow(0 0 2px ${glowColor})`,
+            opacity: 0.8,
           }}
         />
+
+        {/* Tiny Labels around the ring */}
+        <div className="absolute inset-0 pointer-events-none">
+          {['SOMA', 'PRANA', 'DHYANA', 'DRISHTI'].map((label, i) => (
+            <div
+              key={label}
+              className="absolute text-[6px] text-suspended text-white/30"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: `translate(-50%, -50%) rotate(${i * 90}deg) translateY(-144px)`,
+                fontFamily: 'var(--font-display)',
+              }}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -233,7 +257,7 @@ const STAGE_SIGILS = {
 //
 // ─── STATIC SIGIL CORE (stage-aware + path-aware) ────────────────────────────────
 //
-function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false }) {
+function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false }) {
   // Determine image source based on stage, path, attention, and showCore flag
   const stageLower = stage.toLowerCase();
   const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
@@ -288,6 +312,7 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
             )
           `,
           animation: "whirlpool 90s linear infinite",
+          animationPlayState: isPracticing ? 'paused' : 'running',
           opacity: 0.5,
         }}
       />
@@ -311,6 +336,7 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
           height: "46%",
           borderRadius: "9999px",
           overflow: "hidden",
+          animationPlayState: isPracticing ? 'paused' : 'running',
         }}
       >
         <img
@@ -326,21 +352,23 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
       </div>
 
       {/* Variation indicator - asterisk/sparkle when variations available */}
-      {hasVariations && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: "8%",
-            right: "8%",
-            fontSize: "1.5rem",
-            color: accentColor,
-            textShadow: `0 0 8px ${accentColor}, 0 0 16px ${accentColor}`,
-            animation: "pulse 2s ease-in-out infinite",
-          }}
-        >
-          ✦
-        </div>
-      )}
+      {
+        hasVariations && (
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: "8%",
+              right: "8%",
+              fontSize: "1.5rem",
+              color: accentColor,
+              textShadow: `0 0 8px ${accentColor}, 0 0 16px ${accentColor}`,
+              animation: "pulse 2s ease-in-out infinite",
+            }}
+          >
+            ✦
+          </div>
+        )
+      }
 
       {/* Colored glow ring between avatar and black backdrop */}
       <div
@@ -354,7 +382,7 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
           filter: "blur(8px)",
         }}
       />
-    </div>
+    </div >
   );
 }
 
@@ -397,7 +425,8 @@ function AvatarContainer({
   avgAccuracy = 0,
   weeklyConsistency = 0,
   weeklyPracticeLog = [],
-  breathState
+  breathState,
+  isPracticing = false
 }) {
   const glowColor = STAGE_GLOW_COLORS[stage] || STAGE_GLOW_COLORS.flame;
   const { h, s, l } = glowColor;
@@ -414,6 +443,7 @@ function AvatarContainer({
           filter: "blur(100px)",
           borderRadius: "50%",
           animation: "breathingPulse 8s ease-in-out infinite",
+          animationPlayState: isPracticing ? 'paused' : 'running',
         }}
       />
 
@@ -425,6 +455,7 @@ function AvatarContainer({
           filter: "blur(50px)",
           borderRadius: "50%",
           animation: "breathingPulse 8s ease-in-out infinite 0.2s",
+          animationPlayState: isPracticing ? 'paused' : 'running',
         }}
       />
 
@@ -436,6 +467,7 @@ function AvatarContainer({
           filter: "blur(30px)",
           borderRadius: "50%",
           animation: "breathingPulse 8s ease-in-out infinite 0.4s",
+          animationPlayState: isPracticing ? 'paused' : 'running',
         }}
       />
 
@@ -453,7 +485,7 @@ function AvatarContainer({
         )}
 
         {/* Layer 2: rune ring (rotating PNG, stage-aware color) */}
-        <RuneRingLayer stage={stage} />
+        <RuneRingLayer stage={stage} isPracticing={isPracticing} />
 
         {/* Layer 3: static sigil core (stage-aware + path-aware + attention-aware PNG) */}
         <StaticSigilCore
@@ -463,6 +495,7 @@ function AvatarContainer({
           attention={attention}
           variationIndex={variationIndex}
           hasVariations={hasVariations}
+          isPracticing={isPracticing}
         />
 
         {/* Layer 4: Moon orbit (outermost layer) - SVG wrapper required */}
@@ -486,7 +519,7 @@ function AvatarContainer({
 //
 // ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
 //
-export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true, attention = 'vigilance' }) {
+export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true, attention = 'vigilance', isPracticing = false }) {
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
@@ -623,6 +656,7 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
         weeklyConsistency={weeklyConsistency}
         weeklyPracticeLog={weeklyPracticeLog}
         breathState={breathState}
+        isPracticing={isPracticing}
       />
     </div>
   );

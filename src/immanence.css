@@ -15,23 +15,23 @@
   --gold-strong: #F7C35F;
   /* Explicit gold for active pills */
 
-  /* ─── Background Palette ─── */
-  --bg-void: #050508;
-  --bg-deep: #0a0a12;
-  --bg-surface: #0f0f1a;
-  --bg-elevated: #161625;
+  /* ─── Background Palette (LIFTED BLACKS) ─── */
+  --bg-void: #07070c;
+  --bg-deep: #12121e;
+  --bg-surface: #1a1a2e;
+  --bg-elevated: #24243a;
 
-  /* ─── Text Colors ─── */
-  --text-primary: rgba(253, 251, 245, 0.92);
-  --text-secondary: rgba(253, 251, 245, 0.65);
-  --text-muted: rgba(253, 251, 245, 0.4);
-  --text-ghost: rgba(253, 251, 245, 0.2);
+  /* ─── Text Colors (SOFTENED HIGHLIGHTS) ─── */
+  --text-primary: rgba(253, 251, 245, 0.88);
+  --text-secondary: rgba(253, 251, 245, 0.6);
+  --text-muted: rgba(253, 251, 245, 0.35);
+  --text-ghost: rgba(253, 251, 245, 0.18);
 
-  /* ─── Border Colors ─── */
-  --border-subtle: rgba(253, 224, 71, 0.08);
-  --border-visible: rgba(253, 224, 71, 0.15);
-  --border-active: rgba(253, 224, 71, 0.35);
-  --border-glow: rgba(253, 224, 71, 0.5);
+  /* ─── Border Colors (REFINED PRECISION) ─── */
+  --border-subtle: rgba(253, 224, 71, 0.05);
+  --border-visible: rgba(253, 224, 71, 0.10);
+  --border-active: rgba(253, 224, 71, 0.25);
+  --border-glow: rgba(253, 224, 71, 0.4);
 
   /* ─── Typography ─── */
   --font-display: 'Cinzel', serif;
@@ -306,7 +306,7 @@
   border: none;
   border-radius: 9999px;
   cursor: pointer;
-  box-shadow: 0 0 32px rgba(251, 191, 36, 0.15);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.1);
   position: relative;
   overflow: hidden;
   transition: all 200ms ease-out;
@@ -607,9 +607,51 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   RESPONSIVE ADJUSTMENTS
+   REFINEMENT UTILITIES (Meditative UI Refinements)
    ───────────────────────────────────────────────────────────────────────── */
 
+/* ─── Glass Capsule ─── */
+.glass-capsule {
+  background: rgba(10, 10, 20, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  transition: all 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ─── Quiet Zone ─── */
+.quiet-zone {
+  position: relative;
+}
+
+.quiet-zone::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(circle at center, rgba(16, 16, 32, 0.6) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+/* ─── Hairline Ring ─── */
+.hairline-ring {
+  border: 0.5px solid var(--border-glow);
+  border-radius: 50%;
+  box-shadow: 0 0 1px var(--gold-mid);
+}
+
+/* ─── Suspended Text ─── */
+.text-suspended {
+  letter-spacing: var(--tracking-ultra);
+  text-transform: uppercase;
+  opacity: 0.8;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
 @media (max-width: 640px) {
   .panel-ornate {
     padding: 1.5rem;

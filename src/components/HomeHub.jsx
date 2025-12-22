@@ -14,7 +14,7 @@ import { STAGES } from "../state/stageConfig.js";
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
 
-function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide }) {
+function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
@@ -89,13 +89,13 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const progressPct = Math.round(progressToNextStage * 100);
 
   return (
-    <div className="w-full flex flex-col items-center gap-8 py-8 overflow-visible relative">
+    <div className="w-full flex flex-col items-center gap-8 py-8 px-4 overflow-visible relative">
       {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
 
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR SECTION - Primary focal point
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center gap-4">
+      <div className="w-full max-w-2xl flex flex-col items-center gap-4">
         <div className="relative w-full flex items-center justify-center overflow-visible">
           {/* Bloom halo - atmospheric radial glow behind avatar */}
           <div
@@ -116,7 +116,14 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
           {/* Avatar with cosmic focal point */}
           <div className="relative z-10">
-            <Avatar mode="hub" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
+            <Avatar
+              mode="hub"
+              onStageChange={onStageChange}
+              stage={currentStage}
+              path={previewPath}
+              showCore={previewShowCore}
+              isPracticing={isPracticing}
+            />
           </div>
         </div>
 
@@ -170,7 +177,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full max-w-2xl">
         <div
-          className="relative text-[10px] uppercase tracking-[0.2em] mb-4"
+          className="relative text-[10px] uppercase tracking-[0.2em] mb-4 text-suspended"
           style={{
             color: 'rgba(253, 251, 245, 0.7)',
             textShadow: '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',

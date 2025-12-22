@@ -95,12 +95,14 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
     }, [activePoint, scanPoints]);
 
     return (
-        <div className="relative w-full flex items-center justify-center">
+        <div className="relative w-full flex items-center justify-center quiet-zone py-12">
             <CoordinateHelper
                 className="w-full max-w-sm"
                 label={`BodyScan:${image || 'full'}`}
             >
-                <div className="relative w-full h-full" style={{ aspectRatio: '1/1' }}>
+                <div className="relative w-full h-full glass-capsule overflow-visible" style={{ aspectRatio: '1/1' }}>
+                    {/* Interior Quiet Zone Glow */}
+                    <div className="absolute inset-0 bg-radial-gradient from-[var(--bg-void)] to-transparent opacity-40 rounded-[2rem] pointer-events-none" />
                     {/* Top Decorative Bar (Ember FX) */}
                     <div
                         className="absolute -top-4 left-0 right-0 h-[2px] ember-fx-bar z-10 pointer-events-none"

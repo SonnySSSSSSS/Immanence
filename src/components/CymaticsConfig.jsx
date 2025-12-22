@@ -1,6 +1,14 @@
 // src/components/CymaticsConfig.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { getAllSets } from '../utils/frequencyLibrary.js';
+
+// Phase cycle presets with balanced proportions
+const PHASE_CYCLE_PRESETS = [
+    { id: 'quick', total: 25, in: 2.5, hold: 10, out: 2.5, void: 10 },
+    { id: 'balanced', total: 30, in: 3, hold: 12, out: 3, void: 12 },
+    { id: 'extended', total: 45, in: 4.5, hold: 18, out: 4.5, void: 18 },
+    { id: 'deep', total: 60, in: 6, hold: 24, out: 6, void: 24 },
+];
 
 export function CymaticsConfig({
     // Frequency selection
@@ -29,14 +37,24 @@ export function CymaticsConfig({
     const currentSet = frequencySets.find(s => s.id === frequencySet);
     const frequencies = currentSet ? currentSet.frequencies : [];
 
+    const [showFrequencyModal, setShowFrequencyModal] = useState(false);
+
     const totalCycleDuration = fadeInDuration + displayDuration + fadeOutDuration + voidDuration;
 
+    // Apply phase cycle preset
+    const applyPreset = (preset) => {
+        setFadeInDuration(preset.in);
+        setDisplayDuration(preset.hold);
+        setFadeOutDuration(preset.out);
+        setVoidDuration(preset.void);
+    };
+
     return (
-        <div className="space-y-6">
-            {/* Frequency Set Selector */}
+        <div className="space-y-4">
+            {/* Frequency Set Selector - Compact Pills */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
+                    className="text-[9px] uppercase tracking-[0.25em] mb-2"
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
@@ -56,8 +74,10 @@ export function CymaticsConfig({
                                 if (set.frequencies.length > 0) {
                                     setSelectedFrequency(set.frequencies[0]);
                                 }
+                                // Collapse the frequency modal when switching sets
+                                setShowFrequencyModal(false);
                             }}
-                            className="flex-1 px-4 py-3 rounded-xl text-sm transition-all"
+                            className="flex-1 px-3 py-2 rounded-full text-[10px] transition-all"
                             style={{
                                 border: frequencySet === set.id ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                                 background: frequencySet === set.id ? 'var(--accent-10)' : 'transparent',
@@ -67,16 +87,16 @@ export function CymaticsConfig({
                                 fontWeight: 500,
                             }}
                         >
-                            {set.name.toUpperCase()}
+                            {set.name}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Frequency Grid Selector */}
+            {/* Frequency Card - Large, Clickable */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
+                    className="text-[9px] uppercase tracking-[0.25em] mb-2"
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
@@ -86,72 +106,82 @@ export function CymaticsConfig({
                 >
                     Frequency
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                    {frequencies.map((freq) => (
-                        <button
-                            key={freq.hz}
-                            onClick={() => setSelectedFrequency(freq)}
-                            className="px-3 py-3 rounded-xl text-left transition-all"
-                            style={{
-                                border: selectedFrequency?.hz === freq.hz
-                                    ? '1px solid var(--accent-color)'
-                                    : '1px solid var(--accent-15)',
-                                background: selectedFrequency?.hz === freq.hz
-                                    ? 'var(--accent-10)'
-                                    : 'rgba(0,0,0,0.2)',
-                                color: selectedFrequency?.hz === freq.hz
-                                    ? 'var(--accent-color)'
-                                    : 'rgba(253,251,245,0.6)',
-                                fontFamily: 'var(--font-display)',
-                                letterSpacing: 'var(--tracking-wide)',
-                                fontWeight: 500,
-                                animation: selectedFrequency?.hz === freq.hz
-                                    ? 'cymaticRipple 2s ease-out infinite'
-                                    : 'none',
-                            }}
-                        >
-                            <div className="text-xs font-semibold mb-1">
-                                {freq.hz} Hz
-                            </div>
-                            <div className="text-[10px] opacity-70">
-                                {freq.name}
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                {selectedFrequency && (
+                <button
+                    onClick={() => setShowFrequencyModal(!showFrequencyModal)}
+                    className="w-full p-4 rounded-2xl text-center transition-all"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                        border: '1px solid var(--accent-30)',
+                        boxShadow: '0 0 20px var(--accent-15), inset 0 0 20px var(--accent-08)',
+                    }}
+                >
                     <div
-                        className="mt-3 p-3 rounded-xl text-center"
+                        className="text-sm mb-1 font-semibold"
                         style={{
-                            background: 'rgba(0,0,0,0.2)',
-                            border: '1px solid var(--accent-15)',
+                            fontFamily: 'var(--font-display)',
+                            color: 'var(--accent-color)',
+                            letterSpacing: 'var(--tracking-wide)',
+                            fontSize: '14px',
                         }}
                     >
-                        <div
-                            className="text-sm mb-1 font-semibold"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                color: 'var(--accent-color)',
-                                letterSpacing: 'var(--tracking-wide)'
-                            }}
-                        >
-                            {selectedFrequency.name}
-                        </div>
-                        <div
-                            className="text-[10px]"
-                            style={{ color: 'rgba(253,251,245,0.5)' }}
-                        >
-                            {selectedFrequency.quality}
-                        </div>
+                        {selectedFrequency?.name || 'Select Frequency'}
+                    </div>
+                    <div
+                        className="text-2xl font-bold mb-1"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            color: 'rgba(253,251,245,0.9)',
+                        }}
+                    >
+                        {selectedFrequency?.hz || '---'} Hz
+                    </div>
+                    <div
+                        className="text-[10px]"
+                        style={{ color: 'rgba(253,251,245,0.5)' }}
+                    >
+                        {selectedFrequency?.quality || 'Tap to choose'}
+                    </div>
+                </button>
+
+                {/* Frequency Selection Modal/Dropdown */}
+                {showFrequencyModal && (
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                        {frequencies.map((freq) => (
+                            <button
+                                key={freq.hz}
+                                onClick={() => {
+                                    setSelectedFrequency(freq);
+                                    setShowFrequencyModal(false);
+                                }}
+                                className="px-3 py-2 rounded-xl text-left transition-all"
+                                style={{
+                                    border: selectedFrequency?.hz === freq.hz
+                                        ? '1px solid var(--accent-color)'
+                                        : '1px solid var(--accent-15)',
+                                    background: selectedFrequency?.hz === freq.hz
+                                        ? 'var(--accent-10)'
+                                        : 'rgba(0,0,0,0.2)',
+                                    color: selectedFrequency?.hz === freq.hz
+                                        ? 'var(--accent-color)'
+                                        : 'rgba(253,251,245,0.6)',
+                                    fontFamily: 'var(--font-display)',
+                                    letterSpacing: 'var(--tracking-wide)',
+                                    fontWeight: 500,
+                                }}
+                            >
+                                <div className="text-[10px] font-semibold">
+                                    {freq.hz} Hz - {freq.name}
+                                </div>
+                            </button>
+                        ))}
                     </div>
                 )}
             </div>
 
-            {/* Timing Controls */}
+            {/* Phase Cycle - Compact Selector */}
             <div>
                 <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
+                    className="text-[9px] uppercase tracking-[0.25em] mb-2"
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
@@ -159,199 +189,132 @@ export function CymaticsConfig({
                         color: 'rgba(253,251,245,0.4)'
                     }}
                 >
-                    Phase Durations
+                    Phase Cycle
                 </div>
-                <div className="space-y-3">
-                    {/* Fade In */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span
-                                className="text-xs"
-                                style={{ color: 'rgba(253,251,245,0.7)' }}
-                            >
-                                Fade In
-                            </span>
-                            <span
-                                className="text-xs"
-                                style={{ color: 'var(--accent-color)' }}
-                            >
-                                {fadeInDuration}s
-                            </span>
-                        </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="5"
-                            step="0.5"
-                            value={fadeInDuration}
-                            onChange={(e) => setFadeInDuration(parseFloat(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                    {PHASE_CYCLE_PRESETS.map((preset) => (
+                        <button
+                            key={preset.id}
+                            onClick={() => applyPreset(preset)}
+                            className="px-2 py-2 rounded-lg text-center transition-all"
                             style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((fadeInDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) ${((fadeInDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) 100%)`,
+                                border: totalCycleDuration === preset.total
+                                    ? '1px solid var(--accent-color)'
+                                    : '1px solid var(--accent-15)',
+                                background: totalCycleDuration === preset.total
+                                    ? 'var(--accent-10)'
+                                    : 'rgba(0,0,0,0.2)',
+                                color: totalCycleDuration === preset.total
+                                    ? 'var(--accent-color)'
+                                    : 'rgba(253,251,245,0.6)',
+                                fontFamily: 'var(--font-display)',
+                                fontWeight: 600,
+                                fontSize: '11px',
                             }}
-                        />
-                    </div>
-
-                    {/* Display */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span
-                                className="text-xs"
-                                style={{ color: 'rgba(253,251,245,0.7)' }}
-                            >
-                                Display
-                            </span>
-                            <span
-                                className="text-xs"
-                                style={{ color: 'var(--accent-color)' }}
-                            >
-                                {displayDuration}s
-                            </span>
-                        </div>
-                        <input
-                            type="range"
-                            min="5"
-                            max="30"
-                            step="1"
-                            value={displayDuration}
-                            onChange={(e) => setDisplayDuration(parseInt(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((displayDuration - 5) / 25) * 100}%, rgba(255,255,255,0.1) ${((displayDuration - 5) / 25) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
-
-                    {/* Fade Out */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span
-                                className="text-xs"
-                                style={{ color: 'rgba(253,251,245,0.7)' }}
-                            >
-                                Fade Out
-                            </span>
-                            <span
-                                className="text-xs"
-                                style={{ color: 'var(--accent-color)' }}
-                            >
-                                {fadeOutDuration}s
-                            </span>
-                        </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="5"
-                            step="0.5"
-                            value={fadeOutDuration}
-                            onChange={(e) => setFadeOutDuration(parseFloat(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((fadeOutDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) ${((fadeOutDuration - 1) / 4) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
-
-                    {/* Void */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <span
-                                className="text-xs"
-                                style={{ color: 'rgba(253,251,245,0.7)' }}
-                            >
-                                Void
-                            </span>
-                            <span
-                                className="text-xs"
-                                style={{ color: 'var(--accent-color)' }}
-                            >
-                                {voidDuration}s
-                            </span>
-                        </div>
-                        <input
-                            type="range"
-                            min="5"
-                            max="60"
-                            step="5"
-                            value={voidDuration}
-                            onChange={(e) => setVoidDuration(parseInt(e.target.value))}
-                            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                            style={{
-                                background: `linear-gradient(to right, var(--accent-color) 0%, var(--accent-color) ${((voidDuration - 5) / 55) * 100}%, rgba(255,255,255,0.1) ${((voidDuration - 5) / 55) * 100}%, rgba(255,255,255,0.1) 100%)`,
-                            }}
-                        />
-                    </div>
+                        >
+                            {preset.total}s
+                        </button>
+                    ))}
                 </div>
 
+                {/* Cymatic Arc - Visual Representation */}
+                <div className="relative h-8 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                    {/* Phase segments */}
+                    <div className="absolute inset-0 flex">
+                        <div
+                            className="h-full flex items-center justify-center text-[8px] font-semibold"
+                            style={{
+                                width: `${(fadeInDuration / totalCycleDuration) * 100}%`,
+                                background: 'rgba(253,220,145,0.2)',
+                                borderRight: '1px solid rgba(253,220,145,0.3)',
+                                color: 'rgba(253,251,245,0.5)',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                            title={`Fade In: ${fadeInDuration}s`}
+                        >
+                            {fadeInDuration}s
+                        </div>
+                        <div
+                            className="h-full flex items-center justify-center text-[8px] font-semibold"
+                            style={{
+                                width: `${(displayDuration / totalCycleDuration) * 100}%`,
+                                background: 'var(--accent-10)',
+                                borderRight: '1px solid var(--accent-20)',
+                                color: 'var(--accent-color)',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                            title={`Display: ${displayDuration}s`}
+                        >
+                            {displayDuration}s
+                        </div>
+                        <div
+                            className="h-full flex items-center justify-center text-[8px] font-semibold"
+                            style={{
+                                width: `${(fadeOutDuration / totalCycleDuration) * 100}%`,
+                                background: 'rgba(253,220,145,0.2)',
+                                borderRight: '1px solid rgba(253,220,145,0.3)',
+                                color: 'rgba(253,251,245,0.5)',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                            title={`Fade Out: ${fadeOutDuration}s`}
+                        >
+                            {fadeOutDuration}s
+                        </div>
+                        <div
+                            className="h-full flex items-center justify-center text-[8px] font-semibold"
+                            style={{
+                                width: `${(voidDuration / totalCycleDuration) * 100}%`,
+                                background: 'rgba(0,0,0,0.4)',
+                                color: 'rgba(253,251,245,0.4)',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                            title={`Void: ${voidDuration}s`}
+                        >
+                            {voidDuration}s
+                        </div>
+                    </div>
+                </div>
                 <div
-                    className="mt-3 text-center text-xs"
-                    style={{ color: 'rgba(253,251,245,0.5)' }}
+                    className="mt-1 text-center text-[9px]"
+                    style={{ color: 'rgba(253,251,245,0.4)' }}
                 >
-                    Total Cycle: {totalCycleDuration}s
+                    In → Hold → Out → Void
                 </div>
             </div>
 
-            {/* Options */}
-            <div>
-                <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3"
+            {/* Toggles - Horizontal Row */}
+            <div className="flex gap-2">
+                <button
+                    onClick={() => setDriftEnabled(!driftEnabled)}
+                    className="flex-1 px-3 py-2.5 rounded-xl text-[10px] transition-all flex items-center justify-between"
                     style={{
+                        border: driftEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
+                        background: driftEnabled ? 'var(--accent-10)' : 'transparent',
+                        color: driftEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
                         fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        color: 'rgba(253,251,245,0.4)'
+                        letterSpacing: 'var(--tracking-wide)',
+                        fontWeight: 500,
                     }}
                 >
-                    Options
-                </div>
-                <div className="space-y-2">
-                    {/* Drift Toggle */}
-                    <button
-                        onClick={() => setDriftEnabled(!driftEnabled)}
-                        className="w-full px-4 py-3 rounded-xl text-sm transition-all flex items-center justify-between"
-                        style={{
-                            border: driftEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                            background: driftEnabled ? 'var(--accent-10)' : 'transparent',
-                            color: driftEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
-                            fontFamily: 'var(--font-display)',
-                            letterSpacing: 'var(--tracking-wide)',
-                            fontWeight: 500,
-                        }}
-                    >
-                        <span>Drift (Micro-variations)</span>
-                        <span className="text-xs opacity-70">{driftEnabled ? 'ON' : 'OFF'}</span>
-                    </button>
+                    <span>Drift</span>
+                    <span className="text-[9px] opacity-70">{driftEnabled ? 'ON' : 'OFF'}</span>
+                </button>
 
-                    {/* Audio Toggle */}
-                    <button
-                        onClick={() => setAudioEnabled(!audioEnabled)}
-                        className="w-full px-4 py-3 rounded-xl text-sm transition-all flex items-center justify-between"
-                        style={{
-                            border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                            background: audioEnabled ? 'var(--accent-10)' : 'transparent',
-                            color: audioEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
-                            fontFamily: 'var(--font-display)',
-                            letterSpacing: 'var(--tracking-wide)',
-                            fontWeight: 500,
-                        }}
-                    >
-                        <span>Audio</span>
-                        <span className="text-xs opacity-70">{audioEnabled ? 'ON' : 'OFF'}</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Info Box */}
-            <div
-                className="p-3 rounded-xl text-xs leading-relaxed"
-                style={{
-                    border: '1px solid var(--accent-15)',
-                    background: 'rgba(0,0,0,0.2)',
-                    color: 'rgba(253,251,245,0.6)',
-                }}
-            >
-                <span style={{ color: 'var(--accent-color)' }}>Note:</span> Audio continues during void phase.
-                Use the tone to recall the visual pattern from sound alone.
+                <button
+                    onClick={() => setAudioEnabled(!audioEnabled)}
+                    className="flex-1 px-3 py-2.5 rounded-xl text-[10px] transition-all flex items-center justify-between"
+                    style={{
+                        border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
+                        background: audioEnabled ? 'var(--accent-10)' : 'transparent',
+                        color: audioEnabled ? 'rgba(253,251,245,0.9)' : 'rgba(253,251,245,0.6)',
+                        fontFamily: 'var(--font-display)',
+                        letterSpacing: 'var(--tracking-wide)',
+                        fontWeight: 500,
+                    }}
+                >
+                    <span>Audio</span>
+                    <span className="text-[9px] opacity-70">{audioEnabled ? 'ON' : 'OFF'}</span>
+                </button>
             </div>
         </div>
     );

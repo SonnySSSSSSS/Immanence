@@ -336,13 +336,18 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                     ))}
                 </div>
 
-                {/* Swipe hint */}
+                {/* Swipe hint - visual chevrons instead of text */}
                 {currentIndex === 0 && (
-                    <div
-                        className="text-center mt-1 text-[8px] font-bold"
-                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', color: 'rgba(253,251,245,0.3)' }}
-                    >
-                        ← Swipe to see other domains →
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                        <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-30">
+                            <path d="M8 2 L4 6 L8 10" fill="none" stroke="rgba(253,251,245,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
+                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
+                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
+                        <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-30">
+                            <path d="M4 2 L8 6 L4 10" fill="none" stroke="rgba(253,251,245,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                     </div>
                 )}
             </div>

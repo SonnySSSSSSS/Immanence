@@ -56,6 +56,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
               path={previewPath}
               showCore={previewShowCore}
               attention={previewAttention}
+              isPracticing={isPracticing}
             />
           </div>
 
@@ -73,7 +74,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         </div>
       )}
 
-      <div className="w-full max-w-md flex-1 relative z-10" style={{ overflow: 'visible' }}>
+      <div className="w-full max-w-2xl flex-1 relative z-10 px-4" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
 
         {section === "wisdom" && (
@@ -135,7 +136,7 @@ function App() {
   });
   const [isPracticing, setIsPracticing] = useState(false);
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
-  const [avatarStage, setAvatarStage] = useState("Flame"); // Track avatar stage name for theme
+  const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [showFxGallery, setShowFxGallery] = useState(true); // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
@@ -157,7 +158,7 @@ function App() {
     lastTapRef.current = now;
   };
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
-  const [previewStage, setPreviewStage] = useState('Flame');
+  const [previewStage, setPreviewStage] = useState('Seedling');
   const [previewPath, setPreviewPath] = useState('Soma');
   const [previewShowCore, setPreviewShowCore] = useState(true);
   const [previewAttention, setPreviewAttention] = useState('none');
@@ -268,14 +269,22 @@ function App() {
         >
           <Background stage={previewStage} />
 
-          <div className="relative z-10 w-full flex-1 flex flex-col px-4 pt-6 pb-10 overflow-visible">
-            {/* Header */}
-            <header className="flex items-center justify-between mb-4">
+          <div className="relative z-10 w-full flex-1 flex flex-col overflow-visible">
+            {/* Fixed Dark Header Bar */}
+            <header
+              className="sticky top-0 z-50 w-full flex items-center justify-between px-6 py-3"
+              style={{
+                background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+              }}
+            >
               <div
-                className="text-[9px] uppercase tracking-[0.25em] text-white/50"
-                style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}
+                className="text-[10px] text-suspended text-white/60"
+                style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.15em' }}
               >
-                Immanence OS
+                IMMANENCE OS
               </div>
 
               {/* Center Element: Label or Heartbeat Sigil */}
@@ -306,7 +315,7 @@ function App() {
                 )}
               </div>
 
-              <div className="min-w-[140px] flex-shrink-0 flex justify-end items-center gap-2">
+              <div className="flex items-center gap-3">
                 {/* Display Mode Toggle */}
                 <DisplayModeToggle />
                 <button
@@ -319,10 +328,10 @@ function App() {
                   🎨
                 </button>
                 <div
-                  className="text-[8px] uppercase tracking-[0.15em] text-white/30"
+                  className="text-[8px] uppercase tracking-[0.15em] text-white/40"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.10.7
+                  v3.11.0
                 </div>
                 {!isHub && (
                   <button
@@ -354,6 +363,7 @@ function App() {
                       setAvatarStage(stageName);
                       setPreviewStage(stageName);
                     }}
+                    isPracticing={isPracticing}
                     currentStage={previewStage}
                     previewPath={previewPath}
                     previewShowCore={previewShowCore}
@@ -399,7 +409,7 @@ function App() {
           <InstallPrompt />
 
           {/* Indra's Net - animated web at bottom */}
-          <IndrasNet stage={previewStage} />
+          <IndrasNet stage={previewStage} isPracticing={isPracticing} />
         </div>
       </div>
     </ThemeProvider>

@@ -584,12 +584,11 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
           {/* Attention text - enhanced contrast */}
           <span
-            className="text-[11px] uppercase relative z-10"
+            className="text-[10px] text-suspended relative z-10"
             style={{
               color: stageColors.gradient[1],
-              opacity: 0.78,
-              letterSpacing: 'var(--tracking-mythic)',
-              textShadow: `0 1px 6px rgba(0,0,0,0.35), 0 0 12px ${stageColors.glow}30`,
+              opacity: 0.6,
+              textShadow: `0 0 12px ${stageColors.glow}20`,
             }}
           >
             {attention}
