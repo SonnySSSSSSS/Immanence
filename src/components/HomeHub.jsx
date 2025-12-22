@@ -9,6 +9,7 @@ import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle }
 import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
 import { STAGES } from "../state/stageConfig.js";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -18,6 +19,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
 
   const streakInfo = getStreakInfo();
   const breathStats = getDomainStats('breathwork');
@@ -131,14 +134,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         <div
           className="relative text-center space-y-1 px-6 pt-4 pb-0 rounded-3xl overflow-hidden"
           style={{
-            background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.21) 100%)',
+            background: isLight
+              ? 'linear-gradient(180deg, rgba(255, 252, 245, 0.85) 0%, rgba(255, 252, 245, 0.9) 70%, rgba(255, 252, 245, 0.75) 100%)'
+              : 'linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.21) 100%)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: `
-              0 8px 32px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.06)
-            `,
+            border: isLight
+              ? '1px solid rgba(180, 155, 110, 0.25)'
+              : '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: isLight
+              ? '0 4px 24px rgba(100, 80, 50, 0.1)'
+              : '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
           }}
         >
           {/* Volcanic glass texture overlay */}
@@ -157,10 +163,13 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div
             className="relative -mx-6 -mb-4 px-6 pb-6 pt-3"
             style={{
-              background: 'rgba(0, 0, 0, 0.21)',
+              background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(0, 0, 0, 0.21)',
             }}
           >
-            <div className="text-[11px] text-[rgba(253,251,245,0.4)] text-center mt-2">
+            <div
+              className="text-[11px] text-center mt-2"
+              style={{ color: isLight ? 'rgba(90, 77, 60, 0.65)' : 'rgba(253,251,245,0.4)' }}
+            >
               Last practiced {lastPracticed}
             </div>
           </div>

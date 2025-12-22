@@ -1,7 +1,9 @@
 // src/components/Background.jsx
 // Stage-specific cosmic backgrounds with colored vignettes
+// Light mode: Hides nebula, shows warm cream gradient
 
 import React from "react";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 // Vignette edge colors for each stage
 const STAGE_VIGNETTE_COLOR = {
@@ -12,13 +14,59 @@ const STAGE_VIGNETTE_COLOR = {
   stellar: 'rgba(75, 40, 100, 0.18)',   // Deep purple (was silver-gray)
 };
 
-export function Background({ stage = 'flame' }) {
-  const stageLower = (stage || 'flame').toLowerCase();
-  const vignetteColor = STAGE_VIGNETTE_COLOR[stageLower] ?? 'rgba(150, 40, 20, 0.3)';
+// Light mode vignette colors (warm, subtle)
+const STAGE_VIGNETTE_LIGHT = {
+  seedling: 'rgba(160, 140, 110, 0.15)',
+  ember: 'rgba(180, 140, 100, 0.12)',
+  flame: 'rgba(200, 160, 100, 0.12)',
+  beacon: 'rgba(140, 160, 180, 0.12)',
+  stellar: 'rgba(160, 150, 180, 0.10)',
+};
 
-  // Use stage-specific background image
+export function Background({ stage = 'flame' }) {
+  const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+  const isLight = colorScheme === 'light';
+
+  const stageLower = (stage || 'flame').toLowerCase();
+  const vignetteColor = isLight
+    ? (STAGE_VIGNETTE_LIGHT[stageLower] ?? 'rgba(180, 155, 110, 0.12)')
+    : (STAGE_VIGNETTE_COLOR[stageLower] ?? 'rgba(150, 40, 20, 0.3)');
+
+  // Use stage-specific background image (only in dark mode)
   const backgroundImage = `${import.meta.env.BASE_URL}bg/bg-${stageLower}.png`;
 
+  // Light mode: warm cream with subtle texture
+  if (isLight) {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden transition-colors duration-500">
+        {/* Warm cream base gradient */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(180deg, #F5F0E6 0%, #EDE5D8 50%, #E8DFD0 100%)',
+          }}
+        />
+
+        {/* Subtle warm radial glow for avatar area */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 60% 40% at 50% 25%, rgba(212, 168, 75, 0.08) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* Subtle stage-colored vignette */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse 50% 40% at 50% 30%, transparent 50%, ${vignetteColor} 100%)`,
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Dark mode: Original cosmic nebula design
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       {/* Deep dark base - almost black with slight blue tint */}
@@ -35,8 +83,6 @@ export function Background({ stage = 'flame' }) {
           mixBlendMode: 'lighten',
         }}
       />
-
-
 
       {/* Vertical fade - nebula dissolves into solid dark by ~40% */}
       <div

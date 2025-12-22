@@ -69,6 +69,142 @@
 
   /* ─── Wisdom Section: Accent ─── */
   --accent-10: rgba(198, 90, 255, 0.35);
+
+  /* ─── Color Scheme Flag ─── */
+  --color-scheme: dark;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE — Warm Cream Theme
+   Inspired by meditative, paper-like aesthetics
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.light-mode {
+  /* ─── Color Scheme Flag ─── */
+  --color-scheme: light;
+
+  /* ─── Background Palette (Warm Cream) ─── */
+  --bg-void: #F5F0E6;
+  --bg-deep: #EDE5D8;
+  --bg-surface: #F8F3EB;
+  --bg-elevated: #FFFCF7;
+
+  /* ─── Text Colors (Dark on Light) ─── */
+  --text-primary: rgba(61, 52, 37, 0.95);
+  --text-secondary: rgba(90, 77, 60, 0.75);
+  --text-muted: rgba(90, 77, 60, 0.5);
+  --text-ghost: rgba(90, 77, 60, 0.25);
+
+  /* ─── Border Colors (Warm, Subtle) ─── */
+  --border-subtle: rgba(180, 155, 110, 0.12);
+  --border-visible: rgba(180, 155, 110, 0.25);
+  --border-active: rgba(180, 155, 110, 0.45);
+  --border-glow: rgba(180, 155, 110, 0.6);
+
+  /* ─── Gold Accent (Deeper for Light BG) ─── */
+  --gold-bright: #D4A84B;
+  --gold-mid: #C19A40;
+  --gold-deep: #A07830;
+  --gold-strong: #B8923A;
+
+  /* ─── Shadow Tokens (Drop Shadows instead of Glows) ─── */
+  --shadow-panel: 0 8px 32px rgba(100, 80, 50, 0.12);
+  --glow-gold: 0 4px 16px rgba(180, 145, 80, 0.2);
+
+  /* ─── Wisdom Section: Cosmic Tones → Warm Light ─── */
+  --cosmic-900: #F5F0E6;
+  --cosmic-800: #EDE5D8;
+  --cosmic-700: #E5DCC8;
+
+  /* ─── Light Mode Specific ─── */
+  --card-bg: rgba(255, 252, 245, 0.85);
+  --card-border: rgba(180, 155, 110, 0.2);
+  --overlay-bg: rgba(245, 240, 230, 0.95);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LIGHT MODE — Global Text Color Overrides
+   These rules help adapt hardcoded text colors to light mode
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Force text color inheritance in light mode for better contrast */
+.light-mode {
+  color: rgba(61, 52, 37, 0.95);
+}
+
+/* Utility classes that adapt to color scheme */
+.text-adaptive {
+  color: var(--text-primary);
+}
+
+.text-adaptive-secondary {
+  color: var(--text-secondary);
+}
+
+.text-adaptive-muted {
+  color: var(--text-muted);
+}
+
+/* Card backgrounds that adapt to color scheme */
+.card-adaptive {
+  background: var(--card-bg, rgba(0, 0, 0, 0.3));
+  border: 1px solid var(--card-border, var(--border-visible));
+}
+
+.light-mode .card-adaptive {
+  box-shadow: var(--shadow-panel);
+}
+
+/* Light mode specific fixes for common patterns */
+.light-mode .text-white,
+.light-mode [class*="text-white/"] {
+  color: rgba(61, 52, 37, 0.85) !important;
+}
+
+.light-mode .text-white\/90 {
+  color: rgba(61, 52, 37, 0.9) !important;
+}
+
+.light-mode .text-white\/80 {
+  color: rgba(61, 52, 37, 0.8) !important;
+}
+
+.light-mode .text-white\/70 {
+  color: rgba(61, 52, 37, 0.7) !important;
+}
+
+.light-mode .text-white\/60 {
+  color: rgba(90, 77, 60, 0.75) !important;
+}
+
+.light-mode .text-white\/50 {
+  color: rgba(90, 77, 60, 0.65) !important;
+}
+
+.light-mode .text-white\/40 {
+  color: rgba(90, 77, 60, 0.55) !important;
+}
+
+.light-mode .text-white\/30 {
+  color: rgba(90, 77, 60, 0.45) !important;
+}
+
+.light-mode .text-white\/20 {
+  color: rgba(90, 77, 60, 0.35) !important;
+}
+
+/* Light mode border adjustments */
+.light-mode .border-white\/10,
+.light-mode .border-white\/20 {
+  border-color: rgba(180, 155, 110, 0.2) !important;
+}
+
+/* Light mode background adjustments for dark overlays */
+.light-mode .bg-black\/20,
+.light-mode .bg-black\/30,
+.light-mode .bg-black\/40,
+.light-mode .bg-black\/50 {
+  background-color: rgba(180, 155, 110, 0.08) !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

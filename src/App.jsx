@@ -105,8 +105,10 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
 
 
 function App() {
-  // Display mode (sanctuary/hearth)
+  // Display mode (sanctuary/hearth) and color scheme (dark/light)
   const displayMode = useDisplayModeStore((s) => s.mode);
+  const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+  const isLight = colorScheme === 'light';
 
   // Check if user has seen welcome screen
   const getHasSeenWelcome = () => {
@@ -243,17 +245,19 @@ function App() {
 
       {/* Outer Layout Container - Adapts to display mode */}
       <div
-        className="min-h-screen w-full flex justify-center overflow-visible"
+        className="min-h-screen w-full flex justify-center overflow-visible transition-colors duration-500"
         style={{
-          background: displayMode === 'sanctuary'
-            ? 'linear-gradient(135deg, #0a0a12 0%, #050508 100%)'
-            : '#000',
+          background: isLight
+            ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
+            : (displayMode === 'sanctuary'
+              ? 'linear-gradient(135deg, #0a0a12 0%, #050508 100%)'
+              : '#000'),
         }}
       >
 
         {/* Inner App Container */}
         <div
-          className="relative min-h-screen flex flex-col items-center text-white overflow-visible transition-all duration-500"
+          className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
           onPointerDown={handleDoubleTap}
           style={displayMode === 'sanctuary' ? {
             // Sanctuary: Full bleed, max width for large screens
@@ -272,16 +276,20 @@ function App() {
           <div className="relative z-10 w-full flex-1 flex flex-col overflow-visible">
             {/* Fixed Dark Header Bar */}
             <header
-              className="sticky top-0 z-50 w-full flex items-center justify-between px-6 py-3"
+              className="sticky top-0 z-50 w-full flex items-center justify-between px-6 py-3 transition-colors duration-500"
               style={{
-                background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)',
+                background: isLight
+                  ? 'linear-gradient(180deg, rgba(245,240,230,0.95) 0%, rgba(245,240,230,0.8) 60%, rgba(245,240,230,0.4) 100%)'
+                  : 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                borderBottom: isLight
+                  ? '1px solid rgba(180,155,110,0.15)'
+                  : '1px solid rgba(255,255,255,0.05)',
               }}
             >
               <div
-                className="text-[10px] text-suspended text-white/60"
+                className={`text-[10px] text-suspended ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
                 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.15em' }}
               >
                 IMMANENCE OS
@@ -291,7 +299,7 @@ function App() {
               <div className="flex-1 flex justify-center">
                 {!isHub ? (
                   <div
-                    className="text-sm font-medium text-white/90"
+                    className={`text-sm font-medium ${isLight ? 'text-[#3D3425]/90' : 'text-white/90'}`}
                     style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
                   >
                     {currentLabel}
@@ -328,7 +336,7 @@ function App() {
                   🎨
                 </button>
                 <div
-                  className="text-[8px] uppercase tracking-[0.15em] text-white/40"
+                  className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   v3.11.0
@@ -337,7 +345,7 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setActiveSection(null)}
-                    className="text-[11px] uppercase tracking-[0.15em] text-white/70 hover:text-white transition-colors"
+                    className={`text-[11px] uppercase tracking-[0.15em] transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425]' : 'text-white/70 hover:text-white'}`}
                     style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
                   >
                     Home

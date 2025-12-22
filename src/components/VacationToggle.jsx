@@ -3,9 +3,12 @@
 
 import React, { useState } from 'react';
 import { useProgressStore } from '../state/progressStore.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 export function VacationToggle({ compact = false }) {
     const { vacation, startVacation, endVacation, getStreakInfo } = useProgressStore();
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
     const [showConfirm, setShowConfirm] = useState(false);
     const streakInfo = getStreakInfo();
 
@@ -34,9 +37,13 @@ export function VacationToggle({ compact = false }) {
                 onClick={handleToggle}
                 className={`px-3 py-1.5 rounded-full text-[10px] transition-all ${vacation.active
                     ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                    : 'bg-[rgba(253,251,245,0.05)] border-[rgba(253,251,245,0.15)] text-[rgba(253,251,245,0.6)]'
+                    : ''
                     }`}
-                style={{ border: '1px solid' }}
+                style={vacation.active ? { border: '1px solid' } : {
+                    background: isLight ? 'rgba(255, 252, 245, 0.6)' : 'rgba(253,251,245,0.05)',
+                    border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(253,251,245,0.15)',
+                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.6)'
+                }}
                 title={vacation.active ? 'End vacation mode' : 'Enable vacation mode'}
             >
                 {vacation.active ? '❄️ End Vacation' : '🏖️ Vacation'}

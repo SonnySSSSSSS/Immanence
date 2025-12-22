@@ -1,6 +1,7 @@
 // src/state/displayModeStore.js
 // Display Mode: Sanctuary (cosmic immersive) vs Hearth (portrait focused)
-// Persists preference to localStorage
+// Color Scheme: Dark vs Light
+// Persists preferences to localStorage
 
 import { create } from 'zustand';
 
@@ -20,19 +21,46 @@ function detectDefaultMode() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// LOAD STORED PREFERENCE (respects user choice over auto-detect)
+// LOAD STORED PREFERENCES
 // ═══════════════════════════════════════════════════════════════════════════
 function loadStoredMode() {
     try {
         const stored = localStorage.getItem('immanenceOS.displayMode');
         if (stored === 'sanctuary' || stored === 'hearth') {
-            return stored; // Always respect stored preference
+            return stored;
         }
     } catch {
         // localStorage not available
     }
-    return null; // No stored preference → use auto-detect
+    return null;
 }
+
+function loadStoredColorScheme() {
+    try {
+        const stored = localStorage.getItem('immanenceOS.colorScheme');
+        if (stored === 'dark' || stored === 'light') {
+            return stored;
+        }
+    } catch {
+        // localStorage not available
+    }
+    return 'dark'; // Default to dark
+}
+
+// Apply color scheme class to document
+function applyColorSchemeClass(scheme) {
+    if (typeof document !== 'undefined') {
+        if (scheme === 'light') {
+            document.documentElement.classList.add('light-mode');
+        } else {
+            document.documentElement.classList.remove('light-mode');
+        }
+    }
+}
+
+// Initialize on load
+const initialColorScheme = loadStoredColorScheme();
+applyColorSchemeClass(initialColorScheme);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DISPLAY MODE STORE
@@ -41,13 +69,15 @@ export const useDisplayModeStore = create((set, get) => ({
     // Mode: 'sanctuary' | 'hearth'
     mode: loadStoredMode() ?? detectDefaultMode(),
 
-    // Toggle between modes
+    // Color Scheme: 'dark' | 'light'
+    colorScheme: initialColorScheme,
+
+    // Toggle between display modes
     toggleMode: () => {
         const current = get().mode;
         const newMode = current === 'sanctuary' ? 'hearth' : 'sanctuary';
         set({ mode: newMode });
 
-        // Persist to localStorage
         try {
             localStorage.setItem('immanenceOS.displayMode', newMode);
         } catch {
@@ -55,12 +85,11 @@ export const useDisplayModeStore = create((set, get) => ({
         }
     },
 
-    // Set specific mode
+    // Set specific display mode
     setMode: (mode) => {
         if (mode !== 'sanctuary' && mode !== 'hearth') return;
         set({ mode });
 
-        // Persist to localStorage
         try {
             localStorage.setItem('immanenceOS.displayMode', mode);
         } catch {
@@ -68,9 +97,36 @@ export const useDisplayModeStore = create((set, get) => ({
         }
     },
 
-    // Check if current mode is sanctuary
-    isSanctuary: () => get().mode === 'sanctuary',
+    // Toggle between color schemes
+    toggleColorScheme: () => {
+        const current = get().colorScheme;
+        const newScheme = current === 'dark' ? 'light' : 'dark';
+        set({ colorScheme: newScheme });
+        applyColorSchemeClass(newScheme);
 
-    // Check if current mode is hearth
+        try {
+            localStorage.setItem('immanenceOS.colorScheme', newScheme);
+        } catch {
+            // ignore
+        }
+    },
+
+    // Set specific color scheme
+    setColorScheme: (scheme) => {
+        if (scheme !== 'dark' && scheme !== 'light') return;
+        set({ colorScheme: scheme });
+        applyColorSchemeClass(scheme);
+
+        try {
+            localStorage.setItem('immanenceOS.colorScheme', scheme);
+        } catch {
+            // ignore
+        }
+    },
+
+    // Helpers
+    isSanctuary: () => get().mode === 'sanctuary',
     isHearth: () => get().mode === 'hearth',
+    isDark: () => get().colorScheme === 'dark',
+    isLight: () => get().colorScheme === 'light',
 }));

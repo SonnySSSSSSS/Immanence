@@ -10,6 +10,7 @@ import { DishonorBadge } from './DishonorBadge.jsx';
 import { Icon } from '../icons/Icon.jsx';
 import SevenDayTrendCurve from './SevenDayTrendCurve.jsx';
 import { plateauMaterial, plateauMaterialElevated, plateauMaterialClear, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from '../styles/cardMaterial.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 // Domain configuration - using icon names for Icon component
 const DOMAINS = [
@@ -184,6 +185,8 @@ export function TrackingHub({ onOpenHardwareGuide }) {
         displayPreference,
         userSelectedDomain
     } = useProgressStore();
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -278,7 +281,11 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                 <div className="flex items-center justify-between mb-2">
                     <div
                         className="text-[10px] uppercase font-bold"
-                        style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', color: 'rgba(253,251,245,0.65)' }}
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            letterSpacing: 'var(--tracking-mythic)',
+                            color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.65)'
+                        }}
                     >
                         Your Progress
                     </div>
@@ -288,10 +295,11 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                         {/* Log Honor button */}
                         <button
                             onClick={() => setShowHonorModal(true)}
-                            className="px-2 py-1 rounded-full text-[9px] transition-all hover:bg-[rgba(253,251,245,0.1)]"
+                            className="px-2 py-1 rounded-full text-[9px] transition-all"
                             style={{
-                                color: 'rgba(253,251,245,0.6)',
-                                border: '1px solid rgba(253,251,245,0.2)'
+                                color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.6)',
+                                border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(253,251,245,0.2)',
+                                background: isLight ? 'rgba(255, 252, 245, 0.6)' : 'transparent'
                             }}
                             title="Log off-app practice"
                         >
@@ -304,10 +312,11 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                         {/* Physical Bind guide button */}
                         <button
                             onClick={onOpenHardwareGuide}
-                            className="px-2 py-1 rounded-full text-[9px] transition-all hover:bg-amber-500/10"
+                            className="px-2 py-1 rounded-full text-[9px] transition-all"
                             style={{
-                                color: 'rgba(253,190,105,0.6)',
-                                border: '1px solid rgba(253,190,105,0.2)'
+                                color: isLight ? 'rgba(160, 120, 48, 0.85)' : 'rgba(253,190,105,0.6)',
+                                border: isLight ? '1px solid rgba(180, 145, 80, 0.35)' : '1px solid rgba(253,190,105,0.2)',
+                                background: isLight ? 'rgba(255, 250, 240, 0.6)' : 'transparent'
                             }}
                             title="Hardware Button Setup"
                         >
@@ -388,7 +397,13 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                 {/* Stats Card - Three-Layer Hierarchy */}
                                 <div
                                     className="relative rounded-3xl overflow-hidden"
-                                    style={{
+                                    style={isLight ? {
+                                        background: 'linear-gradient(180deg, rgba(255, 252, 245, 0.92) 0%, rgba(255, 250, 240, 0.95) 100%)',
+                                        backdropFilter: 'blur(22px)',
+                                        WebkitBackdropFilter: 'blur(22px)',
+                                        border: '1px solid rgba(180, 155, 110, 0.25)',
+                                        boxShadow: '0 4px 24px rgba(100, 80, 50, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                                    } : {
                                         ...plateauMaterialClear,
                                         boxShadow: `
                                             ${plateauMaterialClear.boxShadow || ''},
@@ -477,8 +492,8 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                                 style={{
                                                     fontSize: '2.3rem',
                                                     lineHeight: '1',
-                                                    color: '#d4b87a',
-                                                    textShadow: `
+                                                    color: isLight ? 'rgba(140, 100, 50, 0.85)' : '#d4b87a',
+                                                    textShadow: isLight ? 'none' : `
                                                         0 0 10px rgba(212, 184, 122, 0.3),
                                                         0 0 20px rgba(212, 184, 122, 0.15),
                                                         0 2px 6px rgba(0, 0, 0, 0.7)
@@ -491,7 +506,7 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                             <div
                                                 className="text-[0.65rem] font-bold"
                                                 style={{
-                                                    color: 'rgba(255, 255, 255, 0.35)',
+                                                    color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.35)',
                                                     fontFamily: 'var(--font-display)',
                                                     letterSpacing: 'var(--tracking-mythic)',
                                                 }}
@@ -506,8 +521,8 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                                 style={{
                                                     fontSize: '2.75rem',
                                                     lineHeight: '1',
-                                                    color: '#fff8e6',
-                                                    textShadow: `
+                                                    color: isLight ? 'rgba(100, 70, 30, 0.95)' : '#fff8e6',
+                                                    textShadow: isLight ? 'none' : `
                                                         0 0 8px rgba(255, 250, 235, 0.9),
                                                         0 0 20px rgba(255, 235, 200, 0.8),
                                                         0 0 40px rgba(255, 220, 150, 0.6),
@@ -521,10 +536,10 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                             <div
                                                 className="text-[0.7rem] font-bold"
                                                 style={{
-                                                    color: 'rgba(255, 248, 230, 0.85)',
+                                                    color: isLight ? 'rgba(140, 100, 50, 0.85)' : 'rgba(255, 248, 230, 0.85)',
                                                     fontFamily: 'var(--font-display)',
                                                     letterSpacing: 'var(--tracking-wide)',
-                                                    textShadow: '0 0 8px rgba(255, 235, 200, 0.3)',
+                                                    textShadow: isLight ? 'none' : '0 0 8px rgba(255, 235, 200, 0.3)',
                                                 }}
                                             >
                                                 MINUTES
@@ -537,8 +552,8 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                                 style={{
                                                     fontSize: '2.3rem',
                                                     lineHeight: '1',
-                                                    color: '#c9a86e',
-                                                    textShadow: `
+                                                    color: isLight ? 'rgba(140, 100, 50, 0.8)' : '#c9a86e',
+                                                    textShadow: isLight ? 'none' : `
                                                         0 0 8px rgba(201, 168, 110, 0.25),
                                                         0 0 15px rgba(201, 168, 110, 0.1),
                                                         0 2px 6px rgba(0, 0, 0, 0.7)
@@ -551,7 +566,7 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                             <div
                                                 className="text-[0.65rem] font-bold"
                                                 style={{
-                                                    color: 'rgba(255, 255, 255, 0.4)',
+                                                    color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.4)',
                                                     fontFamily: 'var(--font-display)',
                                                     letterSpacing: 'var(--tracking-mythic)',
                                                 }}
@@ -576,7 +591,7 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                         <div
                                             className="text-[10px] font-bold mb-4 text-center -mt-5 relative"
                                             style={{
-                                                color: 'rgba(255, 255, 255, 0.45)',
+                                                color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
                                                 fontFamily: 'var(--font-display)',
                                                 letterSpacing: 'var(--tracking-mythic)',
                                                 zIndex: 11,
@@ -691,7 +706,7 @@ export function TrackingHub({ onOpenHardwareGuide }) {
                                             <div
                                                 className="text-[10px] font-bold text-center mt-2"
                                                 style={{
-                                                    color: 'rgba(255, 255, 255, 0.4)',
+                                                    color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.4)',
                                                     fontFamily: 'var(--font-display)',
                                                     letterSpacing: 'var(--tracking-mythic)',
                                                 }}

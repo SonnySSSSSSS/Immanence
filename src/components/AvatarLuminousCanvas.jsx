@@ -6,6 +6,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext.jsx";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 // CONFIGURATION
 const CANVAS_SCALE = 3.0; // Increased to 300% to cover the whole screen/neighbor area
@@ -159,7 +160,7 @@ class Particle {
     }
   }
 
-  draw(ctx, centerX, centerY, scaleMod, glowMod) {
+  draw(ctx, centerX, centerY, scaleMod, glowMod, isLight = false) {
     if (this.trail.length < 2 || this.life <= 0) return;
 
     ctx.save();
@@ -190,14 +191,16 @@ class Particle {
     const hx = centerX + head.x * scaleMod;
     const hy = centerY + head.y * scaleMod;
 
-    // Halo
-    const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * 4 * scaleMod);
-    halo.addColorStop(0, `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${this.brightness * 0.5 * glowMod * lifeMod})`);
-    halo.addColorStop(1, 'transparent');
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(hx, hy, this.size * 4 * scaleMod, 0, Math.PI * 2);
-    ctx.fill();
+    // Halo - skip in light mode (causes gray circles)
+    if (!isLight) {
+      const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * 4 * scaleMod);
+      halo.addColorStop(0, `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${this.brightness * 0.5 * glowMod * lifeMod})`);
+      halo.addColorStop(1, 'transparent');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(hx, hy, this.size * 4 * scaleMod, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Core
     const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * scaleMod);
@@ -512,6 +515,11 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   const breathStateRef = useRef(breathState);
   const weeklyPracticeLogRef = useRef(weeklyPracticeLog);
 
+  // Light mode check
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+  const isLightRef = useRef(isLight);
+
   // Interaction State
   const ritualHoverRef = useRef(null);
   const hoverIntensityRef = useRef(0);
@@ -562,6 +570,10 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   useEffect(() => {
     weeklyPracticeLogRef.current = weeklyPracticeLog;
   }, [weeklyPracticeLog]);
+
+  useEffect(() => {
+    isLightRef.current = isLight;
+  }, [isLight]);
 
   // Setup Interaction Listeners
   useEffect(() => {
@@ -692,33 +704,48 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       ctx.translate(centerX, centerY);
       ctx.scale(scale, scale);
 
-      // Nebula & Stars
-      drawNebulaWisps(ctx, time);
+      // Skip heavy visual effects in light mode (they create visible gray circles)
+      const skipHeavyFx = isLightRef.current;
 
-      // Sacred Geometry
-      drawSacredGeometry(ctx, flameRadius * 1.2);
+      // Nebula & Stars (skip in light mode)
+      if (!skipHeavyFx) {
+        drawNebulaWisps(ctx, time);
+      }
 
-      // INTEGRATION LAYER 1: Refined multi-layered bloom glow
-      drawUnifyingGlow(ctx);
+      // Sacred Geometry (skip in light mode - causes gray circles)
+      if (!skipHeavyFx) {
+        drawSacredGeometry(ctx, flameRadius * 1.2);
+      }
 
-      // INTEGRATION LAYER 2: Light rays
-      drawLightRays(ctx, 110, 800);
+      // INTEGRATION LAYER 1: Refined multi-layered bloom glow (skip in light mode)
+      if (!skipHeavyFx) {
+        drawUnifyingGlow(ctx);
+      }
 
-      // INTEGRATION LAYER 3: Atmospheric haze
-      drawAtmosphericHaze(ctx, time);
+      // INTEGRATION LAYER 2: Light rays (skip in light mode)
+      if (!skipHeavyFx) {
+        drawLightRays(ctx, 110, 800);
+      }
 
-      // Decorative dashed ring - REDUCED shadow blur
-      ctx.save();
-      ctx.shadowColor = 'rgba(253, 224, 71, 0.15)';
-      ctx.shadowBlur = 8;
-      ctx.setLineDash([8, 12]);
-      ctx.strokeStyle = 'rgba(253, 224, 71, 0.10)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(0, 0, runeRingRadius * 1.15, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
+      // INTEGRATION LAYER 3: Atmospheric haze (skip in light mode)
+      if (!skipHeavyFx) {
+        drawAtmosphericHaze(ctx, time);
+      }
+
+      // Decorative dashed ring - skip in light mode
+      if (!skipHeavyFx) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(253, 224, 71, 0.15)';
+        ctx.shadowBlur = 8;
+        ctx.setLineDash([8, 12]);
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.10)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, runeRingRadius * 1.15, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
 
       // 2. Week Nodes & Filaments
       const currentDayIndex = new Date().getDay();
@@ -744,7 +771,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       particlesRef.current.forEach((particle) => {
         particle.update();
         // Pass 0,0 as center because we are already translated
-        particle.draw(ctx, 0, 0, scaleMod, glowMod);
+        particle.draw(ctx, 0, 0, scaleMod, glowMod, isLightRef.current);
       });
 
       ctx.restore();
