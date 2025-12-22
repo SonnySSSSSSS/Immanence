@@ -265,7 +265,7 @@ function App() {
             width: displayMode === 'sanctuary'
               ? 'calc((100vw - min(100vw, 1366px)) / 2)'
               : 'calc((100vw - min(100vw, 1080px)) / 2)',
-            background: isLight ? '#E8DFD0' : '#000',
+            background: '#000',
           }}
         />
 
@@ -276,7 +276,7 @@ function App() {
             width: displayMode === 'sanctuary'
               ? 'calc((100vw - min(100vw, 1366px)) / 2)'
               : 'calc((100vw - min(100vw, 1080px)) / 2)',
-            background: isLight ? '#E8DFD0' : '#000',
+            background: '#000',
           }}
         />
 
@@ -366,7 +366,7 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.11.0
+                  v3.11.4
                 </div>
                 {!isHub && (
                   <button
