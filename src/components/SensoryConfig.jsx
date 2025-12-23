@@ -1,7 +1,8 @@
 // src/components/SensoryConfig.jsx
 // Configuration panel for Sensory practice mode
-// Body Scan, Sakshi type selection
+// Fluid slider for Body Scan vs Sakshi
 import React from 'react';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 // Sensory practice types
 export const SENSORY_TYPES = [
@@ -14,6 +15,9 @@ export function SensoryConfig({
     setSensoryType,
     isLight = false,
 }) {
+    const theme = useTheme();
+    const isSakshi = sensoryType === 'sakshi';
+
     return (
         <div className="sensory-config mb-6">
             <div
@@ -30,40 +34,77 @@ export function SensoryConfig({
             >
                 Sensory Focus
             </div>
-            <div className="grid grid-cols-2 gap-3">
-                {SENSORY_TYPES.map((type) => (
-                    <button
-                        key={type.id}
-                        onClick={() => setSensoryType(type.id)}
-                        className="rounded-xl px-3 py-3 transition-all duration-200 text-center flex flex-col items-center gap-1"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "11px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-wide)",
-                            background: sensoryType === type.id ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)") : "transparent",
-                            border: `1px solid ${sensoryType === type.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
-                            boxShadow: sensoryType === type.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none"
-                        }}
-                    >
-                        <span
-                            style={{
-                                color: sensoryType === type.id ? "var(--accent-color)" : "var(--text-secondary)",
-                                fontWeight: 500,
-                            }}
-                        >
-                            {type.label}
-                        </span>
-                        <span
-                            style={{
-                                fontSize: "8px",
-                                color: "var(--text-muted)",
-                            }}
-                        >
-                            {type.description}
-                        </span>
-                    </button>
-                ))}
+
+            {/* Fluid Slider */}
+            <div
+                className="relative rounded-full p-1 transition-all duration-300"
+                style={{
+                    background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.3)',
+                    border: `1px solid ${isLight ? 'var(--light-border)' : 'var(--accent-10)'}`,
+                }}
+            >
+                {/* Sliding indicator */}
+                <div
+                    className="absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-out"
+                    style={{
+                        left: isSakshi ? '50%' : '0.25rem',
+                        right: isSakshi ? '0.25rem' : '50%',
+                        background: isLight
+                            ? 'linear-gradient(135deg, var(--accent-color) 0%, var(--accent-secondary) 100%)'
+                            : 'var(--accent-color)',
+                        boxShadow: isLight
+                            ? '0 2px 8px var(--light-shadow-tint)'
+                            : '0 0 15px var(--accent-10)',
+                        opacity: 1,
+                    }}
+                />
+
+                {/* Buttons */}
+                <div className="relative z-10 grid grid-cols-2 gap-0">
+                    {SENSORY_TYPES.map((type) => {
+                        const isActive = sensoryType === type.id;
+                        return (
+                            <button
+                                key={type.id}
+                                onClick={() => setSensoryType(type.id)}
+                                className="rounded-full px-4 py-3 transition-all duration-300 text-center flex flex-col items-center gap-1"
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    letterSpacing: "var(--tracking-wide)",
+                                    background: 'transparent',
+                                }}
+                            >
+                                <span
+                                    className="transition-all duration-500"
+                                    style={{
+                                        color: isActive
+                                            ? (isLight ? 'var(--light-bg-base)' : '#050508')
+                                            : 'var(--text-secondary)',
+                                        fontWeight: isActive ? 600 : 500,
+                                        // Inactive state recedes without implying inferiority
+                                        opacity: isActive ? 1 : (isLight ? 0.65 : 0.5),
+                                    }}
+                                >
+                                    {type.label}
+                                </span>
+                                <span
+                                    className="transition-all duration-500"
+                                    style={{
+                                        fontSize: "8px",
+                                        color: isActive
+                                            ? (isLight ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)')
+                                            : 'var(--text-muted)',
+                                        opacity: isActive ? 1 : 0.5,
+                                    }}
+                                >
+                                    {type.description}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

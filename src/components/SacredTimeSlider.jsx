@@ -222,7 +222,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
                 </div>
             </div>
 
-            {/* Labels row - separate from track for consistent positioning */}
+            {/* Labels row - show ALL durations */}
             <div
                 className="absolute flex justify-between"
                 style={{
@@ -231,10 +231,11 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     top: '52px'
                 }}
             >
-                {options.filter(opt => KEY_DURATIONS[opt]).map((opt) => {
+                {options.map((opt) => {
                     const i = options.indexOf(opt);
                     const percent = options.length > 1 ? (i / (options.length - 1)) * 100 : 0;
                     const isSelected = opt === value;
+                    const isKey = KEY_DURATIONS[opt];
 
                     return (
                         <div
@@ -244,7 +245,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 fontFamily: 'var(--font-display)',
                                 left: `${percent}%`,
                                 transform: 'translateX(-50%)',
-                                fontSize: '10px',
+                                fontSize: isKey ? '10px' : '8px',
                                 color: isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.35)',
                                 fontWeight: isSelected ? '600' : '400',
                                 textShadow: isSelected ? '0 0 8px var(--accent-20)' : 'none'

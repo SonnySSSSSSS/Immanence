@@ -39,7 +39,7 @@ export function Background({ stage = 'flame' }) {
   if (isLight) {
     return (
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden transition-colors duration-500">
-        {/* Warm cream base gradient */}
+        {/* Base parchment gradient */}
         <div
           className="absolute inset-0"
           style={{
@@ -47,19 +47,41 @@ export function Background({ stage = 'flame' }) {
           }}
         />
 
+        {/* Organic texture layer - SVG noise (EXAGGERATED) */}
+        <svg className="absolute inset-0 w-full h-full opacity-[0.045]" style={{ mixBlendMode: 'multiply' }}>
+          <filter id="organic-noise">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="5"
+              seed="2"
+              stitchTiles="stitch"
+            />
+            <feColorMatrix
+              type="matrix"
+              values="0.6 0.3 0.2 0 0
+                      0.3 0.5 0.2 0 0
+                      0.2 0.2 0.4 0 0
+                      0 0 0 1 0"
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#organic-noise)" />
+        </svg>
+
         {/* Subtle warm radial glow for avatar area */}
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse 60% 40% at 50% 25%, rgba(212, 168, 75, 0.08) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse 60% 40% at 50% 25%, rgba(212, 168, 75, 0.06) 0%, transparent 70%)',
           }}
         />
 
-        {/* Subtle stage-colored vignette */}
+        {/* Subtle stage-colored vignette - highly desaturated */}
         <div
           className="absolute inset-0"
           style={{
-            background: `radial-gradient(ellipse 50% 40% at 50% 30%, transparent 50%, ${vignetteColor} 100%)`,
+            background: `radial-gradient(ellipse 50% 40% at 50% 30%, transparent 60%, ${vignetteColor} 100%)`,
+            opacity: 0.4,
           }}
         />
 
@@ -67,7 +89,7 @@ export function Background({ stage = 'flame' }) {
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(90deg, rgba(200, 185, 160, 0.08) 0%, transparent 15%, transparent 85%, rgba(200, 185, 160, 0.08) 100%)',
+            background: 'linear-gradient(90deg, rgba(200, 185, 160, 0.05) 0%, transparent 15%, transparent 85%, rgba(200, 185, 160, 0.05) 100%)',
           }}
         />
       </div>

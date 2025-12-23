@@ -90,11 +90,14 @@
   --bg-surface: var(--light-bg-surface);
   --bg-elevated: #FFFFFF;
 
-  /* ─── Readable Text Colors (Much Darker for Contrast) ─── */
-  --text-primary: rgba(30, 25, 20, 0.90);
-  --text-secondary: rgba(50, 45, 40, 0.75);
-  --text-muted: rgba(80, 75, 70, 0.60);
-  --text-ghost: rgba(120, 115, 110, 0.45);
+  /* ─── Readable Text Colors (Ink Palette - WCAG AA Compliant) ─── */
+  --text-primary: rgba(45, 40, 35, 0.95);
+  /* Deep brown-charcoal ink */
+  --text-secondary: rgba(90, 77, 60, 0.75);
+  /* Faded ink */
+  --text-muted: rgba(160, 155, 140, 0.60);
+  /* Pale olive-gray (metadata only) */
+  --text-ghost: rgba(180, 175, 165, 0.45);
 
   /* ─── Stage-Adaptive Borders (Manuscript Aesthetic) ─── */
   --border-subtle: var(--light-border);
@@ -135,9 +138,13 @@
 }
 
 .light-mode .glass-capsule {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.45);
+  /* Lower opacity, warmer tint */
+  backdrop-filter: blur(8px);
+  /* Reduced blur from 24px */
+  -webkit-backdrop-filter: blur(8px);
   border-color: var(--light-border);
-  box-shadow: 0 4px 24px var(--light-shadow-tint);
+  box-shadow: 0 2px 12px var(--light-shadow-tint);
 }
 
 
@@ -175,40 +182,44 @@
 }
 
 /* Light mode specific fixes - make text darker and more visible */
+/* RULE: Never use pure white (#fff) for text in light mode */
 .light-mode .text-white {
-  color: #3D3425 !important;
+  color: rgba(45, 40, 35, 0.95) !important;
+  /* Primary ink */
 }
 
 .light-mode .text-white\/90 {
-  color: #3D3425 !important;
+  color: rgba(45, 40, 35, 0.90) !important;
 }
 
 .light-mode .text-white\/80 {
-  color: #4A3D30 !important;
+  color: rgba(60, 52, 42, 0.85) !important;
 }
 
 .light-mode .text-white\/70 {
-  color: #5A4D3C !important;
+  color: rgba(90, 77, 60, 0.75) !important;
+  /* Faded ink */
 }
 
 .light-mode .text-white\/60 {
-  color: #6B5E4A !important;
+  color: rgba(120, 110, 90, 0.7) !important;
 }
 
 .light-mode .text-white\/50 {
-  color: #7A6D58 !important;
+  color: rgba(140, 130, 110, 0.65) !important;
 }
 
 .light-mode .text-white\/40 {
-  color: #8A7D68 !important;
+  color: rgba(160, 155, 140, 0.60) !important;
+  /* Pale olive-gray */
 }
 
 .light-mode .text-white\/30 {
-  color: #9A8D78 !important;
+  color: rgba(170, 165, 150, 0.55) !important;
 }
 
 .light-mode .text-white\/20 {
-  color: #AA9D88 !important;
+  color: rgba(180, 175, 165, 0.45) !important;
 }
 
 /* Light mode border adjustments */

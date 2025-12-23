@@ -1595,8 +1595,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       <div
                         className="flex gap-2 p-1 rounded-full flex-wrap justify-center"
                         style={{
-                          background: "rgba(0,0,0,0.3)",
-                          border: "1px solid var(--accent-10)",
+                          background: isLight ? 'rgba(60,50,35,0.05)' : "rgba(0,0,0,0.3)",
+                          border: `1px solid ${isLight ? 'var(--light-border)' : 'var(--accent-10)'}`,
                         }}
                       >
                         {Object.values(VIPASSANA_THEMES).map((theme) => (
@@ -1616,12 +1616,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                                   : "transparent",
                               color:
                                 vipassanaTheme === theme.id
-                                  ? "#050508"
-                                  : "var(--text-muted)",
-                              opacity: vipassanaTheme && vipassanaTheme !== theme.id ? 0.35 : 1,
+                                  ? (isLight ? 'var(--light-bg-base)' : "#050508")
+                                  : "var(--text-secondary)",
+                              opacity: vipassanaTheme && vipassanaTheme !== theme.id ? (isLight ? 0.5 : 0.35) : 1,
                               boxShadow:
                                 vipassanaTheme === theme.id
-                                  ? '0 0 10px rgba(120,255,190,0.25)'
+                                  ? (isLight ? '0 2px 8px var(--light-shadow-tint)' : '0 0 10px rgba(120,255,190,0.25)')
                                   : "none",
                               transform: vipassanaTheme === theme.id ? 'scale(1.05)' : 'scale(1)',
                               transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms, opacity 200ms',
@@ -1763,67 +1763,107 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 </div>
               )}
 
-              {/* START BUTTON — DOMINANT ANCHOR (relocated to bottom) */}
-              <button
-                onClick={handleStart}
-                disabled={isStarting}
-                className="w-full rounded-full py-3 transition-all duration-150 relative overflow-hidden mt-6"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  letterSpacing: "var(--tracking-mythic)",
-                  textTransform: "uppercase",
-                  height: '46px',
-                  // Circuit mode: glassmorphic pulsing
-                  ...(practice === "Circuit" ? {
-                    background: isStarting
-                      ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25)'
-                      : 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                    backdropFilter: 'blur(10px)',
-                    color: "var(--accent-color)",
-                    border: "1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)",
-                    boxShadow: isStarting
-                      ? 'inset 0 0 25px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.35), 0 0 50px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)'
-                      : 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25), 0 0 40px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.2)',
-                    animation: isStarting ? 'none' : 'heartbeat 1s ease-in-out infinite',
-                  } : {
-                    // Default styling for other practices
-                    background: isStarting
-                      ? 'rgba(120,255,190,0.4)'
-                      : 'var(--accent-color)',
-                    color: "#0B1F16",
-                    border: "none",
-                    boxShadow: isStarting
-                      ? '0 0 30px rgba(120,255,190,0.5), inset 3px 4px 10px rgba(0,0,0,0.3), inset -2px -3px 8px rgba(255,255,255,0.25)'
-                      : '0 0 18px rgba(120,255,190,0.35), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.2)',
-                  }),
-                  transform: isStarting ? 'scale(1.015)' : 'scale(1)',
-                  cursor: isStarting ? 'default' : 'pointer',
-                }}
-                onMouseDown={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(0.97)')}
-                onMouseUp={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
-                onMouseLeave={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
-              >
-                {isStarting ? 'Initiating...' : 'Start'}
-                {/* Radial gradient overlay for depth */}
-                <div
-                  className="absolute inset-0 rounded-full pointer-events-none"
+              {/* START BUTTON — DOMINANT ANCHOR with Breathing Ring */}
+              <div className="relative mt-6">
+                {/* Breathing Ring - signals readiness */}
+                {!isStarting && (
+                  <svg
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    style={{
+                      transform: 'scale(1.1)',
+                      opacity: 0.25,
+                    }}
+                  >
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      r="48%"
+                      fill="none"
+                      stroke="var(--accent-color)"
+                      strokeWidth="1.5"
+                      style={{
+                        animation: 'breathing-ring 4s ease-in-out infinite',
+                        transformOrigin: 'center',
+                      }}
+                    />
+                  </svg>
+                )}
+
+                <button
+                  onClick={handleStart}
+                  disabled={isStarting}
+                  className="w-full rounded-full py-3 transition-all duration-150 relative overflow-hidden"
                   style={{
-                    background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)',
-                    mixBlendMode: 'soft-light',
+                    fontFamily: "var(--font-display)",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    letterSpacing: "var(--tracking-mythic)",
+                    textTransform: "uppercase",
+                    height: '46px',
+                    // Circuit mode: glassmorphic pulsing
+                    ...(practice === "Circuit" ? {
+                      background: isStarting
+                        ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25)'
+                        : 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                      backdropFilter: 'blur(10px)',
+                      color: "var(--accent-color)",
+                      border: "1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)",
+                      boxShadow: isStarting
+                        ? 'inset 0 0 25px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.35), 0 0 50px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)'
+                        : 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25), 0 0 40px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.2)',
+                      animation: isStarting ? 'none' : 'heartbeat 1s ease-in-out infinite',
+                    } : {
+                      // Default styling for other practices
+                      background: isStarting
+                        ? 'rgba(120,255,190,0.4)'
+                        : 'var(--accent-color)',
+                      color: "#0B1F16",
+                      border: "none",
+                      boxShadow: isStarting
+                        ? '0 0 30px rgba(120,255,190,0.5), inset 3px 4px 10px rgba(0,0,0,0.3), inset -2px -3px 8px rgba(255,255,255,0.25)'
+                        : '0 0 18px rgba(120,255,190,0.35), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.2)',
+                    }),
+                    transform: isStarting ? 'scale(1.015)' : 'scale(1)',
+                    cursor: isStarting ? 'default' : 'pointer',
                   }}
-                />
-                {/* Grain texture overlay */}
-                <div
-                  className="absolute inset-0 rounded-full pointer-events-none"
-                  style={{
-                    background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                    opacity: 0.06,
-                    mixBlendMode: 'overlay',
-                  }}
-                />
-              </button>
+                  onMouseDown={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(0.97)')}
+                  onMouseUp={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
+                  onMouseLeave={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  {isStarting ? 'Initiating...' : 'Start'}
+                  {/* Radial gradient overlay for depth */}
+                  <div
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)',
+                      mixBlendMode: 'soft-light',
+                    }}
+                  />
+                  {/* Grain texture overlay */}
+                  <div
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                      opacity: 0.06,
+                      mixBlendMode: 'overlay',
+                    }}
+                  />
+                </button>
+
+                {/* CSS for breathing ring animation */}
+                <style>{`
+                  @keyframes breathing-ring {
+                    0%, 100% { 
+                      transform: scale(1);
+                      opacity: 0.2;
+                    }
+                    50% { 
+                      transform: scale(1.08);
+                      opacity: 0.35;
+                    }
+                  }
+                `}</style>
+              </div>
             </>
           )}
         </div>

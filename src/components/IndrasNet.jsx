@@ -64,8 +64,9 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
             particles.forEach(p => {
                 const y = p.y + Math.sin(time + p.offset) * 5;
 
-                // Draw particle with stage color
-                ctx.fillStyle = `${colors.primary}${p.alpha})`;
+                // Draw particle with stage color (capped at 20% opacity in light mode)
+                const particleAlpha = isLight ? Math.min(p.alpha * 0.25, 0.2) : p.alpha;
+                ctx.fillStyle = `${colors.primary}${particleAlpha})`;
                 ctx.beginPath();
                 ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
                 ctx.fill();
