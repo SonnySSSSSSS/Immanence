@@ -99,7 +99,7 @@ export function SoundConfig({
                         <button
                             key={type}
                             onClick={() => setSoundType(type)}
-                            className="rounded-xl px-3 py-2.5 transition-all duration-200 text-center"
+                            className="rounded-xl px-3 py-2.5 text-center"
                             style={{
                                 fontFamily: "var(--font-display)",
                                 fontSize: "11px",
@@ -110,6 +110,7 @@ export function SoundConfig({
                                 color: soundType === type ? "var(--accent-color)" : textColors.secondary,
                                 boxShadow: soundType === type ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
                                 gridColumn: type === 'Silence' ? 'span 3' : 'auto',
+                                transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
                             }}
                         >
                             {type}
@@ -140,13 +141,14 @@ export function SoundConfig({
                             <button
                                 key={preset.id}
                                 onClick={() => setBinauralPreset(preset)}
-                                className="rounded-lg px-2 py-3 transition-all duration-200 text-center flex flex-col items-center gap-1"
+                                className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
                                 style={{
                                     background: binauralPreset?.id === preset.id
                                         ? `linear-gradient(135deg, ${preset.color}20, transparent)`
                                         : "transparent",
                                     border: `1px solid ${binauralPreset?.id === preset.id ? preset.color : "var(--accent-10)"}`,
                                     boxShadow: binauralPreset?.id === preset.id ? `0 0 15px ${preset.color}30` : "none",
+                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, box-shadow 800ms ease',
                                 }}
                             >
                                 <span
@@ -342,13 +344,14 @@ export function SoundConfig({
                             <button
                                 key={preset.id}
                                 onClick={() => setIsochronicPreset(preset)}
-                                className="rounded-lg px-2 py-3 transition-all duration-200 text-center flex flex-col items-center gap-1"
+                                className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
                                 style={{
                                     background: isochronicPreset?.id === preset.id
                                         ? `linear-gradient(135deg, ${preset.color}20, transparent)`
                                         : "transparent",
                                     border: `1px solid ${isochronicPreset?.id === preset.id ? preset.color : "var(--accent-10)"}`,
                                     boxShadow: isochronicPreset?.id === preset.id ? `0 0 15px ${preset.color}30` : "none",
+                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, box-shadow 800ms ease',
                                 }}
                             >
                                 <span
@@ -411,13 +414,14 @@ export function SoundConfig({
                             <button
                                 key={preset.id}
                                 onClick={() => setMantraPreset(preset)}
-                                className="rounded-lg px-3 py-3 transition-all duration-200 text-left"
+                                className="rounded-lg px-3 py-3 text-left"
                                 style={{
                                     background: mantraPreset?.id === preset.id
                                         ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
                                         : "transparent",
                                     border: `1px solid ${mantraPreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
                                     boxShadow: mantraPreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
+                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
                                 }}
                             >
                                 <span
@@ -470,13 +474,14 @@ export function SoundConfig({
                             <button
                                 key={preset.id}
                                 onClick={() => setNaturePreset(preset)}
-                                className="rounded-lg px-2 py-3 transition-all duration-200 text-center flex flex-col items-center gap-1"
+                                className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
                                 style={{
                                     background: naturePreset?.id === preset.id
                                         ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
                                         : "transparent",
                                     border: `1px solid ${naturePreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
                                     boxShadow: naturePreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
+                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
                                 }}
                             >
                                 <span

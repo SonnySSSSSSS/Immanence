@@ -6,7 +6,7 @@ import { getRitualById } from '../data/rituals';
 import { useVideoStore } from '../state/videoStore'; // For pausing background video if needed
 import { Icon } from '../icons/Icon.jsx';
 
-const RitualSession = ({ ritual, onComplete, onExit }) => {
+const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     // State
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [stepTimeRemaining, setStepTimeRemaining] = useState(0); // in seconds
@@ -92,7 +92,7 @@ const RitualSession = ({ ritual, onComplete, onExit }) => {
     // Render Intro
     if (sessionState === 'intro') {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-black/80 backdrop-blur-xl relative z-50">
+            <div className={`w-full h-full flex flex-col items-center justify-center p-8 text-center ${isLight ? 'bg-white/90' : 'bg-black/80'} backdrop-blur-xl relative z-50`}>
                 <div className="max-w-2xl flex flex-col gap-6 animate-in fade-in zoom-in duration-500">
                     <div className="flex items-center justify-center text-6xl mb-4" style={{ color: 'var(--accent-color)' }}>
                         {ritual.iconName ? <Icon name={ritual.iconName} size={64} /> : ritual.icon}
@@ -108,7 +108,7 @@ const RitualSession = ({ ritual, onComplete, onExit }) => {
 
                     <button
                         onClick={() => setSessionState('active')}
-                        className="mt-8 px-12 py-4 bg-[var(--accent-primary)] text-black font-bold tracking-widest hover:bg-white transition-all rounded-full"
+                        className={`mt-8 px-12 py-4 ${isLight ? 'bg-[#5A4D3C] text-[#FDFBF5]' : 'bg-[var(--accent-primary)] text-black'} font-bold tracking-widest hover:opacity-90 transition-all rounded-full`}
                     >
                         BEGIN RITUAL
                     </button>
@@ -124,7 +124,7 @@ const RitualSession = ({ ritual, onComplete, onExit }) => {
     // Render Completion
     if (sessionState === 'completion') {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-black/80 backdrop-blur-xl relative z-50">
+            <div className={`w-full h-full flex flex-col items-center justify-center p-8 text-center ${isLight ? 'bg-white/90' : 'bg-black/80'} backdrop-blur-xl relative z-50`}>
                 <div className="max-w-lg flex flex-col gap-6 animate-in fade-in duration-700">
                     <h2 className="text-3xl text-[var(--accent-primary)] font-h1">Ritual Complete</h2>
 
@@ -157,7 +157,7 @@ const RitualSession = ({ ritual, onComplete, onExit }) => {
 
     // Render Active Session
     return (
-        <div className="w-full h-full flex flex-col relative bg-black/80 backdrop-blur-sm max-w-4xl mx-auto">
+        <div className={`w-full h-full flex flex-col relative ${isLight ? 'bg-white/60' : 'bg-black/80'} backdrop-blur-sm max-w-4xl mx-auto overflow-hidden`}>
             {/* Top Bar Controls */}
             <div className="absolute top-2 right-2 z-50 flex gap-4">
                 <button
@@ -175,6 +175,7 @@ const RitualSession = ({ ritual, onComplete, onExit }) => {
                     stepIndex={currentStepIndex}
                     totalSteps={totalSteps}
                     isPaused={isPaused}
+                    isLight={isLight}
                 />
             </div>
 

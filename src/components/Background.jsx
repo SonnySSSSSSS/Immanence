@@ -68,6 +68,15 @@ export function Background({ stage = 'flame' }) {
           <rect width="100%" height="100%" filter="url(#organic-noise)" />
         </svg>
 
+        {/* Luminance drift - subtle uneven paper feel (±2-3%) */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 30%, rgba(0,0,0,0.02) 70%, transparent 100%)',
+            opacity: 0.6,
+          }}
+        />
+
         {/* Subtle warm radial glow for avatar area */}
         <div
           className="absolute inset-0"

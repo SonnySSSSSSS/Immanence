@@ -2,6 +2,7 @@
 // Modal for selecting practice type - replaces horizontal button row
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export function PracticeSelectionModal({
     isOpen,
@@ -24,12 +25,14 @@ export function PracticeSelectionModal({
 
     if (!isOpen) return null;
 
-    return (
+    // Use Portal to render at document.body level, escaping all stacking contexts
+    return createPortal(
         <div
-            className="fixed inset-0 flex items-center justify-center z-50"
+            className="fixed inset-0 flex items-center justify-center"
             style={{
-                background: 'rgba(0, 0, 0, 0.7)',
-                backdropFilter: 'blur(8px)',
+                zIndex: 99999,  // Maximum z-index
+                background: 'rgba(0, 0, 0, 0.85)',  // Darker backdrop
+                backdropFilter: 'blur(16px)',  // Stronger blur
                 animation: 'fadeIn 200ms ease-out',
             }}
             onClick={onClose}
@@ -120,6 +123,7 @@ export function PracticeSelectionModal({
           }
         }
       `}</style>
-        </div>
+        </div>,
+        document.body
     );
 }

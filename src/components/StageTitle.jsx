@@ -161,7 +161,10 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
   const currentPathDescription = pathLower ? PATH_DESCRIPTIONS[pathLower] : null;
 
   return (
-    <div className="stage-title-container relative flex flex-col items-center justify-center overflow-visible">
+    <div
+      className="stage-title-container relative flex flex-col items-center justify-center overflow-visible"
+      style={{ zIndex: 1 }}
+    >
 
       {/* Welcome label - optional */}
       {/* Welcome text removed per user request */}

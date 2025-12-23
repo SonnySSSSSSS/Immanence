@@ -139,12 +139,19 @@
 
 .light-mode .glass-capsule {
   background: rgba(255, 255, 255, 0.45);
-  /* Lower opacity, warmer tint */
-  backdrop-filter: blur(8px);
-  /* Reduced blur from 24px */
-  -webkit-backdrop-filter: blur(8px);
-  border-color: var(--light-border);
-  box-shadow: 0 2px 12px var(--light-shadow-tint);
+  /* Reduced blur for sharper inset feel */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  /* Thin ink border */
+  border: 1px solid rgba(60, 50, 35, 0.15);
+  /* Beveled glass edge + subtle depth */
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.5),
+    /* Top-left bevel */
+    inset -1px -1px 0 rgba(60, 50, 35, 0.08),
+    /* Bottom-right depth */
+    0 1px 4px var(--light-shadow-tint);
+  /* Subtle outer shadow */
 }
 
 
@@ -179,6 +186,13 @@
 
 .light-mode .card-adaptive {
   box-shadow: var(--shadow-panel);
+}
+
+/* Engraved typography - wider tracking, lighter weight */
+.light-mode .engraved-label {
+  font-weight: 500;
+  letter-spacing: var(--tracking-ultra);
+  opacity: 0.85;
 }
 
 /* Light mode specific fixes - make text darker and more visible */
@@ -220,6 +234,23 @@
 
 .light-mode .text-white\/20 {
   color: rgba(180, 175, 165, 0.45) !important;
+}
+
+/* Cymatic wave oscillation animation */
+@keyframes cymatic-wave-drift {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.cymatic-wave {
+  animation: cymatic-wave-drift 4s ease-in-out infinite;
 }
 
 /* Light mode border adjustments */

@@ -20,6 +20,7 @@ export function SensorySession({
     duration, // in minutes
     onStop,
     onTimeUpdate,
+    isLight = false,
 }) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [currentPrompt, setCurrentPrompt] = useState('');
@@ -164,7 +165,7 @@ export function SensorySession({
             <div className="w-full h-full flex flex-col relative">
                 {/* Ritual Selector (Overlay or Top Bar) */}
                 <div className="absolute top-0 left-0 right-0 z-[60] p-4 flex justify-center pointer-events-none">
-                    <div className="bg-black/40 backdrop-blur-md rounded-full pointer-events-auto p-1 border border-white/10 flex gap-2 max-w-[90vw] overflow-x-auto scrollbar-hide">
+                    <div className={`${isLight ? 'bg-white/40' : 'bg-black/40'} backdrop-blur-md rounded-full pointer-events-auto p-1 border ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} flex gap-2 max-w-[90vw] overflow-x-auto scrollbar-hide`}>
                         {availableRituals.map(r => (
                             <button
                                 key={r.id}
@@ -188,6 +189,7 @@ export function SensorySession({
                             ritual={ritual}
                             onComplete={onStop}
                             onExit={onStop}
+                            isLight={isLight}
                         />
                     </div>
                 ) : (
@@ -217,6 +219,7 @@ export function SensorySession({
                         scanPoints={activeScan.points}
                         scanPrompts={activeScan.prompts}
                         image={activeScan.image}
+                        isLight={isLight}
                     />
                 );
             default:
@@ -247,7 +250,7 @@ export function SensorySession({
                             onMouseMove={handleMouseMove}
                             onMouseUp={handleMouseUp}
                             onMouseLeave={handleMouseLeave}
-                            className="bg-black/20 backdrop-blur-sm rounded-full p-1 border border-white/5 flex gap-1 overflow-x-auto scrollbar-hide max-w-full cursor-grab active:cursor-grabbing"
+                            className={`${isLight ? 'bg-[#5A4D3C]/05' : 'bg-black/20'} backdrop-blur-sm rounded-full p-1 border ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/5'} flex gap-1 overflow-x-auto scrollbar-hide max-w-full cursor-grab active:cursor-grabbing`}
                         >
                             {getAllBodyScans().map(scan => (
                                 <button

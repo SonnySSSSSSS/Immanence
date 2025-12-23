@@ -179,10 +179,194 @@ const STAGE_RUNE_COLORS = {
 
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 
+function LightModeRuneRing2D({ stage = "flame", isPracticing = false }) {
+  // Use CSS variables (ink + accent) instead of neon glow filters.
+  // Assumes your light-mode palette already sets --text-primary and --text-muted.
+  // Accent is your stage hue via --accent-color (already used elsewhere).
+  const sizePct = 88;
+
+  // Deterministic tick pattern (no Math.random in render)
+  const tickCount = 84; // 48–96 feels good; 84 is dense but not noisy.
+
+  const ticks = Array.from({ length: tickCount }, (_, i) => {
+    // lengths in SVG units
+    const isLong = i % 21 === 0;
+    const isMid = i % 7 === 0;
+    const isMissing = i % 19 === 0; // intentional gaps
+
+    if (isMissing) return null;
+
+    const len = isLong ? 6.2 : isMid ? 4.2 : 2.8;
+    const alpha = isLong ? 0.26 : isMid ? 0.20 : 0.16;
+
+    const angle = (i / tickCount) * 360;
+    const r1 = 44.5;
+    const r2 = r1 - len;
+
+    return (
+      <line
+        key={`t-${i}`}
+        x1="50"
+        y1={50 - r1}
+        x2="50"
+        y2={50 - r2}
+        stroke={`rgba(45,40,35,${alpha})`}
+        strokeWidth="0.6"
+        strokeLinecap="round"
+        transform={`rotate(${angle} 50 50)`}
+      />
+    );
+  });
+
+  // Sparse accent arcs: calibration marks
+  const arcs = [
+    { start: 12, end: 38, r: 40.2, w: 1.1, a: 0.12 },
+    { start: 112, end: 141, r: 41.6, w: 0.9, a: 0.10 },
+    { start: 206, end: 232, r: 39.1, w: 1.0, a: 0.10 },
+    { start: 292, end: 324, r: 42.4, w: 0.9, a: 0.08 },
+  ];
+
+  // Helper: arc path for a circle sector
+  const arcPath = (r, startDeg, endDeg) => {
+    const toRad = (d) => (d * Math.PI) / 180;
+    const sx = 50 + r * Math.cos(toRad(startDeg - 90));
+    const sy = 50 + r * Math.sin(toRad(startDeg - 90));
+    const ex = 50 + r * Math.cos(toRad(endDeg - 90));
+    const ey = 50 + r * Math.sin(toRad(endDeg - 90));
+    const large = endDeg - startDeg > 180 ? 1 : 0;
+    return `M ${sx} ${sy} A ${r} ${r} 0 ${large} 1 ${ex} ${ey}`;
+  };
+
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+      style={{ width: "100%", height: "100%" }}
+    >
+      <div
+        className="rune-ring-wrapper w-[88%] h-[88%] relative flex items-center justify-center"
+        style={{ animationPlayState: isPracticing ? "paused" : "running" }}
+      >
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 100 100"
+          aria-hidden="true"
+        >
+          <defs>
+            {/* Single capped bloom copy (allowed, but subtle) */}
+            <filter id="lmRingBloom" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.8" />
+            </filter>
+
+            {/* Specular glint */}
+            <radialGradient id="lmGlint" cx="35%" cy="30%" r="60%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
+              <stop offset="55%" stopColor="rgba(255,255,255,0.06)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.0)" />
+            </radialGradient>
+
+            {/* Very faint glass fill */}
+            <radialGradient id="lmGlassFill" cx="50%" cy="45%" r="70%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
+              <stop offset="65%" stopColor="rgba(255,255,255,0.03)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.0)" />
+            </radialGradient>
+          </defs>
+
+          {/* Glass pane fill (no fog) */}
+          <circle cx="50" cy="50" r="46" fill="url(#lmGlassFill)" />
+
+          {/* Bevel illusion (outer dark edge + inner light edge) */}
+          <circle
+            cx="50"
+            cy="50"
+            r="46"
+            fill="none"
+            stroke="rgba(45,40,35,0.10)"
+            strokeWidth="0.9"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="43.7"
+            fill="none"
+            stroke="rgba(255,255,255,0.14)"
+            strokeWidth="0.9"
+          />
+
+          {/* Micro ticks */}
+          <g>{ticks}</g>
+
+          {/* Accent arcs in ink */}
+          <g>
+            {arcs.map((a, idx) => (
+              <path
+                key={`a-${idx}`}
+                d={arcPath(a.r, a.start, a.end)}
+                fill="none"
+                stroke={`rgba(45,40,35,${a.a})`}
+                strokeWidth={a.w}
+                strokeLinecap="round"
+              />
+            ))}
+          </g>
+
+          {/* Accent arcs lightly tinted by accent color */}
+          <g opacity="0.22">
+            <path
+              d={arcPath(41.0, 24, 52)}
+              fill="none"
+              stroke="var(--accent-color)"
+              strokeWidth="1.0"
+              strokeLinecap="round"
+            />
+            <path
+              d={arcPath(39.6, 248, 270)}
+              fill="none"
+              stroke="var(--accent-color)"
+              strokeWidth="0.9"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
+          </g>
+
+          {/* Specular glint (top-right) */}
+          <path
+            d={arcPath(45.5, 310, 350)}
+            fill="none"
+            stroke="url(#lmGlint)"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            opacity="0.14"
+          />
+
+          {/* Single bloom copy (tinted, capped opacity) */}
+          <g filter="url(#lmRingBloom)" opacity="0.14">
+            <circle
+              cx="50"
+              cy="50"
+              r="45.2"
+              fill="none"
+              stroke="var(--accent-color)"
+              strokeWidth="1.2"
+            />
+          </g>
+        </svg>
+
+        {/* Keep hairline trace if you want it; it reads as “etched guide” in light mode */}
+        <div className="absolute inset-0 hairline-ring opacity-20 scale-[1.005]" />
+      </div>
+    </div>
+  );
+}
+
 function RuneRingLayer({ stage = "flame", isPracticing = false }) {
   const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+
+  if (isLight) {
+    return <LightModeRuneRing2D stage={stage} isPracticing={isPracticing} />;
+  }
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

@@ -43,9 +43,9 @@ export function SensoryConfig({
                     border: `1px solid ${isLight ? 'var(--light-border)' : 'var(--accent-10)'}`,
                 }}
             >
-                {/* Sliding indicator */}
+                {/* Sliding indicator with surface tension fill */}
                 <div
-                    className="absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-out"
+                    className="absolute top-1 bottom-1 rounded-full"
                     style={{
                         left: isSakshi ? '50%' : '0.25rem',
                         right: isSakshi ? '0.25rem' : '50%',
@@ -53,9 +53,11 @@ export function SensoryConfig({
                             ? 'linear-gradient(135deg, var(--accent-color) 0%, var(--accent-secondary) 100%)'
                             : 'var(--accent-color)',
                         boxShadow: isLight
-                            ? '0 2px 8px var(--light-shadow-tint)'
+                            ? 'inset 1px 1px 0 rgba(255,255,255,0.4), 0 1px 4px var(--light-shadow-tint)'
                             : '0 0 15px var(--accent-10)',
                         opacity: 1,
+                        // Surface tension filling - ink soaking into paper
+                        transition: 'left 800ms cubic-bezier(0.4, 0, 0.2, 1), right 800ms cubic-bezier(0.4, 0, 0.2, 1), background 800ms ease-in-out',
                     }}
                 />
 

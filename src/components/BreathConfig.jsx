@@ -40,7 +40,7 @@ export function BreathConfig({
                             setPattern(BREATH_PRESETS[name]);
                             setPreset(name);
                         }}
-                        className="rounded-full px-2.5 py-1 transition-all duration-200"
+                        className="rounded-full px-2.5 py-1"
                         style={{
                             fontFamily: "var(--font-display)",
                             fontSize: "8px",
@@ -51,6 +51,7 @@ export function BreathConfig({
                             border: `1px solid ${preset === name ? "var(--accent-color)" : "var(--accent-10)"}`,
                             color: preset === name ? "var(--accent-color)" : "var(--text-muted)",
                             boxShadow: preset === name ? '0 0 12px var(--accent-15)' : "none",
+                            transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
                         }}
                     >
                         {name}

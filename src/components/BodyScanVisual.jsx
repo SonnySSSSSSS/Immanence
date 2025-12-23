@@ -3,7 +3,7 @@ import { getPointById, getBodyScanPrompt } from '../data/bodyScanPrompts';
 import { useSettingsStore } from '../state/settingsStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CoordinateHelper } from './dev/CoordinateHelper';
-export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanPoints = [], scanPrompts = [], image = null }) {
+export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanPoints = [], scanPrompts = [], image = null, isLight = false }) {
     const [activePoint, setActivePoint] = useState(scanPoints[0] || { id: 'default', x: 50, y: 50, name: 'Center' });
     const [hoveredPoint, setHoveredPoint] = useState(null);
     const [breathPhase, setBreathPhase] = useState(0);
@@ -100,7 +100,7 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
                 className="w-full max-w-sm"
                 label={`BodyScan:${image || 'full'}`}
             >
-                <div className="relative w-full h-full glass-capsule overflow-visible" style={{ aspectRatio: '1/1' }}>
+                <div className={`relative w-full h-full glass-capsule overflow-hidden`} style={{ aspectRatio: '1/1' }}>
                     {/* Interior Quiet Zone Glow */}
                     <div className="absolute inset-0 bg-radial-gradient from-[var(--bg-void)] to-transparent opacity-40 rounded-[2rem] pointer-events-none" />
                     {/* Top Decorative Bar (Ember FX) */}
@@ -114,7 +114,11 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
                         src={image ? `${import.meta.env.BASE_URL}sensory/${image}` : `${import.meta.env.BASE_URL}sensory/body-scan-silhouette.png`}
                         alt="Body Scan"
                         className="w-full h-full object-contain transition-opacity duration-700 pointer-events-none"
-                        style={{ filter: 'drop-shadow(0 0 20px var(--accent-20))' }}
+                        style={{
+                            filter: isLight ? 'none' : 'drop-shadow(0 0 20px var(--accent-20))',
+                            maskImage: isLight ? 'radial-gradient(circle at center, black 70%, transparent 100%)' : 'none',
+                            WebkitMaskImage: isLight ? 'radial-gradient(circle at center, black 70%, transparent 100%)' : 'none',
+                        }}
                     />
 
                     {/* SVG overlay for chakra points */}

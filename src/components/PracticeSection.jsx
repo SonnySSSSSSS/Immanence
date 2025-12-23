@@ -274,7 +274,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Selectable header animation loop (chevron sway + halo pulse)
   useEffect(() => {
-    if (practiceModalOpen) return; // Stop animations when modal is open
+    // Animations continue even when modal is open (portal renders separately)
 
     let animationId;
     const startTime = Date.now();
@@ -297,7 +297,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
-  }, [practiceModalOpen]);
+  }, []);
 
   useEffect(() => {
     if (preset && BREATH_PRESETS[preset]) {
@@ -937,6 +937,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               duration={duration}
               onStop={handleExerciseComplete}
               onTimeUpdate={(remaining) => setTimeLeft(remaining)}
+              isLight={isLight}
             />
           ) : (
             <div className="flex flex-col items-center justify-center animate-fade-in-up">
