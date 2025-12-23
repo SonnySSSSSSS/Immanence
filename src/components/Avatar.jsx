@@ -290,7 +290,7 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
               style={{
                 top: '50%',
                 left: '50%',
-                transform: `translate(-50%, -50%) rotate(${i * 90}deg) translateY(-144px)`,
+                transform: `translate(-50%, -50%) rotate(${i * 90}deg) translateY(-32%)`,
                 fontFamily: 'var(--font-display)',
               }}
             >
@@ -511,7 +511,7 @@ function AvatarContainer({
   const shadowY = -Math.sin(moonAngle) * shadowDist;
 
   return (
-    <div className="relative w-[460px] h-[460px] flex items-center justify-center overflow-visible">
+    <div className="relative flex items-center justify-center overflow-visible" style={{ width: 'min(90vw, 600px)', height: 'min(90vw, 600px)' }}>
       {/* Volumetric Glow Layers - DISABLED IN LIGHT MODE for crisp instrument look */}
       {!isLight && (
         <>
@@ -553,12 +553,12 @@ function AvatarContainer({
         </>
       )}
 
-      <div className="relative w-[460px] h-[460px] flex items-center justify-center overflow-visible">
+      <div className="relative w-full h-full flex items-center justify-center overflow-visible">
         {/*
           THE CORE ASSEMBLY (Locked to 288px / w-72)
           We nest the internal layers here so their percentage-based logic stays intact.
         */}
-        <div className="absolute w-72 h-72 flex items-center justify-center overflow-visible pointer-events-none">
+        <div className="absolute w-[64%] h-[64%] flex items-center justify-center overflow-visible pointer-events-none">
           {/* Layer 0: Luminous ring field (canvas) */}
           <AvatarLuminousCanvas
             breathState={breathState}
@@ -631,10 +631,10 @@ function AvatarContainer({
         {/* Layer 5 (Outermost): Moon orbit (Using the 460px container) */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-          viewBox="0 0 460 460"
+          viewBox="0 0 600 600"
           style={{ overflow: 'visible', zIndex: 10 }}
         >
-          <MoonOrbit avatarRadius={100} centerX={230} centerY={230} />
+          <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
         </svg>
 
         {/* 

@@ -62,14 +62,14 @@ export function HubStagePanel({
                 LAYER 1: BACKBOARD SLAB (The Chassis)
                ══════════════════════════════════════════════════════════════════ */}
             <div
-                className="relative w-full rounded-2xl flex items-stretch h-[110px] overflow-hidden"
+                className="relative w-full rounded-2xl flex items-stretch min-h-[110px] overflow-hidden"
                 style={slabStyle}
             >
                 {/* Visual texture for the slab wings */}
                 <div className="absolute inset-0 pointer-events-none" style={slabTexture} />
 
-                {/* LEFT WING: Progress Label + Actions (Integrated/Etched) */}
-                <div className="relative z-10 w-[240px] flex flex-col justify-center px-6 gap-2 opacity-80">
+                {/* LEFT WING: Progress Label + Actions (Integrated/Etched) - Hidden on mobile */}
+                <div className="relative z-10 hidden sm:flex flex-1 min-w-0 flex-col justify-center px-4 sm:px-6 gap-2 opacity-80">
                     <div
                         className="text-[9px] uppercase tracking-[0.2em]"
                         style={{
@@ -97,8 +97,8 @@ export function HubStagePanel({
                 {/* CENTER VOID (Reserved for overlapping plate) */}
                 <div className="flex-1 pointer-events-none" />
 
-                {/* RIGHT WING: Streak (Integrated/Etched) */}
-                <div className="relative z-10 w-[220px] flex items-center justify-end px-6 gap-4 opacity-80">
+                {/* RIGHT WING: Streak (Integrated/Etched) - Hidden on mobile */}
+                <div className="relative z-10 hidden sm:flex flex-1 min-w-0 items-center justify-end px-4 sm:px-6 gap-4 opacity-80">
                     <div className="flex flex-col items-end">
                         <div className="flex items-center gap-2">
                             <span className="text-[12px] opacity-60">📅</span>
@@ -119,7 +119,7 @@ export function HubStagePanel({
                 LAYER 2: IDENTITY PLATE (The Floating Instrument)
                ══════════════════════════════════════════════════════════════════ */}
             <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[300px] h-[150px] rounded-2xl flex flex-col items-center justify-center pointer-events-auto"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[90%] max-w-[300px] h-[150px] rounded-2xl flex flex-col items-center justify-center pointer-events-auto"
                 style={plateStyle}
             >
                 {/* Stage Title - Larger/Dominant */}

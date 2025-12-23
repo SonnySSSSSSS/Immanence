@@ -43,6 +43,9 @@ const PARTICLE_LANES = {
 
 // UTILS
 function createNoiseTexture(width, height) {
+  // Safety guard: prevent DOMException for invalid dimensions
+  if (!width || !height || width <= 0 || height <= 0) return null;
+
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -634,6 +637,10 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
       const rect = canvas.getBoundingClientRect();
       width = rect.width;
       height = rect.height;
+
+      // Safety guard: skip if dimensions are invalid (0 or negative)
+      if (width <= 0 || height <= 0) return;
+
       dpr = window.devicePixelRatio || 1;
 
       canvas.width = width * dpr;

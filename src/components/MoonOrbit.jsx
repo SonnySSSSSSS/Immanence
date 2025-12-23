@@ -19,7 +19,7 @@ function normalizeAngle(angle) {
 /**
  * MoonOrbit — Atmospheric moon with volumetric light behavior
  */
-export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) {
+export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) {
     const progress = useLunarStore(s => s.progress);
     const recentActivity = useLunarStore(s => s.recentActivity);
     const sparkleMode = useLunarStore(s => s.sparkleMode);
