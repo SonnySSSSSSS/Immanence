@@ -63,7 +63,7 @@ function createNoiseTexture(width, height) {
 }
 
 class Particle {
-  constructor(maxRadius, innerBoundary, laneConfig, baseColor = { h: 42, s: 95, l: 63 }) {
+  constructor(maxRadius, innerBoundary, laneConfig, baseColor = { h: 42, s: 95, l: 63 }, isLight = false) {
     this.maxRadius = maxRadius;
     this.innerBoundary = innerBoundary;
     this.laneConfig = laneConfig;
@@ -71,10 +71,10 @@ class Particle {
     this.trail = [];
     this.baseColor = baseColor; // Store base color from theme
     this.color = { ...baseColor }; // Warm amber-gold or theme color
-    this.reset();
+    this.reset(isLight);
   }
 
-  reset() {
+  reset(isLight = false) {
     // Spawn strictly outside inner boundary
     const minSpawn = this.innerBoundary * 1.43; // Spread outwards 30% from 1.1
     const range = this.innerBoundary * 0.52;    // Spread outwards 30% from 0.4
@@ -86,21 +86,26 @@ class Particle {
 
     // VARY COLOR: Warm range based on base color
     this.color = {
-      h: this.baseColor.h + (Math.random() - 0.5) * 10, // ±5 hue variation
-      s: Math.max(70, Math.min(100, this.baseColor.s + (Math.random() - 0.5) * 20)), // ±10 saturation
       l: Math.max(50, Math.min(80, this.baseColor.l + (Math.random() - 0.5) * 20))  // ±10 lightness
     };
 
-    // Angular speed - 5x faster than original for visible trails
-    // Golden ratio harmonics preserved via lane speedMod multipliers
-    const baseAngular = 0.0015 * this.laneConfig.speedMod;
-    this.angularSpeed = baseAngular * (0.8 + Math.random() * 0.4); // ±20% variation
+    // LIGHT MODE REFINEMENTS: Verdigris palette for "residue" feel
+    this.verdigris = {
+      h: 172 + (Math.random() - 0.5) * 12,
+      s: 22 + (Math.random() - 0.5) * 8,
+      l: 62 + (Math.random() - 0.5) * 8
+    };
 
-    // Spiral speed with φ harmonic variation
-    const baseSpiral = 0.05 * this.laneConfig.speedMod;
+    // Angular speed - responding to Light Mode for "residue" feel
+    const speedFactor = isLight ? 0.6 : 1.0; // Slow down to 60% in light mode (prev 45% was too static)
+    const baseAngular = 0.0015 * this.laneConfig.speedMod * speedFactor;
+    this.angularSpeed = baseAngular * (0.8 + Math.random() * 0.4);
+
+    // Spiral speed - also slowed in light mode
+    const baseSpiral = 0.05 * this.laneConfig.speedMod * speedFactor;
     this.spiralSpeed = baseSpiral * (PHI / 2) * (0.8 + Math.random() * 0.4);
 
-    // Size variation influenced by lane and φ ratio
+    // Size variation
     const baseSize = 5 * this.laneConfig.sizeMod;
     this.size = baseSize * (1 + Math.random() * (PHI - 1)); // Range: baseSize to baseSize×φ
 
@@ -121,7 +126,7 @@ class Particle {
     this.trail = [];
   }
 
-  update(deltaTime = 16) {
+  update(deltaTime = 16, isLight = false) {
     // Movement
     this.angle += this.angularSpeed * (deltaTime / 16);
 
@@ -145,7 +150,7 @@ class Particle {
 
     // Respawn
     if (this.life <= 0) {
-      this.reset();
+      this.reset(isLight);
       return;
     }
 
@@ -179,9 +184,19 @@ class Particle {
       ctx.lineTo(centerX + p2.x * scaleMod, centerY + p2.y * scaleMod);
 
       ctx.lineWidth = this.size * (1 - t * 0.9);
-      const alpha = this.brightness * 0.9 * (1 - t * t) * glowMod * lifeMod; // Increased from 0.7 to 0.9 for visibility
+      // Fainter alpha in light mode for "dust/mote" feel
+      const baseAlpha = isLight ? 0.35 : 0.9;
+      const alpha = this.brightness * baseAlpha * (1 - t * t) * glowMod * lifeMod;
 
-      ctx.strokeStyle = `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${alpha})`;
+      let colorStr;
+      if (isLight) {
+        // Use stored verdigris color to avoid flickering
+        colorStr = `hsla(${this.verdigris.h}, ${this.verdigris.s}%, ${this.verdigris.l}%, ${alpha})`;
+      } else {
+        colorStr = `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${alpha})`;
+      }
+
+      ctx.strokeStyle = colorStr;
       ctx.lineCap = "round";
       ctx.stroke();
     }
@@ -635,7 +650,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
 
         Object.values(PARTICLE_LANES).forEach(config => {
           for (let i = 0; i < config.count; i++) {
-            particlesRef.current.push(new Particle(maxRadius, innerBoundary, config, particleColorHSL));
+            particlesRef.current.push(new Particle(maxRadius, innerBoundary, config, particleColorHSL, isLightRef.current));
           }
         });
       }
@@ -769,7 +784,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
 
       // 3. Particles
       particlesRef.current.forEach((particle) => {
-        particle.update();
+        particle.update(16, isLightRef.current);
         // Pass 0,0 as center because we are already translated
         particle.draw(ctx, 0, 0, scaleMod, glowMod, isLightRef.current);
       });

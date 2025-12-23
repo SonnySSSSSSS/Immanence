@@ -27,8 +27,10 @@ export const useSettingsStore = create(
             devPanelOpen: false,
             showFxGallery: false,
             showCoordinateHelper: false,
+            lightModeRingType: 'astrolabe', // 'astrolabe' or 'rune'
 
             // Actions
+            setLightModeRingType: (type) => set({ lightModeRingType: type }),
             setCoordinateHelper: (show) => set({ showCoordinateHelper: show }),
             setDisplayMode: (mode) => set({ displayMode: mode }),
 
@@ -57,6 +59,7 @@ export const useSettingsStore = create(
                 soundVolume: 0.5,
                 reduceMotion: false,
                 highContrast: false,
+                lightModeRingType: 'astrolabe',
             }),
         }),
         {

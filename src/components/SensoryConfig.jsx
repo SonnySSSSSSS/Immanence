@@ -57,7 +57,7 @@ export function SensoryConfig({
                             : '0 0 15px var(--accent-10)',
                         opacity: 1,
                         // Surface tension filling - ink soaking into paper
-                        transition: 'left 800ms cubic-bezier(0.4, 0, 0.2, 1), right 800ms cubic-bezier(0.4, 0, 0.2, 1), background 800ms ease-in-out',
+                        transition: 'left 1200ms cubic-bezier(0.19, 1, 0.22, 1), right 1200ms cubic-bezier(0.19, 1, 0.22, 1), background 1200ms ease-in-out',
                     }}
                 />
 

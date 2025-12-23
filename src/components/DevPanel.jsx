@@ -49,6 +49,8 @@ export function DevPanel({
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
+    const lightModeRingType = useSettingsStore(s => s.lightModeRingType);
+    const setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -227,6 +229,31 @@ export function DevPanel({
                             >
                                 {showCore ? 'ON' : 'OFF'}
                             </button>
+                        </div>
+
+                        {/* Light Mode Ring Toggle */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-xs text-white/50 w-16 text-cyan-400">Ring Type</label>
+                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                                <button
+                                    onClick={() => setLightModeRingType('astrolabe')}
+                                    className={`px-2 py-1 rounded text-[10px] transition-all ${lightModeRingType === 'astrolabe'
+                                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                            : 'text-white/40 hover:text-white/60'
+                                        }`}
+                                >
+                                    ASTROLABE
+                                </button>
+                                <button
+                                    onClick={() => setLightModeRingType('rune')}
+                                    className={`px-2 py-1 rounded text-[10px] transition-all ${lightModeRingType === 'rune'
+                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                            : 'text-white/40 hover:text-white/60'
+                                        }`}
+                                >
+                                    RUNE
+                                </button>
+                            </div>
                         </div>
 
                         {/* Gyro Simulation for Ring Drift */}

@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { AvatarLuminousCanvas } from "./AvatarLuminousCanvas.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import MoonOrbit from "./MoonOrbit.jsx";
+import { LightModeInstrumentRing } from "./LightModeInstrumentRing.jsx";
 import "./Avatar.css";
 
 // Local fallback until ../state/mandalaStore.js exists
@@ -178,200 +179,67 @@ const STAGE_RUNE_COLORS = {
 };
 
 import { useDisplayModeStore } from "../state/displayModeStore.js";
-
-function LightModeRuneRing2D({ stage = "flame", isPracticing = false }) {
-  // Use CSS variables (ink + accent) instead of neon glow filters.
-  // Assumes your light-mode palette already sets --text-primary and --text-muted.
-  // Accent is your stage hue via --accent-color (already used elsewhere).
-  const sizePct = 88;
-
-  // Deterministic tick pattern (no Math.random in render)
-  const tickCount = 84; // 48–96 feels good; 84 is dense but not noisy.
-
-  const ticks = Array.from({ length: tickCount }, (_, i) => {
-    // lengths in SVG units
-    const isLong = i % 21 === 0;
-    const isMid = i % 7 === 0;
-    const isMissing = i % 19 === 0; // intentional gaps
-
-    if (isMissing) return null;
-
-    const len = isLong ? 6.2 : isMid ? 4.2 : 2.8;
-    const alpha = isLong ? 0.26 : isMid ? 0.20 : 0.16;
-
-    const angle = (i / tickCount) * 360;
-    const r1 = 44.5;
-    const r2 = r1 - len;
-
-    return (
-      <line
-        key={`t-${i}`}
-        x1="50"
-        y1={50 - r1}
-        x2="50"
-        y2={50 - r2}
-        stroke={`rgba(45,40,35,${alpha})`}
-        strokeWidth="0.6"
-        strokeLinecap="round"
-        transform={`rotate(${angle} 50 50)`}
-      />
-    );
-  });
-
-  // Sparse accent arcs: calibration marks
-  const arcs = [
-    { start: 12, end: 38, r: 40.2, w: 1.1, a: 0.12 },
-    { start: 112, end: 141, r: 41.6, w: 0.9, a: 0.10 },
-    { start: 206, end: 232, r: 39.1, w: 1.0, a: 0.10 },
-    { start: 292, end: 324, r: 42.4, w: 0.9, a: 0.08 },
-  ];
-
-  // Helper: arc path for a circle sector
-  const arcPath = (r, startDeg, endDeg) => {
-    const toRad = (d) => (d * Math.PI) / 180;
-    const sx = 50 + r * Math.cos(toRad(startDeg - 90));
-    const sy = 50 + r * Math.sin(toRad(startDeg - 90));
-    const ex = 50 + r * Math.cos(toRad(endDeg - 90));
-    const ey = 50 + r * Math.sin(toRad(endDeg - 90));
-    const large = endDeg - startDeg > 180 ? 1 : 0;
-    return `M ${sx} ${sy} A ${r} ${r} 0 ${large} 1 ${ex} ${ey}`;
-  };
-
-  return (
-    <div
-      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-      style={{ width: "100%", height: "100%" }}
-    >
-      <div
-        className="rune-ring-wrapper w-[88%] h-[88%] relative flex items-center justify-center"
-        style={{ animationPlayState: isPracticing ? "paused" : "running" }}
-      >
-        <svg
-          className="w-full h-full"
-          viewBox="0 0 100 100"
-          aria-hidden="true"
-        >
-          <defs>
-            {/* Single capped bloom copy (allowed, but subtle) */}
-            <filter id="lmRingBloom" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="1.8" />
-            </filter>
-
-            {/* Specular glint */}
-            <radialGradient id="lmGlint" cx="35%" cy="30%" r="60%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
-              <stop offset="55%" stopColor="rgba(255,255,255,0.06)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0.0)" />
-            </radialGradient>
-
-            {/* Very faint glass fill */}
-            <radialGradient id="lmGlassFill" cx="50%" cy="45%" r="70%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
-              <stop offset="65%" stopColor="rgba(255,255,255,0.03)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0.0)" />
-            </radialGradient>
-          </defs>
-
-          {/* Glass pane fill (no fog) */}
-          <circle cx="50" cy="50" r="46" fill="url(#lmGlassFill)" />
-
-          {/* Bevel illusion (outer dark edge + inner light edge) */}
-          <circle
-            cx="50"
-            cy="50"
-            r="46"
-            fill="none"
-            stroke="rgba(45,40,35,0.10)"
-            strokeWidth="0.9"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="43.7"
-            fill="none"
-            stroke="rgba(255,255,255,0.14)"
-            strokeWidth="0.9"
-          />
-
-          {/* Micro ticks */}
-          <g>{ticks}</g>
-
-          {/* Accent arcs in ink */}
-          <g>
-            {arcs.map((a, idx) => (
-              <path
-                key={`a-${idx}`}
-                d={arcPath(a.r, a.start, a.end)}
-                fill="none"
-                stroke={`rgba(45,40,35,${a.a})`}
-                strokeWidth={a.w}
-                strokeLinecap="round"
-              />
-            ))}
-          </g>
-
-          {/* Accent arcs lightly tinted by accent color */}
-          <g opacity="0.22">
-            <path
-              d={arcPath(41.0, 24, 52)}
-              fill="none"
-              stroke="var(--accent-color)"
-              strokeWidth="1.0"
-              strokeLinecap="round"
-            />
-            <path
-              d={arcPath(39.6, 248, 270)}
-              fill="none"
-              stroke="var(--accent-color)"
-              strokeWidth="0.9"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-          </g>
-
-          {/* Specular glint (top-right) */}
-          <path
-            d={arcPath(45.5, 310, 350)}
-            fill="none"
-            stroke="url(#lmGlint)"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            opacity="0.14"
-          />
-
-          {/* Single bloom copy (tinted, capped opacity) */}
-          <g filter="url(#lmRingBloom)" opacity="0.14">
-            <circle
-              cx="50"
-              cy="50"
-              r="45.2"
-              fill="none"
-              stroke="var(--accent-color)"
-              strokeWidth="1.2"
-            />
-          </g>
-        </svg>
-
-        {/* Keep hairline trace if you want it; it reads as “etched guide” in light mode */}
-        <div className="absolute inset-0 hairline-ring opacity-20 scale-[1.005]" />
-      </div>
-    </div>
-  );
-}
+import { useSettingsStore } from "../state/settingsStore.js";
 
 function RuneRingLayer({ stage = "flame", isPracticing = false }) {
+  const isLight = useDisplayModeStore((state) => state.colorScheme === "light");
   const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
-  const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const isLight = colorScheme === 'light';
+
+  const ringType = useSettingsStore(s => s.lightModeRingType);
+  const isAstrolabe = ringType === 'astrolabe';
 
   if (isLight) {
-    return <LightModeRuneRing2D stage={stage} isPracticing={isPracticing} />;
+    return (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div
+          className="relative w-[100%] h-[100%] flex items-center justify-center"
+          style={{ transition: 'opacity 0.5s ease' }}
+        >
+          {/* Asset-based Ring Select */}
+          <img
+            src={`${import.meta.env.BASE_URL}sigils/${isAstrolabe ? 'ring-structure.webp' : 'light-rune-ring.png'}`}
+            alt="Instrument ring"
+            className="absolute top-1/2 left-1/2 object-contain"
+            style={{
+              width: "100%",
+              height: "100%",
+              opacity: isPracticing ? 0.95 : 1,
+              // Apply aging filters only to the historical astrolabe
+              filter: isAstrolabe
+                ? `sepia(0.22) contrast(1.05) brightness(0.96) drop-shadow(0 2px 6px var(--light-shadow-tint))`
+                : `drop-shadow(0 2px 8px var(--light-shadow-tint))`,
+              transition: 'transform 0.5s ease, opacity 0.5s ease',
+              // Use robust centering + specific nudge for ring placement (down 1px, left 1px)
+              transform: isPracticing
+                ? `translate(-50.35%, ${isAstrolabe ? '-49.2%' : '-48.0%'}) ${isAstrolabe ? 'scale(1.15)' : 'scale(1.08)'}`
+                : `translate(-50.35%, ${isAstrolabe ? '-49.2%' : '-48.0%'}) ${isAstrolabe ? 'scale(1.1)' : 'scale(1.05)'}`,
+            }}
+          />
+
+          {/* ring-inner-lip: Only seat the jewel if it's the astrolabe instrument */}
+          {isAstrolabe && (
+            <img
+              src={`${import.meta.env.BASE_URL}sigils/ring-inner-lip.webp`}
+              alt="Mechanical lip"
+              className="absolute"
+              style={{
+                width: "48.5%",
+                height: "48.5%",
+                opacity: 0.12,
+                mixBlendMode: "multiply",
+                pointerEvents: "none"
+              }}
+            />
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       {/* Dark backdrop for Flame stage only - improves rune contrast (dark mode only) */}
-      {stage === "flame" && !isLight && (
+      {stage === "flame" && (
         <div
           className="absolute w-[88%] h-[88%]"
           style={{
@@ -445,7 +313,7 @@ const STAGE_SIGILS = {
 //
 // ─── STATIC SIGIL CORE (stage-aware + path-aware) ────────────────────────────────
 //
-function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false }) {
+function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false, isLight = false }) {
   // Determine image source based on stage, path, attention, and showCore flag
   const stageLower = stage.toLowerCase();
   const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
@@ -505,36 +373,47 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
         }}
       />
 
-      {/* Black circular backdrop */}
+      {/* Core Backdrop: Stark black for Dark Mode, soft ink-glow for Light Mode */}
       <div
         className="absolute pointer-events-none"
         style={{
           width: "50%",
           height: "50%",
           borderRadius: "9999px",
-          background: "#000000",
+          background: isLight
+            ? "radial-gradient(circle, rgba(10, 25, 20, 0.45) 0%, rgba(10, 25, 20, 0.25) 50%, transparent 85%)"
+            : "#000000",
+          opacity: isLight ? 0.7 : 1,
         }}
       />
 
-      {/* Stage Avatar Core Image */}
+      {/* Stage Avatar Core Image Stage */}
       <div
         className="relative pointer-events-none select-none avatar-sigil-rotate"
         style={{
-          width: "46%",
-          height: "46%",
+          width: "44%", // Scaled to ~95% of the 46.5-48% inner ring opening
+          height: "44%",
           borderRadius: "9999px",
           overflow: "hidden",
           animationPlayState: isPracticing ? 'paused' : 'running',
+          // Ambient Occlusion: Tight black glow to "lock" the orb into geometry
+          boxShadow: "0 0 5px 2px rgba(0,0,0,0.6)",
         }}
       >
         <img
           src={src}
           alt={`${stage} ${path || 'core'} ${attention || ''} avatar`}
+          className="absolute top-1/2 left-1/2"
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
             objectPosition: "50% 50%",
+            // Perfect centering for core
+            transform: "translate(-50%, -50%)",
+            // Vignette Mask: Allows edges to "sink" into ring shadow
+            maskImage: "radial-gradient(circle, black 88%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(circle, black 88%, transparent 100%)",
           }}
         />
       </div>
@@ -618,64 +497,99 @@ function AvatarContainer({
 }) {
   const glowColor = STAGE_GLOW_COLORS[stage] || STAGE_GLOW_COLORS.flame;
   const { h, s, l } = glowColor;
+  const isLight = useDisplayModeStore((state) => state.colorScheme === 'light');
 
   return (
     <div className="relative w-80 h-80 flex items-center justify-center overflow-visible">
-      {/* Volumetric Glow Layers - AMPLIFIED */}
+      {/* Volumetric Glow Layers - DISABLED IN LIGHT MODE for crisp instrument look */}
+      {!isLight && (
+        <>
+          {/* Layer 0a: Outer atmospheric wash - EXTENDED FALLOFF */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, 0.45) 0%, hsla(${h}, ${s}%, ${l - 5}%, 0.32) 35%, hsla(${h}, ${s}%, ${l - 10}%, 0.18) 60%, hsla(${h}, ${s}%, ${l - 15}%, 0.08) 80%, hsla(${h}, ${s}%, ${l - 20}%, 0.01) 90%, transparent 95%)`,
+              filter: "blur(100px)",
+              borderRadius: "50%",
+              animation: "breathingPulse 8s ease-in-out infinite",
+              animationPlayState: isPracticing ? 'paused' : 'running',
+            }}
+          />
 
-      {/* Layer 0a: Outer atmospheric wash - EXTENDED FALLOFF */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, 0.45) 0%, hsla(${h}, ${s}%, ${l - 5}%, 0.32) 35%, hsla(${h}, ${s - 5}%, ${l - 10}%, 0.18) 60%, hsla(${h}, ${s - 10}%, ${l - 15}%, 0.08) 80%, hsla(${h}, ${s - 15}%, ${l - 20}%, 0.03) 90%, transparent 95%)`,
-          filter: "blur(100px)",
-          borderRadius: "50%",
-          animation: "breathingPulse 8s ease-in-out infinite",
-          animationPlayState: isPracticing ? 'paused' : 'running',
-        }}
-      />
+          {/* Layer 0b: Mid bloom - TRIPLED INTENSITY */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.6) 0%, hsla(${h}, ${s}%, ${l + 5}%, 0.4) 30%, hsla(${h}, ${s - 5}%, ${l}%, 0.15) 55%, transparent 75%)`,
+              filter: "blur(50px)",
+              borderRadius: "50%",
+              animation: "breathingPulse 8s ease-in-out infinite 0.2s",
+              animationPlayState: isPracticing ? 'paused' : 'running',
+            }}
+          />
 
-      {/* Layer 0b: Mid bloom - TRIPLED INTENSITY */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.6) 0%, hsla(${h}, ${s}%, ${l + 5}%, 0.4) 30%, hsla(${h}, ${s - 5}%, ${l}%, 0.15) 55%, transparent 75%)`,
-          filter: "blur(50px)",
-          borderRadius: "50%",
-          animation: "breathingPulse 8s ease-in-out infinite 0.2s",
-          animationPlayState: isPracticing ? 'paused' : 'running',
-        }}
-      />
-
-      {/* Layer 0c: Tight inner bloom */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle, hsla(${h}, ${s + 10}%, ${l + 15}%, 0.5) 0%, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.25) 25%, transparent 50%)`,
-          filter: "blur(30px)",
-          borderRadius: "50%",
-          animation: "breathingPulse 8s ease-in-out infinite 0.4s",
-          animationPlayState: isPracticing ? 'paused' : 'running',
-        }}
-      />
+          {/* Layer 0c: Tight inner bloom */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, hsla(${h}, ${s + 10}%, ${l + 15}%, 0.5) 0%, hsla(${h}, ${s + 5}%, ${l + 10}%, 0.25) 25%, transparent 50%)`,
+              filter: "blur(30px)",
+              borderRadius: "50%",
+              animation: "breathingPulse 8s ease-in-out infinite 0.4s",
+              animationPlayState: isPracticing ? 'paused' : 'running',
+            }}
+          />
+        </>
+      )}
 
       <div className="relative w-72 h-72 flex items-center justify-center overflow-visible">
-        {/* Layer 0: luminous ring field (canvas) */}
+        {/* Layer 0: Luminous ring field (canvas) */}
         <AvatarLuminousCanvas
           breathState={breathState}
           weeklyPracticeLog={weeklyPracticeLog}
           weeklyConsistency={weeklyConsistency}
         />
 
-        {/* Layer 1: breathing aura (only in Practice mode) */}
-        {mode === "practice" && (
-          <BreathingAura key={stage.label} breathPattern={breathPattern} />
-        )}
-
-        {/* Layer 2: rune ring (rotating PNG, stage-aware color) */}
+        {/* Layer 1 (Bottom of Instrument): Rune ring (rotating PNG) */}
         <RuneRingLayer stage={stage} isPracticing={isPracticing} />
 
-        {/* Layer 3: static sigil core (stage-aware + path-aware + attention-aware PNG) */}
+        {/* 
+          Layer 2: THE GLOW BLEED (Dynamic Lighting)
+          Simulates light from the core reflecting onto the physical frame.
+          Uses plus-lighter for additive staining without blowing out Light Mode textures.
+        */}
+        {isLight && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              width: "100%",
+              height: "100%",
+              borderRadius: "50%",
+              background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, 0.18) 0%, hsla(${h}, ${s}%, ${l}%, 0.08) 45%, transparent 70%)`,
+              mixBlendMode: "plus-lighter",
+              opacity: isPracticing ? 0.25 : 0.18,
+              transition: "opacity 1.5s ease-in-out",
+              zIndex: 1, // Above Ring, Below Shadows/Core
+            }}
+          />
+        )}
+
+        {/* 
+          Layer 3: THE CONTACT SHADOW (Inset)
+          Creates a visible occlusion zone where the ivory/brass meets the void.
+        */}
+        <div
+          className="absolute pointer-events-none shadow-inner"
+          style={{
+            width: "50.5%", // Slightly larger than core to define the seating edge
+            height: "50.5%",
+            borderRadius: "50%",
+            boxShadow: "inset 0 0 10px rgba(0, 0, 0, 0.45)",
+            zIndex: 2,
+          }}
+        />
+
+        {/* Layer 4: Static Sigil Core (Avatar Orb) */}
         <StaticSigilCore
           stage={stage}
           path={path}
@@ -684,16 +598,37 @@ function AvatarContainer({
           variationIndex={variationIndex}
           hasVariations={hasVariations}
           isPracticing={isPracticing}
+          isLight={isLight}
         />
 
-        {/* Layer 4: Moon orbit (outermost layer) - SVG wrapper required */}
+        {/* Layer 1b: Breathing aura (only in Practice mode, sits behind moon) */}
+        {mode === "practice" && (
+          <BreathingAura key={stage.label} breathPattern={breathPattern} />
+        )}
+
+        {/* Layer 5 (Outermost): Moon orbit */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
           viewBox="0 0 288 288"
-          style={{ overflow: 'visible' }}
+          style={{ overflow: 'visible', zIndex: 10 }}
         >
           <MoonOrbit avatarRadius={100} centerX={144} centerY={144} />
         </svg>
+
+        {/* 
+          Layer 6 (Overlay): UNIFIED GRAIN/NOISE
+          Subtle global noise to unify the digital orb and physical ring.
+        */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            borderRadius: "50%",
+            opacity: 0.025,
+            mixBlendMode: "overlay",
+            background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctels='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+            zIndex: 20
+          }}
+        />
       </div>
     </div>
   );
