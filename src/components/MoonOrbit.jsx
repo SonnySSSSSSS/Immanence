@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useLunarStore } from '../state/lunarStore';
+import { useDisplayModeStore } from '../state/displayModeStore';
 import { MoonGlowLayer } from './MoonGlowLayer';
 import './moonAnimations.css';
 
@@ -54,12 +55,10 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
         prevAngleRef.current = newAngle;
     }, [progress]);
 
-    // Calculate values
+    const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
+
     const moonAngle = (progress / 12) * TWO_PI - Math.PI / 2; // Start at 12 o'clock
     const phase = getMoonPhase(progress);
-    const illumination = getIllumination(phase);
-    const normalized = Math.min(progress / 12, 1);
-
     const orbitRadius = avatarRadius * 1.4;
     const moonRadius = 8;
 
@@ -67,49 +66,151 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
     const moonX = centerX + Math.cos(moonAngle) * orbitRadius;
     const moonY = centerY + Math.sin(moonAngle) * orbitRadius;
 
-    // Halo properties - SUBTLE, not dominant
-    const isDormant = progress === 0;
-    const haloRadius = moonRadius * (1.5 + illumination * 0.5); // Much smaller: 12-16px
-    const haloOpacity = isDormant ? 0 : (0.12 + illumination * 0.08); // Subtle: 0.12-0.20
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RENDER PATH: LIGHT MODE (Engraved Instrument)
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (isLight) {
+        return (
+            <g className="moon-orbit-light">
+                <defs>
+                    {/* Hatching pattern for Quarter Moon */}
+                    <pattern id="hatch" width="4" height="4" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+                        <line x1="0" y1="0" x2="0" y2="4" stroke="var(--accent-color)" strokeWidth="1" />
+                    </pattern>
 
-    // Rimlight properties
+                    {/* Hand-Etched Imperfection Filter - INCREASED SCALE */}
+                    <filter id="rough-etched" x="-40%" y="-40%" width="180%" height="180%">
+                        <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" result="noise" />
+                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+                    </filter>
+                </defs>
+
+                {/* LAYER 1: The Engraved Orbit Track */}
+                <circle
+                    cx={centerX}
+                    cy={centerY}
+                    r={orbitRadius}
+                    fill="none"
+                    stroke="var(--text-muted)"
+                    strokeWidth={1.5}
+                    strokeOpacity={0.25}
+                    strokeDasharray="1 8"
+                    filter="url(#rough-etched)"
+                />
+
+                {/* Decorative Markers on Inner Track: Small pointed needles */}
+                <g opacity={0.65} stroke="var(--accent-color)" filter="url(#rough-etched)">
+                    {[...Array(12)].map((_, i) => {
+                        const angle = (i / 12) * Math.PI * 2;
+                        const r = orbitRadius * 1.15;
+                        const x = centerX + Math.cos(angle) * r;
+                        const y = centerY + Math.sin(angle) * r;
+                        return (
+                            <path
+                                key={i}
+                                d="M 0 -4 L 3 2 L -3 2 Z"
+                                transform={`translate(${x}, ${y}) rotate(${(angle * 180) / Math.PI + 90})`}
+                                fill="currentColor"
+                                stroke="none"
+                            />
+                        );
+                    })}
+                </g>
+
+                {/* 
+                  LAYER 2: The 2D Celestial Engravings 
+                  Render the moon as a 2D glyph positioned on the track.
+                */}
+                <g transform={`translate(${moonX}, ${moonY})`}>
+                    <g
+                        style={{
+                            color: "var(--accent-color)",
+                        }}
+                    >
+                        {/* TEST LABEL - Remove after verification */}
+                        <text y="-12" fontSize="5" fill="currentColor" textAnchor="middle" opacity="0.5">LUMEN</text>
+                        {/* THE GLYPHS - Crisp, No digital drop-shadow for instrument look */}
+                        <circle
+                            r={moonRadius}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            filter="url(#rough-etched)"
+                        />
+
+                        {phase === 'new' && (
+                            <circle r={2.5} fill="currentColor" filter="url(#rough-etched)" />
+                        )}
+
+                        {phase === 'crescent' && (
+                            <path
+                                d={`M 0 ${-moonRadius} A ${moonRadius} ${moonRadius} 0 0 1 0 ${moonRadius} A ${moonRadius * 0.45} ${moonRadius} 0 0 1 0 ${-moonRadius}`}
+                                fill="currentColor"
+                                stroke="none"
+                                filter="url(#rough-etched)"
+                            />
+                        )}
+
+                        {phase === 'firstQuarter' && (
+                            <>
+                                <line x1="0" y1={-moonRadius} x2="0" y2={moonRadius} stroke="currentColor" strokeWidth={1.5} filter="url(#rough-etched)" />
+                                <path d={`M 0 ${-moonRadius} A ${moonRadius} ${moonRadius} 0 0 1 0 ${moonRadius} Z`} fill="url(#hatch)" />
+                            </>
+                        )}
+
+                        {phase === 'full' && (
+                            <g filter="url(#rough-etched)">
+                                {/* 8-pointed starburst */}
+                                {[0, 45, 90, 135].map(deg => (
+                                    <line
+                                        key={deg}
+                                        x1={-moonRadius * 0.75} y1="0" x2={moonRadius * 0.75} y2="0"
+                                        stroke="currentColor" strokeWidth={1.5}
+                                        transform={`rotate(${deg})`}
+                                    />
+                                ))}
+                            </g>
+                        )}
+
+                        {phase === 'lastQuarter' && (
+                            <>
+                                <line x1="0" y1={-moonRadius} x2="0" y2={moonRadius} stroke="currentColor" strokeWidth={1.5} filter="url(#rough-etched)" />
+                                <path d={`M 0 ${-moonRadius} A ${moonRadius} ${moonRadius} 0 0 0 0 ${moonRadius} Z`} fill="url(#hatch)" />
+                            </>
+                        )}
+                    </g>
+                </g>
+            </g >
+        );
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RENDER PATH: DARK MODE (Volumetric Cosmic)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const illumination = getIllumination(phase);
+    const isDormant = progress === 0;
+    const haloRadius = moonRadius * (1.5 + illumination * 0.5);
+    const haloOpacity = isDormant ? 0 : (0.12 + illumination * 0.08);
     const rimlightWidth = 0.5 + illumination * 2;
     const rimlightOpacity = 0.3 + illumination * 0.5;
 
-    // Handle moon click (future: skins)
-    const handleMoonClick = (e) => {
-        e.stopPropagation();
-        // Reserved for skin cycling
-        console.log('🌙 Moon clicked — skins coming soon');
-    };
-
     return (
-        <g className="moon-orbit">
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* SVG DEFS: Gradients and Filters */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+        <g className="moon-orbit-dark">
             <defs>
-                {/* Atmospheric Halo Gradient */}
                 <radialGradient id="moonHaloGradient" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stopColor="var(--accent-color)" stopOpacity="0.4" />
                     <stop offset="40%" stopColor="var(--accent-color)" stopOpacity="0.15" />
                     <stop offset="100%" stopColor="var(--accent-color)" stopOpacity="0" />
                 </radialGradient>
-
-                {/* Rimlight blur filter */}
                 <filter id="rimlightBlur" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1" />
                 </filter>
-
-                {/* Ghost echo blur */}
                 <filter id="ghostBlur" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
                 </filter>
             </defs>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* LAYER 1: Orbit Path (very subtle) */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* Orbit Path */}
             <circle
                 cx={centerX}
                 cy={centerY}
@@ -120,9 +221,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 strokeOpacity={0.08}
             />
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* LAYER 2: Ghost Echo Arc (motion only, 400ms fade) */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* Ghost Echo */}
             {ghostEcho && (
                 <path
                     key={ghostEcho.key}
@@ -136,9 +235,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 />
             )}
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* LAYER 3: Atmospheric Halo (always visible, wobbles on advance) */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* Atmospheric Halo */}
             <circle
                 cx={moonX}
                 cy={moonY}
@@ -148,7 +245,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 className={`moon-star-breathe ${isWobbling ? 'moon-halo-wobble' : ''}`}
             />
 
-            {/* Secondary inner halo - even more subtle */}
+            {/* Core Glow */}
             <circle
                 cx={moonX}
                 cy={moonY}
@@ -158,9 +255,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 className={`moon-star-breathe ${isWobbling ? 'moon-halo-wobble' : ''}`}
             />
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* LAYER 4: Phase Rimlight (edge glow) */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* Phase Rimlight */}
             {!isDormant && (
                 <circle
                     cx={moonX}
@@ -174,9 +269,7 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 />
             )}
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* LAYER 5: Evolving Moon (MoonGlowLayer component) */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* Standard MoonGlowLayer (fallback/combined) */}
             <MoonGlowLayer
                 progress={progress}
                 centerX={centerX}
@@ -184,33 +277,15 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
                 orbitRadius={orbitRadius}
             />
 
-            {/* Phase shadow */}
+            {/* Phase shadows... */}
             {phase === 'firstQuarter' && (
-                <ellipse
-                    cx={moonX - moonRadius * 0.3}
-                    cy={moonY}
-                    rx={moonRadius * 0.7}
-                    ry={moonRadius}
-                    fill="rgba(10, 10, 18, 0.75)"
-                />
+                <ellipse cx={moonX - moonRadius * 0.3} cy={moonY} rx={moonRadius * 0.7} ry={moonRadius} fill="rgba(10, 10, 18, 0.75)" />
             )}
             {phase === 'lastQuarter' && (
-                <ellipse
-                    cx={moonX + moonRadius * 0.3}
-                    cy={moonY}
-                    rx={moonRadius * 0.7}
-                    ry={moonRadius}
-                    fill="rgba(10, 10, 18, 0.75)"
-                />
+                <ellipse cx={moonX + moonRadius * 0.3} cy={moonY} rx={moonRadius * 0.7} ry={moonRadius} fill="rgba(10, 10, 18, 0.75)" />
             )}
             {phase === 'new' && (
-                <ellipse
-                    cx={moonX + moonRadius * 0.4}
-                    cy={moonY}
-                    rx={moonRadius * 0.8}
-                    ry={moonRadius}
-                    fill="rgba(10, 10, 18, 0.85)"
-                />
+                <ellipse cx={moonX + moonRadius * 0.4} cy={moonY} rx={moonRadius * 0.8} ry={moonRadius} fill="rgba(10, 10, 18, 0.85)" />
             )}
         </g>
     );
@@ -221,7 +296,8 @@ export function MoonOrbit({ avatarRadius = 100, centerX = 150, centerY = 150 }) 
 // ═══════════════════════════════════════════════════════════════════════════
 
 function getMoonPhase(progress) {
-    if (progress < 3) return 'new';
+    if (progress === 0) return 'new';
+    if (progress < 4) return 'crescent';
     if (progress < 6) return 'firstQuarter';
     if (progress < 9) return 'full';
     return 'lastQuarter';

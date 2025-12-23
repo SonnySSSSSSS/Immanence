@@ -5,6 +5,8 @@ import { Avatar } from "./Avatar.jsx";
 import { StageTitle, STAGE_COLORS } from "./StageTitle.jsx";
 import { TrackingHub } from "./TrackingHub.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
+import { HubStagePanel } from "./HubStagePanel.jsx";
+import { HonorLogModal } from "./HonorLogModal.jsx";
 import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
@@ -24,8 +26,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
 
-  // Dynamic max-width based on display mode: sanctuary=1024px, hearth=672px
-  const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-2xl';
+  // Honor log modal state (moved from TrackingHub)
+  const [showHonorModal, setShowHonorModal] = useState(false);
+
+  // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
+  const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-[580px]';
 
   const streakInfo = getStreakInfo();
   const breathStats = getDomainStats('breathwork');
@@ -97,234 +102,211 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const progressPct = Math.round(progressToNextStage * 100);
 
   return (
-    <div className="w-full flex flex-col items-center gap-8 py-8 px-4 overflow-visible relative">
+    <div className="w-full flex flex-col items-center py-8 relative overflow-visible">
       {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
 
-      {/* ──────────────────────────────────────────────────────────────────────
-          AVATAR SECTION - Primary focal point
-          ────────────────────────────────────────────────────────────────────── */}
-      <div className={`w-full ${contentMaxWidth} flex flex-col items-center gap-4 transition-all duration-500`}>
-        <div className="relative w-full flex items-center justify-center overflow-visible">
-          {/* Bloom halo - atmospheric radial glow behind avatar */}
-          <div
-            className="absolute"
-            style={{
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '600px',
-              height: '600px',
-              background: 'radial-gradient(circle, var(--accent-glow) 0%, var(--accent-glow)25 15%, var(--accent-glow)08 40%, transparent 70%)',
-              filter: 'blur(80px)',
-              opacity: 0.15,
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          />
+      {/* Shared Page Container - Single source of truth for width alignment */}
+      <div className="mx-auto w-full max-w-[1040px] px-6 flex flex-col items-stretch gap-12">
 
-          {/* Avatar with cosmic focal point */}
-          <div className="relative z-10">
-            <Avatar
-              mode="hub"
-              onStageChange={onStageChange}
-              stage={currentStage}
-              path={previewPath}
-              showCore={previewShowCore}
-              isPracticing={isPracticing}
-            />
-          </div>
-        </div>
-
-        {/* Stage Title - Dynamic animated image based on stage and path */}
-        <div
-          className="relative text-center space-y-1 px-6 pt-4 pb-0 rounded-3xl overflow-hidden"
-          style={{
-            background: isLight
-              ? 'linear-gradient(180deg, rgba(255, 252, 245, 0.85) 0%, rgba(255, 252, 245, 0.9) 70%, rgba(255, 252, 245, 0.75) 100%)'
-              : 'linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.21) 100%)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: isLight
-              ? '1px solid rgba(180, 155, 110, 0.25)'
-              : '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: isLight
-              ? '0 4px 24px rgba(100, 80, 50, 0.1)'
-              : '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-          }}
-        >
-          {/* Volcanic glass texture overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none rounded-3xl"
-            style={{
-              background: `
-                radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-                repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)
-              `,
-              opacity: 0.7,
-            }}
-          />
-          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} />
-          {/* Unified bottom section - attention vector + last practiced */}
-          <div
-            className="relative -mx-6 -mb-4 px-6 pb-6 pt-3"
-            style={{
-              background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(0, 0, 0, 0.21)',
-            }}
-          >
+        {/* ──────────────────────────────────────────────────────────────────────
+            AVATAR & HUB INSTRUMENT - Primary focal point
+            ────────────────────────────────────────────────────────────────────── */}
+        <div className="w-full flex flex-col items-center gap-4 transition-all duration-500 overflow-visible">
+          <div className="relative w-full flex items-center justify-center overflow-visible">
+            {/* Bloom halo - atmospheric radial glow behind avatar */}
             <div
-              className="text-[11px] text-center mt-2"
-              style={{ color: isLight ? 'rgba(90, 77, 60, 0.65)' : 'rgba(253,251,245,0.4)' }}
-            >
-              Last practiced {lastPracticed}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ──────────────────────────────────────────────────────────────────────
-          STATS DASHBOARD - TrackingHub with live progress data
-          ────────────────────────────────────────────────────────────────────── */}
-      <TrackingHub onOpenHardwareGuide={onOpenHardwareGuide} />
-
-      {/* ──────────────────────────────────────────────────────────────────────
-          MODES SECTION - Mode selection buttons
-          ────────────────────────────────────────────────────────────────────── */}
-      <div className={`w-full ${contentMaxWidth} transition-all duration-500`}>
-        <div
-          className="relative text-[10px] uppercase tracking-[0.2em] mb-4 text-suspended"
-          style={{
-            color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.7)',
-            textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          {/* Dark backing (dark mode only) */}
-          {!isLight && (
-            <div
-              className="absolute inset-x-0 -inset-y-2"
+              className="absolute"
               style={{
-                background: 'radial-gradient(ellipse 60% 100% at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%)',
-                filter: 'blur(10px)',
-                zIndex: -1,
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '600px',
+                height: '600px',
+                background: 'radial-gradient(circle, var(--accent-glow) 0%, var(--accent-glow)25 15%, var(--accent-glow)08 40%, transparent 70%)',
+                filter: 'blur(80px)',
+                opacity: 0.15,
+                pointerEvents: 'none',
+                zIndex: 0,
               }}
             />
-          )}
-          Explore Modes
-        </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <ModeButton
-            title="Practice"
-            description="Breathing & timing"
-            subtext="Build consistency"
-            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-practice.png` : `${import.meta.env.BASE_URL}modes/darkmode-practice.png`}
-            colorGrade="gold"
-            onClick={() => onSelectSection("practice")}
-          />
-          <ModeButton
-            title="Wisdom"
-            description="Treatise & teachings"
-            subtext="Deepen understanding"
-            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-wisdom.png` : `${import.meta.env.BASE_URL}modes/darkmode-wisdom.png`}
-            colorGrade="amberViolet"
-            onClick={() => onSelectSection("wisdom")}
-          />
-          <ModeButton
-            title="Application"
-            description="Track gestures"
-            subtext="Embody practice"
-            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-application.png` : `${import.meta.env.BASE_URL}modes/darkmode-application.png`}
-            colorGrade="indigo"
-            onClick={() => onSelectSection("application")}
-          />
-          <ModeButton
-            title="Navigation"
-            description="Roadmap & goals"
-            subtext="Set intentions"
-            image={isLight ? `${import.meta.env.BASE_URL}modes/mode-navigation.png` : `${import.meta.env.BASE_URL}modes/darkmode-navigation.png`}
-            colorGrade="goldBlue"
-            onClick={() => onSelectSection("navigation")}
+            {/* Avatar with cosmic focal point */}
+            <div className="relative z-10">
+              <Avatar
+                mode="hub"
+                onStageChange={onStageChange}
+                stage={currentStage}
+                path={previewPath}
+                showCore={previewShowCore}
+                isPracticing={isPracticing}
+              />
+            </div>
+          </div>
+
+          {/* STATUS & CONTROL INSTRUMENT - Agency | Identity | Continuity */}
+          <HubStagePanel
+            stage={currentStage}
+            path={previewPath}
+            showCore={previewShowCore}
+            attention={previewAttention}
+            lastPracticed={lastPracticed}
+            streakInfo={streakInfo}
+            onOpenHardwareGuide={onOpenHardwareGuide}
+            onOpenHonorLog={() => setShowHonorModal(true)}
           />
         </div>
 
-        {/* Export Data - below mode buttons */}
-        <div className="mt-4 flex justify-center">
-          <ExportDataButton variant="link" />
-        </div>
-      </div>
-
-      {/* ──────────────────────────────────────────────────────────────────────
-          QUICK INSIGHTS - Small contextual suggestions
-          ────────────────────────────────────────────────────────────────────── */}
-      <div
-        className={`w-full ${contentMaxWidth} rounded-3xl px-5 py-4 relative overflow-hidden transition-all duration-500`}
-        style={{
-          background: isLight
-            ? 'linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%)'
-            : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-          border: isLight
-            ? `1px solid var(--light-border)`
-            : `1px solid ${insightColors[insightState].border}`,
-          boxShadow: isLight
-            ? `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`
-            : `
-              0 8px 32px rgba(0, 0, 0, 0.6),
-              0 2px 8px ${insightColors[insightState].glow},
-              inset 0 1px 0 rgba(255, 255, 255, 0.08)
-            `,
-          transition: 'all 0.6s ease',
-        }}
-      >
-        {/* Scan-line animation overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `linear-gradient(180deg, 
-              transparent 0%, 
-              ${insightColors[insightState].glow} 50%, 
-              transparent 100%
-            )`,
-            animation: 'scan-line 3s ease-in-out infinite',
-            opacity: 0.3,
-          }}
+        {/* Honor Log Modal */}
+        <HonorLogModal
+          isOpen={showHonorModal}
+          onClose={() => setShowHonorModal(false)}
         />
 
-        {/* Inner glow */}
-        <div style={innerGlowStyle} />
+        {/* ──────────────────────────────────────────────────────────────────────
+            STATS DASHBOARD - TrackingHub with live progress data  
+            ────────────────────────────────────────────────────────────────────── */}
+        <TrackingHub />
 
-        {/* Noise texture */}
-        <div style={noiseOverlayStyle} />
-
-        {/* Sheen */}
-        <div style={sheenOverlayStyle} />
-
-        <div className="relative z-10">
+        {/* ──────────────────────────────────────────────────────────────────────
+            MODES SECTION - Mode selection buttons
+            ────────────────────────────────────────────────────────────────────── */}
+        <div className={`w-full transition-all duration-500`}>
           <div
-            className="text-[10px] mb-2 uppercase tracking-[0.15em]"
+            className="relative text-[10px] uppercase tracking-[0.2em] mb-4 text-suspended"
             style={{
-              color: isLight ? 'var(--light-accent)' : insightColors[insightState].accent,
-              textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
+              color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.7)',
+              textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
             }}
           >
-            ⟨ Transmission ⟩
+            {/* Dark backing (dark mode only) */}
+            {!isLight && (
+              <div
+                className="absolute inset-x-0 -inset-y-2"
+                style={{
+                  background: 'radial-gradient(ellipse 60% 100% at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%)',
+                  filter: 'blur(10px)',
+                  zIndex: -1,
+                }}
+              />
+            )}
+            Explore Modes
           </div>
+
+          <div className="grid w-full grid-cols-2 gap-6">
+            <ModeButton
+              title="Practice"
+              description="Breathing & timing"
+              subtext="Build consistency"
+              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-practice.png` : `${import.meta.env.BASE_URL}modes/darkmode-practice.png`}
+              colorGrade="gold"
+              onClick={() => onSelectSection("practice")}
+            />
+            <ModeButton
+              title="Wisdom"
+              description="Treatise & teachings"
+              subtext="Deepen understanding"
+              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-wisdom.png` : `${import.meta.env.BASE_URL}modes/darkmode-wisdom.png`}
+              colorGrade="amberViolet"
+              onClick={() => onSelectSection("wisdom")}
+            />
+            <ModeButton
+              title="Application"
+              description="Track gestures"
+              subtext="Embody practice"
+              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-application.png` : `${import.meta.env.BASE_URL}modes/darkmode-application.png`}
+              colorGrade="indigo"
+              onClick={() => onSelectSection("application")}
+            />
+            <ModeButton
+              title="Navigation"
+              description="Roadmap & goals"
+              subtext="Set intentions"
+              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-navigation.png` : `${import.meta.env.BASE_URL}modes/darkmode-navigation.png`}
+              colorGrade="goldBlue"
+              onClick={() => onSelectSection("navigation")}
+            />
+          </div>
+
+          {/* Export Data - below mode buttons */}
+          <div className="mt-4 flex justify-center">
+            <ExportDataButton variant="link" />
+          </div>
+        </div>
+
+        {/* ──────────────────────────────────────────────────────────────────────
+            QUICK INSIGHTS - Small contextual suggestions
+            ────────────────────────────────────────────────────────────────────── */}
+        <div
+          className={`w-full rounded-3xl px-5 py-4 relative overflow-hidden transition-all duration-500`}
+          style={{
+            background: isLight
+              ? 'linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%)'
+              : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+            border: isLight
+              ? `1px solid var(--light-border)`
+              : `1px solid ${insightColors[insightState].border}`,
+            boxShadow: isLight
+              ? `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`
+              : `
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                0 2px 8px ${insightColors[insightState].glow},
+                inset 0 1px 0 rgba(255, 255, 255, 0.08)
+              `,
+            transition: 'all 0.6s ease',
+          }}
+        >
+          {/* Scan-line animation overlay */}
           <div
-            className="text-[11px] leading-relaxed"
+            className="absolute inset-0 pointer-events-none"
             style={{
-              color: isLight ? 'var(--light-text-primary)' : 'rgba(253, 251, 245, 0.85)',
-              fontFamily: "'Courier New', monospace",
-              letterSpacing: '0.02em',
-              textShadow: isLight ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.4)',
+              background: `linear-gradient(180deg, 
+                transparent 0%, 
+                ${insightColors[insightState].glow} 50%, 
+                transparent 100%
+              )`,
+              animation: 'scan-line 3s ease-in-out infinite',
+              opacity: 0.3,
             }}
-          >
-            {currentStreak >= 7
-              ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
-              : avgAccuracy < 0.5
-                ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
-                : weeklyConsistency < 4
-                  ? "You're inconsistent this week. One practice per day keeps the alignment alive."
-                  : totalSessions > 0
-                    ? "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."
-                    : "Welcome. Begin your practice to see your progress reflected here."}
+          />
+
+          {/* Inner glow */}
+          <div style={innerGlowStyle} />
+
+          {/* Noise texture */}
+          <div style={noiseOverlayStyle} />
+
+          {/* Sheen */}
+          <div style={sheenOverlayStyle} />
+
+          <div className="relative z-10">
+            <div
+              className="text-[10px] mb-2 uppercase tracking-[0.15em]"
+              style={{
+                color: isLight ? 'var(--light-accent)' : insightColors[insightState].accent,
+                textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              ⟨ Transmission ⟩
+            </div>
+            <div
+              className="text-[11px] leading-relaxed"
+              style={{
+                color: isLight ? 'var(--light-text-primary)' : 'rgba(253, 251, 245, 0.85)',
+                fontFamily: "'Courier New', monospace",
+                letterSpacing: '0.02em',
+                textShadow: isLight ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.4)',
+              }}
+            >
+              {currentStreak >= 7
+                ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
+                : avgAccuracy < 0.5
+                  ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
+                  : weeklyConsistency < 4
+                    ? "You're inconsistent this week. One practice per day keeps the alignment alive."
+                    : totalSessions > 0
+                      ? "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."
+                      : "Welcome. Begin your practice to see your progress reflected here."}
+            </div>
           </div>
         </div>
       </div>

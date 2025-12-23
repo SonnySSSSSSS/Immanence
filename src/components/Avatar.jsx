@@ -11,6 +11,7 @@ import { AvatarLuminousCanvas } from "./AvatarLuminousCanvas.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import MoonOrbit from "./MoonOrbit.jsx";
 import { LightModeInstrumentRing } from "./LightModeInstrumentRing.jsx";
+import { useLunarStore } from "../state/lunarStore";
 import "./Avatar.css";
 
 // Local fallback until ../state/mandalaStore.js exists
@@ -501,9 +502,16 @@ function AvatarContainer({
   const glowColor = STAGE_GLOW_COLORS[stage] || STAGE_GLOW_COLORS.flame;
   const { h, s, l } = glowColor;
   const isLight = useDisplayModeStore((state) => state.colorScheme === 'light');
+  const moonProgress = useLunarStore(s => s.progress);
+
+  // Interactive Shadow Math: Orient shadow opposite to moon position
+  const moonAngle = (moonProgress / 12) * (Math.PI * 2) - Math.PI / 2;
+  const shadowDist = isLight ? 10 : 0;
+  const shadowX = -Math.cos(moonAngle) * shadowDist;
+  const shadowY = -Math.sin(moonAngle) * shadowDist;
 
   return (
-    <div className="relative w-80 h-80 flex items-center justify-center overflow-visible">
+    <div className="relative w-[460px] h-[460px] flex items-center justify-center overflow-visible">
       {/* Volumetric Glow Layers - DISABLED IN LIGHT MODE for crisp instrument look */}
       {!isLight && (
         <>
@@ -545,77 +553,88 @@ function AvatarContainer({
         </>
       )}
 
-      <div className="relative w-72 h-72 flex items-center justify-center overflow-visible">
-        {/* Layer 0: Luminous ring field (canvas) */}
-        <AvatarLuminousCanvas
-          breathState={breathState}
-          weeklyPracticeLog={weeklyPracticeLog}
-          weeklyConsistency={weeklyConsistency}
-        />
-
-        {/* Layer 1 (Bottom of Instrument): Rune ring (rotating PNG) */}
-        <RuneRingLayer stage={stage} isPracticing={isPracticing} />
-
-        {/* 
-          Layer 2: THE GLOW BLEED (Dynamic Lighting)
-          Simulates light from the core reflecting onto the physical frame.
-          Uses plus-lighter for additive staining without blowing out Light Mode textures.
+      <div className="relative w-[460px] h-[460px] flex items-center justify-center overflow-visible">
+        {/*
+          THE CORE ASSEMBLY (Locked to 288px / w-72)
+          We nest the internal layers here so their percentage-based logic stays intact.
         */}
-        {isLight && (
+        <div className="absolute w-72 h-72 flex items-center justify-center overflow-visible pointer-events-none">
+          {/* Layer 0: Luminous ring field (canvas) */}
+          <AvatarLuminousCanvas
+            breathState={breathState}
+            weeklyPracticeLog={weeklyPracticeLog}
+            weeklyConsistency={weeklyConsistency}
+          />
+
+          {/* Layer 1 (Bottom of Instrument): Rune ring (rotating PNG) */}
+          <RuneRingLayer stage={stage} isPracticing={isPracticing} />
+
+          {/* 
+            Layer 2: THE GLOW BLEED (Dynamic Lighting)
+            Simulates light from the core reflecting onto the physical frame.
+            Uses plus-lighter for additive staining without blowing out Light Mode textures.
+          */}
+          {isLight && (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                // Boost intensity for seedling
+                background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, ${stage === 'seedling' ? 0.28 : 0.18}) 0%, hsla(${h}, ${s}%, ${l}%, 0.08) 45%, transparent 70%)`,
+                mixBlendMode: "plus-lighter",
+                opacity: isPracticing ? 0.25 : 0.18,
+                transition: "opacity 1.5s ease-in-out",
+                zIndex: 1, // Above Ring, Below Shadows/Core
+              }}
+            />
+          )}
+
+          {/* 
+            Layer 3: THE CONTACT SHADOW (Inset)
+            Creates a visible occlusion zone where the ivory/brass meets the void.
+            Orientation reacts to moon position in Light Mode.
+          */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute pointer-events-none shadow-inner"
             style={{
-              width: "100%",
-              height: "100%",
+              width: "50.5%", // Slightly larger than core to define the seating edge
+              height: "50.5%",
               borderRadius: "50%",
-              background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, 0.18) 0%, hsla(${h}, ${s}%, ${l}%, 0.08) 45%, transparent 70%)`,
-              mixBlendMode: "plus-lighter",
-              opacity: isPracticing ? 0.25 : 0.18,
-              transition: "opacity 1.5s ease-in-out",
-              zIndex: 1, // Above Ring, Below Shadows/Core
+              boxShadow: isLight
+                ? `inset ${shadowX}px ${shadowY}px 12px rgba(0, 0, 0, 0.45)`
+                : "inset 0 0 10px rgba(0, 0, 0, 0.45)",
+              zIndex: 2,
+              transition: 'box-shadow 0.8s ease-out',
             }}
           />
-        )}
 
-        {/* 
-          Layer 3: THE CONTACT SHADOW (Inset)
-          Creates a visible occlusion zone where the ivory/brass meets the void.
-        */}
-        <div
-          className="absolute pointer-events-none shadow-inner"
-          style={{
-            width: "50.5%", // Slightly larger than core to define the seating edge
-            height: "50.5%",
-            borderRadius: "50%",
-            boxShadow: "inset 0 0 10px rgba(0, 0, 0, 0.45)",
-            zIndex: 2,
-          }}
-        />
-
-        {/* Layer 4: Static Sigil Core (Avatar Orb) */}
-        <StaticSigilCore
-          stage={stage}
-          path={path}
-          showCore={showCore}
-          attention={attention}
-          variationIndex={variationIndex}
-          hasVariations={hasVariations}
-          isPracticing={isPracticing}
-          isLight={isLight}
-        />
+          {/* Layer 4: Static Sigil Core (Avatar Orb) */}
+          <StaticSigilCore
+            stage={stage}
+            path={path}
+            showCore={showCore}
+            attention={attention}
+            variationIndex={variationIndex}
+            hasVariations={hasVariations}
+            isPracticing={isPracticing}
+            isLight={isLight}
+          />
+        </div>
 
         {/* Layer 1b: Breathing aura (only in Practice mode, sits behind moon) */}
         {mode === "practice" && (
           <BreathingAura key={stage.label} breathPattern={breathPattern} />
         )}
 
-        {/* Layer 5 (Outermost): Moon orbit */}
+        {/* Layer 5 (Outermost): Moon orbit (Using the 460px container) */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-          viewBox="0 0 288 288"
+          viewBox="0 0 460 460"
           style={{ overflow: 'visible', zIndex: 10 }}
         >
-          <MoonOrbit avatarRadius={100} centerX={144} centerY={144} />
+          <MoonOrbit avatarRadius={100} centerX={230} centerY={230} />
         </svg>
 
         {/* 

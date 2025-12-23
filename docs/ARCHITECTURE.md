@@ -393,7 +393,8 @@ ApplicationSection.jsx
 
 ### Ember FX & Decorative Layers
 - **Ember FX Bar**: A horizontal, glowing, flickering bar added to the top of the `BodyScanVisual` container.
-- **Avatar Rotation**: The central avatar sigil rotates counter-clockwise at 25% the speed of the outer rune ring (62.4s CW vs 249.6s CCW).
+- **Avatar Rotation**: The central avatar sigil rotates counter-clockwise at 25% the speed of the outer rune ring. Light/Dark modes use explicit opposing classes (`.dark-ring-rotate`, `.light-ring-rotate`) for distinct feels.
+- **Interactive Shadow**: In Light Mode, the inner rim shadow dynamically shifts opposite to the moon's orbital position.
 - **Z-Index Stacking**: Header section (`z-20`) is strictly above content (`z-10`) to prevent tooltip occlusion.
 
 **Key Props:**
@@ -635,8 +636,9 @@ Avatar advancement requires both cycle completion and demonstrated capacity (see
 - Last Practiced, Next Stage, Progress % from `lunarStore`
 - Quick Insights respond to real user behavior patterns
 - All placeholder data removed in favor of actual tracked metrics
+- **Mode-Specific Aesthetics**: Light Mode prioritizes a 'handled instrument' aesthetic with flatter geometry, 2D engraved celestial glyphs, slower rotations, and etched visual treatments. Dark Mode retains a cosmic/mystical feel with volumetric glows and faster rotations.
 
-### 8. Practice Settings Persistence
+### 9. Practice Settings Persistence
 
 User's last-used practice settings persist between sessions via `localStorage`:
 - Practice type, duration, breath pattern
