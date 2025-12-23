@@ -12,6 +12,7 @@ export const SENSORY_TYPES = [
 export function SensoryConfig({
     sensoryType,
     setSensoryType,
+    isLight = false,
 }) {
     return (
         <div className="sensory-config mb-6">
@@ -40,9 +41,9 @@ export function SensoryConfig({
                             fontSize: "11px",
                             fontWeight: 600,
                             letterSpacing: "var(--tracking-wide)",
-                            background: sensoryType === type.id ? "rgba(255,255,255,0.05)" : "transparent",
-                            border: `1px solid ${sensoryType === type.id ? "var(--accent-color)" : "var(--accent-10)"}`,
-                            boxShadow: sensoryType === type.id ? "0 0 15px var(--accent-10)" : "none"
+                            background: sensoryType === type.id ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)") : "transparent",
+                            border: `1px solid ${sensoryType === type.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
+                            boxShadow: sensoryType === type.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none"
                         }}
                     >
                         <span

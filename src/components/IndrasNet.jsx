@@ -12,7 +12,7 @@ const STAGE_PARTICLE_COLORS = {
     stellar: { primary: 'rgba(192, 132, 252, ', glow: 'rgba(168, 85, 247, ' },   // Purple
 };
 
-export function IndrasNet({ stage = 'flame', isPracticing = false }) {
+export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false }) {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -70,14 +70,16 @@ export function IndrasNet({ stage = 'flame', isPracticing = false }) {
                 ctx.arc(p.x, y, p.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Glow with stage color
-                const glow = ctx.createRadialGradient(p.x, y, 0, p.x, y, p.size * 4);
-                glow.addColorStop(0, `${colors.glow}${p.alpha * 0.5})`);
-                glow.addColorStop(1, 'transparent');
-                ctx.fillStyle = glow;
-                ctx.beginPath();
-                ctx.arc(p.x, y, p.size * 4, 0, Math.PI * 2);
-                ctx.fill();
+                // Glow with stage color - skip in light mode to prevent gray artifacts
+                if (!isLight) {
+                    const glow = ctx.createRadialGradient(p.x, y, 0, p.x, y, p.size * 4);
+                    glow.addColorStop(0, `${colors.glow}${p.alpha * 0.5})`);
+                    glow.addColorStop(1, 'transparent');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath();
+                    ctx.arc(p.x, y, p.size * 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             });
 
             if (isPracticing) return;
@@ -92,7 +94,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false }) {
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationFrame);
         };
-    }, [stage, isPracticing]);
+    }, [stage, isPracticing, isLight]);
 
     return (
         <div
@@ -116,7 +118,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false }) {
                     backgroundSize: "cover",
                     animation: "indrasNetDrift 120s ease-in-out infinite alternate",
                     animationPlayState: isPracticing ? 'paused' : 'running',
-                    opacity: isPracticing ? 0.15 : 0.284, // Fade out even more during practice
+                    opacity: isPracticing ? 0.08 : (isLight ? 0.12 : 0.284), // Fade out even more in light mode
                 }}
             />
 
@@ -130,8 +132,8 @@ export function IndrasNet({ stage = 'flame', isPracticing = false }) {
                     transform: "translateX(-50%)",
                     width: "60%",
                     height: "100%",
-                    background: `radial-gradient(ellipse at bottom center, var(--accent-glow)15 0%, transparent 60%)`,
-                    mixBlendMode: "overlay",
+                    background: `radial-gradient(ellipse at bottom center, var(--accent-glow)${isLight ? '10' : '15'} 0%, transparent 60%)`,
+                    mixBlendMode: isLight ? "normal" : "overlay",
                     filter: "blur(40px)",
                     animation: "indrasPulse 8s ease-in-out infinite", // Slowed down from 4s
                     animationPlayState: isPracticing ? 'paused' : 'running',

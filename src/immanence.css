@@ -125,6 +125,21 @@
   --overlay-bg: var(--light-bg-surface);
 }
 
+.light-mode .pill-group {
+  background: rgba(60, 50, 35, 0.05);
+}
+
+.light-mode .tap-stats {
+  background: rgba(60, 50, 35, 0.05);
+  color: var(--text-secondary);
+}
+
+.light-mode .glass-capsule {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: var(--light-border);
+  box-shadow: 0 4px 24px var(--light-shadow-tint);
+}
+
 
 /* ─────────────────────────────────────────────────────────────────────────
    LIGHT MODE — Global Text Color Overrides

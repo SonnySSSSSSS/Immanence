@@ -239,6 +239,26 @@ WisdomSection.jsx
 - `SelfKnowledgeView` - Wave Function personality viz
 - `VideoToken` - Minimal video selector
 
+### ComfyUI API Integration
+
+The system uses a direct REST API connection to a local ComfyUI instance for generating high-fidelity assets like stage backgrounds.
+
+**Key Features:**
+- **Script-based Generation:** `generate_parchment.ps1` allows headless image generation via PowerShell.
+- **API Mapping:** Interacts with `http://127.0.0.1:8188/prompt` to queue workflows.
+- **Workflow Management:** Uses `UnsavedWorkflow.json` (exported in API format) as the base template.
+- **Dynamic Prompts:** Script modifies node values (text prompts, seeds, resolutions) before submission.
+
+**Standard Prompt Structure:**
+- **Positive:** High quality parchment paper texture, botanical watercolor accents, minimalist zen style (Seedling theme).
+- **Negative:** Text, watermark, people, harsh colors, neon, oversaturated.
+
+**Components:**
+- `generate_parchment.ps1` - API client and generation logic.
+- `comfyui_workflow.json` - Local copy of the generation template.
+
+---
+
 ### Sound Practice
 
 Sound-based practices use binaural beats and isochronic tones.

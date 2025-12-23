@@ -105,10 +105,10 @@ export function SoundConfig({
                                 fontSize: "11px",
                                 fontWeight: 500,
                                 letterSpacing: "var(--tracking-wide)",
-                                background: soundType === type ? "rgba(255,255,255,0.05)" : "transparent",
-                                border: `1px solid ${soundType === type ? "var(--accent-color)" : "var(--accent-10)"}`,
+                                background: soundType === type ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)") : "transparent",
+                                border: `1px solid ${soundType === type ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
                                 color: soundType === type ? "var(--accent-color)" : textColors.secondary,
-                                boxShadow: soundType === type ? "0 0 15px var(--accent-10)" : "none",
+                                boxShadow: soundType === type ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
                                 gridColumn: type === 'Silence' ? 'span 3' : 'auto',
                             }}
                         >
@@ -231,7 +231,7 @@ export function SoundConfig({
                                 {[100, 200, 300, 400, 500].map(freq => (
                                     <div key={freq} style={{
                                         fontSize: '7px',
-                                        color: 'rgba(255,255,255,0.3)',
+                                        color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.3)',
                                         fontFamily: 'monospace'
                                     }}>
                                         {freq}
@@ -414,10 +414,10 @@ export function SoundConfig({
                                 className="rounded-lg px-3 py-3 transition-all duration-200 text-left"
                                 style={{
                                     background: mantraPreset?.id === preset.id
-                                        ? "rgba(255,255,255,0.05)"
+                                        ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
                                         : "transparent",
-                                    border: `1px solid ${mantraPreset?.id === preset.id ? "var(--accent-color)" : "var(--accent-10)"}`,
-                                    boxShadow: mantraPreset?.id === preset.id ? "0 0 15px var(--accent-10)" : "none",
+                                    border: `1px solid ${mantraPreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
+                                    boxShadow: mantraPreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
                                 }}
                             >
                                 <span
@@ -473,10 +473,10 @@ export function SoundConfig({
                                 className="rounded-lg px-2 py-3 transition-all duration-200 text-center flex flex-col items-center gap-1"
                                 style={{
                                     background: naturePreset?.id === preset.id
-                                        ? "rgba(255,255,255,0.05)"
+                                        ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
                                         : "transparent",
-                                    border: `1px solid ${naturePreset?.id === preset.id ? "var(--accent-color)" : "var(--accent-10)"}`,
-                                    boxShadow: naturePreset?.id === preset.id ? "0 0 15px var(--accent-10)" : "none",
+                                    border: `1px solid ${naturePreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
+                                    boxShadow: naturePreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
                                 }}
                             >
                                 <span

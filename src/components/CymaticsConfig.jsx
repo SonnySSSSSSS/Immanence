@@ -32,6 +32,7 @@ export function CymaticsConfig({
     setDriftEnabled,
     audioEnabled,
     setAudioEnabled,
+    isLight = false,
 }) {
     const frequencySets = getAllSets();
     const currentSet = frequencySets.find(s => s.id === frequencySet);
@@ -110,9 +111,9 @@ export function CymaticsConfig({
                     onClick={() => setShowFrequencyModal(!showFrequencyModal)}
                     className="w-full p-4 rounded-2xl text-center transition-all"
                     style={{
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-                        border: '1px solid var(--accent-30)',
-                        boxShadow: '0 0 20px var(--accent-15), inset 0 0 20px var(--accent-08)',
+                        background: isLight ? 'var(--light-bg-surface)' : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                        border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-30)',
+                        boxShadow: isLight ? '0 2px 12px var(--light-shadow-tint)' : '0 0 20px var(--accent-15), inset 0 0 20px var(--accent-08)',
                     }}
                 >
                     <div
@@ -130,7 +131,7 @@ export function CymaticsConfig({
                         className="text-2xl font-bold mb-1"
                         style={{
                             fontFamily: 'var(--font-display)',
-                            color: 'rgba(253,251,245,0.9)',
+                            color: 'var(--text-primary)',
                         }}
                     >
                         {selectedFrequency?.hz || '---'} Hz
@@ -160,7 +161,7 @@ export function CymaticsConfig({
                                         : '1px solid var(--accent-15)',
                                     background: selectedFrequency?.hz === freq.hz
                                         ? 'var(--accent-10)'
-                                        : 'rgba(0,0,0,0.2)',
+                                        : (isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)'),
                                     color: selectedFrequency?.hz === freq.hz
                                         ? 'var(--accent-color)'
                                         : 'var(--text-secondary)',
@@ -203,7 +204,7 @@ export function CymaticsConfig({
                                     : '1px solid var(--accent-15)',
                                 background: totalCycleDuration === preset.total
                                     ? 'var(--accent-10)'
-                                    : 'rgba(0,0,0,0.2)',
+                                    : (isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)'),
                                 color: totalCycleDuration === preset.total
                                     ? 'var(--accent-color)'
                                     : 'var(--text-secondary)',
@@ -218,15 +219,15 @@ export function CymaticsConfig({
                 </div>
 
                 {/* Cymatic Arc - Visual Representation */}
-                <div className="relative h-8 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                <div className="relative h-8 rounded-full overflow-hidden" style={{ background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.3)' }}>
                     {/* Phase segments */}
                     <div className="absolute inset-0 flex">
                         <div
                             className="h-full flex items-center justify-center text-[8px] font-semibold"
                             style={{
                                 width: `${(fadeInDuration / totalCycleDuration) * 100}%`,
-                                background: 'rgba(253,220,145,0.2)',
-                                borderRight: '1px solid rgba(253,220,145,0.3)',
+                                background: isLight ? 'rgba(180,155,110,0.1)' : 'rgba(253,220,145,0.2)',
+                                borderRight: isLight ? '1px solid rgba(180,155,110,0.15)' : '1px solid rgba(253,220,145,0.3)',
                                 color: 'var(--text-muted)',
                                 fontFamily: 'var(--font-display)',
                             }}
@@ -251,8 +252,8 @@ export function CymaticsConfig({
                             className="h-full flex items-center justify-center text-[8px] font-semibold"
                             style={{
                                 width: `${(fadeOutDuration / totalCycleDuration) * 100}%`,
-                                background: 'rgba(253,220,145,0.2)',
-                                borderRight: '1px solid rgba(253,220,145,0.3)',
+                                background: isLight ? 'rgba(180,155,110,0.1)' : 'rgba(253,220,145,0.2)',
+                                borderRight: isLight ? '1px solid rgba(180,155,110,0.15)' : '1px solid rgba(253,220,145,0.3)',
                                 color: 'var(--text-muted)',
                                 fontFamily: 'var(--font-display)',
                             }}
@@ -264,7 +265,7 @@ export function CymaticsConfig({
                             className="h-full flex items-center justify-center text-[8px] font-semibold"
                             style={{
                                 width: `${(voidDuration / totalCycleDuration) * 100}%`,
-                                background: 'rgba(0,0,0,0.4)',
+                                background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(0,0,0,0.4)',
                                 color: 'var(--text-muted)',
                                 fontFamily: 'var(--font-display)',
                             }}

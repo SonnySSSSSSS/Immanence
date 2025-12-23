@@ -19,6 +19,7 @@ export function VisualizationConfig({
     setDuration,
     audioEnabled,
     setAudioEnabled,
+    isLight = false,
 }) {
     // Basic shapes
     const BASIC_GEOMETRIES = ['enso', 'circle', 'triangle', 'square'];
@@ -110,6 +111,7 @@ export function VisualizationConfig({
                     setFadeOutDuration={setFadeOutDuration}
                     voidDuration={voidDuration}
                     setVoidDuration={setVoidDuration}
+                    isLight={isLight}
                 />
             </div>
 

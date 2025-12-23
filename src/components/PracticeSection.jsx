@@ -154,7 +154,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
                 fontSize: "22px",
                 fontWeight: 600,
                 letterSpacing: "var(--tracking-wide)",
-                color: "rgba(253,251,245,0.9)",
+                color: "var(--text-primary)",
                 opacity,
                 transform: `scale(${scale})`,
                 transition: "opacity 0.2s, transform 0.2s"
@@ -789,14 +789,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         feedbackColor = '#ef4444';
         feedbackText = "OUT OF BOUNDS";
         feedbackShadow = "0 0 8px rgba(239, 68, 68, 0.5)";
-        buttonBg = 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(60,60,60,0.4) 100%)';
+        buttonBg = isLight ? 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)' : 'linear-gradient(180deg, rgba(100,100,100,0.3) 0%, rgba(60,60,60,0.4) 100%)';
         radialGlow = '';
       } else if (absError <= 30) {
-        feedbackColor = "#f8fafc";
+        feedbackColor = isLight ? 'var(--text-primary)' : "#f8fafc";
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
-        feedbackShadow = "0 0 12px rgba(255,255,255,0.6)";
-        buttonBg = "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
-        radialGlow = '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
+        feedbackShadow = isLight ? "none" : "0 0 12px rgba(255,255,255,0.6)";
+        buttonBg = isLight ? "linear-gradient(180deg, var(--accent-color) 0%, var(--accent-secondary) 100%)" : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)";
+        radialGlow = isLight ? '0 0 40px var(--accent-30)' : '0 0 60px 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.7)';
       } else if (absError <= 100) {
         feedbackColor = 'var(--accent-color)';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
@@ -810,7 +810,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         buttonBg = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
         radialGlow = '0 0 40px 10px rgba(217, 119, 6, 0.3), 0 0 20px rgba(217, 119, 6, 0.5)';
       } else {
-        feedbackColor = '#9ca3af';
+        feedbackColor = isLight ? 'var(--text-muted)' : '#9ca3af';
         feedbackText = `${absError}ms ${lastSignedErrorMs > 0 ? "Late" : "Early"} `;
         feedbackShadow = "0 0 6px rgba(156, 163, 175, 0.3)";
         buttonBg = 'linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)';
@@ -825,8 +825,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           <div
             className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
             style={{
-              background: 'rgba(0,0,0,0.7)',
-              border: '1px solid var(--accent-30)',
+              background: isLight ? 'var(--light-bg-surface)' : 'rgba(0,0,0,0.7)',
+              border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-30)',
               backdropFilter: 'blur(8px)',
             }}
           >
@@ -840,9 +840,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   className="w-2 h-2 rounded-full transition-all duration-300"
                   style={{
                     background: idx < circuitExerciseIndex ? 'var(--accent-color)'
-                      : idx === circuitExerciseIndex ? '#fff'
-                        : 'rgba(253,251,245,0.2)',
-                    boxShadow: idx === circuitExerciseIndex ? '0 0 8px rgba(255,255,255,0.6)' : 'none',
+                      : idx === circuitExerciseIndex ? (isLight ? 'var(--text-primary)' : '#fff')
+                        : (isLight ? 'rgba(60,50,35,0.2)' : 'rgba(253,251,245,0.2)'),
+                    boxShadow: idx === circuitExerciseIndex ? (isLight ? '0 2px 8px rgba(60,50,35,0.2)' : '0 0 8px rgba(255,255,255,0.6)') : 'none',
                   }}
                 />
               ))}
@@ -892,13 +892,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <div
                   className="flex items-center gap-3 mt-4 px-4 py-2 rounded-full"
                   style={{
-                    background: 'rgba(0,0,0,0.5)',
-                    border: '1px solid var(--accent-20)',
+                    background: isLight ? 'var(--light-bg-surface)' : 'rgba(0,0,0,0.5)',
+                    border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-20)',
                   }}
                 >
                   <button
                     onClick={handlePrevFx}
-                    className="text-white/60 hover:text-white transition-colors px-2 py-1"
+                    className={`${isLight ? 'text-[#5A4D3C]/60 hover:text-[#3D3425]' : 'text-white/60 hover:text-white'} transition-colors px-2 py-1`}
                     style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px' }}
                   >
                     ◀
@@ -923,7 +923,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   </div>
                   <button
                     onClick={handleNextFx}
-                    className="text-white/60 hover:text-white transition-colors px-2 py-1"
+                    className={`${isLight ? 'text-[#5A4D3C]/60 hover:text-[#3D3425]' : 'text-white/60 hover:text-white'} transition-colors px-2 py-1`}
                     style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px' }}
                   >
                     ▶
@@ -1009,8 +1009,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   .sound-volume-slider::-moz-range-track {
                     height: 4px;
                     border-radius: 2px;
-                    background: rgba(255, 255, 255, 0.2);
-                  }
+                    background: isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255, 255, 255, 0.2)',
+                  }}
                 `}</style>
               </div>
             </div>
@@ -1161,9 +1161,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 fontSize: '18px',
                 fontWeight: 600,
                 letterSpacing: 'var(--tracking-mythic)',
-                color: 'rgba(253,251,245,0.9)',
+                color: 'var(--text-primary)',
                 marginBottom: '24px',
-                textShadow: '0 0 10px var(--accent-30)',
+                textShadow: isLight ? 'none' : '0 0 10px var(--accent-30)',
               }}
             >
               SESSION COMPLETE
@@ -1174,8 +1174,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               style={{
                 padding: '20px',
                 borderRadius: '16px',
-                background: 'rgba(0,0,0,0.3)',
-                border: '1px solid var(--accent-10)',
+                background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.3)',
+                border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-10)',
                 marginBottom: '24px',
               }}
             >
@@ -1556,6 +1556,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       setPattern={setPattern}
                       preset={preset}
                       setPreset={setPreset}
+                      isLight={isLight}
                     />
                   )}
 
@@ -1563,6 +1564,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     <SensoryConfig
                       sensoryType={sensoryType}
                       setSensoryType={setSensoryType}
+                      isLight={isLight}
                     />
                   )}
 
@@ -1570,6 +1572,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     <CircuitConfig
                       value={circuitConfig}
                       onChange={setCircuitConfig}
+                      isLight={isLight}
                     />
                   )}
 
@@ -1667,6 +1670,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       setDuration={setDuration}
                       audioEnabled={audioEnabled}
                       setAudioEnabled={setAudioEnabled}
+                      isLight={isLight}
                     />
                   )}
 
@@ -1688,6 +1692,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                       setDriftEnabled={setDriftEnabled}
                       audioEnabled={audioEnabled}
                       setAudioEnabled={setAudioEnabled}
+                      isLight={isLight}
                     />
                   )}
                 </div>

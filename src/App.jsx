@@ -366,7 +366,7 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.14.8
+                  v3.14.10
                 </div>
                 {!isHub && (
                   <button
@@ -444,7 +444,7 @@ function App() {
           <InstallPrompt />
 
           {/* Indra's Net - animated web at bottom */}
-          <IndrasNet stage={previewStage} isPracticing={isPracticing} />
+          <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} />
         </div>
       </div>
     </ThemeProvider>

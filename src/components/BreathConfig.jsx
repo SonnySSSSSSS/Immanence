@@ -19,6 +19,7 @@ export function BreathConfig({
     setPattern,
     preset,
     setPreset,
+    isLight = false,
 }) {
     const handlePatternChange = (key, value) => {
         setPattern((prev) => ({
@@ -88,8 +89,8 @@ export function BreathConfig({
                                 fontFamily: "var(--font-display)",
                                 fontSize: "14px",
                                 fontWeight: 600,
-                                background: "rgba(0,0,0,0.4)",
-                                border: "1px solid var(--accent-10)",
+                                background: isLight ? 'rgba(60,50,35,0.05)' : "rgba(0,0,0,0.4)",
+                                border: isLight ? '1px solid var(--light-border)' : "1px solid var(--accent-10)",
                                 color: "var(--text-primary)",
                             }}
                         />

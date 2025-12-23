@@ -58,7 +58,7 @@ const AVAILABLE_EXERCISES = [
 
 const DURATION_OPTIONS = [3, 5, 7, 10, 12, 15, 20];
 
-export function CircuitConfig({ value, onChange }) {
+export function CircuitConfig({ value, onChange, isLight = false }) {
     // Per-exercise duration (user can change this)
     const [exerciseDuration, setExerciseDuration] = useState(value?.exerciseDuration || 5);
     const [pageIndex, setPageIndex] = useState(0);
@@ -172,13 +172,14 @@ export function CircuitConfig({ value, onChange }) {
                             Total Circuit
                         </div>
                         <div
-                            className="text-3xl text-white/95 font-bold tracking-wide"
+                            className="text-3xl font-bold tracking-wide"
                             style={{
+                                color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
                                 fontFamily: 'var(--font-display)',
                                 animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none'
                             }}
                         >
-                            {totalDuration} <span className="text-lg text-white/50" style={{ fontFamily: 'var(--font-body)' }}>min</span>
+                            {totalDuration} <span className="text-lg" style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.5)' }}>min</span>
                         </div>
                     </div>
                     <div className="text-right">
@@ -204,7 +205,7 @@ export function CircuitConfig({ value, onChange }) {
                             }}
                         >
                             {DURATION_OPTIONS.map((dur) => (
-                                <option key={dur} value={dur} style={{ background: '#1a1a2e', color: '#fff' }}>
+                                <option key={dur} value={dur} style={{ background: isLight ? 'var(--bg-card)' : '#1a1a2e', color: isLight ? 'var(--text-primary)' : '#fff' }}>
                                     {dur} min
                                 </option>
                             ))}
@@ -220,7 +221,7 @@ export function CircuitConfig({ value, onChange }) {
                     style={{ fontFamily: 'var(--font-body)' }}
                 >
                     <span>Select Practices</span>
-                    <span style={{ color: selectedExercises.length >= MAX_EXERCISES ? 'var(--accent-color)' : 'inherit' }}>
+                    <span style={{ color: selectedExercises.length >= MAX_EXERCISES ? 'var(--accent-color)' : (isLight ? 'var(--text-muted)' : 'inherit') }}>
                         {selectedExercises.length}/{MAX_EXERCISES}
                     </span>
                 </div>
@@ -265,10 +266,10 @@ export function CircuitConfig({ value, onChange }) {
                                                 borderRadius: '12px',
                                                 border: isSelected
                                                     ? '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)'
-                                                    : '1px solid rgba(255,255,255,0.08)',
+                                                    : (isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.08)'),
                                                 background: isSelected
                                                     ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)'
-                                                    : 'rgba(255,255,255,0.03)',
+                                                    : (isLight ? 'rgba(60,50,35,0.03)' : 'rgba(255,255,255,0.03)'),
                                                 backdropFilter: 'blur(12px)',
                                                 transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
                                                 boxShadow: isSelected
@@ -295,7 +296,9 @@ export function CircuitConfig({ value, onChange }) {
                                                         fontFamily: 'var(--font-display)',
                                                         fontSize: '11px',
                                                         letterSpacing: '0.04em',
-                                                        color: isSelected ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.65)',
+                                                        color: isSelected
+                                                            ? (isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)')
+                                                            : (isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.65)'),
                                                     }}
                                                 >
                                                     {exercise.name}
@@ -327,7 +330,7 @@ export function CircuitConfig({ value, onChange }) {
                             style={{
                                 width: i === pageIndex ? '16px' : '6px',
                                 height: '6px',
-                                background: i === pageIndex ? 'var(--accent-color)' : 'rgba(255,255,255,0.15)',
+                                background: i === pageIndex ? 'var(--accent-color)' : (isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.15)'),
                                 boxShadow: i === pageIndex ? '0 0 10px var(--accent-color)' : 'none'
                             }}
                         />
@@ -339,8 +342,8 @@ export function CircuitConfig({ value, onChange }) {
             {selectedExercises.length > 0 && (
                 <div>
                     <div
-                        className="text-[10px] text-white/40 mb-3 uppercase tracking-[0.2em] font-bold"
-                        style={{ fontFamily: 'var(--font-display)' }}
+                        className="text-[10px] mb-3 uppercase tracking-[0.2em] font-bold"
+                        style={{ fontFamily: 'var(--font-display)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)' }}
                     >
                         Energy Pathway · {selectedExercises.length} Nodes
                     </div>
@@ -351,8 +354,8 @@ export function CircuitConfig({ value, onChange }) {
                                     key={`${item.exercise.id}-${index}`}
                                     className="p-3 rounded flex items-center gap-3"
                                     style={{
-                                        background: 'rgba(255,255,255,0.04)',
-                                        border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                        background: isLight ? 'rgba(60,50,35,0.03)' : 'rgba(255,255,255,0.04)',
+                                        border: isLight ? '1px solid var(--light-border)' : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
                                         backdropFilter: 'blur(5px)',
                                     }}
                                 >
@@ -397,8 +400,9 @@ export function CircuitConfig({ value, onChange }) {
                                     {/* Exercise Name */}
                                     <div className="flex-1">
                                         <div
-                                            className="text-sm text-white font-bold leading-tight"
+                                            className="text-sm font-bold leading-tight"
                                             style={{
+                                                color: isLight ? 'var(--text-primary)' : 'white',
                                                 fontFamily: 'var(--font-display)',
                                                 letterSpacing: '0.04em'
                                             }}
@@ -418,7 +422,7 @@ export function CircuitConfig({ value, onChange }) {
                                     {/* Remove button */}
                                     <button
                                         onClick={() => handleRemoveExercise(index)}
-                                        className="text-white/30 hover:text-white/70 text-sm transition-colors"
+                                        className={`text-sm transition-colors ${isLight ? 'text-[#3D3425]/30 hover:text-[#3D3425]/70' : 'text-white/30 hover:text-white/70'}`}
                                     >
                                         ✕
                                     </button>
@@ -438,8 +442,8 @@ export function CircuitConfig({ value, onChange }) {
                     }}
                 >
                     <p
-                        className="text-sm text-white/40 font-medium"
-                        style={{ fontFamily: 'var(--font-body)' }}
+                        className="text-sm font-medium"
+                        style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)' }}
                     >
                         Select practices above to build your circuit
                     </p>
