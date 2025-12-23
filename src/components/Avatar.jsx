@@ -192,8 +192,11 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
     return (
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div
-          className="relative w-[100%] h-[100%] flex items-center justify-center"
-          style={{ transition: 'opacity 0.5s ease' }}
+          className="light-ring-rotate relative w-[100%] h-[100%] flex items-center justify-center"
+          style={{
+            transition: 'opacity 0.5s ease',
+            animationPlayState: isPracticing ? 'paused' : 'running'
+          }}
         >
           {/* Asset-based Ring Select */}
           <img
@@ -261,7 +264,7 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
       />
 
       <div
-        className="rune-ring-wrapper w-[88%] h-[88%] relative flex items-center justify-center"
+        className="dark-ring-rotate w-[88%] h-[88%] relative flex items-center justify-center"
         style={{ animationPlayState: isPracticing ? 'paused' : 'running' }}
       >
         {/* Hairline trace behind the image */}
@@ -389,7 +392,7 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
 
       {/* Stage Avatar Core Image Stage */}
       <div
-        className="relative pointer-events-none select-none avatar-sigil-rotate"
+        className={`relative pointer-events-none select-none ${isLight ? 'light-orb-rotate' : 'dark-orb-rotate'}`}
         style={{
           width: "44%", // Scaled to ~95% of the 46.5-48% inner ring opening
           height: "44%",

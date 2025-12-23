@@ -482,19 +482,50 @@
   will-change: transform;
 }
 
-/* Legacy wrapper - keep for backwards compatibility */
+/* Legacy wrapper - flip to CCW */
 .rune-ring-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: rune-ring-clockwise 62.4s linear infinite;
+  animation: rune-ring-counterclockwise 62.4s linear infinite;
   transform-origin: center;
   will-change: transform;
 }
 
-/* Avatar Sigil: Quarter speed (25%), counter-clockwise */
+/* Avatar Sigil: Quarter speed (25%), flip to CW */
 .avatar-sigil-rotate {
-  animation: rune-ring-counterclockwise 249.6s linear infinite;
+  animation: rune-ring-clockwise 249.6s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MODE-SPECIFIC ROTATION CLASSES
+   Dark Mode: Ring CCW, Orb CW | Light Mode: Ring CW, Orb CCW
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Dark Mode Rotations */
+.dark-ring-rotate {
+  animation: rune-ring-counterclockwise 62.4s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.dark-orb-rotate {
+  animation: rune-ring-clockwise 249.6s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* Light Mode Rotations (slower, opposite direction) */
+.light-ring-rotate {
+  animation: rune-ring-clockwise 78s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.light-orb-rotate {
+  animation: rune-ring-counterclockwise 312s linear infinite;
   transform-origin: center;
   will-change: transform;
 }
