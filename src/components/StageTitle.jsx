@@ -1,8 +1,10 @@
 // src/components/StageTitle.jsx
 // Shared Stage Title component for displaying current stage and path across all sections
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { GoldCartouche } from "./GoldCartouche.jsx";
+import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
+import { STAGE_COLORS } from "../constants/stageColors.js";
 
 // Sanskrit path names with their closest one-word English translations
 const PATH_TRANSLATIONS = {
@@ -92,16 +94,23 @@ const PathIcon = ({ path, color, size = 20 }) => {
 };
 
 // Stage colors for glow effects and styling
-export const STAGE_COLORS = {
-  seedling: { gradient: ["#4ade80", "#22c55e", "#16a34a"], glow: "#22c55e" },
-  ember: { gradient: ["#fb923c", "#f97316", "#ea580c"], glow: "#f97316" },
-  flame: { gradient: ["#fbbf24", "#f59e0b", "#d97706"], glow: "#f59e0b" },
-  beacon: { gradient: ["#60a5fa", "#3b82f6", "#2563eb"], glow: "#3b82f6" },
-  stellar: { gradient: ["#c084fc", "#a855f7", "#9333ea"], glow: "#a855f7" },
-};
+
 
 // Textured Title Card Component - Geometrically Stable with Minimal Texture
 const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention }) => {
+  const cardRef = useRef(null);
+  const [gradientAngle, setGradientAngle] = useState(135);
+
+  // Calculate gradient angle based on position relative to avatar
+  useEffect(() => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const avatarCenter = getAvatarCenter();
+      const angle = calculateGradientAngle(rect, avatarCenter);
+      setGradientAngle(angle);
+    }
+  }, []);
+
   // Static SVG noise texture URL for marble effect (minimal opacity)
   const noiseTexture = `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='3' seed='15' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`;
 
@@ -113,22 +122,23 @@ const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention 
 
   return (
     <div
+      ref={cardRef}
       className="relative overflow-hidden rounded-2xl"
       style={{
         // Fixed padding to maintain stable internal grid
         padding: '18px 40px 14px',
         minWidth: '320px',
 
-        // Refined Gold Border - Beveled Light Simulation
+        // Refined Gold Border - Beveled Light Simulation (Dynamic lighting from avatar)
         border: '2px solid transparent',
         backgroundImage: isLight
           ? `
             linear-gradient(rgba(255,252,248,0.96), rgba(255,250,242,0.92)),
-            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+            ${getDynamicGoldGradient(gradientAngle, true)}
           `
           : `
             linear-gradient(rgba(22,20,18,0.88), rgba(16,14,12,0.82)),
-            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+            linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))
           `,
         backgroundOrigin: 'padding-box, border-box',
         backgroundClip: 'padding-box, border-box',
@@ -142,8 +152,7 @@ const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention 
             inset 0 1px 0 rgba(255,255,255,0.4)
           `
           : `
-            0 0 0 0.5px #AF8B2C,
-            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
+            0 0 0 0.5px rgba(255,255,255,0.1),
             0 3px 20px rgba(0,0,0,0.25),
             inset 0 1px 0 rgba(255,250,240,0.04)
           `,
@@ -247,7 +256,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
   return (
     <div
       className="stage-title-container relative flex flex-col items-center justify-center overflow-visible"
-      style={{ zIndex: 1 }}
+      style={{ zIndex: 15 }}
     >
 
       {/* Welcome label - optional */}

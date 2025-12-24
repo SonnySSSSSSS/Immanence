@@ -23,7 +23,7 @@ export const plateauMaterial = {
   boxShadow: `
     0 8px 32px rgba(0, 0, 0, 0.6),
     0 2px 8px var(--accent-15),
-    inset 0 1px 0 rgba(255, 215, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3),
     inset 0 -4px 16px rgba(0, 0, 0, 0.4)
   `,
@@ -37,7 +37,7 @@ export const plateauMaterialElevated = {
   boxShadow: `
     0 12px 40px rgba(0, 0, 0, 0.7),
     0 0 40px var(--accent-20),
-    inset 0 1px 0 rgba(255, 215, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3),
     inset 0 -4px 16px rgba(0, 0, 0, 0.5)
   `,
@@ -105,9 +105,9 @@ export const plateauMaterialClear = {
   backgroundOrigin: 'border-box',
   backgroundClip: 'padding-box, border-box',
   boxShadow: `
-    0 0 30px rgba(255, 200, 100, 0.08),
+    0 0 30px rgba(255, 255, 255, 0.03),
     0 8px 32px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 215, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25)
   `,
 };

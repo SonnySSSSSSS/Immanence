@@ -242,8 +242,8 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
           alt="Rune ring"
           className="w-full h-full object-contain"
           style={{
-            filter: `brightness(1.05) saturate(1.1) drop-shadow(0 0 2px ${glowColor}) drop-shadow(0 0 3px #C9A942) drop-shadow(0 0 4px #A67C00)`,
-            opacity: 0.8,
+            filter: `brightness(1.1) saturate(1.2) drop-shadow(0 0 3px ${glowColor})`,
+            opacity: 0.9,
           }}
         />
         <div className="absolute inset-0 pointer-events-none">

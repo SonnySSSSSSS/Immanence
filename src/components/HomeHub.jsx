@@ -1,8 +1,10 @@
 // Improved HomeHub component with stats overview and better visual hierarchy
 
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "./Avatar.jsx";
-import { StageTitle, STAGE_COLORS } from "./StageTitle.jsx";
+import { StageTitle } from "./StageTitle.jsx";
+import { STAGE_COLORS } from "../constants/stageColors.js";
 import { TrackingHub } from "./TrackingHub.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
@@ -12,6 +14,7 @@ import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
 import { STAGES } from "../state/stageConfig.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
+import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -25,6 +28,19 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
+
+  // Dynamic lighting for Transmission section
+  const transmissionRef = useRef(null);
+  const [transmissionAngle, setTransmissionAngle] = useState(135);
+
+  useEffect(() => {
+    if (transmissionRef.current) {
+      const rect = transmissionRef.current.getBoundingClientRect();
+      const avatarCenter = getAvatarCenter();
+      const angle = calculateGradientAngle(rect, avatarCenter);
+      setTransmissionAngle(angle);
+    }
+  }, []);
 
   // Honor log modal state (moved from TrackingHub)
   const [showHonorModal, setShowHonorModal] = useState(false);
@@ -57,24 +73,24 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
   const insightColors = {
     achievement: {
-      border: 'rgba(255, 215, 0, 0.3)',
-      glow: 'rgba(255, 215, 0, 0.2)',
-      accent: 'rgba(255, 215, 0, 0.9)',
+      border: isLight ? 'rgba(255, 215, 0, 0.3)' : 'rgba(139, 92, 246, 0.3)',
+      glow: isLight ? 'rgba(255, 215, 0, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+      accent: isLight ? 'rgba(255, 215, 0, 0.9)' : 'rgba(167, 139, 250, 0.9)',
     },
     caution: {
-      border: 'rgba(255, 145, 0, 0.3)',
-      glow: 'rgba(255, 145, 0, 0.2)',
-      accent: 'rgba(255, 145, 0, 0.9)',
+      border: isLight ? 'rgba(255, 145, 0, 0.3)' : 'rgba(244, 63, 94, 0.3)',
+      glow: isLight ? 'rgba(255, 145, 0, 0.2)' : 'rgba(244, 63, 94, 0.2)',
+      accent: isLight ? 'rgba(255, 145, 0, 0.9)' : 'rgba(251, 113, 133, 0.9)',
     },
     warning: {
       border: 'rgba(100, 150, 255, 0.3)', // Calming blue for drop-off
       glow: 'rgba(100, 150, 255, 0.2)',
-      accent: 'rgba(150, 180, 255, 0.9)',
+      accent: isLight ? 'rgba(59, 130, 246, 0.9)' : 'rgba(150, 180, 255, 0.9)',
     },
     neutral: {
-      border: 'var(--accent-40)',
-      glow: 'var(--accent-20)',
-      accent: 'var(--accent-color)',
+      border: isLight ? 'rgba(139, 92, 246, 0.3)' : 'rgba(253, 251, 245, 0.15)',
+      glow: isLight ? 'rgba(139, 92, 246, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+      accent: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
     }
   };
 
@@ -124,6 +140,23 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               opacity: isSanctuary ? 0.2 : 0.15,
               pointerEvents: 'none',
               zIndex: 0,
+            }}
+          />
+
+          {/* Diagonal Grounding Shadow - Cast by central instrument */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              width: '180%',
+              height: '40px',
+              background: isLight
+                ? 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.03) 0%, transparent 70%)'
+                : 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, transparent 75%)',
+              top: '65%',
+              left: '55%',
+              transform: 'translate(-50%, -50%) rotate(-15deg)',
+              filter: 'blur(40px)',
+              zIndex: -2,
             }}
           />
 
@@ -236,6 +269,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
         {/* TRANSMISSION - Quick Insights */}
         <div
+          ref={transmissionRef}
           className="w-full rounded-3xl px-4 py-3 relative overflow-hidden transition-all duration-500"
           style={{
             // Refined Gold Border
@@ -243,11 +277,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             backgroundImage: isLight
               ? `
                 linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%),
-                linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+                ${getDynamicGoldGradient(transmissionAngle, true)}
               `
               : `
                 linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%),
-                linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+                linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))
               `,
             backgroundOrigin: 'padding-box, border-box',
             backgroundClip: 'padding-box, border-box',
@@ -260,8 +294,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 inset 0 1px 0 rgba(255, 255, 255, 0.8)
               `
               : `
-                0 0 0 0.5px #AF8B2C,
-                inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
+                0 0 0 0.5px rgba(255, 255, 255, 0.1),
                 0 8px 32px rgba(0, 0, 0, 0.6),
                 0 2px 8px ${insightColors[insightState].glow},
                 inset 0 1px 0 rgba(255, 255, 255, 0.08)
@@ -332,17 +365,31 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
 
+  const cardRef = useRef(null);
+  const [gradientAngle, setGradientAngle] = useState(135);
+
+  useEffect(() => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const avatarCenter = getAvatarCenter();
+      const angle = calculateGradientAngle(rect, avatarCenter);
+      setGradientAngle(angle);
+    }
+  }, []);
+
+  // Per-mode color grading for subtle identity
   // Per-mode color grading for subtle identity
   const colorGrades = {
-    gold: isLight ? 'rgba(180, 140, 60, 0.03)' : 'rgba(255, 191, 0, 0.08)', // warm gold - Practice
-    amberViolet: isLight ? 'rgba(124, 92, 174, 0.03)' : 'rgba(180, 120, 200, 0.06)', // amber-violet - Wisdom
-    indigo: isLight ? 'rgba(14, 116, 144, 0.03)' : 'rgba(100, 130, 220, 0.06)', // cool indigo - Application
-    goldBlue: isLight ? 'rgba(100, 110, 140, 0.03)' : 'rgba(180, 190, 220, 0.05)', // neutral gold-blue - Navigation
+    gold: isLight ? 'rgba(180, 140, 60, 0.03)' : 'rgba(255, 255, 255, 0.03)', // warm gold -> clean white
+    amberViolet: isLight ? 'rgba(124, 92, 174, 0.03)' : 'rgba(180, 120, 200, 0.06)',
+    indigo: isLight ? 'rgba(14, 116, 144, 0.03)' : 'rgba(100, 130, 220, 0.06)',
+    goldBlue: isLight ? 'rgba(100, 110, 140, 0.03)' : 'rgba(180, 190, 220, 0.05)',
   };
   const gradeOverlay = colorGrades[colorGrade] || colorGrades.gold;
 
   return (
     <button
+      ref={cardRef}
       type="button"
       onClick={onClick}
       className="group relative rounded-3xl text-left transition-all duration-300 flex flex-col items-start justify-end overflow-hidden"
@@ -354,13 +401,13 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
         backgroundImage: isLight
           ? `
             linear-gradient(var(--light-bg-surface), var(--light-bg-surface)),
-            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+            ${getDynamicGoldGradient(gradientAngle, true)}
           `
           : `
             linear-gradient(rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+            linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01))
           `,
-        backgroundOrigin: 'padding-box, border-box',
+        backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
 
         boxShadow: isLight
@@ -371,8 +418,7 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
             inset 0 1px 0 rgba(255, 255, 255, 0.8)
           `
           : `
-            0 0 0 0.5px #AF8B2C,
-            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
+            0 0 0 0.5px rgba(255, 255, 255, 0.1),
             0 8px 32px rgba(0, 0, 0, 0.6),
             0 2px 8px var(--accent-15),
             inset 0 1px 0 rgba(255, 255, 255, 0.08),

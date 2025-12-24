@@ -9,15 +9,18 @@ export function Breathwork({ size = 24, color = 'currentColor', className = '' }
             viewBox="0 0 24 24"
             fill="none"
             stroke={color}
-            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             className={className}
         >
-            {/* Three flowing wave lines representing breath */}
-            <path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
-            <path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
-            <path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
+            {/* Upper and lower waves - Support (0.5px) */}
+            <g strokeWidth="0.5" opacity="0.4">
+                <path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
+                <path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
+            </g>
+
+            {/* Central wave - Primary (2px) */}
+            <path strokeWidth="2" d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
         </svg>
     );
 }

@@ -3,18 +3,12 @@
 
 import React, { useEffect } from 'react';
 import { IconStyleToggle } from '../icons/Icon.jsx';
+import { STAGE_COLORS } from '../constants/stageColors.js';
 
 export const STAGES = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
 export const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
-// Stage colors for glow effect
-export const STAGE_COLORS = {
-    Seedling: '#4ade80',
-    Ember: '#f97316',
-    Flame: '#fcd34d',
-    Beacon: '#22d3ee',
-    Stellar: '#a78bfa',
-};
+
 
 export function AvatarPreview({
     onClose,
@@ -25,7 +19,7 @@ export function AvatarPreview({
     onPathChange,
     onShowCoreChange
 }) {
-    const stageColor = STAGE_COLORS[stage];
+    const stageColor = STAGE_COLORS[stage.toLowerCase()]?.simple || '#fff';
 
     // File path: /avatars/Stage-Path.png or /avatars/stage-core.png
     const imagePath = showCore

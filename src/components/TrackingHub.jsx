@@ -1,13 +1,14 @@
 // src/components/TrackingHub.jsx
 // Swipeable stats dashboard showing domain-specific progress
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useProgressStore } from '../state/progressStore.js';
 import { DishonorBadge } from './DishonorBadge.jsx';
 import { Icon } from '../icons/Icon.jsx';
 import SevenDayTrendCurve from './SevenDayTrendCurve.jsx';
 import { plateauMaterial, plateauMaterialElevated, plateauMaterialClear, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from '../styles/cardMaterial.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
 
 // Domain configuration - using icon names for Icon component
 const DOMAINS = [
@@ -73,6 +74,315 @@ const CYMATIC_GLYPHS = {
         </svg>
     )
 };
+
+/**
+ * Individual stats card component with dynamic lighting and mythic aesthetics
+ */
+function StatsCard({ domain, stats, isLight }) {
+    const cardRef = useRef(null);
+    const [gradientAngle, setGradientAngle] = useState(135);
+
+    useEffect(() => {
+        if (cardRef.current) {
+            const rect = cardRef.current.getBoundingClientRect();
+            const avatarCenter = getAvatarCenter();
+            const angle = calculateGradientAngle(rect, avatarCenter);
+            setGradientAngle(angle);
+        }
+    }, [isLight]);
+
+    // Format relative time (original utility)
+    const formatLastPracticed = (isoDate) => {
+        if (!isoDate) return 'Never';
+        const now = new Date();
+        const then = new Date(isoDate);
+        const diffMs = now - then;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return then.toLocaleDateString();
+    };
+
+    return (
+        <div
+            ref={cardRef}
+            className="relative rounded-3xl overflow-hidden"
+            style={isLight ? {
+                border: '2px solid transparent',
+                backgroundImage: `
+                  linear-gradient(rgba(255, 252, 245, 0.82), rgba(255, 252, 245, 0.82)),
+                  ${getDynamicGoldGradient(gradientAngle, true)}
+                `,
+                backgroundOrigin: 'padding-box, border-box',
+                backgroundClip: 'padding-box, border-box',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: `
+                  0 0 0 0.5px #AF8B2C,
+                  inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+                  0 4px 24px rgba(100, 80, 50, 0.08),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.6)
+                `
+            } : {
+                ...plateauMaterialClear,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                backgroundOrigin: 'padding-box, border-box',
+                backgroundClip: 'padding-box, border-box',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: `
+                  ${plateauMaterialClear.boxShadow || ''},
+                  inset 0 0 20px rgba(253, 220, 145, 0.08),
+                  inset 0 1px 0 rgba(253, 220, 145, 0.1)
+                `
+            }}
+        >
+            {/* Wave lines decoration - ambient background */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    backgroundImage: `url(${import.meta.env.BASE_URL}stats/wave-lines.png)`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'top center',
+                    backgroundRepeat: 'no-repeat',
+                    opacity: 0.35,
+                    mixBlendMode: 'screen',
+                    maskImage: 'linear-gradient(to bottom, white 0%, white 50%, transparent 70%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, white 0%, white 50%, transparent 70%)',
+                    zIndex: 1,
+                }}
+            />
+
+            {/* Texture overlays */}
+            <div style={{ ...noiseOverlayStyle, opacity: 0.02, zIndex: 2 }} />
+            <div style={{ ...sheenOverlayStyle, zIndex: 2 }} />
+            <div style={{ ...innerGlowStyle, zIndex: 2 }} />
+
+            {/* Domain header with Metadata on Right */}
+            <div className="flex items-center justify-between mb-3 px-5 pt-4 relative z-10">
+                {/* Left: Icon + Label */}
+                <div className="flex items-center gap-2">
+                    <span className="text-xl" style={{ color: isLight ? 'rgba(140, 100, 50, 0.9)' : 'var(--accent-color)' }}>
+                        <Icon name={domain.iconName} size={22} />
+                    </span>
+                    <span
+                        className="text-sm font-semibold"
+                        style={{
+                            color: isLight ? 'rgba(45, 40, 35, 0.9)' : 'white',
+                            fontFamily: 'var(--font-display)',
+                            letterSpacing: '0.15em',
+                            textTransform: 'uppercase'
+                        }}
+                    >
+                        {domain.label}
+                    </span>
+                </div>
+
+                {/* Right: Metadata (Last Practiced + Peak) */}
+                <div className="flex flex-col items-end gap-0.5 text-right opacity-60">
+                    <div
+                        className="text-[9px] font-light uppercase tracking-wider"
+                        style={{
+                            color: isLight ? 'rgba(45, 40, 35, 0.8)' : 'rgba(253, 251, 245, 0.9)',
+                            fontFamily: 'var(--font-ui)',
+                            lineHeight: '1',
+                        }}
+                    >
+                        {formatLastPracticed(stats.lastPracticed)}
+                    </div>
+                    <div
+                        className="text-[9px] font-light uppercase tracking-wider"
+                        style={{
+                            color: isLight ? 'rgba(45, 40, 35, 0.7)' : 'rgba(253, 251, 245, 0.7)',
+                            fontFamily: 'var(--font-ui)',
+                            lineHeight: '1.2',
+                        }}
+                    >
+                        Peak: {Math.max(...(stats.last7Days || [0]))} min
+                    </div>
+                </div>
+            </div>
+
+            {/* Tier 1: Hero Stats - Proportional Grid */}
+            <div className="grid grid-cols-3 gap-2 mb-9 items-end px-5 relative z-10">
+                {/* SESSIONS */}
+                <div className="text-center">
+                    <div
+                        className="font-black mb-1"
+                        style={{
+                            fontSize: '2.4rem',
+                            lineHeight: '1',
+                            color: isLight ? 'rgba(140, 100, 50, 0.95)' : '#d4b87a',
+                            letterSpacing: '-0.04em',
+                            opacity: 0.9,
+                        }}
+                    >
+                        {stats.totalSessions || 0}
+                    </div>
+                    <div
+                        className="text-[0.65rem] font-bold"
+                        style={{
+                            color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+                            fontFamily: 'var(--font-ui)',
+                            letterSpacing: '0.2em',
+                        }}
+                    >
+                        SESSIONS
+                    </div>
+                </div>
+
+                {/* MINUTES - THE HEARTBEAT - STANDS OUT */}
+                <div className="text-center">
+                    <div
+                        className="font-black mb-1"
+                        style={{
+                            fontSize: '2.8rem',
+                            lineHeight: '1',
+                            color: isLight ? 'rgba(120, 80, 40, 1)' : '#fff8e6',
+                            letterSpacing: '-0.05em',
+                            textShadow: isLight ? 'none' : '0 0 12px rgba(255, 235, 200, 0.45)',
+                        }}
+                    >
+                        {stats.totalMinutes || 0}
+                    </div>
+                    <div
+                        className="text-[0.7rem] font-bold"
+                        style={{
+                            color: isLight ? 'rgba(100, 70, 30, 0.95)' : 'rgba(255, 248, 230, 0.95)',
+                            fontFamily: 'var(--font-ui)',
+                            letterSpacing: '0.15em',
+                            textShadow: isLight ? 'none' : '0 0 10px rgba(255, 235, 200, 0.4)',
+                        }}
+                    >
+                        MINUTES
+                    </div>
+                </div>
+
+                {/* HONOR */}
+                <div className="text-center">
+                    <div
+                        className="font-black mb-1"
+                        style={{
+                            fontSize: '2.4rem',
+                            lineHeight: '1',
+                            color: isLight ? 'rgba(140, 100, 50, 0.9)' : '#c9a86e',
+                            letterSpacing: '-0.04em',
+                            opacity: 0.9,
+                        }}
+                    >
+                        {stats.totalHonor || 0}
+                    </div>
+                    <div
+                        className="text-[0.65rem] font-bold"
+                        style={{
+                            color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+                            fontFamily: 'var(--font-ui)',
+                            letterSpacing: '0.2em',
+                        }}
+                    >
+                        HONOR
+                    </div>
+                </div>
+            </div>
+
+            {/* MIDDLE: Curve - Performance Vector */}
+            <div className="relative px-5 -mt-6 z-10">
+                {/* Semantic label */}
+                <div
+                    className="text-[10px] font-bold mb-4 text-center -mt-5 relative font-mono opacity-60"
+                    style={{
+                        color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+                        letterSpacing: '0.15em',
+                        zIndex: 11,
+                    }}
+                >
+                    ⟨ PERFORMANCE.VECTOR ⟩
+                </div>
+
+                {/* Curve container - elevated height */}
+                <div className="relative h-[88px] w-full -mx-4 px-7 overflow-hidden">
+                    <SevenDayTrendCurve last7Days={stats.last7Days || [0, 0, 0, 0, 0, 0, 0]} />
+                </div>
+            </div>
+
+            {/* LOWER: Intensity Dots & Weekdays */}
+            <div className="px-5 pb-[18px] pt-[18px] border-t border-white/5 relative z-10">
+                <div className="relative">
+                    {/* Intensity dots with PEAK markers */}
+                    <div className="flex items-center justify-between px-2 relative mb-2">
+                        {(() => {
+                            const days = stats.last7Days || [0, 0, 0, 0, 0, 0, 0];
+                            const maxMinutes = Math.max(...days);
+                            const peakIndex = days.indexOf(maxMinutes);
+
+                            return days.map((minutes, i) => {
+                                const isPeakDay = (i === peakIndex && maxMinutes > 0);
+
+                                // Base intensity logic
+                                const getIntensity = (min, isPeak) => {
+                                    if (min === 0) return { bg: 'rgba(255,255,255,0.08)', glow: 'none', scale: 1 };
+                                    if (isPeak) return {
+                                        bg: 'linear-gradient(135deg, rgba(255,220,130,1) 0%, rgba(255,240,180,1) 100%)',
+                                        glow: '0 0 12px rgba(255,200,100,0.6)',
+                                        scale: 1.4
+                                    };
+                                    if (min < 15) return { bg: 'rgba(253,220,145,0.3)', glow: 'none', scale: 1 };
+                                    return { bg: 'rgba(253,220,145,0.7)', glow: '0 0 6px rgba(253,220,145,0.3)', scale: 1.1 };
+                                };
+                                const intensity = getIntensity(minutes, isPeakDay);
+
+                                return (
+                                    <div key={i} className="relative">
+                                        {isPeakDay && (
+                                            <div
+                                                className="absolute left-1/2 -translate-x-1/2 text-[8px] text-amber-200 font-display opacity-80 whitespace-nowrap tracking-wider"
+                                                style={{ bottom: '16px' }}
+                                            >
+                                                ⭐ PEAK
+                                            </div>
+                                        )}
+                                        <div
+                                            className="w-1.5 h-1.5 rounded-full"
+                                            style={{
+                                                background: intensity.bg,
+                                                boxShadow: intensity.glow,
+                                                transform: `scale(${intensity.scale})`
+                                            }}
+                                        />
+                                    </div>
+                                );
+                            });
+                        })()}
+                    </div>
+
+                    <div
+                        className="text-[9px] font-bold text-center opacity-40 mb-1.5"
+                        style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.2em' }}
+                    >
+                        DAYS PRACTICED
+                    </div>
+
+                    <div className="flex justify-between px-2 text-[8px] font-display tracking-widest opacity-30">
+                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                            <div key={i} className="w-1.5 text-center">{day}</div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Domain-specific insights (positioned at bottom) */}
+            <div className="px-5 pb-3">
+                <DomainInsights domain={domain.id} stats={stats} />
+            </div>
+        </div>
+    );
+}
 
 /**
  * Domain-specific insights component
@@ -331,363 +641,14 @@ export function TrackingHub() {
                         cursor: isDragging ? 'grabbing' : 'grab'
                     }}
                 >
-                    {orderedDomains.map((domain, index) => {
+                    {orderedDomains.map((domain) => {
                         const stats = getDomainStats(domain.id);
-                        const isPrimary = index === 0;
-
                         return (
-                            <div
-                                key={domain.id}
-                                className="w-full flex-shrink-0 px-0 py-2"
-                                onMouseDown={() => handleLongPressStart(domain.id)}
-                                onMouseUp={handleLongPressEnd}
-                                onTouchStart={() => handleLongPressStart(domain.id)}
-                                onTouchEnd={handleLongPressEnd}
-                            >
-                                {/* Stats Card - Three-Layer Hierarchy */}
-                                <div
-                                    className="relative rounded-3xl overflow-hidden"
-                                    style={isLight ? {
-                                        border: '2px solid transparent',
-                                        backgroundImage: `
-                                          linear-gradient(rgba(255, 252, 245, 0.82), rgba(255, 252, 245, 0.82)),
-                                          linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
-                                        `,
-                                        backgroundOrigin: 'padding-box, border-box',
-                                        backgroundClip: 'padding-box, border-box',
-                                        backdropFilter: 'blur(16px)',
-                                        WebkitBackdropFilter: 'blur(16px)',
-                                        boxShadow: `
-                                          0 0 0 0.5px #AF8B2C,
-                                          inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
-                                          0 4px 24px rgba(100, 80, 50, 0.08),
-                                          inset 0 1px 0 rgba(255, 255, 255, 0.6)
-                                        `
-                                    } : {
-                                        ...plateauMaterialClear,
-                                        border: '2px solid transparent',
-                                        backgroundImage: `
-                                          linear-gradient(rgba(10, 12, 15, 0.85), rgba(10, 12, 15, 0.85)),
-                                          linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
-                                        `,
-                                        backgroundOrigin: 'padding-box, border-box',
-                                        backgroundClip: 'padding-box, border-box',
-                                        backdropFilter: 'blur(16px)',
-                                        WebkitBackdropFilter: 'blur(16px)',
-                                        boxShadow: `
-                                          ${plateauMaterialClear.boxShadow || ''},
-                                          0 0 0 0.5px #AF8B2C,
-                                          inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
-                                          inset 0 0 20px rgba(253, 220, 145, 0.06),
-                                          inset 0 1px 0 rgba(253, 220, 145, 0.08)
-                                        `
-                                    }}
-                                >
-                                    {/* Wave lines decoration - ambient background */}
-                                    <div
-                                        className="absolute inset-0 pointer-events-none"
-                                        style={{
-                                            backgroundImage: `url(${import.meta.env.BASE_URL}stats/wave-lines.png)`,
-                                            backgroundSize: 'cover',
-                                            backgroundPosition: 'top center',
-                                            backgroundRepeat: 'no-repeat',
-                                            opacity: 0.35,
-                                            mixBlendMode: 'screen',
-                                            maskImage: 'linear-gradient(to bottom, white 0%, white 50%, transparent 70%)',
-                                            WebkitMaskImage: 'linear-gradient(to bottom, white 0%, white 50%, transparent 70%)',
-                                            zIndex: 1,
-                                        }}
-                                    />
-
-                                    {/* Noise texture overlay - reduced to 2% */}
-                                    <div style={{ ...noiseOverlayStyle, opacity: 0.02, zIndex: 2 }} />
-
-                                    {/* Sheen overlay */}
-                                    <div style={{ ...sheenOverlayStyle, zIndex: 2 }} />
-
-                                    {/* Inner ember glow */}
-                                    <div style={{ ...innerGlowStyle, zIndex: 2 }} />
-
-                                    {/* Domain header with Metadata on Right */}
-                                    <div className="flex items-center justify-between mb-3 px-5 pt-4">
-                                        {/* Left: Icon + Label */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xl" style={{ color: 'var(--accent-color)' }}>
-                                                <Icon name={domain.iconName} size={22} />
-                                            </span>
-                                            <span
-                                                className="text-sm font-semibold"
-                                                style={{
-                                                    color: 'var(--accent-color)',
-                                                    fontFamily: 'var(--font-display)',
-                                                    letterSpacing: 'var(--tracking-wide)'
-                                                }}
-                                            >
-                                                {domain.label}
-                                            </span>
-                                            {userSelectedDomain === domain.id && (
-                                                <span className="text-[10px] text-[rgba(253,251,245,0.4)]">📌</span>
-                                            )}
-                                        </div>
-
-                                        {/* Right: Metadata (Time + Peak) */}
-                                        <div className="flex flex-col items-end gap-0.5 text-right">
-                                            <div
-                                                className="text-[0.55rem] font-light"
-                                                style={{
-                                                    color: 'rgba(255, 255, 255, 0.50)',
-                                                    fontFamily: 'var(--font-ui)',
-                                                    lineHeight: '1.2',
-                                                }}
-                                            >
-                                                {formatLastPracticed(stats.lastPracticed)}
-                                            </div>
-                                            <div
-                                                className="text-[0.55rem] font-light"
-                                                style={{
-                                                    color: 'rgba(255, 255, 255, 0.45)',
-                                                    fontFamily: 'var(--font-ui)',
-                                                    lineHeight: '1.2',
-                                                }}
-                                            >
-                                                Peak: {Math.max(...(stats.last7Days || [0]))} min
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Tier 1: Hero Stats - 2.5rem, bold, golden glow */}
-                                    <div className="grid grid-cols-3 gap-4 mb-9 items-end">
-                                        <div className="text-center">
-                                            <div
-                                                className="font-black mb-1"
-                                                style={{
-                                                    fontSize: '2.4rem',
-                                                    lineHeight: '1',
-                                                    color: isLight ? 'rgba(140, 100, 50, 0.95)' : '#d4b87a',
-                                                    letterSpacing: '-0.04em',
-                                                    opacity: 0.9,
-                                                }}
-                                            >
-                                                {stats.totalSessions}
-                                            </div>
-                                            <div
-                                                className="text-[0.65rem] font-bold"
-                                                style={{
-                                                    color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.5)',
-                                                    fontFamily: 'var(--font-ui)',
-                                                    letterSpacing: '0.2em',
-                                                }}
-                                            >
-                                                SESSIONS
-                                            </div>
-                                        </div>
-                                        {/* MINUTES - THE HEARTBEAT - DRAMATICALLY BRIGHTER */}
-                                        <div className="text-center">
-                                            <div
-                                                className="font-black mb-1"
-                                                style={{
-                                                    fontSize: '2.8rem',
-                                                    lineHeight: '1',
-                                                    color: isLight ? 'rgba(120, 80, 40, 1)' : '#fff8e6',
-                                                    letterSpacing: '-0.05em',
-                                                }}
-                                            >
-                                                {stats.totalMinutes}
-                                            </div>
-                                            <div
-                                                className="text-[0.7rem] font-bold"
-                                                style={{
-                                                    color: isLight ? 'rgba(100, 70, 30, 0.95)' : 'rgba(255, 248, 230, 0.95)',
-                                                    fontFamily: 'var(--font-ui)',
-                                                    letterSpacing: '0.15em',
-                                                    textShadow: isLight ? 'none' : '0 0 10px rgba(255, 235, 200, 0.4)',
-                                                }}
-                                            >
-                                                MINUTES
-                                            </div>
-                                        </div>
-                                        {/* HONOR - with micro-outline and 'Character' metadata */}
-                                        <div className="text-center">
-                                            <div
-                                                className="font-black mb-1"
-                                                style={{
-                                                    fontSize: '2.4rem',
-                                                    lineHeight: '1',
-                                                    color: isLight ? 'rgba(140, 100, 50, 0.9)' : '#c9a86e',
-                                                    letterSpacing: '-0.04em',
-                                                    opacity: 0.9,
-                                                }}
-                                            >
-                                                {stats.totalHonor}
-                                            </div>
-                                            <div
-                                                className="text-[0.65rem] font-bold"
-                                                style={{
-                                                    color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.5)',
-                                                    fontFamily: 'var(--font-ui)',
-                                                    letterSpacing: '0.2em',
-                                                }}
-                                            >
-                                                HONOR
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* MIDDLE: Curve - The Energetic River (Option 1: Magical Overlap) */}
-                                    <div className="relative px-5 -mt-6">
-                                        {/* Top fade mask - prevents curve glow from interfering with numbers */}
-                                        <div
-                                            className="absolute top-0 left-0 right-0 h-8 pointer-events-none"
-                                            style={{
-                                                background: 'linear-gradient(to bottom, rgba(10,10,18,0.85) 0%, rgba(10,10,18,0) 100%)',
-                                                zIndex: 10,
-                                            }}
-                                        />
-
-                                        {/* Semantic label - floats cleanly between numbers and curve */}
-                                        <div
-                                            className="text-[10px] font-bold mb-4 text-center -mt-5 relative font-mono"
-                                            style={{
-                                                color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.6)',
-                                                letterSpacing: '0.1em',
-                                                zIndex: 11,
-                                            }}
-                                        >
-                                            ⟨ PERFORMANCE.VECTOR ⟩
-                                        </div>
-                                        {/* Curve container - extends 16px beyond edges for continuous rhythm */}
-                                        <div className="relative h-[88px] w-full -mx-4 px-7 overflow-hidden">
-                                            <SevenDayTrendCurve last7Days={stats.last7Days || [0, 0, 0, 0, 0, 0, 0]} />
-                                        </div>
-                                    </div>
-
-                                    {/* LOWER: Timeline - The Stepping Stones */}
-                                    {/* Reordered: curve → PEAK → dots → DAYS PRACTICED → weekdays */}
-                                    <div className="px-5 pb-[18px] pt-[18px] border-t border-white/5">
-                                        {/* Intensity dots with PEAK label above */}
-                                        <div className="relative">
-                                            {/* Dots row */}
-                                            <div className="flex items-center justify-between px-2 relative">
-                                                {(() => {
-                                                    const days = stats.last7Days || [0, 0, 0, 0, 0, 0, 0];
-                                                    const maxMinutes = Math.max(...days);
-                                                    const peakIndex = days.indexOf(maxMinutes);
-
-                                                    return days.map((minutes, i) => {
-                                                        const isPeakDay = (i === peakIndex && maxMinutes > 0);
-
-                                                        // Base intensity
-                                                        const getIntensity = (min, isPeak) => {
-                                                            if (min === 0) return {
-                                                                bg: 'rgba(255,255,255,0.08)',
-                                                                glow: 'none',
-                                                                scale: 1
-                                                            };
-                                                            if (isPeak) return {
-                                                                // PEAK DAY: Dynamic halo pulse - matches curve apex
-                                                                bg: 'linear-gradient(135deg, rgba(255,220,130,1) 0%, rgba(255,240,180,1) 100%)',
-                                                                glow: `
-                                                                    0 0 6px rgba(255,220,150,0.95),
-                                                                    0 0 14px rgba(255,200,100,0.7),
-                                                                    0 0 20px rgba(255,180,80,0.3)
-                                                                `,
-                                                                scale: 1.5
-                                                            };
-                                                            if (min < 5) return {
-                                                                bg: 'rgba(253,220,145,0.25)',
-                                                                glow: '0 0 4px rgba(253,220,145,0.2)',
-                                                                scale: 1
-                                                            };
-                                                            if (min < 15) return {
-                                                                bg: 'rgba(253,220,145,0.45)',
-                                                                glow: '0 0 5px rgba(253,220,145,0.3)',
-                                                                scale: 1
-                                                            };
-                                                            if (min < 30) return {
-                                                                bg: 'rgba(253,220,145,0.65)',
-                                                                glow: '0 0 6px rgba(253,220,145,0.4)',
-                                                                scale: 1.05
-                                                            };
-                                                            return {
-                                                                bg: 'rgba(253,220,145,0.85)',
-                                                                glow: '0 0 8px rgba(253,220,145,0.5)',
-                                                                scale: 1.1
-                                                            };
-                                                        };
-                                                        const intensity = getIntensity(minutes, isPeakDay);
-
-                                                        return (
-                                                            <div key={i} className="relative">
-                                                                {/* GOD RAY: Vertical beam - stops 6px above PEAK label */}
-                                                                {isPeakDay && (
-                                                                    <div
-                                                                        className="absolute bottom-full left-1/2 -translate-x-1/2 w-[1.5px] pointer-events-none"
-                                                                        style={{
-                                                                            height: '80px', // Shortened - stops above PEAK label
-                                                                            bottom: '26px', // Offset to clear PEAK label
-                                                                            background: 'linear-gradient(to top, rgba(180,130,60,0) 0%, rgba(200,140,70,0.25) 30%, rgba(220,160,90,0.45) 100%)',
-                                                                            boxShadow: '0 0 2px rgba(220,160,90,0.3)',
-                                                                            zIndex: 0,
-                                                                        }}
-                                                                    />
-                                                                )}
-
-                                                                {/* PEAK label - 10px above dot center */}
-                                                                {isPeakDay && (
-                                                                    <div
-                                                                        className="absolute left-1/2 -translate-x-1/2 text-[9px] text-amber-200 font-display opacity-80 whitespace-nowrap tracking-wider"
-                                                                        style={{ bottom: '18px' }}
-                                                                    >
-                                                                        ⭐ PEAK
-                                                                    </div>
-                                                                )}
-
-                                                                <div
-                                                                    className="w-2 h-2 rounded-full transition-all duration-300 relative z-10"
-                                                                    style={{
-                                                                        background: intensity.bg,
-                                                                        boxShadow: intensity.glow,
-                                                                        transform: `scale(${intensity.scale})`,
-                                                                        animation: isPeakDay ? 'peakPulse 2s ease-in-out infinite' : 'none',
-                                                                    }}
-                                                                    title={`${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}: ${minutes} min${isPeakDay ? ' ⭐ PEAK' : ''}`}
-                                                                />
-                                                            </div>
-                                                        );
-                                                    });
-                                                })()}
-                                            </div>
-
-                                            {/* DAYS PRACTICED label - 8px below dots */}
-                                            <div
-                                                className="text-[10px] font-bold text-center mt-2"
-                                                style={{
-                                                    color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.4)',
-                                                    fontFamily: 'var(--font-display)',
-                                                    letterSpacing: 'var(--tracking-mythic)',
-                                                }}
-                                            >
-                                                DAYS PRACTICED
-                                            </div>
-
-                                            {/* Weekday Labels - 6px below DAYS PRACTICED */}
-                                            <div className="flex justify-between px-2 mt-1.5 text-[9px] font-display tracking-widest text-[#6b5e43]">
-                                                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                                                    <div key={i} className="w-2 text-center">{day}</div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Debug info - absolute bottom right */}
-                                        <div className="absolute bottom-2 right-4 text-[9px] text-[#6b5e43] opacity-50 font-mono">
-                                            mock: {stats.sessions}
-                                        </div>
-                                    </div>
-                                </div>
+                            <div key={domain.id} className="w-full flex-shrink-0 px-0 py-2">
+                                <StatsCard domain={domain} stats={stats} isLight={isLight} />
                             </div>
                         );
-                    })}
-                </div>
+                    })}                </div>
             </div>
 
             {/* Dishonor Badge - only shows when ratio > 50% and ≥10 practices */}

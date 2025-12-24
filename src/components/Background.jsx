@@ -85,6 +85,20 @@ export function Background({ stage = 'flame' }) {
           }}
         />
 
+        {/* Relic marbling - ultra-faint large-scale veins (aged vellum) */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse 800px 600px at 30% 20%, rgba(180, 140, 90, 0.02) 0%, transparent 50%),
+              radial-gradient(ellipse 700px 900px at 70% 60%, rgba(160, 120, 80, 0.015) 0%, transparent 45%),
+              radial-gradient(ellipse 900px 700px at 50% 80%, rgba(140, 110, 75, 0.012) 0%, transparent 40%)
+            `,
+            opacity: 0.5,
+            transition: 'opacity 0.3s ease',
+          }}
+        />
+
         {/* Subtle stage-colored vignette - highly desaturated */}
         <div
           className="absolute inset-0"
