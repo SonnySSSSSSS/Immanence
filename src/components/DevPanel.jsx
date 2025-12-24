@@ -14,6 +14,7 @@ import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../u
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
+import { useDisplayModeStore } from '../state/displayModeStore';
 import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 
 // Available stages and paths for dropdowns
@@ -51,6 +52,10 @@ export function DevPanel({
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
     const lightModeRingType = useSettingsStore(s => s.lightModeRingType);
     const setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
+
+    // Color scheme detection
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -129,16 +134,25 @@ export function DevPanel({
             />
 
             {/* Panel */}
-            <div className="relative ml-auto w-[400px] h-full bg-[#0a0a12] border-l border-white/10 overflow-y-auto">
+            <div className="relative ml-auto w-[400px] h-full border-l overflow-y-auto" style={{
+                background: isLight ? '#F5F0E6' : '#0a0a12',
+                borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.1)'
+            }}>
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-[#0a0a12] border-b border-white/10 px-4 py-3 flex items-center justify-between">
+                <div className="sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between" style={{
+                    background: isLight ? '#F5F0E6' : '#0a0a12',
+                    borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.1)'
+                }}>
                     <div className="flex items-center gap-2">
                         <span className="text-lg">🔧</span>
-                        <span className="text-sm font-semibold text-white/90 tracking-wide">DEVELOPER PANEL</span>
+                        <span className="text-sm font-semibold tracking-wide" style={{
+                            color: isLight ? 'rgba(45, 40, 35, 0.95)' : 'rgba(255, 255, 255, 0.9)'
+                        }}>DEVELOPER PANEL</span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)' }}
                     >
                         ✕
                     </button>
@@ -154,6 +168,7 @@ export function DevPanel({
                         title="Avatar Preview"
                         expanded={expandedSections.avatar}
                         onToggle={() => toggleSection('avatar')}
+                        isLight={isLight}
                     >
                         {/* Avatar display */}
                         <div className="flex justify-center mb-4 scale-50 origin-center -my-16">
@@ -167,13 +182,13 @@ export function DevPanel({
                         </div>
 
                         {/* Variation info */}
-                        <div className="text-xs text-center text-white/40 mb-4">
+                        <div className="text-xs text-center mb-4" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)' }}>
                             Click avatar to cycle through variations
                         </div>
 
                         {/* Stage selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-sm text-white w-16 font-medium">Stage</label>
+                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(45, 40, 35, 0.9)' : 'white' }}>Stage</label>
                             <select
                                 value={avatarStage}
                                 onChange={(e) => setAvatarStage(e.target.value)}
@@ -326,6 +341,7 @@ export function DevPanel({
                         title="Lunar Progress"
                         expanded={expandedSections.lunar}
                         onToggle={() => toggleSection('lunar')}
+                        isLight={isLight}
                     >
                         {/* Stats */}
                         <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -411,6 +427,7 @@ export function DevPanel({
                         title="Path Ceremony"
                         expanded={expandedSections.path}
                         onToggle={() => toggleSection('path')}
+                        isLight={isLight}
                     >
                         {/* Stats */}
                         <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -458,6 +475,7 @@ export function DevPanel({
                         onToggle={() => toggleSection('attention')}
                         armed={armed}
                         handleDestructive={handleDestructive}
+                        isLight={isLight}
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -466,6 +484,7 @@ export function DevPanel({
                     <TrackingHubSection
                         expanded={expandedSections.tracking}
                         onToggle={() => toggleSection('tracking')}
+                        isLight={isLight}
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -475,6 +494,7 @@ export function DevPanel({
                         title="LLM Service (Gemini)"
                         expanded={expandedSections.llm}
                         onToggle={() => toggleSection('llm')}
+                        isLight={isLight}
                     >
                         <LLMTestPanel />
                     </Section>
@@ -486,6 +506,7 @@ export function DevPanel({
                         title="Design & Diagnostic"
                         expanded={expandedSections.design || false}
                         onToggle={() => toggleSection('design')}
+                        isLight={isLight}
                     >
                         <div className="flex items-center justify-between mb-4 bg-white/5 rounded-lg px-3 py-2">
                             <div className="flex flex-col">
@@ -511,6 +532,7 @@ export function DevPanel({
                         title="Data Management"
                         expanded={expandedSections.data}
                         onToggle={() => toggleSection('data')}
+                        isLight={isLight}
                     >
                         <div className="grid grid-cols-2 gap-2 mb-3">
                             <DevButton onClick={openInspector}>Inspect Stores</DevButton>
@@ -563,7 +585,7 @@ export function DevPanel({
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function AttentionPathSection({ expanded, onToggle, armed, handleDestructive }) {
+function AttentionPathSection({ expanded, onToggle, armed, handleDestructive, isLight = false }) {
     const weeklyFeatures = useAttentionStore(s => s.weeklyFeatures);
     const windows = useAttentionStore(s => s.windows);
     const getValidWeekCount = useAttentionStore(s => s.getValidWeekCount);
@@ -604,6 +626,7 @@ function AttentionPathSection({ expanded, onToggle, armed, handleDestructive }) 
             title="Attention Path (Ekagrata/Sahaja/Vigilance)"
             expanded={expanded}
             onToggle={onToggle}
+            isLight={isLight}
         >
             {/* Stats */}
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -701,7 +724,7 @@ function AttentionPathSection({ expanded, onToggle, armed, handleDestructive }) 
     );
 }
 
-function TrackingHubSection({ expanded, onToggle }) {
+function TrackingHubSection({ expanded, onToggle, isLight = false }) {
     const { sessions } = useProgressStore();
     const [selectedPattern, setSelectedPattern] = useState('dedicated');
 
@@ -732,6 +755,7 @@ function TrackingHubSection({ expanded, onToggle }) {
             title="TrackingHub Mock Data"
             expanded={expanded}
             onToggle={onToggle}
+            isLight={isLight}
         >
             {/* Session counts */}
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -788,15 +812,20 @@ function TrackingHubSection({ expanded, onToggle }) {
     );
 }
 
-function Section({ title, expanded, onToggle, children }) {
+function Section({ title, expanded, onToggle, children, isLight = false }) {
     return (
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl overflow-hidden">
+        <div className="border rounded-xl overflow-hidden" style={{
+            background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+            borderColor: isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(255, 255, 255, 0.1)'
+        }}>
             <button
                 onClick={onToggle}
                 className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
             >
-                <span className="text-sm text-white/80 font-medium">{title}</span>
-                <span className="text-white/40">{expanded ? '▼' : '▶'}</span>
+                <span className="text-sm font-medium" style={{
+                    color: isLight ? 'rgba(45, 40, 35, 0.85)' : 'rgba(255, 255, 255, 0.8)'
+                }}>{title}</span>
+                <span style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)' }}>{expanded ? '▼' : '▶'}</span>
             </button>
             {expanded && (
                 <div className="px-4 pb-4 pt-2 border-t border-white/5">
