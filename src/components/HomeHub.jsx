@@ -122,6 +122,18 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
 
       {/* ──────────────────────────────────────────────────────────────────────
+          STAGE TITLE - Ancient Manuscript Incipit
+          ────────────────────────────────────────────────────────────────────── */}
+      <div className="w-full flex flex-col items-center pt-4 pb-2">
+        <StageTitle
+          stage={currentStage}
+          path={previewPath}
+          attention={previewAttention}
+          showWelcome={false}
+        />
+      </div>
+
+      {/* ──────────────────────────────────────────────────────────────────────
           AVATAR & HUB INSTRUMENT - Full-Bleed Altar (Cosmic Zone)
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full flex flex-col items-center gap-4 py-8 transition-all duration-500 overflow-visible">
@@ -143,19 +155,19 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           />
 
-          {/* Diagonal Grounding Shadow - Cast by central instrument */}
+          {/* Diagonal Grounding Shadow - Cast by central instrument (Radial Lighting) */}
           <div
             className="absolute pointer-events-none"
             style={{
               width: '180%',
               height: '40px',
               background: isLight
-                ? 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.03) 0%, transparent 70%)'
+                ? 'radial-gradient(ellipse at center, rgba(120, 90, 60, 0.15) 0%, transparent 70%)'
                 : 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, transparent 75%)',
               top: '65%',
               left: '55%',
               transform: 'translate(-50%, -50%) rotate(-15deg)',
-              filter: 'blur(40px)',
+              filter: isLight ? 'blur(60px)' : 'blur(40px)',
               zIndex: -2,
             }}
           />
@@ -173,7 +185,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           </div>
         </div>
 
-        {/* STATUS & CONTROL INSTRUMENT - Agency | Identity | Continuity */}
+        {/* STATUS & CONTROL INSTRUMENT - Agency | Continuity (No StageTitle - moved to top) */}
         <HubStagePanel
           stage={currentStage}
           path={previewPath}
@@ -183,6 +195,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           streakInfo={streakInfo}
           onOpenHardwareGuide={onOpenHardwareGuide}
           onOpenHonorLog={() => setShowHonorModal(true)}
+          hideStageTitle={true}
         />
       </div>
 

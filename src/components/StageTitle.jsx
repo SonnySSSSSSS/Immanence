@@ -147,7 +147,8 @@ const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention 
         boxShadow: isLight
           ? `
             0 0 0 0.5px #AF8B2C,
-            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+            inset -1px -1px 0 0.5px rgba(255, 250, 235, 0.8),
+            inset 1px 1px 0 0.5px rgba(101, 67, 33, 0.6),
             0 3px 16px rgba(100,80,50,0.08),
             inset 0 1px 0 rgba(255,255,255,0.4)
           `

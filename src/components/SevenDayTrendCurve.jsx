@@ -227,7 +227,7 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
                 }
             />
 
-            {/* Curve segments with intensity-based heat-map colors */}
+            {/* Curve segments with intensity-based heat-map colors + bioluminescent glow */}
             {segments.map((seg, i) => (
                 <path
                     key={i}
@@ -238,7 +238,7 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     opacity={isFirefox ? seg.opacity : undefined}
-                    style={!isFirefox ? { opacity: seg.opacity } : undefined}
+                    style={!isFirefox ? { opacity: seg.opacity, filter: 'drop-shadow(0 0 1px rgba(74, 222, 128, 0.4))' } : undefined}
                     filter={seg.isPeak && !isFirefox ? "url(#peakGlow)" : undefined}
                 />
             ))}
@@ -268,19 +268,25 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
                 </>
             )}
 
-            {/* "Now" marker at right edge - shows direction */}
+            {/* "Now" marker at right edge - shows direction (with breathing animation) */}
             <circle
                 cx={width}
                 cy={latestY}
-                r={1.8}
+                r={2.2}
                 fill="rgba(74, 222, 128, 0.5)"
                 filter={!isFirefox ? "url(#softGlow)" : undefined}
+                style={{
+                    animation: 'breathe 10s ease-in-out infinite'
+                }}
             />
             <circle
                 cx={width}
                 cy={latestY}
-                r={0.6}
-                fill="rgba(255, 255, 255, 0.9)"
+                r={0.8}
+                fill="rgba(255, 255, 255, 0.95)"
+                style={{
+                    animation: 'breathe 10s ease-in-out infinite'
+                }}
             />
         </svg>
     );

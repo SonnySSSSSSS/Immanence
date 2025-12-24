@@ -115,6 +115,24 @@ export function Background({ stage = 'flame' }) {
             background: 'linear-gradient(90deg, rgba(200, 185, 160, 0.05) 0%, transparent 15%, transparent 85%, rgba(200, 185, 160, 0.05) 100%)',
           }}
         />
+
+        {/* Sacred geometry watermark - Flower of Life pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-[0.03]" style={{ mixBlendMode: 'multiply' }}>
+          <defs>
+            <pattern id="flower-of-life" x="0" y="0" width="400" height="400" patternUnits="userSpaceOnUse">
+              {/* Central circle */}
+              <circle cx="200" cy="200" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+              {/* Six outer circles forming the flower */}
+              <circle cx="260" cy="200" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+              <circle cx="230" cy="148" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+              <circle cx="170" cy="148" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+              <circle cx="140" cy="200" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+              <circle cx="170" cy="252" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+              <circle cx="230" cy="252" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#flower-of-life)" />
+        </svg>
       </div>
     );
   }

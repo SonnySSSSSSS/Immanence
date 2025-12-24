@@ -16,6 +16,7 @@ export function HubStagePanel({
     streakInfo,
     onOpenHardwareGuide,
     onOpenHonorLog,
+    hideStageTitle = false,
 }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -33,14 +34,16 @@ export function HubStagePanel({
             {/* ══════════════════════════════════════════════════════════════════
                 STAGE NAME — Shared ceremonial inscription
                ══════════════════════════════════════════════════════════════════ */}
-            <div className="-mt-16 mb-2 relative overflow-visible">
-                <StageTitle
-                    stage={stage}
-                    path={path}
-                    attention={attention}
-                    showWelcome={false}
-                />
-            </div>
+            {!hideStageTitle && (
+                <div className="-mt-16 mb-2 relative overflow-visible">
+                    <StageTitle
+                        stage={stage}
+                        path={path}
+                        attention={attention}
+                        showWelcome={false}
+                    />
+                </div>
+            )}
 
             {/* ══════════════════════════════════════════════════════════════════
                 THE STRUCTURAL DIVIDE — Transition from Identity to Interaction

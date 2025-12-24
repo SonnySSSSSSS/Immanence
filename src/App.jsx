@@ -304,12 +304,12 @@ function App() {
               className="sticky top-0 z-50 w-full flex items-center justify-between px-6 py-3 transition-colors duration-500"
               style={{
                 background: isLight
-                  ? 'linear-gradient(180deg, rgba(245,240,230,0.95) 0%, rgba(245,240,230,0.8) 60%, rgba(245,240,230,0.4) 100%)'
+                  ? 'linear-gradient(180deg, rgba(200,185,165,0.95) 0%, rgba(210,195,175,0.85) 60%, rgba(220,205,185,0.5) 100%)'
                   : 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
                 borderBottom: isLight
-                  ? '1px solid rgba(180,155,110,0.15)'
+                  ? '1px solid rgba(140,120,90,0.25)'
                   : '1px solid rgba(255,255,255,0.05)',
               }}
             >
@@ -366,7 +366,7 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.14.56
+                  v3.14.61
                 </div>
                 {!isHub && (
                   <button
