@@ -76,7 +76,7 @@ export function HubStagePanel({
                 ACTIONS ROW — Compact, horizontal, pill-style with shared atmosphere
                ══════════════════════════════════════════════════════════════════ */}
             <div
-                className="relative flex items-center justify-center gap-3 flex-wrap py-2 px-6"
+                className="relative flex items-center justify-center gap-2 flex-wrap py-2 px-6"
                 style={{
                     overflow: 'visible'
                 }}
@@ -94,9 +94,9 @@ export function HubStagePanel({
                         top: '50%',
                         transform: 'translate(-50%, -50%)',
                         background: isLight
-                            ? 'radial-gradient(ellipse at center, rgba(74, 222, 128, 0.12) 0%, transparent 70%)'
-                            : 'radial-gradient(ellipse at center, rgba(74, 222, 128, 0.2) 0%, transparent 75%)',
-                        filter: 'blur(70px)',
+                            ? 'radial-gradient(ellipse at center, rgba(74, 222, 128, 0.04) 0%, transparent 70%)'
+                            : 'radial-gradient(ellipse at center, rgba(74, 222, 128, 0.03) 0%, transparent 75%)',
+                        filter: 'blur(80px)',
                         zIndex: -1,
                     }}
                 />

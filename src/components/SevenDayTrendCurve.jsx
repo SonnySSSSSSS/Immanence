@@ -249,21 +249,21 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
                     <circle
                         cx={peakPoint.x}
                         cy={peakPoint.y}
-                        r={5}
-                        fill="rgba(255, 210, 120, 0.1)"
+                        r={4}
+                        fill="rgba(74, 222, 128, 0.15)"
                         filter={!isFirefox ? "url(#peakGlow)" : undefined}
                     />
                     <circle
                         cx={peakPoint.x}
                         cy={peakPoint.y}
-                        r={2}
-                        fill="rgba(255, 220, 150, 0.75)"
+                        r={1.5}
+                        fill="rgba(74, 222, 128, 0.8)"
                     />
                     <circle
                         cx={peakPoint.x}
                         cy={peakPoint.y}
-                        r={0.8}
-                        fill="rgba(255, 250, 220, 0.95)"
+                        r={0.6}
+                        fill="rgba(255, 255, 255, 0.95)"
                     />
                 </>
             )}
@@ -272,15 +272,15 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
             <circle
                 cx={width}
                 cy={latestY}
-                r={2}
-                fill="rgba(255, 240, 200, 0.6)"
+                r={1.8}
+                fill="rgba(74, 222, 128, 0.5)"
                 filter={!isFirefox ? "url(#softGlow)" : undefined}
             />
             <circle
                 cx={width}
                 cy={latestY}
-                r={0.7}
-                fill="rgba(255, 250, 230, 0.9)"
+                r={0.6}
+                fill="rgba(255, 255, 255, 0.9)"
             />
         </svg>
     );

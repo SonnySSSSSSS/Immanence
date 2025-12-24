@@ -348,17 +348,38 @@ export function TrackingHub() {
                                 <div
                                     className="relative rounded-3xl overflow-hidden"
                                     style={isLight ? {
-                                        background: 'linear-gradient(180deg, rgba(255, 252, 245, 0.92) 0%, rgba(255, 250, 240, 0.95) 100%)',
-                                        backdropFilter: 'blur(22px)',
-                                        WebkitBackdropFilter: 'blur(22px)',
-                                        border: '1px solid rgba(180, 155, 110, 0.25)',
-                                        boxShadow: '0 4px 24px rgba(100, 80, 50, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                                        border: '2px solid transparent',
+                                        backgroundImage: `
+                                          linear-gradient(rgba(255, 252, 245, 0.82), rgba(255, 252, 245, 0.82)),
+                                          linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+                                        `,
+                                        backgroundOrigin: 'padding-box, border-box',
+                                        backgroundClip: 'padding-box, border-box',
+                                        backdropFilter: 'blur(16px)',
+                                        WebkitBackdropFilter: 'blur(16px)',
+                                        boxShadow: `
+                                          0 0 0 0.5px #AF8B2C,
+                                          inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+                                          0 4px 24px rgba(100, 80, 50, 0.08),
+                                          inset 0 1px 0 rgba(255, 255, 255, 0.6)
+                                        `
                                     } : {
                                         ...plateauMaterialClear,
+                                        border: '2px solid transparent',
+                                        backgroundImage: `
+                                          linear-gradient(rgba(10, 12, 15, 0.85), rgba(10, 12, 15, 0.85)),
+                                          linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+                                        `,
+                                        backgroundOrigin: 'padding-box, border-box',
+                                        backgroundClip: 'padding-box, border-box',
+                                        backdropFilter: 'blur(16px)',
+                                        WebkitBackdropFilter: 'blur(16px)',
                                         boxShadow: `
-                                            ${plateauMaterialClear.boxShadow || ''},
-                                            inset 0 0 20px rgba(253, 220, 145, 0.08),
-                                            inset 0 1px 0 rgba(253, 220, 145, 0.1)
+                                          ${plateauMaterialClear.boxShadow || ''},
+                                          0 0 0 0.5px #AF8B2C,
+                                          inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
+                                          inset 0 0 20px rgba(253, 220, 145, 0.06),
+                                          inset 0 1px 0 rgba(253, 220, 145, 0.08)
                                         `
                                     }}
                                 >

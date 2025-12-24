@@ -12,16 +12,16 @@ import { useTheme } from "../context/ThemeContext.jsx";
 import MoonOrbit from "./MoonOrbit.jsx";
 import { LightModeInstrumentRing } from "./LightModeInstrumentRing.jsx";
 import { useLunarStore } from "../state/lunarStore";
+import { useDisplayModeStore } from "../state/displayModeStore";
+import { useSettingsStore } from "../state/settingsStore";
 import "./Avatar.css";
 
 // Local fallback until ../state/mandalaStore.js exists
-// Replace this with a real import when mandalaStore.js is available:
-// import { getMandalaState } from "../state/mandalaStore.js";
 function getMandalaState() {
   return {
     avgAccuracy: 0,
     weeklyConsistency: 0,
-    weeklyPracticeLog: [true, true, false, true, false, true, false], // Example: Mon-Sun practice pattern
+    weeklyPracticeLog: [true, true, false, true, false, true, false],
     phase: "foundation",
     transient: {
       focus: 0,
@@ -31,9 +31,7 @@ function getMandalaState() {
   };
 }
 
-//
-// ─── BREATHING AURA (for Practice mode) ────────────────────────────────────────
-//
+// ─── BREATHING AURA ────────────────────────────────────────
 function BreathingAura({ breathPattern }) {
   const {
     inhale = 4,
@@ -50,7 +48,6 @@ function BreathingAura({ breathPattern }) {
 
   useEffect(() => {
     if (!total || total <= 0) return;
-
     const cycleMs = total * 1000;
     const start = performance.now();
     let frameId = null;
@@ -80,24 +77,16 @@ function BreathingAura({ breathPattern }) {
   } else if (progress < tHoldTop) {
     scale = maxScale;
   } else if (progress < tExhale) {
-    scale =
-      maxScale -
-      (maxScale - minScale) * ((progress - tHoldTop) / (tExhale - tHoldTop));
+    scale = maxScale - (maxScale - minScale) * ((progress - tHoldTop) / (tExhale - tHoldTop));
   } else {
     scale = minScale;
   }
 
-  // Read colors directly from theme context (bypasses CSS variable issues)
   const theme = useTheme();
-
-  const { primary, secondary, muted } = theme.accent;
-
-  // Create gradient using pre-computed alpha variants
   const gradient = 'radial-gradient(circle, var(--accent-80) 0%, var(--accent-40) 32%, var(--accent-20) 58%, rgba(248,250,252,0.02) 75%, transparent 100%)';
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {/* Main breathing glow - uses stage color from CSS variables */}
       <div
         className="rounded-full"
         style={{
@@ -110,15 +99,12 @@ function BreathingAura({ breathPattern }) {
           mixBlendMode: "screen",
         }}
       />
-
-      {/* Gold accent trace for 3D depth */}
       <div
         className="rounded-full absolute"
         style={{
           width: "80%",
           height: "80%",
-          background:
-            `radial-gradient(circle at 30% 30%, rgba(252, 211, 77, 0.3) 0%, transparent 40%)`,
+          background: `radial-gradient(circle at 30% 30%, rgba(252, 211, 77, 0.3) 0%, transparent 40%)`,
           filter: "blur(8px)",
           transform: `scale(${scale})`,
           transition: "transform 80ms linear",
@@ -129,20 +115,12 @@ function BreathingAura({ breathPattern }) {
   );
 }
 
-//
-// ─── CONSISTENCY AURA (pulsing outer glow based on weekly consistency) ─────────
-//
+// ─── CONSISTENCY AURA ─────────────────────────────────────────
 function ConsistencyAura({ weeklyConsistency = 0 }) {
-  // weeklyConsistency is 0-7 (days practiced this week)
-  // Map to opacity: 0 days = 0.15, 7 days = 0.5
   const minOpacity = 0.15;
   const maxOpacity = 0.5;
   const opacity = minOpacity + (maxOpacity - minOpacity) * (weeklyConsistency / 7);
-
-  // Pulse intensity also scales with consistency
   const pulseScale = 0.05 + (0.1 * (weeklyConsistency / 7));
-
-  // Center opacity reduced by 30% to not obscure avatar, outer glow preserved
   const centerOpacity = opacity * 0.7;
 
   return (
@@ -155,7 +133,6 @@ function ConsistencyAura({ weeklyConsistency = 0 }) {
           background: `radial-gradient(circle, rgba(252,211,77,${centerOpacity}) 0%, rgba(253,224,71,${centerOpacity * 0.6}) 35%, rgba(253,224,71,${opacity * 0.6}) 50%, transparent 70%)`,
           filter: "blur(12px)",
           mixBlendMode: "screen",
-          // Custom CSS property for animation intensity
           "--pulse-scale": pulseScale,
         }}
       />
@@ -163,29 +140,18 @@ function ConsistencyAura({ weeklyConsistency = 0 }) {
   );
 }
 
-//
-// ─── WEEKLY BADGES (7 dots around avatar showing practice days) ───────────────
-//
-
-
-//
-// ─── RUNE RING LAYER (rotating outer glyph circle) ────────────────────────────
-//
+// ─── RUNE RING LAYER ────────────────────────────────────────────
 const STAGE_RUNE_COLORS = {
-  seedling: "rgba(75, 192, 192, 0.6)", // cyan
-  ember: "rgba(255, 140, 0, 0.6)", // orange
-  flame: "rgba(255, 247, 216, 0.8)", // warm white for contrast
-  beacon: "rgba(100, 200, 255, 0.6)", // bright cyan
-  stellar: "rgba(200, 150, 255, 0.6)", // purple
+  seedling: "rgba(75, 192, 192, 0.6)",
+  ember: "rgba(255, 140, 0, 0.6)",
+  flame: "rgba(255, 247, 216, 0.8)",
+  beacon: "rgba(100, 200, 255, 0.6)",
+  stellar: "rgba(200, 150, 255, 0.6)",
 };
-
-import { useDisplayModeStore } from "../state/displayModeStore.js";
-import { useSettingsStore } from "../state/settingsStore.js";
 
 function RuneRingLayer({ stage = "flame", isPracticing = false }) {
   const isLight = useDisplayModeStore((state) => state.colorScheme === "light");
   const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
-
   const ringType = useSettingsStore(s => s.lightModeRingType);
   const isAstrolabe = ringType === 'astrolabe';
 
@@ -199,7 +165,6 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
             animationPlayState: isPracticing ? 'paused' : 'running'
           }}
         >
-          {/* Asset-based Ring Select */}
           <img
             src={`${import.meta.env.BASE_URL}sigils/${isAstrolabe ? 'ring-structure.webp' : 'light-rune-ring.png'}`}
             alt="Instrument ring"
@@ -208,19 +173,15 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
               width: "100%",
               height: "100%",
               opacity: isPracticing ? 0.95 : 1,
-              // Apply aging filters only to the historical astrolabe
               filter: isAstrolabe
-                ? `sepia(0.22) contrast(1.05) brightness(0.96) drop-shadow(0 2px 6px var(--light-shadow-tint))`
-                : `drop-shadow(0 2px 8px var(--light-shadow-tint))`,
+                ? `sepia(0.22) contrast(1.05) brightness(0.96) drop-shadow(0 2px 6px var(--light-shadow-tint)) drop-shadow(0 0 2px #D4AF37) drop-shadow(0 0 4px #B8860B)`
+                : `drop-shadow(0 2px 8px var(--light-shadow-tint)) drop-shadow(0 0 2px #D4AF37) drop-shadow(0 0 4px #B8860B)`,
               transition: 'transform 0.5s ease, opacity 0.5s ease',
-              // Use robust centering + specific nudge for ring placement (down 1px, left 1px)
               transform: isPracticing
                 ? `translate(-50.35%, ${isAstrolabe ? '-49.2%' : '-48.0%'}) ${isAstrolabe ? 'scale(1.15)' : 'scale(1.08)'}`
                 : `translate(-50.35%, ${isAstrolabe ? '-49.2%' : '-48.0%'}) ${isAstrolabe ? 'scale(1.1)' : 'scale(1.05)'}`,
             }}
           />
-
-          {/* ring-inner-lip: Only seat the jewel if it's the astrolabe instrument */}
           {isAstrolabe && (
             <img
               src={`${import.meta.env.BASE_URL}sigils/ring-inner-lip.webp`}
@@ -242,23 +203,19 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {/* Dark backdrop for Flame stage only - improves rune contrast (dark mode only) */}
       {stage === "flame" && (
         <div
           className="absolute w-[88%] h-[88%]"
           style={{
             borderRadius: "9999px",
-            background:
-              "radial-gradient(circle, transparent 45%, #2b2418 55%, #4a3a1d 100%)",
+            background: "radial-gradient(circle, transparent 45%, #2b2418 55%, #4a3a1d 100%)",
           }}
         />
       )}
-
-      {/* Ambient Occlusion: Inner rim definition (Phase 2) */}
       <div
         className="absolute pointer-events-none"
         style={{
-          width: "48.5%", // Matches core opening
+          width: "48.5%",
           height: "48.5%",
           borderRadius: "50%",
           boxShadow: isLight
@@ -267,14 +224,11 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
           zIndex: 10
         }}
       />
-
-      {/* Radial shadow for depth - all stages */}
       <div
         className="absolute w-[88%] h-[88%]"
         style={{
           borderRadius: "9999px",
-          background:
-            "radial-gradient(circle, transparent 60%, rgba(0,0,0,0.15) 70%, transparent 80%)",
+          background: "radial-gradient(circle, transparent 60%, rgba(0,0,0,0.15) 70%, transparent 80%)",
         }}
       />
 
@@ -282,20 +236,16 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
         className="dark-ring-rotate w-[88%] h-[88%] relative flex items-center justify-center"
         style={{ animationPlayState: isPracticing ? 'paused' : 'running' }}
       >
-        {/* Hairline trace behind the image */}
         <div className="absolute inset-0 hairline-ring opacity-40 scale-[1.005]" />
-
         <img
           src={`${import.meta.env.BASE_URL}sigils/${stage === 'flame' ? 'rune-ring2.png' : 'rune-ring.png'}`}
           alt="Rune ring"
           className="w-full h-full object-contain"
           style={{
-            filter: `brightness(1.05) saturate(1.1) drop-shadow(0 0 2px ${glowColor})`,
+            filter: `brightness(1.05) saturate(1.1) drop-shadow(0 0 2px ${glowColor}) drop-shadow(0 0 3px #C9A942) drop-shadow(0 0 4px #A67C00)`,
             opacity: 0.8,
           }}
         />
-
-        {/* Tiny Labels around the ring */}
         <div className="absolute inset-0 pointer-events-none">
           {['SOMA', 'PRANA', 'DHYANA', 'DRISHTI'].map((label, i) => (
             <div
@@ -317,26 +267,9 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
   );
 }
 
-//
-// ─── STAGE SIGILS ──────────────────────────────────────────────────────────────
-//
-const STAGE_SIGILS = {
-  seedling: `${import.meta.env.BASE_URL}avatars/seedling-core.png`,
-  ember: `${import.meta.env.BASE_URL}avatars/ember-core.png`,
-  flame: `${import.meta.env.BASE_URL}avatars/flame-core.png`,
-  beacon: `${import.meta.env.BASE_URL}avatars/beacon-core.png`,
-  stellar: `${import.meta.env.BASE_URL}avatars/stellar-core.png`,
-};
-
-//
-// ─── STATIC SIGIL CORE (stage-aware + path-aware) ────────────────────────────────
-//
+// ─── STATIC SIGIL CORE ───────────────────────────────────────────
 function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false, isLight = false }) {
-  // Determine image source based on stage, path, attention, and showCore flag
   const stageLower = stage.toLowerCase();
-  const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
-
-  // Get stage-specific color (hardcoded to avoid import issues)
   const stageColors = {
     'seedling': '#4ade80',
     'ember': '#f97316',
@@ -348,50 +281,32 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
 
   let src;
   if (showCore || !path) {
-    // Use core image
     src = `${import.meta.env.BASE_URL}avatars/${stageLower}-core.png`;
   } else if (attention && attention !== 'none') {
-    // Use attention-specific image with variation
     const pathLower = path.toLowerCase();
     const attentionLower = attention.toLowerCase();
     const variationSuffix = `_0000${variationIndex + 1}_`;
-
-    // Try with variation suffix first
     src = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
   } else {
-    // Fallback to old Stage-Path.png format (when attention is null, empty, or 'none')
+    const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
     const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1).toLowerCase();
     src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
   }
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center">
-      {/* Subtle whirlpool effect behind the avatar image */}
       <div
         className="absolute pointer-events-none"
         style={{
           width: "45%",
           height: "45%",
           borderRadius: "9999px",
-          background: `
-            conic-gradient(
-              from 0deg,
-              transparent 0%,
-              var(--accent-10) 15%,
-              transparent 30%,
-              var(--accent-10) 45%,
-              transparent 60%,
-              var(--accent-10) 75%,
-              transparent 90%
-            )
-          `,
+          background: `conic-gradient(from 0deg, transparent 0%, var(--accent-10) 15%, transparent 30%, var(--accent-10) 45%, transparent 60%, var(--accent-10) 75%, transparent 90%)`,
           animation: "whirlpool 90s linear infinite",
           animationPlayState: isPracticing ? 'paused' : 'running',
           opacity: 0.5,
         }}
       />
-
-      {/* Core Backdrop: Stark black for Dark Mode, soft ink-glow for Light Mode */}
       <div
         className="absolute pointer-events-none"
         style={{
@@ -404,58 +319,47 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
           opacity: isLight ? 0.7 : 1,
         }}
       />
-
-      {/* Stage Avatar Core Image Stage */}
       <div
         className={`relative pointer-events-none select-none ${isLight ? 'light-orb-rotate' : 'dark-orb-rotate'}`}
         style={{
-          width: "44%", // Scaled to ~95% of the 46.5-48% inner ring opening
+          width: "44%",
           height: "44%",
           borderRadius: "9999px",
           overflow: "hidden",
           animationPlayState: isPracticing ? 'paused' : 'running',
-          // Ambient Occlusion: Tight black glow to "lock" the orb into geometry
           boxShadow: "0 0 5px 2px rgba(0,0,0,0.6)",
         }}
       >
         <img
           src={src}
-          alt={`${stage} ${path || 'core'} ${attention || ''} avatar`}
+          alt={`${stage} avatar`}
           className="absolute top-1/2 left-1/2"
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
             objectPosition: "50% 50%",
-            // Perfect centering for core
             transform: "translate(-50%, -50%)",
-            // Vignette Mask: Allows edges to "sink" into ring shadow
             maskImage: "radial-gradient(circle, black 88%, transparent 100%)",
             WebkitMaskImage: "radial-gradient(circle, black 88%, transparent 100%)",
           }}
         />
       </div>
-
-      {/* Variation indicator - asterisk/sparkle when variations available */}
-      {
-        hasVariations && (
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              top: "8%",
-              right: "8%",
-              fontSize: "1.5rem",
-              color: accentColor,
-              textShadow: `0 0 8px ${accentColor}, 0 0 16px ${accentColor}`,
-              animation: "pulse 2s ease-in-out infinite",
-            }}
-          >
-            ✦
-          </div>
-        )
-      }
-
-      {/* Colored glow ring between avatar and black backdrop */}
+      {hasVariations && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: "8%",
+            right: "8%",
+            fontSize: "1.5rem",
+            color: accentColor,
+            textShadow: `0 0 8px ${accentColor}, 0 0 16px ${accentColor}`,
+            animation: "pulse 2s ease-in-out infinite",
+          }}
+        >
+          ✦
+        </div>
+      )}
       <div
         className="absolute pointer-events-none"
         style={{
@@ -467,13 +371,11 @@ function StaticSigilCore({ stage = "flame", path = null, showCore = true, attent
           filter: "blur(8px)",
         }}
       />
-    </div >
+    </div>
   );
 }
 
-//
-// ─── LABELS ────────────────────────────────────────────────────────────────────
-//
+// ─── LABELS ───────────────────────────────────────────────────
 const LABELS = {
   hub: "Center",
   practice: "Practice",
@@ -482,23 +384,18 @@ const LABELS = {
   navigation: "Navigation",
 };
 
-//
-// ─── STAGE GLOW COLORS ─────────────────────────────────────────────────────────
-//
+// ─── STAGE GLOW COLORS ────────────────────────────────────────
 const STAGE_GLOW_COLORS = {
-  seedling: { h: 180, s: 70, l: 50 },  // cyan
-  ember: { h: 25, s: 85, l: 55 },      // orange
-  flame: { h: 42, s: 95, l: 58 },      // warm amber-gold
-  beacon: { h: 200, s: 85, l: 60 },    // bright cyan
-  stellar: { h: 270, s: 80, l: 65 },   // violet
+  seedling: { h: 180, s: 70, l: 50 },
+  ember: { h: 25, s: 85, l: 55 },
+  flame: { h: 42, s: 95, l: 58 },
+  beacon: { h: 200, s: 85, l: 60 },
+  stellar: { h: 270, s: 80, l: 65 },
 };
 
-//
-// ─── AVATAR CONTAINER ──────────────────────────────────────────────────────────
-//
+// ─── AVATAR CONTAINER ─────────────────────────────────────────
 function AvatarContainer({
   mode,
-  label,
   breathPattern,
   stage = "flame",
   path = null,
@@ -506,8 +403,6 @@ function AvatarContainer({
   attention = 'vigilance',
   variationIndex = 0,
   hasVariations = false,
-  totalSessions = 0,
-  avgAccuracy = 0,
   weeklyConsistency = 0,
   weeklyPracticeLog = [],
   breathState,
@@ -518,7 +413,6 @@ function AvatarContainer({
   const isLight = useDisplayModeStore((state) => state.colorScheme === 'light');
   const moonProgress = useLunarStore(s => s.progress);
 
-  // Interactive Shadow Math: Orient shadow opposite to moon position
   const moonAngle = (moonProgress / 12) * (Math.PI * 2) - Math.PI / 2;
   const shadowDist = isLight ? 10 : 0;
   const shadowX = -Math.cos(moonAngle) * shadowDist;
@@ -526,10 +420,8 @@ function AvatarContainer({
 
   return (
     <div className="relative flex items-center justify-center overflow-visible" style={{ width: 'min(90vw, 600px)', height: 'min(90vw, 600px)' }}>
-      {/* Volumetric Glow Layers - DISABLED IN LIGHT MODE for crisp instrument look */}
       {!isLight && (
         <>
-          {/* Layer 0a: Outer atmospheric wash - EXTENDED FALLOFF */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -540,8 +432,6 @@ function AvatarContainer({
               animationPlayState: isPracticing ? 'paused' : 'running',
             }}
           />
-
-          {/* Layer 0b: Mid bloom - TRIPLED INTENSITY */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -552,8 +442,6 @@ function AvatarContainer({
               animationPlayState: isPracticing ? 'paused' : 'running',
             }}
           />
-
-          {/* Layer 0c: Tight inner bloom */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -568,22 +456,15 @@ function AvatarContainer({
       )}
 
       <div className="relative w-full h-full flex items-center justify-center overflow-visible">
-        {/*
-          THE CORE ASSEMBLY (Locked to 288px / w-72)
-          We nest the internal layers here so their percentage-based logic stays intact.
-        */}
         <div className="absolute w-[64%] h-[64%] flex items-center justify-center overflow-visible pointer-events-none">
-          {/* Layer 0: Luminous ring field (canvas) */}
           <AvatarLuminousCanvas
             breathState={breathState}
             weeklyPracticeLog={weeklyPracticeLog}
             weeklyConsistency={weeklyConsistency}
           />
 
-          {/* Layer 1 (Bottom of Instrument): Rune ring (rotating PNG) */}
           <RuneRingLayer stage={stage} isPracticing={isPracticing} />
 
-          {/* STAGE-COLORED CONCENTRIC CIRCLES - Calibrated Instrument Layer */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -592,7 +473,6 @@ function AvatarContainer({
               zIndex: 5
             }}
           >
-            {/* Outer circle: atmospheric, lighter */}
             <div
               className="absolute"
               style={{
@@ -602,11 +482,10 @@ function AvatarContainer({
                 left: "50%",
                 transform: "translate(-50%, -50%)",
                 borderRadius: "50%",
-                border: `1px solid hsla(${h}, ${s}%, ${l}%, 0.5)`,
-                boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.3)`,
+                border: `1px solid hsla(${h}, ${s}%, ${l}%, 0.25)`,
+                boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.2)`,
               }}
             />
-            {/* Inner circle: authoritative, thicker */}
             <div
               className="absolute"
               style={{
@@ -616,11 +495,10 @@ function AvatarContainer({
                 left: "50%",
                 transform: "translate(-50%, -50%)",
                 borderRadius: "50%",
-                border: `1.5px solid hsla(${h}, ${s}%, ${l}%, 0.7)`,
+                border: `1.5px solid hsla(${h}, ${s}%, ${l}%, 0.45)`,
                 boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.4)`,
               }}
             >
-              {/* Asymmetric marker (12 o'clock notch) */}
               <div
                 className="absolute"
                 style={{
@@ -629,19 +507,14 @@ function AvatarContainer({
                   top: "-5px",
                   left: "50%",
                   transform: "translateX(-50%)",
-                  background: `hsla(${h}, ${s}%, ${l}%, 0.95)`,
-                  boxShadow: `0 0 6px hsla(${h}, ${s}%, ${l}%, 0.7)`,
-                  zIndex: 10
+                  background: `hsla(${h}, ${s}%, ${l}%, 0.98)`,
+                  boxShadow: `0 0 8px hsla(${h}, ${s}%, ${l}%, 0.9), 0 0 12px hsla(${h}, ${s}%, ${l}%, 0.4)`,
+                  zIndex: 20
                 }}
               />
             </div>
           </div>
 
-          {/* 
-            Layer 2: THE GLOW BLEED (Dynamic Lighting)
-            Simulates light from the core reflecting onto the physical frame.
-            Uses plus-lighter for additive staining without blowing out Light Mode textures.
-          */}
           {isLight && (
             <div
               className="absolute inset-0 pointer-events-none"
@@ -649,36 +522,29 @@ function AvatarContainer({
                 width: "100%",
                 height: "100%",
                 borderRadius: "50%",
-                // Boost intensity for seedling
                 background: `radial-gradient(circle, hsla(${h}, ${s}%, ${l}%, ${stage === 'seedling' ? 0.28 : 0.18}) 0%, hsla(${h}, ${s}%, ${l}%, 0.08) 45%, transparent 70%)`,
                 mixBlendMode: "plus-lighter",
                 opacity: isPracticing ? 0.25 : 0.18,
                 transition: "opacity 1.5s ease-in-out",
-                zIndex: 1, // Above Ring, Below Shadows/Core
+                zIndex: 1,
               }}
             />
           )}
 
-          {/* 
-            Layer 3: THE CONTACT SHADOW (Inset)
-            Creates a visible occlusion zone where the ivory/brass meets the void.
-            Orientation reacts to moon position in Light Mode.
-          */}
           <div
             className="absolute pointer-events-none shadow-inner"
             style={{
-              width: "50.5%", // Slightly larger than core to define the seating edge
+              width: "50.5%",
               height: "50.5%",
               borderRadius: "50%",
               boxShadow: isLight
                 ? `inset ${shadowX}px ${shadowY}px 12px rgba(0, 0, 0, 0.45)`
                 : "inset 0 0 10px rgba(0, 0, 0, 0.45)",
               zIndex: 2,
-              transition: 'box-shadow 0.8s ease-out',
+              transition: 'box-shadow 0.8s ease-out'
             }}
           />
 
-          {/* Layer 4: Static Sigil Core (Avatar Orb) */}
           <StaticSigilCore
             stage={stage}
             path={path}
@@ -691,12 +557,10 @@ function AvatarContainer({
           />
         </div>
 
-        {/* Layer 1b: Breathing aura (only in Practice mode, sits behind moon) */}
         {mode === "practice" && (
-          <BreathingAura key={stage.label} breathPattern={breathPattern} />
+          <BreathingAura key={stage} breathPattern={breathPattern} />
         )}
 
-        {/* Layer 5 (Outermost): Moon orbit (Using the 460px container) */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
           viewBox="0 0 600 600"
@@ -705,10 +569,6 @@ function AvatarContainer({
           <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
         </svg>
 
-        {/* 
-          Layer 6 (Overlay): UNIFIED GRAIN/NOISE
-          Subtle global noise to unify the digital orb and physical ring.
-        */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -724,37 +584,29 @@ function AvatarContainer({
   );
 }
 
-//
-// ─── MAIN AVATAR EXPORT ────────────────────────────────────────────────────────
-//
+// ─── MAIN AVATAR EXPORT ──────────────────────────────────────────
 export function Avatar({ mode, breathPattern, breathState, onStageChange, stage: controlledStage, path = null, showCore = true, attention = 'vigilance', isPracticing = false }) {
   const label = LABELS[mode] || "Center";
 
   const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
-  const [stageIndex, setStageIndex] = useState(2); // Start at Flame (index 2)
+  const [stageIndex, setStageIndex] = useState(2);
   const [variationIndex, setVariationIndex] = useState(0);
   const [maxVariations, setMaxVariations] = useState(1);
 
   const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
   const internalStage = STAGE_NAMES[stageIndex];
-
-  // Use controlled stage if provided, otherwise internal
   const currentStage = controlledStage ? controlledStage.toLowerCase() : internalStage;
 
-  // Detect available variations when stage/path/attention changes
   useEffect(() => {
     if (!path || showCore || !attention || attention === 'none') {
       setMaxVariations(1);
       setVariationIndex(0);
       return;
     }
-
-    // Check for variations by trying to load images
     const stageLower = currentStage.toLowerCase();
     const pathLower = path.toLowerCase();
     const attentionLower = attention.toLowerCase();
 
-    let count = 0;
     const checkVariation = (index) => {
       return new Promise((resolve) => {
         const img = new Image();
@@ -765,7 +617,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
       });
     };
 
-    // Check up to 10 variations
     Promise.all([...Array(10)].map((_, i) => checkVariation(i)))
       .then(results => {
         const foundCount = results.filter(Boolean).length;
@@ -774,15 +625,13 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
       });
   }, [currentStage, path, attention, showCore]);
 
-  // Notify parent when stage changes
   useEffect(() => {
     if (onStageChange) {
       const stageColors = STAGE_GLOW_COLORS[currentStage];
-      // Capitalize first letter for theme system: "seedling" -> "Seedling"
       const stageName = currentStage.charAt(0).toUpperCase() + currentStage.slice(1);
       onStageChange(stageColors, stageName);
     }
-  }, [stageIndex, currentStage, onStageChange]);
+  }, [currentStage, onStageChange]);
 
   useEffect(() => {
     function refresh() {
@@ -791,50 +640,26 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
     }
     refresh();
     const id = setInterval(refresh, 2000);
-    return () => {
-      if (id) clearInterval(id);
-    };
+    return () => clearInterval(id);
   }, []);
 
-  const avgAccuracy = mandalaSnapshot?.avgAccuracy || 0;
-  const weeklyConsistency = mandalaSnapshot?.weeklyConsistency || 0;
-  const weeklyPracticeLog = mandalaSnapshot?.weeklyPracticeLog || [false, false, false, false, false, false, false];
-  const phase = mandalaSnapshot?.phase || "foundation";
-  const transient = mandalaSnapshot?.transient || {};
-  const focus = transient.focus || 0;
-  const clarity = transient.clarity || 0;
-  const distortion = transient.distortion || 0;
-
-  // For now, derive totalSessions from avgAccuracy × 100 as a placeholder.
-  // Later, wire this to real totalSessions from mandalaStore.
-  const totalSessions = mandalaSnapshot?.totalSessions || Math.round(avgAccuracy * 100);
-
-  const accPct = Math.round(avgAccuracy * 100);
-  const wkPct = Math.round(weeklyConsistency * 100);
-
-  let accLabel = "loose";
-  if (accPct >= 75) accLabel = "tight";
-  else if (accPct >= 40) accLabel = "mixed";
-
-  let wkLabel = "sporadic";
-  if (wkPct >= 75) wkLabel = "steady";
-  else if (wkPct >= 40) wkLabel = "warming";
+  const mandalaData = mandalaSnapshot || {};
+  const avgAccuracy = mandalaData.avgAccuracy || 0;
+  const weeklyConsistency = mandalaData.weeklyConsistency || 0;
+  const weeklyPracticeLog = mandalaData.weeklyPracticeLog || [false, false, false, false, false, false, false];
 
   const safePattern = breathPattern || {};
   const patternForBreath = {
     inhale: typeof safePattern.inhale === "number" ? safePattern.inhale : 4,
     holdTop: typeof safePattern.hold1 === "number" ? safePattern.hold1 : 4,
     exhale: typeof safePattern.exhale === "number" ? safePattern.exhale : 4,
-    holdBottom:
-      typeof safePattern.hold2 === "number" ? safePattern.hold2 : 2,
+    holdBottom: typeof safePattern.hold2 === "number" ? safePattern.hold2 : 2,
   };
 
   const handleSigilClick = () => {
-    // If variations exist, cycle through them
     if (maxVariations > 1) {
       setVariationIndex((prev) => (prev + 1) % maxVariations);
     } else if (controlledStage && onStageChange) {
-      // Controlled mode - calculate next stage and notify parent
       const currentIndex = STAGE_NAMES.indexOf(currentStage);
       const nextIndex = (currentIndex + 1) % STAGE_NAMES.length;
       const nextStage = STAGE_NAMES[nextIndex];
@@ -842,7 +667,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
       const stageName = nextStage.charAt(0).toUpperCase() + nextStage.slice(1);
       onStageChange(stageColors, stageName);
     } else {
-      // Uncontrolled mode - use internal state
       setStageIndex((prev) => (prev + 1) % STAGE_NAMES.length);
     }
   };
@@ -851,7 +675,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
     <div className="flex flex-col items-center cursor-pointer overflow-visible" onClick={handleSigilClick}>
       <AvatarContainer
         mode={mode}
-        label={label}
         breathPattern={patternForBreath}
         stage={currentStage}
         path={path}
@@ -859,8 +682,6 @@ export function Avatar({ mode, breathPattern, breathState, onStageChange, stage:
         attention={attention}
         variationIndex={variationIndex}
         hasVariations={maxVariations > 1}
-        totalSessions={totalSessions}
-        avgAccuracy={avgAccuracy}
         weeklyConsistency={weeklyConsistency}
         weeklyPracticeLog={weeklyPracticeLog}
         breathState={breathState}

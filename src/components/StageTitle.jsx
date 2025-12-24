@@ -2,6 +2,7 @@
 // Shared Stage Title component for displaying current stage and path across all sections
 import React, { useState } from "react";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
+import { GoldCartouche } from "./GoldCartouche.jsx";
 
 // Sanskrit path names with their closest one-word English translations
 const PATH_TRANSLATIONS = {
@@ -97,6 +98,89 @@ export const STAGE_COLORS = {
   flame: { gradient: ["#fbbf24", "#f59e0b", "#d97706"], glow: "#f59e0b" },
   beacon: { gradient: ["#60a5fa", "#3b82f6", "#2563eb"], glow: "#3b82f6" },
   stellar: { gradient: ["#c084fc", "#a855f7", "#9333ea"], glow: "#a855f7" },
+};
+
+// Textured Title Card Component - Geometrically Stable with Minimal Texture
+const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention }) => {
+  // Static SVG noise texture URL for marble effect (minimal opacity)
+  const noiseTexture = `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='3' seed='15' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`;
+
+  // Stage-adaptive tint color (use gradient midpoint)
+  const tintColor = stageColors.gradient[1];
+
+  // Gold border texture (CSS-generated hammered edge)
+  const goldBorderTexture = `url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L12,0 L12,12 L0,12 Z' fill='%23D4AF37' /%3E%3Cpath d='M0,0 L1,1 L1,11 L0,12 M12,0 L11,1 L11,11 L12,12' fill='%23C9A942' /%3E%3C/svg%3E")`;
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl"
+      style={{
+        // Fixed padding to maintain stable internal grid
+        padding: '18px 40px 14px',
+        minWidth: '320px',
+
+        // Refined Gold Border - Beveled Light Simulation
+        border: '2px solid transparent',
+        backgroundImage: isLight
+          ? `
+            linear-gradient(rgba(255,252,248,0.96), rgba(255,250,242,0.92)),
+            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+          `
+          : `
+            linear-gradient(rgba(22,20,18,0.88), rgba(16,14,12,0.82)),
+            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+          `,
+        backgroundOrigin: 'padding-box, border-box',
+        backgroundClip: 'padding-box, border-box',
+
+        // Soft shadow for depth + specular highlight + contact shadow
+        boxShadow: isLight
+          ? `
+            0 0 0 0.5px #AF8B2C,
+            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+            0 3px 16px rgba(100,80,50,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.4)
+          `
+          : `
+            0 0 0 0.5px #AF8B2C,
+            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
+            0 3px 20px rgba(0,0,0,0.25),
+            inset 0 1px 0 rgba(255,250,240,0.04)
+          `,
+
+        // Minimal blur
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      }}
+    >
+      {/* Noise/Marble Texture Overlay - VERY SUBTLE (4% max) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: noiseTexture,
+          backgroundSize: 'cover',
+          mixBlendMode: 'normal', // Default to normal for clean edges
+          opacity: isLight ? 0.04 : 0.03,
+        }}
+      />
+
+      {/* Stage-Tinted Vein Overlay - Even more subtle */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: isLight
+            ? `radial-gradient(ellipse 100% 70% at 35% 40%, ${tintColor}08 0%, transparent 55%)`
+            : `radial-gradient(ellipse 100% 70% at 35% 40%, ${tintColor}05 0%, transparent 55%)`,
+          mixBlendMode: 'normal',
+        }}
+      />
+
+      {/* Content Layer - Fixed 2-Row Grid */}
+      <div className="relative z-10">
+        {children}
+      </div>
+    </div>
+  );
 };
 
 // CSS-based Stage Title Component with stacked vertical layout
@@ -205,101 +289,104 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         ))}
       </div>
 
-      {/* Divider Tick above Title - Vertical Spine (Phase 1) */}
+      {/* Divider Tick above Title - Vertical Spine (Coupling to Orb) */}
       <div
-        className="relative mb-3 opacity-20 pointer-events-none"
+        className="relative -mb-1 opacity-30 pointer-events-none"
         style={{ color: stageColors.gradient[1] }}
       >
-        <svg width="2" height="16" viewBox="0 0 2 16" fill="none">
-          <rect width="2" height="16" fill="currentColor" rx="1" />
+        <svg width="2" height="20" viewBox="0 0 2 20" fill="none">
+          <rect width="2" height="20" fill="currentColor" rx="1" />
         </svg>
       </div>
 
-      {/* Title container - Composite Image based with text fallback */}
-      <div className="relative flex items-center justify-center opacity-75 grayscale-[0.2]">
-        {/* background strip - Ceremonial Field (Phase 6 expanded) */}
-        <div
-          className="absolute inset-x-[-100vw] h-16 pointer-events-none"
-          style={{
-            background: isLight
-              ? `linear-gradient(90deg, transparent 0%, ${stageColors.glow}12 50%, transparent 100%)`
-              : `linear-gradient(90deg, transparent 0%, ${stageColors.glow}08 50%, transparent 100%)`,
-            zIndex: 0
-          }}
-        />
+      {/* Title container - Geometrically Stable Textured Card */}
+      <TexturedTitleCard stageColors={stageColors} isLight={isLight} hasPath={hasPath} attention={attention}>
+        {/* FIXED 2-ROW GRID LAYOUT*/}
+        <div className="flex flex-col items-center gap-1">
 
-        {/* Background separation - dark backing for contrast (dark mode only) */}
-        {!isLight && (
+          {/* ROW 1: Stage + Separator + Path (3-column grid with reserved space) */}
           <div
-            className="absolute -inset-x-8 -inset-y-4 rounded-xl"
+            className="grid items-center justify-items-center w-full"
             style={{
-              background: 'radial-gradient(ellipse 100% 100% at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              filter: 'blur(12px)',
-              pointerEvents: 'none',
-              zIndex: 1
+              gridTemplateColumns: '1fr auto 1fr',
+              gap: '12px'
             }}
-          />
-        )}
-
-        {/* Composite: Stage Image + Separator + Path Image */}
-        <div className="composite-title-row flex items-center justify-center gap-4 relative z-10">
-          {/* Stage image - with hover tooltip */}
-          <div
-            className="relative cursor-help"
-            onMouseEnter={() => handleMouseEnter('stage')}
-            onMouseLeave={handleMouseLeave}
           >
-            <img
-              src={`${import.meta.env.BASE_URL}titles/stage-${stageLower}.png`}
-              alt={stageLower}
-              className="h-11 w-auto object-contain"
-              style={{
-                filter: isLight ? 'none' : 'brightness(1.1) drop-shadow(0 0 10px rgba(253,251,245,0.15))',
-              }}
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                // Show text fallback if stage image fails
-                const fallback = e.currentTarget.closest('.relative')?.querySelector('.text-fallback');
-                if (fallback) fallback.style.display = 'flex';
-              }}
-            />
-
-            {/* Stage Tooltip */}
-            {tooltip === 'stage' && (
+            {/* LEFT COL: Stage (Right-aligned to center) */}
+            <div className="flex justify-end w-full">
               <div
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
-                style={{
-                  background: 'rgba(0,0,0,0.9)',
-                  backdropFilter: 'blur(12px)',
-                  border: `1px solid ${stageColors.glow}40`,
-                  boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
-                  width: '260px',
-                }}
+                className="relative cursor-help"
+                onMouseEnter={() => handleMouseEnter('stage')}
+                onMouseLeave={handleMouseLeave}
               >
-                <div
+                <img
+                  src={`${import.meta.env.BASE_URL}titles/stage-${stageLower}.png`}
+                  alt={stageLower}
+                  className="h-12 w-auto object-contain"
                   style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: '12px',
-                    lineHeight: 1.6,
-                    color: 'rgba(253,251,245,0.85)',
-                    textAlign: 'center',
+                    filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.closest('.relative')?.querySelector('.text-fallback');
+                    if (fallback) fallback.style.display = 'block';
+                  }}
+                />
+
+                {/* Text fallback for Stage */}
+                <span
+                  className="text-fallback text-[1.4rem] font-medium uppercase"
+                  style={{
+                    display: 'none',
+                    fontFamily: "var(--font-display)",
+                    color: isLight ? 'rgba(45, 40, 35, 0.9)' : stageColors.gradient[1],
+                    letterSpacing: '0.25em',
                   }}
                 >
-                  <span style={{ color: stageColors.glow, fontWeight: 600 }}>{stageName}</span>
-                  <br />
-                  {currentStageDescription}
-                </div>
-              </div>
-            )}
-          </div>
+                  {stageName}
+                </span>
 
-          {/* Divider glyph - symbolic separator (Option C) */}
-          {hasPath && (
-            <div className="divider-glyph relative mx-3" style={{ opacity: 0.6 }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" className="transition-opacity duration-300">
-                {/* Diamond outline */}
+                {/* Stage Tooltip */}
+                {tooltip === 'stage' && (
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
+                    style={{
+                      background: 'rgba(0,0,0,0.9)',
+                      backdropFilter: 'blur(12px)',
+                      border: `1px solid ${stageColors.glow}40`,
+                      boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
+                      width: '260px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: "var(--font-ui)",
+                        fontSize: '12px',
+                        lineHeight: 1.6,
+                        color: 'rgba(253,251,245,0.85)',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <span style={{ color: stageColors.glow, fontWeight: 600 }}>{stageName}</span>
+                      <br />
+                      {currentStageDescription}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* MID COL: Separator (Fixed width, always rendered but conditionally visible) */}
+            <div
+              className="divider-glyph relative"
+              style={{
+                opacity: hasPath ? 0.5 : 0,
+                visibility: hasPath ? 'visible' : 'hidden',
+                width: '14px', // Fixed width to prevent drift
+                transition: 'opacity 0.3s ease'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14">
                 <path
                   d="M7 1 L13 7 L7 13 L1 7 Z"
                   fill="none"
@@ -309,7 +396,6 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                     filter: `drop-shadow(0 0 3px ${stageColors.glow}40)`,
                   }}
                 />
-                {/* Center dot for weight */}
                 <circle
                   cx="7"
                   cy="7"
@@ -319,281 +405,91 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                 />
               </svg>
             </div>
-          )}
 
-          {/* Path section - with hover tooltip */}
-          {hasPath && (
-            <div
-              className="path-section relative flex items-center justify-center cursor-help"
-              onMouseEnter={() => handleMouseEnter('path')}
-              onMouseLeave={handleMouseLeave}
-            >
-              {/* Subtle gold halo behind path */}
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  background: `radial-gradient(ellipse 100% 80% at center, ${stageColors.glow}08 0%, transparent 70%)`,
-                  filter: 'blur(8px)',
-                  zIndex: 0,
-                }}
-              />
-
-              {/* Path image - enhanced visibility with increased brightness */}
-              <img
-                src={`${import.meta.env.BASE_URL}titles/path-${pathLower}.png`}
-                alt={pathLower}
-                className="h-11 w-auto object-contain"
-                style={{
-                  filter: isLight ? 'none' : 'brightness(1.1) drop-shadow(0 0 10px rgba(253,251,245,0.15))',
-                }}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  // Show calligraphic text fallback
-                  const textFallback = e.currentTarget.parentElement?.querySelector('.path-text-fallback');
-                  if (textFallback) textFallback.style.display = 'block';
-                }}
-              />
-
-              {/* Path text fallback - calligraphic style */}
-              <span
-                className="path-text-fallback text-[1.5rem] tracking-[0.08em]"
-                onClick={() => setShowEnglish(!showEnglish)}
-                style={{
-                  display: 'none',
-                  fontFamily: "var(--font-body)",
-                  fontStyle: 'italic',
-                  fontWeight: 500,
-                  color: `${stageColors.gradient[1]}dd`,
-                  textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                  cursor: 'pointer',
-                  letterSpacing: 'var(--tracking-wide)',
-                }}
-              >
-                {pathName}
-              </span>
-
-              {/* Path Tooltip */}
-              {tooltip === 'path' && currentPathDescription && (
+            {/* RIGHT COL: Path OR Gold Cartouche (Left-aligned to center) */}
+            <div className="flex justify-start w-full items-center gap-3">
+              {hasPath && (
                 <div
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
-                  style={{
-                    background: 'rgba(0,0,0,0.9)',
-                    backdropFilter: 'blur(12px)',
-                    border: `1px solid ${stageColors.glow}40`,
-                    boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
-                    width: '280px',
-                  }}
+                  className="path-section relative flex items-center justify-center cursor-help"
+                  onMouseEnter={() => handleMouseEnter('path')}
+                  onMouseLeave={handleMouseLeave}
                 >
-                  <div
+                  <img
+                    src={`${import.meta.env.BASE_URL}titles/path-${pathLower}.png`}
+                    alt={pathLower}
+                    className="h-12 w-auto object-contain"
                     style={{
-                      fontFamily: "var(--font-ui)",
-                      fontSize: '12px',
-                      lineHeight: 1.6,
-                      color: 'rgba(253,251,245,0.85)',
-                      textAlign: 'center',
+                      filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const textFallback = e.currentTarget.parentElement?.querySelector('.path-text-fallback');
+                      if (textFallback) textFallback.style.display = 'block';
+                    }}
+                  />
+
+                  {/* Path text fallback */}
+                  <span
+                    className="path-text-fallback text-[1.3rem] tracking-[0.08em]"
+                    onClick={() => setShowEnglish(!showEnglish)}
+                    style={{
+                      display: 'none',
+                      fontFamily: "var(--font-body)",
+                      fontStyle: 'italic',
+                      fontWeight: 500,
+                      color: `${stageColors.gradient[1]}dd`,
+                      cursor: 'pointer',
+                      letterSpacing: 'var(--tracking-wide)',
                     }}
                   >
-                    <span style={{ color: stageColors.glow, fontWeight: 600 }}>{pathName}</span>
-                    <br />
-                    {currentPathDescription}
-                  </div>
+                    {pathName}
+                  </span>
+
+                  {/* Path Tooltip */}
+                  {tooltip === 'path' && currentPathDescription && (
+                    <div
+                      className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
+                      style={{
+                        background: 'rgba(0,0,0,0.9)',
+                        backdropFilter: 'blur(12px)',
+                        border: `1px solid ${stageColors.glow}40`,
+                        boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
+                        width: '280px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: "var(--font-ui)",
+                          fontSize: '12px',
+                          lineHeight: 1.6,
+                          color: 'rgba(253,251,245,0.85)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <span style={{ color: stageColors.glow, fontWeight: 600 }}>{pathName}</span>
+                        <br />
+                        {currentPathDescription}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Gold Cartouche for Attention (Authority Material) */}
+              {attention && attention !== 'none' && (
+                <GoldCartouche
+                  text={attention}
+                  stageColor={stageColors.gradient[1]}
+                  isLight={isLight}
+                />
+              )}
             </div>
-          )}
+          </div>
+
+          {/* ROW 2: Removed - Attention now inline in Row 1 as gold cartouche */}
         </div>
+      </TexturedTitleCard>
 
-        {/* Text Fallback (Hidden by default if image loads, shown on error) */}
-        <div
-          className="text-fallback stage-title-text relative items-center justify-center gap-2"
-          style={{
-            display: 'none', // Hidden initially, shown by onError
-            filter: `drop-shadow(0 0 30px ${stageColors.glow}30)`,
-          }}
-        >
-          {/* Stage name */}
-          <span
-            className="stage-name text-[1.65rem] font-medium uppercase"
-            style={{
-              fontFamily: "var(--font-display)",
-              color: isLight ? 'rgba(45, 40, 35, 0.9)' : '#fdfbf5',
-              textShadow: isLight ? 'none' : `
-                0 0 20px rgba(253,251,245,0.3),
-                0 0 40px rgba(253,251,245,0.15)
-              `,
-              letterSpacing: '0.35em',
-            }}
-          >
-            {stageName}
-          </span>
-
-          {/* Separator */}
-          {hasPath && (
-            <span
-              className="text-[0.9rem] opacity-30"
-              style={{
-                color: stageColors.gradient[1],
-                textShadow: `0 0 10px ${stageColors.glow}50`,
-              }}
-            >
-              ·
-            </span>
-          )}
-
-          {/* Path name */}
-          {hasPath && (
-            <span
-              className="stage-path text-[1.6rem] font-normal uppercase"
-              onClick={() => setShowEnglish(!showEnglish)}
-              title={showEnglish ? "Click for Sanskrit" : "Click for English"}
-              style={{
-                fontFamily: "var(--font-display)",
-                backgroundImage: `linear-gradient(135deg, ${stageColors.gradient[0]} 0%, ${stageColors.gradient[1]} 50%, ${stageColors.gradient[2]} 100%)`,
-                backgroundSize: '200% 200%',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: 'pathGradient 4s ease-in-out infinite',
-                filter: `drop-shadow(0 0 15px ${stageColors.glow}40)`,
-                cursor: 'pointer',
-                transition: 'transform 0.15s ease',
-                letterSpacing: 'var(--tracking-normal)',
-              }}
-            >
-              {pathName}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Decorative Divider - moved up to sit above attention vector */}
-      <div className="flex items-center justify-center gap-3 w-full -mt-4 mb-2 px-8">
-        {/* Left flanking geometry - small diamond */}
-        <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-40">
-          <path
-            d="M6 0 L12 6 L6 12 L0 6 Z"
-            fill="none"
-            stroke={stageColors.gradient[1]}
-            strokeWidth="0.75"
-            style={{ filter: `drop-shadow(0 0 4px ${stageColors.glow}50)` }}
-          />
-        </svg>
-
-        {/* Left crosshair accent */}
-        <svg width="16" height="8" viewBox="0 0 16 8" className="opacity-30 mx-1">
-          <line x1="0" y1="4" x2="16" y2="4" stroke={stageColors.gradient[0]} strokeWidth="0.5" />
-          <line x1="8" y1="0" x2="8" y2="8" stroke={stageColors.gradient[0]} strokeWidth="0.5" />
-        </svg>
-
-        {/* Center gradient line */}
-        <div
-          className="stage-accent-line h-[1px] flex-1 rounded-full mx-2"
-          style={{
-            background: `linear-gradient(90deg, 
-              ${stageColors.gradient[1]}60 0%, 
-              rgba(253,251,245,0.3) 30%,
-              ${stageColors.gradient[1]} 50%, 
-              rgba(253,251,245,0.3) 70%,
-              ${stageColors.gradient[1]}60 100%
-            )`,
-            boxShadow: `0 0 12px ${stageColors.glow}40`,
-          }}
-        />
-
-        {/* Center ornament - subtle star/compass point */}
-        <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-60 mx-1">
-          <circle cx="5" cy="5" r="1.5" fill={stageColors.gradient[1]} style={{ filter: `drop-shadow(0 0 3px ${stageColors.glow})` }} />
-          <path
-            d="M5 0 L5 2.5 M5 7.5 L5 10 M0 5 L2.5 5 M7.5 5 L10 5"
-            stroke={stageColors.gradient[0]}
-            strokeWidth="0.5"
-            opacity="0.5"
-          />
-        </svg>
-
-        {/* Right gradient line */}
-        <div
-          className="stage-accent-line h-[1px] flex-1 rounded-full mx-2"
-          style={{
-            background: `linear-gradient(90deg, 
-              ${stageColors.gradient[1]}60 0%, 
-              rgba(253,251,245,0.3) 30%,
-              ${stageColors.gradient[1]} 50%, 
-              rgba(253,251,245,0.3) 70%,
-              ${stageColors.gradient[1]}60 100%
-            )`,
-            boxShadow: `0 0 12px ${stageColors.glow}40`,
-          }}
-        />
-
-        {/* Right crosshair accent */}
-        <svg width="16" height="8" viewBox="0 0 16 8" className="opacity-30 mx-1">
-          <line x1="0" y1="4" x2="16" y2="4" stroke={stageColors.gradient[0]} strokeWidth="0.5" />
-          <line x1="8" y1="0" x2="8" y2="8" stroke={stageColors.gradient[0]} strokeWidth="0.5" />
-        </svg>
-
-        {/* Right flanking geometry - small diamond */}
-        <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-40">
-          <path
-            d="M6 0 L12 6 L6 12 L0 6 Z"
-            fill="none"
-            stroke={stageColors.gradient[1]}
-            strokeWidth="0.75"
-            style={{ filter: `drop-shadow(0 0 4px ${stageColors.glow}50)` }}
-          />
-        </svg>
-      </div>
-
-      {/* Attention Vector Row - enhanced contrast and vertical spacing */}
-      {attention && attention !== 'none' && (
-        <div
-          className="attention-row relative flex items-center justify-center gap-2 -mt-1 mb-3"
-          style={{
-            fontFamily: "var(--font-ui)",
-          }}
-        >
-          {/* Subtle bloom background for legibility */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `radial-gradient(ellipse 140% 120% at center, ${stageColors.glow}25 0%, ${stageColors.glow}12 30%, transparent 70%)`,
-              filter: 'blur(8px)',
-              zIndex: 0,
-            }}
-          />
-
-          {/* Small dot separator */}
-          <span
-            className="text-[13px] opacity-40 relative z-10"
-            style={{ color: stageColors.gradient[1] }}
-          >
-            ·
-          </span>
-
-          {/* Attention text - enhanced contrast */}
-          <span
-            className="text-[13px] uppercase tracking-wider font-medium relative z-10"
-            style={{
-              color: stageColors.gradient[1],
-              opacity: 0.75,
-              textShadow: `0 0 12px ${stageColors.glow}30`,
-              letterSpacing: '0.15em',
-            }}
-          >
-            {attention}
-          </span>
-
-          {/* Small dot separator */}
-          <span
-            className="text-[13px] opacity-40 relative z-10"
-            style={{ color: stageColors.gradient[1] }}
-          >
-            ·
-          </span>
-        </div>
-      )}
 
       {/* CSS Animations */}
       <style>{`
@@ -667,6 +563,6 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
           50% { transform: translateY(-8px) rotate(180deg); opacity: 0.7; }
         }
       `}</style>
-    </div>
+    </div >
   );
 }

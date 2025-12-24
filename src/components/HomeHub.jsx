@@ -238,15 +238,30 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         <div
           className="w-full rounded-3xl px-4 py-3 relative overflow-hidden transition-all duration-500"
           style={{
-            background: isLight
-              ? 'linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%)'
-              : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-            border: isLight
-              ? `1px solid var(--light-border)`
-              : `1px solid ${insightColors[insightState].border}`,
-            boxShadow: isLight
-              ? `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`
+            // Refined Gold Border
+            border: '2px solid transparent',
+            backgroundImage: isLight
+              ? `
+                linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%),
+                linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+              `
               : `
+                linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%),
+                linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+              `,
+            backgroundOrigin: 'padding-box, border-box',
+            backgroundClip: 'padding-box, border-box',
+
+            boxShadow: isLight
+              ? `
+                0 0 0 0.5px #AF8B2C,
+                inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+                0 4px 20px var(--light-shadow-tint),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8)
+              `
+              : `
+                0 0 0 0.5px #AF8B2C,
+                inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
                 0 8px 32px rgba(0, 0, 0, 0.6),
                 0 2px 8px ${insightColors[insightState].glow},
                 inset 0 1px 0 rgba(255, 255, 255, 0.08)
@@ -333,17 +348,31 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
       className="group relative rounded-3xl text-left transition-all duration-300 flex flex-col items-start justify-end overflow-hidden"
       style={{
         minHeight: '200px',
-        background: isLight ? 'var(--light-bg-surface)' : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-        border: isLight ? '1px solid var(--light-border)' : '1px solid transparent',
-        backgroundImage: isLight ? 'none' : `
-          linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-          linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)
-        `,
-        backgroundOrigin: 'border-box',
-        backgroundClip: 'padding-box, border-box',
-        boxShadow: isLight
-          ? `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`
+
+        // Refined Gold Border - Triple stroke with gradient
+        border: '2px solid transparent',
+        backgroundImage: isLight
+          ? `
+            linear-gradient(var(--light-bg-surface), var(--light-bg-surface)),
+            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+          `
           : `
+            linear-gradient(rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+            linear-gradient(135deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)
+          `,
+        backgroundOrigin: 'padding-box, border-box',
+        backgroundClip: 'padding-box, border-box',
+
+        boxShadow: isLight
+          ? `
+            0 0 0 0.5px #AF8B2C,
+            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+            0 4px 20px var(--light-shadow-tint),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8)
+          `
+          : `
+            0 0 0 0.5px #AF8B2C,
+            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.6),
             0 8px 32px rgba(0, 0, 0, 0.6),
             0 2px 8px var(--accent-15),
             inset 0 1px 0 rgba(255, 255, 255, 0.08),

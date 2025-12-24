@@ -176,6 +176,11 @@ class Particle {
 
     const lifeMod = this.life;
 
+    // Fallback validation for color HSL values
+    const safeH = typeof this.color?.h === 'number' && !isNaN(this.color.h) ? this.color.h : 42;
+    const safeS = typeof this.color?.s === 'number' && !isNaN(this.color.s) ? this.color.s : 95;
+    const safeL = typeof this.color?.l === 'number' && !isNaN(this.color.l) ? this.color.l : 63;
+
     // Trail
     for (let i = 0; i < this.trail.length - 1; i++) {
       const p1 = this.trail[i];
@@ -212,7 +217,7 @@ class Particle {
     // Halo - skip in light mode (causes gray circles)
     if (!isLight) {
       const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * 4 * scaleMod);
-      halo.addColorStop(0, `hsla(${this.color.h}, ${this.color.s}%, ${this.color.l}%, ${this.brightness * 0.5 * glowMod * lifeMod})`);
+      halo.addColorStop(0, `hsla(${safeH}, ${safeS}%, ${safeL}%, ${this.brightness * 0.5 * glowMod * lifeMod})`);
       halo.addColorStop(1, 'transparent');
       ctx.fillStyle = halo;
       ctx.beginPath();
@@ -223,7 +228,7 @@ class Particle {
     // Core
     const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * scaleMod);
     core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod * lifeMod})`);
-    core.addColorStop(0.4, `hsla(${this.color.h}, ${this.color.s}%, 85%, ${this.brightness * 0.9 * glowMod * lifeMod})`);
+    core.addColorStop(0.4, `hsla(${safeH}, ${safeS}%, 85%, ${this.brightness * 0.9 * glowMod * lifeMod})`);
     core.addColorStop(1, 'transparent');
     ctx.fillStyle = core;
     ctx.beginPath();
