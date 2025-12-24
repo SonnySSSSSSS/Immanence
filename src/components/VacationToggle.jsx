@@ -32,21 +32,25 @@ export function VacationToggle({ compact = false }) {
     };
 
     if (compact) {
+        const dividerColor = isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(253, 251, 245, 0.1)';
+        const textSecondary = isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253, 251, 245, 0.85)';
+
         return (
             <button
                 onClick={handleToggle}
-                className={`px-3 py-1.5 rounded-full text-[10px] transition-all ${vacation.active
-                    ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                    : ''
-                    }`}
-                style={vacation.active ? { border: '1px solid' } : {
-                    background: isLight ? 'rgba(255, 252, 245, 0.6)' : 'rgba(253,251,245,0.05)',
-                    border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(253,251,245,0.15)',
-                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.6)'
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full transition-opacity hover:opacity-80"
+                style={{
+                    background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
+                    border: `1px solid ${dividerColor}`,
+                    color: textSecondary,
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '10px',
+                    letterSpacing: '0.1em',
                 }}
                 title={vacation.active ? 'End vacation mode' : 'Enable vacation mode'}
             >
-                {vacation.active ? '❄️ End Vacation' : '🏖️ Vacation'}
+                <span style={{ opacity: 0.7 }}>{vacation.active ? '❄️' : '🏖️'}</span>
+                <span>{vacation.active ? 'END' : 'Vacation'}</span>
             </button>
         );
     }

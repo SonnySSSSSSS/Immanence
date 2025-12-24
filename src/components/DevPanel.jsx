@@ -173,47 +173,47 @@ export function DevPanel({
 
                         {/* Stage selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-xs text-white/50 w-16">Stage</label>
+                            <label className="text-sm text-white w-16 font-medium">Stage</label>
                             <select
                                 value={avatarStage}
                                 onChange={(e) => setAvatarStage(e.target.value)}
-                                className="flex-1 bg-[#1a1a24] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90"
+                                className="flex-1 bg-[#0a0a12] border border-white/30 rounded-lg px-3 py-2.5 text-base text-white font-medium"
                                 style={{ colorScheme: 'dark' }}
                             >
                                 {STAGE_OPTIONS.map(s => (
-                                    <option key={s} value={s} className="bg-[#1a1a24] text-white">{s}</option>
+                                    <option key={s} value={s} className="bg-[#0a0a12] text-white text-base font-medium">{s}</option>
                                 ))}
                             </select>
                         </div>
 
                         {/* Path selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-xs text-white/50 w-16">Path</label>
+                            <label className="text-sm text-white w-16 font-medium">Path</label>
                             <select
                                 value={avatarPath}
                                 onChange={(e) => setAvatarPath(e.target.value)}
-                                className="flex-1 bg-[#1a1a24] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90"
+                                className="flex-1 bg-[#0a0a12] border border-white/30 rounded-lg px-3 py-2.5 text-base text-white font-medium"
                                 style={{ colorScheme: 'dark' }}
                             >
                                 {PATH_OPTIONS.map(p => (
-                                    <option key={p} value={p} className="bg-[#1a1a24] text-white">{p}</option>
+                                    <option key={p} value={p} className="bg-[#0a0a12] text-white text-base font-medium">{p}</option>
                                 ))}
                             </select>
                         </div>
 
                         {/* Attention selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-xs text-white/50 w-16">Attention</label>
+                            <label className="text-sm text-white w-16 font-medium">Attention</label>
                             <select
                                 value={avatarAttention}
                                 onChange={(e) => setAvatarAttention(e.target.value)}
-                                className="flex-1 bg-[#1a1a24] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90"
+                                className="flex-1 bg-[#0a0a12] border border-white/30 rounded-lg px-3 py-2.5 text-base text-white font-medium"
                                 style={{ colorScheme: 'dark' }}
                             >
-                                <option value="none" className="bg-[#1a1a24] text-white">None (Stage/Path only)</option>
-                                <option value="vigilance" className="bg-[#1a1a24] text-white">Vigilance</option>
-                                <option value="sahaja" className="bg-[#1a1a24] text-white">Sahaja</option>
-                                <option value="ekagrata" className="bg-[#1a1a24] text-white">Ekagrata</option>
+                                <option value="none" className="bg-[#0a0a12] text-white text-base font-medium">None (Stage/Path only)</option>
+                                <option value="vigilance" className="bg-[#0a0a12] text-white text-base font-medium">Vigilance</option>
+                                <option value="sahaja" className="bg-[#0a0a12] text-white text-base font-medium">Sahaja</option>
+                                <option value="ekagrata" className="bg-[#0a0a12] text-white text-base font-medium">Ekagrata</option>
                             </select>
                         </div>
 
@@ -238,8 +238,8 @@ export function DevPanel({
                                 <button
                                     onClick={() => setLightModeRingType('astrolabe')}
                                     className={`px-2 py-1 rounded text-[10px] transition-all ${lightModeRingType === 'astrolabe'
-                                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                                            : 'text-white/40 hover:text-white/60'
+                                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                        : 'text-white/40 hover:text-white/60'
                                         }`}
                                 >
                                     ASTROLABE
@@ -247,8 +247,8 @@ export function DevPanel({
                                 <button
                                     onClick={() => setLightModeRingType('rune')}
                                     className={`px-2 py-1 rounded text-[10px] transition-all ${lightModeRingType === 'rune'
-                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                            : 'text-white/40 hover:text-white/60'
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                        : 'text-white/40 hover:text-white/60'
                                         }`}
                                 >
                                     RUNE

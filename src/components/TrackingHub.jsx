@@ -22,14 +22,17 @@ const CYMATIC_GLYPHS = {
     breathwork: (isActive) => (
         <svg width="20" height="20" viewBox="0 0 20 20">
             <circle cx="10" cy="10" r="7" fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)'}
-                strokeWidth={isActive ? "1.2" : "0.8"} opacity="0.4" />
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
+                strokeWidth={isActive ? "1.2" : "0.5"}
+                strokeDasharray={isActive ? "none" : "2 2"}
+                opacity={isActive ? "0.4" : "0.2"} />
             <circle cx="10" cy="10" r="5" fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.25)'}
-                strokeWidth={isActive ? "1.5" : "1"} opacity="0.7" />
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)'}
+                strokeWidth={isActive ? "1.5" : "0.8"}
+                opacity={isActive ? "0.7" : "0.3"} />
             <circle cx="10" cy="10" r="2.5"
-                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)'}
-                opacity={isActive ? "0.6" : "0.3"} />
+                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.1)'}
+                opacity={isActive ? "0.6" : "0.2"} />
         </svg>
     ),
 
@@ -39,12 +42,14 @@ const CYMATIC_GLYPHS = {
             <path
                 d="M10 2 L16.33 6 L16.33 14 L10 18 L3.67 14 L3.67 6 Z"
                 fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.25)'}
-                strokeWidth={isActive ? "1.5" : "1"}
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
+                strokeWidth={isActive ? "1.5" : "0.8"}
+                strokeDasharray={isActive ? "none" : "1.5 1.5"}
                 style={{
                     transition: 'all 0.4s ease',
                     transform: isActive ? 'rotate(30deg)' : 'rotate(0deg)',
-                    transformOrigin: 'center'
+                    transformOrigin: 'center',
+                    opacity: isActive ? 1 : 0.4
                 }}
             />
             {isActive && (
@@ -58,11 +63,13 @@ const CYMATIC_GLYPHS = {
         <svg width="20" height="20" viewBox="0 0 20 20">
             <rect x="5" y="5" width="10" height="10"
                 fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.25)'}
-                strokeWidth={isActive ? "1.5" : "1"} />
+                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
+                strokeWidth={isActive ? "1.5" : "0.8"}
+                strokeDasharray={isActive ? "none" : "3 1"}
+                opacity={isActive ? 1 : 0.4} />
             <rect x="7.5" y="7.5" width="5" height="5"
-                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
-                opacity="0.3" />
+                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.05)'}
+                opacity={isActive ? "0.3" : "0.1"} />
         </svg>
     )
 };
@@ -431,17 +438,13 @@ export function TrackingHub() {
                                     <div className="grid grid-cols-3 gap-4 mb-9 items-end">
                                         <div className="text-center">
                                             <div
-                                                className="font-bold mb-1"
+                                                className="font-black mb-1"
                                                 style={{
-                                                    fontSize: '2.3rem',
+                                                    fontSize: '2.4rem',
                                                     lineHeight: '1',
-                                                    color: isLight ? 'rgba(140, 100, 50, 0.85)' : '#d4b87a',
-                                                    textShadow: isLight ? 'none' : `
-                                                        0 0 10px rgba(212, 184, 122, 0.3),
-                                                        0 0 20px rgba(212, 184, 122, 0.15),
-                                                        0 2px 6px rgba(0, 0, 0, 0.7)
-                                                    `,
-                                                    opacity: 0.85,
+                                                    color: isLight ? 'rgba(140, 100, 50, 0.95)' : '#d4b87a',
+                                                    letterSpacing: '-0.04em',
+                                                    opacity: 0.9,
                                                 }}
                                             >
                                                 {stats.totalSessions}
@@ -449,9 +452,9 @@ export function TrackingHub() {
                                             <div
                                                 className="text-[0.65rem] font-bold"
                                                 style={{
-                                                    color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.35)',
-                                                    fontFamily: 'var(--font-display)',
-                                                    letterSpacing: 'var(--tracking-mythic)',
+                                                    color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+                                                    fontFamily: 'var(--font-ui)',
+                                                    letterSpacing: '0.2em',
                                                 }}
                                             >
                                                 SESSIONS
@@ -460,18 +463,12 @@ export function TrackingHub() {
                                         {/* MINUTES - THE HEARTBEAT - DRAMATICALLY BRIGHTER */}
                                         <div className="text-center">
                                             <div
-                                                className="font-bold mb-1"
+                                                className="font-black mb-1"
                                                 style={{
-                                                    fontSize: '2.75rem',
+                                                    fontSize: '2.8rem',
                                                     lineHeight: '1',
-                                                    color: isLight ? 'rgba(100, 70, 30, 0.95)' : '#fff8e6',
-                                                    textShadow: isLight ? 'none' : `
-                                                        0 0 8px rgba(255, 250, 235, 0.9),
-                                                        0 0 20px rgba(255, 235, 200, 0.8),
-                                                        0 0 40px rgba(255, 220, 150, 0.6),
-                                                        0 0 60px rgba(255, 200, 100, 0.4),
-                                                        0 2px 8px rgba(0, 0, 0, 0.9)
-                                                    `,
+                                                    color: isLight ? 'rgba(120, 80, 40, 1)' : '#fff8e6',
+                                                    letterSpacing: '-0.05em',
                                                 }}
                                             >
                                                 {stats.totalMinutes}
@@ -479,10 +476,10 @@ export function TrackingHub() {
                                             <div
                                                 className="text-[0.7rem] font-bold"
                                                 style={{
-                                                    color: isLight ? 'rgba(140, 100, 50, 0.85)' : 'rgba(255, 248, 230, 0.85)',
-                                                    fontFamily: 'var(--font-display)',
-                                                    letterSpacing: 'var(--tracking-wide)',
-                                                    textShadow: isLight ? 'none' : '0 0 8px rgba(255, 235, 200, 0.3)',
+                                                    color: isLight ? 'rgba(100, 70, 30, 0.95)' : 'rgba(255, 248, 230, 0.95)',
+                                                    fontFamily: 'var(--font-ui)',
+                                                    letterSpacing: '0.15em',
+                                                    textShadow: isLight ? 'none' : '0 0 10px rgba(255, 235, 200, 0.4)',
                                                 }}
                                             >
                                                 MINUTES
@@ -491,17 +488,13 @@ export function TrackingHub() {
                                         {/* HONOR - with micro-outline and 'Character' metadata */}
                                         <div className="text-center">
                                             <div
-                                                className="font-bold mb-1"
+                                                className="font-black mb-1"
                                                 style={{
-                                                    fontSize: '2.3rem',
+                                                    fontSize: '2.4rem',
                                                     lineHeight: '1',
-                                                    color: isLight ? 'rgba(140, 100, 50, 0.8)' : '#c9a86e',
-                                                    textShadow: isLight ? 'none' : `
-                                                        0 0 8px rgba(201, 168, 110, 0.25),
-                                                        0 0 15px rgba(201, 168, 110, 0.1),
-                                                        0 2px 6px rgba(0, 0, 0, 0.7)
-                                                    `,
-                                                    opacity: 0.8,
+                                                    color: isLight ? 'rgba(140, 100, 50, 0.9)' : '#c9a86e',
+                                                    letterSpacing: '-0.04em',
+                                                    opacity: 0.9,
                                                 }}
                                             >
                                                 {stats.totalHonor}
@@ -509,9 +502,9 @@ export function TrackingHub() {
                                             <div
                                                 className="text-[0.65rem] font-bold"
                                                 style={{
-                                                    color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.4)',
-                                                    fontFamily: 'var(--font-display)',
-                                                    letterSpacing: 'var(--tracking-mythic)',
+                                                    color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+                                                    fontFamily: 'var(--font-ui)',
+                                                    letterSpacing: '0.2em',
                                                 }}
                                             >
                                                 HONOR
@@ -532,15 +525,14 @@ export function TrackingHub() {
 
                                         {/* Semantic label - floats cleanly between numbers and curve */}
                                         <div
-                                            className="text-[10px] font-bold mb-4 text-center -mt-5 relative"
+                                            className="text-[10px] font-bold mb-4 text-center -mt-5 relative font-mono"
                                             style={{
-                                                color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
-                                                fontFamily: 'var(--font-display)',
-                                                letterSpacing: 'var(--tracking-mythic)',
+                                                color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+                                                letterSpacing: '0.1em',
                                                 zIndex: 11,
                                             }}
                                         >
-                                            INTENSITY (LAST 7 DAYS)
+                                            ⟨ PERFORMANCE.VECTOR ⟩
                                         </div>
                                         {/* Curve container - extends 16px beyond edges for continuous rhythm */}
                                         <div className="relative h-[88px] w-full -mx-4 px-7 overflow-hidden">

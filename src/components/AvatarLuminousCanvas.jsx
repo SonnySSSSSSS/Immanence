@@ -734,10 +734,8 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         drawNebulaWisps(ctx, time);
       }
 
-      // Sacred Geometry (skip in light mode - causes gray circles)
-      if (!skipHeavyFx) {
-        drawSacredGeometry(ctx, flameRadius * 1.2);
-      }
+      // Sacred Geometry - Always visible (restored per user request)
+      drawSacredGeometry(ctx, flameRadius * 1.2);
 
       // INTEGRATION LAYER 1: Refined multi-layered bloom glow (skip in light mode)
       if (!skipHeavyFx) {

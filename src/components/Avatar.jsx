@@ -254,6 +254,20 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
         />
       )}
 
+      {/* Ambient Occlusion: Inner rim definition (Phase 2) */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: "48.5%", // Matches core opening
+          height: "48.5%",
+          borderRadius: "50%",
+          boxShadow: isLight
+            ? "inset 0 0 1px 1.5px rgba(0,0,0,0.15)"
+            : "inset 0 0 2px 2px rgba(0,0,0,0.8)",
+          zIndex: 10
+        }}
+      />
+
       {/* Radial shadow for depth - all stages */}
       <div
         className="absolute w-[88%] h-[88%]"
@@ -568,6 +582,60 @@ function AvatarContainer({
 
           {/* Layer 1 (Bottom of Instrument): Rune ring (rotating PNG) */}
           <RuneRingLayer stage={stage} isPracticing={isPracticing} />
+
+          {/* STAGE-COLORED CONCENTRIC CIRCLES - Calibrated Instrument Layer */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              width: "100%",
+              height: "100%",
+              zIndex: 5
+            }}
+          >
+            {/* Outer circle: atmospheric, lighter */}
+            <div
+              className="absolute"
+              style={{
+                width: "108%",
+                height: "108%",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                border: `1px solid hsla(${h}, ${s}%, ${l}%, 0.5)`,
+                boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.3)`,
+              }}
+            />
+            {/* Inner circle: authoritative, thicker */}
+            <div
+              className="absolute"
+              style={{
+                width: "102%",
+                height: "102%",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                border: `1.5px solid hsla(${h}, ${s}%, ${l}%, 0.7)`,
+                boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.4)`,
+              }}
+            >
+              {/* Asymmetric marker (12 o'clock notch) */}
+              <div
+                className="absolute"
+                style={{
+                  width: "2px",
+                  height: "10px",
+                  top: "-5px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: `hsla(${h}, ${s}%, ${l}%, 0.95)`,
+                  boxShadow: `0 0 6px hsla(${h}, ${s}%, ${l}%, 0.7)`,
+                  zIndex: 10
+                }}
+              />
+            </div>
+          </div>
 
           {/* 
             Layer 2: THE GLOW BLEED (Dynamic Lighting)

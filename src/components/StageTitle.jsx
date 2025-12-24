@@ -205,8 +205,29 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         ))}
       </div>
 
+      {/* Divider Tick above Title - Vertical Spine (Phase 1) */}
+      <div
+        className="relative mb-3 opacity-20 pointer-events-none"
+        style={{ color: stageColors.gradient[1] }}
+      >
+        <svg width="2" height="16" viewBox="0 0 2 16" fill="none">
+          <rect width="2" height="16" fill="currentColor" rx="1" />
+        </svg>
+      </div>
+
       {/* Title container - Composite Image based with text fallback */}
-      <div className="relative flex items-center justify-center -mt-2">
+      <div className="relative flex items-center justify-center opacity-75 grayscale-[0.2]">
+        {/* background strip - Ceremonial Field (Phase 6 expanded) */}
+        <div
+          className="absolute inset-x-[-100vw] h-16 pointer-events-none"
+          style={{
+            background: isLight
+              ? `linear-gradient(90deg, transparent 0%, ${stageColors.glow}12 50%, transparent 100%)`
+              : `linear-gradient(90deg, transparent 0%, ${stageColors.glow}08 50%, transparent 100%)`,
+            zIndex: 0
+          }}
+        />
+
         {/* Background separation - dark backing for contrast (dark mode only) */}
         {!isLight && (
           <div
@@ -217,6 +238,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
               WebkitBackdropFilter: 'blur(16px)',
               filter: 'blur(12px)',
               pointerEvents: 'none',
+              zIndex: 1
             }}
           />
         )}
@@ -231,45 +253,10 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
           >
             <img
               src={`${import.meta.env.BASE_URL}titles/stage-${stageLower}.png`}
-              alt={stageName}
-              className="stage-title-img h-16 w-auto object-contain transition-opacity duration-500"
+              alt={stageLower}
+              className="h-11 w-auto object-contain"
               style={{
-                // Stage-specific outlines + edge discipline
-                filter: (() => {
-                  // Base effects
-                  const base = 'drop-shadow(0 2px 3px rgba(0,0,0,0.5)) contrast(1.05)';
-
-                  // Stage-specific outlines
-                  if (stageLower === 'ember') {
-                    // Softer white 1px outline for EMBER (reduced 20%)
-                    return `
-                      drop-shadow(0 0 1px rgba(255,255,255,0.7))
-                      drop-shadow(0 0 1px rgba(255,255,255,0.5))
-                      ${base}
-                    `;
-                  } else if (stageLower === 'flame') {
-                    // Balanced white outline for FLAME (77/57/37 for good visibility)
-                    return `
-                      drop-shadow(0 0 1px rgba(255,255,255,0.77))
-                      drop-shadow(0 0 2px rgba(255,255,255,0.57))
-                      drop-shadow(0 0 3px rgba(255,255,255,0.37))
-                      ${base}
-                    `;
-                  } else if (stageLower === 'stellar') {
-                    // Darker gray 1px outline for STELLAR
-                    return `
-                      drop-shadow(0 0 1px rgba(120,120,120,0.9))
-                      drop-shadow(0 0 1px rgba(140,140,140,0.7))
-                      ${base}
-                    `;
-                  }
-                  // Default for SEEDLING, BEACON
-                  return `drop-shadow(0 0 1px rgba(0,0,0,0.8)) ${base}`;
-                })(),
-                // Vertical luminance gradient: darker at base, brighter at top (silhouette authority)
-                maskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
-                WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 100%)',
-                maxWidth: hasPath ? '200px' : '300px',
+                filter: isLight ? 'none' : 'brightness(1.1) drop-shadow(0 0 10px rgba(253,251,245,0.15))',
               }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -356,15 +343,10 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
               {/* Path image - enhanced visibility with increased brightness */}
               <img
                 src={`${import.meta.env.BASE_URL}titles/path-${pathLower}.png`}
-                alt={pathName}
-                className="path-title-img h-24 w-auto object-contain transition-opacity duration-500 relative z-10"
+                alt={pathLower}
+                className="h-11 w-auto object-contain"
                 style={{
-                  filter: `
-                    brightness(1.23)
-                    drop-shadow(0 0 8px ${stageColors.glow}50)
-                    drop-shadow(0 2px 4px rgba(0,0,0,0.7))
-                  `,
-                  maxWidth: '288px',
+                  filter: isLight ? 'none' : 'brightness(1.1) drop-shadow(0 0 10px rgba(253,251,245,0.15))',
                 }}
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
@@ -433,15 +415,15 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         >
           {/* Stage name */}
           <span
-            className="stage-name text-[1.75rem] font-medium uppercase"
+            className="stage-name text-[1.65rem] font-medium uppercase"
             style={{
               fontFamily: "var(--font-display)",
-              color: '#fdfbf5',
-              textShadow: `
+              color: isLight ? 'rgba(45, 40, 35, 0.9)' : '#fdfbf5',
+              textShadow: isLight ? 'none' : `
                 0 0 20px rgba(253,251,245,0.3),
                 0 0 40px rgba(253,251,245,0.15)
               `,
-              letterSpacing: 'var(--tracking-tight)',
+              letterSpacing: '0.35em',
             }}
           >
             {stageName}
@@ -584,7 +566,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
           {/* Small dot separator */}
           <span
-            className="text-[10px] opacity-30 relative z-10"
+            className="text-[13px] opacity-40 relative z-10"
             style={{ color: stageColors.gradient[1] }}
           >
             ·
@@ -592,11 +574,12 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
           {/* Attention text - enhanced contrast */}
           <span
-            className="text-[10px] text-suspended relative z-10"
+            className="text-[13px] uppercase tracking-wider font-medium relative z-10"
             style={{
               color: stageColors.gradient[1],
-              opacity: 0.6,
-              textShadow: `0 0 12px ${stageColors.glow}20`,
+              opacity: 0.75,
+              textShadow: `0 0 12px ${stageColors.glow}30`,
+              letterSpacing: '0.15em',
             }}
           >
             {attention}
@@ -604,7 +587,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
 
           {/* Small dot separator */}
           <span
-            className="text-[10px] opacity-30 relative z-10"
+            className="text-[13px] opacity-40 relative z-10"
             style={{ color: stageColors.gradient[1] }}
           >
             ·
