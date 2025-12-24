@@ -330,7 +330,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                 onMouseLeave={handleMouseLeave}
               >
                 <img
-                  src={`${import.meta.env.BASE_URL}titles/stage-${stageLower}.png`}
+                  src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}stage-${stageLower}.png`}
                   alt={stageLower}
                   className="h-12 w-auto object-contain"
                   style={{
@@ -425,7 +425,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                   onMouseLeave={handleMouseLeave}
                 >
                   <img
-                    src={`${import.meta.env.BASE_URL}titles/path-${pathLower}.png`}
+                    src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}path-${pathLower}.png`}
                     alt={pathLower}
                     className="h-12 w-auto object-contain"
                     style={{

@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
-ComfyUI MCP Server for IMMANENCE
-Provides tools for AI assistants to generate images via ComfyUI
+ComfyUI MCP Server - Z-IMAGE TURBO VERSION
+Uses separate loaders for diffusion model, CLIP, and VAE
 """
 
 import json
 import sys
 import urllib.request
 import urllib.error
-import time
-import uuid
+import urllib.parse
+import random
+import asyncio
+import websockets
 from pathlib import Path
 
 COMFYUI_URL = "http://127.0.0.1:8188"
+COMFYUI_WS = "ws://127.0.0.1:8188/ws"
 PROJECT_ROOT = Path(r"D:\Unity Apps\immanence-os")
 
 def check_comfyui():
@@ -21,116 +24,165 @@ def check_comfyui():
         urllib.request.urlopen(f"{COMFYUI_URL}/system_stats", timeout=2)
         return True, "ComfyUI is running"
     except:
-        return False, "ComfyUI is not running. Please start ComfyUI first."
+        return False, "ComfyUI is not running at http://127.0.0.1:8188"
 
-def queue_prompt(workflow):
+def queue_prompt_simple(workflow):
     """Submit workflow to ComfyUI"""
-    prompt_id = str(uuid.uuid4())
-    data = json.dumps({"prompt": workflow, "client_id": prompt_id}).encode('utf-8')
+    prompt_data = {"prompt": workflow}
+    data = json.dumps(prompt_data).encode('utf-8')
     req = urllib.request.Request(f"{COMFYUI_URL}/prompt", data=data)
     req.add_header('Content-Type', 'application/json')
     
     try:
-        response = urllib.request.urlopen(req)
-        return json.loads(response.read())
+        response = urllib.request.urlopen(req, timeout=10)
+        result = json.loads(response.read())
+        return result
     except Exception as e:
         return {"error": str(e)}
 
-def get_history(prompt_id):
-    """Get generation history"""
-    try:
-        with urllib.request.urlopen(f"{COMFYUI_URL}/history/{prompt_id}") as response:
-            return json.loads(response.read())
-    except:
-        return {}
-
-def get_image(filename, subfolder, folder_type):
+def get_image_sync(filename, subfolder, folder_type):
     """Download image from ComfyUI"""
     data = {"filename": filename, "subfolder": subfolder, "type": folder_type}
     url_values = urllib.parse.urlencode(data)
     with urllib.request.urlopen(f"{COMFYUI_URL}/view?{url_values}") as response:
         return response.read()
 
-def wait_for_completion(prompt_id, timeout=300):
-    """Wait for generation to complete"""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        history = get_history(prompt_id)
-        if prompt_id in history:
-            outputs = history[prompt_id].get("outputs", {})
-            for node_id, node_output in outputs.items():
-                if "images" in node_output and node_output["images"]:
-                    img_info = node_output["images"][0]
-                    return get_image(
-                        img_info["filename"],
-                        img_info.get("subfolder", ""),
-                        img_info.get("type", "output")
-                    )
-        time.sleep(1)
-    raise TimeoutError("Generation timed out")
+async def wait_for_completion_ws(prompt_id, timeout=300):
+    """Wait for completion using WebSocket"""
+    try:
+        async with websockets.connect(COMFYUI_WS) as websocket:
+            start_time = asyncio.get_event_loop().time()
+            
+            while asyncio.get_event_loop().time() - start_time < timeout:
+                try:
+                    message = await asyncio.wait_for(websocket.recv(), timeout=1.0)
+                    data = json.loads(message)
+                    
+                    if data.get("type") == "executed":
+                        output = data.get("data", {}).get("output", {})
+                        
+                        if "images" in output and output["images"]:
+                            img_info = output["images"][0]
+                            return get_image_sync(
+                                img_info["filename"],
+                                img_info.get("subfolder", ""),
+                                img_info.get("type", "output")
+                            )
+                    
+                    if data.get("type") == "execution_error":
+                        error_msg = data.get('data', {}).get('exception_message', 'Unknown error')
+                        raise RuntimeError(f"ComfyUI error: {error_msg}")
+                        
+                except asyncio.TimeoutError:
+                    continue
+                    
+            raise TimeoutError(f"Timed out after {timeout}s")
+            
+    except Exception as e:
+        raise RuntimeError(f"WebSocket error: {str(e)}")
 
-def convert_workflow(ui_workflow):
-    """Convert UI workflow to API format"""
-    api_workflow = {}
-    for node in ui_workflow.get("nodes", []):
-        node_id = str(node["id"])
-        api_workflow[node_id] = {"class_type": node["type"], "inputs": {}}
-        
-        if "widgets_values" in node:
-            input_names = [inp["name"] for inp in node.get("inputs", []) if "widget" in inp]
-            for i, value in enumerate(node["widgets_values"]):
-                if i < len(input_names):
-                    api_workflow[node_id]["inputs"][input_names[i]] = value
-        
-        for inp in node.get("inputs", []):
-            if inp.get("link") is not None:
-                for link in ui_workflow.get("links", []):
-                    if link[0] == inp["link"]:
-                        api_workflow[node_id]["inputs"][inp["name"]] = [str(link[1]), link[2]]
-    return api_workflow
-
-def generate_asset(positive_prompt, negative_prompt=None, output_path=None):
-    """Generate an image asset using ComfyUI"""
+def create_zimage_workflow(positive_prompt):
+    """Create Z-Image Turbo workflow with separate loaders"""
     
-    # Check ComfyUI
+    seed = random.randint(0, 0xffffffffffffffff)
+    
+    workflow = {
+        "1": {
+            "inputs": {
+                "unet_name": "z_image_turbo_bf16.safetensors",
+                "weight_dtype": "default"
+            },
+            "class_type": "UNETLoader"
+        },
+        "2": {
+            "inputs": {
+                "clip_name1": "qwen_3_4b.safetensors",
+                "type": "lumina_next2"
+            },
+            "class_type": "CLIPLoader"
+        },
+        "3": {
+            "inputs": {
+                "vae_name": "ae.safetensors"
+            },
+            "class_type": "VAELoader"
+        },
+        "4": {
+            "inputs": {
+                "text": positive_prompt,
+                "clip": ["2", 0]
+            },
+            "class_type": "CLIPTextEncode"
+        },
+        "5": {
+            "inputs": {
+                "width": 1024,
+                "height": 1024,
+                "batch_size": 1
+            },
+            "class_type": "EmptyLatentImage"
+        },
+        "6": {
+            "inputs": {
+                "seed": seed,
+                "steps": 8,
+                "cfg": 1.0,
+                "sampler_name": "euler",
+                "scheduler": "beta",
+                "denoise": 1.0,
+                "model": ["1", 0],
+                "positive": ["4", 0],
+                "negative": ["4", 0],
+                "latent_image": ["5", 0]
+            },
+            "class_type": "KSampler"
+        },
+        "7": {
+            "inputs": {
+                "samples": ["6", 0],
+                "vae": ["3", 0]
+            },
+            "class_type": "VAEDecode"
+        },
+        "8": {
+            "inputs": {
+                "filename_prefix": "ZImage",
+                "images": ["7", 0]
+            },
+            "class_type": "SaveImage"
+        }
+    }
+    
+    return workflow
+
+def generate_asset_sync(positive_prompt, negative_prompt=None, output_path=None):
+    """Generate image using Z-Image Turbo"""
+    
     running, msg = check_comfyui()
     if not running:
         return {"success": False, "error": msg}
     
-    # Load workflow
-    workflow_file = PROJECT_ROOT / "comfyui_workflow.json"
-    if not workflow_file.exists():
-        return {"success": False, "error": f"Workflow file not found: {workflow_file}"}
-    
-    with open(workflow_file, 'r', encoding='utf-8') as f:
-        ui_workflow = json.load(f)
-    
-    api_workflow = convert_workflow(ui_workflow)
-    
-    # Update prompts
-    positive_set = False
-    negative_set = False
-    for node_id, node in api_workflow.items():
-        if node["class_type"] == "CLIPTextEncode":
-            if not positive_set:
-                node["inputs"]["text"] = positive_prompt
-                positive_set = True
-            elif negative_prompt and not negative_set:
-                node["inputs"]["text"] = negative_prompt
-                negative_set = True
-    
-    # Submit
-    result = queue_prompt(api_workflow)
-    if "error" in result:
-        return {"success": False, "error": result["error"]}
-    
-    prompt_id = result.get("prompt_id")
-    
-    # Wait for completion
     try:
-        image_data = wait_for_completion(prompt_id)
+        workflow = create_zimage_workflow(positive_prompt)
+    except Exception as e:
+        return {"success": False, "error": f"Workflow creation failed: {str(e)}"}
+    
+    result = queue_prompt_simple(workflow)
+    
+    if "error" in result:
+        return {"success": False, "error": f"Queue failed: {result['error']}"}
+    
+    if "prompt_id" not in result:
+        return {"success": False, "error": f"No prompt_id: {result}"}
+    
+    prompt_id = result["prompt_id"]
+    
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        image_data = loop.run_until_complete(wait_for_completion_ws(prompt_id, timeout=300))
+        loop.close()
         
-        # Save
         if output_path:
             output_file = PROJECT_ROOT / output_path
         else:
@@ -140,15 +192,18 @@ def generate_asset(positive_prompt, negative_prompt=None, output_path=None):
         with open(output_file, 'wb') as f:
             f.write(image_data)
         
-        relative_path = str(output_file.relative_to(PROJECT_ROOT))
+        relative_path = str(output_file.relative_to(PROJECT_ROOT)).replace('\\', '/')
+        
         return {
             "success": True,
             "output_path": relative_path,
             "full_path": str(output_file),
-            "prompt_id": prompt_id
+            "prompt_id": prompt_id,
+            "message": f"Generated with Z-Image Turbo, saved to {relative_path}"
         }
+        
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": f"Generation failed: {str(e)}"}
 
 def handle(msg):
     """Handle MCP protocol messages"""
@@ -162,7 +217,7 @@ def handle(msg):
             "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "comfyui-generator", "version": "1.0.0"}
+                "serverInfo": {"name": "comfyui-zimage", "version": "4.0.0"}
             }
         }
     
@@ -177,21 +232,17 @@ def handle(msg):
                 "tools": [
                     {
                         "name": "generate_comfyui_asset",
-                        "description": "Generate an image asset using ComfyUI. Requires ComfyUI to be running at http://127.0.0.1:8188",
+                        "description": "Generate image using Z-Image Turbo. Fast 8-step generation. Optimized for your setup.",
                         "inputSchema": {
                             "type": "object",
                             "properties": {
                                 "positive_prompt": {
                                     "type": "string",
-                                    "description": "The positive prompt describing what to generate"
-                                },
-                                "negative_prompt": {
-                                    "type": "string",
-                                    "description": "Optional negative prompt for what to avoid"
+                                    "description": "What to generate"
                                 },
                                 "output_path": {
                                     "type": "string",
-                                    "description": "Output path relative to project root (e.g., 'public/avatars/test.png'). If not specified, saves to public/generated/"
+                                    "description": "Output path relative to project"
                                 }
                             },
                             "required": ["positive_prompt"]
@@ -199,7 +250,7 @@ def handle(msg):
                     },
                     {
                         "name": "check_comfyui_status",
-                        "description": "Check if ComfyUI server is running and accessible",
+                        "description": "Check if ComfyUI is running",
                         "inputSchema": {
                             "type": "object",
                             "properties": {}
@@ -216,10 +267,14 @@ def handle(msg):
         
         if name == "check_comfyui_status":
             running, status = check_comfyui()
-            result = json.dumps({"running": running, "status": status}, indent=2)
+            result = json.dumps({
+                "running": running,
+                "status": status,
+                "model": "Z-Image Turbo (separate loaders)"
+            }, indent=2)
         
         elif name == "generate_comfyui_asset":
-            result_dict = generate_asset(
+            result_dict = generate_asset_sync(
                 positive_prompt=args["positive_prompt"],
                 negative_prompt=args.get("negative_prompt"),
                 output_path=args.get("output_path")
