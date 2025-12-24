@@ -263,8 +263,8 @@ function App() {
           className="fixed inset-y-0 left-0 pointer-events-none z-50 transition-all duration-500"
           style={{
             width: displayMode === 'sanctuary'
-              ? 'calc((100vw - min(100vw, 1366px)) / 2)'
-              : 'calc((100vw - min(100vw, 1080px)) / 2)',
+              ? 'calc((100vw - min(100vw, 820px)) / 2)'
+              : 'calc((100vw - min(100vw, 430px)) / 2)',
             background: '#000',
           }}
         />
@@ -274,8 +274,8 @@ function App() {
           className="fixed inset-y-0 right-0 pointer-events-none z-50 transition-all duration-500"
           style={{
             width: displayMode === 'sanctuary'
-              ? 'calc((100vw - min(100vw, 1366px)) / 2)'
-              : 'calc((100vw - min(100vw, 1080px)) / 2)',
+              ? 'calc((100vw - min(100vw, 820px)) / 2)'
+              : 'calc((100vw - min(100vw, 430px)) / 2)',
             background: '#000',
           }}
         />
@@ -285,14 +285,14 @@ function App() {
           className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
           onPointerDown={handleDoubleTap}
           style={displayMode === 'sanctuary' ? {
-            // Sanctuary: iPad landscape width (1366px)
+            // Sanctuary: iPad width (820px)
             width: '100%',
-            maxWidth: '1366px',
+            maxWidth: '820px',
             boxShadow: 'none',
           } : {
-            // Hearth: Standard desktop width (1080px)
+            // Hearth: Phone width (430px)
             width: '100%',
-            maxWidth: '1080px',
+            maxWidth: '430px',
             boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
           }}
         >
@@ -366,7 +366,7 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.14.26
+                  v3.14.31
                 </div>
                 {!isHub && (
                   <button

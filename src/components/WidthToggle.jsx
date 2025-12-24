@@ -1,5 +1,5 @@
 // src/components/WidthToggle.jsx
-// Toggle between Hearth (1080px) and Sanctuary (1366px) viewport widths
+// Toggle between Hearth (430px phone) and Sanctuary (820px tablet) viewport widths
 
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -21,7 +21,7 @@ export function WidthToggle() {
                     : 'linear-gradient(135deg, rgba(255, 120, 40, 0.15), rgba(255, 80, 20, 0.1))',
                 border: `1px solid ${isSanctuary ? 'rgba(100, 150, 200, 0.3)' : 'rgba(255, 120, 40, 0.3)'}`,
             }}
-            title={isSanctuary ? 'Sanctuary (1366px) - Click for Hearth (1080px)' : 'Hearth (1080px) - Click for Sanctuary (1366px)'}
+            title={isSanctuary ? 'Sanctuary (820px tablet) - Click for Hearth (430px phone)' : 'Hearth (430px phone) - Click for Sanctuary (820px tablet)'}
         >
             {isSanctuary ? (
                 // Sanctuary icon - expand/wide icon

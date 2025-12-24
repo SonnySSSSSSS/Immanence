@@ -577,9 +577,23 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE SPINE SYSTEM
+   Single vertical spine for content (380px), enforcing monastic layout discipline
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Mobile Spine: Disciplined content container
+   ARCHITECTURAL RULE: No component may define its own horizontal max-width outside the spine.
+   All width constraints flow from the spine container only. */
+.mobile-spine {
+  max-width: 380px;
+  margin: 0 auto;
+  padding-inline: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    CORE COMPONENT STYLES
-   ───────────────────────────────────────────────────────────────────────── */
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Panel Container ─── */
 .panel-ornate {

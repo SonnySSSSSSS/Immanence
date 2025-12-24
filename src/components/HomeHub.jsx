@@ -102,75 +102,75 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const progressPct = Math.round(progressToNextStage * 100);
 
   return (
-    <div className="w-full flex flex-col items-center py-8 relative overflow-visible">
+    <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
 
-      {/* Shared Page Container - Single source of truth for width alignment */}
-      <div className="mx-auto w-full max-w-[1040px] px-6 flex flex-col items-stretch gap-12">
-
-        {/* ──────────────────────────────────────────────────────────────────────
-            AVATAR & HUB INSTRUMENT - Primary focal point
-            ────────────────────────────────────────────────────────────────────── */}
-        <div className="w-full flex flex-col items-center gap-4 transition-all duration-500 overflow-visible">
-          <div className="relative w-full flex items-center justify-center overflow-visible">
-            {/* Bloom halo - atmospheric radial glow behind avatar */}
-            <div
-              className="absolute"
-              style={{
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 'min(100%, 600px)',
-                height: 'min(100%, 600px)',
-                background: 'radial-gradient(circle, var(--accent-glow) 0%, var(--accent-glow)25 15%, var(--accent-glow)08 40%, transparent 70%)',
-                filter: 'blur(80px)',
-                opacity: 0.15,
-                pointerEvents: 'none',
-                zIndex: 0,
-              }}
-            />
-
-            {/* Avatar with cosmic focal point */}
-            <div className="relative z-10">
-              <Avatar
-                mode="hub"
-                onStageChange={onStageChange}
-                stage={currentStage}
-                path={previewPath}
-                showCore={previewShowCore}
-                isPracticing={isPracticing}
-              />
-            </div>
-          </div>
-
-          {/* STATUS & CONTROL INSTRUMENT - Agency | Identity | Continuity */}
-          <HubStagePanel
-            stage={currentStage}
-            path={previewPath}
-            showCore={previewShowCore}
-            attention={previewAttention}
-            lastPracticed={lastPracticed}
-            streakInfo={streakInfo}
-            onOpenHardwareGuide={onOpenHardwareGuide}
-            onOpenHonorLog={() => setShowHonorModal(true)}
+      {/* ──────────────────────────────────────────────────────────────────────
+          AVATAR & HUB INSTRUMENT - Full-Bleed Altar (Cosmic Zone)
+          ────────────────────────────────────────────────────────────────────── */}
+      <div className="w-full flex flex-col items-center gap-4 py-8 transition-all duration-500 overflow-visible">
+        <div className="relative w-full flex items-center justify-center overflow-visible">
+          {/* Bloom halo - EXPANDED in Sanctuary mode to fill space */}
+          <div
+            className="absolute transition-all duration-500"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: isSanctuary ? 'min(120%, 900px)' : 'min(100%, 600px)',
+              height: isSanctuary ? 'min(120%, 700px)' : 'min(100%, 600px)',
+              background: 'radial-gradient(circle, var(--accent-glow) 0%, var(--accent-glow)25 15%, var(--accent-glow)08 40%, transparent 70%)',
+              filter: isSanctuary ? 'blur(100px)' : 'blur(80px)',
+              opacity: isSanctuary ? 0.2 : 0.15,
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
           />
+
+          {/* Avatar with cosmic focal point */}
+          <div className="relative z-10">
+            <Avatar
+              mode="hub"
+              onStageChange={onStageChange}
+              stage={currentStage}
+              path={previewPath}
+              showCore={previewShowCore}
+              isPracticing={isPracticing}
+            />
+          </div>
         </div>
 
-        {/* Honor Log Modal */}
-        <HonorLogModal
-          isOpen={showHonorModal}
-          onClose={() => setShowHonorModal(false)}
+        {/* STATUS & CONTROL INSTRUMENT - Agency | Identity | Continuity */}
+        <HubStagePanel
+          stage={currentStage}
+          path={previewPath}
+          showCore={previewShowCore}
+          attention={previewAttention}
+          lastPracticed={lastPracticed}
+          streakInfo={streakInfo}
+          onOpenHardwareGuide={onOpenHardwareGuide}
+          onOpenHonorLog={() => setShowHonorModal(true)}
         />
+      </div>
 
-        {/* ──────────────────────────────────────────────────────────────────────
-            STATS DASHBOARD - TrackingHub with live progress data  
-            ────────────────────────────────────────────────────────────────────── */}
-        <TrackingHub />
+      {/* Honor Log Modal */}
+      <HonorLogModal
+        isOpen={showHonorModal}
+        onClose={() => setShowHonorModal(false)}
+      />
 
-        {/* ──────────────────────────────────────────────────────────────────────
-            MODES SECTION - Mode selection buttons
-            ────────────────────────────────────────────────────────────────────── */}
-        <div className={`w-full transition-all duration-500`}>
+      {/* ──────────────────────────────────────────────────────────────────────
+          CONTENT SECTIONS - Centered container with adaptive width
+          ────────────────────────────────────────────────────────────────────── */}
+      <div className={`w-full mx-auto px-4 flex flex-col items-center gap-8 pb-8 ${isSanctuary ? 'max-w-[700px]' : 'max-w-[380px]'}`}>
+
+        {/* STATS DASHBOARD - TrackingHub */}
+        <div className="w-full">
+          <TrackingHub />
+        </div>
+
+        {/* MODES SECTION - Explore Modes Grid */}
+        <div className="w-full transition-all duration-500">
           <div
             className="relative text-[10px] uppercase tracking-[0.2em] mb-4 text-suspended"
             style={{
@@ -192,7 +192,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             Explore Modes
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-6">
+          {/* Grid: 2x2 always */}
+          <div className="grid w-full grid-cols-2 gap-4">
             <ModeButton
               title="Practice"
               description="Breathing & timing"
@@ -227,17 +228,15 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             />
           </div>
 
-          {/* Export Data - below mode buttons */}
+          {/* Export Data */}
           <div className="mt-4 flex justify-center">
             <ExportDataButton variant="link" />
           </div>
         </div>
 
-        {/* ──────────────────────────────────────────────────────────────────────
-            QUICK INSIGHTS - Small contextual suggestions
-            ────────────────────────────────────────────────────────────────────── */}
+        {/* TRANSMISSION - Quick Insights */}
         <div
-          className={`w-full rounded-3xl px-5 py-4 relative overflow-hidden transition-all duration-500`}
+          className="w-full rounded-3xl px-4 py-3 relative overflow-hidden transition-all duration-500"
           style={{
             background: isLight
               ? 'linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%)'
