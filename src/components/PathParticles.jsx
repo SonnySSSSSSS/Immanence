@@ -14,7 +14,8 @@ export function PathParticles({
     phase = 'rest',
     size = 300,
     accentColor = '#d4af37',
-    isActive = true
+    isActive = true,
+    isLight = false  // Light mode flag for color inversion
 }) {
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
@@ -79,8 +80,16 @@ export function PathParticles({
             g = Math.max(0, Math.min(255, newG));
             b = Math.max(0, Math.min(255, newB));
         }
+
+        // LIGHT MODE: Invert colors to make particles visible on light background
+        if (isLight) {
+            r = 255 - r;
+            g = 255 - g;
+            b = 255 - b;
+        }
+
         return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${Math.max(0.1, opacity * fx.colorModifier.opacity)})`;
-    }, [fx.colorModifier]);
+    }, [fx.colorModifier, isLight]);
 
     const initParticles = useCallback(() => {
         const particles = [];

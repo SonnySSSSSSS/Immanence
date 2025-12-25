@@ -24,6 +24,14 @@ description: Communication and debugging protocol for Immanence OS development
 2. If that fails: Ctrl + Shift + Delete → Clear cache → Reload
 ```
 
+### Browser-Specific Issues:
+
+**Firefox**: Caches Tailwind classes more aggressively than Chrome
+- If changes appear in Chrome but not Firefox, suspect CSS caching
+- Solution: Clear cache completely (Ctrl+Shift+Delete → Cache + Cached Web Content)
+- Alternative: Open DevTools (F12) → Network tab → Check "Disable cache" → Refresh
+
+
 ## COMMUNICATION PATTERNS
 
 ### When User is Frustrated:

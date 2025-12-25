@@ -825,7 +825,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
     <canvas
       ref={canvasRef}
       className="absolute w-[300%] h-[300%] -left-[100%] -top-[100%] pointer-events-none"
-      style={{ zIndex: 5 }}
+      style={{ zIndex: 1 }}
     />
   );
 }

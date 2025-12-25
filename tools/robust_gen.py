@@ -6,24 +6,21 @@ import uuid
 import os
 from pathlib import Path
 
-COMFYUI_URL = "http://127.0.0.1:8188"
+COMFYUI_URL = "http://localhost:8188"
 PROJECT_ROOT = Path(r"D:\Unity Apps\immanence-os")
 
 def get_ckpt():
-    try:
-        with urllib.request.urlopen(f"{COMFYUI_URL}/object_info") as r:
-            data = json.loads(r.read())
-            return data["CheckpointLoaderSimple"]["input"]["required"]["ckpt_name"][0][0]
-    except: return "z_image_turbo_bf16.safetensors"
+    # Forcing Turbo as requested
+    return "z_image_turbo_bf16.safetensors"
 
 def generate_one(prompt, filename):
     print(f"PROGRESS: Starting {filename} (Abstract)...")
     ckpt = get_ckpt()
     
     workflow = {
-        "3": { "inputs": { "seed": int(time.time()), "steps": 20, "cfg": 8, "sampler_name": "euler", "scheduler": "normal", "denoise": 1, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] }, "class_type": "KSampler" },
+        "3": { "inputs": { "seed": int(time.time()), "steps": 4, "cfg": 1.0, "sampler_name": "euler", "scheduler": "normal", "denoise": 1, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] }, "class_type": "KSampler" },
         "4": { "inputs": { "ckpt_name": ckpt }, "class_type": "CheckpointLoaderSimple" },
-        "5": { "inputs": { "width": 1024, "height": 512, "batch_size": 1 }, "class_type": "EmptyLatentImage" },
+        "5": { "inputs": { "width": 1024, "height": 1024, "batch_size": 1 }, "class_type": "EmptyLatentImage" },
         "6": { "inputs": { "text": prompt, "clip": ["4", 1] }, "class_type": "CLIPTextEncode" },
         "7": { "inputs": { "text": "text, letters, watermark, blurry, low quality", "clip": ["4", 1] }, "class_type": "CLIPTextEncode" },
         "8": { "inputs": { "samples": ["3", 0], "vae": ["4", 2] }, "class_type": "VAEDecode" },
@@ -55,7 +52,7 @@ def generate_one(prompt, filename):
         try:
             with urllib.request.urlopen(f"{COMFYUI_URL}/history/{pid}") as r:
                 h = json.loads(r.read())
-                if pid in h:
+                if pid in h and h[pid]['outputs']:
                     img_info = h[pid]['outputs']['9']['images'][0]
                     img_url = f"{COMFYUI_URL}/view?filename={img_info['filename']}&subfolder={img_info['subfolder']}&type={img_info['type']}"
                     with urllib.request.urlopen(img_url) as r_img:
@@ -64,7 +61,12 @@ def generate_one(prompt, filename):
                         with open(out_path, "wb") as f: f.write(r_img.read())
                     print(f"PROGRESS: SUCCESS - Saved {filename}")
                     return True
-        except: pass
+                elif pid in h:
+                    print(f"PROGRESS: ERROR - ComfyUI finished but produced no output for {filename}")
+                    print(f"DEBUG: Status: {json.dumps(h[pid].get('status', {}))}")
+                    return False
+        except Exception as e: 
+            print(f"DEBUG Error: {e}")
         time.sleep(5)
     print(f"PROGRESS: TIMEOUT - {filename}")
     return False

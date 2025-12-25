@@ -10,6 +10,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { EnsoStroke } from "./EnsoStroke";
 import { useTheme } from "../context/ThemeContext";
 import { PathParticles } from "./PathParticles.jsx";
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5 }) {
   const {
@@ -231,6 +232,10 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
 
+  // Detect light mode to use subtle shadow instead of glow
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+
   return (
     <div
       className="relative w-full flex items-center justify-center py-16 cursor-pointer"
@@ -302,22 +307,26 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           pointerEvents: "none",
           overflow: "visible",
           // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
-          filter: progress < tInhale
-            ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px var(--accent-primary)) 
+          // Light mode: subtle dark shadow for definition
+          // Dark mode: full colored glow effect
+          filter: isLight
+            ? 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.1))'
+            : progress < tInhale
+              ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px var(--accent-primary)) 
                drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px var(--accent-secondary)) 
                drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px var(--accent-muted)) 
                drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px var(--accent-glow))`
-            : progress < tHoldTop
-              ? `drop-shadow(0 0 9.6px var(--accent-primary)) 
+              : progress < tHoldTop
+                ? `drop-shadow(0 0 9.6px var(--accent-primary)) 
                drop-shadow(0 0 19.2px var(--accent-secondary)) 
                drop-shadow(0 0 28.8px var(--accent-muted)) 
                drop-shadow(0 0 38.4px var(--accent-glow))`
-              : progress < tExhale
-                ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-primary)) 
+                : progress < tExhale
+                  ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-primary)) 
                drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-secondary)) 
                drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-muted)) 
                drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-glow))`
-                : `drop-shadow(0 0 8px var(--accent-primary)) 
+                  : `drop-shadow(0 0 8px var(--accent-primary)) 
                drop-shadow(0 0 16px var(--accent-secondary)) 
                drop-shadow(0 0 24px var(--accent-muted)) 
                drop-shadow(0 0 32px var(--accent-glow))`
@@ -403,6 +412,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           size={400}
           accentColor={theme.accent.particleColor || primary}
           isActive={true}
+          isLight={isLight}
         />
       </div>
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-ComfyUI MCP Server - Z-IMAGE TURBO VERSION
-Uses separate loaders for diffusion model, CLIP, and VAE
+ComfyUI MCP Server - Z-IMAGE TURBO AIO VERSION
+Uses CheckpointLoaderSimple with all-in-one model file
 """
 
 import json
@@ -81,48 +81,34 @@ async def wait_for_completion_ws(prompt_id, timeout=300):
     except Exception as e:
         raise RuntimeError(f"WebSocket error: {str(e)}")
 
-def create_zimage_workflow(positive_prompt):
-    """Create Z-Image Turbo workflow with separate loaders"""
+def create_zimage_workflow(positive_prompt, width=1024, height=1024):
+    """Create Z-Image Turbo workflow using AIO checkpoint"""
     
     seed = random.randint(0, 0xffffffffffffffff)
     
     workflow = {
         "1": {
             "inputs": {
-                "unet_name": "z_image_turbo_bf16.safetensors",
-                "weight_dtype": "default"
+                "ckpt_name": "z-image-turbo-fp8-aio.safetensors"
             },
-            "class_type": "UNETLoader"
+            "class_type": "CheckpointLoaderSimple"
         },
         "2": {
             "inputs": {
-                "clip_name1": "qwen_3_4b.safetensors",
-                "type": "lumina_next2"
-            },
-            "class_type": "CLIPLoader"
-        },
-        "3": {
-            "inputs": {
-                "vae_name": "ae.safetensors"
-            },
-            "class_type": "VAELoader"
-        },
-        "4": {
-            "inputs": {
                 "text": positive_prompt,
-                "clip": ["2", 0]
+                "clip": ["1", 1]
             },
             "class_type": "CLIPTextEncode"
         },
-        "5": {
+        "3": {
             "inputs": {
-                "width": 1024,
-                "height": 1024,
+                "width": width,
+                "height": height,
                 "batch_size": 1
             },
             "class_type": "EmptyLatentImage"
         },
-        "6": {
+        "4": {
             "inputs": {
                 "seed": seed,
                 "steps": 8,
@@ -131,23 +117,23 @@ def create_zimage_workflow(positive_prompt):
                 "scheduler": "beta",
                 "denoise": 1.0,
                 "model": ["1", 0],
-                "positive": ["4", 0],
-                "negative": ["4", 0],
-                "latent_image": ["5", 0]
+                "positive": ["2", 0],
+                "negative": ["2", 0],
+                "latent_image": ["3", 0]
             },
             "class_type": "KSampler"
         },
-        "7": {
+        "5": {
             "inputs": {
-                "samples": ["6", 0],
-                "vae": ["3", 0]
+                "samples": ["4", 0],
+                "vae": ["1", 2]
             },
             "class_type": "VAEDecode"
         },
-        "8": {
+        "6": {
             "inputs": {
                 "filename_prefix": "ZImage",
-                "images": ["7", 0]
+                "images": ["5", 0]
             },
             "class_type": "SaveImage"
         }
@@ -155,15 +141,15 @@ def create_zimage_workflow(positive_prompt):
     
     return workflow
 
-def generate_asset_sync(positive_prompt, negative_prompt=None, output_path=None):
-    """Generate image using Z-Image Turbo"""
+def generate_asset_sync(positive_prompt, negative_prompt=None, output_path=None, width=1024, height=1024):
+    """Generate image using Z-Image Turbo AIO"""
     
     running, msg = check_comfyui()
     if not running:
         return {"success": False, "error": msg}
     
     try:
-        workflow = create_zimage_workflow(positive_prompt)
+        workflow = create_zimage_workflow(positive_prompt, width, height)
     except Exception as e:
         return {"success": False, "error": f"Workflow creation failed: {str(e)}"}
     
@@ -199,7 +185,7 @@ def generate_asset_sync(positive_prompt, negative_prompt=None, output_path=None)
             "output_path": relative_path,
             "full_path": str(output_file),
             "prompt_id": prompt_id,
-            "message": f"Generated with Z-Image Turbo, saved to {relative_path}"
+            "message": f"Generated with Z-Image Turbo AIO ({width}x{height}), saved to {relative_path}"
         }
         
     except Exception as e:
@@ -217,7 +203,7 @@ def handle(msg):
             "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "comfyui-zimage", "version": "4.0.0"}
+                "serverInfo": {"name": "comfyui-zimage-aio", "version": "5.0.0"}
             }
         }
     
@@ -232,7 +218,7 @@ def handle(msg):
                 "tools": [
                     {
                         "name": "generate_comfyui_asset",
-                        "description": "Generate image using Z-Image Turbo. Fast 8-step generation. Optimized for your setup.",
+                        "description": "Generate image using Z-Image Turbo AIO. Fast 8-step generation with text rendering. Default 1024x1024.",
                         "inputSchema": {
                             "type": "object",
                             "properties": {
@@ -243,6 +229,16 @@ def handle(msg):
                                 "output_path": {
                                     "type": "string",
                                     "description": "Output path relative to project"
+                                },
+                                "width": {
+                                    "type": "integer",
+                                    "description": "Image width (default 1024)",
+                                    "default": 1024
+                                },
+                                "height": {
+                                    "type": "integer",
+                                    "description": "Image height (default 1024)",
+                                    "default": 1024
                                 }
                             },
                             "required": ["positive_prompt"]
@@ -270,14 +266,16 @@ def handle(msg):
             result = json.dumps({
                 "running": running,
                 "status": status,
-                "model": "Z-Image Turbo (separate loaders)"
+                "model": "Z-Image Turbo AIO (FP8)"
             }, indent=2)
         
         elif name == "generate_comfyui_asset":
             result_dict = generate_asset_sync(
                 positive_prompt=args["positive_prompt"],
                 negative_prompt=args.get("negative_prompt"),
-                output_path=args.get("output_path")
+                output_path=args.get("output_path"),
+                width=args.get("width", 1024),
+                height=args.get("height", 1024)
             )
             result = json.dumps(result_dict, indent=2)
         

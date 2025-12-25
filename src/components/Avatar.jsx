@@ -203,38 +203,9 @@ function RuneRingLayer({ stage = "flame", isPracticing = false }) {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {stage === "flame" && (
-        <div
-          className="absolute w-[88%] h-[88%]"
-          style={{
-            borderRadius: "9999px",
-            background: "radial-gradient(circle, transparent 45%, #2b2418 55%, #4a3a1d 100%)",
-          }}
-        />
-      )}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "48.5%",
-          height: "48.5%",
-          borderRadius: "50%",
-          boxShadow: isLight
-            ? "inset 0 0 1px 1.5px rgba(0,0,0,0.15)"
-            : "inset 0 0 2px 2px rgba(0,0,0,0.8)",
-          zIndex: 10
-        }}
-      />
-      <div
-        className="absolute w-[88%] h-[88%]"
-        style={{
-          borderRadius: "9999px",
-          background: "radial-gradient(circle, transparent 60%, rgba(0,0,0,0.15) 70%, transparent 80%)",
-        }}
-      />
-
       <div
         className="dark-ring-rotate w-[88%] h-[88%] relative flex items-center justify-center"
-        style={{ animationPlayState: isPracticing ? 'paused' : 'running' }}
+        style={{ animationPlayState: isPracticing ? 'paused' : 'running', zIndex: 5 }}
       >
         <div className="absolute inset-0 hairline-ring opacity-40 scale-[1.005]" />
         <img
@@ -457,20 +428,63 @@ function AvatarContainer({
 
       <div className="relative w-full h-full flex items-center justify-center overflow-visible">
         <div className="absolute w-[64%] h-[64%] flex items-center justify-center overflow-visible pointer-events-none">
-          <AvatarLuminousCanvas
-            breathState={breathState}
-            weeklyPracticeLog={weeklyPracticeLog}
-            weeklyConsistency={weeklyConsistency}
-          />
+          {/* LAYER 0: Base Plate (Behind everything, provides contrast for core/rings) */}
+          <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
+            {/* Flame-specific dark backer: moves behind the web but provides contrast */}
+            {stage === "flame" && !isLight && (
+              <div
+                className="absolute w-[88%] h-[88%]"
+                style={{
+                  borderRadius: "9999px",
+                  background: "radial-gradient(circle, transparent 45%, #2b2418 55%, #4a3a1d 100%)",
+                }}
+              />
+            )}
+            {/* Universal shadow backer for rune visibility */}
+            {!isLight && (
+              <div
+                className="absolute w-[88%] h-[88%]"
+                style={{
+                  borderRadius: "9999px",
+                  background: "radial-gradient(circle, transparent 60%, rgba(0,0,0,0.15) 70%, transparent 80%)",
+                }}
+              />
+            )}
+            {/* Ring rim shadow */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                width: "48.5%",
+                height: "48.5%",
+                borderRadius: "50%",
+                boxShadow: isLight
+                  ? "inset 0 0 1px 1.5px rgba(0,0,0,0.15)"
+                  : "inset 0 0 2px 2px rgba(0,0,0,0.8)",
+              }}
+            />
+          </div>
 
-          <RuneRingLayer stage={stage} isPracticing={isPracticing} />
+          {/* LAYER 1: Background Atmosphere/Web */}
+          <div className="absolute inset-0" style={{ zIndex: 1 }}>
+            <AvatarLuminousCanvas
+              breathState={breathState}
+              weeklyPracticeLog={weeklyPracticeLog}
+              weeklyConsistency={weeklyConsistency}
+            />
+          </div>
 
+          {/* LAYER 2: Rune Ring Layer */}
+          <div className="absolute inset-0" style={{ zIndex: 5 }}>
+            <RuneRingLayer stage={stage} isPracticing={isPracticing} />
+          </div>
+
+          {/* LAYER 3: Decorative Outline Rings */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
               width: "100%",
               height: "100%",
-              zIndex: 5
+              zIndex: 6
             }}
           >
             <div
@@ -515,6 +529,7 @@ function AvatarContainer({
             </div>
           </div>
 
+          {/* LAYER 4: Mode-specific Glow/Feedback */}
           {isLight && (
             <div
               className="absolute inset-0 pointer-events-none"
@@ -526,11 +541,12 @@ function AvatarContainer({
                 mixBlendMode: "plus-lighter",
                 opacity: isPracticing ? 0.25 : 0.18,
                 transition: "opacity 1.5s ease-in-out",
-                zIndex: 1,
+                zIndex: 2,
               }}
             />
           )}
 
+          {/* LAYER 5: Inner Shadow / Depth Layer */}
           <div
             className="absolute pointer-events-none shadow-inner"
             style={{
@@ -540,11 +556,12 @@ function AvatarContainer({
               boxShadow: isLight
                 ? `inset ${shadowX}px ${shadowY}px 12px rgba(0, 0, 0, 0.45)`
                 : "inset 0 0 10px rgba(0, 0, 0, 0.45)",
-              zIndex: 2,
+              zIndex: 7,
               transition: 'box-shadow 0.8s ease-out'
             }}
           />
 
+          {/* LAYER 6: Sigil Core */}
           <StaticSigilCore
             stage={stage}
             path={path}
@@ -564,7 +581,7 @@ function AvatarContainer({
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
           viewBox="0 0 600 600"
-          style={{ overflow: 'visible', zIndex: 10 }}
+          style={{ overflow: 'visible', zIndex: 100 }}
         >
           <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
         </svg>
@@ -576,7 +593,7 @@ function AvatarContainer({
             opacity: 0.025,
             mixBlendMode: "overlay",
             background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctels='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-            zIndex: 20
+            zIndex: 200
           }}
         />
       </div>

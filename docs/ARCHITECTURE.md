@@ -311,7 +311,8 @@ App.jsx
 ├── IndrasNet.jsx           # Particle system
 ├── SectionView
 │   ├── Avatar.jsx          # Central multi-layer avatar (Canvas + PNGs)
-│   ├── StageTitle.jsx      # Stage/path display with hover tooltips
+│   ├── StageTitle.jsx      # Stage/path/attention display
+│   │   └── GoldCartouche.jsx   # Gold seal for attention vectors
 │   └── [Section Content]
 │       ├── HomeHub.jsx             # Dashboard
 │       ├── PracticeSection.jsx     # Breathing, visualization, Ember FX
@@ -327,6 +328,33 @@ App.jsx
 │       └── NavigationSection.jsx   # Settings, profile
 └── DevPanel.jsx            # Developer tools
 ```
+
+### StageTitle Component
+
+`StageTitle.jsx` displays the user's current stage, path, and attention vector in a compact, premium gold-bordered capsule.
+
+**Layout Structure (3-column grid):**
+1. **Left column**: Stage title image (e.g., "FLAME", "SEEDLING")
+2. **Center column**: Attention Vector as `GoldCartouche` (e.g., "SAHAJA", "EKAGRATA") OR diamond separator when no attention set
+3. **Right column**: Path title image (e.g., "Soma", "Prana")
+
+**Sizing:**
+- Images: `h-14` (56px) for balanced proportions
+- Container padding: `4px 34px 4px` (minimal vertical, moderate horizontal)
+- Min width: `300px` to prevent layout shifts
+
+**Visual Design:**
+- Dynamic gold gradient border with avatar-based lighting
+- Stage-adaptive tint overlay from stage colors
+- Minimal marble texture (4% opacity)
+- Hover tooltips with stage/path descriptions (2s delay)
+- Light mode uses multiply blend for "FLAME" title
+
+**Components:**
+- `GoldCartouche.jsx` - Polished gold seal for attention state indicators
+- `TexturedTitleCard` - Internal wrapper with gold border and lighting effects
+
+
 
 ### Four Modes Components
 

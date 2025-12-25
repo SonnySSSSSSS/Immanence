@@ -102,3 +102,16 @@ Recommended directories for generated assets:
 - **Backgrounds**: `public/backgrounds/`
 - **UI Elements**: `public/ui/`
 - **Generated**: `public/generated/` (for temporary/test assets)
+
+---
+
+## 🔥 FIRE-AND-FORGET PROTOCOL (MANDATORY)
+
+To prevent the AI from "freezing" or "locked waits," always follow these steps for ComfyUI generations:
+
+1. **DO NOT use synchronous MCP tools** for generations.
+2. **USE A SCRIPT** (like `trigger_bg_gen.py`) to queue the prompt via background command.
+3. **IMMEDIATELY CONTINUE WORK.** After triggering the generation, immediately ask for the next task or continue with existing code work.
+4. **USER NOTIFICATION.** The user will handle file placement and notify the AI when the asset is ready to be inspected or used.
+5. **NEVER WAIT.** If a generation is running, the AI must remain active and responsive to other requests.
+

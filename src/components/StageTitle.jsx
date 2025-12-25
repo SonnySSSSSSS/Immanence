@@ -125,9 +125,9 @@ const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention 
       ref={cardRef}
       className="relative overflow-hidden rounded-2xl"
       style={{
-        // Fixed padding to maintain stable internal grid
-        padding: '18px 40px 14px',
-        minWidth: '320px',
+        // Fixed padding to maintain stable internal grid - compact sizing
+        padding: '4px 34px 4px',
+        minWidth: '300px',
 
         // Refined Gold Border - Beveled Light Simulation (Dynamic lighting from avatar)
         border: '2px solid transparent',
@@ -267,8 +267,8 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
       <div
         className="stage-ambient-glow absolute"
         style={{
-          width: '350px',
-          height: '50px',
+          width: '400px',
+          height: '60px',
           top: showWelcome ? '60%' : '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
@@ -314,12 +314,12 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
         {/* FIXED 2-ROW GRID LAYOUT*/}
         <div className="flex flex-col items-center gap-1">
 
-          {/* ROW 1: Stage + Separator + Path (3-column grid with reserved space) */}
+          {/* ROW 1: Stage + Attention Vector + Path (3-column grid with reserved space) */}
           <div
             className="grid items-center justify-items-center w-full"
             style={{
               gridTemplateColumns: '1fr auto 1fr',
-              gap: '12px'
+              gap: '16px'
             }}
           >
             {/* LEFT COL: Stage (Right-aligned to center) */}
@@ -332,9 +332,10 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                 <img
                   src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}stage-${stageLower}.png`}
                   alt={stageLower}
-                  className="h-12 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                   style={{
                     filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                    mixBlendMode: (isLight && stageLower === 'flame') ? 'multiply' : 'initial',
                   }}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -386,38 +387,48 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
               </div>
             </div>
 
-            {/* MID COL: Separator (Fixed width, always rendered but conditionally visible) */}
-            <div
-              className="divider-glyph relative"
-              style={{
-                opacity: hasPath ? 0.5 : 0,
-                visibility: hasPath ? 'visible' : 'hidden',
-                width: '14px', // Fixed width to prevent drift
-                transition: 'opacity 0.3s ease'
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14">
-                <path
-                  d="M7 1 L13 7 L7 13 L1 7 Z"
-                  fill="none"
-                  stroke={stageColors.gradient[1]}
-                  strokeWidth="1.2"
+            {/* MID COL: Attention Vector (Gold Cartouche) OR Separator */}
+            <div className="flex items-center justify-center">
+              {attention && attention !== 'none' ? (
+                <GoldCartouche
+                  text={attention}
+                  stageColor={stageColors.gradient[1]}
+                  isLight={isLight}
+                />
+              ) : (
+                <div
+                  className="divider-glyph relative"
                   style={{
-                    filter: `drop-shadow(0 0 3px ${stageColors.glow}40)`,
+                    opacity: hasPath ? 0.5 : 0,
+                    visibility: hasPath ? 'visible' : 'hidden',
+                    width: '18px',
+                    transition: 'opacity 0.3s ease'
                   }}
-                />
-                <circle
-                  cx="7"
-                  cy="7"
-                  r="1.5"
-                  fill={stageColors.gradient[1]}
-                  opacity="0.8"
-                />
-              </svg>
+                >
+                  <svg width="18" height="18" viewBox="0 0 14 14">
+                    <path
+                      d="M7 1 L13 7 L7 13 L1 7 Z"
+                      fill="none"
+                      stroke={stageColors.gradient[1]}
+                      strokeWidth="1.2"
+                      style={{
+                        filter: `drop-shadow(0 0 3px ${stageColors.glow}40)`,
+                      }}
+                    />
+                    <circle
+                      cx="7"
+                      cy="7"
+                      r="1.5"
+                      fill={stageColors.gradient[1]}
+                      opacity="0.8"
+                    />
+                  </svg>
+                </div>
+              )}
             </div>
 
-            {/* RIGHT COL: Path OR Gold Cartouche (Left-aligned to center) */}
-            <div className="flex justify-start w-full items-center gap-3">
+            {/* RIGHT COL: Path (Left-aligned to center) */}
+            <div className="flex justify-start w-full items-center">
               {hasPath && (
                 <div
                   className="path-section relative flex items-center justify-center cursor-help"
@@ -427,7 +438,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                   <img
                     src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}path-${pathLower}.png`}
                     alt={pathLower}
-                    className="h-12 w-auto object-contain"
+                    className="h-16 w-auto object-contain"
                     style={{
                       filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
                     }}
@@ -483,15 +494,6 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Gold Cartouche for Attention (Authority Material) */}
-              {attention && attention !== 'none' && (
-                <GoldCartouche
-                  text={attention}
-                  stageColor={stageColors.gradient[1]}
-                  isLight={isLight}
-                />
               )}
             </div>
           </div>

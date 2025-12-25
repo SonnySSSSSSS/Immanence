@@ -20,37 +20,37 @@ const DOMAINS = [
 // Cymatic glyphs - sacred geometry for each domain
 const CYMATIC_GLYPHS = {
     // BREATHWORK (Wave) - Concentric circles: rhythmic flow of life-force
-    breathwork: (isActive) => (
+    breathwork: (isActive, isLight) => (
         <svg width="20" height="20" viewBox="0 0 20 20">
             <circle cx="10" cy="10" r="7" fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
-                strokeWidth={isActive ? "1.2" : "0.5"}
+                stroke={isActive ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
+                strokeWidth={isActive ? "1.2" : "0.8"}
                 strokeDasharray={isActive ? "none" : "2 2"}
-                opacity={isActive ? "0.4" : "0.2"} />
+                opacity={isActive ? "0.4" : "0.5"} />
             <circle cx="10" cy="10" r="5" fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.2)'}
-                strokeWidth={isActive ? "1.5" : "0.8"}
-                opacity={isActive ? "0.7" : "0.3"} />
+                stroke={isActive ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.4)' : 'rgba(253,251,245,0.3)')}
+                strokeWidth={isActive ? "1.5" : "1"}
+                opacity={isActive ? "0.7" : "0.6"} />
             <circle cx="10" cy="10" r="2.5"
-                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.1)'}
-                opacity={isActive ? "0.6" : "0.2"} />
+                fill={isActive ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.2)' : 'rgba(253,251,245,0.15)')}
+                opacity={isActive ? "0.6" : "0.4"} />
         </svg>
     ),
 
     // VISUALIZATION (Sword) - Hexagon: precision of directed consciousness
-    visualization: (isActive) => (
+    visualization: (isActive, isLight) => (
         <svg width="20" height="20" viewBox="0 0 20 20">
             <path
                 d="M10 2 L16.33 6 L16.33 14 L10 18 L3.67 14 L3.67 6 Z"
                 fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
-                strokeWidth={isActive ? "1.5" : "0.8"}
+                stroke={isActive ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
+                strokeWidth={isActive ? "1.5" : "1"}
                 strokeDasharray={isActive ? "none" : "1.5 1.5"}
                 style={{
                     transition: 'all 0.4s ease',
                     transform: isActive ? 'rotate(30deg)' : 'rotate(0deg)',
                     transformOrigin: 'center',
-                    opacity: isActive ? 1 : 0.4
+                    opacity: isActive ? 1 : 0.6
                 }}
             />
             {isActive && (
@@ -60,17 +60,17 @@ const CYMATIC_GLYPHS = {
     ),
 
     // WISDOM (Mirror) - Square: stable foundation of recognition
-    wisdom: (isActive) => (
+    wisdom: (isActive, isLight) => (
         <svg width="20" height="20" viewBox="0 0 20 20">
             <rect x="5" y="5" width="10" height="10"
                 fill="none"
-                stroke={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.15)'}
-                strokeWidth={isActive ? "1.5" : "0.8"}
+                stroke={isActive ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
+                strokeWidth={isActive ? "1.5" : "1"}
                 strokeDasharray={isActive ? "none" : "3 1"}
-                opacity={isActive ? 1 : 0.4} />
+                opacity={isActive ? 1 : 0.6} />
             <rect x="7.5" y="7.5" width="5" height="5"
-                fill={isActive ? 'var(--accent-color)' : 'rgba(253,251,245,0.05)'}
-                opacity={isActive ? "0.3" : "0.1"} />
+                fill={isActive ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.15)' : 'rgba(253,251,245,0.1)')}
+                opacity={isActive ? "0.3" : "0.25"} />
         </svg>
     )
 };
@@ -597,11 +597,11 @@ export function TrackingHub() {
                             onClick={() => setCurrentIndex(index)}
                             className="transition-all duration-300"
                             style={{
-                                opacity: index === currentIndex ? 1 : 0.4,
+                                opacity: index === currentIndex ? 1 : 0.75,
                                 transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
                             }}
                         >
-                            {CYMATIC_GLYPHS[domain.id](index === currentIndex)}
+                            {CYMATIC_GLYPHS[domain.id](index === currentIndex, isLight)}
                         </button>
                     ))}
                 </div>

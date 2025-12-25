@@ -26,6 +26,8 @@ description: Rules for working on Immanence OS
    - Avatar.jsx
 4. **DO NOT guess** - if something is missing, ASK instead of improvising
 5. **Small changes only** - one thing at a time, verify before next change
+6. **NEVER WAIT FOR COMFYUI** - Trigger generation in the background and continue working immediately. Do not freeze the session waiting for assets.
+
 
 ## PROTECTED FILES
 These files must NEVER be edited without showing exact diff first:

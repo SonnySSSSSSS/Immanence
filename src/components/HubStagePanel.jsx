@@ -35,7 +35,7 @@ export function HubStagePanel({
                 STAGE NAME — Shared ceremonial inscription
                ══════════════════════════════════════════════════════════════════ */}
             {!hideStageTitle && (
-                <div className="-mt-16 mb-2 relative overflow-visible">
+                <div className="-mt-16 mb-1.5 relative overflow-visible">
                     <StageTitle
                         stage={stage}
                         path={path}
