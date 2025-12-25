@@ -103,10 +103,22 @@ function generateCurve(data, width, height, tension = 0.3, isLight = false) {
         const isPeakSegment = (i === peakIndex || i === peakIndex - 1);
 
         // Directional flow: thinner at start, thicker toward end
-        // Plus peak emphasis
+        // Plus peak emphasis and CALLIGRAPHIC VELOCITY-BASED WIDTH (light mode)
         const baseWidth = 0.8 + (i / (points.length - 1)) * 0.8; // 0.8 → 1.6 L→R
         const peakBoost = isPeakSegment ? 1.2 : 0;
-        const strokeWidth = baseWidth + avgNorm * 0.6 + peakBoost;
+
+        // Calligraphic velocity modulation: thicker on descents, thinner on ascents
+        const velocityDelta = normalized[i + 1] - normalized[i];
+        const velocityWidth = isLight
+            ? Math.abs(velocityDelta) * 1.5 // More pronounced in light mode for ink effect
+            : Math.abs(velocityDelta) * 0.8;
+
+        // Ascending = thinner (pen lifting), Descending = thicker (pen pressing)
+        const calligraphyMod = isLight
+            ? (velocityDelta < 0 ? 0.6 : -0.3) // Descending = thicker, ascending = thinner
+            : 0;
+
+        const strokeWidth = baseWidth + avgNorm * 0.6 + peakBoost + velocityWidth + calligraphyMod;
 
         // Directional opacity: slightly dimmer at start, brighter toward "now"
         const baseOpacity = 0.25 + (i / (points.length - 1)) * 0.25; // 0.25 → 0.5 L→R

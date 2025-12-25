@@ -33,6 +33,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const transmissionRef = useRef(null);
   const [transmissionAngle, setTransmissionAngle] = useState(135);
 
+  // Cloud background test state
+  const [cloudBackground, setCloudBackground] = useState('medium'); // 'subtle', 'medium', 'dramatic', or 'none'
+
   useEffect(() => {
     if (transmissionRef.current) {
       const rect = transmissionRef.current.getBoundingClientRect();
@@ -117,27 +120,39 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const accuracyPct = Math.round(avgAccuracy * 100);
   const progressPct = Math.round(progressToNextStage * 100);
 
+  // Listen for DevPanel cloud background changes
+  useEffect(() => {
+    const handleCloudChange = (e) => setCloudBackground(e.detail);
+    window.addEventListener('dev-cloud-change', handleCloudChange);
+    return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
+  }, []);
+
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
 
-      {/* ──────────────────────────────────────────────────────────────────────
-          STAGE TITLE - Ancient Manuscript Incipit
-          ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full flex flex-col items-center pt-4 pb-2">
-        <StageTitle
-          stage={currentStage}
-          path={previewPath}
-          attention={previewAttention}
-          showWelcome={false}
+      {/* FULL-PAGE CLOUD BACKGROUND (LIGHT MODE ONLY) */}
+      {cloudBackground !== 'none' && isLight && (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${import.meta.env.BASE_URL}bg/cloud-${cloudBackground}.png)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.85,
+            zIndex: 0,
+            filter: 'contrast(1.1) saturate(1.1)',
+          }}
         />
-      </div>
+      )}
 
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR & HUB INSTRUMENT - Full-Bleed Altar (Cosmic Zone)
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full flex flex-col items-center gap-4 py-8 transition-all duration-500 overflow-visible">
         <div className="relative w-full flex items-center justify-center overflow-visible">
+          {/* Cloud Background - NO LONGER HERE, moved to full-page layer */}
+
           {/* Bloom halo - EXPANDED in Sanctuary mode to fill space */}
           <div
             className="absolute transition-all duration-500"
@@ -172,8 +187,15 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           />
 
-          {/* Avatar with cosmic focal point */}
-          <div className="relative z-10">
+          {/* Avatar with cosmic focal point + subtle drop shadow */}
+          <div
+            className="relative z-10"
+            style={{
+              filter: cloudBackground !== 'none' && isLight
+                ? 'drop-shadow(0 8px 24px rgba(120, 90, 60, 0.2))'
+                : 'none',
+            }}
+          >
             <Avatar
               mode="hub"
               onStageChange={onStageChange}
@@ -242,32 +264,24 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div className="grid w-full grid-cols-2 gap-4">
             <ModeButton
               title="Practice"
-              description="Breathing & timing"
-              subtext="Build consistency"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-practice.png` : `${import.meta.env.BASE_URL}modes/darkmode-practice.png`}
               colorGrade="gold"
               onClick={() => onSelectSection("practice")}
             />
             <ModeButton
               title="Wisdom"
-              description="Treatise & teachings"
-              subtext="Deepen understanding"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-wisdom.png` : `${import.meta.env.BASE_URL}modes/darkmode-wisdom.png`}
               colorGrade="amberViolet"
               onClick={() => onSelectSection("wisdom")}
             />
             <ModeButton
               title="Application"
-              description="Track gestures"
-              subtext="Embody practice"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-application.png` : `${import.meta.env.BASE_URL}modes/darkmode-application.png`}
               colorGrade="indigo"
               onClick={() => onSelectSection("application")}
             />
             <ModeButton
               title="Navigation"
-              description="Roadmap & goals"
-              subtext="Set intentions"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-navigation.png` : `${import.meta.env.BASE_URL}modes/darkmode-navigation.png`}
               colorGrade="goldBlue"
               onClick={() => onSelectSection("navigation")}
@@ -374,7 +388,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   );
 }
 
-function ModeButton({ title, description, subtext, onClick, image, colorGrade = 'gold' }) {
+function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
 
@@ -481,7 +495,7 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
             backgroundImage: `url(${image})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: isLight ? 0.25 : 0.55,
+            opacity: 1.0,
             mixBlendMode: isLight ? 'multiply' : 'normal',
           }}
         />
@@ -525,33 +539,15 @@ function ModeButton({ title, description, subtext, onClick, image, colorGrade = 
       {/* Text Content - positioned at bottom with proper z-index */}
       <div className="relative z-10 px-5 py-5 w-full">
         <div
-          className="text-sm font-semibold tracking-wide transition-colors"
+          className="text-lg font-bold tracking-wide transition-colors"
           style={{
             color: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
-            textShadow: isLight ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8)',
+            textShadow: isLight
+              ? '0 1px 2px rgba(255, 255, 255, 0.95), 0 2px 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(255, 255, 255, 0.6), 1px 1px 0 rgba(0, 0, 0, 0.15)'
+              : '0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.7)',
           }}
         >
           {title}
-        </div>
-        <div
-          style={{
-            color: isLight ? 'var(--light-text-primary)' : 'rgba(253, 251, 245, 0.92)',
-            fontSize: '0.75rem',
-            marginTop: '0.25rem',
-            textShadow: isLight ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.95)',
-          }}
-        >
-          {description}
-        </div>
-        <div
-          style={{
-            color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.65)',
-            fontSize: '0.625rem',
-            marginTop: '0.5rem',
-            textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.9)',
-          }}
-        >
-          {subtext}
         </div>
       </div>
     </button >

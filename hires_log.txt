@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "D:\Unity Apps\immanence-os\tools\batch_gen_hires.py", line 97, in <module>
+    run_batch(example_tasks)
+  File "D:\Unity Apps\immanence-os\tools\batch_gen_hires.py", line 77, in run_batch
+    print(f"--- \U0001f48e IMMANENCE HI-RES FIX BATCH (V8) \U0001f48e ---")
+  File "encodings\cp1252.py", line 19, in encode
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f48e' in position 4: character maps to <undefined>

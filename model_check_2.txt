@@ -1,0 +1,6 @@
+Querying ComfyUI for available models at http://127.0.0.1:8188...
+
+Available Checkpoints:
+ - v1-5-pruned-emaonly.safetensors
+ - z-image-turbo-bf16-aio.safetensors
+ - z-image-turbo-fp8-aio.safetensors

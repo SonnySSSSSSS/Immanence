@@ -271,6 +271,26 @@ export function DevPanel({
                             </div>
                         </div>
 
+                        {/* Cloud Background Toggle (Light Mode) */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-xs text-white/50 w-16 text-emerald-400">Cloud BG</label>
+                            <div className="flex bg-white/5 rounded-lg p-1 gap-1 flex-wrap">
+                                {['none', 'subtle', 'medium', 'dramatic'].map(cloud => (
+                                    <button
+                                        key={cloud}
+                                        onClick={() => {
+                                            // This will need to be wired to HomeHub state via props
+                                            const event = new CustomEvent('dev-cloud-change', { detail: cloud });
+                                            window.dispatchEvent(event);
+                                        }}
+                                        className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
+                                    >
+                                        {cloud.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Gyro Simulation for Ring Drift */}
                         <div className="border-t border-white/10 pt-3 mt-2">
                             <div className="flex items-center justify-between mb-2">

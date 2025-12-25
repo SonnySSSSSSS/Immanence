@@ -320,7 +320,7 @@ function App() {
                 IMMANENCE OS
               </div>
 
-              {/* Center Element: Label or Heartbeat Sigil */}
+              {/* Center Element: StageTitle or Section Label */}
               <div className="flex-1 flex justify-center">
                 {!isHub ? (
                   <div
@@ -330,20 +330,13 @@ function App() {
                     {currentLabel}
                   </div>
                 ) : (
-                  <div
-                    className="relative w-6 h-6 flex items-center justify-center cursor-pointer select-none"
-                    onPointerDown={(e) => {
-                      const timer = setTimeout(() => setIsSigilTrackerOpen(true), 600);
-                      const cancel = () => {
-                        clearTimeout(timer);
-                        window.removeEventListener('pointerup', cancel);
-                      };
-                      window.addEventListener('pointerup', cancel);
-                    }}
-                  >
-                    {/* Pulsing Core */}
-                    <div className="absolute inset-0 rounded-full bg-amber-500/10 blur-sm animate-pulse" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500/40 shadow-[0_0_8px_var(--accent-color)]" />
+                  <div className="scale-[0.65] origin-center">
+                    <StageTitle
+                      stage={previewStage}
+                      path={previewPath}
+                      attention={previewAttention}
+                      showWelcome={false}
+                    />
                   </div>
                 )}
               </div>

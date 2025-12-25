@@ -1,0 +1,8 @@
+Querying ComfyUI for available Upscalers at http://127.0.0.1:8188...
+
+Available Upscale Models:
+ - C
+ - O
+ - M
+ - B
+ - O

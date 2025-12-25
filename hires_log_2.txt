@@ -1,0 +1,28 @@
+--- IMMANENCE HI-RES FIX BATCH (V8) ---
+Workflow: 512x200 -> 2x Latent Upscale -> 1024x400 Refinement
+Model: z-image-turbo-bf16-aio.safetensors | Sampler: euler/karras
+
+Traceback (most recent call last):
+  File "D:\Unity Apps\immanence-os\tools\batch_gen_hires.py", line 83, in run_batch
+    pid = queue_hi_res_fix(prompt, prefix)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Unity Apps\immanence-os\tools\batch_gen_hires.py", line 72, in queue_hi_res_fix
+    with urllib.request.urlopen(req, timeout=10) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "urllib\request.py", line 215, in urlopen
+  File "urllib\request.py", line 521, in open
+  File "urllib\request.py", line 630, in http_response
+  File "urllib\request.py", line 559, in error
+  File "urllib\request.py", line 492, in _call_chain
+  File "urllib\request.py", line 639, in http_error_default
+urllib.error.HTTPError: HTTP Error 400: Bad Request
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Unity Apps\immanence-os\tools\batch_gen_hires.py", line 97, in <module>
+    run_batch(example_tasks)
+  File "D:\Unity Apps\immanence-os\tools\batch_gen_hires.py", line 87, in run_batch
+    print(f"\u2717 Failed {prefix}: {e}")
+  File "encodings\cp1252.py", line 19, in encode
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2717' in position 0: character maps to <undefined>

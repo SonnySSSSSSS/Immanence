@@ -165,6 +165,21 @@ function StatsCard({ domain, stats, isLight }) {
             <div style={{ ...sheenOverlayStyle, zIndex: 2 }} />
             <div style={{ ...innerGlowStyle, zIndex: 2 }} />
 
+            {/* Subtle parchment texture overlay (LIGHT MODE ONLY) */}
+            {isLight && (
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundImage: `url(${import.meta.env.BASE_URL}textures/parchment-subtle.png)`,
+                        backgroundSize: '300px 300px',
+                        backgroundRepeat: 'repeat',
+                        opacity: 0.08,
+                        mixBlendMode: 'multiply',
+                        zIndex: 2,
+                    }}
+                />
+            )}
+
             {/* Domain header with Metadata on Right */}
             <div className="flex items-center justify-between mb-3 px-5 pt-4 relative z-10">
                 {/* Left: Icon + Label */}
