@@ -321,7 +321,7 @@ function App() {
               </div>
 
               {/* Center Element: StageTitle or Section Label */}
-              <div className="flex-1 flex justify-center">
+              <div className="flex-1 flex justify-center items-center overflow-hidden" style={{ maxHeight: '100%' }}>
                 {!isHub ? (
                   <div
                     className={`text-sm font-medium ${isLight ? 'text-[#3D3425]/90' : 'text-white/90'}`}
@@ -330,7 +330,7 @@ function App() {
                     {currentLabel}
                   </div>
                 ) : (
-                  <div className="scale-[0.65] origin-center">
+                  <div className="h-full flex items-center" style={{ transform: 'scale(0.85)' }}>
                     <StageTitle
                       stage={previewStage}
                       path={previewPath}
@@ -359,7 +359,7 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.14.73
+                  v3.14.74
                 </div>
                 {!isHub && (
                   <button

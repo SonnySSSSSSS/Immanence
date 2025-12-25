@@ -234,7 +234,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
         {/* STATS DASHBOARD - TrackingHub */}
         <div className="w-full">
-          <TrackingHub />
+          <TrackingHub streakInfo={streakInfo} />
         </div>
 
         {/* MODES SECTION - Explore Modes Grid */}

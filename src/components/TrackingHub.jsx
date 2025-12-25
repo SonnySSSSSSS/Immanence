@@ -505,7 +505,7 @@ function DomainInsights({ domain, stats }) {
     );
 }
 
-export function TrackingHub() {
+export function TrackingHub({ streakInfo: propStreakInfo }) {
     const {
         getStreakInfo,
         getDomainStats,
@@ -535,8 +535,8 @@ export function TrackingHub() {
         ...DOMAINS.filter(d => d.id !== primaryDomainObj.id)
     ];
 
-    // Derived data
-    const streakInfo = getStreakInfo();
+    // Derived data - use prop if provided, otherwise get from store
+    const streakInfo = propStreakInfo || getStreakInfo();
     const weeklyPattern = getWeeklyPattern();
 
 
@@ -602,6 +602,70 @@ export function TrackingHub() {
 
     return (
         <div className="w-full transition-all duration-500">
+            {/* Status Pills - Moved from HubStagePanel */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+                {/* Streak Pill */}
+                <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                    style={{
+                        background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
+                        border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)'}`,
+                    }}
+                >
+                    <span className="text-[11px]" style={{ opacity: 0.6 }}>📅</span>
+                    <span
+                        className="text-[14px] font-black"
+                        style={{
+                            color: isLight ? 'rgba(45, 40, 35, 0.98)' : 'rgba(253, 251, 245, 1)',
+                            fontFamily: 'var(--font-ui)',
+                            letterSpacing: '-0.02em'
+                        }}
+                    >
+                        {streakInfo.current}
+                    </span>
+                    <span
+                        className="text-[9px] uppercase tracking-wider"
+                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253, 251, 245, 0.85)' }}
+                    >
+                        days
+                    </span>
+                </div>
+
+                {/* Legacy HONOR button - kept for compatibility */}
+                <div
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full"
+                    style={{
+                        background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
+                        border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)'}`,
+                        color: isLight ? 'rgba(45, 40, 35, 0.98)' : 'rgba(253, 251, 245, 1)',
+                        fontFamily: 'var(--font-ui)',
+                        fontWeight: 800,
+                        fontSize: '10px',
+                        letterSpacing: '0.05em',
+                    }}
+                >
+                    <span style={{ opacity: 0.9 }}>⭐</span>
+                    <span>HONOR</span>
+                </div>
+
+                {/* Vacation placeholder - matches sizing */}
+                <div
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full"
+                    style={{
+                        background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
+                        border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)'}`,
+                        color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253, 251, 245, 0.6)',
+                        fontFamily: 'var(--font-ui)',
+                        fontWeight: 600,
+                        fontSize: '9px',
+                        letterSpacing: '0.08em',
+                    }}
+                >
+                    <span style={{ opacity: 0.7 }}>☀️</span>
+                    <span>VACATION</span>
+                </div>
+            </div>
+
             {/* Simplified header - cymatic pagination glyphs only */}
             <div className="mb-3">
                 {/* Cymatic pagination glyphs */}
