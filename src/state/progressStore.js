@@ -60,6 +60,13 @@ export const useProgressStore = create(
             userSelectedDomain: null,
             lastPracticeType: 'breathwork',
 
+            // === Goals (Daily Targets in minutes) ===
+            goals: {
+                breathwork: 30,
+                visualization: 20,
+                wisdom: 15,
+            },
+
             // === Export Version ===
             exportVersion: 1,
 
@@ -249,6 +256,18 @@ export const useProgressStore = create(
                     displayPreference: mode,
                     userSelectedDomain: mode === 'userSelected' ? domain : null
                 });
+            },
+
+            /**
+             * Set daily goal for a domain
+             */
+            setGoal: (domain, minutes) => {
+                set(state => ({
+                    goals: {
+                        ...state.goals,
+                        [domain]: minutes
+                    }
+                }));
             },
 
             /**
