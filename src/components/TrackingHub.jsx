@@ -230,13 +230,14 @@ function StatsCard({ domain, stats, isLight }) {
                 {/* SESSIONS */}
                 <div className="text-center">
                     <div
-                        className="font-black mb-1"
+                        className="font-semibold mb-1"
                         style={{
                             fontSize: '2.4rem',
                             lineHeight: '1',
                             color: isLight ? 'rgba(140, 100, 50, 0.95)' : '#d4b87a',
-                            letterSpacing: '-0.04em',
+                            letterSpacing: '0.02em',
                             opacity: 0.9,
+                            fontFamily: 'var(--font-display)',
                         }}
                     >
                         {stats.totalSessions || 0}
@@ -256,13 +257,14 @@ function StatsCard({ domain, stats, isLight }) {
                 {/* MINUTES - THE HEARTBEAT - STANDS OUT */}
                 <div className="text-center">
                     <div
-                        className="font-black mb-1"
+                        className="font-bold mb-1"
                         style={{
                             fontSize: '2.8rem',
                             lineHeight: '1',
                             color: isLight ? 'rgba(120, 80, 40, 1)' : '#fff8e6',
-                            letterSpacing: '-0.05em',
+                            letterSpacing: '0.03em',
                             textShadow: isLight ? 'none' : '0 0 12px rgba(255, 235, 200, 0.45)',
+                            fontFamily: 'var(--font-display)',
                         }}
                     >
                         {stats.totalMinutes || 0}
@@ -283,13 +285,14 @@ function StatsCard({ domain, stats, isLight }) {
                 {/* HONOR */}
                 <div className="text-center">
                     <div
-                        className="font-black mb-1"
+                        className="font-semibold mb-1"
                         style={{
                             fontSize: '2.4rem',
                             lineHeight: '1',
                             color: isLight ? 'rgba(140, 100, 50, 0.9)' : '#c9a86e',
-                            letterSpacing: '-0.04em',
+                            letterSpacing: '0.02em',
                             opacity: 0.9,
+                            fontFamily: 'var(--font-display)',
                         }}
                     >
                         {stats.totalHonor || 0}

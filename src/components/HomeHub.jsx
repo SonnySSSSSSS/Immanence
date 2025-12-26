@@ -538,12 +538,24 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
 
       {/* Text Content - positioned at bottom with proper z-index */}
       <div className="relative z-10 px-5 py-5 w-full">
+        {/* Light mode: Add a semi-transparent backdrop for text legibility */}
+        {isLight && (
+          <div
+            className="absolute inset-0 rounded-3xl"
+            style={{
+              background: 'linear-gradient(to top, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.45) 60%, transparent 100%)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+            }}
+          />
+        )}
         <div
-          className="text-lg font-bold tracking-wide transition-colors"
+          className="text-lg font-bold tracking-wide transition-colors relative"
           style={{
             color: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
+            fontFamily: 'var(--font-display)',
             textShadow: isLight
-              ? '0 1px 2px rgba(255, 255, 255, 0.95), 0 2px 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(255, 255, 255, 0.6), 1px 1px 0 rgba(0, 0, 0, 0.15)'
+              ? '0 1px 2px rgba(255, 255, 255, 1), 0 2px 12px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7), 1px 1px 0 rgba(0, 0, 0, 0.25), -1px -1px 0 rgba(0, 0, 0, 0.15)'
               : '0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.7)',
           }}
         >
