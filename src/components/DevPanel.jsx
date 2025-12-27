@@ -188,7 +188,7 @@ export function DevPanel({
 
                         {/* Stage selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(45, 40, 35, 0.9)' : 'white' }}>Stage</label>
+                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Stage</label>
                             <select
                                 value={avatarStage}
                                 onChange={(e) => setAvatarStage(e.target.value)}
@@ -203,7 +203,7 @@ export function DevPanel({
 
                         {/* Path selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-sm text-white w-16 font-medium">Path</label>
+                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Path</label>
                             <select
                                 value={avatarPath}
                                 onChange={(e) => setAvatarPath(e.target.value)}
@@ -218,7 +218,7 @@ export function DevPanel({
 
                         {/* Attention selector */}
                         <div className="flex items-center gap-3 mb-3">
-                            <label className="text-sm text-white w-16 font-medium">Attention</label>
+                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Attention</label>
                             <select
                                 value={avatarAttention}
                                 onChange={(e) => setAvatarAttention(e.target.value)}
@@ -234,7 +234,7 @@ export function DevPanel({
 
                         {/* Show Core toggle */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs text-white/50 w-16">Show Core</label>
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(255, 255, 255, 0.5)' }}>Show Core</label>
                             <button
                                 onClick={() => setShowCore(!showCore)}
                                 className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${showCore
@@ -248,7 +248,7 @@ export function DevPanel({
 
                         {/* Light Mode Ring Toggle */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs text-white/50 w-16 text-cyan-400">Ring Type</label>
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 120, 140, 0.9)' : '#22d3ee' }}>Ring Type</label>
                             <div className="flex bg-white/5 rounded-lg p-1 gap-1">
                                 <button
                                     onClick={() => setLightModeRingType('astrolabe')}
@@ -273,7 +273,7 @@ export function DevPanel({
 
                         {/* Cloud Background Toggle (Light Mode) */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs text-white/50 w-16 text-emerald-400">Cloud BG</label>
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 140, 100, 0.9)' : '#34d399' }}>Cloud BG</label>
                             <div className="flex bg-white/5 rounded-lg p-1 gap-1 flex-wrap">
                                 {['none', 'subtle', 'medium', 'dramatic'].map(cloud => (
                                     <button

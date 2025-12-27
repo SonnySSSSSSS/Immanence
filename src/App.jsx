@@ -298,6 +298,76 @@ function App() {
         >
           <Background stage={previewStage} />
 
+          {/* HAMBURGER MENU - Inside App Container, absolute positioned to stay within UI bounds */}
+          <div className="lg:hidden absolute top-16 right-2 z-[9999]">
+            <button
+              type="button"
+              onClick={() => setShowDevPanel(v => !v)}
+              className={`p-2.5 rounded-xl transition-all shadow-lg ${showDevPanel
+                ? (isLight ? 'bg-amber-100' : 'bg-white/20')
+                : (isLight ? 'bg-white/90' : 'bg-black/70')
+                }`}
+              style={{
+                backdropFilter: 'blur(12px)',
+                border: isLight
+                  ? '2px solid rgba(140, 120, 90, 0.4)'
+                  : '2px solid rgba(255, 255, 255, 0.2)',
+              }}
+              aria-label="Menu"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={isLight ? 'rgba(90, 77, 60, 0.9)' : 'rgba(255, 255, 255, 0.8)'}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showDevPanel && (
+              <div
+                className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden shadow-2xl"
+                style={{
+                  background: isLight
+                    ? 'rgba(255, 252, 245, 0.98)'
+                    : 'rgba(20, 18, 16, 0.98)',
+                  backdropFilter: 'blur(16px)',
+                  border: isLight
+                    ? '2px solid rgba(140, 120, 90, 0.35)'
+                    : '2px solid rgba(255, 255, 255, 0.15)',
+                  minWidth: '160px'
+                }}
+              >
+                <div className="flex flex-col gap-2 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-medium ${isLight ? 'text-[#5A4D3C]' : 'text-white/80'}`}>Width</span>
+                    <WidthToggle />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-medium ${isLight ? 'text-[#5A4D3C]' : 'text-white/80'}`}>Theme</span>
+                    <DisplayModeToggle />
+                  </div>
+                  <div
+                    className="h-px w-full"
+                    style={{
+                      background: isLight
+                        ? 'rgba(90, 77, 60, 0.2)'
+                        : 'rgba(255, 255, 255, 0.1)'
+                    }}
+                  />
+                  <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.14.99</div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="relative z-10 w-full flex-1 flex flex-col overflow-visible">
             {/* Fixed Dark Header Bar */}
             <header
@@ -313,8 +383,9 @@ function App() {
                   : '1px solid rgba(255,255,255,0.05)',
               }}
             >
+              {/* Branding - Desktop Only */}
               <div
-                className={`text-[10px] text-suspended ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
+                className={`hidden lg:block text-[10px] text-suspended ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
                 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.15em' }}
               >
                 IMMANENCE OS
@@ -324,7 +395,7 @@ function App() {
               <div
                 className="absolute left-1/2 top-1/2 flex justify-center items-center"
                 style={{
-                  transform: 'translate(-50%, calc(-50% - 5px)) scaleX(0.85) scaleY(0.75)',
+                  transform: 'translate(-50%, calc(-50% - 5px)) scaleX(0.65) scaleY(0.6)',
                   width: 'min(90vw, 600px)',
                   transformOrigin: 'center center'
                 }}
@@ -346,7 +417,8 @@ function App() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* Desktop Controls (Hidden on Mobile) */}
+              <div className="hidden lg:flex items-center gap-3">
                 {/* Width Toggle (Sanctuary/Hearth) */}
                 <WidthToggle />
                 {/* Color Scheme Toggle (Dark/Light) */}
@@ -364,19 +436,20 @@ function App() {
                   className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  v3.14.94
+                  v3.14.99
                 </div>
-                {!isHub && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection(null)}
-                    className={`text-[11px] uppercase tracking-[0.15em] transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425]' : 'text-white/70 hover:text-white'}`}
-                    style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
-                  >
-                    Home
-                  </button>
-                )}
               </div>
+
+              {!isHub && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(null)}
+                  className={`text-[11px] uppercase tracking-[0.15em] transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425]' : 'text-white/70 hover:text-white'}`}
+                  style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
+                >
+                  Home
+                </button>
+              )}
             </header>
 
             {/* Main content - hide when minimized */}
@@ -443,9 +516,9 @@ function App() {
 
           {/* Indra's Net - animated web at bottom */}
           <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} />
-        </div>
-      </div>
-    </ThemeProvider>
+        </div >
+      </div >
+    </ThemeProvider >
   );
 }
 
