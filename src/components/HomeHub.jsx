@@ -230,7 +230,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Centered container with adaptive width
           ────────────────────────────────────────────────────────────────────── */}
-      <div className={`w-full mx-auto px-4 flex flex-col items-center gap-8 pb-8 ${isSanctuary ? 'max-w-[700px]' : 'max-w-[380px]'}`}>
+      <div className="w-full mx-auto px-4 flex flex-col items-center gap-8 pb-8" style={{ maxWidth: 'min(90vw, 600px)' }}>
 
         {/* STATS DASHBOARD - TrackingHub */}
         <div className="w-full">

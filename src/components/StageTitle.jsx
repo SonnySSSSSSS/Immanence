@@ -8,503 +8,504 @@ import { STAGE_COLORS } from "../constants/stageColors.js";
 
 // Sanskrit path names with their closest one-word English translations
 const PATH_TRANSLATIONS = {
-  soma: { sanskrit: 'Soma', english: 'Sensory' },
-  prana: { sanskrit: 'Prana', english: 'Breath' },
-  dhyana: { sanskrit: 'Dhyana', english: 'Meditation' },
-  drishti: { sanskrit: 'Drishti', english: 'Vision' },
-  jnana: { sanskrit: 'Jnana', english: 'Knowledge' },
-  samyoga: { sanskrit: 'Samyoga', english: 'Union' },
+    soma: { sanskrit: 'Soma', english: 'Sensory' },
+    prana: { sanskrit: 'Prana', english: 'Breath' },
+    dhyana: { sanskrit: 'Dhyana', english: 'Meditation' },
+    drishti: { sanskrit: 'Drishti', english: 'Vision' },
+    jnana: { sanskrit: 'Jnana', english: 'Knowledge' },
+    samyoga: { sanskrit: 'Samyoga', english: 'Union' },
 };
 
 // Attention vector labels
 const ATTENTION_LABELS = {
-  vigilance: 'vigilance',
-  sahaja: 'sahaja',
-  ekagrata: 'ekagrata',
+    vigilance: 'vigilance',
+    sahaja: 'sahaja',
+    ekagrata: 'ekagrata',
 };
 
 // Sacred geometry path icons (SVG components)
 const PathIcon = ({ path, color, size = 20 }) => {
-  const iconColor = color || 'currentColor';
+    const iconColor = color || 'currentColor';
 
-  const icons = {
-    // Soma (Body): Concentric circles - grounded body-field
-    soma: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke={iconColor} strokeWidth="1" opacity="0.4" />
-        <circle cx="12" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.6" />
-        <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
-      </svg>
-    ),
-    // Prana (Breath): Spiral flow lines - vital currents
-    prana: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path
-          d="M12 3 C8 5, 6 9, 8 12 C10 15, 8 19, 12 21"
-          stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
-        />
-        <path
-          d="M12 3 C16 5, 18 9, 16 12 C14 15, 16 19, 12 21"
-          stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
-        />
-        <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
-      </svg>
-    ),
-    // Dhyana (Meditation): Abstract lotus geometry - stillness
-    dhyana: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path d="M12 4 L14 10 L12 8 L10 10 Z" stroke={iconColor} strokeWidth="0.8" fill={iconColor} opacity="0.5" />
-        <path d="M12 4 L16 12 L12 9 L8 12 Z" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
-        <ellipse cx="12" cy="18" rx="6" ry="2" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-        <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
-      </svg>
-    ),
-    // Drishti (Vision): Aperture/lens rings - radiating perception
-    drishti: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="9" stroke={iconColor} strokeWidth="0.8" opacity="0.3" />
-        <path d="M12 3 L12 6 M12 18 L12 21 M3 12 L6 12 M18 12 L21 12" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-        <path d="M5.5 5.5 L7.5 7.5 M16.5 16.5 L18.5 18.5 M5.5 18.5 L7.5 16.5 M16.5 7.5 L18.5 5.5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
-        <circle cx="12" cy="12" r="4" stroke={iconColor} strokeWidth="1" opacity="0.6" />
-        <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.95" />
-      </svg>
-    ),
-    // Jnana (Wisdom): Crystalline light burst - knowledge
-    jnana: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path d="M12 2 L12 7 M12 17 L12 22 M2 12 L7 12 M17 12 L22 12" stroke={iconColor} strokeWidth="1.2" opacity="0.6" />
-        <path d="M5 5 L8.5 8.5 M15.5 15.5 L19 19 M5 19 L8.5 15.5 M15.5 8.5 L19 5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
-        <polygon points="12,6 14,10 12,9 10,10" fill={iconColor} opacity="0.7" />
-        <polygon points="12,18 14,14 12,15 10,14" fill={iconColor} opacity="0.7" />
-        <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
-      </svg>
-    ),
-    // Samyoga (Integration): Vesica piscis / interlocking rings - unity
-    samyoga: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <circle cx="9" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-        <circle cx="15" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-        <ellipse cx="12" cy="12" rx="2.5" ry="5" fill={iconColor} opacity="0.3" />
-        <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.9" />
-      </svg>
-    ),
-  };
+    const icons = {
+        // Soma (Body): Concentric circles - grounded body-field
+        soma: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke={iconColor} strokeWidth="1" opacity="0.4" />
+                <circle cx="12" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.6" />
+                <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
+            </svg>
+        ),
+        // Prana (Breath): Spiral flow lines - vital currents
+        prana: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+                <path
+                    d="M12 3 C8 5, 6 9, 8 12 C10 15, 8 19, 12 21"
+                    stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
+                />
+                <path
+                    d="M12 3 C16 5, 18 9, 16 12 C14 15, 16 19, 12 21"
+                    stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
+                />
+                <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
+            </svg>
+        ),
+        // Dhyana (Meditation): Abstract lotus geometry - stillness
+        dhyana: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+                <path d="M12 4 L14 10 L12 8 L10 10 Z" stroke={iconColor} strokeWidth="0.8" fill={iconColor} opacity="0.5" />
+                <path d="M12 4 L16 12 L12 9 L8 12 Z" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
+                <ellipse cx="12" cy="18" rx="6" ry="2" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+                <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
+            </svg>
+        ),
+        // Drishti (Vision): Aperture/lens rings - radiating perception
+        drishti: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke={iconColor} strokeWidth="0.8" opacity="0.3" />
+                <path d="M12 3 L12 6 M12 18 L12 21 M3 12 L6 12 M18 12 L21 12" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+                <path d="M5.5 5.5 L7.5 7.5 M16.5 16.5 L18.5 18.5 M5.5 18.5 L7.5 16.5 M16.5 7.5 L18.5 5.5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
+                <circle cx="12" cy="12" r="4" stroke={iconColor} strokeWidth="1" opacity="0.6" />
+                <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.95" />
+            </svg>
+        ),
+        // Jnana (Wisdom): Crystalline light burst - knowledge
+        jnana: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+                <path d="M12 2 L12 7 M12 17 L12 22 M2 12 L7 12 M17 12 L22 12" stroke={iconColor} strokeWidth="1.2" opacity="0.6" />
+                <path d="M5 5 L8.5 8.5 M15.5 15.5 L19 19 M5 19 L8.5 15.5 M15.5 8.5 L19 5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
+                <polygon points="12,6 14,10 12,9 10,10" fill={iconColor} opacity="0.7" />
+                <polygon points="12,18 14,14 12,15 10,14" fill={iconColor} opacity="0.7" />
+                <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
+            </svg>
+        ),
+        // Samyoga (Integration): Vesica piscis / interlocking rings - unity
+        samyoga: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+                <circle cx="15" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+                <ellipse cx="12" cy="12" rx="2.5" ry="5" fill={iconColor} opacity="0.3" />
+                <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.9" />
+            </svg>
+        ),
+    };
 
-  return icons[path?.toLowerCase()] || icons.soma;
+    return icons[path?.toLowerCase()] || icons.soma;
 };
 
 // Stage colors for glow effects and styling
 
 
 // Textured Title Card Component - Geometrically Stable with Minimal Texture
-const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention }) => {
-  const cardRef = useRef(null);
-  const [gradientAngle, setGradientAngle] = useState(135);
+const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention, width }) => {
+    const cardRef = useRef(null);
+    const [gradientAngle, setGradientAngle] = useState(135);
 
-  // Calculate gradient angle based on position relative to avatar
-  useEffect(() => {
-    if (cardRef.current) {
-      const rect = cardRef.current.getBoundingClientRect();
-      const avatarCenter = getAvatarCenter();
-      const angle = calculateGradientAngle(rect, avatarCenter);
-      setGradientAngle(angle);
-    }
-  }, []);
+    // Calculate gradient angle based on position relative to avatar
+    useEffect(() => {
+        if (cardRef.current) {
+            const rect = cardRef.current.getBoundingClientRect();
+            const avatarCenter = getAvatarCenter();
+            const angle = calculateGradientAngle(rect, avatarCenter);
+            setGradientAngle(angle);
+        }
+    }, []);
 
-  // Static SVG noise texture URL for marble effect (minimal opacity)
-  const noiseTexture = `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='3' seed='15' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`;
+    // Static SVG noise texture URL for marble effect (minimal opacity)
+    const noiseTexture = `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='3' seed='15' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`;
 
-  // Stage-adaptive tint color (use gradient midpoint)
-  const tintColor = stageColors.gradient[1];
+    // Stage-adaptive tint color (use gradient midpoint)
+    const tintColor = stageColors.gradient[1];
 
-  // Gold border texture (CSS-generated hammered edge)
-  const goldBorderTexture = `url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L12,0 L12,12 L0,12 Z' fill='%23D4AF37' /%3E%3Cpath d='M0,0 L1,1 L1,11 L0,12 M12,0 L11,1 L11,11 L12,12' fill='%23C9A942' /%3E%3C/svg%3E")`;
+    // Gold border texture (CSS-generated hammered edge)
+    const goldBorderTexture = `url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L12,0 L12,12 L0,12 Z' fill='%23D4AF37' /%3E%3Cpath d='M0,0 L1,1 L1,11 L0,12 M12,0 L11,1 L11,11 L12,12' fill='%23C9A942' /%3E%3C/svg%3E")`;
 
-  return (
-    <div
-      ref={cardRef}
-      className="relative overflow-hidden rounded-2xl"
-      style={{
-        // Fixed padding to maintain stable internal grid - compact sizing
-        padding: '4px 34px 4px',
-        minWidth: '300px',
+    return (
+        <div
+            ref={cardRef}
+            className="relative overflow-hidden rounded-2xl"
+            style={{
+                // Fixed padding to maintain stable internal grid - compact sizing
+                padding: '4px 34px 4px',
+                width: width,
+                minWidth: width ? undefined : '300px',
 
-        // Refined Gold Border - Beveled Light Simulation (Dynamic lighting from avatar)
-        border: '2px solid transparent',
-        backgroundImage: isLight
-          ? `
+                // Refined Gold Border - Beveled Light Simulation (Dynamic lighting from avatar)
+                border: '2px solid transparent',
+                backgroundImage: isLight
+                    ? `
             linear-gradient(rgba(255,252,248,0.96), rgba(255,250,242,0.92)),
             ${getDynamicGoldGradient(gradientAngle, true)}
           `
-          : `
+                    : `
             linear-gradient(rgba(22,20,18,0.88), rgba(16,14,12,0.82)),
             linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))
           `,
-        backgroundOrigin: 'padding-box, border-box',
-        backgroundClip: 'padding-box, border-box',
+                backgroundOrigin: 'padding-box, border-box',
+                backgroundClip: 'padding-box, border-box',
 
-        // Soft shadow for depth + specular highlight + contact shadow
-        boxShadow: isLight
-          ? `
+                // Soft shadow for depth + specular highlight + contact shadow
+                boxShadow: isLight
+                    ? `
             0 0 0 0.5px #AF8B2C,
             inset -1px -1px 0 0.5px rgba(255, 250, 235, 0.8),
             inset 1px 1px 0 0.5px rgba(101, 67, 33, 0.6),
             0 3px 16px rgba(100,80,50,0.08),
             inset 0 1px 0 rgba(255,255,255,0.4)
           `
-          : `
+                    : `
             0 0 0 0.5px rgba(255,255,255,0.1),
             0 3px 20px rgba(0,0,0,0.25),
             inset 0 1px 0 rgba(255,250,240,0.04)
           `,
 
-        // Minimal blur
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-      }}
-    >
-      {/* Noise/Marble Texture Overlay - VERY SUBTLE (4% max) */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: noiseTexture,
-          backgroundSize: 'cover',
-          mixBlendMode: 'normal', // Default to normal for clean edges
-          opacity: isLight ? 0.04 : 0.03,
-        }}
-      />
+                // Minimal blur
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+            }}
+        >
+            {/* Noise/Marble Texture Overlay - VERY SUBTLE (4% max) */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    backgroundImage: noiseTexture,
+                    backgroundSize: 'cover',
+                    mixBlendMode: 'normal', // Default to normal for clean edges
+                    opacity: isLight ? 0.04 : 0.03,
+                }}
+            />
 
-      {/* Stage-Tinted Vein Overlay - Even more subtle */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: isLight
-            ? `radial-gradient(ellipse 100% 70% at 35% 40%, ${tintColor}08 0%, transparent 55%)`
-            : `radial-gradient(ellipse 100% 70% at 35% 40%, ${tintColor}05 0%, transparent 55%)`,
-          mixBlendMode: 'normal',
-        }}
-      />
+            {/* Stage-Tinted Vein Overlay - Even more subtle */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    background: isLight
+                        ? `radial-gradient(ellipse 100% 70% at 35% 40%, ${tintColor}08 0%, transparent 55%)`
+                        : `radial-gradient(ellipse 100% 70% at 35% 40%, ${tintColor}05 0%, transparent 55%)`,
+                    mixBlendMode: 'normal',
+                }}
+            />
 
-      {/* Content Layer - Fixed 2-Row Grid */}
-      <div className="relative z-10">
-        {children}
-      </div>
-    </div>
-  );
+            {/* Content Layer - Fixed 2-Row Grid */}
+            <div className="relative z-10">
+                {children}
+            </div>
+        </div>
+    );
 };
 
 // CSS-based Stage Title Component with stacked vertical layout
-export function StageTitle({ stage, path, attention, showWelcome = true }) {
-  const [showEnglish, setShowEnglish] = useState(false);
-  const [tooltip, setTooltip] = useState(null); // 'stage', 'path', or null
-  const [tooltipTimer, setTooltipTimer] = useState(null);
-  const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const isLight = colorScheme === 'light';
+export function StageTitle({ stage, path, attention, showWelcome = true, width }) {
+    const [showEnglish, setShowEnglish] = useState(false);
+    const [tooltip, setTooltip] = useState(null); // 'stage', 'path', or null
+    const [tooltipTimer, setTooltipTimer] = useState(null);
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
 
-  const stageLower = (stage || "flame").toLowerCase();
-  const stageColors = STAGE_COLORS[stageLower] || STAGE_COLORS.flame;
+    const stageLower = (stage || "flame").toLowerCase();
+    const stageColors = STAGE_COLORS[stageLower] || STAGE_COLORS.flame;
 
-  // Capitalize first letter
-  const stageName = (stage || "Flame").charAt(0).toUpperCase() + (stage || "Flame").slice(1).toLowerCase();
+    // Capitalize first letter
+    const stageName = (stage || "Flame").charAt(0).toUpperCase() + (stage || "Flame").slice(1).toLowerCase();
 
-  // Get the path translation, or fallback to capitalized path
-  const pathLower = path ? path.toLowerCase() : null;
-  const pathTranslation = pathLower ? PATH_TRANSLATIONS[pathLower] : null;
-  const pathName = pathTranslation
-    ? (showEnglish ? pathTranslation.english : pathTranslation.sanskrit)
-    : (path ? path.charAt(0).toUpperCase() + path.slice(1).toLowerCase() : null);
+    // Get the path translation, or fallback to capitalized path
+    const pathLower = path ? path.toLowerCase() : null;
+    const pathTranslation = pathLower ? PATH_TRANSLATIONS[pathLower] : null;
+    const pathName = pathTranslation
+        ? (showEnglish ? pathTranslation.english : pathTranslation.sanskrit)
+        : (path ? path.charAt(0).toUpperCase() + path.slice(1).toLowerCase() : null);
 
-  // Check if we have a path to display
-  const hasPath = path && path.trim() !== '';
+    // Check if we have a path to display
+    const hasPath = path && path.trim() !== '';
 
-  // Tooltip descriptions (general, non-statistical)
-  const STAGE_DESCRIPTIONS = {
-    seedling: "Your journey is just beginning. This stage represents the planting of seeds of awareness.",
-    ember: "A spark of dedication has ignited. You're building the foundations of consistent practice.",
-    flame: "Your practice burns steady. Discipline and understanding are growing stronger.",
-    beacon: "You've become a light for yourself. Deep patterns of awareness are now established.",
-    stellar: "Mastery radiates from within. Your practice illuminates every aspect of life.",
-  };
+    // Tooltip descriptions (general, non-statistical)
+    const STAGE_DESCRIPTIONS = {
+        seedling: "Your journey is just beginning. This stage represents the planting of seeds of awareness.",
+        ember: "A spark of dedication has ignited. You're building the foundations of consistent practice.",
+        flame: "Your practice burns steady. Discipline and understanding are growing stronger.",
+        beacon: "You've become a light for yourself. Deep patterns of awareness are now established.",
+        stellar: "Mastery radiates from within. Your practice illuminates every aspect of life.",
+    };
 
-  const PATH_DESCRIPTIONS = {
-    soma: "The path of embodiment. Cultivating awareness through the body and senses.",
-    prana: "The path of breath. Using life force as the doorway to presence.",
-    dhyana: "The path of meditation. Training the mind through stillness and focus.",
-    drishti: "The path of vision. Developing clear seeing and insight.",
-    jnana: "The path of knowledge. Understanding through wisdom and inquiry.",
-    samyoga: "The path of integration. Unifying all aspects of self and practice.",
-  };
+    const PATH_DESCRIPTIONS = {
+        soma: "The path of embodiment. Cultivating awareness through the body and senses.",
+        prana: "The path of breath. Using life force as the doorway to presence.",
+        dhyana: "The path of meditation. Training the mind through stillness and focus.",
+        drishti: "The path of vision. Developing clear seeing and insight.",
+        jnana: "The path of knowledge. Understanding through wisdom and inquiry.",
+        samyoga: "The path of integration. Unifying all aspects of self and practice.",
+    };
 
-  // Tooltip handlers with 2-second delay
-  const handleMouseEnter = (type) => {
-    const timer = setTimeout(() => {
-      setTooltip(type);
-    }, 2000);
-    setTooltipTimer(timer);
-  };
+    // Tooltip handlers with 2-second delay
+    const handleMouseEnter = (type) => {
+        const timer = setTimeout(() => {
+            setTooltip(type);
+        }, 2000);
+        setTooltipTimer(timer);
+    };
 
-  const handleMouseLeave = () => {
-    if (tooltipTimer) {
-      clearTimeout(tooltipTimer);
-      setTooltipTimer(null);
-    }
-    setTooltip(null);
-  };
+    const handleMouseLeave = () => {
+        if (tooltipTimer) {
+            clearTimeout(tooltipTimer);
+            setTooltipTimer(null);
+        }
+        setTooltip(null);
+    };
 
-  const currentStageDescription = STAGE_DESCRIPTIONS[stageLower] || STAGE_DESCRIPTIONS.flame;
-  const currentPathDescription = pathLower ? PATH_DESCRIPTIONS[pathLower] : null;
+    const currentStageDescription = STAGE_DESCRIPTIONS[stageLower] || STAGE_DESCRIPTIONS.flame;
+    const currentPathDescription = pathLower ? PATH_DESCRIPTIONS[pathLower] : null;
 
-  return (
-    <div
-      className="stage-title-container relative flex flex-col items-center justify-center overflow-visible"
-      style={{ zIndex: 15 }}
-    >
+    return (
+        <div
+            className="stage-title-container relative flex flex-col items-center justify-center overflow-visible"
+            style={{ zIndex: 15 }}
+        >
 
-      {/* Welcome label - optional */}
-      {/* Welcome text removed per user request */}
+            {/* Welcome label - optional */}
+            {/* Welcome text removed per user request */}
 
-      {/* Ambient glow */}
-      <div
-        className="stage-ambient-glow absolute"
-        style={{
-          width: '400px',
-          height: '60px',
-          top: showWelcome ? '60%' : '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: `radial-gradient(ellipse 100% 100% at center, ${stageColors.glow}35 0%, transparent 70%)`,
-          filter: 'blur(20px)',
-          pointerEvents: 'none',
-        }}
-      />
+            {/* Ambient glow */}
+            <div
+                className="stage-ambient-glow absolute"
+                style={{
+                    width: '400px',
+                    height: '60px',
+                    top: showWelcome ? '60%' : '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: `radial-gradient(ellipse 100% 100% at center, ${stageColors.glow}35 0%, transparent 70%)`,
+                    filter: 'blur(20px)',
+                    pointerEvents: 'none',
+                }}
+            />
 
-      {/* Floating Particles - subtle sparkles for contrast */}
-      <div className="absolute pointer-events-none" style={{ width: '400px', height: '80px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="stage-particle absolute rounded-full"
-            style={{
-              width: `${2 + (i % 3)}px`,
-              height: `${2 + (i % 3)}px`,
-              left: `${10 + (i * 11)}%`,
-              top: `${20 + ((i * 17) % 60)}%`,
-              backgroundColor: stageColors.gradient[i % 3],
-              opacity: 0.4 + (i % 3) * 0.1,
-              animation: `particleFloat${i % 4} ${3 + (i % 2)}s ease-in-out infinite`,
-              animationDelay: `${i * 0.3}s`,
-              boxShadow: `0 0 ${4 + (i % 2) * 2}px ${stageColors.glow}60`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Divider Tick above Title - Vertical Spine (Coupling to Orb) */}
-      <div
-        className="relative -mb-1 opacity-30 pointer-events-none"
-        style={{ color: stageColors.gradient[1] }}
-      >
-        <svg width="2" height="20" viewBox="0 0 2 20" fill="none">
-          <rect width="2" height="20" fill="currentColor" rx="1" />
-        </svg>
-      </div>
-
-      {/* Title container - Geometrically Stable Textured Card */}
-      <TexturedTitleCard stageColors={stageColors} isLight={isLight} hasPath={hasPath} attention={attention}>
-        {/* FIXED 2-ROW GRID LAYOUT*/}
-        <div className="flex flex-col items-center gap-1">
-
-          {/* ROW 1: Stage + Attention Vector + Path (3-column grid with reserved space) */}
-          <div
-            className="grid items-center justify-items-center w-full"
-            style={{
-              gridTemplateColumns: '1fr auto 1fr',
-              gap: '16px'
-            }}
-          >
-            {/* LEFT COL: Stage (Right-aligned to center) */}
-            <div className="flex justify-end w-full">
-              <div
-                className="relative cursor-help"
-                onMouseEnter={() => handleMouseEnter('stage')}
-                onMouseLeave={handleMouseLeave}
-              >
-                <img
-                  src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}stage-${stageLower}.png`}
-                  alt={stageLower}
-                  className="h-16 w-auto object-contain"
-                  style={{
-                    filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
-                    mixBlendMode: (isLight && stageLower === 'flame') ? 'multiply' : 'initial',
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const fallback = e.currentTarget.closest('.relative')?.querySelector('.text-fallback');
-                    if (fallback) fallback.style.display = 'block';
-                  }}
-                />
-
-                {/* Text fallback for Stage */}
-                <span
-                  className="text-fallback text-[1.4rem] font-medium uppercase"
-                  style={{
-                    display: 'none',
-                    fontFamily: "var(--font-display)",
-                    color: isLight ? 'rgba(45, 40, 35, 0.9)' : stageColors.gradient[1],
-                    letterSpacing: '0.25em',
-                  }}
-                >
-                  {stageName}
-                </span>
-
-                {/* Stage Tooltip */}
-                {tooltip === 'stage' && (
-                  <div
-                    className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
-                    style={{
-                      background: 'rgba(0,0,0,0.9)',
-                      backdropFilter: 'blur(12px)',
-                      border: `1px solid ${stageColors.glow}40`,
-                      boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
-                      width: '260px',
-                    }}
-                  >
+            {/* Floating Particles - subtle sparkles for contrast */}
+            <div className="absolute pointer-events-none" style={{ width: '400px', height: '80px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+                {[...Array(8)].map((_, i) => (
                     <div
-                      style={{
-                        fontFamily: "var(--font-ui)",
-                        fontSize: '12px',
-                        lineHeight: 1.6,
-                        color: 'rgba(253,251,245,0.85)',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <span style={{ color: stageColors.glow, fontWeight: 600 }}>{stageName}</span>
-                      <br />
-                      {currentStageDescription}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* MID COL: Attention Vector (Gold Cartouche) OR Separator */}
-            <div className="flex items-center justify-center">
-              {attention && attention !== 'none' ? (
-                <GoldCartouche
-                  text={attention}
-                  stageColor={stageColors.gradient[1]}
-                  isLight={isLight}
-                />
-              ) : (
-                <div
-                  className="divider-glyph relative"
-                  style={{
-                    opacity: hasPath ? 0.5 : 0,
-                    visibility: hasPath ? 'visible' : 'hidden',
-                    width: '18px',
-                    transition: 'opacity 0.3s ease'
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 14 14">
-                    <path
-                      d="M7 1 L13 7 L7 13 L1 7 Z"
-                      fill="none"
-                      stroke={stageColors.gradient[1]}
-                      strokeWidth="1.2"
-                      style={{
-                        filter: `drop-shadow(0 0 3px ${stageColors.glow}40)`,
-                      }}
-                    />
-                    <circle
-                      cx="7"
-                      cy="7"
-                      r="1.5"
-                      fill={stageColors.gradient[1]}
-                      opacity="0.8"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-
-            {/* RIGHT COL: Path (Left-aligned to center) */}
-            <div className="flex justify-start w-full items-center">
-              {hasPath && (
-                <div
-                  className="path-section relative flex items-center justify-center cursor-help"
-                  onMouseEnter={() => handleMouseEnter('path')}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <img
-                    src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}path-${pathLower}.png`}
-                    alt={pathLower}
-                    className="h-16 w-auto object-contain"
-                    style={{
-                      filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const textFallback = e.currentTarget.parentElement?.querySelector('.path-text-fallback');
-                      if (textFallback) textFallback.style.display = 'block';
-                    }}
-                  />
-
-                  {/* Path text fallback */}
-                  <span
-                    className="path-text-fallback text-[1.3rem] tracking-[0.08em]"
-                    onClick={() => setShowEnglish(!showEnglish)}
-                    style={{
-                      display: 'none',
-                      fontFamily: "var(--font-body)",
-                      fontStyle: 'italic',
-                      fontWeight: 500,
-                      color: `${stageColors.gradient[1]}dd`,
-                      cursor: 'pointer',
-                      letterSpacing: 'var(--tracking-wide)',
-                    }}
-                  >
-                    {pathName}
-                  </span>
-
-                  {/* Path Tooltip */}
-                  {tooltip === 'path' && currentPathDescription && (
-                    <div
-                      className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
-                      style={{
-                        background: 'rgba(0,0,0,0.9)',
-                        backdropFilter: 'blur(12px)',
-                        border: `1px solid ${stageColors.glow}40`,
-                        boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
-                        width: '280px',
-                      }}
-                    >
-                      <div
+                        key={i}
+                        className="stage-particle absolute rounded-full"
                         style={{
-                          fontFamily: "var(--font-ui)",
-                          fontSize: '12px',
-                          lineHeight: 1.6,
-                          color: 'rgba(253,251,245,0.85)',
-                          textAlign: 'center',
+                            width: `${2 + (i % 3)}px`,
+                            height: `${2 + (i % 3)}px`,
+                            left: `${10 + (i * 11)}%`,
+                            top: `${20 + ((i * 17) % 60)}%`,
+                            backgroundColor: stageColors.gradient[i % 3],
+                            opacity: 0.4 + (i % 3) * 0.1,
+                            animation: `particleFloat${i % 4} ${3 + (i % 2)}s ease-in-out infinite`,
+                            animationDelay: `${i * 0.3}s`,
+                            boxShadow: `0 0 ${4 + (i % 2) * 2}px ${stageColors.glow}60`,
                         }}
-                      >
-                        <span style={{ color: stageColors.glow, fontWeight: 600 }}>{pathName}</span>
-                        <br />
-                        {currentPathDescription}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    />
+                ))}
             </div>
-          </div>
 
-          {/* ROW 2: Removed - Attention now inline in Row 1 as gold cartouche */}
-        </div>
-      </TexturedTitleCard>
+            {/* Divider Tick above Title - Vertical Spine (Coupling to Orb) */}
+            <div
+                className="relative -mb-1 opacity-30 pointer-events-none"
+                style={{ color: stageColors.gradient[1] }}
+            >
+                <svg width="2" height="20" viewBox="0 0 2 20" fill="none">
+                    <rect width="2" height="20" fill="currentColor" rx="1" />
+                </svg>
+            </div>
+
+            {/* Title container - Geometrically Stable Textured Card */}
+            <TexturedTitleCard stageColors={stageColors} isLight={isLight} hasPath={hasPath} attention={attention} width={width}>
+                {/* FIXED 2-ROW GRID LAYOUT*/}
+                <div className="flex flex-col items-center gap-1">
+
+                    {/* ROW 1: Stage + Attention Vector + Path (3-column grid with reserved space) */}
+                    <div
+                        className="grid items-center justify-items-center w-full"
+                        style={{
+                            gridTemplateColumns: '1fr auto 1fr',
+                            gap: '16px'
+                        }}
+                    >
+                        {/* LEFT COL: Stage (Right-aligned to center) */}
+                        <div className="flex justify-end w-full">
+                            <div
+                                className="relative cursor-help"
+                                onMouseEnter={() => handleMouseEnter('stage')}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                <img
+                                    src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}stage-${stageLower}.png`}
+                                    alt={stageLower}
+                                    className="h-16 w-auto object-contain"
+                                    style={{
+                                        filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                                        mixBlendMode: (isLight && stageLower === 'flame') ? 'multiply' : 'initial',
+                                    }}
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        const fallback = e.currentTarget.closest('.relative')?.querySelector('.text-fallback');
+                                        if (fallback) fallback.style.display = 'block';
+                                    }}
+                                />
+
+                                {/* Text fallback for Stage */}
+                                <span
+                                    className="text-fallback text-[1.4rem] font-medium uppercase"
+                                    style={{
+                                        display: 'none',
+                                        fontFamily: "var(--font-display)",
+                                        color: isLight ? 'rgba(45, 40, 35, 0.9)' : stageColors.gradient[1],
+                                        letterSpacing: '0.25em',
+                                    }}
+                                >
+                                    {stageName}
+                                </span>
+
+                                {/* Stage Tooltip */}
+                                {tooltip === 'stage' && (
+                                    <div
+                                        className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
+                                        style={{
+                                            background: 'rgba(0,0,0,0.9)',
+                                            backdropFilter: 'blur(12px)',
+                                            border: `1px solid ${stageColors.glow}40`,
+                                            boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
+                                            width: '260px',
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                fontFamily: "var(--font-ui)",
+                                                fontSize: '12px',
+                                                lineHeight: 1.6,
+                                                color: 'rgba(253,251,245,0.85)',
+                                                textAlign: 'center',
+                                            }}
+                                        >
+                                            <span style={{ color: stageColors.glow, fontWeight: 600 }}>{stageName}</span>
+                                            <br />
+                                            {currentStageDescription}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* MID COL: Attention Vector (Gold Cartouche) OR Separator */}
+                        <div className="flex items-center justify-center">
+                            {attention && attention !== 'none' ? (
+                                <GoldCartouche
+                                    text={attention}
+                                    stageColor={stageColors.gradient[1]}
+                                    isLight={isLight}
+                                />
+                            ) : (
+                                <div
+                                    className="divider-glyph relative"
+                                    style={{
+                                        opacity: hasPath ? 0.5 : 0,
+                                        visibility: hasPath ? 'visible' : 'hidden',
+                                        width: '18px',
+                                        transition: 'opacity 0.3s ease'
+                                    }}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 14 14">
+                                        <path
+                                            d="M7 1 L13 7 L7 13 L1 7 Z"
+                                            fill="none"
+                                            stroke={stageColors.gradient[1]}
+                                            strokeWidth="1.2"
+                                            style={{
+                                                filter: `drop-shadow(0 0 3px ${stageColors.glow}40)`,
+                                            }}
+                                        />
+                                        <circle
+                                            cx="7"
+                                            cy="7"
+                                            r="1.5"
+                                            fill={stageColors.gradient[1]}
+                                            opacity="0.8"
+                                        />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* RIGHT COL: Path (Left-aligned to center) */}
+                        <div className="flex justify-start w-full items-center">
+                            {hasPath && (
+                                <div
+                                    className="path-section relative flex items-center justify-center cursor-help"
+                                    onMouseEnter={() => handleMouseEnter('path')}
+                                    onMouseLeave={handleMouseLeave}
+                                >
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}path-${pathLower}.png`}
+                                        alt={pathLower}
+                                        className="h-16 w-auto object-contain"
+                                        style={{
+                                            filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                                        }}
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            const textFallback = e.currentTarget.parentElement?.querySelector('.path-text-fallback');
+                                            if (textFallback) textFallback.style.display = 'block';
+                                        }}
+                                    />
+
+                                    {/* Path text fallback */}
+                                    <span
+                                        className="path-text-fallback text-[1.3rem] tracking-[0.08em]"
+                                        onClick={() => setShowEnglish(!showEnglish)}
+                                        style={{
+                                            display: 'none',
+                                            fontFamily: "var(--font-body)",
+                                            fontStyle: 'italic',
+                                            fontWeight: 500,
+                                            color: `${stageColors.gradient[1]}dd`,
+                                            cursor: 'pointer',
+                                            letterSpacing: 'var(--tracking-wide)',
+                                        }}
+                                    >
+                                        {pathName}
+                                    </span>
+
+                                    {/* Path Tooltip */}
+                                    {tooltip === 'path' && currentPathDescription && (
+                                        <div
+                                            className="absolute left-1/2 -translate-x-1/2 top-full mt-3 px-4 py-3 rounded-xl z-[9999] animate-fade-in"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.9)',
+                                                backdropFilter: 'blur(12px)',
+                                                border: `1px solid ${stageColors.glow}40`,
+                                                boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${stageColors.glow}20`,
+                                                width: '280px',
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    fontFamily: "var(--font-ui)",
+                                                    fontSize: '12px',
+                                                    lineHeight: 1.6,
+                                                    color: 'rgba(253,251,245,0.85)',
+                                                    textAlign: 'center',
+                                                }}
+                                            >
+                                                <span style={{ color: stageColors.glow, fontWeight: 600 }}>{pathName}</span>
+                                                <br />
+                                                {currentPathDescription}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ROW 2: Removed - Attention now inline in Row 1 as gold cartouche */}
+                </div>
+            </TexturedTitleCard>
 
 
-      {/* CSS Animations */}
-      <style>{`
+            {/* CSS Animations */}
+            <style>{`
         .stage-title-text {
           animation: titleFloat 6s ease-in-out infinite;
         }
@@ -575,6 +576,6 @@ export function StageTitle({ stage, path, attention, showWelcome = true }) {
           50% { transform: translateY(-8px) rotate(180deg); opacity: 0.7; }
         }
       `}</style>
-    </div >
-  );
+        </div >
+    );
 }

@@ -89,8 +89,21 @@ def convert_ui_to_api_workflow(ui_workflow):
         
         # Add widget values as inputs
         if "widgets_values" in node:
+            # Get list of inputs that have widget configurations
+            # NOTE: This conversion is heuristic. UI format has more values than API format expects.
             input_names = [inp["name"] for inp in node.get("inputs", []) if "widget" in inp]
-            for i, value in enumerate(node["widgets_values"]):
+            
+            # Filter out known UI-only sidecar values from widgets_values
+            # e.g., "randomize", "fixed", "increment" following a seed
+            filtered_values = []
+            for i, val in enumerate(node["widgets_values"]):
+                # Simple heuristic: if the current value is a known UI sidecar string 
+                # following a numeric value, it's likely a control, not a functional input.
+                if i > 0 and isinstance(val, str) and val in ["randomize", "fixed", "increment", "decrement"]:
+                    continue
+                filtered_values.append(val)
+                
+            for i, value in enumerate(filtered_values):
                 if i < len(input_names):
                     api_workflow[node_id]["inputs"][input_names[i]] = value
         

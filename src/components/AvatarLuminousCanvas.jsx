@@ -297,8 +297,8 @@ function drawNebulaWisps(ctx, time) {
 }
 
 function drawSacredGeometry(ctx, radius) {
-  // Sacred geometry at 50% opacity (increased from 10%)
-  ctx.strokeStyle = 'rgba(253, 224, 71, 0.5)';
+  // Sacred geometry at 100% opacity (maximum visibility)
+  ctx.strokeStyle = 'rgba(253, 224, 71, 1.0)';
   ctx.lineWidth = 2;
 
   // Concentric circles

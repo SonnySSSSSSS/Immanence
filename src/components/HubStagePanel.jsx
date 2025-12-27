@@ -29,7 +29,7 @@ export function HubStagePanel({
     const accentColor = isLight ? 'var(--light-accent)' : 'var(--accent-color)';
 
     return (
-        <div className="w-full flex flex-col items-center px-4">
+        <div className="w-full flex flex-col items-center px-4" style={{ maxWidth: 'min(90vw, 600px)' }}>
 
             {/* ══════════════════════════════════════════════════════════════════
                 STAGE NAME — Shared ceremonial inscription
@@ -45,35 +45,10 @@ export function HubStagePanel({
                 </div>
             )}
 
-            {/* ══════════════════════════════════════════════════════════════════
-                THE STRUCTURAL DIVIDE — Transition from Identity to Interaction
-               ══════════════════════════════════════════════════════════════════ */}
-            <div className="flex flex-col items-center gap-2 mb-4 w-full">
-                <div className="flex items-center gap-4 w-full">
-                    <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${dividerColor})` }} />
-                    <div
-                        className="text-[9px] uppercase tracking-[0.25em] whitespace-nowrap opacity-60"
-                        style={{ color: textSecondary, fontFamily: 'var(--font-ui)', fontWeight: 500 }}
-                    >
-                        ⟨ MEASUREMENT ⟩
-                    </div>
-                    <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${dividerColor})` }} />
-                </div>
-            </div>
 
             {/* ══════════════════════════════════════════════════════════════════
-                METADATA ROW — Quieter, smaller, rhythmic
+                Tracking content starts immediately after stage title
                ══════════════════════════════════════════════════════════════════ */}
-            <div
-                className="text-[10px] mb-5 uppercase tracking-[0.1em] font-mono"
-                style={{
-                    color: textMuted,
-                    letterSpacing: '0.05em',
-                    opacity: 0.8
-                }}
-            >
-                Last practiced: {lastPracticed}
-            </div>
 
             {/* Attention Vector (if active) — MEASURED READOUT */}
             {attention && attention !== 'none' && (
