@@ -315,16 +315,16 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                 {/* FIXED 2-ROW GRID LAYOUT*/}
                 <div className="flex flex-col items-center gap-1">
 
-                    {/* ROW 1: Stage + Attention Vector + Path (3-column grid with reserved space) */}
+                    {/* ROW 1: Stage + Attention Vector + Path (3 EQUAL columns) */}
                     <div
                         className="grid items-center justify-items-center w-full"
                         style={{
-                            gridTemplateColumns: '1fr auto 1fr',
+                            gridTemplateColumns: '1fr 1fr 1fr', // 3 equal columns
                             gap: '16px'
                         }}
                     >
-                        {/* LEFT COL: Stage (Right-aligned to center) */}
-                        <div className="flex justify-end w-full">
+                        {/* LEFT COL: Stage (Centered) */}
+                        <div className="flex justify-center w-full">
                             <div
                                 className="relative cursor-help"
                                 onMouseEnter={() => handleMouseEnter('stage')}
@@ -388,7 +388,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                             </div>
                         </div>
 
-                        {/* MID COL: Attention Vector (Gold Cartouche) OR Separator */}
+                        {/* MID COL: Attention Vector (Gold Cartouche) OR Separator (Centered) */}
                         <div className="flex items-center justify-center">
                             {attention && attention !== 'none' ? (
                                 <GoldCartouche
@@ -428,8 +428,8 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                             )}
                         </div>
 
-                        {/* RIGHT COL: Path (Left-aligned to center) */}
-                        <div className="flex justify-start w-full items-center">
+                        {/* RIGHT COL: Path (Centered) */}
+                        <div className="flex justify-center w-full items-center">
                             {hasPath && (
                                 <div
                                     className="path-section relative flex items-center justify-center cursor-help"
