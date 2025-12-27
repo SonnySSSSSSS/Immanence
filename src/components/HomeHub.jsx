@@ -2,7 +2,7 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
-import { Avatar } from "./Avatar.jsx";
+import { Avatar } from "./avatar";
 import { StageTitle } from "./StageTitle.jsx";
 import { STAGE_COLORS } from "../constants/stageColors.js";
 import { TrackingHub } from "./TrackingHub.jsx";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { Avatar } from "./components/Avatar.jsx";
+import { Avatar } from "./components/avatar";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
 import { HomeHub } from "./components/HomeHub.jsx";

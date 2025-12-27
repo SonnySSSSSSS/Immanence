@@ -7,7 +7,7 @@ import { useLunarStore } from '../state/lunarStore';
 import { usePathStore, PATH_NAMES, PATH_SYMBOLS } from '../state/pathStore';
 import { useAttentionStore } from '../state/attentionStore';
 import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
-import { Avatar } from './Avatar';
+import { Avatar } from './avatar';
 import * as devHelpers from '../utils/devHelpers';
 import { calculatePathProbabilities, getDominantPath, determinePathState } from '../utils/attentionPathScoring';
 import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';

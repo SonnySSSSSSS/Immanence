@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
 import { getEmergenceText, getFullShiftText } from '../data/pathDescriptions';
-import { Avatar } from './Avatar';
+import { Avatar } from './avatar';
 
 /**
  * PathCeremony — A full-screen ceremonial modal

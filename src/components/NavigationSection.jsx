@@ -7,7 +7,7 @@ import { ActivePathState } from './ActivePathState.jsx';
 import { FoundationCard } from './FoundationCard.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { CodexChamber } from './Codex/CodexChamber.jsx';
-import { Avatar } from './Avatar.jsx';
+import { Avatar } from './avatar';
 import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 import { ConsistencyFoundation } from './Cycle/ConsistencyFoundation.jsx';
