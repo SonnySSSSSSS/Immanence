@@ -228,9 +228,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       />
 
       {/* ──────────────────────────────────────────────────────────────────────
-          CONTENT SECTIONS - Centered container with adaptive width
+          CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full mx-auto px-4 flex flex-col items-center gap-8 pb-8" style={{ maxWidth: 'min(90vw, 600px)' }}>
+      <div className="w-full px-4 flex flex-col items-center gap-8 pb-8">
 
         {/* STATS DASHBOARD - TrackingHub */}
         <div className="w-full">

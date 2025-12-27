@@ -36,9 +36,6 @@ const SECTION_LABELS = {
 function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide }) {
   // Navigation and Application sections handle their own avatars and stage titles
   const showAvatar = section !== 'navigation' && section !== 'application';
-  const displayMode = useDisplayModeStore((s) => s.mode);
-  const isSanctuary = displayMode === 'sanctuary';
-  const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-2xl';
 
   return (
     <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
@@ -60,25 +57,12 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
               path={previewPath}
               showCore={previewShowCore}
               attention={previewAttention}
-              isPracticing={isPracticing}
             />
-          </div>
-
-          {/* Stage Title - fades out during practice */}
-          <div
-            className="transition-all duration-500 mt-4"
-            style={{
-              opacity: isPracticing ? 0 : 1,
-              transform: isPracticing ? 'translateY(-10px)' : 'translateY(0)',
-              pointerEvents: isPracticing ? 'none' : 'auto',
-            }}
-          >
-            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
           </div>
         </div>
       )}
 
-      <div className={`w-full ${contentMaxWidth} flex-1 relative z-10 px-4 transition-all duration-500`} style={{ overflow: 'visible' }}>
+      <div className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
 
         {section === "wisdom" && (
@@ -362,7 +346,7 @@ function App() {
                         : 'rgba(255, 255, 255, 0.1)'
                     }}
                   />
-                  <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.14.99</div>
+                  <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.15.0</div>
                 </div>
               </div>
             )}
@@ -391,7 +375,7 @@ function App() {
                 IMMANENCE OS
               </div>
 
-              {/* Center Element: StageTitle or Section Label - Absolutely positioned for true centering */}
+              {/* Center Element: StageTitle - Always visible, Absolutely positioned for true centering */}
               <div
                 className="absolute left-1/2 top-1/2 flex justify-center items-center"
                 style={{
@@ -400,21 +384,12 @@ function App() {
                   transformOrigin: 'center center'
                 }}
               >
-                {!isHub ? (
-                  <div
-                    className={`text-sm font-medium ${isLight ? 'text-[#3D3425]/90' : 'text-white/90'}`}
-                    style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-wide)' }}
-                  >
-                    {currentLabel}
-                  </div>
-                ) : (
-                  <StageTitle
-                    stage={previewStage}
-                    path={previewPath}
-                    attention={previewAttention}
-                    showWelcome={false}
-                  />
-                )}
+                <StageTitle
+                  stage={previewStage}
+                  path={previewPath}
+                  attention={previewAttention}
+                  showWelcome={false}
+                />
               </div>
 
               {/* Desktop Controls (Hidden on Mobile) */}
