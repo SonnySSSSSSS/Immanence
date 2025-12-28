@@ -52,6 +52,8 @@ export function DevPanel({
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
     const lightModeRingType = useSettingsStore(s => s.lightModeRingType);
     const setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
+    const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
+    const setUseNewAvatars = useSettingsStore(s => s.setUseNewAvatars);
 
     // Color scheme detection
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -192,11 +194,16 @@ export function DevPanel({
                             <select
                                 value={avatarStage}
                                 onChange={(e) => setAvatarStage(e.target.value)}
-                                className="flex-1 bg-[#0a0a12] border border-white/30 rounded-lg px-3 py-2.5 text-base text-white font-medium"
-                                style={{ colorScheme: 'dark' }}
+                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
+                                style={{
+                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
+                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
+                                    colorScheme: isLight ? 'light' : 'dark'
+                                }}
                             >
                                 {STAGE_OPTIONS.map(s => (
-                                    <option key={s} value={s} className="bg-[#0a0a12] text-white text-base font-medium">{s}</option>
+                                    <option key={s} value={s}>{s}</option>
                                 ))}
                             </select>
                         </div>
@@ -207,11 +214,16 @@ export function DevPanel({
                             <select
                                 value={avatarPath}
                                 onChange={(e) => setAvatarPath(e.target.value)}
-                                className="flex-1 bg-[#0a0a12] border border-white/30 rounded-lg px-3 py-2.5 text-base text-white font-medium"
-                                style={{ colorScheme: 'dark' }}
+                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
+                                style={{
+                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
+                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
+                                    colorScheme: isLight ? 'light' : 'dark'
+                                }}
                             >
                                 {PATH_OPTIONS.map(p => (
-                                    <option key={p} value={p} className="bg-[#0a0a12] text-white text-base font-medium">{p}</option>
+                                    <option key={p} value={p}>{p}</option>
                                 ))}
                             </select>
                         </div>
@@ -222,13 +234,18 @@ export function DevPanel({
                             <select
                                 value={avatarAttention}
                                 onChange={(e) => setAvatarAttention(e.target.value)}
-                                className="flex-1 bg-[#0a0a12] border border-white/30 rounded-lg px-3 py-2.5 text-base text-white font-medium"
-                                style={{ colorScheme: 'dark' }}
+                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
+                                style={{
+                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
+                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
+                                    colorScheme: isLight ? 'light' : 'dark'
+                                }}
                             >
-                                <option value="none" className="bg-[#0a0a12] text-white text-base font-medium">None (Stage/Path only)</option>
-                                <option value="vigilance" className="bg-[#0a0a12] text-white text-base font-medium">Vigilance</option>
-                                <option value="sahaja" className="bg-[#0a0a12] text-white text-base font-medium">Sahaja</option>
-                                <option value="ekagrata" className="bg-[#0a0a12] text-white text-base font-medium">Ekagrata</option>
+                                <option value="none">None (Stage/Path only)</option>
+                                <option value="vigilance">Vigilance</option>
+                                <option value="sahaja">Sahaja</option>
+                                <option value="ekagrata">Ekagrata</option>
                             </select>
                         </div>
 
@@ -288,6 +305,31 @@ export function DevPanel({
                                         {cloud.toUpperCase()}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Avatar Version Toggle */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 60, 100, 0.9)' : '#ec4899' }}>Avatar Set</label>
+                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                                <button
+                                    onClick={() => setUseNewAvatars(false)}
+                                    className={`px-2 py-1 rounded text-[10px] transition-all ${!useNewAvatars
+                                        ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30'
+                                        : 'text-white/40 hover:text-white/60'
+                                        }`}
+                                >
+                                    OLD
+                                </button>
+                                <button
+                                    onClick={() => setUseNewAvatars(true)}
+                                    className={`px-2 py-1 rounded text-[10px] transition-all ${useNewAvatars
+                                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                        : 'text-white/40 hover:text-white/60'
+                                        }`}
+                                >
+                                    NEW
+                                </button>
                             </div>
                         </div>
 

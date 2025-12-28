@@ -1,0 +1,17 @@
+{
+  "matrix": "Full Jewel Lock",
+  "stage": "FLAME",
+  "path": "Ekagrata",
+  "vector": "Jittered",
+  "seed": 0,
+  "timestamp": "2025-12-28T13:15:07.913710",
+  "prompt": "[STAGE]: FLAME\nMaterial: #fcd34d (Gold), #f59e0b, 4-5 rings internal rings\nRefinement: Sharper geometry, deliberate pulse, purpose\n\n[PATH]: Ekagrata\nDeformation: High symmetry (6-8 fold), minimal deformation.\nRings may vary in thickness but remain circular.\nMass concentrated toward center or outer edge.\nSlight front-tilt. No fragmentation. Inward radial flow.\n\n[VECTOR]: Jittered\nLight Physics: Irregular pulse 0.5-2 Hz, 20-40% opacity variation.\nVisible positional jitter (\u00b12-5 degrees rotation).\nMedium diffusion, slight bloom. Fragmented light sources.\nHigh temporal noise, unpredictable timing.\n\n[OBJECT LOCK]:\nSingle continuous jewel-like object\nSubsurface light refraction\nPolished energy crystal\nThree-dimensional volumetric form\nExternal silhouette may only change via smooth deformation\nLighting originates entirely from within the object\nInternal subsurface illumination only\n\n[BACKGROUND]:\nIsolated object\nPure black void or transparent background\nNo environment\nNo surface\nNo horizon\n\n[SHADOWS]:\nNo cast shadows\nNo ground shadows\nNo contact shadows\nNo ambient occlusion on background\nNo contact with any surface\n\n[FORBIDDEN]:\nNo mandalas, no sigils, no symbolic diagrams\nNo flat glyphs, no sacred geometry patterns\nNo spiritual symbols, no text, no inscriptions\nNo multiple objects, no fragmentation\nNo protrusions, no spokes, no radial appendages\nNo scene context\nNo studio backdrop\nNo atmospheric depth\nNo external light sources\nStage-appropriate color palette only: #fcd34d (Gold), #f59e0b",
+  "validation": {
+    "jewelAuthority": "PENDING",
+    "sameTopology": "PENDING",
+    "smoothSilhouette": "PENDING",
+    "pathIdentifiable": "PENDING",
+    "vectorBlindTest": "PENDING",
+    "noBackground": "PENDING"
+  }
+}

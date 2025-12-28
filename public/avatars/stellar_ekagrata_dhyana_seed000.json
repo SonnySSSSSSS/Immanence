@@ -1,0 +1,10 @@
+{
+  "model": "Sanskrit 6-Path",
+  "stage": "STELLAR",
+  "path": "Dhyana",
+  "attentionVector": "Ekagrata",
+  "seed": 0,
+  "timestamp": "2025-12-28T15:10:49.706590",
+  "prompt": "[STAGE]: STELLAR\nMaterial: #a78bfa (Violet), #8b5cf6, 2-3 rings internal rings\nRefinement: Fractal spirals, cosmic complexity, transcendence\n\n[PATH]: Dhyana\nDeformation: Precision geometry family.\nPerfect radial symmetry, minimal internal turbulence, single-pointed focus.\nRings are perfectly concentric and coherent.\n\n[VECTOR]: Ekagrata\nLight Physics: Stable/Coherent focus.\nSteady internal glow, constant intensity, perfectly periodic 1Hz pulse.\nLong light coherence, no jitter, centered motion.\n\n[OBJECT LOCK]:\nSingle continuous jewel-like object\nSubsurface light refraction\nPolished energy crystal\nThree-dimensional volumetric form\nExternal silhouette may only change via smooth deformation\nLighting originates entirely from within the object\nInternal subsurface illumination only\n\n[BACKGROUND]:\nIsolated object\nPure black void or transparent background\nNo environment\nNo surface\nNo horizon\n\n[SHADOWS]:\nNo cast shadows\nNo ground shadows\nNo contact shadows\nNo ambient occlusion on background\nNo contact with any surface\n\n[FORBIDDEN]:\nNo mandalas, no sigils, no symbolic diagrams\nNo flat glyphs, no sacred geometry patterns\nNo spiritual symbols, no text, no inscriptions\nNo multiple objects, no fragmentation\nNo protrusions, no spokes, no radial appendages\nNo scene context\nNo studio backdrop\nNo atmospheric depth\nNo external light sources\nStage-appropriate color palette only: #a78bfa (Violet), #8b5cf6",
+  "validation": "PENDING"
+}

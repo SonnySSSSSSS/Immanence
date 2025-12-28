@@ -144,34 +144,32 @@ At 85%+ progress within a stage, the avatar begins to hint at the next stage:
 ### What Paths Represent
 
 Paths are **behavioral participation patterns** — the shape of how someone engages with practice over time.
+The avatar system uses 6 canonical paths, all available at all stages. There is no hierarchy or "better" path.
 
-**Critical reframe**: These are NOT attention quality assessments. They are pattern recognitions based on measurable behavior.
+| Path | Geometry Family | Participation Mode |
+|------|-----------------|-------------------|
+| **DHYANA** | Precision | Structured, single-pointed commitment. |
+| **PRANA** | Flowing | Directional, vital, circulatory participation. |
+| **DRISHTI** | Faceted | Multi-faceted, analytical, orienting gaze. |
+| **JNANA** | Precision | Clarity-focused, high-contrast participation. |
+| **SOMA** | Flowing | Restorative, enveloping, soft presence. |
+| **SAMYOGA** | Integrated | Balanced, harmonized, non-biased engagement. |
 
-| Path | Original Concept | Actual Measurement |
-|------|------------------|-------------------|
-| **Ekagrata** | "Narrow, sustained focus" | **Structured committed participation** |
-| **Sahaja** | "Effortless ambient presence" | **Steady rhythmic participation** |
-| **Vigilance** | "Scanning, watchful attention" | **Exploratory varied participation** |
+---
 
-### Behavioral Signatures
+## DIMENSION 3: Attention Vectors (Internal/Energy Axis)
 
-**EKAGRATA PATH — Structured Commitment**
-- High completion rate (completes what they start)
-- Stable rhythm (shows up consistently)
-- Focused repetition (sticks with practices)
-- The "marathon training" pattern
+### What Vectors Represent
 
-**SAHAJA PATH — Natural Rhythm**
-- Moderate completion (doesn't force completion)
-- High rhythm score (natural cadence without rigid structure)
-- Low friction (shows up regularly without pushing)
-- The "walking daily" pattern
+Attention Vectors modulate the **internal energy behavior** of the jewel. They represent micro-patterns in participation pace and rhythm variance.
 
-**VIGILANCE PATH — Active Exploration**
-- Varied practices (explores different approaches)
-- Higher interaction/switch rate
-- Completes cycles but moves between modalities
-- The "cross-training" pattern
+| Vector | Metaphor | Visual Expression |
+|--------|----------|-------------------|
+| **EKAGRATA** | Stable | Steady internal glow, perfectly periodic pulse, coherence. |
+| **SAHAJA** | Natural | Breathing glow, soft undulations, organic modulation. |
+| **VIGILANCE** | Scanning | Scintillating light, angular searching, jittered energy. |
+
+> **Crucial constraint**: Vectors affect only light behavior (pulse/jitter/glow), never structure or silhouette. If the vector is identifiable via grayscale silhouette, it fails validation.
 
 ### None of These Are Better
 
@@ -353,3 +351,508 @@ Both are verifiable. Both are meaningful. Neither claims to know what's happenin
 The internal transformation happens through the participation. The app measures the participation that creates the transformation.
 
 > "The practice IS the path. Showing up consistently changes you regardless of what your 'attention quality' is on any given day. The app just reflects that participation back."
+
+---
+
+---
+
+# AVATAR MATRIX EXPLORATION PLAYBOOK
+
+This section defines the rigorous exploration methodology for generating avatar visual variations across the three-dimensional matrix: **Stage × Path × Attention Vector**.
+
+## Critical Constraint: Separation of Concerns
+
+The avatar matrix is **not a creative exploration**. It is a **measurement instrument design**. Each axis must remain independent and visually isolated to prevent ontological collapse.
+
+### Axis Constraint Table (IMMUTABLE)
+
+This table governs the entire exploration. **If a generated asset violates this table, it is invalid.**
+
+| Axis | Allowed to Change | Forbidden to Change |
+|------|-------------------|---------------------|
+| **Stage** | Ring count, refinement, palette, material coherence | Pose, symmetry, gesture |
+| **Path (Mode)** | Geometry deformation (Precision, Flowing, Faceted), expression style | Color palette, base ring count from stage |
+| **Attention Vector** | Glow dynamics, pulse, jitter, diffusion, internal energy behavior | Geometry, pose, palette, structure |
+
+### Locked Axis Definitions
+
+#### STAGE (Vertical Axis)
+**What it is:** Scalar function of time × consistency.
+**Visual Controls:** Ring count, color palette, material refinement.
+**Answers only:** *"How much capacity has been built over time?"*
+
+---
+
+#### PATH (Horizontal Axis)
+**What it is:** Behavioral participation modes (Dhyana, Prana, Drishti, Jnana, Soma, Samyoga).
+**Visual Controls:** One of 3 Geometry Families (Precision, Flowing, Faceted) + Path-specific expression.
+**Answers only:** *"What is the mode of participation?"*
+
+---
+
+#### ATTENTION VECTOR (Internal Axis)
+**What it is:** Attentional orientation (Ekagrata, Sahaja, Vigilance).
+**Visual Controls:** Internal light behavior only.
+**Answers only:** *"What is the flavor of attention within the path?"*
+
+---
+
+## Exploration Methodology: Orthogonal Passes
+
+**Do NOT explore all 5×3×N combinations at once.** That is how meaning collapses.
+
+Instead, explore in **orthogonal passes**, each answering a specific validation question.
+
+---
+
+### PASS 1 — Stage Baseline Lock (No Path, No Vector)
+
+**Goal:** Verify that **Stages alone** communicate increasing duration/consistency without implying superiority or enlightenment.
+
+**Method:**
+- Fix Path = neutral (perfect symmetry, no deformation)
+- Fix Vector = neutral (steady glow, no jitter)
+- Generate: 5 Stages × multiple seeds
+
+**Evaluation Question:**
+> "If I showed only these five avatars, would a user intuitively read 'time + consistency'?"
+
+**Pass Criteria:**
+- Stellar must feel *refined*, not merely flashy
+- Progression must read as capacity-building, not aesthetic escalation
+- No stage should implicitly suggest moral or spiritual superiority
+
+---
+
+### PASS 2 — Path Expression Within a Fixed Stage
+
+**Goal:** Verify that **Paths are legible as behavioral shapes**, independent of progress.
+
+**Method:**
+- Fix Stage = FLAME (middle, most readable)
+- Fix Vector = neutral
+- Vary Path: Ekagrata / Sahaja / Vigilance
+- Generate multiple seeds per path
+
+**Evaluation Question:**
+> "Do these feel like different *ways of showing up*, not different levels?"
+
+**Pass Criteria:**
+- If Ekagrata looks "better" than Vigilance, the system is lying
+- Paths must be distinguishable by geometry/symmetry alone
+- Color palette must remain identical across all paths
+
+---
+
+### PASS 3 — Attention Vector Texture Isolation
+
+**Goal:** Ensure vectors read as *energy behavior*, not personality or virtue.
+
+**Method:**
+- Fix Stage = FLAME
+- Fix Path = Ekagrata (most structurally stable)
+- Vary Attention Vector (e.g., stable / jittered / diffused)
+
+**Evaluation Question:**
+> "Does the structure remain identical while the *energy* changes?"
+
+**Pass Criteria:**
+- If geometry shifts, the vector is leaking into Path
+- Only light dynamics, pulse, and glow should vary
+- No structural deformation allowed
+
+---
+
+### PASS 4 — Path × Vector Interaction (Within One Stage)
+
+**Goal:** Test whether vectors *modulate* paths without redefining them.
+
+**Method:**
+- Fix Stage = FLAME
+- Cross all combinations:
+  - Ekagrata × {stable, jittered, diffused}
+  - Sahaja × {stable, jittered, diffused}
+  - Vigilance × {stable, jittered, diffused}
+
+**Evaluation Question:**
+> "Can I still identify the Path even when the energy texture changes?"
+
+**Pass Criteria:**
+- Path identity must remain legible across all vectors
+- If not, vectors are overpowering shape
+
+---
+
+### PASS 5 — Vertical Consistency Check (Stage Integrity)
+
+**Goal:** Ensure Stage progression remains legible *across all Paths*.
+
+**Method:**
+- Pick one Path (e.g., Sahaja)
+- Pick one Vector (neutral)
+- Generate all 5 Stages
+
+**Evaluation Question:**
+> "Does vertical progression read as capacity-building, not aesthetic escalation?"
+
+**Pass Criteria:**
+- Stage identity must be preserved across paths
+- If Sahaja + Stellar feels fundamentally different from Ekagrata + Stellar, the stage axis is compromised
+
+---
+
+## Prompting Strategy (Z-Image-Turbo Aligned)
+
+### Mandatory Prompt Structure
+
+Each prompt must declare axes **explicitly and separately**:
+
+```
+STAGE: Beacon
+(controls ring refinement, color palette, material coherence)
+
+PATH: Vigilance
+(controls geometry deformation and mass distribution only)
+
+ATTENTION VECTOR: High temporal variance
+(controls light jitter and pulse behavior only)
+
+CONSTRAINTS:
+- Do not alter geometry based on attention vector
+- Do not alter color palette based on path
+- SVG-aligned circular rune geometry
+- Non-anthropomorphic
+- No spiritual symbols
+```
+
+This is not verbosity — **it's guardrails**.
+
+---
+
+### Batching Strategy (5070 Ti / Z-Turbo)
+
+Use the GPU for **breadth, not polish**:
+- Low steps (6–10)
+- CFG conservative (1.0–1.5)
+- Many seeds (10+ per combination)
+- Fast discard workflow
+
+**You are mapping a phase space, not generating finals.**
+
+---
+
+## Gallery Organization & Curation
+
+### Folder Structure (Immutable)
+
+```
+/AvatarMatrix/Sanskrit_Matrix
+  /Stage (Seedling, Ember, Flame, Beacon, Stellar)
+    /Path (Dhyana, Prana, Drishti, Jnana, Soma, Samyoga)
+      /Vector (Ekagrata, Sahaja, Vigilance)
+        /stage_vector_path_seed000.png
+        /stage_vector_path_seed000.json
+```
+
+**Each pass is its own epistemic experiment. Do not mix.**
+
+---
+
+### Metadata Tags (Minimum Required)
+
+For each generated asset:
+- `stage` (SEEDLING | EMBER | FLAME | BEACON | STELLAR)
+- `path` (Ekagrata | Sahaja | Vigilance | Neutral)
+- `attentionVector` (Stable | Jittered | Diffused | Neutral)
+- `passNumber` (1 | 2 | 3 | 4 | 5)
+- `promptHash` (SHA-256 of full prompt)
+- `axisIntegrity` (PASS | FAIL) — Does it violate constraint table?
+- `resonance` (1–5) — Gut aesthetic appeal
+- `confusionRisk` (YES | NO) — Could users misread this?
+
+**Only assets that pass Axis Integrity are eligible for production.**
+
+---
+
+## What This Gives You
+
+✅ A matrix you can **reason about**, not just feel  
+✅ A defensible philosophical position if challenged  
+✅ A scalable system when real user data arrives  
+✅ Protection against the biggest failure mode: **aesthetic inflation**
+
+**You're not designing avatars. You're designing a measurement instrument that happens to be visible.**
+
+---
+
+---
+
+# NEUTRAL BASELINE SPECIFICATIONS
+
+To execute the orthogonal passes correctly, we must define **precise neutral states** for Path and Attention Vector. These serve as the "zero point" against which variations are measured.
+
+## NEUTRAL PATH SPECIFICATION
+
+**Name:** `Path.Neutral`
+
+**Purpose:** A geometrically balanced, symmetry-pure form that does NOT express any behavioral signature.
+
+### Visual Characteristics
+
+| Property | Specification |
+|----------|---------------|
+| **Symmetry** | Perfect radial symmetry (n-fold, typically 6 or 8) |
+| **Deformation** | Zero. All rings are perfect circles. |
+| **Mass Distribution** | Evenly distributed across all rings |
+| **Tilt/Pose** | Flat, face-on, no perspective tilt |
+| **Fragmentation** | None. Rings are continuous, unbroken |
+| **Flow Direction** | None. No implied motion or directionality |
+
+### Prompt Fragment (Neutral Path)
+
+```
+Geometry: Perfect radial symmetry, no deformation, no tilt, no fragmentation.
+All rings are perfect circles, evenly spaced, face-on view.
+No implied motion or directionality in the geometry.
+```
+
+### What Neutral Path IS NOT
+
+❌ Not "balanced" in a zen sense — it's geometrically neutral  
+❌ Not a fourth path — it's the absence of path expression  
+❌ Not the "default" for users — it's a calibration tool  
+
+---
+
+## NEUTRAL ATTENTION VECTOR SPECIFICATION
+
+**Name:** `AttentionVector.Neutral`
+
+**Purpose:** A steady, stable energy state that does NOT express temporal texture or micro-pattern variance.
+
+### Visual Characteristics
+
+| Property | Specification |
+|----------|---------------|
+| **Pulse Rate** | Steady 1 Hz (60 BPM) |
+| **Pulse Amplitude** | 10% opacity variation (80% → 90% → 80%) |
+| **Jitter** | None. No randomness in timing or position. |
+| **Diffusion** | Minimal. Crisp edges, no soft bloom. |
+| **Light Source** | Single, coherent, centered |
+| **Temporal Noise** | Zero. Perfectly periodic. |
+
+### Prompt Fragment (Neutral Vector)
+
+```
+Light Behavior: Steady 1 Hz pulse, 10% opacity variation (80%–90%).
+No jitter, no randomness, no diffusion blur.
+Crisp edges, coherent light source, perfectly periodic.
+```
+
+### What Neutral Vector IS NOT
+
+❌ Not "calm" or "meditative" — it's metronomic  
+❌ Not a desirable end state — it's a measurement baseline  
+❌ Not emotionally neutral — it's temporally stable  
+
+---
+
+## COMBINED NEUTRAL BASELINE
+
+When both Path and Vector are neutral, the avatar should read as:
+
+> **"A geometrically pure, metronomically stable form that expresses only Stage."**
+
+This is the foundation for **Pass 1: Stage Baseline Lock**.
+
+### Full Neutral Baseline Prompt Template
+
+```
+STAGE: [STAGE_NAME]
+(controls ring count, refinement, color palette, material coherence)
+
+PATH: Neutral
+Geometry: Perfect radial symmetry, no deformation, no tilt, no fragmentation.
+All rings are perfect circles, evenly spaced, face-on view.
+No implied motion or directionality in the geometry.
+
+ATTENTION VECTOR: Neutral
+Light Behavior: Steady 1 Hz pulse, 10% opacity variation (80%–90%).
+No jitter, no randomness, no diffusion blur.
+Crisp edges, coherent light source, perfectly periodic.
+
+CONSTRAINTS:
+- SVG-aligned circular rune geometry
+- Non-anthropomorphic
+- No spiritual symbols (lotus, OM, chakra, etc.)
+- No text or inscriptions
+- Stage-appropriate color palette only
+```
+
+---
+
+## PATH VARIATION SPECIFICATIONS
+
+Once neutral is established, we can define deviations for each path.
+
+### Ekagrata (Structured Commitment)
+
+**Geometry Signature:**
+- **Symmetry:** High (6-fold or 8-fold)
+- **Deformation:** Minimal. Rings may thicken/thin but remain circular.
+- **Mass Distribution:** Concentrated toward center or outer edge (structured focus)
+- **Tilt/Pose:** Slight front-tilt (implies "leaning in")
+- **Fragmentation:** None. Continuous rings (commitment = completion)
+- **Flow Direction:** Inward or outward radial flow
+
+**Prompt Fragment:**
+```
+PATH: Ekagrata (Structured Commitment)
+Geometry: High symmetry (6–8 fold), minimal deformation.
+Rings may vary in thickness but remain circular.
+Mass concentrated toward center or outer edge.
+Slight front-tilt. No fragmentation. Inward radial flow.
+```
+
+---
+
+### Sahaja (Steady Rhythmic Participation)
+
+**Geometry Signature:**
+- **Symmetry:** Medium (4-fold or organic wave patterns)
+- **Deformation:** Gentle undulation, flowing curves
+- **Mass Distribution:** Evenly distributed with gentle wave modulation
+- **Tilt/Pose:** Level, no tilt (natural equilibrium)
+- **Fragmentation:** None. Continuous but flowing.
+- **Flow Direction:** Circular, tangential (suggests orbit, not thrust)
+
+**Prompt Fragment:**
+```
+PATH: Sahaja (Steady Rhythmic Participation)
+Geometry: Medium symmetry (4-fold or organic wave).
+Gentle undulating curves, flowing deformation.
+Mass evenly distributed with wave modulation.
+Level pose, no tilt. Circular/tangential flow.
+```
+
+---
+
+### Vigilance (Exploratory Varied Participation)
+
+**Geometry Signature:**
+- **Symmetry:** Low or asymmetric (2-fold or scattered)
+- **Deformation:** Irregular, varied thickness and gaps
+- **Mass Distribution:** Scattered, clustered in multiple regions
+- **Tilt/Pose:** Variable, multi-angle (implies scanning)
+- **Fragmentation:** Partial. Rings may have gaps or breaks (exploration = incompletion)
+- **Flow Direction:** Multi-directional, scanning pattern
+
+**Prompt Fragment:**
+```
+PATH: Vigilance (Exploratory Varied Participation)
+Geometry: Low symmetry (2-fold or asymmetric).
+Irregular deformation, varied thickness, partial gaps.
+Mass scattered across multiple regions.
+Variable tilt/angle. Multi-directional flow, scanning pattern.
+```
+
+---
+
+## ATTENTION VECTOR VARIATION SPECIFICATIONS
+
+### Stable (Low Temporal Variance)
+
+**Already defined as Neutral.** Use Neutral Vector spec.
+
+---
+
+### Jittered (High Temporal Variance)
+
+**Energy Signature:**
+- **Pulse Rate:** Irregular, 0.5–2 Hz with randomness
+- **Pulse Amplitude:** 20–40% opacity variation (random peaks)
+- **Jitter:** Visible positional/rotational jitter (±2–5 degrees)
+- **Diffusion:** Medium. Slight bloom around edges.
+- **Light Source:** Slightly fragmented, multiple micro-sources
+- **Temporal Noise:** High. Unpredictable timing.
+
+**Prompt Fragment:**
+```
+ATTENTION VECTOR: Jittered (High Temporal Variance)
+Light Behavior: Irregular pulse 0.5–2 Hz, 20–40% opacity variation.
+Visible positional jitter (±2–5 degrees rotation).
+Medium diffusion, slight bloom. Fragmented light sources.
+High temporal noise, unpredictable timing.
+```
+
+---
+
+### Diffused (Interruption/Fragmentation)
+
+**Energy Signature:**
+- **Pulse Rate:** Slow, 0.3–0.5 Hz
+- **Pulse Amplitude:** 30–50% opacity variation (deep fades)
+- **Jitter:** None. Smooth but diffused.
+- **Diffusion:** High. Soft bloom, blurred edges.
+- **Light Source:** Distributed, no clear center
+- **Temporal Noise:** Low frequency, gentle drift
+
+**Prompt Fragment:**
+```
+ATTENTION VECTOR: Diffused (Interruption/Fragmentation)
+Light Behavior: Slow pulse 0.3–0.5 Hz, 30–50% opacity variation.
+No jitter, but high diffusion with soft bloom.
+Blurred edges, distributed light source with no clear center.
+Low-frequency gentle drift.
+```
+
+---
+
+## Usage in Batch Generation
+
+When generating assets, use these specifications as **modular prompt fragments**.
+
+### Example: FLAME + Ekagrata + Jittered
+
+```
+STAGE: FLAME
+Ring count: 4–5 rings
+Color palette: #fcd34d (Gold), #f59e0b (Amber)
+Material: Sharpening geometry, deliberate pulse
+
+PATH: Ekagrata (Structured Commitment)
+Geometry: High symmetry (6–8 fold), minimal deformation.
+Rings may vary in thickness but remain circular.
+Mass concentrated toward center. Slight front-tilt.
+No fragmentation. Inward radial flow.
+
+ATTENTION VECTOR: Jittered (High Temporal Variance)
+Light Behavior: Irregular pulse 0.5–2 Hz, 20–40% opacity variation.
+Visible positional jitter (±2–5 degrees rotation).
+Medium diffusion, slight bloom. Fragmented light sources.
+
+CONSTRAINTS:
+- Do not alter geometry based on attention vector
+- Do not alter color palette based on path
+- SVG-aligned circular rune geometry
+- Non-anthropomorphic
+- No spiritual symbols
+```
+
+---
+
+## Validation Checklist
+
+For each generated asset, verify:
+
+✅ **Stage Integrity:** Does color palette match stage spec?  
+✅ **Path Integrity:** Does geometry match path signature?  
+✅ **Vector Integrity:** Does light behavior match vector spec?  
+✅ **Axis Separation:** Are forbidden changes absent?  
+✅ **Legibility:** Can you identify stage/path/vector independently?  
+
+If any check fails, the asset is **invalid** and must be discarded.
+
+---
+
+## End of Neutral Baseline Specifications

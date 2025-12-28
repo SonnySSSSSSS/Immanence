@@ -3,8 +3,9 @@
 
 import React from "react";
 
-export function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false, isLight = false }) {
+export function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false, isLight = false, useNewAvatars = false }) {
     const stageLower = stage.toLowerCase();
+
     const stageColors = {
         'seedling': '#4ade80',
         'ember': '#f97316',
@@ -20,9 +21,19 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
     } else if (attention && attention !== 'none') {
         const pathLower = path.toLowerCase();
         const attentionLower = attention.toLowerCase();
-        const variationSuffix = `_0000${variationIndex + 1}_`;
-        src = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
+
+        if (useNewAvatars) {
+            // New naming: avatar-{stage}-{path}-{attention}_0000{n}_.png
+            const variationSuffix = `_0000${variationIndex + 1}_`;
+            src = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
+        } else {
+            // Old naming: {Stage}-{Path}.png
+            const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
+            const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1).toLowerCase();
+            src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
+        }
     } else {
+        // Fallback: old naming
         const stageCapitalized = stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
         const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1).toLowerCase();
         src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;

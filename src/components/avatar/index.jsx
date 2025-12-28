@@ -12,6 +12,7 @@ import "../Avatar.css";
 import { LABELS, STAGE_GLOW_COLORS, getMandalaState } from "./constants";
 import { AvatarContainer } from "./AvatarContainer";
 import HaloGate from "./HaloGate";
+import { useSettingsStore } from "../../state/settingsStore";
 
 export function Avatar({
     mode,
@@ -28,6 +29,9 @@ export function Avatar({
     onGateSelect,
 }) {
     const label = LABELS[mode] || "Center";
+
+    // Get avatar naming preference from settings
+    const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
 
     const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
     const [stageIndex, setStageIndex] = useState(2);
@@ -57,20 +61,35 @@ export function Avatar({
         const checkVariation = (index) => {
             return new Promise((resolve) => {
                 const img = new Image();
-                const variationSuffix = `_0000${index + 1}_`;
-                img.src = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
+
+                // Construct path based on naming convention
+                let imagePath;
+                if (useNewAvatars) {
+                    // New naming: avatar-{stage}-{path}-{attention}_0000{n}_.png
+                    const variationSuffix = `_0000${index + 1}_`;
+                    imagePath = `${import.meta.env.BASE_URL}avatars/avatar-${stageLower}-${pathLower}-${attentionLower}${variationSuffix}.png`;
+                } else {
+                    // Old naming: {Stage}-{Path}.png (capitalize first letter)
+                    const stageCapitalized = stageLower.charAt(0).toUpperCase() + stageLower.slice(1);
+                    const pathCapitalized = pathLower.charAt(0).toUpperCase() + pathLower.slice(1);
+                    imagePath = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
+                }
+
+                img.src = imagePath;
                 img.onload = () => resolve(true);
                 img.onerror = () => resolve(false);
             });
         };
 
-        Promise.all([...Array(10)].map((_, i) => checkVariation(i)))
+        // For old avatars, only check index 0 (single file)
+        const maxChecks = useNewAvatars ? 10 : 1;
+        Promise.all([...Array(maxChecks)].map((_, i) => checkVariation(i)))
             .then(results => {
                 const foundCount = results.filter(Boolean).length;
                 setMaxVariations(foundCount > 0 ? foundCount : 1);
                 setVariationIndex(0);
             });
-    }, [currentStage, path, attention, showCore]);
+    }, [currentStage, path, attention, showCore, useNewAvatars]);
 
     useEffect(() => {
         if (onStageChange) {

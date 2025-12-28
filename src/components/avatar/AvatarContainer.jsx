@@ -6,6 +6,7 @@ import { AvatarLuminousCanvas } from "../AvatarLuminousCanvas.jsx";
 import MoonOrbit from "../MoonOrbit.jsx";
 import { useDisplayModeStore } from "../../state/displayModeStore";
 import { useLunarStore } from "../../state/lunarStore";
+import { useSettingsStore } from "../../state/settingsStore";
 import { STAGE_GLOW_COLORS } from "./constants";
 import { BreathingAura } from "./BreathingAura";
 import { RuneRingLayer } from "./RuneRingLayer";
@@ -30,6 +31,7 @@ export function AvatarContainer({
     const { h, s, l } = glowColor;
     const isLight = useDisplayModeStore((state) => state.colorScheme === 'light');
     const moonProgress = useLunarStore(s => s.progress);
+    const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
 
     const moonAngle = (moonProgress / 12) * (Math.PI * 2) - Math.PI / 2;
     const shadowDist = isLight ? 10 : 0;
@@ -218,6 +220,7 @@ export function AvatarContainer({
                         hasVariations={hasVariations}
                         isPracticing={isPracticing}
                         isLight={isLight}
+                        useNewAvatars={useNewAvatars}
                     />
                 </div>
 

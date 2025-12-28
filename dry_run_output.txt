@@ -1,0 +1,75 @@
+================================================================================
+AVATAR MATRIX BATCH GENERATOR
+================================================================================
+Project Root: D:\Unity Apps\immanence-os
+Output Directory: D:\Unity Apps\immanence-os\AvatarMatrix
+Seeds per combo: 5
+Mode: DRY RUN
+Wait for completion: True
+
+================================================================================
+PASS 1: Stage Baseline Lock
+================================================================================
+Goal: Verify Stages communicate time + consistency without superiority
+Method: Path=Neutral, Vector=Neutral, Vary Stage (5 stages × 5 seeds)
+
+
+Generating SEEDLING (5 seeds)...
+  [DRY RUN] Would generate: seedling_neutral_seed000.png
+  Metadata saved to: seedling_neutral_seed000.json
+  [DRY RUN] Would generate: seedling_neutral_seed001.png
+  Metadata saved to: seedling_neutral_seed001.json
+  [DRY RUN] Would generate: seedling_neutral_seed002.png
+  Metadata saved to: seedling_neutral_seed002.json
+  [DRY RUN] Would generate: seedling_neutral_seed003.png
+  Metadata saved to: seedling_neutral_seed003.json
+  [DRY RUN] Would generate: seedling_neutral_seed004.png
+  Metadata saved to: seedling_neutral_seed004.json
+
+Generating EMBER (5 seeds)...
+  [DRY RUN] Would generate: ember_neutral_seed000.png
+  Metadata saved to: ember_neutral_seed000.json
+  [DRY RUN] Would generate: ember_neutral_seed001.png
+  Metadata saved to: ember_neutral_seed001.json
+  [DRY RUN] Would generate: ember_neutral_seed002.png
+  Metadata saved to: ember_neutral_seed002.json
+  [DRY RUN] Would generate: ember_neutral_seed003.png
+  Metadata saved to: ember_neutral_seed003.json
+  [DRY RUN] Would generate: ember_neutral_seed004.png
+  Metadata saved to: ember_neutral_seed004.json
+
+Generating FLAME (5 seeds)...
+  [DRY RUN] Would generate: flame_neutral_seed000.png
+  Metadata saved to: flame_neutral_seed000.json
+  [DRY RUN] Would generate: flame_neutral_seed001.png
+  Metadata saved to: flame_neutral_seed001.json
+  [DRY RUN] Would generate: flame_neutral_seed002.png
+  Metadata saved to: flame_neutral_seed002.json
+  [DRY RUN] Would generate: flame_neutral_seed003.png
+  Metadata saved to: flame_neutral_seed003.json
+  [DRY RUN] Would generate: flame_neutral_seed004.png
+  Metadata saved to: flame_neutral_seed004.json
+
+Generating BEACON (5 seeds)...
+  [DRY RUN] Would generate: beacon_neutral_seed000.png
+  Metadata saved to: beacon_neutral_seed000.json
+  [DRY RUN] Would generate: beacon_neutral_seed001.png
+  Metadata saved to: beacon_neutral_seed001.json
+  [DRY RUN] Would generate: beacon_neutral_seed002.png
+  Metadata saved to: beacon_neutral_seed002.json
+  [DRY RUN] Would generate: beacon_neutral_seed003.png
+  Metadata saved to: beacon_neutral_seed003.json
+  [DRY RUN] Would generate: beacon_neutral_seed004.png
+  Metadata saved to: beacon_neutral_seed004.json
+
+Generating STELLAR (5 seeds)...
+  [DRY RUN] Would generate: stellar_neutral_seed000.png
+  Metadata saved to: stellar_neutral_seed000.json
+  [DRY RUN] Would generate: stellar_neutral_seed001.png
+  Metadata saved to: stellar_neutral_seed001.json
+  [DRY RUN] Would generate: stellar_neutral_seed002.png
+  Metadata saved to: stellar_neutral_seed002.json
+  [DRY RUN] Would generate: stellar_neutral_seed003.png
+  Metadata saved to: stellar_neutral_seed003.json
+  [DRY RUN] Would generate: stellar_neutral_seed004.png
+  Metadata saved to: stellar_neutral_seed004.json

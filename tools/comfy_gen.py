@@ -23,7 +23,7 @@ from pathlib import Path
 # Configuration
 COMFYUI_URL = "http://127.0.0.1:8188"
 PROJECT_ROOT = Path(__file__).parent.parent  # d:\Unity Apps\immanence-os
-DEFAULT_CKPT = "z-image-turbo-bf16-aio.safetensors"
+DEFAULT_CKPT = "z-image-turbo-fp8-aio.safetensors"
 DEFAULT_NEGATIVE = "text, letters, watermark, blurry, low quality, photorealistic, harsh edges"
 
 

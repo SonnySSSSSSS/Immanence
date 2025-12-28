@@ -1,0 +1,10 @@
+{
+  "model": "Sanskrit 6-Path",
+  "stage": "SEEDLING",
+  "path": "Dhyana",
+  "attentionVector": "Vigilance",
+  "seed": 0,
+  "timestamp": "2025-12-28T14:42:21.726574",
+  "prompt": "[STAGE]: SEEDLING\nMaterial: #818cf8 (Indigo), #6366f1, 6-7 rings internal rings\nRefinement: Faint, soft glow, slow pulse, fragile and nascent\n\n[PATH]: Dhyana\nDeformation: Precision geometry family.\nPerfect radial symmetry, minimal internal turbulence, single-pointed focus.\nRings are perfectly concentric and coherent.\n\n[VECTOR]: Vigilance\nLight Physics: Scanning/Analytical awareness.\nScintillating angular light, searching internal energy, fragmented pulse.\nHigh-frequency exploratory jitter, angular light shifting.\n\n[OBJECT LOCK]:\nSingle continuous jewel-like object\nSubsurface light refraction\nPolished energy crystal\nThree-dimensional volumetric form\nExternal silhouette may only change via smooth deformation\nLighting originates entirely from within the object\nInternal subsurface illumination only\n\n[BACKGROUND]:\nIsolated object\nPure black void or transparent background\nNo environment\nNo surface\nNo horizon\n\n[SHADOWS]:\nNo cast shadows\nNo ground shadows\nNo contact shadows\nNo ambient occlusion on background\nNo contact with any surface\n\n[FORBIDDEN]:\nNo mandalas, no sigils, no symbolic diagrams\nNo flat glyphs, no sacred geometry patterns\nNo spiritual symbols, no text, no inscriptions\nNo multiple objects, no fragmentation\nNo protrusions, no spokes, no radial appendages\nNo scene context\nNo studio backdrop\nNo atmospheric depth\nNo external light sources\nStage-appropriate color palette only: #818cf8 (Indigo), #6366f1",
+  "validation": "PENDING"
+}

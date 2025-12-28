@@ -28,10 +28,12 @@ export const useSettingsStore = create(
             showFxGallery: false,
             showCoordinateHelper: false,
             lightModeRingType: 'astrolabe', // 'astrolabe' or 'rune'
+            useNewAvatars: false, // false = old naming (Flame-Dhyana.png), true = new (avatar-flame-dhyana-ekagrata_00001_.png)
 
             // Actions
             setLightModeRingType: (type) => set({ lightModeRingType: type }),
             setCoordinateHelper: (show) => set({ showCoordinateHelper: show }),
+            setUseNewAvatars: (useNew) => set({ useNewAvatars: useNew }),
             setDisplayMode: (mode) => set({ displayMode: mode }),
 
             setLlmModel: (model) => set({ llmModel: model }),
@@ -60,6 +62,7 @@ export const useSettingsStore = create(
                 reduceMotion: false,
                 highContrast: false,
                 lightModeRingType: 'astrolabe',
+                useNewAvatars: false,
             }),
         }),
         {

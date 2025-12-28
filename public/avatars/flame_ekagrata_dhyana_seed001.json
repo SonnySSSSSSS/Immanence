@@ -1,0 +1,10 @@
+{
+  "model": "Sanskrit 6-Path",
+  "stage": "FLAME",
+  "path": "Dhyana",
+  "attentionVector": "Ekagrata",
+  "seed": 1,
+  "timestamp": "2025-12-28T14:55:16.786352",
+  "prompt": "[STAGE]: FLAME\nMaterial: #fcd34d (Gold), #f59e0b, 4-5 rings internal rings\nRefinement: Sharper geometry, deliberate pulse, purpose\n\n[PATH]: Dhyana\nDeformation: Precision geometry family.\nPerfect radial symmetry, minimal internal turbulence, single-pointed focus.\nRings are perfectly concentric and coherent.\n\n[VECTOR]: Ekagrata\nLight Physics: Stable/Coherent focus.\nSteady internal glow, constant intensity, perfectly periodic 1Hz pulse.\nLong light coherence, no jitter, centered motion.\n\n[OBJECT LOCK]:\nSingle continuous jewel-like object\nSubsurface light refraction\nPolished energy crystal\nThree-dimensional volumetric form\nExternal silhouette may only change via smooth deformation\nLighting originates entirely from within the object\nInternal subsurface illumination only\n\n[BACKGROUND]:\nIsolated object\nPure black void or transparent background\nNo environment\nNo surface\nNo horizon\n\n[SHADOWS]:\nNo cast shadows\nNo ground shadows\nNo contact shadows\nNo ambient occlusion on background\nNo contact with any surface\n\n[FORBIDDEN]:\nNo mandalas, no sigils, no symbolic diagrams\nNo flat glyphs, no sacred geometry patterns\nNo spiritual symbols, no text, no inscriptions\nNo multiple objects, no fragmentation\nNo protrusions, no spokes, no radial appendages\nNo scene context\nNo studio backdrop\nNo atmospheric depth\nNo external light sources\nStage-appropriate color palette only: #fcd34d (Gold), #f59e0b",
+  "validation": "PENDING"
+}
