@@ -23,7 +23,8 @@ export function AvatarContainer({
     weeklyConsistency = 0,
     weeklyPracticeLog = [],
     breathState,
-    isPracticing = false
+    isPracticing = false,
+    ringSpeedMultiplier = 1.0,
 }) {
     const glowColor = STAGE_GLOW_COLORS[stage] || STAGE_GLOW_COLORS.flame;
     const { h, s, l } = glowColor;
@@ -121,7 +122,7 @@ export function AvatarContainer({
 
                     {/* LAYER 2: Rune Ring Layer */}
                     <div className="absolute inset-0" style={{ zIndex: 5 }}>
-                        <RuneRingLayer stage={stage} isPracticing={isPracticing} />
+                        <RuneRingLayer stage={stage} isPracticing={isPracticing} speedMultiplier={ringSpeedMultiplier} />
                     </div>
 
                     {/* LAYER 3: Decorative Outline Rings */}

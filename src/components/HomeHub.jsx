@@ -203,6 +203,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               path={previewPath}
               showCore={previewShowCore}
               isPracticing={isPracticing}
+              showHaloGates={true}
+              onGateSelect={onSelectSection}
             />
           </div>
         </div>

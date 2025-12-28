@@ -105,13 +105,119 @@ Recommended directories for generated assets:
 
 ---
 
+## 🎯 RECOMMENDED: Universal Script (`comfy_gen.py`)
+
+**As of December 2024, use `tools/comfy_gen.py` instead of creating one-off scripts.**
+
+### Quick Start
+
+```bash
+# Basic usage - waits for completion
+python tools/comfy_gen.py "mystical golden lotus on cream background" --output public/lotus.png
+
+# Fire-and-forget mode - queues and exits immediately
+python tools/comfy_gen.py "swirling ethereal clouds" --output public/clouds.png --no-download
+```
+
+### Common Use Cases
+
+#### Generate Avatar Asset
+```bash
+python tools/comfy_gen.py \
+  "serene meditation avatar, purple ethereal glow, spiritual energy, high quality" \
+  --output public/avatars/meditation_01.png \
+  --negative "text, watermark, blurry, photorealistic"
+```
+
+#### Generate Background (Fire-and-Forget)
+```bash
+python tools/comfy_gen.py \
+  "soft swirling clouds in cream and pale gold, ethereal wisps, gentle gradients" \
+  --output public/backgrounds/clouds_subtle.png \
+  --no-download
+```
+
+#### Generate with Custom Dimensions
+```bash
+python tools/comfy_gen.py \
+  "sacred geometry mandala, golden and amber tones" \
+  --output public/icons/mandala.png \
+  --width 512 \
+  --height 512 \
+  --steps 4
+```
+
+#### Quick Test Generation
+```bash
+# Generates to public/generated/ComfyUI_[timestamp].png
+python tools/comfy_gen.py "abstract golden energy swirls"
+```
+
+### All Available Options
+
+```bash
+python tools/comfy_gen.py --help
+
+Arguments:
+  prompt              Positive prompt describing what to generate
+  
+Options:
+  --output, -o        Output file path (relative to project root)
+  --negative, -n      Negative prompt (default: "text, letters, watermark...")
+  --width, -w         Image width in pixels (default: 1024)
+  --height, -H        Image height in pixels (default: 1024)
+  --steps, -s         Generation steps (default: 9)
+  --cfg, -c           CFG scale (default: 1.0)
+  --sampler           Sampler name (default: euler_ancestral)
+  --scheduler         Scheduler (default: simple)
+  --ckpt              Checkpoint name (default: z-image-turbo-bf16-aio.safetensors)
+  --prefix, -p        Filename prefix for ComfyUI (default: ComfyUI)
+  --timeout, -t       Timeout in seconds (default: 300)
+  --no-download       Queue only, don't wait for completion
+```
+
+### Best Practices for AI Agent
+
+1. **Always use `--no-download`** when generating during active tasks to avoid blocking
+2. **Use descriptive prompts** with style, lighting, and quality modifiers
+3. **Specify `--output`** with meaningful paths in the appropriate directory
+4. **Include `--negative`** to avoid text, watermarks, and unwanted elements
+5. **Notify user** after queuing, then continue with other work
+
+### Example AI Agent Workflow
+
+```bash
+# 1. Queue the generation (non-blocking)
+python tools/comfy_gen.py \
+  "luminous chakra symbol, emerald green energy, lotus petals, sacred geometry" \
+  --output public/chakras/heart_chakra.png \
+  --negative "text, watermark, blurry, photorealistic" \
+  --no-download
+
+# 2. Immediately inform user and continue work
+# "I've queued the heart chakra generation. I'll continue with the next task..."
+```
+
+---
+
 ## 🔥 FIRE-AND-FORGET PROTOCOL (MANDATORY)
+
 
 To prevent the AI from "freezing" or "locked waits," always follow these steps for ComfyUI generations:
 
 1. **DO NOT use synchronous MCP tools** for generations.
-2. **USE A SCRIPT** (like `trigger_bg_gen.py`) to queue the prompt via background command.
+2. **USE THE UNIVERSAL SCRIPT** `tools/comfy_gen.py` with the `--no-download` flag to queue prompts via background command.
 3. **IMMEDIATELY CONTINUE WORK.** After triggering the generation, immediately ask for the next task or continue with existing code work.
 4. **USER NOTIFICATION.** The user will handle file placement and notify the AI when the asset is ready to be inspected or used.
 5. **NEVER WAIT.** If a generation is running, the AI must remain active and responsive to other requests.
+
+### Recommended Command Pattern
+```bash
+python tools/comfy_gen.py "your prompt here" --output public/path/to/asset.png --no-download
+```
+
+For synchronous generation (when user explicitly requests waiting):
+```bash
+python tools/comfy_gen.py "your prompt here" --output public/path/to/asset.png
+```
 

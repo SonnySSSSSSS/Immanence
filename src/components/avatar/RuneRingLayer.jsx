@@ -6,11 +6,18 @@ import { useDisplayModeStore } from "../../state/displayModeStore";
 import { useSettingsStore } from "../../state/settingsStore";
 import { STAGE_RUNE_COLORS } from "./constants";
 
-export function RuneRingLayer({ stage = "flame", isPracticing = false }) {
+export function RuneRingLayer({ stage = "flame", isPracticing = false, speedMultiplier = 1.0 }) {
     const isLight = useDisplayModeStore((state) => state.colorScheme === "light");
     const glowColor = STAGE_RUNE_COLORS[stage] || STAGE_RUNE_COLORS.flame;
     const ringType = useSettingsStore(s => s.lightModeRingType);
     const isAstrolabe = ringType === 'astrolabe';
+
+    // Calculate animation duration based on speed multiplier
+    // Base: 60s for light, 120s for dark. Slower = longer duration.
+    const lightBaseDuration = 60;
+    const darkBaseDuration = 120;
+    const lightDuration = speedMultiplier > 0 ? lightBaseDuration / speedMultiplier : lightBaseDuration;
+    const darkDuration = speedMultiplier > 0 ? darkBaseDuration / speedMultiplier : darkBaseDuration;
 
     if (isLight) {
         return (
@@ -18,8 +25,9 @@ export function RuneRingLayer({ stage = "flame", isPracticing = false }) {
                 <div
                     className="light-ring-rotate relative w-[100%] h-[100%] flex items-center justify-center"
                     style={{
-                        transition: 'opacity 0.5s ease',
-                        animationPlayState: isPracticing ? 'paused' : 'running'
+                        transition: 'opacity 0.5s ease, animation-duration 0.5s ease',
+                        animationPlayState: isPracticing ? 'paused' : 'running',
+                        animationDuration: `${lightDuration}s`,
                     }}
                 >
                     <img
@@ -62,7 +70,11 @@ export function RuneRingLayer({ stage = "flame", isPracticing = false }) {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div
                 className="dark-ring-rotate w-[88%] h-[88%] relative flex items-center justify-center"
-                style={{ animationPlayState: isPracticing ? 'paused' : 'running', zIndex: 5 }}
+                style={{
+                    animationPlayState: isPracticing ? 'paused' : 'running',
+                    animationDuration: `${darkDuration}s`,
+                    zIndex: 5
+                }}
             >
                 <div className="absolute inset-0 hairline-ring opacity-40 scale-[1.005]" />
                 <img
