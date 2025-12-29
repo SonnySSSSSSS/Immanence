@@ -19,25 +19,17 @@ cd /d "%PROJECT_DIR%"
 :: Get current branch
 for /f "tokens=*" %%b in ('git branch --show-current') do set "CURRENT_BRANCH=%%b"
 
-:: Get current version from App.jsx - robust method
+:: Get current version from App.jsx - strip HTML tags
 set "CURRENT_VERSION=unknown"
-findstr /c:"v3." src\App.jsx > "%TEMP%\version_temp.txt"
-for /f "tokens=*" %%v in (%TEMP%\version_temp.txt) do (
-    echo.%%v | findstr /c:"className" >nul
-    if errorlevel 1 (
-        echo.%%v | findstr /c:"<" >nul
-        if errorlevel 1 (
-            set "line=%%v"
-            for /f "tokens=1" %%n in ("!line!") do (
-                set "CURRENT_VERSION=%%n"
-                set "CURRENT_VERSION=!CURRENT_VERSION:v=!"
-                goto :version_found
-            )
-        )
+for /f "tokens=*" %%v in ('findstr /c:"v3." src\App.jsx ^| findstr /v "className"') do (
+    set "line=%%v"
+    set "line=!line:*v3.=3.!"
+    for /f "tokens=1 delims=<" %%n in ("!line!") do (
+        set "CURRENT_VERSION=%%n"
+        goto :version_found
     )
 )
 :version_found
-del "%TEMP%\version_temp.txt" 2>nul
 
 :MENU
 cls
