@@ -1,7 +1,7 @@
 // src/components/ApplicationSection.jsx
 import React, { useState } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
-import { Avatar } from './Avatar.jsx';
+import { AvatarPreview as Avatar } from './AvatarPreview.jsx';
 import { StageTitle } from './StageTitle.jsx';
 import { TrackingView } from './TrackingView.jsx';
 import { FourModesHome } from './FourModesHome.jsx';
