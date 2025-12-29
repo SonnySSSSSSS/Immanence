@@ -1,17 +1,15 @@
 // src/components/avatar/index.jsx
-// FIVE-LAYER AVATAR STACK:
+// FOUR-LAYER AVATAR STACK:
 // 0) Luminous field (canvas rings)
 // 1) Breathing aura (practice only)
 // 2) Rune ring (PNG, rotating)
 // 3) Inner sigil core (PNG, stage-aware)
 // 4) Metrics text
-// 5) HaloGate (static navigation labels, Hub only)
 
 import React, { useEffect, useState, useCallback } from "react";
 import "../Avatar.css";
 import { LABELS, STAGE_GLOW_COLORS, getMandalaState } from "./constants";
 import { AvatarContainer } from "./AvatarContainer";
-import HaloGate from "./HaloGate";
 import { useSettingsStore } from "../../state/settingsStore";
 
 export function Avatar({
@@ -24,9 +22,6 @@ export function Avatar({
     showCore = true,
     attention = 'vigilance',
     isPracticing = false,
-    // HaloGate props
-    showHaloGates = false,
-    onGateSelect,
 }) {
     const label = LABELS[mode] || "Center";
 
@@ -38,15 +33,9 @@ export function Avatar({
     const [variationIndex, setVariationIndex] = useState(0);
     const [maxVariations, setMaxVariations] = useState(1);
 
-    // HaloGate state
-    const [haloState, setHaloState] = useState("idle");
-
     const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
     const internalStage = STAGE_NAMES[stageIndex];
     const currentStage = controlledStage ? controlledStage.toLowerCase() : internalStage;
-
-    // Ring speed: 1.0 normal, 0.4 when armed
-    const ringSpeedMultiplier = haloState === "armed" ? 0.4 : 1.0;
 
     useEffect(() => {
         if (!path || showCore || !attention || attention === 'none') {
@@ -123,12 +112,6 @@ export function Avatar({
     };
 
     const handleSigilClick = () => {
-        // If HaloGates are enabled, clicking avatar arms them instead of cycling stage
-        if (showHaloGates) {
-            setHaloState(prev => prev === "idle" ? "armed" : "idle");
-            return;
-        }
-
         if (maxVariations > 1) {
             setVariationIndex((prev) => (prev + 1) % maxVariations);
         } else if (controlledStage && onStageChange) {
@@ -158,15 +141,6 @@ export function Avatar({
                 weeklyPracticeLog={weeklyPracticeLog}
                 breathState={breathState}
                 isPracticing={isPracticing}
-                ringSpeedMultiplier={ringSpeedMultiplier}
-            />
-            <HaloGate
-                enabled={showHaloGates}
-                haloState={haloState}
-                setHaloState={setHaloState}
-                onGateSelect={onGateSelect}
-                ringRadiusPx={132}
-                gateOffsetPx={28}
             />
         </div>
     );

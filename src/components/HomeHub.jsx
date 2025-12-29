@@ -5,10 +5,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "./avatar";
 import { StageTitle } from "./StageTitle.jsx";
 import { STAGE_COLORS } from "../constants/stageColors.js";
-import { TrackingHub } from "./TrackingHub.jsx";
+import { CompactStatsCard } from "./CompactStatsCard.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
+import { SideNavigation } from "./SideNavigation.jsx";
 import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
@@ -149,7 +150,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR & HUB INSTRUMENT - Full-Bleed Altar (Cosmic Zone)
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full flex flex-col items-center gap-4 py-8 transition-all duration-500 overflow-visible">
+      <div className="w-full flex flex-col items-center gap-2 py-4 transition-all duration-500 overflow-visible">
         <div className="relative w-full flex items-center justify-center overflow-visible">
           {/* Cloud Background - NO LONGER HERE, moved to full-page layer */}
 
@@ -196,6 +197,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 : 'none',
             }}
           >
+            {/* Avatar without side navigation */}
             <Avatar
               mode="hub"
               onStageChange={onStageChange}
@@ -203,8 +205,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               path={previewPath}
               showCore={previewShowCore}
               isPracticing={isPracticing}
-              showHaloGates={false}
-              onGateSelect={onSelectSection}
             />
           </div>
         </div>
@@ -232,67 +232,51 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full px-4 flex flex-col items-center gap-8 pb-8">
+      <div className="w-full px-4 flex flex-col items-center gap-4 pb-4">
 
-        {/* STATS DASHBOARD - TrackingHub */}
+        {/* STATS DASHBOARD - Compact Visual Stats */}
         <div className="w-full">
-          <TrackingHub streakInfo={streakInfo} />
+          <CompactStatsCard domain="wisdom" streakInfo={streakInfo} />
         </div>
 
-        {/* MODES SECTION - Explore Modes Grid */}
+        {/* MODES SECTION - Horizontal Row */}
         <div className="w-full transition-all duration-500">
           <div
-            className="relative text-[10px] uppercase tracking-[0.2em] mb-4 text-suspended"
+            className="relative text-[10px] uppercase tracking-[0.2em] mb-3 text-suspended text-center"
             style={{
               color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.7)',
               textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
             }}
           >
-            {/* Dark backing (dark mode only) */}
-            {!isLight && (
-              <div
-                className="absolute inset-x-0 -inset-y-2"
-                style={{
-                  background: 'radial-gradient(ellipse 60% 100% at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%)',
-                  filter: 'blur(10px)',
-                  zIndex: -1,
-                }}
-              />
-            )}
             Explore Modes
           </div>
 
-          {/* Grid: 2x2 always */}
-          <div className="grid w-full grid-cols-2 gap-4">
-            <ModeButton
+          {/* Horizontal Row - Flex layout for compact spacing */}
+          <div className="flex justify-center items-center gap-4">
+            <ArcModeButton
               title="Practice"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-practice.png` : `${import.meta.env.BASE_URL}modes/darkmode-practice.png`}
-              colorGrade="gold"
               onClick={() => onSelectSection("practice")}
+              isLight={isLight}
             />
-            <ModeButton
+            <ArcModeButton
               title="Wisdom"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-wisdom.png` : `${import.meta.env.BASE_URL}modes/darkmode-wisdom.png`}
-              colorGrade="amberViolet"
               onClick={() => onSelectSection("wisdom")}
+              isLight={isLight}
             />
-            <ModeButton
+            <ArcModeButton
               title="Application"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-application.png` : `${import.meta.env.BASE_URL}modes/darkmode-application.png`}
-              colorGrade="indigo"
               onClick={() => onSelectSection("application")}
+              isLight={isLight}
             />
-            <ModeButton
+            <ArcModeButton
               title="Navigation"
               image={isLight ? `${import.meta.env.BASE_URL}modes/mode-navigation.png` : `${import.meta.env.BASE_URL}modes/darkmode-navigation.png`}
-              colorGrade="goldBlue"
               onClick={() => onSelectSection("navigation")}
+              isLight={isLight}
             />
-          </div>
-
-          {/* Export Data */}
-          <div className="mt-4 flex justify-center">
-            <ExportDataButton variant="link" />
           </div>
         </div>
 
@@ -390,6 +374,124 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   );
 }
 
+// Arc Mode Button - Circular button with AAA-quality layered shadows for bioluminescent glow
+function ArcModeButton({ title, onClick, image, isLight }) {
+  const buttonSize = 80; // Diameter in px
+
+  // AAA-quality layered glow (GPU-accelerated)
+  const getGlowShadow = (isHovered = false) => {
+    const baseColor = isLight ? '175, 139, 44' : '139, 92, 246';
+    const intensity = isHovered ? 1.5 : 1;
+
+    return `
+      0 0 ${2 * intensity}px rgba(${baseColor}, ${0.8 * intensity}),
+      0 0 ${15 * intensity}px rgba(${baseColor}, ${0.4 * intensity}),
+      0 0 ${45 * intensity}px rgba(${baseColor}, ${0.1 * intensity})
+    `;
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative overflow-hidden"
+      style={{
+        width: `${buttonSize}px`,
+        height: `${buttonSize}px`,
+        borderRadius: '50%',
+        cursor: 'pointer',
+        transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+        border: isLight
+          ? '2px solid rgba(175, 139, 44, 0.4)'
+          : '2px solid rgba(255, 255, 255, 0.2)',
+        background: isLight
+          ? 'linear-gradient(135deg, rgba(255, 250, 235, 0.95) 0%, rgba(253, 248, 230, 0.9) 100%)'
+          : 'linear-gradient(135deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+        boxShadow: getGlowShadow(false),
+        padding: 0,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.1)';
+        e.currentTarget.style.boxShadow = getGlowShadow(true);
+        e.currentTarget.style.borderColor = isLight
+          ? 'rgba(175, 139, 44, 0.7)'
+          : 'rgba(139, 92, 246, 0.6)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.boxShadow = getGlowShadow(false);
+        e.currentTarget.style.borderColor = isLight
+          ? 'rgba(175, 139, 44, 0.4)'
+          : 'rgba(255, 255, 255, 0.2)';
+      }}
+      aria-label={title}
+    >
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
+        style={{
+          backgroundImage: `url(${image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          borderRadius: '50%',
+          opacity: 0.9,
+          mixBlendMode: isLight ? 'multiply' : 'normal',
+        }}
+      />
+
+      {/* Specular Shimmer Effect */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          borderRadius: '50%',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.25) 50%, transparent 100%)',
+            transform: 'translateX(-100%) rotate(45deg)',
+            animation: 'shimmer 10s infinite linear',
+          }}
+        />
+      </div>
+
+      {/* Label overlay */}
+      <div
+        className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-1"
+        style={{
+          background: isLight
+            ? 'linear-gradient(to top, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 70%, transparent 100%)'
+            : 'linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 70%, transparent 100%)',
+          borderBottomLeftRadius: '50%',
+          borderBottomRightRadius: '50%',
+        }}
+      >
+        <span
+          style={{
+            fontSize: '7px',
+            fontWeight: '700',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: isLight ? 'var(--light-accent)' : 'rgba(253, 251, 245, 0.95)',
+            textShadow: isLight
+              ? '0 1px 2px rgba(255, 255, 255, 0.8)'
+              : '0 1px 3px rgba(0, 0, 0, 0.9)',
+            userSelect: 'none',
+          }}
+        >
+          {title}
+        </span>
+      </div>
+    </button>
+  );
+}
+
 function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
@@ -407,25 +509,28 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
   }, []);
 
   // Per-mode color grading for subtle identity
-  // Per-mode color grading for subtle identity
   const colorGrades = {
-    gold: isLight ? 'rgba(180, 140, 60, 0.03)' : 'rgba(255, 255, 255, 0.03)', // warm gold -> clean white
+    gold: isLight ? 'rgba(180, 140, 60, 0.03)' : 'rgba(255, 255, 255, 0.03)',
     amberViolet: isLight ? 'rgba(124, 92, 174, 0.03)' : 'rgba(180, 120, 200, 0.06)',
     indigo: isLight ? 'rgba(14, 116, 144, 0.03)' : 'rgba(100, 130, 220, 0.06)',
     goldBlue: isLight ? 'rgba(100, 110, 140, 0.03)' : 'rgba(180, 190, 220, 0.05)',
   };
   const gradeOverlay = colorGrades[colorGrade] || colorGrades.gold;
 
+  const circleSize = 150; // Circle diameter in px
+
   return (
     <button
       ref={cardRef}
       type="button"
       onClick={onClick}
-      className="group relative rounded-3xl text-left transition-all duration-300 flex flex-col items-start justify-end overflow-hidden"
+      className="group relative overflow-hidden transition-all duration-300"
       style={{
-        minHeight: '200px',
+        width: `${circleSize}px`,
+        height: `${circleSize}px`,
+        borderRadius: '50%',
 
-        // Refined Gold Border - Triple stroke with gradient
+        // Refined Gold Border - circular
         border: '2px solid transparent',
         backgroundImage: isLight
           ? `
@@ -459,7 +564,7 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
         if (isLight) {
           e.currentTarget.style.boxShadow = `
             0 8px 30px var(--light-shadow-tint),
-            0 0 10px var(--light-accent-muted),
+            0 0 20px var(--light-accent-muted),
             inset 0 1px 0 rgba(255, 255, 255, 0.9)
           `;
         } else {
@@ -472,13 +577,19 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
             inset 0 0 40px rgba(0, 0, 0, 0.25)
           `;
         }
-        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.transform = 'scale(1.05)';
       }}
       onMouseLeave={(e) => {
         if (isLight) {
-          e.currentTarget.style.boxShadow = `0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)`;
+          e.currentTarget.style.boxShadow = `
+            0 0 0 0.5px #AF8B2C,
+            inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
+            0 4px 20px var(--light-shadow-tint),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8)
+          `;
         } else {
           e.currentTarget.style.boxShadow = `
+            0 0 0 0.5px rgba(255, 255, 255, 0.1),
             0 8px 32px rgba(0, 0, 0, 0.6),
             0 2px 8px var(--accent-15),
             inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -486,19 +597,20 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
             inset 0 0 40px rgba(0, 0, 0, 0.25)
           `;
         }
-        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.transform = 'scale(1)';
       }}
     >
-      {/* Background Image Layer - sigil fills entire card */}
+      {/* Background Image Layer - masked to circle */}
       {image && (
         <div
-          className="absolute inset-0 transition-all duration-500 group-hover:scale-105"
+          className="absolute inset-0 transition-all duration-500 group-hover:scale-110"
           style={{
             backgroundImage: `url(${image})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             opacity: 1.0,
             mixBlendMode: isLight ? 'multiply' : 'normal',
+            borderRadius: '50%',
           }}
         />
       )}
@@ -509,53 +621,70 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `
-              linear-gradient(to bottom, 
+              radial-gradient(circle at center, 
                 rgba(0, 0, 0, 0.1) 0%, 
-                rgba(0, 0, 0, 0.4) 40%, 
+                rgba(0, 0, 0, 0.4) 50%, 
                 rgba(0, 0, 0, 0.8) 100%
               )
             `,
+            borderRadius: '50%',
           }}
         />
       )}
 
-      {/* Noise texture overlay - enhanced visibility */}
-      <div style={{ ...noiseOverlayStyle, opacity: isLight ? 0.015 : 0.05 }} />
+      {/* Noise texture overlay */}
+      <div
+        style={{
+          ...noiseOverlayStyle,
+          opacity: isLight ? 0.015 : 0.05,
+          borderRadius: '50%',
+        }}
+      />
 
       {/* Sheen overlay (dark mode) / Inset shadow (light mode) */}
       {isLight ? (
         <div
-          className="absolute inset-0 pointer-events-none rounded-3xl"
-          style={{ boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.03)' }}
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.03)',
+            borderRadius: '50%',
+          }}
         />
       ) : (
-        <div style={sheenOverlayStyle} />
+        <div style={{ ...sheenOverlayStyle, borderRadius: '50%' }} />
       )}
 
       {/* Color grade overlay - per-mode identity */}
       <div
-        className="absolute inset-0 pointer-events-none rounded-3xl"
-        style={{ background: gradeOverlay }}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: gradeOverlay,
+          borderRadius: '50%',
+        }}
       />
 
-      {/* Text Content - positioned at bottom with proper z-index */}
-      <div className="relative z-10 px-5 py-5 w-full">
+      {/* Text Content - positioned at bottom */}
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-4 z-10">
         {/* Light mode: Add a semi-transparent backdrop for text legibility */}
         {isLight && (
           <div
-            className="absolute inset-0 rounded-3xl"
+            className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to top, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.45) 60%, transparent 100%)',
+              background: 'linear-gradient(to top, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 70%, transparent 100%)',
               backdropFilter: 'blur(2px)',
               WebkitBackdropFilter: 'blur(2px)',
+              borderBottomLeftRadius: '50%',
+              borderBottomRightRadius: '50%',
             }}
           />
         )}
         <div
-          className="text-lg font-bold tracking-wide transition-colors relative"
+          className="text-sm font-bold tracking-wide transition-colors relative"
           style={{
             color: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
             fontFamily: 'var(--font-display)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
             textShadow: isLight
               ? '0 1px 2px rgba(255, 255, 255, 1), 0 2px 12px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7), 1px 1px 0 rgba(0, 0, 0, 0.25), -1px -1px 0 rgba(0, 0, 0, 0.15)'
               : '0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.7)',
@@ -564,7 +693,7 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
           {title}
         </div>
       </div>
-    </button >
+    </button>
   );
 }
 
