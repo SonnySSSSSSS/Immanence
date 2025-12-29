@@ -19,16 +19,25 @@ cd /d "%PROJECT_DIR%"
 :: Get current branch
 for /f "tokens=*" %%b in ('git branch --show-current') do set "CURRENT_BRANCH=%%b"
 
-:: Get current version from App.jsx
+:: Get current version from App.jsx - robust method
 set "CURRENT_VERSION=unknown"
-for /f "tokens=*" %%v in ('findstr /r "v[0-9]\." src\App.jsx') do (
-    set "line=%%v"
-    for /f "tokens=2 delims=v" %%n in ("!line!") do (
-        set "CURRENT_VERSION=%%n"
-        goto :version_found
+findstr /c:"v3." src\App.jsx > "%TEMP%\version_temp.txt"
+for /f "tokens=*" %%v in (%TEMP%\version_temp.txt) do (
+    echo.%%v | findstr /c:"className" >nul
+    if errorlevel 1 (
+        echo.%%v | findstr /c:"<" >nul
+        if errorlevel 1 (
+            set "line=%%v"
+            for /f "tokens=1" %%n in ("!line!") do (
+                set "CURRENT_VERSION=%%n"
+                set "CURRENT_VERSION=!CURRENT_VERSION:v=!"
+                goto :version_found
+            )
+        )
     )
 )
 :version_found
+del "%TEMP%\version_temp.txt" 2>nul
 
 :MENU
 cls
@@ -299,9 +308,9 @@ for %%f in (*) do if not "%%f"==".git" del /q "%%f" 2>nul
 popd
 
 :: Copy dist contents to temp folder
-xcopy /E /I /Y "dist\*" "%DEPLOY_TEMP%" >nul
+xcopy /E /I /Y "%PROJECT_DIR%\dist\*" "%DEPLOY_TEMP%\" >nul
 if errorlevel 1 (
-    echo [DEPLOY] FAILED - Could not copy files
+    echo [DEPLOY] FAILED - Could not copy build files
     echo Your files are SAFE. Nothing was changed.
     rmdir /s /q "%DEPLOY_TEMP%" 2>nul
     exit /b 1

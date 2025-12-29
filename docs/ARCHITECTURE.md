@@ -41,8 +41,8 @@ The interface follows a **"high-tech HUD over cosmic chaos"** philosophy, where 
 │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
 │                                                              │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ Wisdom      │  │ Navigation  │  │ DevPanel            │  │
-│  │ Section     │  │ Section     │  │ (Ctrl+Shift+D)      │  │
+│  │ WisdomHub   │  │ Navigation  │  │ DevPanel            │  │
+│  │ (Library)   │  │ Section     │  │ (Ctrl+Shift+D)      │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
 │                                                              │
 ├─────────────────────────────────────────────────────────────┤
@@ -69,7 +69,7 @@ All state is managed with Zustand stores, persisted to localStorage.
 | `applicationStore` | Awareness tracking & Intention | awarenessLogs[], intention, getWeekLogs() |
 | `chainStore` | Four Modes chains | activeChain, completedChains |
 | `cycleStore` | Cycle & consistency tracking | currentCycle, history, checkpoints, modeHistory |
-| `settingsStore` | App settings & preferences | displayMode, llmModel, themeStageOverride, volume |
+| `settingsStore` | App settings & preferences | displayMode, llmModel, themeStageOverride, volume, useNewAvatars |
 | `historyStore` | Undo/redo for modes | histories{}, positions{}, snapshots |
 | `curriculumStore` | Circuit definitions | circuits, exercises |
 | `waveStore` | Personality profile (Big Five) | traits, assessmentHistory |
@@ -239,6 +239,74 @@ WisdomSection.jsx
 - `SelfKnowledgeView` - Wave Function personality viz
 - `VideoToken` - Minimal video selector
 
+### Practice System
+
+The practice system is the core training engine of Immanence OS, managing various meditation and focus exercises.
+
+**Primary Orchestrator:** `PracticeSection.jsx`
+- Manages switching between **Configuration** and **Running** views.
+- Loads/Saves user preferences (duration, breath pattern, theme).
+- Records practice metrics (accuracy, duration, breath count) to `progressStore`.
+
+| Practice Mode | Purpose | Primary Components |
+|---------------|---------|--------------------|
+| **Breath & Stillness** | Rhythmic breathing & timing accuracy | `BreathingRing.jsx`, `BreathConfig.jsx`, `PathParticles.jsx` |
+| **Cognitive Vipassana**| Thought labeling & mental observation | `vipassana/VipassanaVisual.jsx`, `ThoughtLabeling.jsx` |
+| **Somatic Vipassana** | Body awareness & sensory tracking | `SensorySession.jsx`, `BodyScanVisual.jsx`, `SensoryConfig.jsx` |
+| **Visualization** | Mental object focus & geometric stability | `VisualizationCanvas.jsx`, `VisualizationConfig.jsx` |
+| **Cymatics** | Frequency-to-geometry resonance | `CymaticsVisualization.jsx`, `CymaticsConfig.jsx` |
+| **Sound** | Binaural beats & frequency entrainment | `SoundConfig.jsx`, `ToneGenerator` (Web Audio API) |
+| **Ritual** | Multi-step structured rituals | `RitualPortal.jsx`, `RitualSelectionDeck.jsx`, `RitualSession.jsx` |
+| **Circuit** | Chained sequence of different practices | `Cycle/CircuitConfig.jsx`, `CircuitTrainer.jsx` |
+
+**Practice Visuals:**
+- **BreathingRing**: Central teacher, syncs with breath phases (inhale/hold/exhale/rest).
+- **Vipassana Canvas**: Dynamic visualizers for thought-objects (DynamicClouds, ScrollingFog).
+- **BodyScan silhouette**: Anatomical outline with Ember FX bar for focus tracking.
+
+### Application (The Four Modes)
+
+The "Four Modes" workflow moves from observation to action through four distinct recursive chambers.
+
+**Primary Orchestrator:** `ApplicationSection.jsx` -> `ModeTraining.jsx`
+
+1. **Mirror (Observation)**: Pure description of an event.
+   - `MirrorObservation.jsx`: Context, Actor, Action, Recipient.
+   - `VoiceInput.jsx`: Transcription with confirm-first preview.
+   - `MirrorValidationFeedback.jsx`: E-Prime check + AI-powered neutrality validation.
+   - `MirrorStillness.jsx`: Post-observation dwell time.
+
+2. **Prism (Separation)**: Breaking one "Truth" into multiple interpretations.
+   - `PrismSeparation.jsx`: Identifying subjective filters.
+   - `PrismReframing.jsx`: Creating alternative meanings supported by evidence.
+
+3. **Wave (Capacity)**: Somatic experience and emotional intensity.
+   - `WaveRide.jsx`: Tracking somatic locations and emotional impulses.
+   - `ResonatorChambering.jsx`: Increasing capacity for the feeling without reactivity.
+
+4. **Sword (Commitment)**: Precise action aligned with values.
+   - `SwordCommitment.jsx`: Defining small, cost-bound actions.
+   - `SwordCompression.jsx`: Distilling the commitment to its core essence.
+
+### Awareness Tracking Hub
+
+The Tracking Hub (`TrackingHub.jsx`) provides the "Ground" for practice, visualizing behavioral data.
+
+- **AwarenessCompass.jsx**: Cardinal-direction logging (N/E/S/W). Manages "Intention" seal.
+- **SevenDayTrendCurve.jsx**: Frequency analysis of logged moments.
+- **PathJourneyLog.jsx**: Long-term alignment with the 6 paths (Soma, Prana, Dhyana, etc.).
+- **HonorLogModal.jsx**: Record of commitments kept or broken.
+
+### Wisdom Hub
+
+The library and reflection space for theoretical understanding.
+
+- **Treatise**: Hierarchical text content (The Book of Immanence).
+- **VideoLibrary.jsx**: Featured and category-based video instruction with "Idle Hearth" metaphors.
+- **Self-Knowledge**: Visualization of self-reported traits and patterns.
+- **Recommendations**: Dynamic content suggestions based on current needs assessment.
+
+
 ### ComfyUI API Integration
 
 The system uses a direct REST API connection to a local ComfyUI instance for generating high-fidelity assets like stage backgrounds.
@@ -311,6 +379,11 @@ App.jsx
 ├── IndrasNet.jsx           # Particle system
 ├── SectionView
 │   ├── Avatar.jsx          # Central multi-layer avatar (Canvas + PNGs)
+│   │   ├── AvatarContainer.jsx     # Layer orchestration (z-index management)
+│   │   ├── StaticSigilCore.jsx     # Inner jewel with visual effects
+│   │   ├── RuneRingLayer.jsx       # Rotating rune/astrolabe ring
+│   │   ├── BreathingAura.jsx       # Practice-mode breathing glow
+│   │   └── HaloGate.jsx            # Radial navigation (currently disabled)
 │   ├── StageTitle.jsx      # Stage/path/attention display
 │   │   └── GoldCartouche.jsx   # Gold seal for attention vectors
 │   └── [Section Content]
@@ -353,6 +426,39 @@ App.jsx
 **Components:**
 - `GoldCartouche.jsx` - Polished gold seal for attention state indicators
 - `TexturedTitleCard` - Internal wrapper with gold border and lighting effects
+
+### Avatar System
+
+The avatar is a multi-layer visual system representing the user's spiritual state through concentric layers of visual effects.
+
+**Layer Stack (z-index order):**
+1. **z-index 0**: Base plate - contrast backing for rings/core
+2. **z-index 1**: Luminous canvas - glowing web pattern
+3. **z-index 5**: Rune ring - rotating PNG with stage-specific markings
+4. **z-index 6**: Decorative outline rings with stage-adaptive colors
+5. **z-index 7-9**: Avatar sigil core with effects (see below)
+6. **z-index 10**: Sigil rotation container
+
+**Avatar Visual Effects ("Captured Star" Aesthetic):**
+- **Black separation ring**: 52% backdrop with 48% avatar floating inside
+- **Cyan/teal halo**: `rgba(80, 200, 180)` blurred glow bleeding over rim
+- **Screen blend mode**: Luminous jewel effect on avatar image
+- **Teal-tinted stone frame**: Rune ring uses `hue-rotate(-10deg)` for color harmony
+- **Toned background haze**: Conic gradient at 30% opacity
+- **Counter-rotation**: Avatar sigil rotates opposite to rune ring at 25% speed
+
+**Settings:**
+- `useNewAvatars` (settingsStore): Toggle between old (`Flame-Dhyana.png`) and new (`avatar-flame-dhyana-ekagrata_00001_.png`) naming conventions
+- DevPanel includes "Avatar Set" toggle (OLD/NEW buttons)
+
+**Components:**
+- `avatar/index.jsx` - Main component with HaloGate integration
+- `avatar/AvatarContainer.jsx` - Layer orchestration and z-index management  
+- `avatar/StaticSigilCore.jsx` - Inner jewel with cyan halo and screen blend
+- `avatar/RuneRingLayer.jsx` - Rotating ring with teal-tinted stone effect
+- `avatar/BreathingAura.jsx` - Practice-mode breathing glow
+- `avatar/HaloGate.jsx` - Radial navigation system (currently disabled)
+- `avatar/constants.js` - Stage colors and glow definitions
 
 
 

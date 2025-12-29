@@ -50,30 +50,44 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     background: `conic-gradient(from 0deg, transparent 0%, var(--accent-10) 15%, transparent 30%, var(--accent-10) 45%, transparent 60%, var(--accent-10) 75%, transparent 90%)`,
                     animation: "whirlpool 90s linear infinite",
                     animationPlayState: isPracticing ? 'paused' : 'running',
-                    opacity: 0.5,
+                    opacity: 0.3,  // Toned down from 0.5 for cleaner look
                 }}
             />
+            {/* Cyan/teal outer halo - energy "leaks" into frame */}
             <div
                 className="absolute pointer-events-none"
                 style={{
-                    width: "50%",
-                    height: "50%",
+                    width: "60%",
+                    height: "60%",
                     borderRadius: "9999px",
-                    background: isLight
-                        ? "radial-gradient(circle, rgba(10, 25, 20, 0.45) 0%, rgba(10, 25, 20, 0.25) 50%, transparent 85%)"
-                        : "#000000",
-                    opacity: isLight ? 0.7 : 1,
+                    background: `radial-gradient(circle, rgba(80, 200, 180, 0.25) 0%, rgba(60, 180, 160, 0.15) 50%, transparent 75%)`,
+                    filter: "blur(30px)",
+                    zIndex: 7,
                 }}
             />
+            {/* Black halo space - separation ring */}
+            <div
+                className="absolute pointer-events-none"
+                style={{
+                    width: "52%",
+                    height: "52%",
+                    borderRadius: "9999px",
+                    background: "#000000",
+                    zIndex: 8,
+                }}
+            />
+            {/* Avatar container - scaled to 48% for black ring separation */}
             <div
                 className={`relative pointer-events-none select-none ${isLight ? 'light-orb-rotate' : 'dark-orb-rotate'}`}
                 style={{
-                    width: "44%",
-                    height: "44%",
+                    width: "48%",  // Scaled to create thin black ring separation
+                    height: "48%",
                     borderRadius: "9999px",
                     overflow: "hidden",
                     animationPlayState: isPracticing ? 'paused' : 'running',
-                    boxShadow: "0 0 5px 2px rgba(0,0,0,0.6)",
+                    // Subtle teal-tinted glow
+                    boxShadow: `0 0 20px 8px rgba(80, 200, 180, 0.35), 0 0 40px 15px rgba(60, 180, 160, 0.2)`,
+                    zIndex: 9,
                 }}
             >
                 <img
@@ -86,8 +100,18 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                         objectFit: "cover",
                         objectPosition: "50% 50%",
                         transform: "translate(-50%, -50%)",
+                        mixBlendMode: "screen",
                         maskImage: "radial-gradient(circle, black 88%, transparent 100%)",
                         WebkitMaskImage: "radial-gradient(circle, black 88%, transparent 100%)",
+                    }}
+                />
+                {/* Subtle luminous overlay */}
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        background: `radial-gradient(circle, rgba(80, 200, 180, 0.12) 0%, transparent 60%)`,
+                        mixBlendMode: "screen",
+                        pointerEvents: "none",
                     }}
                 />
             </div>
@@ -106,15 +130,17 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     ✦
                 </div>
             )}
+            {/* Background accent glow - enhanced */}
             <div
                 className="absolute pointer-events-none"
                 style={{
-                    width: "48%",
-                    height: "48%",
+                    width: "56%",  // Slightly larger to account for overscale
+                    height: "56%",
                     borderRadius: "9999px",
                     background: accentColor,
-                    opacity: stage === "flame" ? 0.3 : 0.4,
-                    filter: "blur(8px)",
+                    opacity: stage === "flame" ? 0.35 : 0.45,
+                    filter: "blur(12px)",
+                    zIndex: -1,
                 }}
             />
         </div>
