@@ -5,6 +5,7 @@ import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
 import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
+import { VipassanaVariantSelector } from "./vipassana/VipassanaVariantSelector.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
@@ -197,6 +198,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [soundType, setSoundType] = useState(savedPrefs.soundType || SOUND_TYPES[0]);
   const [vipassanaTheme, setVipassanaTheme] = useState(savedPrefs.vipassanaTheme);
   const [vipassanaElement, setVipassanaElement] = useState(savedPrefs.vipassanaElement);
+
+  // Vipassana variant selection state (Thought Labeling vs Sakshi)
+  const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
+  const [showVipassanaVariantModal, setShowVipassanaVariantModal] = useState(false);
 
   // Sound configuration state
   const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
@@ -564,6 +569,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
+    // For Cognitive Vipassana, show variant selector before starting
+    if (practice === "Cognitive Vipassana") {
+      setShowVipassanaVariantModal(true);
+    }
+
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
     setSessionStartTime(performance.now());
@@ -759,16 +769,35 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    // Cognitive Vipassana MODE - Thought labeling meditation
+    // Cognitive Vipassana MODE - Show variant selector or run practice
     if (practice === "Cognitive Vipassana") {
+      // If variant modal should be shown (triggered by start button)
+      if (showVipassanaVariantModal) {
+        return (
+          <VipassanaVariantSelector
+            onSelect={(variant) => {
+              setVipassanaVariant(variant);
+              setShowVipassanaVariantModal(false);
+              // Practice will continue since isRunning is true
+            }}
+            onCancel={() => {
+              setShowVipassanaVariantModal(false);
+              handleStop(); // Cancel the practice
+            }}
+          />
+        );
+      }
+
       return (
         <VipassanaVisual
+          variant={vipassanaVariant}
           wallpaperId={vipassanaTheme}
           themeId={vipassanaElement}
           durationSeconds={duration * 60}
           stage={theme.stage || 'flame'}
           onComplete={handleExerciseComplete}
           onExit={activeCircuitId ? handleCircuitComplete : handleStop}
+          onCancel={handleStop}
         />
       );
     }

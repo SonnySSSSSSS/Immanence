@@ -330,11 +330,61 @@ function StatsCard({ domain, stats, isLight }) {
                 </div>
             </div>
 
-            {/* LOWER: Intensity Dots & Weekdays */}
-            <div className="px-5 pb-[18px] pt-[18px] border-t border-white/5 relative z-10">
-                <div className="relative">
-                    {/* Intensity dots with PEAK markers */}
-                    <div className="flex items-center justify-between px-2 relative mb-2">
+            {/* Regiment Progress Section */}
+            <div className="px-5 mb-4 relative z-10">
+                <div className="flex items-center justify-between mb-1">
+                    <span
+                        className="text-[9px] font-bold tracking-widest opacity-40 uppercase"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                        Regiment Progress
+                    </span>
+                    <span
+                        className="text-[9px] font-bold opacity-60"
+                        style={{ color: isLight ? 'var(--gold-deep)' : 'var(--accent-color)' }}
+                    >
+                        {Math.min(100, Math.floor(((stats.totalMinutes || 0) / 100) * 100))}%
+                    </span>
+                </div>
+                <div
+                    className="h-[14px] w-full rounded-full relative overflow-hidden"
+                    style={{
+                        background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                        border: isLight ? '0.5px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.05)',
+                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
+                    }}
+                >
+                    <div
+                        className="h-full rounded-full transition-all duration-1000 ease-out relative"
+                        style={{
+                            width: `${Math.min(100, ((stats.totalMinutes || 0) / 100) * 100)}%`,
+                            backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/progress_texture.png)`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            boxShadow: isLight ? 'none' : '0 0 10px rgba(212, 184, 122, 0.4)'
+                        }}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                    </div>
+                </div>
+            </div>
+
+            {/* LOWER: Intensity Orbs & Weekdays */}
+            <div className="px-5 pb-[18px] pt-2 border-t border-white/5 relative z-10">
+                <div className="relative pt-4 pb-2">
+                    {/* Flowing Wave Ribbon Background */}
+                    <div
+                        className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 pointer-events-none opacity-60 mix-blend-screen"
+                        style={{
+                            backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/wave_ribbon.png)`,
+                            backgroundSize: '100% 100%',
+                            backgroundPosition: 'center',
+                            filter: isLight ? 'brightness(0.8) contrast(1.2)' : 'none'
+                        }}
+                    />
+
+                    {/* Intensity Orbs */}
+                    <div className="flex items-center justify-between px-2 relative z-20">
                         {(() => {
                             const days = stats.last7Days || [0, 0, 0, 0, 0, 0, 0];
                             const maxMinutes = Math.max(...days);
@@ -343,53 +393,53 @@ function StatsCard({ domain, stats, isLight }) {
                             return days.map((minutes, i) => {
                                 const isPeakDay = (i === peakIndex && maxMinutes > 0);
 
-                                // Base intensity logic
-                                const getIntensity = (min, isPeak) => {
-                                    if (min === 0) return { bg: 'rgba(255,255,255,0.08)', glow: 'none', scale: 1 };
-                                    if (isPeak) return {
-                                        bg: 'linear-gradient(135deg, rgba(255,220,130,1) 0%, rgba(255,240,180,1) 100%)',
-                                        glow: '0 0 12px rgba(255,200,100,0.6)',
-                                        scale: 1.4
-                                    };
-                                    if (min < 15) return { bg: 'rgba(253,220,145,0.3)', glow: 'none', scale: 1 };
-                                    return { bg: 'rgba(253,220,145,0.7)', glow: '0 0 6px rgba(253,220,145,0.3)', scale: 1.1 };
-                                };
-                                const intensity = getIntensity(minutes, isPeakDay);
+                                let orbImg = 'orb_empty.png';
+                                let scale = 1.0;
+                                let glow = 'none';
+
+                                if (isPeakDay) {
+                                    orbImg = 'orb_peak.png';
+                                    scale = 1.2;
+                                    glow = '0 0 15px rgba(255, 240, 180, 0.4)';
+                                } else if (minutes > 30) {
+                                    orbImg = 'orb_high.png';
+                                    scale = 1.1;
+                                } else if (minutes >= 15) {
+                                    orbImg = 'orb_medium.png';
+                                    scale = 1.0;
+                                } else if (minutes > 0) {
+                                    orbImg = 'orb_low.png';
+                                    scale = 0.9;
+                                }
 
                                 return (
-                                    <div key={i} className="relative">
-                                        {isPeakDay && (
-                                            <div
-                                                className="absolute left-1/2 -translate-x-1/2 text-[8px] text-amber-200 font-display opacity-80 whitespace-nowrap tracking-wider"
-                                                style={{ bottom: '16px' }}
-                                            >
-                                                ⭐ PEAK
-                                            </div>
-                                        )}
+                                    <div key={i} className="relative flex flex-col items-center">
                                         <div
-                                            className="w-1.5 h-1.5 rounded-full"
+                                            className="w-10 h-10 bg-contain bg-center bg-no-repeat transition-transform duration-500"
                                             style={{
-                                                background: intensity.bg,
-                                                boxShadow: intensity.glow,
-                                                transform: `scale(${intensity.scale})`
+                                                backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/${orbImg})`,
+                                                transform: `scale(${scale})`,
+                                                filter: isLight ? (minutes === 0 ? 'grayscale(0.5) opacity(0.3)' : 'none') : 'none',
+                                                boxShadow: glow
                                             }}
                                         />
+                                        {isPeakDay && (
+                                            <div
+                                                className="absolute -top-4 text-[7px] font-bold text-amber-200/80 uppercase tracking-tighter"
+                                                style={{ fontFamily: 'var(--font-display)' }}
+                                            >
+                                                Peak
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             });
                         })()}
                     </div>
 
-                    <div
-                        className="text-[9px] font-bold text-center opacity-40 mb-1.5"
-                        style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.2em' }}
-                    >
-                        DAYS PRACTICED
-                    </div>
-
-                    <div className="flex justify-between px-2 text-[8px] font-display tracking-widest opacity-30">
+                    <div className="flex justify-between px-4 text-[8px] font-display tracking-[0.3em] opacity-30 mt-2">
                         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                            <div key={i} className="w-1.5 text-center">{day}</div>
+                            <div key={i} className="w-6 text-center">{day}</div>
                         ))}
                     </div>
                 </div>

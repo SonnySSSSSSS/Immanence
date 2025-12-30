@@ -2,6 +2,7 @@
 // Export all Vipassana components
 
 export { VipassanaVisual } from './VipassanaVisual';
+export { VipassanaVariantSelector } from './VipassanaVariantSelector';
 export { ThoughtLabeling } from './ThoughtLabeling';
 export { ThoughtElement } from './ThoughtElement';
 export { RadialDial } from './RadialDial';
