@@ -13,8 +13,8 @@ import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from 
  */
 const THEME_CONFIG = {
     light: {
-        accent: 'hsl(45, 100%, 55%)',
-        glow: 'rgba(255, 180, 50, 0.6)',
+        accent: 'var(--light-accent)',
+        glow: 'var(--light-accent-muted)',
         wellBg: 'rgba(248, 245, 232, 0.85)',
         barBg: 'rgba(120, 100, 80, 0.12)',
         textMain: 'rgba(60, 50, 40, 0.95)',
@@ -24,13 +24,13 @@ const THEME_CONFIG = {
         lowGem: 'gem_low_alpha.png',
         emptyGem: 'gem_empty_alpha.png',
         progressAsset: 'progress_glow_alpha.png',
-        border: 'rgba(255, 255, 255, 0.3)',
+        border: 'var(--light-border)',
         wellBorder: 'rgba(255, 255, 255, 0.2)',
-        threadColor: 'rgba(215, 175, 100, 0.7)'
+        threadColor: 'var(--light-accent-muted)'
     },
     dark: {
-        accent: 'hsl(180, 100%, 50%)',
-        glow: 'rgba(0, 255, 240, 0.8)',
+        accent: 'var(--accent-color)',
+        glow: 'var(--accent-glow)',
         wellBg: 'rgba(10, 15, 25, 0.75)',
         barBg: 'rgba(255, 255, 255, 0.05)',
         textMain: 'rgba(253, 251, 245, 0.95)',
@@ -40,9 +40,9 @@ const THEME_CONFIG = {
         lowGem: 'gem_low_alpha.png',
         emptyGem: 'gem_empty_alpha.png',
         progressAsset: 'progress_glow_alpha.png',
-        border: 'rgba(0, 255, 240, 0.2)',
-        wellBorder: 'rgba(0, 170, 255, 0.15)',
-        threadColor: 'rgba(0, 255, 240, 0.6)'
+        border: 'var(--accent-20)',
+        wellBorder: 'var(--accent-15)',
+        threadColor: 'var(--accent-color)'
     }
 };
 
@@ -123,7 +123,7 @@ function RegimentProgress({ progress, isLight }) {
 /**
  * Precision Timeline - Neural Thread SVG Architecture
  */
-function PrecisionTimeline({ weekData, isLight }) {
+function PrecisionTimeline({ weekData, isLight, r, g, b }) {
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const [hoverInfo, setHoverInfo] = useState(null);
@@ -213,10 +213,22 @@ function PrecisionTimeline({ weekData, isLight }) {
                     <filter id="crystalGlow" x="-50%" y="-50%" width="200%" height="200%">
                         <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
                         <feColorMatrix in="blur" type="matrix"
-                            values="0 0 0 0 0  0 1 1 0 0  0 1 1 0 0  0 0 0 1 0" result="coloredBlur" />
+                            values={`
+                                0 0 0 0 ${r / 255}
+                                0 0 0 0 ${g / 255}
+                                0 0 0 0 ${b / 255}
+                                0 0 0 1 0
+                            `} result="coloredBlur" />
+                        <feColorMatrix in="SourceGraphic" type="matrix"
+                            values={`
+                                0 0 0 0 ${r / 255}
+                                0 0 0 0 ${g / 255}
+                                0 0 0 0 ${b / 255}
+                                0 0 0 1 0
+                            `} result="coloredSource" />
                         <feMerge>
                             <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
+                            <feMergeNode in="coloredSource" />
                         </feMerge>
                     </filter>
                 </defs>
@@ -422,7 +434,13 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
             </div>
 
             {/* Precision Vector - The Master Visual */}
-            <PrecisionTimeline weekData={mockWeekData} isLight={isLight} />
+            <PrecisionTimeline
+                weekData={mockWeekData}
+                isLight={isLight}
+                r={parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-r')) || 252}
+                g={parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-g')) || 211}
+                b={parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-b')) || 77}
+            />
 
             {/* System Status Line */}
             <div className="mt-6 flex items-center justify-between px-2 opacity-20">

@@ -244,7 +244,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div
             className="relative text-[10px] uppercase tracking-[0.2em] mb-3 text-suspended text-center"
             style={{
-              color: isLight ? 'var(--light-text-secondary)' : 'rgba(253, 251, 245, 0.7)',
+              color: isLight ? 'var(--light-text-secondary)' : 'var(--text-accent-muted)',
               textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
             }}
           >
@@ -301,7 +301,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
             boxShadow: isLight
               ? `
-                0 0 0 0.5px #AF8B2C,
+                0 0 0 0.5px var(--light-border),
                 inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
                 0 4px 20px var(--light-shadow-tint),
                 inset 0 1px 0 rgba(255, 255, 255, 0.8)
@@ -309,7 +309,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               : `
                 0 0 0 0.5px rgba(255, 255, 255, 0.1),
                 0 8px 32px rgba(0, 0, 0, 0.6),
-                0 2px 8px ${insightColors[insightState].glow},
+                0 2px 8px var(--accent-15),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08)
               `,
             transition: 'all 0.6s ease',
@@ -380,7 +380,7 @@ function ArcModeButton({ title, onClick, image, isLight }) {
 
   // AAA-quality layered glow (GPU-accelerated)
   const getGlowShadow = (isHovered = false) => {
-    const baseColor = isLight ? '175, 139, 44' : '139, 92, 246';
+    const baseColor = isLight ? 'var(--accent-r), var(--accent-g), var(--accent-b)' : 'var(--accent-r), var(--accent-g), var(--accent-b)';
     const intensity = isHovered ? 1.5 : 1;
 
     return `
@@ -402,7 +402,7 @@ function ArcModeButton({ title, onClick, image, isLight }) {
         cursor: 'pointer',
         transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
         border: isLight
-          ? '2px solid rgba(175, 139, 44, 0.4)'
+          ? '2px solid var(--light-accent-muted)'
           : '2px solid rgba(255, 255, 255, 0.2)',
         background: isLight
           ? 'linear-gradient(135deg, rgba(255, 250, 235, 0.95) 0%, rgba(253, 248, 230, 0.9) 100%)'
@@ -414,14 +414,14 @@ function ArcModeButton({ title, onClick, image, isLight }) {
         e.currentTarget.style.transform = 'scale(1.1)';
         e.currentTarget.style.boxShadow = getGlowShadow(true);
         e.currentTarget.style.borderColor = isLight
-          ? 'rgba(175, 139, 44, 0.7)'
-          : 'rgba(139, 92, 246, 0.6)';
+          ? 'var(--light-accent)'
+          : 'var(--accent-60)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'scale(1)';
         e.currentTarget.style.boxShadow = getGlowShadow(false);
         e.currentTarget.style.borderColor = isLight
-          ? 'rgba(175, 139, 44, 0.4)'
+          ? 'var(--light-accent-muted)'
           : 'rgba(255, 255, 255, 0.2)';
       }}
       aria-label={title}
