@@ -292,7 +292,7 @@ export function DevPanel({
                         <div className="flex items-center gap-3 mb-4">
                             <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 140, 100, 0.9)' : '#34d399' }}>Cloud BG</label>
                             <div className="flex bg-white/5 rounded-lg p-1 gap-1 flex-wrap">
-                                {['none', 'subtle', 'medium', 'dramatic'].map(cloud => (
+                                {['none', 'light_clouds', 'cloudier', 'cloudiest'].map(cloud => (
                                     <button
                                         key={cloud}
                                         onClick={() => {
@@ -302,7 +302,7 @@ export function DevPanel({
                                         }}
                                         className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
                                     >
-                                        {cloud.toUpperCase()}
+                                        {cloud === 'light_clouds' ? 'LIGHT' : cloud.toUpperCase()}
                                     </button>
                                 ))}
                             </div>

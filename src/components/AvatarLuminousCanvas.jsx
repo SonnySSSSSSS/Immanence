@@ -792,21 +792,25 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         drawWeekNode(ctx, x, y, node.practiced, node.isToday);
       });
 
-      // 3. Particles
-      particlesRef.current.forEach((particle) => {
-        particle.update(16, isLightRef.current);
-        // Pass 0,0 as center because we are already translated
-        particle.draw(ctx, 0, 0, scaleMod, glowMod, isLightRef.current);
-      });
+      // 3. Particles - skip in light mode
+      if (!skipHeavyFx) {
+        particlesRef.current.forEach((particle) => {
+          particle.update(16, isLightRef.current);
+          // Pass 0,0 as center because we are already translated
+          particle.draw(ctx, 0, 0, scaleMod, glowMod, isLightRef.current);
+        });
+      }
 
       ctx.restore();
       // --- END VIRTUAL WORLD TRANSFORM ---
 
-      // 4. Ambient Dust (Screen Space)
-      dustRef.current.forEach(dust => {
-        dust.update();
-        dust.draw(ctx);
-      });
+      // 4. Ambient Dust (Screen Space) - skip in light mode
+      if (!skipHeavyFx) {
+        dustRef.current.forEach(dust => {
+          dust.update();
+          dust.draw(ctx);
+        });
+      }
 
       animationRef.current = requestAnimationFrame(drawFrame);
     }

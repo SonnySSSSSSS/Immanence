@@ -127,56 +127,58 @@ export function AvatarContainer({
                         <RuneRingLayer stage={stage} isPracticing={isPracticing} speedMultiplier={ringSpeedMultiplier} />
                     </div>
 
-                    {/* LAYER 3: Decorative Outline Rings */}
-                    <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            zIndex: 6
-                        }}
-                    >
+                    {/* LAYER 3: Decorative Outline Rings - Dark mode only */}
+                    {!isLight && (
                         <div
-                            className="absolute"
+                            className="absolute inset-0 pointer-events-none"
                             style={{
-                                width: "108%",
-                                height: "108%",
-                                top: "50%",
-                                left: "50%",
-                                transform: "translate(-50%, -50%)",
-                                borderRadius: "50%",
-                                border: `1px solid hsla(${h}, ${s}%, ${l}%, 0.25)`,
-                                boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.2)`,
-                            }}
-                        />
-                        <div
-                            className="absolute"
-                            style={{
-                                width: "102%",
-                                height: "102%",
-                                top: "50%",
-                                left: "50%",
-                                transform: "translate(-50%, -50%)",
-                                borderRadius: "50%",
-                                border: `1.5px solid hsla(${h}, ${s}%, ${l}%, 0.45)`,
-                                boxShadow: isLight ? 'none' : `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.4)`,
+                                width: "100%",
+                                height: "100%",
+                                zIndex: 6
                             }}
                         >
                             <div
                                 className="absolute"
                                 style={{
-                                    width: "2px",
-                                    height: "10px",
-                                    top: "-5px",
+                                    width: "108%",
+                                    height: "108%",
+                                    top: "50%",
                                     left: "50%",
-                                    transform: "translateX(-50%)",
-                                    background: `hsla(${h}, ${s}%, ${l}%, 0.98)`,
-                                    boxShadow: `0 0 8px hsla(${h}, ${s}%, ${l}%, 0.9), 0 0 12px hsla(${h}, ${s}%, ${l}%, 0.4)`,
-                                    zIndex: 20
+                                    transform: "translate(-50%, -50%)",
+                                    borderRadius: "50%",
+                                    border: `1px solid hsla(${h}, ${s}%, ${l}%, 0.25)`,
+                                    boxShadow: `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.2)`,
                                 }}
                             />
+                            <div
+                                className="absolute"
+                                style={{
+                                    width: "102%",
+                                    height: "102%",
+                                    top: "50%",
+                                    left: "50%",
+                                    transform: "translate(-50%, -50%)",
+                                    borderRadius: "50%",
+                                    border: `1.5px solid hsla(${h}, ${s}%, ${l}%, 0.45)`,
+                                    boxShadow: `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.4)`,
+                                }}
+                            >
+                                <div
+                                    className="absolute"
+                                    style={{
+                                        width: "2px",
+                                        height: "10px",
+                                        top: "-5px",
+                                        left: "50%",
+                                        transform: "translateX(-50%)",
+                                        background: `hsla(${h}, ${s}%, ${l}%, 0.98)`,
+                                        boxShadow: `0 0 8px hsla(${h}, ${s}%, ${l}%, 0.9), 0 0 12px hsla(${h}, ${s}%, ${l}%, 0.4)`,
+                                        zIndex: 20
+                                    }}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* LAYER 4: Mode-specific Glow/Feedback */}
                     {isLight && (
@@ -228,13 +230,16 @@ export function AvatarContainer({
                     <BreathingAura key={stage} breathPattern={breathPattern} />
                 )}
 
-                <svg
-                    className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-                    viewBox="0 0 600 600"
-                    style={{ overflow: 'visible', zIndex: 100 }}
-                >
-                    <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
-                </svg>
+                {/* Moon Orbit - Dark mode only */}
+                {!isLight && (
+                    <svg
+                        className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+                        viewBox="0 0 600 600"
+                        style={{ overflow: 'visible', zIndex: 100 }}
+                    >
+                        <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
+                    </svg>
+                )}
 
                 <div
                     className="absolute inset-0 pointer-events-none"

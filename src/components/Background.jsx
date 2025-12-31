@@ -116,23 +116,6 @@ export function Background({ stage = 'flame' }) {
           }}
         />
 
-        {/* Sacred geometry watermark - Flower of Life pattern */}
-        <svg className="absolute inset-0 w-full h-full opacity-[0.03]" style={{ mixBlendMode: 'multiply' }}>
-          <defs>
-            <pattern id="flower-of-life" x="0" y="0" width="400" height="400" patternUnits="userSpaceOnUse">
-              {/* Central circle */}
-              <circle cx="200" cy="200" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-              {/* Six outer circles forming the flower */}
-              <circle cx="260" cy="200" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-              <circle cx="230" cy="148" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-              <circle cx="170" cy="148" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-              <circle cx="140" cy="200" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-              <circle cx="170" cy="252" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-              <circle cx="230" cy="252" r="60" fill="none" stroke="rgba(120, 90, 60, 0.8)" strokeWidth="1.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#flower-of-life)" />
-        </svg>
       </div>
     );
   }
@@ -143,17 +126,27 @@ export function Background({ stage = 'flame' }) {
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
 
-      {/* Stage-specific cosmic background */}
+      {/* Stage-specific cosmic background - Height-based sizing, anchored at bottom */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
+          backgroundSize: 'auto 100%',  // Height fills screen, width scales proportionally
+          backgroundPosition: 'center bottom',  // Anchor particles at bottom center
+          backgroundRepeat: 'no-repeat',
           opacity: 0.9,
           mixBlendMode: 'lighten',
+          animation: 'bgDrift 60s ease-in-out infinite',
         }}
       />
+
+      {/* CSS for background animation */}
+      <style>{`
+        @keyframes bgDrift {
+          0%, 100% { background-position: center bottom; }
+          50% { background-position: calc(50% + 30px) bottom; }
+        }
+      `}</style>
 
       {/* Vertical fade - nebula dissolves into solid dark by ~40% */}
       <div

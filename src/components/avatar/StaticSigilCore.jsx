@@ -53,18 +53,34 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     opacity: 0.3,  // Toned down from 0.5 for cleaner look
                 }}
             />
-            {/* Cyan/teal outer halo - energy "leaks" into frame */}
-            <div
-                className="absolute pointer-events-none"
-                style={{
-                    width: "60%",
-                    height: "60%",
-                    borderRadius: "9999px",
-                    background: `radial-gradient(circle, rgba(80, 200, 180, 0.25) 0%, rgba(60, 180, 160, 0.15) 50%, transparent 75%)`,
-                    filter: "blur(30px)",
-                    zIndex: 7,
-                }}
-            />
+            {/* Cyan/teal outer halo - energy "leaks" into frame - DARK MODE ONLY */}
+            {!isLight && (
+                <div
+                    className="absolute pointer-events-none"
+                    style={{
+                        width: "60%",
+                        height: "60%",
+                        borderRadius: "9999px",
+                        background: `radial-gradient(circle, rgba(80, 200, 180, 0.25) 0%, rgba(60, 180, 160, 0.15) 50%, transparent 75%)`,
+                        filter: "blur(30px)",
+                        zIndex: 7,
+                    }}
+                />
+            )}
+            {/* Warm gold halo for light mode */}
+            {isLight && (
+                <div
+                    className="absolute pointer-events-none"
+                    style={{
+                        width: "60%",
+                        height: "60%",
+                        borderRadius: "9999px",
+                        background: `radial-gradient(circle, rgba(200, 160, 110, 0.2) 0%, rgba(180, 140, 90, 0.1) 50%, transparent 75%)`,
+                        filter: "blur(30px)",
+                        zIndex: 7,
+                    }}
+                />
+            )}
             {/* Black halo space - separation ring */}
             <div
                 className="absolute pointer-events-none"
@@ -85,8 +101,10 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     borderRadius: "9999px",
                     overflow: "hidden",
                     animationPlayState: isPracticing ? 'paused' : 'running',
-                    // Subtle teal-tinted glow
-                    boxShadow: `0 0 20px 8px rgba(80, 200, 180, 0.35), 0 0 40px 15px rgba(60, 180, 160, 0.2)`,
+                    // Glow: teal for dark, gold for light
+                    boxShadow: isLight
+                        ? `0 0 20px 8px rgba(200, 160, 110, 0.35), 0 0 40px 15px rgba(180, 140, 90, 0.2)`
+                        : `0 0 20px 8px rgba(80, 200, 180, 0.35), 0 0 40px 15px rgba(60, 180, 160, 0.2)`,
                     zIndex: 9,
                 }}
             >
@@ -105,11 +123,13 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                         WebkitMaskImage: "radial-gradient(circle, black 88%, transparent 100%)",
                     }}
                 />
-                {/* Subtle luminous overlay */}
+                {/* Subtle luminous overlay - gold for light, teal for dark */}
                 <div
                     className="absolute inset-0"
                     style={{
-                        background: `radial-gradient(circle, rgba(80, 200, 180, 0.12) 0%, transparent 60%)`,
+                        background: isLight
+                            ? `radial-gradient(circle, rgba(200, 160, 110, 0.12) 0%, transparent 60%)`
+                            : `radial-gradient(circle, rgba(80, 200, 180, 0.12) 0%, transparent 60%)`,
                         mixBlendMode: "screen",
                         pointerEvents: "none",
                     }}

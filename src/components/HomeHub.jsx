@@ -1,4 +1,5 @@
 // Improved HomeHub component with stats overview and better visual hierarchy
+// BUILD: 2025-12-31T20:46 - Removed constellation completely
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -36,7 +37,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [transmissionAngle, setTransmissionAngle] = useState(135);
 
   // Cloud background test state
-  const [cloudBackground, setCloudBackground] = useState('medium'); // 'subtle', 'medium', 'dramatic', or 'none'
+  const [cloudBackground, setCloudBackground] = useState('cloudier'); // 'light_clouds', 'cloudier', 'cloudiest', or 'none'
 
   useEffect(() => {
     if (transmissionRef.current) {
@@ -133,19 +134,38 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
 
-      {/* FULL-PAGE CLOUD BACKGROUND (LIGHT MODE ONLY) */}
+      {/* FULL-PAGE CLOUD BACKGROUND (LIGHT MODE ONLY) - Positioned at bottom with top fade */}
       {cloudBackground !== 'none' && isLight && (
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `url(${import.meta.env.BASE_URL}bg/cloud-${cloudBackground}.png)`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.85,
-            zIndex: 0,
-            filter: 'contrast(1.1) saturate(1.1)',
-          }}
-        />
+        <>
+          {/* Cloud layer - anchored at bottom */}
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url(${import.meta.env.BASE_URL}backgrounds/${currentStage.toLowerCase()}_${cloudBackground}.png)`,
+              backgroundSize: 'auto 100%',  // Height fills screen
+              backgroundPosition: 'center bottom',  // Anchor clouds at bottom
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.85,
+              zIndex: 0,
+              filter: 'contrast(1.1) saturate(1.1)',
+              animation: 'cloudDrift 60s ease-in-out infinite',
+            }}
+          />
+          {/* Top fade - soft transition from clouds to parchment */}
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(245, 240, 230, 0.95) 0%, rgba(245, 240, 230, 0.7) 15%, transparent 35%, transparent 100%)',
+              zIndex: 1,
+            }}
+          />
+          <style>{`
+            @keyframes cloudDrift {
+              0%, 100% { background-position: center bottom; }
+              50% { background-position: calc(50% + 30px) bottom; }
+            }
+          `}</style>
+        </>
       )}
 
       {/* ──────────────────────────────────────────────────────────────────────
