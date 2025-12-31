@@ -331,12 +331,11 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                                 onMouseLeave={handleMouseLeave}
                             >
                                 <img
-                                    src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}stage-${stageLower}.png`}
+                                    src={`${import.meta.env.BASE_URL}titles/stage_${stageLower}.png`}
                                     alt={stageLower}
                                     className="h-16 w-auto object-contain"
                                     style={{
                                         filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
-                                        mixBlendMode: (isLight && stageLower === 'flame') ? 'multiply' : 'initial',
                                     }}
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
@@ -437,7 +436,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                                     onMouseLeave={handleMouseLeave}
                                 >
                                     <img
-                                        src={`${import.meta.env.BASE_URL}titles/${isLight ? 'light/' : ''}path-${pathLower}.png`}
+                                        src={`${import.meta.env.BASE_URL}titles/path_${pathLower}.png`}
                                         alt={pathLower}
                                         className="h-16 w-auto object-contain"
                                         style={{

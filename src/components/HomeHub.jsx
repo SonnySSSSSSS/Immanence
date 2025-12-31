@@ -16,6 +16,7 @@ import { useLunarStore } from "../state/lunarStore.js";
 import { STAGES } from "../state/stageConfig.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
+import { SimpleModeButton } from "./SimpleModeButton.jsx";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -190,11 +191,12 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
           {/* Avatar with cosmic focal point + subtle drop shadow */}
           <div
-            className="relative z-10"
+            className="relative z-10 transition-transform duration-500"
             style={{
               filter: cloudBackground !== 'none' && isLight
                 ? 'drop-shadow(0 8px 24px rgba(120, 90, 60, 0.2))'
                 : 'none',
+              transform: isSanctuary ? 'scale(1.35)' : 'scale(1)',
             }}
           >
             {/* Avatar without side navigation */}
@@ -239,10 +241,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <CompactStatsCard domain="wisdom" streakInfo={streakInfo} />
         </div>
 
-        {/* MODES SECTION - Horizontal Row */}
-        <div className="w-full transition-all duration-500">
+        {/* MODES SELECTION - Container with consistent width */}
+        <div
+          className="w-full"
+          style={{
+            maxWidth: isSanctuary ? '600px' : '430px',
+            margin: '0 auto',
+            transition: 'max-width 0.5s ease'
+          }}
+        >
           <div
-            className="relative text-[10px] uppercase tracking-[0.2em] mb-3 text-suspended text-center"
+            className="text-[11px] font-black uppercase tracking-[0.3em] text-center mb-5 opacity-40 transition-colors duration-500"
             style={{
               color: isLight ? 'var(--light-text-secondary)' : 'var(--text-accent-muted)',
               textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
@@ -251,121 +260,131 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             Explore Modes
           </div>
 
-          {/* Horizontal Row - Flex layout for compact spacing */}
-          <div className="flex justify-center items-center gap-4">
-            <ArcModeButton
+          {/* Horizontal Row - Simple circular buttons */}
+          <div className="flex justify-center items-center gap-6">
+            <SimpleModeButton
               title="Practice"
-              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-practice.png` : `${import.meta.env.BASE_URL}modes/darkmode-practice.png`}
               onClick={() => onSelectSection("practice")}
-              isLight={isLight}
+              gradient="linear-gradient(135deg, #FFB366 0%, #FFE5B3 100%)"
+              icon="practice"
             />
-            <ArcModeButton
+            <SimpleModeButton
               title="Wisdom"
-              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-wisdom.png` : `${import.meta.env.BASE_URL}modes/darkmode-wisdom.png`}
               onClick={() => onSelectSection("wisdom")}
-              isLight={isLight}
+              gradient="linear-gradient(135deg, #B4E6D4 0%, #7FD4B8 100%)"
+              icon="wisdom"
             />
-            <ArcModeButton
+            <SimpleModeButton
               title="Application"
-              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-application.png` : `${import.meta.env.BASE_URL}modes/darkmode-application.png`}
               onClick={() => onSelectSection("application")}
-              isLight={isLight}
+              gradient="linear-gradient(135deg, #FFD97D 0%, #FFB85C 100%)"
+              icon="application"
             />
-            <ArcModeButton
+            <SimpleModeButton
               title="Navigation"
-              image={isLight ? `${import.meta.env.BASE_URL}modes/mode-navigation.png` : `${import.meta.env.BASE_URL}modes/darkmode-navigation.png`}
               onClick={() => onSelectSection("navigation")}
-              isLight={isLight}
+              gradient="linear-gradient(135deg, #E5C4FF 0%, #B88FD9 100%)"
+              icon="navigation"
             />
           </div>
         </div>
 
         {/* TRANSMISSION - Quick Insights */}
         <div
-          ref={transmissionRef}
-          className="w-full rounded-3xl px-4 py-3 relative overflow-hidden transition-all duration-500"
+          className="w-full"
           style={{
-            // Refined Gold Border
-            border: '2px solid transparent',
-            backgroundImage: isLight
-              ? `
-                linear-gradient(145deg, var(--light-bg-surface) 0%, var(--light-bg-base) 100%),
+            maxWidth: isSanctuary ? '600px' : '430px',
+            margin: '0 auto',
+            transition: 'max-width 0.5s ease'
+          }}
+        >
+          <div
+            ref={transmissionRef}
+            className="w-full rounded-3xl px-4 py-3 relative overflow-hidden transition-all duration-500"
+            style={{
+              // Soft Watercolor Border
+              border: '2px solid transparent',
+              backgroundImage: isLight
+                ? `
+                linear-gradient(145deg, rgba(252, 248, 240, 0.96) 0%, rgba(248, 242, 232, 0.98) 100%),
                 ${getDynamicGoldGradient(transmissionAngle, true)}
               `
-              : `
+                : `
                 linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%),
                 linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))
               `,
-            backgroundOrigin: 'padding-box, border-box',
-            backgroundClip: 'padding-box, border-box',
+              backgroundOrigin: 'padding-box, border-box',
+              backgroundClip: 'padding-box, border-box',
 
-            boxShadow: isLight
-              ? `
-                0 0 0 0.5px var(--light-border),
+              boxShadow: isLight
+                ? `
+                0 0 0 1px rgba(160, 120, 80, 0.3),
                 inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
-                0 4px 20px var(--light-shadow-tint),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8)
+                0 8px 32px rgba(120, 90, 60, 0.1),
+                0 3px 12px rgba(200, 160, 110, 0.08),
+                inset 0 2px 0 rgba(255, 255, 255, 0.7)
               `
-              : `
+                : `
                 0 0 0 0.5px rgba(255, 255, 255, 0.1),
                 0 8px 32px rgba(0, 0, 0, 0.6),
                 0 2px 8px var(--accent-15),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08)
               `,
-            transition: 'all 0.6s ease',
-          }}
-        >
-          {/* Scan-line animation overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `linear-gradient(180deg, 
+              transition: 'all 0.6s ease',
+            }}
+          >
+            {/* Scan-line animation overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg, 
                 transparent 0%, 
                 ${insightColors[insightState].glow} 50%, 
                 transparent 100%
               )`,
-              animation: 'scan-line 3s ease-in-out infinite',
-              opacity: 0.3,
-            }}
-          />
-
-          {/* Inner glow */}
-          <div style={innerGlowStyle} />
-
-          {/* Noise texture */}
-          <div style={noiseOverlayStyle} />
-
-          {/* Sheen */}
-          <div style={sheenOverlayStyle} />
-
-          <div className="relative z-10">
-            <div
-              className="text-[10px] mb-2 uppercase tracking-[0.15em]"
-              style={{
-                color: isLight ? 'var(--light-accent)' : insightColors[insightState].accent,
-                textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
+                animation: 'scan-line 3s ease-in-out infinite',
+                opacity: 0.3,
               }}
-            >
-              ⟨ Transmission ⟩
-            </div>
-            <div
-              className="text-[11px] leading-relaxed"
-              style={{
-                color: isLight ? 'var(--light-text-primary)' : 'rgba(253, 251, 245, 0.85)',
-                fontFamily: "'Courier New', monospace",
-                letterSpacing: '0.02em',
-                textShadow: isLight ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.4)',
-              }}
-            >
-              {currentStreak >= 7
-                ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
-                : avgAccuracy < 0.5
-                  ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
-                  : weeklyConsistency < 4
-                    ? "You're inconsistent this week. One practice per day keeps the alignment alive."
-                    : totalSessions > 0
-                      ? "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."
-                      : "Welcome. Begin your practice to see your progress reflected here."}
+            />
+
+            {/* Inner glow */}
+            <div style={innerGlowStyle} />
+
+            {/* Noise texture */}
+            <div style={noiseOverlayStyle} />
+
+            {/* Sheen */}
+            <div style={sheenOverlayStyle} />
+
+            <div className="relative z-10">
+              <div
+                className="text-[10px] mb-2 uppercase tracking-[0.15em]"
+                style={{
+                  color: isLight ? 'var(--light-accent)' : insightColors[insightState].accent,
+                  textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
+                }}
+              >
+                ⟨ Transmission ⟩
+              </div>
+              <div
+                className="text-[11px] leading-relaxed"
+                style={{
+                  color: isLight ? 'rgba(60, 45, 35, 0.90)' : 'rgba(253, 251, 245, 0.85)',
+                  fontFamily: "'Courier New', monospace",
+                  letterSpacing: '0.02em',
+                  textShadow: isLight ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.4)',
+                }}
+              >
+                {currentStreak >= 7
+                  ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
+                  : avgAccuracy < 0.5
+                    ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
+                    : weeklyConsistency < 4
+                      ? "You're inconsistent this week. One practice per day keeps the alignment alive."
+                      : totalSessions > 0
+                        ? "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."
+                        : "Welcome. Begin your practice to see your progress reflected here."}
+              </div>
             </div>
           </div>
         </div>
@@ -387,7 +406,7 @@ function ArcModeButton({ title, onClick, image, isLight }) {
       0 0 ${2 * intensity}px rgba(${baseColor}, ${0.8 * intensity}),
       0 0 ${15 * intensity}px rgba(${baseColor}, ${0.4 * intensity}),
       0 0 ${45 * intensity}px rgba(${baseColor}, ${0.1 * intensity})
-    `;
+      `;
   };
 
   return (
@@ -434,8 +453,8 @@ function ArcModeButton({ title, onClick, image, isLight }) {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           borderRadius: '50%',
-          opacity: 0.9,
-          mixBlendMode: isLight ? 'multiply' : 'normal',
+          opacity: 1.0,
+          mixBlendMode: 'normal',
         }}
       />
 
