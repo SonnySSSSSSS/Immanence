@@ -41,6 +41,8 @@ export function RadiantHalo({ size = 440, stage = 'flame' }) {
                     animation: 'radiant-shimmer 12s ease-in-out infinite',
                     opacity: 0.85,
                     filter: `hue-rotate(${hueShift}deg) contrast(1.1) brightness(1.05)`,
+                    WebkitMaskImage: 'radial-gradient(circle, transparent 0%, transparent 35%, black 45%, black 100%)',
+                    maskImage: 'radial-gradient(circle, transparent 0%, transparent 35%, black 45%, black 100%)',
                 }}
             />
 
