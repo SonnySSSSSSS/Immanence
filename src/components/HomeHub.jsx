@@ -9,6 +9,7 @@ import { STAGE_COLORS } from "../constants/stageColors.js";
 import { HubCardSwiper } from "./HubCardSwiper.jsx";
 import { CompactStatsCard } from "./CompactStatsCard.jsx";
 import { ApplicationTrackingCard } from "./ApplicationTrackingCard.jsx";
+import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
@@ -211,13 +212,20 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           />
 
-          {/* Avatar with cosmic focal point + subtle drop shadow */}
+          {/* Avatar with multi-layered shadows for depth */}
           <div
-            className="relative z-10 transition-transform duration-500"
+            className="relative z-10 transition-all duration-500"
             style={{
-              filter: cloudBackground !== 'none' && isLight
-                ? 'drop-shadow(0 8px 24px rgba(120, 90, 60, 0.2))'
-                : 'none',
+              filter: isLight
+                ? `drop-shadow(0 4px 12px ${STAGE_COLORS[currentStage]?.shadow || 'rgba(120, 90, 60, 0.4)'})
+                   drop-shadow(0 12px 32px ${STAGE_COLORS[currentStage]?.shadow || 'rgba(120, 90, 60, 0.25)'})
+                   drop-shadow(0 20px 60px rgba(0, 0, 0, 0.12))
+                   drop-shadow(0 6px 20px ${STAGE_COLORS[currentStage]?.shadowDeep || 'rgba(100, 75, 50, 0.5)'})
+                   drop-shadow(0 0 40px ${STAGE_COLORS[currentStage]?.shadow || 'rgba(120, 90, 60, 0.15)'})`
+                : `drop-shadow(0 8px 20px ${STAGE_COLORS[currentStage]?.shadowDark || 'rgba(0, 0, 0, 0.7)'})
+                   drop-shadow(0 16px 48px ${STAGE_COLORS[currentStage]?.shadowDark || 'rgba(0, 0, 0, 0.6)'})
+                   drop-shadow(0 10px 30px ${STAGE_COLORS[currentStage]?.shadowDeep || 'rgba(0, 0, 0, 0.8)'})
+                   drop-shadow(0 0 60px ${STAGE_COLORS[currentStage]?.shadowDark || 'rgba(0, 0, 0, 0.4)'})`,
               transform: isSanctuary ? 'scale(1.35)' : 'scale(1)',
             }}
           >
@@ -262,6 +270,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         <div className="w-full">
           <HubCardSwiper cards={[
             <CompactStatsCard key="compact" domain="wisdom" streakInfo={streakInfo} />,
+            <TrajectoryCard key="trajectory" onTap={() => console.log('TODO: Open TrajectoryReport')} />,
             <ApplicationTrackingCard key="application" />
           ]} />
         </div>

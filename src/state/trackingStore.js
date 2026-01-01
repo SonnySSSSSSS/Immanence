@@ -192,42 +192,42 @@ export const useTrackingStore = create(
                 const state = get();
                 const now = Date.now();
                 const dateKey = getDateKey();
-                const timeStr = new Date().toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    hour12: false 
+                const timeStr = new Date().toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
                 });
 
                 const session = {
                     id: crypto?.randomUUID?.() || `session_${now}`,
                     dateKey,
                     timestamp: now,
-                    
+
                     // Required fields with defaults
                     practiceType: sessionData.practiceType || 'breath',
                     practiceFamily: sessionData.practiceFamily || 'attention',
-                    
+
                     // Timing
                     scheduledTime: state.schedule.preferredTime,
                     actualTime: timeStr,
                     duration: sessionData.duration || 0,
                     durationMs: sessionData.durationMs || (sessionData.duration * 60 * 1000),
-                    
+
                     // Completion
                     exitType: sessionData.exitType || 'completed',
                     completionRatio: sessionData.completionRatio ?? 1,
-                    
+
                     // Precision
                     precision: sessionData.precision || {},
-                    
+
                     // Engagement
                     pauseCount: sessionData.pauseCount || 0,
                     pauseTotalMs: sessionData.pauseTotalMs || 0,
                     aliveSignalCount: sessionData.aliveSignalCount || 0,
-                    
+
                     // Circuit data
                     circuitExercises: sessionData.circuitExercises || null,
-                    
+
                     // Pass-through metadata
                     metadata: sessionData.metadata || {},
                 };
@@ -439,8 +439,8 @@ export const useTrackingStore = create(
             recordTreatiseSession: ({ sectionId, durationMs }) => {
                 const state = get();
                 const visited = state.treatiseProgress.sectionsVisited;
-                const newVisited = visited.includes(sectionId) 
-                    ? visited 
+                const newVisited = visited.includes(sectionId)
+                    ? visited
                     : [...visited, sectionId];
 
                 set({
@@ -477,7 +477,7 @@ export const useTrackingStore = create(
             getToday: () => {
                 const state = get();
                 const dateKey = getDateKey();
-                
+
                 const todaySessions = state.sessions.filter(s => s.dateKey === dateKey);
                 const todayLog = state.dailyLogs[dateKey] || {};
                 const todayHonor = state.honorLogs.filter(h => h.dateKey === dateKey);
@@ -527,7 +527,7 @@ export const useTrackingStore = create(
                 const state = get();
                 const now = new Date();
                 now.setDate(now.getDate() - (weekOffset * 7));
-                
+
                 // Get start of week (Sunday)
                 const startOfWeek = new Date(now);
                 startOfWeek.setDate(now.getDate() - now.getDay());
@@ -604,7 +604,7 @@ export const useTrackingStore = create(
                 const state = get();
                 const now = new Date();
                 now.setMonth(now.getMonth() - monthOffset);
-                
+
                 const year = now.getFullYear();
                 const month = now.getMonth();
                 const monthKey = getMonthKey(now);
@@ -635,13 +635,13 @@ export const useTrackingStore = create(
 
             getLifetime: () => {
                 const state = get();
-                
+
                 const totalSessions = state.sessions.length;
                 const totalMinutes = state.sessions.reduce((sum, s) => sum + s.duration, 0);
                 const totalHours = Math.round(totalMinutes / 60 * 10) / 10;
-                
+
                 const uniqueDays = new Set(state.sessions.map(s => s.dateKey));
-                
+
                 const firstSession = state.sessions[0];
                 const firstDate = firstSession ? getDateKey(new Date(firstSession.timestamp)) : null;
 
@@ -672,12 +672,170 @@ export const useTrackingStore = create(
             },
 
             // ═══════════════════════════════════════════════════════════════
+            // SELECTORS: TRAJECTORY (MULTI-WEEK TRENDS)
+            // ═══════════════════════════════════════════════════════════════
+
+            /**
+             * Get trajectory data for the past N weeks
+             * Returns weekly summaries with computed trends and insights
+             */
+            getTrajectory: (weekCount = 8) => {
+                const state = get();
+                const weeks = [];
+
+                // Collect weekly data
+                for (let offset = weekCount - 1; offset >= 0; offset--) {
+                    const weekData = get().getWeek(offset);
+
+                    // Compute session-level averages
+                    const now = new Date();
+                    now.setDate(now.getDate() - (offset * 7));
+
+                    const startOfWeek = new Date(now);
+                    startOfWeek.setDate(now.getDate() - now.getDay());
+                    startOfWeek.setHours(0, 0, 0, 0);
+
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+                    const weekSessions = state.sessions.filter(s => {
+                        const sDate = new Date(s.timestamp);
+                        return sDate >= startOfWeek && sDate < endOfWeek;
+                    });
+
+                    // Average precision across all breath sessions
+                    const breathSessions = weekSessions.filter(s => s.precision?.breath?.rhythmAccuracy != null);
+                    const avgBreathPrecision = breathSessions.length > 0
+                        ? breathSessions.reduce((sum, s) => sum + s.precision.breath.rhythmAccuracy, 0) / breathSessions.length
+                        : null;
+
+                    // Completion rate (% of sessions completed vs early exit)
+                    const completed = weekSessions.filter(s => s.exitType === 'completed').length;
+                    const completionRate = weekSessions.length > 0 ? completed / weekSessions.length : 0;
+
+                    // Practice type diversity
+                    const practiceTypes = [...new Set(weekSessions.map(s => s.practiceType))];
+
+                    weeks.push({
+                        weekKey: weekData.weekKey,
+                        startDate: weekData.startDate,
+                        daysActive: weekData.daysPracticed,
+                        totalMinutes: weekData.totalMinutes,
+                        sessionCount: weekData.totalSessions,
+                        avgPrecision: {
+                            breath: avgBreathPrecision,
+                        },
+                        karmaCount: weekData.karmaTotal,
+                        dharmaCount: weekData.dharmaTotal,
+                        completionRate,
+                        practiceTypes,
+                    });
+                }
+
+                // Compute trends (simple linear regression slope)
+                const getTrend = (data, key) => {
+                    if (data.length < 2) return 0;
+                    const yValues = data.map(w => w[key] || 0);
+                    const n = yValues.length;
+                    const xMean = (n - 1) / 2;
+                    const yMean = yValues.reduce((a, b) => a + b, 0) / n;
+
+                    let numerator = 0;
+                    let denominator = 0;
+
+                    for (let i = 0; i < n; i++) {
+                        numerator += (i - xMean) * (yValues[i] - yMean);
+                        denominator += Math.pow(i - xMean, 2);
+                    }
+
+                    return denominator === 0 ? 0 : numerator / denominator;
+                };
+
+                // Compute lulls (2+ consecutive weeks below 50% of personal average)
+                const avgDaysActive = weeks.reduce((sum, w) => sum + w.daysActive, 0) / weeks.length;
+                const lullThreshold = Math.max(avgDaysActive * 0.5, 2);
+
+                const lulls = [];
+                let lullStart = null;
+
+                weeks.forEach((week, idx) => {
+                    if (week.daysActive < lullThreshold) {
+                        if (lullStart === null) lullStart = idx;
+                    } else {
+                        if (lullStart !== null && idx - lullStart >= 2) {
+                            lulls.push({
+                                startWeek: weeks[lullStart].weekKey,
+                                endWeek: weeks[idx - 1].weekKey,
+                                duration: idx - lullStart,
+                            });
+                        }
+                        lullStart = null;
+                    }
+                });
+
+                // Detect milestones
+                const peakWeek = weeks.reduce((max, w) => w.daysActive > max.daysActive ? w : max, weeks[0]);
+                const mostMinutes = weeks.reduce((max, w) => w.totalMinutes > max.totalMinutes ? w : max, weeks[0]);
+
+                // Precision delta (first vs last week with data)
+                const firstWeekPrecision = weeks.find(w => w.avgPrecision.breath !== null)?.avgPrecision.breath;
+                const lastWeekPrecision = [...weeks].reverse().find(w => w.avgPrecision.breath !== null)?.avgPrecision.breath;
+                const precisionDelta = (firstWeekPrecision && lastWeekPrecision)
+                    ? ((lastWeekPrecision - firstWeekPrecision) / firstWeekPrecision) * 100
+                    : null;
+
+                // Practice type changes
+                const practiceChanges = [];
+                for (let i = 1; i < weeks.length; i++) {
+                    const newTypes = weeks[i].practiceTypes.filter(t => !weeks[i - 1].practiceTypes.includes(t));
+                    if (newTypes.length > 0) {
+                        practiceChanges.push({
+                            weekKey: weeks[i].weekKey,
+                            added: newTypes,
+                        });
+                    }
+                }
+
+                // Overall trajectory direction
+                const consistencyTrend = getTrend(weeks, 'daysActive');
+                const volumeTrend = getTrend(weeks, 'totalMinutes');
+                const direction = consistencyTrend > 0.1 ? 'ascending' :
+                    consistencyTrend < -0.1 ? 'declining' : 'steady';
+
+                return {
+                    weeks,
+                    period: {
+                        weekCount,
+                        startDate: weeks[0]?.startDate,
+                        endDate: weeks[weeks.length - 1]?.startDate,
+                    },
+                    trends: {
+                        consistency: consistencyTrend,
+                        volume: volumeTrend,
+                        precision: getTrend(weeks.map(w => ({ avgPrecision: w.avgPrecision.breath || 0 })), 'avgPrecision'),
+                        direction,
+                        directionLabel: direction === 'ascending' ? 'Ascending' :
+                            direction === 'declining' ? 'Declining' : 'Steady',
+                    },
+                    insights: {
+                        peakWeek: peakWeek?.weekKey,
+                        peakDays: peakWeek?.daysActive,
+                        mostProductiveWeek: mostMinutes?.weekKey,
+                        mostMinutes: mostMinutes?.totalMinutes,
+                        precisionDelta,
+                        practiceChanges,
+                    },
+                    lulls,
+                };
+            },
+
+            // ═══════════════════════════════════════════════════════════════
             // EXPORT
             // ═══════════════════════════════════════════════════════════════
 
             exportData: (format = 'json') => {
                 const state = get();
-                
+
                 const data = {
                     exportedAt: new Date().toISOString(),
                     version: 1,
@@ -702,7 +860,7 @@ export const useTrackingStore = create(
                         'date', 'time', 'practiceType', 'duration', 'exitType',
                         'breathPrecision', 'pauseCount', 'effort', 'karmaCount', 'dharmaCount'
                     ];
-                    
+
                     const rows = state.sessions.map(s => {
                         const dayLog = state.dailyLogs[s.dateKey] || {};
                         return [

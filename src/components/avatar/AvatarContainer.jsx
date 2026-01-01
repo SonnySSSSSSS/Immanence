@@ -114,14 +114,16 @@ export function AvatarContainer({
                         />
                     </div>
 
-                    {/* LAYER 1: Background Atmosphere/Web */}
-                    <div className="absolute inset-0" style={{ zIndex: 1 }}>
-                        <AvatarLuminousCanvas
-                            breathState={breathState}
-                            weeklyPracticeLog={weeklyPracticeLog}
-                            weeklyConsistency={weeklyConsistency}
-                        />
-                    </div>
+                    {/* LAYER 1: Background Atmosphere/Web - Dark mode only */}
+                    {!isLight && (
+                        <div className="absolute inset-0" style={{ zIndex: 1 }}>
+                            <AvatarLuminousCanvas
+                                breathState={breathState}
+                                weeklyPracticeLog={weeklyPracticeLog}
+                                weeklyConsistency={weeklyConsistency}
+                            />
+                        </div>
+                    )}
 
                     {/* LAYER 1.5: Radiant Star Halo - Light mode only */}
                     {isLight && <RadiantHalo size={280} stage={stage} />}
