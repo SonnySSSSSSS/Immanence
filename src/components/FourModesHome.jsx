@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FOUR_MODES } from '../data/fourModes.js';
 import { useChainStore } from '../state/chainStore.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 // Image filename mapping using existing mode images
 const MODE_IMAGE_MAP = {
@@ -24,7 +25,7 @@ const STATE_METAPHOR = {
 };
 
 // Chain Node - Compact icon with hover expansion
-function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
+function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover, isLight }) {
     const metaphor = STATE_METAPHOR[mode.id];
 
     return (
@@ -46,10 +47,16 @@ function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
                     scale: isActive ? 1.1 : 1,
                 }}
                 style={{
-                    border: `2px solid ${isComplete ? 'var(--accent-color)' : isLocked ? 'rgba(255,255,255,0.1)' : 'rgba(255,220,120,0.3)'}`,
+                    border: `2px solid ${isComplete
+                        ? (isLight ? 'rgba(180, 140, 90, 0.8)' : 'var(--accent-color)')
+                        : isLocked
+                            ? (isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)')
+                            : (isLight ? 'rgba(180, 140, 90, 0.4)' : 'rgba(255,220,120,0.3)')}`,
                     boxShadow: isActive
-                        ? '0 0 25px rgba(255,220,120,0.4), 0 8px 24px rgba(0,0,0,0.5)'
-                        : '0 4px 16px rgba(0,0,0,0.4)',
+                        ? (isLight
+                            ? '0 10px 25px rgba(180, 140, 90, 0.2), 0 4px 12px rgba(0,0,0,0.1)'
+                            : '0 0 25px rgba(255,220,120,0.4), 0 8px 24px rgba(0,0,0,0.5)')
+                        : '0 4px 16px rgba(0,0,0,0.3)',
                 }}
             >
                 {/* Mode image */}
@@ -65,24 +72,28 @@ function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
                 {/* Complete overlay */}
                 {isComplete && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="text-xl">✓</span>
+                        <span className="text-xl text-white">✓</span>
                     </div>
                 )}
 
                 {/* Lock overlay */}
                 {isLocked && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-sm opacity-60">🔒</span>
+                        <span className="text-sm opacity-60 text-white">🔒</span>
                     </div>
                 )}
             </motion.div>
 
             {/* Mode name - always visible */}
             <motion.span
-                className="mt-2 text-[10px] uppercase tracking-[0.2em] font-bold"
+                className="mt-3 text-[10px] uppercase tracking-[0.2em] font-bold"
                 style={{
                     fontFamily: 'var(--font-display)',
-                    color: isActive ? 'var(--accent-color)' : isLocked ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)',
+                    color: isActive
+                        ? (isLight ? 'rgba(180, 120, 40, 1)' : 'var(--accent-color)')
+                        : isLocked
+                            ? (isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.3)')
+                            : (isLight ? 'rgba(100, 80, 60, 0.7)' : 'rgba(255,255,255,0.7)'),
                 }}
                 animate={{ y: isActive ? -2 : 0 }}
             >
@@ -99,9 +110,9 @@ function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
                         className="text-[9px] italic mt-0.5"
                         style={{
                             fontFamily: 'var(--font-body)',
-                            color: 'rgba(255,220,120,0.6)',
+                            color: isLight ? 'rgba(160, 110, 50, 0.7)' : 'rgba(255,220,120,0.6)',
                             letterSpacing: '0.02em',
-                            fontWeight: 500
+                            fontWeight: 600
                         }}
                     >
                         {metaphor.state} · {metaphor.essence}
@@ -113,17 +124,17 @@ function ChainNode({ mode, onEnter, isLocked, isComplete, isActive, onHover }) {
 }
 
 // Connecting Thread between nodes
-function ChainThread({ isComplete, isNext }) {
+function ChainThread({ isComplete, isNext, isLight }) {
     return (
         <div className="flex-1 flex items-center justify-center px-1 h-16">
             {/* Thread line */}
             <motion.div
-                className="w-full h-0.5 relative"
+                className="w-full h-[1px] relative"
                 style={{
                     background: isComplete
-                        ? 'linear-gradient(90deg, var(--accent-color), var(--accent-70))'
-                        : 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))',
-                    boxShadow: isComplete ? '0 0 8px var(--accent-40)' : 'none',
+                        ? (isLight ? 'linear-gradient(90deg, #B48C5A, #DFC6A8)' : 'linear-gradient(90deg, var(--accent-color), var(--accent-70))')
+                        : (isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'),
+                    boxShadow: isComplete && !isLight ? '0 0 8px var(--accent-40)' : 'none',
                 }}
             >
                 {/* Glow for next accessible */}
@@ -138,7 +149,9 @@ function ChainThread({ isComplete, isNext }) {
                             repeat: Infinity,
                         }}
                         style={{
-                            background: 'linear-gradient(90deg, transparent, rgba(255,220,120,0.4), transparent)',
+                            background: isLight
+                                ? 'linear-gradient(90deg, transparent, rgba(180, 140, 90, 0.3), transparent)'
+                                : 'linear-gradient(90deg, transparent, rgba(255,220,120,0.4), transparent)',
                         }}
                     />
                 )}
@@ -146,7 +159,7 @@ function ChainThread({ isComplete, isNext }) {
                 {/* Arrow indicator */}
                 <div
                     className="absolute right-0 top-1/2 -translate-y-1/2 text-[8px]"
-                    style={{ color: isComplete ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)' }}
+                    style={{ color: isComplete ? (isLight ? '#B48C5A' : 'var(--accent-color)') : (isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)') }}
                 >
                     →
                 </div>
@@ -155,8 +168,10 @@ function ChainThread({ isComplete, isNext }) {
     );
 }
 
-export function FourModesHome({ onSelectMode }) {
+export function FourModesHome({ onSelectMode, onClose }) {
     const { activeChain, isModeAccessible, startNewChain } = useChainStore();
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
     const [hoveredMode, setHoveredMode] = useState(null);
 
     const handleStartChain = () => {
@@ -172,18 +187,25 @@ export function FourModesHome({ onSelectMode }) {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-12 max-w-lg mx-auto py-8">
             {/* Header */}
-            <div className="text-center">
+            <div className="text-center space-y-2">
                 <h2
-                    className="text-[14px] uppercase tracking-[0.25em] font-bold mb-2"
-                    style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-color)' }}
+                    className="text-[14px] uppercase tracking-[0.25em] font-bold"
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        color: isLight ? 'rgba(180, 120, 40, 1)' : 'var(--accent-color)'
+                    }}
                 >
                     The Transmutation Chain
                 </h2>
                 <p
                     className="text-[11px] italic font-medium"
-                    style={{ fontFamily: 'var(--font-body)', color: 'rgba(253,251,245,0.5)', letterSpacing: '0.05em' }}
+                    style={{
+                        fontFamily: 'var(--font-body)',
+                        color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(253,251,245,0.5)',
+                        letterSpacing: '0.05em'
+                    }}
                 >
                     Observation → Separation → Capacity → Commitment
                 </p>
@@ -194,17 +216,17 @@ export function FourModesHome({ onSelectMode }) {
                 <div className="flex justify-center">
                     <motion.button
                         onClick={handleStartChain}
-                        className="px-6 py-2.5 rounded-full border transition-all"
-                        whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(255,220,120,0.2)' }}
+                        className="px-8 py-3 rounded-full border transition-all"
+                        whileHover={{ scale: 1.05, boxShadow: isLight ? '0 10px 20px rgba(180, 140, 90, 0.1)' : '0 0 20px rgba(255,220,120,0.2)' }}
                         whileTap={{ scale: 0.95 }}
                         style={{
-                            borderColor: 'var(--accent-color)',
-                            color: 'var(--accent-color)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.4)' : 'var(--accent-color)',
+                            color: isLight ? 'rgba(140, 100, 40, 1)' : 'var(--accent-color)',
                             fontFamily: 'var(--font-display)',
                             fontSize: '11px',
                             letterSpacing: 'var(--tracking-mythic)',
                             fontWeight: 700,
-                            background: 'rgba(255,220,120,0.05)',
+                            background: isLight ? 'rgba(180, 140, 90, 0.05)' : 'rgba(255,220,120,0.05)',
                         }}
                     >
                         BEGIN THE CHAIN
@@ -212,8 +234,8 @@ export function FourModesHome({ onSelectMode }) {
                 </div>
             )}
 
-            {/* The Chain - Horizontal Layout */}
-            <div className="flex items-start justify-center gap-0 px-2 py-4">
+            {/* The Chain - Horizontal Layout - Focused Centering */}
+            <div className="flex items-start justify-center gap-0 px-4">
                 {FOUR_MODES.map((mode, idx) => {
                     const isAccessible = isModeAccessible(mode.id);
                     const isComplete = activeChain?.[mode.id]?.locked || activeChain?.[mode.id]?.skipped || activeChain?.[mode.id]?.aborted;
@@ -233,6 +255,7 @@ export function FourModesHome({ onSelectMode }) {
                                 isComplete={isComplete}
                                 isActive={isActive}
                                 onHover={setHoveredMode}
+                                isLight={isLight}
                             />
 
                             {/* Thread between nodes */}
@@ -240,6 +263,7 @@ export function FourModesHome({ onSelectMode }) {
                                 <ChainThread
                                     isComplete={isComplete}
                                     isNext={isNextAccessible && !isComplete}
+                                    isLight={isLight}
                                 />
                             )}
                         </React.Fragment>
@@ -248,65 +272,93 @@ export function FourModesHome({ onSelectMode }) {
             </div>
 
             {/* Expanded Mode Detail - shows tagline on hover */}
-            <AnimatePresence mode="wait">
-                {hoveredMode && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="text-center px-4"
-                    >
-                        <p
-                            className="text-[12px] italic max-w-sm mx-auto"
-                            style={{
-                                fontFamily: 'var(--font-body)',
-                                color: 'rgba(253,251,245,0.7)',
-                                letterSpacing: '0.01em',
-                                fontWeight: 500
-                            }}
+            <div className="h-12 flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                    {hoveredMode && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="text-center px-4"
                         >
-                            {FOUR_MODES.find(m => m.id === hoveredMode)?.tagline}
-                        </p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                            <p
+                                className="text-[12px] italic max-w-sm mx-auto"
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    color: isLight ? 'rgba(80, 60, 40, 0.7)' : 'rgba(253,251,245,0.7)',
+                                    letterSpacing: '0.01em',
+                                    fontWeight: 500
+                                }}
+                            >
+                                {FOUR_MODES.find(m => m.id === hoveredMode)?.tagline}
+                            </p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
 
-            {/* Chain Status Indicator */}
-            {activeChain && (
-                <div className="flex justify-center gap-1.5 items-center pt-2">
-                    {FOUR_MODES.map((mode, idx) => {
-                        const isComplete = activeChain[mode.id]?.locked || activeChain[mode.id]?.skipped || activeChain[mode.id]?.aborted;
-                        const isCurrent = isModeAccessible(mode.id) && !isComplete;
-                        return (
-                            <React.Fragment key={mode.id}>
-                                <motion.div
-                                    className="w-1.5 h-1.5 rounded-full"
-                                    animate={{
-                                        scale: isCurrent ? [1, 1.3, 1] : 1,
-                                    }}
-                                    transition={{
-                                        duration: 1.5,
-                                        repeat: isCurrent ? Infinity : 0,
-                                    }}
-                                    style={{
-                                        background: isComplete
-                                            ? 'var(--accent-color)'
-                                            : isCurrent
-                                                ? 'rgba(255, 220, 120, 0.7)'
-                                                : 'rgba(255, 255, 255, 0.15)',
-                                    }}
-                                />
-                                {idx < 3 && (
-                                    <div
-                                        className="w-4 h-px"
-                                        style={{ background: isComplete ? 'var(--accent-50)' : 'rgba(255,255,255,0.1)' }}
+            {/* Status & Exit Info */}
+            <div className="flex flex-col items-center gap-6 pt-4">
+                {/* Chain Status Indicator */}
+                {activeChain && (
+                    <div className="flex justify-center gap-1.5 items-center">
+                        {FOUR_MODES.map((mode, idx) => {
+                            const isComplete = activeChain[mode.id]?.locked || activeChain[mode.id]?.skipped || activeChain[mode.id]?.aborted;
+                            const isCurrent = isModeAccessible(mode.id) && !isComplete;
+                            return (
+                                <React.Fragment key={mode.id}>
+                                    <motion.div
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        animate={{
+                                            scale: isCurrent ? [1, 1.3, 1] : 1,
+                                        }}
+                                        transition={{
+                                            duration: 1.5,
+                                            repeat: isCurrent ? Infinity : 0,
+                                        }}
+                                        style={{
+                                            background: isComplete
+                                                ? (isLight ? '#B48C5A' : 'var(--accent-color)')
+                                                : isCurrent
+                                                    ? (isLight ? 'rgba(180, 120, 40, 0.6)' : 'rgba(255, 220, 120, 0.7)')
+                                                    : (isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255, 255, 255, 0.15)'),
+                                        }}
                                     />
-                                )}
-                            </React.Fragment>
-                        );
-                    })}
+                                    {idx < 3 && (
+                                        <div
+                                            className="w-4 h-px"
+                                            style={{ background: isComplete ? (isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-50)') : (isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)') }}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                )}
+                {/* Return Button */}
+                <div className="flex justify-center mt-4">
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold transition-all"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.4)',
+                            border: isLight ? '1px solid rgba(0, 0, 0, 0.05)' : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.02)',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.color = isLight ? 'rgba(100, 80, 60, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+                            e.target.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.3)' : 'rgba(255, 255, 255, 0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.color = isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.4)';
+                            e.target.style.borderColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)';
+                        }}
+                    >
+                        Return to Sealing
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

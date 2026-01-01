@@ -1,6 +1,7 @@
 // src/components/PathFinderCard.jsx
 import React from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 const PATH_PROMPTS = [
     {
@@ -36,6 +37,8 @@ export function PathFinderCard({ onPathRecommended }) {
         setPathAssessment,
         setSelectedPath
     } = useNavigationStore();
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
 
     const handleSelect = (promptId) => {
         setPathAssessment(promptId);
@@ -62,15 +65,19 @@ export function PathFinderCard({ onPathRecommended }) {
             <div
                 className="relative rounded-3xl p-8 overflow-hidden"
                 style={{
-                    background: 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-                    border: '1px solid transparent',
-                    backgroundImage: `
+                    background: isLight
+                        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%)'
+                        : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+                    border: isLight ? '1px solid rgba(180, 140, 90, 0.25)' : '1px solid transparent',
+                    backgroundImage: isLight ? 'none' : `
                         linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
                         linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)
                     `,
                     backgroundOrigin: 'border-box',
                     backgroundClip: 'padding-box, border-box',
-                    boxShadow: `
+                    boxShadow: isLight
+                        ? '0 10px 30px rgba(180, 140, 90, 0.15)'
+                        : `
                         0 8px 32px rgba(0, 0, 0, 0.6),
                         0 2px 8px var(--accent-15),
                         inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -102,16 +109,23 @@ export function PathFinderCard({ onPathRecommended }) {
                 <div className="relative z-10">
                     {/* Header */}
                     <h2
-                        className="text-lg uppercase tracking-[0.25em] text-[var(--accent-80)] mb-4 text-center font-bold"
-                        style={{ fontFamily: 'var(--font-display)' }}
+                        className="text-lg uppercase tracking-[0.25em] mb-4 text-center font-bold"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-80)'
+                        }}
                     >
                         FIND YOUR PATH
                     </h2>
 
                     {/* Prompt */}
                     <p
-                        className="text-base text-[rgba(253,251,245,0.75)] mb-6 text-center font-medium"
-                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
+                        className="text-base mb-6 text-center font-medium"
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            letterSpacing: '0.01em',
+                            color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)'
+                        }}
                     >
                         What brings you here today?
                     </p>
@@ -126,43 +140,53 @@ export function PathFinderCard({ onPathRecommended }) {
                                     key={prompt.id}
                                     onClick={() => handleSelect(prompt.id)}
                                     className={`
-                  w-full px-4 py-3 rounded-xl text-left
-                  border transition-all duration-200
-                  flex items-center gap-3
-                  ${isSelected
-                                            ? 'border-[var(--accent-50)] bg-[var(--accent-10)] shadow-[0_0_15px_var(--accent-10)]'
-                                            : 'border-[var(--accent-15)] bg-[rgba(253,251,245,0.02)] hover:border-[var(--accent-30)] hover:bg-[rgba(253,251,245,0.04)]'
-                                        }
-                `}
+                                        w-full px-4 py-3 rounded-xl text-left
+                                        border transition-all duration-200
+                                        flex items-center gap-3
+                                    `}
+                                    style={{
+                                        borderColor: isSelected
+                                            ? (isLight ? 'rgba(180, 140, 90, 0.5)' : 'var(--accent-50)')
+                                            : (isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-15)'),
+                                        background: isSelected
+                                            ? (isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-10)')
+                                            : (isLight ? 'rgba(255, 255, 255, 0.3)' : 'rgba(253, 251, 245, 0.02)'),
+                                        boxShadow: isSelected && !isLight ? '0 0 15px var(--accent-10)' : 'none'
+                                    }}
                                 >
                                     {/* Radio Circle */}
                                     <div
                                         className={`
-                    w-5 h-5 rounded-full border-2 flex-shrink-0
-                    transition-all duration-200
-                    ${isSelected
-                                                ? 'border-[var(--accent-color)] bg-[var(--accent-20)]'
-                                                : 'border-[var(--accent-30)]'
-                                            }
-                  `}
+                                            w-5 h-5 rounded-full border-2 flex-shrink-0
+                                            transition-all duration-200
+                                            flex items-center justify-center
+                                        `}
+                                        style={{
+                                            borderColor: isSelected
+                                                ? (isLight ? 'rgba(180, 140, 90, 0.8)' : 'var(--accent-color)')
+                                                : (isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)'),
+                                            background: isSelected && !isLight ? 'var(--accent-20)' : 'transparent'
+                                        }}
                                     >
                                         {isSelected && (
-                                            <div className="w-full h-full rounded-full flex items-center justify-center">
-                                                <div className="w-2 h-2 rounded-full bg-[var(--accent-color)]" />
-                                            </div>
+                                            <div
+                                                className="w-2.5 h-2.5 rounded-full transition-all"
+                                                style={{ background: isLight ? 'rgba(180, 140, 90, 0.9)' : 'var(--accent-color)' }}
+                                            />
                                         )}
                                     </div>
 
                                     {/* Label */}
                                     <span
-                                        className={`
-                    text-sm transition-colors
-                    ${isSelected
-                                                ? 'text-[rgba(253,251,245,0.95)]'
-                                                : 'text-[rgba(253,251,245,0.7)]'
-                                            }
-                  `}
-                                        style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}
+                                        className="text-sm transition-colors"
+                                        style={{
+                                            fontFamily: 'var(--font-body)',
+                                            fontWeight: 500,
+                                            letterSpacing: '0.01em',
+                                            color: isSelected
+                                                ? (isLight ? 'rgba(60, 52, 37, 0.95)' : 'rgba(253,251,245,0.95)')
+                                                : (isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.7)')
+                                        }}
                                     >
                                         {prompt.label}
                                     </span>
@@ -174,17 +198,29 @@ export function PathFinderCard({ onPathRecommended }) {
                     {/* Recommendation */}
                     {selectedPrompt && (
                         <div
-                            className="text-center py-3 px-4 rounded-xl bg-[var(--accent-10)] border border-[var(--accent-15)]"
-                            style={{ animation: 'fadeIn 300ms ease-out' }}
+                            className="text-center py-3 px-4 rounded-xl border"
+                            style={{
+                                animation: 'fadeIn 300ms ease-out',
+                                background: isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-10)',
+                                borderColor: isLight ? 'rgba(180, 140, 90, 0.2)' : 'var(--accent-15)'
+                            }}
                         >
                             <p
-                                className="text-sm text-[var(--accent-80)]"
-                                style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}
+                                className="text-sm"
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    fontWeight: 500,
+                                    letterSpacing: '0.01em',
+                                    color: isLight ? 'rgba(140, 100, 40, 0.9)' : 'var(--accent-80)'
+                                }}
                             >
                                 → Suggested:{' '}
                                 <span
-                                    className="font-bold text-[var(--accent-color)] tracking-wide"
-                                    style={{ fontFamily: 'var(--font-display)' }}
+                                    className="font-bold tracking-wide"
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        color: isLight ? 'rgba(180, 120, 40, 1)' : 'var(--accent-color)'
+                                    }}
                                 >
                                     {selectedPrompt.recommendedPath === 'shadow-work' && 'Integrate Shadow Work'}
                                     {selectedPrompt.recommendedPath === 'consistency' && 'Build Consistency'}
@@ -200,8 +236,15 @@ export function PathFinderCard({ onPathRecommended }) {
                     <div className="text-center mt-4">
                         <button
                             onClick={handleSkip}
-                            className="text-xs text-[rgba(253,251,245,0.4)] hover:text-[rgba(253,251,245,0.7)] transition-colors"
-                            style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}
+                            className="text-xs transition-colors"
+                            style={{
+                                fontFamily: 'var(--font-body)',
+                                fontWeight: 500,
+                                letterSpacing: '0.01em',
+                                color: isLight ? 'rgba(90, 77, 60, 0.4)' : 'rgba(253,251,245,0.4)'
+                            }}
+                            onMouseEnter={(e) => e.target.style.color = isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.7)'}
+                            onMouseLeave={(e) => e.target.style.color = isLight ? 'rgba(90, 77, 60, 0.4)' : 'rgba(253,251,245,0.4)'}
                         >
                             Skip assessment
                         </button>

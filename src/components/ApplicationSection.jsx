@@ -16,14 +16,9 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
   if (!activePath) {
     return (
       <div className="w-full max-w-4xl mx-auto space-y-8 pb-12">
-        {/* Avatar */}
         <div className="flex flex-col items-center pt-8">
           <div style={{ transform: 'scale(0.75)' }}>
             <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
-          </div>
-          {/* Stage Title */}
-          <div className="mt-4">
-            <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
           </div>
         </div>
 
@@ -90,21 +85,14 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
   // Active path - show permanent sigil sealing area
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Avatar - smaller, no title below */}
-      <div className="flex flex-col items-center pt-8">
+      {/* Avatar & Navigation Toggle */}
+      <div className="flex flex-col items-center pt-8 gap-6">
         <div style={{ transform: 'scale(0.65)' }}>
           <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
         </div>
-      </div>
 
-      {/* Permanent Sigil Sealing Area */}
-      {!showFourModes && !selectedModeId && (
-        <SigilSealingArea />
-      )}
-
-      {/* Four Modes Toggle Button */}
-      {!selectedModeId && (
-        <div className="flex justify-center mt-8">
+        {/* Four Modes Toggle Button - Moved below Avatar */}
+        {!selectedModeId && (
           <button
             onClick={() => setShowFourModes(!showFourModes)}
             className="px-6 py-3 rounded-full transition-all duration-300"
@@ -125,12 +113,17 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
           >
             {showFourModes ? 'Hide Four Modes' : 'Explore Four Modes'}
           </button>
-        </div>
+        )}
+      </div>
+
+      {/* Permanent Sigil Sealing Area */}
+      {!showFourModes && !selectedModeId && (
+        <SigilSealingArea />
       )}
 
       {/* Content based on active view */}
       {showFourModes && !selectedModeId && (
-        <FourModesHome onSelectMode={handleSelectMode} />
+        <FourModesHome onSelectMode={handleSelectMode} onClose={() => setShowFourModes(false)} />
       )}
 
       {selectedModeId && (

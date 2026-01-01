@@ -108,7 +108,7 @@ export function AvatarContainer({
                                 height: "48.5%",
                                 borderRadius: "50%",
                                 boxShadow: isLight
-                                    ? "inset 0 0 1px 1.5px rgba(0,0,0,0.15)"
+                                    ? `inset 0 0 1px 1px rgba(${h * 2.5}, ${s * 1.2}, ${l * 0.8}, 0.08)`
                                     : "inset 0 0 2px 2px rgba(0,0,0,0.8)",
                             }}
                         />
@@ -124,7 +124,7 @@ export function AvatarContainer({
                     </div>
 
                     {/* LAYER 1.5: Radiant Star Halo - Light mode only */}
-                    {isLight && <RadiantHalo size={280} />}
+                    {isLight && <RadiantHalo size={280} stage={stage} />}
 
                     {/* LAYER 2: Rune Ring Layer */}
                     <div className="absolute inset-0" style={{ zIndex: 5 }}>

@@ -2,10 +2,14 @@
 import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { treatiseChapters } from '../data/treatise.generated.js';
 
-export function PathOverviewPanel({ pathId }) {
-    const path = getPathById(pathId);
+export function PathOverviewPanel({ path, onBegin, onClose }) {
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
+
+    if (!path) return null;
     const { beginPath } = useNavigationStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);
 
@@ -20,7 +24,7 @@ export function PathOverviewPanel({ pathId }) {
     };
 
     const handleBegin = () => {
-        beginPath(pathId);
+        beginPath(path.id); // Changed from pathId to path.id
     };
 
     // Helper to get chapter title from ID
@@ -39,12 +43,15 @@ export function PathOverviewPanel({ pathId }) {
 
     return (
         <div
-            className="w-full p-6 space-y-6 relative"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl relative"
             style={{
-                background: 'linear-gradient(180deg, rgba(22, 22, 37, 0.95) 0%, rgba(16, 14, 28, 0.98) 100%)',
-                border: '2px solid rgba(250, 208, 120, 0.55)',
-                borderRadius: '24px',
-                boxShadow: '0 0 40px rgba(250, 208, 120, 0.15), inset 0 0 60px rgba(0, 0, 0, 0.5)',
+                background: isLight
+                    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)'
+                    : 'linear-gradient(180deg, rgba(26, 15, 28, 0.98) 0%, rgba(21, 11, 22, 0.99) 100%)',
+                border: isLight ? '1px solid rgba(180, 140, 90, 0.3)' : '1px solid rgba(250, 208, 120, 0.3)',
+                boxShadow: isLight
+                    ? '0 20px 50px rgba(180, 140, 90, 0.15)'
+                    : '0 0 60px rgba(0,0,0,0.8), 0 0 20px rgba(250, 208, 120, 0.1)'
             }}
         >
             {/* Center top ornament */}
@@ -52,22 +59,63 @@ export function PathOverviewPanel({ pathId }) {
                 <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />
             </div>
 
+            {/* Close Button */}
+            <button
+                onClick={onClose}
+                className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                style={{
+                    background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                    color: isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'
+                }}
+                onMouseEnter={(e) => {
+                    e.target.style.background = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+                    e.target.style.color = isLight ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.background = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+                    e.target.style.color = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)';
+                }}
+            >
+                ✕
+            </button>
+
             {/* Header */}
             <div className="border-b border-[var(--accent-15)] pb-4">
-                <h2
-                    className="text-2xl font-bold text-[var(--accent-color)] mb-2 tracking-wide"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                <div className="mb-8 pr-12">
+                    <h2
+                        className="text-3xl font-bold mb-2"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            letterSpacing: 'var(--tracking-mythic)',
+                            color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)'
+                        }}
+                    >
+                        {path.title}
+                    </h2>
+                    <p
+                        className="text-sm uppercase tracking-[0.2em]"
+                        style={{ color: isLight ? 'rgba(140, 100, 40, 0.6)' : 'var(--accent-60)' }}
+                    >
+                        {path.duration} WEEK INITIATION
+                    </p>
+                </div>
+                <div
+                    className="rounded-2xl p-6 mb-8 border"
+                    style={{
+                        background: isLight ? 'rgba(180, 140, 90, 0.08)' : 'rgba(250, 208, 120, 0.03)',
+                        borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)'
+                    }}
                 >
-                    {path.title}
-                </h2>
-                <p
-                    className="text-base text-[rgba(253,251,245,0.75)] italic mb-2 font-medium"
-                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
-                >
-                    {path.subtitle}
-                </p>
-                <div className="text-sm text-[var(--accent-60)]">
-                    {path.duration} weeks
+                    <p
+                        className="text-lg italic leading-relaxed text-center"
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            letterSpacing: '0.01em',
+                            color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'rgba(253,251,245,0.95)'
+                        }}
+                    >
+                        "{path.description}"
+                    </p>
                 </div>
             </div>
 
@@ -163,12 +211,18 @@ export function PathOverviewPanel({ pathId }) {
 
             {/* Weekly Breakdown */}
             {path.weeks.length > 0 && (
-                <div>
+                <div className="mb-8">
                     <h3
-                        className="text-base font-bold text-[var(--accent-color)] mb-3 tracking-wide"
-                        style={{ fontFamily: 'var(--font-display)' }}
+                        className="text-base font-bold mb-4 flex items-center gap-2"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            letterSpacing: 'var(--tracking-wide)',
+                            color: isLight ? 'rgba(180, 140, 90, 0.8)' : 'var(--accent-60)'
+                        }}
                     >
-                        Weekly Breakdown
+                        <span className="w-8 h-[1px]" style={{ background: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)' }} />
+                        CURRICULUM OVERVIEW
+                        <span className="w-8 h-[1px]" style={{ background: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)' }} />
                     </h3>
                     <div className="space-y-2">
                         {path.weeks.map((week) => {
@@ -186,18 +240,31 @@ export function PathOverviewPanel({ pathId }) {
                                         <span className="text-[var(--accent-50)] transition-transform duration-[1000ms] ease-in-out" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
                                             ▾
                                         </span>
-                                        <span
-                                            className="text-xs text-[var(--accent-60)] uppercase tracking-[0.15em] font-bold"
-                                            style={{ fontFamily: 'var(--font-display)' }}
+                                        <div
+                                            className="p-4 rounded-xl border transition-colors"
+                                            style={{
+                                                background: isLight ? 'rgba(255, 255, 255, 0.4)' : 'rgba(253, 251, 245, 0.02)',
+                                                borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(253, 251, 245, 0.05)'
+                                            }}
                                         >
-                                            Week {week.number}
-                                        </span>
-                                        <span
-                                            className="flex-1 text-sm text-[rgba(253,251,245,0.85)] font-medium"
-                                            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
-                                        >
-                                            {week.title}
-                                        </span>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4
+                                                    className="text-base font-bold"
+                                                    style={{
+                                                        fontFamily: 'var(--font-display)',
+                                                        color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)'
+                                                    }}
+                                                >
+                                                    Week {week.number}: {week.title}
+                                                </h4>
+                                            </div>
+                                            <p
+                                                className="text-sm italic"
+                                                style={{ color: isLight ? 'rgba(90, 77, 60, 0.65)' : 'rgba(253,251,245,0.6)' }}
+                                            >
+                                                {week.focus}
+                                            </p>
+                                        </div>
                                     </button>
 
                                     {isExpanded && (
@@ -216,11 +283,11 @@ export function PathOverviewPanel({ pathId }) {
                                             {/* Practices */}
                                             {week.practices.length > 0 && (
                                                 <div>
-                                                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Practices</div>
+                                                    <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-40)' }}>Practices</div>
                                                     <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                                                         {week.practices.map((practice, idx) => (
-                                                            <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
-                                                                <span className="text-[var(--accent-40)] mt-0.5">•</span>
+                                                            <li key={idx} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                                                                <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.4)' : 'var(--accent-40)' }} className="mt-0.5">•</span>
                                                                 <span>{practice}</span>
                                                             </li>
                                                         ))}
@@ -229,13 +296,13 @@ export function PathOverviewPanel({ pathId }) {
                                             )}
 
                                             {/* Reading */}
-                                            {week.reading.length > 0 && (
+                                            {week.reading && week.reading.length > 0 && (
                                                 <div>
-                                                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Reading</div>
+                                                    <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-40)' }}>Reading</div>
                                                     <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
                                                         {week.reading.map((chapterId, idx) => (
-                                                            <li key={idx} className="text-sm text-[rgba(253,251,245,0.75)] flex items-start gap-2">
-                                                                <span className="text-[var(--accent-40)] mt-0.5">•</span>
+                                                            <li key={idx} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                                                                <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.4)' : 'var(--accent-40)' }} className="mt-0.5">•</span>
                                                                 <span>{getChapterTitle(chapterId)}</span>
                                                             </li>
                                                         ))}
@@ -246,10 +313,14 @@ export function PathOverviewPanel({ pathId }) {
                                             {/* Tracking */}
                                             {week.tracking && (
                                                 <div>
-                                                    <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Tracking Focus</div>
+                                                    <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-40)' }}>Tracking Focus</div>
                                                     <p
-                                                        className="text-sm text-[rgba(253,251,245,0.75)] font-medium"
-                                                        style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
+                                                        className="text-sm font-medium"
+                                                        style={{
+                                                            fontFamily: 'var(--font-body)',
+                                                            letterSpacing: '0.01em',
+                                                            color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)'
+                                                        }}
                                                     >
                                                         {week.tracking}
                                                     </p>
@@ -274,14 +345,32 @@ export function PathOverviewPanel({ pathId }) {
             </div>
 
             {/* BEGIN Button */}
-            <div className="flex justify-center">
+            <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <button
-                    onClick={handleBegin}
-                    className="px-8 py-3 rounded-full text-[#050508] font-semibold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
-                    style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: 'var(--tracking-wide)', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
+                    onClick={() => onBegin(path.id)}
+                    className="w-full py-4 rounded-full font-bold text-lg transition-all group relative overflow-hidden"
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        letterSpacing: 'var(--tracking-mythic)',
+                        background: isLight
+                            ? 'rgba(180, 140, 90, 0.8)'
+                            : 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))',
+                        color: isLight ? 'white' : '#050508',
+                        boxShadow: isLight ? '0 10px 30px rgba(180, 140, 90, 0.3)' : '0 0 30px var(--accent-30)'
+                    }}
                 >
-                    BEGIN PATH
+                    <span className="relative z-10">BEGIN THIS PATH</span>
+                    <div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }}
+                    />
                 </button>
+                <p
+                    className="text-center text-xs mt-4 italic"
+                    style={{ color: isLight ? 'rgba(140, 100, 40, 0.5)' : 'var(--accent-40)' }}
+                >
+                    This will become your active focus for the next {path.duration} weeks.
+                </p>
             </div>
         </div>
     );

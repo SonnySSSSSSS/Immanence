@@ -357,7 +357,7 @@ function App() {
           <div className="relative z-10 w-full flex-1 flex flex-col overflow-visible">
             {/* Fixed Dark Header Bar */}
             <header
-              className="sticky top-0 z-50 w-full flex items-center justify-between px-6 py-3 transition-colors duration-500"
+              className="sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500"
               style={{
                 background: isLight
                   ? 'linear-gradient(180deg, rgba(200,185,165,0.95) 0%, rgba(210,195,175,0.85) 60%, rgba(220,205,185,0.5) 100%)'
@@ -369,68 +369,75 @@ function App() {
                   : '1px solid rgba(255,255,255,0.05)',
               }}
             >
-              {/* Branding - Sanctuary Mode Only */}
-              {displayMode === 'sanctuary' && (
-                <div
-                  className={`text-[10px] text-suspended ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
-                  style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.15em' }}
-                >
-                  IMMANENCE OS
+              <div className="flex items-center justify-between w-full h-full relative">
+                {/* Left: Branding (Sanctuary) or Empty (Hearth) */}
+                <div className="flex-1 flex items-center justify-start">
+                  {displayMode === 'sanctuary' && (
+                    <div
+                      className={`text-[10px] text-suspended ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
+                      style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.15em' }}
+                    >
+                      IMMANENCE OS
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Center Element: StageTitle - Always visible, Absolutely positioned for true centering */}
-              <div
-                className="absolute left-1/2 top-1/2 flex justify-center items-center"
-                style={{
-                  transform: 'translate(-50%, calc(-50% - 5px)) scaleX(0.65) scaleY(0.6)',
-                  width: 'min(90vw, 600px)',
-                  transformOrigin: 'center center'
-                }}
-              >
-                <StageTitle
-                  stage={previewStage}
-                  path={previewPath}
-                  attention={previewAttention}
-                  showWelcome={false}
-                />
-              </div>
-
-              {/* Desktop Controls - Sanctuary Mode Only */}
-              {displayMode === 'sanctuary' && (
-                <div className="flex items-center gap-3">
-                  {/* Width Toggle (Sanctuary/Hearth) */}
-                  <WidthToggle />
-                  {/* Color Scheme Toggle (Dark/Light) */}
-                  <DisplayModeToggle />
-                  <button
-                    type="button"
-                    onClick={() => setShowDevPanel(v => !v)}
-                    className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
-                    title="Dev Panel (Ctrl+Shift+D)"
-                    style={{ color: showDevPanel ? 'var(--accent-color)' : undefined }}
-                  >
-                    🎨
-                  </button>
-                  <div
-                    className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    v3.14.99
+                {/* Center Element: StageTitle - Always visible, Absolutely positioned for true centering */}
+                {/* We use a container to ensure hit targets or relative positioning don't bleed */}
+                <div
+                  className="absolute left-1/2 top-1/2 flex justify-center items-center pointer-events-none"
+                  style={{
+                    transform: 'translate(-50%, calc(-50% - 5px)) scaleX(0.65) scaleY(0.6)',
+                    width: 'min(50vw, 400px)',
+                    transformOrigin: 'center center'
+                  }}
+                >
+                  <div className="pointer-events-auto">
+                    <StageTitle
+                      stage={previewStage}
+                      path={previewPath}
+                      attention={previewAttention}
+                      showWelcome={false}
+                    />
                   </div>
                 </div>
-              )}
 
-              {!isHub && (
-                <button
-                  type="button"
-                  onClick={() => setActiveSection(null)}
-                  className={`text-[11px] uppercase tracking-[0.15em] transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425]' : 'text-white/70 hover:text-white'}`}
-                  style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
-                >
-                  Home
-                </button>
-              )}
+                {/* Right: Controls & Home Button */}
+                <div className="flex-1 flex items-center justify-end gap-3">
+                  {displayMode === 'sanctuary' && (
+                    <div className="flex items-center gap-3">
+                      <WidthToggle />
+                      <DisplayModeToggle />
+                      <button
+                        type="button"
+                        onClick={() => setShowDevPanel(v => !v)}
+                        className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
+                        title="Dev Panel (Ctrl+Shift+D)"
+                        style={{ color: showDevPanel ? 'var(--accent-color)' : undefined }}
+                      >
+                        🎨
+                      </button>
+                      <div
+                        className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
+                        style={{ fontFamily: 'var(--font-display)' }}
+                      >
+                        v3.15.0
+                      </div>
+                    </div>
+                  )}
+
+                  {!isHub && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection(null)}
+                      className={`text-[11px] uppercase tracking-[0.15em] px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                      style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
+                    >
+                      Home
+                    </button>
+                  )}
+                </div>
+              </div>
             </header>
 
             {/* Main content - hide when minimized */}

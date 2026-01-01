@@ -11,9 +11,13 @@ import { Avatar } from './avatar';
 import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 import { ConsistencyFoundation } from './Cycle/ConsistencyFoundation.jsx';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { getPathById } from '../data/navigationData.js';
 
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide }) {
   const { selectedPathId, activePath } = useNavigationStore();
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
   const [navModalOpen, setNavModalOpen] = useState(false);
@@ -35,10 +39,6 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         <div style={{ transform: 'scale(0.65)' }}>
           <Avatar mode="navigation" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
         </div>
-        {/* Stage Title */}
-        <div className="mt-4">
-          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
-        </div>
       </div>
 
       {/* Cycle & Consistency System */}
@@ -54,10 +54,10 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
 
           {/* Ornamental Divider */}
           <div className="flex items-center justify-center py-2">
-            <div className="flex items-center gap-4 text-[var(--accent-30)]">
-              <div className="w-32 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
+            <div className="flex items-center gap-4" style={{ color: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)' }}>
+              <div className={`w-32 h-[1px] bg-gradient-to-r from-transparent ${isLight ? 'to-[rgba(180,140,90,0.4)]' : 'to-[var(--accent-30)]'}`} />
               <div style={{ fontSize: '12px' }}>◆</div>
-              <div className="w-32 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
+              <div className={`w-32 h-[1px] bg-gradient-to-l from-transparent ${isLight ? 'to-[rgba(180,140,90,0.4)]' : 'to-[var(--accent-30)]'}`} />
             </div>
           </div>
 
@@ -74,7 +74,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             fontFamily: 'var(--font-body)',
             fontSize: '11px',
             letterSpacing: 'var(--tracking-wide)',
-            color: 'rgba(253,251,245,0.4)',
+            color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.4)',
             textTransform: 'uppercase',
             fontStyle: 'italic'
           }}
@@ -89,15 +89,21 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             fontSize: '12px',
             fontWeight: 500,
             letterSpacing: 'var(--tracking-wide)',
-            color: showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A',
+            color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-            border: showCodex ? '1px solid rgba(220, 210, 180, 0.4)' : '1px solid rgba(250, 208, 120, 0.4)',
-            boxShadow: showCodex
-              ? '0 0 25px rgba(220, 210, 180, 0.15), inset 0 0 20px rgba(220, 210, 180, 0.08)'
-              : '0 0 25px rgba(250, 208, 120, 0.15), inset 0 0 20px rgba(250, 208, 120, 0.08)',
+            background: isLight
+              ? 'rgba(255, 255, 255, 0.4)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+            border: isLight
+              ? (showCodex ? '1px solid rgba(140, 100, 40, 0.4)' : '1px solid rgba(180, 140, 90, 0.4)')
+              : (showCodex ? '1px solid rgba(220, 210, 180, 0.4)' : '1px solid rgba(250, 208, 120, 0.4)'),
+            boxShadow: isLight
+              ? '0 4px 12px rgba(180, 140, 90, 0.1)'
+              : (showCodex
+                ? '0 0 25px rgba(220, 210, 180, 0.15), inset 0 0 20px rgba(220, 210, 180, 0.08)'
+                : '0 0 25px rgba(250, 208, 120, 0.15), inset 0 0 20px rgba(250, 208, 120, 0.08)'),
             transform: navModalOpen ? 'scale(1.06)' : 'scale(1)',
             transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
           }}
@@ -130,12 +136,19 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             {activePath ? (
               <ActivePathState />
             ) : selectedPathId ? (
-              <PathOverviewPanel pathId={selectedPathId} />
+              <PathOverviewPanel
+                path={getPathById(selectedPathId)}
+                onClose={() => useNavigationStore.getState().setSelectedPath(null)}
+              />
             ) : (
               <div className="text-center py-12">
                 <p
-                  className="text-sm text-[rgba(253,251,245,0.5)] italic font-medium"
-                  style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
+                  className="text-sm italic font-medium"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    letterSpacing: '0.01em',
+                    color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)'
+                  }}
                 >
                   Select a path to view details and begin your journey
                 </p>

@@ -304,6 +304,14 @@
   stroke-opacity: 0.8;
 }
 
+/* Exception: Sigil Tracker polylines should not use multiply blend mode */
+.light-mode .sigil-tracker-modal svg polyline,
+.light-mode svg polyline[stroke*="rgba(180, 120, 40"] {
+  mix-blend-mode: normal !important;
+  stroke-opacity: 1 !important;
+}
+
+
 /* Prevent multiply on filled SVG elements */
 .light-mode svg path[fill]:not([fill="none"]),
 .light-mode svg circle[fill]:not([fill="none"]) {

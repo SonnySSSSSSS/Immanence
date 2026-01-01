@@ -61,9 +61,11 @@ export function VacationToggle({ compact = false }) {
                 className="rounded-xl p-4"
                 style={{
                     background: vacation.active
-                        ? 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.05) 100%)'
-                        : 'rgba(253,251,245,0.03)',
-                    border: `1px solid ${vacation.active ? 'rgba(59,130,246,0.3)' : 'rgba(253,251,245,0.1)'}`
+                        ? (isLight ? 'rgba(59, 130, 246, 0.08)' : 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.05) 100%)')
+                        : (isLight ? 'rgba(60, 50, 40, 0.03)' : 'rgba(253,251,245,0.03)'),
+                    border: `1px solid ${vacation.active
+                        ? (isLight ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59,130,246,0.3)')
+                        : (isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(253,251,245,0.1)')}`
                 }}
             >
                 <div className="flex items-center justify-between">
@@ -73,7 +75,7 @@ export function VacationToggle({ compact = false }) {
                             <span
                                 className="text-sm font-medium"
                                 style={{
-                                    color: vacation.active ? '#3b82f6' : 'rgba(253,251,245,0.8)',
+                                    color: vacation.active ? '#3b82f6' : (isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.8)'),
                                     fontFamily: 'var(--font-display)',
                                     fontWeight: 600,
                                     letterSpacing: 'var(--tracking-wide)',
@@ -82,7 +84,7 @@ export function VacationToggle({ compact = false }) {
                                 Vacation Mode
                             </span>
                         </div>
-                        <p className="text-[10px] text-[rgba(253,251,245,0.5)] max-w-[200px]">
+                        <p className="text-[10px] max-w-[200px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.5)' }}>
                             {vacation.active
                                 ? `Streak frozen at ${vacation.frozenStreak} day${vacation.frozenStreak !== 1 ? 's' : ''} since ${vacation.startDate}`
                                 : 'Pause streak tracking during planned breaks'
@@ -93,8 +95,10 @@ export function VacationToggle({ compact = false }) {
                     <button
                         onClick={handleToggle}
                         className={`px-4 py-2 rounded-full text-[11px] font-medium transition-all ${vacation.active
-                            ? 'bg-blue-500 text-white hover:bg-blue-600'
-                            : 'bg-[rgba(253,251,245,0.1)] text-[rgba(253,251,245,0.8)] hover:bg-[rgba(253,251,245,0.15)]'
+                            ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg shadow-blue-500/20'
+                            : (isLight
+                                ? 'bg-black/5 text-black/70 hover:bg-black/10'
+                                : 'bg-[rgba(253,251,245,0.1)] text-[rgba(253,251,245,0.8)] hover:bg-[rgba(253,251,245,0.15)]')
                             }`}
                         style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: 'var(--tracking-wide)' }}
                     >
@@ -107,14 +111,20 @@ export function VacationToggle({ compact = false }) {
             {showConfirm && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+                    style={{
+                        background: isLight ? 'rgba(60, 50, 40, 0.4)' : 'rgba(0,0,0,0.8)',
+                        backdropFilter: 'blur(8px)'
+                    }}
                     onClick={() => setShowConfirm(false)}
                 >
                     <div
                         className="w-full max-w-xs rounded-2xl p-5"
                         style={{
-                            background: 'linear-gradient(180deg, rgba(22,22,37,0.98) 0%, rgba(15,15,26,0.99) 100%)',
-                            border: '1px solid rgba(59,130,246,0.3)'
+                            background: isLight
+                                ? 'linear-gradient(180deg, #FDFBF5 0%, #F5F0E6 100%)'
+                                : 'linear-gradient(180deg, rgba(22,22,37,0.98) 0%, rgba(15,15,26,0.99) 100%)',
+                            border: `1px solid ${isLight ? 'rgba(59, 130, 246, 0.4)' : 'rgba(59,130,246,0.3)'}`,
+                            boxShadow: isLight ? '0 15px 40px rgba(120, 90, 60, 0.15)' : 'none'
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -126,15 +136,19 @@ export function VacationToggle({ compact = false }) {
                             >
                                 Freeze Your Streak?
                             </h3>
-                            <p className="text-[11px] text-[rgba(253,251,245,0.6)]">
-                                Your <strong className="text-white">{streakInfo.current}-day streak</strong> will be frozen until you return.
+                            <p className="text-[11px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
+                                Your <strong style={{ color: isLight ? '#3D3425' : 'white' }}>{streakInfo.current}-day streak</strong> will be frozen until you return.
                             </p>
                         </div>
 
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setShowConfirm(false)}
-                                className="flex-1 py-2 rounded-full text-[11px] bg-[rgba(253,251,245,0.1)] text-[rgba(253,251,245,0.7)] hover:bg-[rgba(253,251,245,0.15)]"
+                                className="flex-1 py-2 rounded-full text-[11px] transition-colors"
+                                style={{
+                                    background: isLight ? 'rgba(60, 50, 40, 0.05)' : 'rgba(253,251,245,0.1)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)'
+                                }}
                             >
                                 Cancel
                             </button>
