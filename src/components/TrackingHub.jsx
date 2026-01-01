@@ -611,233 +611,35 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
     const {
         getStreakInfo,
         getDomainStats,
-        getWeeklyPattern,
-        getPrimaryDomain,
-        setDisplayPreference,
-        displayPreference,
-        userSelectedDomain
+        getPrimaryDomain
     } = useProgressStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
-    const isSanctuary = displayMode === 'sanctuary';
-    const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-2xl';
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [startX, setStartX] = useState(0);
-    const [translateX, setTranslateX] = useState(0);
-    const containerRef = useRef(null);
-
-    // Get primary domain and reorder domains to show it first
+    // Get primary domain stats
     const primaryDomain = getPrimaryDomain();
     const primaryDomainObj = DOMAINS.find(d => d.id === primaryDomain) || DOMAINS[0];
-    const orderedDomains = [
-        primaryDomainObj,
-        ...DOMAINS.filter(d => d.id !== primaryDomainObj.id)
-    ];
+    const stats = getDomainStats(primaryDomainObj.id);
 
     // Derived data - use prop if provided, otherwise get from store
     const streakInfo = propStreakInfo || getStreakInfo();
-    const weeklyPattern = getWeeklyPattern();
-
-
-
-    // Touch/mouse handlers for swipe
-    const handleDragStart = (clientX) => {
-        setIsDragging(true);
-        setStartX(clientX);
-    };
-
-    const handleDragMove = (clientX) => {
-        if (!isDragging) return;
-        const diff = clientX - startX;
-        setTranslateX(diff);
-    };
-
-    const handleDragEnd = () => {
-        if (!isDragging) return;
-        setIsDragging(false);
-
-        const threshold = 80;
-        if (translateX < -threshold && currentIndex < orderedDomains.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-        } else if (translateX > threshold && currentIndex > 0) {
-            setCurrentIndex(prev => prev - 1);
-        }
-        setTranslateX(0);
-    };
-
-    // Long press to pin
-    const longPressTimer = useRef(null);
-
-    const handleLongPressStart = (domainId) => {
-        longPressTimer.current = setTimeout(() => {
-            setDisplayPreference('userSelected', domainId);
-        }, 600);
-    };
-
-    const handleLongPressEnd = () => {
-        if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current);
-        }
-    };
-
-    // Format relative time
-    const formatLastPracticed = (isoDate) => {
-        if (!isoDate) return 'Never';
-
-        const now = new Date();
-        const then = new Date(isoDate);
-        const diffMs = now - then;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays === 1) return 'Yesterday';
-        if (diffDays < 7) return `${diffDays}d ago`;
-        return then.toLocaleDateString();
-    };
 
     return (
-        <div className="w-full transition-all duration-500">
-            {/* Status Pills - Moved from HubStagePanel */}
-            <div className="flex items-center justify-center gap-2 mb-4">
-                {/* Streak Pill */}
-                <div
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                    style={{
-                        background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
-                        border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)'}`,
-                    }}
-                >
-                    <span className="text-[11px]" style={{ opacity: 0.6 }}>📅</span>
-                    <span
-                        className="text-[14px] font-black"
-                        style={{
-                            color: isLight ? 'rgba(45, 40, 35, 0.98)' : 'rgba(253, 251, 245, 1)',
-                            fontFamily: 'var(--font-ui)',
-                            letterSpacing: '-0.02em'
-                        }}
-                    >
-                        {streakInfo.current}
-                    </span>
-                    <span
-                        className="text-[9px] uppercase tracking-wider"
-                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253, 251, 245, 0.85)' }}
-                    >
-                        days
-                    </span>
-                </div>
-
-                {/* Legacy HONOR button - kept for compatibility */}
-                <div
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full"
-                    style={{
-                        background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
-                        border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)'}`,
-                        color: isLight ? 'rgba(45, 40, 35, 0.98)' : 'rgba(253, 251, 245, 1)',
-                        fontFamily: 'var(--font-ui)',
-                        fontWeight: 800,
-                        fontSize: '10px',
-                        letterSpacing: '0.05em',
-                    }}
-                >
-                    <span style={{ opacity: 0.9 }}>⭐</span>
-                    <span>HONOR</span>
-                </div>
-
-                {/* Vacation placeholder - matches sizing */}
-                <div
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full"
-                    style={{
-                        background: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
-                        border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)'}`,
-                        color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253, 251, 245, 0.6)',
-                        fontFamily: 'var(--font-ui)',
-                        fontWeight: 600,
-                        fontSize: '9px',
-                        letterSpacing: '0.08em',
-                    }}
-                >
-                    <span style={{ opacity: 0.7 }}>☀️</span>
-                    <span>VACATION</span>
-                </div>
-            </div>
-
-            {/* Simplified header - cymatic pagination glyphs only */}
-            <div className="mb-3">
-                {/* Cymatic pagination glyphs */}
-                <div className="flex items-center justify-center gap-3">
-                    {orderedDomains.map((domain, index) => (
-                        <button
-                            key={index}
-                            onClick={() => setCurrentIndex(index)}
-                            className="transition-all duration-300"
-                            style={{
-                                opacity: index === currentIndex ? 1 : 0.75,
-                                transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
-                            }}
-                        >
-                            {CYMATIC_GLYPHS[domain.id](index === currentIndex, isLight)}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Swipe hint - visual chevrons instead of text */}
-                {currentIndex === 0 && (
-                    <div className="flex items-center justify-center gap-1 mt-1">
-                        <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-30">
-                            <path d="M8 2 L4 6 L8 10" fill="none" stroke="rgba(253,251,245,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
-                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
-                        <div className="w-1 h-1 rounded-full bg-white/20"></div>
-                        <svg width="12" height="12" viewBox="0 0 12 12" className="opacity-30">
-                            <path d="M4 2 L8 6 L4 10" fill="none" stroke="rgba(253,251,245,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </div>
-                )}
-            </div>
-
-            {/* Swipeable cards container */}
+        <div className="w-full max-w-md mx-auto">
+            {/* Header with semantic label */}
             <div
-                ref={containerRef}
-                className="relative overflow-hidden rounded-2xl"
-                style={{ touchAction: 'pan-y' }}
-                onMouseDown={(e) => handleDragStart(e.clientX)}
-                onMouseMove={(e) => handleDragMove(e.clientX)}
-                onMouseUp={handleDragEnd}
-                onMouseLeave={handleDragEnd}
-                onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-                onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
-                onTouchEnd={handleDragEnd}
+                className="text-[10px] mb-4 uppercase tracking-[0.15em] text-center"
+                style={{
+                    color: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
+                    textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
+                }}
             >
-                <div
-                    className="flex transition-transform duration-300 ease-out"
-                    style={{
-                        transform: `translateX(calc(-${currentIndex * 100}% + ${translateX}px))`,
-                        cursor: isDragging ? 'grabbing' : 'grab'
-                    }}
-                >
-                    {orderedDomains.map((domain) => {
-                        const stats = getDomainStats(domain.id);
-                        return (
-                            <div key={domain.id} className="w-full flex-shrink-0 px-0 py-2">
-                                <StatsCard domain={domain} stats={stats} isLight={isLight} />
-                            </div>
-                        );
-                    })}                </div>
+                ⟨ PRACTICE HUB ⟩
             </div>
 
-            {/* Dishonor Badge - only shows when ratio > 50% and ≥10 practices */}
-            <div className="mt-4">
-                <DishonorBadge />
-            </div>
-
+            {/* Single domain stats card */}
+            <StatsCard domain={primaryDomainObj} stats={stats} isLight={isLight} />
         </div>
     );
 }
+

@@ -69,7 +69,7 @@ All state is managed with Zustand stores, persisted to localStorage.
 | `applicationStore` | Awareness tracking & Intention | awarenessLogs[], intention, getWeekLogs() |
 | `chainStore` | Four Modes chains | activeChain, completedChains |
 | `cycleStore` | Cycle & consistency tracking | currentCycle, history, checkpoints, modeHistory |
-| `settingsStore` | App settings & preferences | displayMode, llmModel, themeStageOverride, volume, useNewAvatars |
+| `settingsStore` | App settings & preferences | displayMode, llmModel, themeStageOverride, volume, useNewAvatars, buttonThemeDark, buttonThemeLight |
 | `historyStore` | Undo/redo for modes | histories{}, positions{}, snapshots |
 | `curriculumStore` | Circuit definitions | circuits, exercises |
 | `waveStore` | Personality profile (Big Five) | traits, assessmentHistory |
@@ -292,10 +292,22 @@ The "Four Modes" workflow moves from observation to action through four distinct
 
 The Tracking Hub (`TrackingHub.jsx`) provides the "Ground" for practice, visualizing behavioral data.
 
-- **AwarenessCompass.jsx**: Cardinal-direction logging (N/E/S/W). Manages "Intention" seal.
+- **AwarenessCompass.jsx**: Cardinal-direction logging (N/E/S/W). Manages "Intention" seal. Features the **Dual-Visual Orb System** where background orbs represent intensity and foreground SVG indicators represent precision (Bullseye ≥90%, Crosshair 70-89%, Dashed <70%).
 - **SevenDayTrendCurve.jsx**: Frequency analysis of logged moments.
 - **PathJourneyLog.jsx**: Long-term alignment with the 6 paths (Soma, Prana, Dhyana, etc.).
 - **HonorLogModal.jsx**: Record of commitments kept or broken.
+
+### Themed Button Assets
+
+The system uses a dynamic, theme-aware button asset system for the mode navigation buttons.
+
+**Key Features:**
+- **Mode-Aware Generation:** Distinct themes for light and dark modes (40 total assets).
+- **Themes:** 
+  - Dark: `cosmic`, `bioluminescent`, `aurora`, `crystalline`, `electric`.
+  - Light: `watercolor`, `sketch`, `botanical`, `inkwash`, `cloudscape`.
+- **Dynamic Loading:** `SimpleModeButton.jsx` retrieves the active theme from `settingsStore` and constructs paths: `mode_buttons/{icon}_{theme}_{mode}.png`.
+- **Customization:** Themes can be toggled via the Dev Panel.
 
 ### Wisdom Hub
 
@@ -369,7 +381,21 @@ Rituals are structured, multi-step meditative practices with specific friction m
 
 ---
 
-## Component Hierarchy
+### Header & Hamburger Logic
+
+The application header adapts dynamically to the `displayMode` (Sanctuary vs. Hearth) to ensure a clean mobile-first experience.
+
+**Visibility States:**
+- **Sanctuary Mode (Wide):**
+  - Full desktop header visible (Branding, Width/Theme Toggles, Dev Panel button, version).
+  - Hamburger menu hidden.
+- **Hearth Mode (iPhone):**
+  - Clean mobile header: Only **StageTitle** remains in the center.
+  - Hamburger menu visible in the top-right.
+  - Desktop controls (Toggles, Version) move inside the hamburger dropdown menu.
+
+**Components:**
+- `App.jsx` handles the conditional rendering logic based on `displayMode === 'hearth'`.
 
 ### Main Sections
 

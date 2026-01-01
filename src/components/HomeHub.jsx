@@ -6,7 +6,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "./avatar";
 import { StageTitle } from "./StageTitle.jsx";
 import { STAGE_COLORS } from "../constants/stageColors.js";
+import { HubCardSwiper } from "./HubCardSwiper.jsx";
 import { CompactStatsCard } from "./CompactStatsCard.jsx";
+import { ApplicationTrackingCard } from "./ApplicationTrackingCard.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
@@ -256,18 +258,20 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full px-4 flex flex-col items-center gap-4 pb-4">
 
-        {/* STATS DASHBOARD - Compact Visual Stats */}
+        {/* TRACKING HUB - Swipeable Stats Cards */}
         <div className="w-full">
-          <CompactStatsCard domain="wisdom" streakInfo={streakInfo} />
+          <HubCardSwiper cards={[
+            <CompactStatsCard key="compact" domain="wisdom" streakInfo={streakInfo} />,
+            <ApplicationTrackingCard key="application" />
+          ]} />
         </div>
 
         {/* MODES SELECTION - Container with consistent width */}
         <div
           className="w-full"
           style={{
-            maxWidth: isSanctuary ? '600px' : '430px',
+            maxWidth: '430px',
             margin: '0 auto',
-            transition: 'max-width 0.5s ease'
           }}
         >
           <div
@@ -312,9 +316,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         <div
           className="w-full"
           style={{
-            maxWidth: isSanctuary ? '600px' : '430px',
+            maxWidth: '430px',
             margin: '0 auto',
-            transition: 'max-width 0.5s ease'
           }}
         >
           <div

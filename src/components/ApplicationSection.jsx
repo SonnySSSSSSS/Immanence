@@ -1,18 +1,16 @@
 // src/components/ApplicationSection.jsx
 import React, { useState } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
-import { AvatarPreview as Avatar } from './AvatarPreview.jsx';
+import { Avatar } from './avatar';
 import { StageTitle } from './StageTitle.jsx';
-import { TrackingView } from './TrackingView.jsx';
+import { SigilSealingArea } from './SigilSealingArea.jsx';
 import { FourModesHome } from './FourModesHome.jsx';
 import { ModeDetail } from './ModeDetail.jsx';
-import { ApplicationSelectionModal } from './ApplicationSelectionModal.jsx';
 
 export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
   const { activePath } = useNavigationStore();
-  const [activeSubView, setActiveSubView] = useState('tracking'); // 'tracking' | 'modes'
   const [selectedModeId, setSelectedModeId] = useState(null);
-  const [appModalOpen, setAppModalOpen] = useState(false);
+  const [showFourModes, setShowFourModes] = useState(false);
 
   // No active path - show empty state
   if (!activePath) {
@@ -89,78 +87,53 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
     }
   };
 
-  // Active path - show tracking / modes interface
+  // Active path - show permanent sigil sealing area
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Avatar - smaller */}
+      {/* Avatar - smaller, no title below */}
       <div className="flex flex-col items-center pt-8">
         <div style={{ transform: 'scale(0.65)' }}>
           <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
         </div>
-        {/* Stage Title */}
-        <div className="mt-4">
-          <StageTitle stage={currentStage} path={previewShowCore ? null : previewPath} attention={previewAttention} showWelcome={false} />
-        </div>
       </div>
 
-      {/* Application Selector - Dropdown Style (matching practice menu) */}
-      <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-        {/* Text prompt above button */}
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '11px',
-            fontWeight: 600,
-            letterSpacing: 'var(--tracking-mythic)',
-            color: 'rgba(253,251,245,0.5)',
-            textTransform: 'uppercase',
-          }}
-        >
-          This space reflects how you are showing up — not how well.
-        </div>
-        <button
-          onClick={() => setAppModalOpen(true)}
-          className="px-6 py-3 rounded-full"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 600,
-            fontSize: '13px',
-            letterSpacing: 'var(--tracking-mythic)',
-            color: 'var(--gold-100)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-            border: '1px solid var(--gold-30)',
-            boxShadow: activeSubView === 'tracking'
-              ? '0 0 25px rgba(251, 191, 36, 0.15), inset 0 0 20px rgba(251, 191, 36, 0.08)'
-              : '0 0 25px rgba(202, 138, 4, 0.15), inset 0 0 20px rgba(202, 138, 4, 0.08)',
-            transform: appModalOpen ? 'scale(1.06)' : 'scale(1)',
-            transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
-          }}
-        >
-          <span>{activeSubView === 'tracking' ? 'Tracking' : 'Four Modes'}</span>
-          {/* Chevron */}
-          <span
+      {/* Permanent Sigil Sealing Area */}
+      {!showFourModes && !selectedModeId && (
+        <SigilSealingArea />
+      )}
+
+      {/* Four Modes Toggle Button */}
+      {!selectedModeId && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setShowFourModes(!showFourModes)}
+            className="px-6 py-3 rounded-full transition-all duration-300"
             style={{
-              fontSize: '10px',
-              transform: appModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 200ms ease-out',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 600,
+              fontSize: '13px',
+              letterSpacing: 'var(--tracking-mythic)',
+              color: showFourModes ? 'rgba(180, 120, 40, 1)' : 'rgba(100, 80, 60, 0.85)',
+              background: showFourModes
+                ? 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)'
+                : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+              border: '1px solid rgba(180, 140, 90, 0.3)',
+              boxShadow: showFourModes
+                ? '0 0 30px rgba(251, 191, 36, 0.2), inset 0 0 25px rgba(251, 191, 36, 0.1)'
+                : '0 0 25px rgba(251, 191, 36, 0.15), inset 0 0 20px rgba(251, 191, 36, 0.08)',
             }}
           >
-            ▼
-          </span>
-        </button>
-      </div>
+            {showFourModes ? 'Hide Four Modes' : 'Explore Four Modes'}
+          </button>
+        </div>
+      )}
 
-      {/* Content based on active sub-view */}
-      {activeSubView === 'tracking' && <TrackingView />}
-
-      {activeSubView === 'modes' && !selectedModeId && (
+      {/* Content based on active view */}
+      {showFourModes && !selectedModeId && (
         <FourModesHome onSelectMode={handleSelectMode} />
       )}
 
-      {activeSubView === 'modes' && selectedModeId && (
+      {selectedModeId && (
         <ModeDetail
           key={selectedModeId}
           modeId={selectedModeId}
@@ -168,14 +141,6 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
           autoStartTraining={autoOpenTraining}
         />
       )}
-
-      {/* Application Selection Modal */}
-      <ApplicationSelectionModal
-        isOpen={appModalOpen}
-        onClose={() => setAppModalOpen(false)}
-        currentView={activeSubView}
-        onSelectView={(view) => { setActiveSubView(view); setSelectedModeId(null); }}
-      />
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function HubStagePanel({
     const accentColor = isLight ? 'var(--light-accent)' : 'var(--accent-color)';
 
     return (
-        <div className="w-full flex flex-col items-center px-4" style={{ maxWidth: 'min(90vw, 600px)' }}>
+        <div className="w-full flex flex-col items-center px-4" style={{ maxWidth: '430px' }}>
 
             {/* ══════════════════════════════════════════════════════════════════
                 STAGE NAME — Shared ceremonial inscription
