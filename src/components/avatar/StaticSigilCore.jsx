@@ -81,14 +81,28 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     }}
                 />
             )}
-            {/* Black halo space - separation ring */}
+            {/* Gem backlight - subtle glow behind the jewel in light mode */}
+            {isLight && (
+                <div
+                    className="absolute pointer-events-none"
+                    style={{
+                        width: "53%",
+                        height: "53%",
+                        borderRadius: "9999px",
+                        background: `radial-gradient(circle, rgba(200, 160, 110, 0.4) 0%, rgba(180, 140, 90, 0.25) 40%, transparent 70%)`,
+                        filter: "blur(20px)",
+                        zIndex: 7.5,
+                    }}
+                />
+            )}
+            {/* Separation ring - transparent/light-gold for light mode to allow radiance through, black for dark mode - UPDATED 2026-01-01 */}
             <div
                 className="absolute pointer-events-none"
                 style={{
                     width: "52%",
                     height: "52%",
                     borderRadius: "9999px",
-                    background: "#000000",
+                    background: isLight ? "rgba(245, 240, 220, 0.4)" : "#000000",
                     zIndex: 8,
                 }}
             />

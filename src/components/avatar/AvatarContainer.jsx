@@ -11,6 +11,7 @@ import { STAGE_GLOW_COLORS } from "./constants";
 import { BreathingAura } from "./BreathingAura";
 import { RuneRingLayer } from "./RuneRingLayer";
 import { StaticSigilCore } from "./StaticSigilCore";
+import { RadiantHalo } from "./RadiantHalo";
 
 export function AvatarContainer({
     mode,
@@ -122,6 +123,9 @@ export function AvatarContainer({
                         />
                     </div>
 
+                    {/* LAYER 1.5: Radiant Star Halo - Light mode only */}
+                    {isLight && <RadiantHalo size={280} />}
+
                     {/* LAYER 2: Rune Ring Layer */}
                     <div className="absolute inset-0" style={{ zIndex: 5 }}>
                         <RuneRingLayer stage={stage} isPracticing={isPracticing} speedMultiplier={ringSpeedMultiplier} />
@@ -205,7 +209,7 @@ export function AvatarContainer({
                             height: "50.5%",
                             borderRadius: "50%",
                             boxShadow: isLight
-                                ? `inset ${shadowX}px ${shadowY}px 12px rgba(0, 0, 0, 0.45)`
+                                ? `inset ${shadowX}px ${shadowY}px 12px rgba(120, 100, 80, 0.15)` // Toned down from black 0.45
                                 : "inset 0 0 10px rgba(0, 0, 0, 0.45)",
                             zIndex: 7,
                             transition: 'box-shadow 0.8s ease-out'

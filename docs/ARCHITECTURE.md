@@ -537,7 +537,148 @@ ApplicationSection.jsx
 - `ringScale` - Dynamic ring size
 - `pathId` / `fxPreset` - Visual style
 
+
 ---
+
+## Visual Effects & Background Components
+
+This section maps all visual effect components to their module ownership and display mode behavior. Use this as a quick reference when debugging visual elements.
+
+### Component Ownership Map
+
+| Component | Location | Module | Render Layer | Light Mode | Dark Mode |
+|-----------|----------|--------|--------------|------------|-----------|
+| `Background.jsx` | `src/components/` | Background | z-index 0 | Parchment base + clouds | Cosmic particles (auto 100% height) |
+| `AvatarLuminousCanvas.jsx` | `src/components/` | Avatar | z-index 1 | **Hidden** (skipHeavyFx) | Active particles + dust + week nodes |
+| `MoonOrbit.jsx` | `src/components/` | Avatar | z-index 100 | **Returns null** | Lunar orbit SVG with glyphs |
+| `AvatarContainer.jsx` | `src/components/avatar/` | Avatar | z-index 6 | Decorative rings **hidden** | Full decorative outline rings |
+| `StaticSigilCore.jsx` | `src/components/avatar/` | Avatar | z-index 7-10 | Gold halo/glow | Cyan/teal halo + glow |
+| `RuneRingLayer.jsx` | `src/components/avatar/` | Avatar | z-index 5 | Active (rotating) | Active (rotating) |
+| `BreathingAura.jsx` | `src/components/avatar/` | Avatar | Practice mode | Active during practice | Active during practice |
+| `PathParticles.jsx` | `src/components/` | Practice | Canvas overlay | Active | Active |
+| `AvatarLuminousCanvas` week nodes | `src/components/` | Avatar | Canvas layer | Active (sacred geometry) | Active (week practice dots) |
+
+**Key Takeaway:** Most heavy visual effects (particles, dust, decorative rings, moon orbit) are **hidden in light mode** to achieve a clean, "handled instrument" aesthetic.
+
+### Background Layer Stack (Bottom to Top)
+
+The complete layering order from base to content:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Background.jsx (z-index 0)                                │
+│    ├─ Light Mode: Parchment base color                       │
+│    └─ Dark Mode: Cosmic background with particles            │
+├─────────────────────────────────────────────────────────────┤
+│ 2. Cloud Overlay (HomeHub.jsx, light mode only)              │
+│    ├─ Stage-specific: {stage}_{cloudVariant}.png             │
+│    ├─ Position: center bottom, auto 100% height              │
+│    ├─ Gradient fade at top for seamless blend                │
+│    └─ Animation: 60s horizontal drift (cloudDrift)           │
+├─────────────────────────────────────────────────────────────┤
+│ 3. ConstellationField.jsx (REMOVED)                          │
+│    └─ Previously: Canvas-based gold constellation            │
+├─────────────────────────────────────────────────────────────┤
+│ 4. Content Layers (z-index 10+)                              │
+│    └─ Avatar, UI, text content                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Avatar Visual Effects Stack (Inside to Outside)
+
+The avatar is composed of multiple visual layers with specific z-index ordering:
+
+```
+Avatar Container (64% of viewport)
+├─ LAYER 0 (z-index 0): Base Plate
+│  ├─ Flame-specific dark backer (dark mode only)
+│  ├─ Universal shadow backer (dark mode only)
+│  └─ Ring rim shadow (both modes)
+│
+├─ LAYER 1 (z-index 1): AvatarLuminousCanvas
+│  ├─ Dark Mode: Particles, dust, nebula, sacred geometry
+│  └─ Light Mode: HIDDEN (skipHeavyFx = true)
+│     - Particles: wrapped in if (!skipHeavyFx)
+│     - Dust: wrapped in if (!skipHeavyFx)
+│     - Sacred geometry: still renders
+│
+├─ LAYER 2 (z-index 5): RuneRingLayer
+│  ├─ Rotating PNG with stage-specific rune markings
+│  ├─ Both modes: Active rotation
+│  └─ Speed: adjustable via ringSpeedMultiplier
+│
+├─ LAYER 3 (z-index 6): Decorative Outline Rings
+│  ├─ Dark Mode: Two concentric rings (108%, 102%) + top pin
+│  └─ Light Mode: HIDDEN (wrapped in {!isLight && (...)})
+│
+├─ LAYER 4 (z-index 2): Mode-specific Glow
+│  ├─ Light Mode: Subtle radial gradient
+│  └─ Dark Mode: None (glow handled by other layers)
+│
+├─ LAYER 5 (z-index 7): Inner Shadow / Depth
+│  ├─ Light Mode: Directional shadow opposite moon position
+│  └─ Dark Mode: Centered shadow
+│
+├─ LAYER 6 (z-index 8-10): StaticSigilCore
+│  ├─ Inner jewel/avatar image with effects
+│  ├─ Light Mode: Gold halo (rgba(200, 160, 110))
+│  ├─ Dark Mode: Cyan/teal halo (rgba(80, 200, 180))
+│  ├─ Conic gradient whirlpool (30% opacity)
+│  ├─ Black separation ring at 52%
+│  └─ Counter-rotation: Opposite to rune ring at 25% speed
+│
+└─ LAYER 7 (z-index 100): MoonOrbit (SVG)
+   ├─ Light Mode: RETURNS NULL (completely hidden)
+   └─ Dark Mode: Lunar orbit track with moon glyphs
+      - Orbit radius: avatarRadius * 1.4
+      - Moon phases: new, crescent, quarter, full
+      - Ghost echo arc on progress change
+```
+
+### Mode-Specific Visibility Quick Reference
+
+Use this table to quickly determine what's visible in each display mode:
+
+| Visual Element | Light Mode | Dark Mode | Notes |
+|----------------|------------|-----------|-------|
+| **Background** | ✅ Parchment | ✅ Cosmic particles | Auto 100% height, bottom-anchored |
+| **Cloud overlay** | ✅ Visible | ❌ Hidden | Stage-specific watercolor clouds |
+| **Constellation field** | ❌ Removed | ❌ Removed | Deleted component (ConstellationField.jsx) |
+| **Avatar particles** | ❌ Hidden | ✅ Visible | AvatarLuminousCanvas skipHeavyFx check |
+| **Avatar dust** | ❌ Hidden | ✅ Visible | Wrapped in if (!skipHeavyFx) |
+| **Decorative rings** | ❌ Hidden | ✅ Visible | {!isLight && (...)} conditional |
+| **Moon orbit SVG** | ❌ Returns null | ✅ Visible | Early return in MoonOrbit.jsx |
+| **Avatar halo color** | 🟡 Gold | 🔵 Cyan/Teal | StaticSigilCore color swap |
+| **Sacred geometry** | ✅ Visible | ✅ Visible | Concentric circles in AvatarLuminousCanvas |
+| **Week practice nodes** | ✅ Visible | ✅ Visible | Hexagram markers around avatar |
+| **Rune ring** | ✅ Rotating | ✅ Rotating | Always visible in both modes |
+| **Breathing aura** | ⚡ Practice only | ⚡ Practice only | BreathingAura.jsx during sessions |
+
+**Legend:**
+- ✅ Fully visible
+- ❌ Completely hidden
+- 🟡 Modified appearance (gold)
+- 🔵 Modified appearance (cyan)
+- ⚡ Conditionally visible
+
+### Debugging Guidelines
+
+When tracking down unexpected visual elements:
+
+1. **Check display mode first**: Use DevPanel (Ctrl+Shift+D) to confirm light/dark mode
+2. **Identify the layer**: Look at z-index to determine which component owns it
+3. **Check conditional rendering**: Search for `isLight`, `skipHeavyFx`, or `colorScheme` checks
+4. **Verify file changes**: Use hard refresh (Ctrl+Shift+R) to clear browser cache
+5. **Restart dev server**: Some canvas-based effects require full rebuild
+
+**Common Issues:**
+- **Particles appearing in light mode**: Check `AvatarLuminousCanvas.jsx` lines 795-809 for `skipHeavyFx` wrapping
+- **Cyan circles around avatar**: Check `AvatarContainer.jsx` line 130 for `{!isLight && (...)}` conditional
+- **Moon orbit glyphs in light mode**: Check `MoonOrbit.jsx` line 72 for early `return null`
+- **Constellation stars**: ConstellationField.jsx deleted, check it's not imported in HomeHub.jsx
+
+---
+
 
 ## Service Layer
 

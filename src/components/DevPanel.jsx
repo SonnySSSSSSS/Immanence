@@ -54,6 +54,10 @@ export function DevPanel({
     const setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
     const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
     const setUseNewAvatars = useSettingsStore(s => s.setUseNewAvatars);
+    const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
+    const setButtonThemeDark = useSettingsStore(s => s.setButtonThemeDark);
+    const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
+    const setButtonThemeLight = useSettingsStore(s => s.setButtonThemeLight);
 
     // Color scheme detection
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -393,6 +397,66 @@ export function DevPanel({
                             >
                                 Reset Tilt
                             </button>
+                        </div>
+                    </Section>
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* BUTTON AESTHETICS SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="Button Aesthetics"
+                        expanded={expandedSections.buttons || false}
+                        onToggle={() => toggleSection('buttons')}
+                        isLight={isLight}
+                    >
+                        {/* Dark Mode Theme */}
+                        {!isLight && (
+                            <div className="flex flex-col gap-2 mb-4">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-white/30">
+                                    Dark Mode Theme (Cosmic)
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['cosmic', 'bioluminescent', 'aurora', 'crystalline', 'electric'].map(theme => (
+                                        <button
+                                            key={theme}
+                                            onClick={() => setButtonThemeDark(theme)}
+                                            className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all border ${buttonThemeDark === theme
+                                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                                    : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            {theme}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Light Mode Theme */}
+                        {isLight && (
+                            <div className="flex flex-col gap-2 mb-4">
+                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(60, 50, 40, 0.4)' }}>
+                                    Light Mode Theme (Pastel)
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['watercolor', 'sketch', 'botanical', 'inkwash', 'cloudscape'].map(theme => (
+                                        <button
+                                            key={theme}
+                                            onClick={() => setButtonThemeLight(theme)}
+                                            className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all border ${buttonThemeLight === theme
+                                                    ? 'bg-amber-700/20 text-amber-800 border-amber-700/30'
+                                                    : 'bg-black/5 text-black/40 border-black/10 hover:bg-black/10'
+                                                }`}
+                                        >
+                                            {theme}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="text-[10px] text-center opacity-40 mt-2 italic">
+                            {isLight ? 'Pastel & Watercolor' : 'Dramatic & Cosmic'}
                         </div>
                     </Section>
 

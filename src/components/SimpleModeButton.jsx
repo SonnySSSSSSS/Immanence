@@ -1,9 +1,23 @@
 // src/components/SimpleModeButton.jsx
-// Simplified mode button with gradient circle and minimal SVG icon (reference design style)
+// Mode button with cosmic dark mode and watercolor light mode imagery
 
-import React from 'react';
+import { useSettingsStore } from '../state/settingsStore.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function SimpleModeButton({ title, onClick, gradient, icon }) {
+export function SimpleModeButton({ title, onClick, icon }) {
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
+    const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
+    const isLight = colorScheme === 'light';
+
+    // Get appropriate background image based on mode, theme and icon
+    const getBackgroundImage = () => {
+        const theme = isLight ? buttonThemeLight : buttonThemeDark;
+        const mode = isLight ? 'light' : 'dark';
+        const imagePath = `${import.meta.env.BASE_URL}mode_buttons/${icon}_${theme}_${mode}.png`;
+        return imagePath;
+    };
+
     const getIcon = () => {
         switch (icon) {
             case 'practice':
@@ -47,29 +61,46 @@ export function SimpleModeButton({ title, onClick, gradient, icon }) {
             aria-label={title}
         >
             <div
-                className="relative flex items-center justify-center transition-all duration-300"
+                className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
                 style={{
                     width: '70px',
                     height: '70px',
                     borderRadius: '50%',
-                    background: gradient,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)',
+                    backgroundImage: `url(${getBackgroundImage()})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    boxShadow: isLight
+                        ? '0 4px 12px rgba(100, 80, 60, 0.15), 0 2px 4px rgba(100, 80, 60, 0.1)'
+                        : '0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3)',
                 }}
                 onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.25), 0 4px 8px rgba(0, 0, 0, 0.15)';
+                    e.currentTarget.style.boxShadow = isLight
+                        ? '0 8px 20px rgba(100, 80, 60, 0.25), 0 4px 8px rgba(100, 80, 60, 0.15)'
+                        : '0 8px 24px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35)';
                 }}
                 onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)';
+                    e.currentTarget.style.boxShadow = isLight
+                        ? '0 4px 12px rgba(100, 80, 60, 0.15), 0 2px 4px rgba(100, 80, 60, 0.1)'
+                        : '0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3)';
                 }}
             >
+                {/* Dark overlay for text legibility (dark mode only) */}
+                {!isLight && (
+                    <div
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                            background: 'radial-gradient(circle, transparent 20%, rgba(0,0,0,0.3) 70%)',
+                        }}
+                    />
+                )}
                 {getIcon()}
             </div>
             <span
                 className="text-[9px] font-bold uppercase tracking-wider"
                 style={{
-                    color: 'rgba(100, 80, 60, 0.75)',
+                    color: isLight ? 'rgba(100, 80, 60, 0.75)' : 'rgba(253, 251, 245, 0.7)',
                     letterSpacing: '0.08em',
                 }}
             >

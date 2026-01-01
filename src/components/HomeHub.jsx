@@ -285,7 +285,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             <SimpleModeButton
               title="Practice"
               onClick={() => onSelectSection("practice")}
-              gradient="linear-gradient(135deg, #FFB366 0%, #FFE5B3 100%)"
               icon="practice"
             />
             <SimpleModeButton

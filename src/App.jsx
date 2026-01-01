@@ -283,7 +283,7 @@ function App() {
           <Background stage={previewStage} />
 
           {/* HAMBURGER MENU - Inside App Container, absolute positioned to stay within UI bounds */}
-          <div className="lg:hidden absolute top-16 right-2 z-[9999]">
+          <div className="lg:hidden absolute top-3 right-2 z-[9999]">
             <button
               type="button"
               onClick={() => setShowDevPanel(v => !v)}

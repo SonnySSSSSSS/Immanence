@@ -29,8 +29,12 @@ export const useSettingsStore = create(
             showCoordinateHelper: false,
             lightModeRingType: 'astrolabe', // 'astrolabe' or 'rune'
             useNewAvatars: false, // false = old naming (Flame-Dhyana.png), true = new (avatar-flame-dhyana-ekagrata_00001_.png)
+            buttonThemeDark: 'cosmic', // 'cosmic', 'bioluminescent', 'aurora', 'crystalline', 'electric'
+            buttonThemeLight: 'watercolor', // 'watercolor', 'sketch', 'botanical', 'inkwash', 'cloudscape'
 
             // Actions
+            setButtonThemeDark: (theme) => set({ buttonThemeDark: theme }),
+            setButtonThemeLight: (theme) => set({ buttonThemeLight: theme }),
             setLightModeRingType: (type) => set({ lightModeRingType: type }),
             setCoordinateHelper: (show) => set({ showCoordinateHelper: show }),
             setUseNewAvatars: (useNew) => set({ useNewAvatars: useNew }),
@@ -63,6 +67,8 @@ export const useSettingsStore = create(
                 highContrast: false,
                 lightModeRingType: 'astrolabe',
                 useNewAvatars: false,
+                buttonThemeDark: 'cosmic',
+                buttonThemeLight: 'watercolor',
             }),
         }),
         {

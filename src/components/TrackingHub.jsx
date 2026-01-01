@@ -383,12 +383,16 @@ function StatsCard({ domain, stats, isLight }) {
                         }}
                     />
 
-                    {/* Intensity Orbs */}
+                    {/* Dual-Visual Orbs: Background = Intensity, Foreground = Precision */}
                     <div className="flex items-center justify-between px-2 relative z-20">
                         {(() => {
                             const days = stats.last7Days || [0, 0, 0, 0, 0, 0, 0];
                             const maxMinutes = Math.max(...days);
                             const peakIndex = days.indexOf(maxMinutes);
+
+                            // Precision proxy: use avgAccuracy as a domain-level quality metric
+                            // TODO: Track per-day precision when instrumentation is available
+                            const avgAccuracy = stats.avgAccuracy || null;
 
                             return days.map((minutes, i) => {
                                 const isPeakDay = (i === peakIndex && maxMinutes > 0);
@@ -412,8 +416,50 @@ function StatsCard({ domain, stats, isLight }) {
                                     scale = 0.9;
                                 }
 
+                                // Precision indicator logic (only show if practiced that day)
+                                let precisionIcon = null;
+                                if (minutes > 0 && avgAccuracy !== null) {
+                                    if (avgAccuracy >= 90) {
+                                        // High precision: Bullseye with high-contrast background
+                                        precisionIcon = (
+                                            <svg className="absolute inset-0 pointer-events-none" width="40" height="40" viewBox="0 0 40 40">
+                                                {/* High-contrast background circle */}
+                                                <circle cx="20" cy="20" r="13" fill={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.8)'} />
+                                                {/* Bullseye */}
+                                                <circle cx="20" cy="20" r="5" fill={isLight ? 'rgba(180, 120, 40, 1)' : 'rgba(255, 220, 120, 1)'} />
+                                                <circle cx="20" cy="20" r="8.5" fill="none" stroke={isLight ? 'rgba(180, 120, 40, 0.9)' : 'rgba(255, 220, 120, 0.9)'} strokeWidth="3" />
+                                                <circle cx="20" cy="20" r="12" fill="none" stroke={isLight ? 'rgba(180, 120, 40, 0.6)' : 'rgba(255, 220, 120, 0.6)'} strokeWidth="2" />
+                                            </svg>
+                                        );
+                                    } else if (avgAccuracy >= 70) {
+                                        // Medium precision: Crosshair with high-contrast background
+                                        precisionIcon = (
+                                            <svg className="absolute inset-0 pointer-events-none" width="40" height="40" viewBox="0 0 40 40">
+                                                {/* High-contrast background circle */}
+                                                <circle cx="20" cy="20" r="13" fill={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.8)'} />
+                                                {/* Crosshair */}
+                                                <line x1="20" y1="8" x2="20" y2="32" stroke={isLight ? 'rgba(180, 120, 40, 1)' : 'rgba(255, 220, 120, 1)'} strokeWidth="3" strokeLinecap="round" />
+                                                <line x1="8" y1="20" x2="32" y2="20" stroke={isLight ? 'rgba(180, 120, 40, 1)' : 'rgba(255, 220, 120, 1)'} strokeWidth="3" strokeLinecap="round" />
+                                                <circle cx="20" cy="20" r="11" fill="none" stroke={isLight ? 'rgba(180, 120, 40, 0.6)' : 'rgba(255, 220, 120, 0.6)'} strokeWidth="2" />
+                                            </svg>
+                                        );
+                                    } else if (avgAccuracy >= 50) {
+                                        // Low precision: Partial ring with high-contrast background
+                                        precisionIcon = (
+                                            <svg className="absolute inset-0 pointer-events-none" width="40" height="40" viewBox="0 0 40 40">
+                                                {/* High-contrast background circle */}
+                                                <circle cx="20" cy="20" r="13" fill={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.8)'} />
+                                                {/* Dashed ring */}
+                                                <circle cx="20" cy="20" r="11" fill="none" stroke={isLight ? 'rgba(180, 120, 40, 0.8)' : 'rgba(255, 220, 120, 0.8)'} strokeWidth="3.5" strokeDasharray="10 5" opacity="1" />
+                                            </svg>
+                                        );
+                                    }
+                                    // Below 50%: no precision indicator (just shows intensity orb)
+                                }
+
                                 return (
                                     <div key={i} className="relative flex flex-col items-center">
+                                        {/* Background: Intensity Orb */}
                                         <div
                                             className="w-10 h-10 bg-contain bg-center bg-no-repeat transition-transform duration-500"
                                             style={{
@@ -422,7 +468,10 @@ function StatsCard({ domain, stats, isLight }) {
                                                 filter: isLight ? (minutes === 0 ? 'grayscale(0.5) opacity(0.3)' : 'none') : 'none',
                                                 boxShadow: glow
                                             }}
-                                        />
+                                        >
+                                            {/* Foreground: Precision Overlay */}
+                                            {precisionIcon}
+                                        </div>
                                         {isPeakDay && (
                                             <div
                                                 className="absolute -top-4 text-[7px] font-bold text-amber-200/80 uppercase tracking-tighter"
