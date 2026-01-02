@@ -428,6 +428,24 @@ function PrecisionTimeline({ weekData, isLight, r, g, b }) {
                                                 src={`${import.meta.env.BASE_URL}assets/brush_dab_${(i % 4) + 1}.png`}
                                                 className="w-8 h-8 object-contain"
                                                 alt=""
+                                                style={{
+                                                    filter: (() => {
+                                                        // Calculate hue rotation from green (120deg) to target color
+                                                        const max = Math.max(r, g, b) / 255;
+                                                        const min = Math.min(r, g, b) / 255;
+                                                        let h = 0;
+                                                        if (max !== min) {
+                                                            const d = max - min;
+                                                            const rn = r / 255, gn = g / 255, bn = b / 255;
+                                                            if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+                                                            else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+                                                            else h = ((rn - gn) / d + 4) / 6;
+                                                        }
+                                                        const targetHue = Math.round(h * 360);
+                                                        const rotation = targetHue - 120; // Green baseline
+                                                        return `hue-rotate(${rotation}deg)`;
+                                                    })()
+                                                }}
                                             />
                                         </div>
                                     )
@@ -733,26 +751,26 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                             </span>
                         </div>
                     </div>
-                    {/* Painted Progress Bar with Muted Sage Green */}
+                    {/* Painted Progress Bar - Shortened to avoid feather */}
                     {isLight ? (
-                        <div className="w-full h-[28px] relative flex flex-col justify-center">
-                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 30" preserveAspectRatio="none">
+                        <div className="h-[28px] relative flex flex-col justify-center ml-auto" style={{ width: '50%' }}>
+                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
                                 <defs>
                                     <clipPath id="curriculumClip">
-                                        <rect x="0" y="0" width={Math.round(regimentProgress * 100) * 2} height="30" />
+                                        <rect x="0" y="0" width={Math.round(regimentProgress * 100)} height="30" />
                                     </clipPath>
                                 </defs>
                                 {/* Background stroke */}
                                 <path
-                                    d="M2,15 Q50,12 100,15 T198,15"
+                                    d="M2,15 Q25,12 50,15 T98,15"
                                     fill="none"
                                     stroke="rgba(139, 115, 85, 0.15)"
                                     strokeWidth="14"
                                     strokeLinecap="round"
                                 />
-                                {/* Progress stroke - MUTED SAGE GREEN */}
+                                {/* Progress stroke */}
                                 <path
-                                    d="M2,15 Q50,12 100,15 T198,15"
+                                    d="M2,15 Q25,12 50,15 T98,15"
                                     fill="none"
                                     stroke={`rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.85)`}
                                     strokeWidth="16"
@@ -907,7 +925,23 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                                                     src={`${import.meta.env.BASE_URL}assets/${config.dabAssets[i % config.dabAssets.length]}`}
                                                     className="w-7 h-7 object-contain"
                                                     style={{ 
-                                                        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))',
+                                                        filter: (() => {
+                                                            // Calculate hue rotation from green (120deg) to target color
+                                                            const r = currentDomain.r, g = currentDomain.g, b = currentDomain.b;
+                                                            const max = Math.max(r, g, b) / 255;
+                                                            const min = Math.min(r, g, b) / 255;
+                                                            let h = 0;
+                                                            if (max !== min) {
+                                                                const d = max - min;
+                                                                const rn = r / 255, gn = g / 255, bn = b / 255;
+                                                                if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+                                                                else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+                                                                else h = ((rn - gn) / d + 4) / 6;
+                                                            }
+                                                            const targetHue = Math.round(h * 360);
+                                                            const rotation = targetHue - 120; // Green baseline
+                                                            return `hue-rotate(${rotation}deg) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))`;
+                                                        })(),
                                                         mixBlendMode: 'multiply'
                                                     }}
                                                     alt=""
