@@ -150,6 +150,9 @@ export const useProgressStore = create(
                     pause_count: instrumentation?.pause_count ?? 0,
                     pause_total_ms: instrumentation?.pause_total_ms ?? 0,
                     switch_count: instrumentation?.switch_count ?? 0,
+                    
+                    // Layer 1: Post-Session Micro-Note (Journal)
+                    journal: null,
                 };
 
                 // Update streak
@@ -182,6 +185,9 @@ export const useProgressStore = create(
 
                 // Trigger weekly attention aggregation
                 triggerWeeklyAggregation();
+                
+                // Return the session so caller can use its ID
+                return newSession;
             },
 
             /**

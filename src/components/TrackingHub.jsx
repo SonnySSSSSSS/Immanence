@@ -9,6 +9,8 @@ import SevenDayTrendCurve from './SevenDayTrendCurve.jsx';
 import { plateauMaterial, plateauMaterialElevated, plateauMaterialClear, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from '../styles/cardMaterial.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
+import { SessionHistoryView } from './SessionHistoryView.jsx';
+import { AnimatePresence } from 'framer-motion';
 
 // Domain configuration - using icon names for Icon component
 const DOMAINS = [
@@ -113,53 +115,19 @@ function StatsCard({ domain, stats, isLight }) {
         <div
             ref={cardRef}
             className="relative rounded-3xl overflow-hidden"
-            style={isLight ? {
-                border: '2px solid transparent',
-                backgroundImage: `
-                  linear-gradient(rgba(255, 252, 245, 0.82), rgba(255, 252, 245, 0.82)),
-                  ${getDynamicGoldGradient(gradientAngle, true)}
-                `,
-                backgroundOrigin: 'padding-box, border-box',
-                backgroundClip: 'padding-box, border-box',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                boxShadow: `
-                  0 0 0 0.5px #AF8B2C,
-                  inset -1px -1px 0 0.5px rgba(255, 250, 235, 0.8),
-                  inset 1px 1px 0 0.5px rgba(101, 67, 33, 0.6),
-                  0 4px 24px rgba(100, 80, 50, 0.08),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.6)
-                `
-            } : {
-                ...plateauMaterialClear,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                backgroundOrigin: 'padding-box, border-box',
-                backgroundClip: 'padding-box, border-box',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                boxShadow: `
-                  ${plateauMaterialClear.boxShadow || ''},
-                  inset 0 0 20px rgba(253, 220, 145, 0.08),
-                  inset 0 1px 0 rgba(253, 220, 145, 0.1)
-                `
+            style={{
+                backgroundImage: isLight 
+                    ? `url(${import.meta.env.BASE_URL}mode_buttons/light_mode_tracking_card_1767105882932.png)`
+                    : `url(${import.meta.env.BASE_URL}mode_buttons/dark_mode_tracking_card_1767105843256.png)`,
+                backgroundSize: '100% 100%',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                border: 'none',
+                boxShadow: 'none'
             }}
         >
-            {/* Wave lines decoration - ambient background */}
-            <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                    backgroundImage: `url(${import.meta.env.BASE_URL}stats/wave-lines.png)`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'top center',
-                    backgroundRepeat: 'no-repeat',
-                    opacity: 0.35,
-                    mixBlendMode: 'screen',
-                    maskImage: 'linear-gradient(to bottom, white 0%, white 50%, transparent 70%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, white 0%, white 50%, transparent 70%)',
-                    zIndex: 1,
-                }}
-            />
-
+            {/* Parchment image already includes all background decoration */}
+            
             {/* Texture overlays */}
             <div style={{ ...noiseOverlayStyle, opacity: 0.02, zIndex: 2 }} />
             <div style={{ ...sheenOverlayStyle, zIndex: 2 }} />
@@ -615,6 +583,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
     } = useProgressStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const [showHistory, setShowHistory] = useState(false);
 
     // Get primary domain stats
     const primaryDomain = getPrimaryDomain();
@@ -639,6 +608,30 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
 
             {/* Single domain stats card */}
             <StatsCard domain={primaryDomainObj} stats={stats} isLight={isLight} />
+
+            {/* History Button */}
+            <button
+                onClick={() => setShowHistory(true)}
+                className="mt-6 w-full py-3 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                style={{
+                    backgroundColor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)',
+                    border: isLight ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.05)',
+                }}
+            >
+                <div
+                    className="text-[10px] uppercase font-black tracking-[0.2em]"
+                    style={{ color: isLight ? 'rgba(0,0,0,0.5)' : 'rgba(253,251,245,0.5)' }}
+                >
+                    Practice Archive
+                </div>
+            </button>
+
+            {/* Overlay View */}
+            <AnimatePresence>
+                {showHistory && (
+                    <SessionHistoryView onClose={() => setShowHistory(false)} />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

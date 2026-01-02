@@ -31,6 +31,8 @@ import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
 import { BreathPatternPreview } from "./BreathPatternPreview.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
+import { PostSessionJournal } from "./PostSessionJournal.jsx";
+import { useJournalStore } from "../state/journalStore.js";
 
 // DEV GALLERY MODE - now controlled via prop from App.jsx
 const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
@@ -225,6 +227,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Session summary state (Ritual Seal)
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
+
+  // Journal state
+  const [lastSessionId, setLastSessionId] = useState(null);
+  const { startMicroNote, pendingMicroNote } = useJournalStore();
 
   // Hover states for peripheral halos
   const [tier2Hovered, setTier2Hovered] = useState(false);
@@ -476,6 +482,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
     };
 
+    let recordedSession = null;
     try {
       // Map practice to domain for Path calculation
       let domain = 'breathwork';
@@ -485,8 +492,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
-      // Record in progress store (single source of truth)
-      useProgressStore.getState().recordSession({
+      // Record in progress store (single source of truth) and capture the returned session
+      recordedSession = useProgressStore.getState().recordSession({
         domain,
         duration: duration, // minutes
         metadata: {
@@ -534,6 +541,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         exitType,
       });
       setShowSummary(true);
+
+      // Trigger journal micro-note flow using the recorded session ID
+      if (recordedSession) {
+        setLastSessionId(recordedSession.id);
+        startMicroNote(recordedSession.id);
+      }
     }
   };
 
@@ -1907,6 +1920,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         currentPractice={practice}
         onSelectPractice={setPractice}
       />
+
+      {/* Post-Session Journal Modal */}
+      {pendingMicroNote && lastSessionId && (
+        <PostSessionJournal
+          sessionId={lastSessionId}
+          onComplete={() => {
+            setLastSessionId(null);
+            // Summary modal continues to show after journal
+          }}
+        />
+      )}
     </section>
   );
 }

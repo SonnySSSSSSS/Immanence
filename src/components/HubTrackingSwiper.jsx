@@ -1,17 +1,15 @@
 // src/components/HubTrackingSwiper.jsx
-// Swipeable container for Awareness Hub and Practice Hub cards
+// Swipeable container for Practice Hub and Application Hub cards
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AwarenessCompass } from './AwarenessCompass.jsx';
 import { TrackingHub } from './TrackingHub.jsx';
 import { ApplicationTrackingCard } from './ApplicationTrackingCard.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 const PAGES = [
-    { id: 0, name: 'Awareness Hub', component: AwarenessCompass },
-    { id: 1, name: 'Practice Hub', component: TrackingHub },
-    { id: 2, name: 'Application Hub', component: ApplicationTrackingCard }
+    { id: 0, name: 'Practice Hub', component: TrackingHub },
+    { id: 1, name: 'Application Hub', component: ApplicationTrackingCard }
 ];
 
 export function HubTrackingSwiper({ streakInfo }) {
@@ -55,7 +53,7 @@ export function HubTrackingSwiper({ streakInfo }) {
     return (
         <div className="w-full relative">
             {/* Page Indicators */}
-            <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-12">
                 {PAGES.map((p, index) => (
                     <button
                         key={p.id}
@@ -71,26 +69,6 @@ export function HubTrackingSwiper({ streakInfo }) {
                     >
                         {/* Cymatic glyph indicators */}
                         {index === 0 ? (
-                            // Awareness: Compass rose
-                            <svg width="20" height="20" viewBox="0 0 20 20">
-                                <circle cx="10" cy="10" r="6" fill="none"
-                                    stroke={index === page ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
-                                    strokeWidth={index === page ? "1.5" : "1"}
-                                    opacity={index === page ? 1 : 0.6} />
-                                <line x1="10" y1="4" x2="10" y2="7"
-                                    stroke={index === page ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
-                                    strokeWidth={index === page ? "1.5" : "1"} />
-                                <line x1="10" y1="13" x2="10" y2="16"
-                                    stroke={index === page ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
-                                    strokeWidth={index === page ? "1.5" : "1"} />
-                                <line x1="4" y1="10" x2="7" y2="10"
-                                    stroke={index === page ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
-                                    strokeWidth={index === page ? "1.5" : "1"} />
-                                <line x1="13" y1="10" x2="16" y2="10"
-                                    stroke={index === page ? 'var(--accent-color)' : (isLight ? 'rgba(90, 77, 60, 0.35)' : 'rgba(253,251,245,0.25)')}
-                                    strokeWidth={index === page ? "1.5" : "1"} />
-                            </svg>
-                        ) : index === 1 ? (
                             // Practice: Concentric circles
                             <svg width="20" height="20" viewBox="0 0 20 20">
                                 <circle cx="10" cy="10" r="7" fill="none"
@@ -157,25 +135,6 @@ export function HubTrackingSwiper({ streakInfo }) {
                     </motion.div>
                 </AnimatePresence>
             </div>
-
-            {/* Swipe Hint */}
-            {page === 0 && (
-                <div className="flex items-center justify-center gap-1 mt-3 opacity-30">
-                    <svg width="12" height="12" viewBox="0 0 12 12">
-                        <path d="M8 2 L4 6 L8 10" fill="none"
-                            stroke={isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)'}
-                            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div className="w-1 h-1 rounded-full" style={{ background: isLight ? 'rgba(90, 77, 60, 0.2)' : 'rgba(255, 255, 255, 0.2)' }}></div>
-                    <div className="w-1 h-1 rounded-full" style={{ background: isLight ? 'rgba(90, 77, 60, 0.2)' : 'rgba(255, 255, 255, 0.2)' }}></div>
-                    <div className="w-1 h-1 rounded-full" style={{ background: isLight ? 'rgba(90, 77, 60, 0.2)' : 'rgba(255, 255, 255, 0.2)' }}></div>
-                    <svg width="12" height="12" viewBox="0 0 12 12">
-                        <path d="M4 2 L8 6 L4 10" fill="none"
-                            stroke={isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)'}
-                            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </div>
-            )}
         </div>
     );
 }

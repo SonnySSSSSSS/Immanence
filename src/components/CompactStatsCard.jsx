@@ -2,8 +2,9 @@
 // Premium visual stats card with precision-of-time tracking
 // Targets the "ancient relic / celestial technology" aesthetic
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useProgressStore } from '../state/progressStore.js';
+import { useTrackingStore } from '../state/trackingStore.js';
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 
@@ -499,17 +500,48 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
     const domainStats = allStats[domain] || { count: 0, totalMinutes: 0 };
     const streak = streakInfo?.currentStreak || 0;
 
-    const mockWeekData = [
-        { precision: 'perfect', time: '12:03' },
-        { precision: 'perfect', time: '11:58' },
-        { precision: 'close', time: '12:45' },
-        { precision: 'missed', time: null },
-        { precision: 'perfect', time: '12:02' },
-        { precision: 'close', time: '13:15' },
-        { precision: 'missed', time: null },
-    ];
+    const domainConfig = {
+        wisdom: {
+            title: 'Cognitive Vipassana',
+            metricLabel: 'Focus Stability',
+            curriculumLabel: 'Sanctuary of Mind',
+            unit: '%',
+            r: 126, g: 217, b: 87 // Lime green for wisdom
+        },
+        breathwork: {
+            title: 'Rhythm Calibration',
+            metricLabel: 'Breath Precision',
+            curriculumLabel: 'Pranic Regulation',
+            unit: '%',
+            r: 80, g: 180, b: 230 // Air blue for breath
+        },
+        visualization: {
+            title: 'Radiant Schematics',
+            metricLabel: 'Vividness Depth',
+            curriculumLabel: 'Conceptual Mapping',
+            unit: '%',
+            r: 255, g: 180, b: 50 // Gold for visualization
+        }
+    };
 
-    const regimentProgress = mockWeekData.filter(d => d.precision !== 'missed').length / 7;
+    const currentDomain = domainConfig[domain] || domainConfig.wisdom;
+    const getTrajectory = useTrackingStore(s => s.getTrajectory);
+    const sessionsCount = useTrackingStore(s => s.sessions.length);
+    const logsCount = useTrackingStore(s => Object.keys(s.dailyLogs).length);
+    
+    const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount, logsCount]);
+    
+    const weekData = useMemo(() => trajectory.weeks.map(w => ({
+        precision: w.avgPrecision.breath !== null ? w.avgPrecision.breath : 'missed',
+        time: w.totalMinutes > 0 ? `${Math.floor(w.totalMinutes / 60)}h ${w.totalMinutes % 60}m` : null,
+        practiced: w.daysActive > 0
+    })), [trajectory]);
+
+    // Calculate actual regiment progress based on past 7 weeks or path completion
+    const activePath = useTrackingStore(s => s.activePath);
+    const regimentProgress = activePath 
+        ? (activePath.completedWeeks.length / activePath.totalWeeks)
+        : (weekData.filter(d => d.practiced).length / 7);
 
     useEffect(() => {
         if (cardRef.current) {
@@ -523,14 +555,37 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
 
     return (
         <div
-            ref={cardRef}
             className="w-full relative transition-all duration-700 ease-in-out"
             style={{
                 maxWidth: isSanctuary ? '600px' : '430px',
                 margin: '0 auto',
-                overflow: 'visible' // Allow background to bleed beyond
             }}
         >
+            {/* OUTER: Golden Border Frame - Never Clipped */}
+            <div
+                className="w-full relative"
+                style={{
+                    filter: isLight 
+                        ? 'drop-shadow(0 0 0 2px rgba(180, 140, 60, 0.5)) drop-shadow(0 0 0 1px rgba(220, 180, 100, 0.3)) drop-shadow(0 12px 40px rgba(120, 90, 60, 0.15)) drop-shadow(0 4px 16px rgba(200, 160, 110, 0.1))'
+                        : 'drop-shadow(0 30px 80px rgba(0, 0, 0, 0.8))'
+                }}
+            >
+                {/* MIDDLE: Parchment Background Container */}
+                <div
+                    ref={cardRef}
+                    className="w-full h-full relative"
+                    style={{
+                        overflow: 'visible',
+                    }}
+                >
+                    {/* INNER: Masked Content - Softened to 98% */}
+                    <div
+                        className="w-full h-full relative"
+                        style={{
+                            WebkitMaskImage: 'radial-gradient(ellipse 100% 100% at center, black 98%, transparent 100%)',
+                            maskImage: 'radial-gradient(ellipse 100% 100% at center, black 98%, transparent 100%)',
+                        }}
+                    >
             {/* Painted Surface Background Layer */}
             {isLight && (
                 <div
@@ -632,7 +687,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                                 textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none'
                             }}
                         >
-                            Curriculum: Morning Awareness
+                            Curriculum: {currentDomain.curriculumLabel}
                         </span>
                         <div className="flex items-center gap-2">
                             <span
@@ -668,7 +723,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                                 <path
                                     d="M2,15 Q50,12 100,15 T198,15"
                                     fill="none"
-                                    stroke="rgba(139, 159, 136, 0.85)"
+                                    stroke={`rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.85)`}
                                     strokeWidth="16"
                                     strokeLinecap="round"
                                     style={{ opacity: 0.9, filter: 'blur(0.3px)' }}
@@ -678,7 +733,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                             </svg>
                         </div>
                     ) : (
-                        <RegimentProgress progress={regimentProgress} isLight={isLight} r={126} g={217} b={87} />
+                        <RegimentProgress progress={regimentProgress} isLight={isLight} r={currentDomain.r} g={currentDomain.g} b={currentDomain.b} />
                     )}
                 </div>
 
@@ -760,7 +815,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                     )}
                     <div className="text-center mb-3">
                         <span className="text-[11px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: config.textMain }}>
-                            Practice Precision (Last 7 Days)
+                            {currentDomain.metricLabel} (Last 7 Days)
                         </span>
                         {/* Dashed separator */}
                         <div className="mt-2 flex justify-center">
@@ -777,20 +832,21 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
 
                     {/* Precision Markers with Vertical Grid - NARROWED & SNAPPED */}
                     <div className="flex justify-between items-end px-4 relative h-32 max-w-[280px] mx-auto">
-                        {mockWeekData.map((dayData, i) => {
+                        {weekData.map((dayData, i) => {
                             const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                            const isActive = dayData.precision !== 'missed';
+                            const isActive = dayData.practiced;
 
                             // 5-Row Precision Mapping (0%, 25%, 50%, 75%, 100%)
-                            // Slot 1 (Bottom/Late), Slot 2, Slot 3 (Center), Slot 4, Slot 5 (Top/Early)
                             let verticalSlot = 3; // Default to Center (On-Time)
+                            
+                            if (isActive) {
+                                if (dayData.precision >= 0.9) verticalSlot = 3;
+                                else if (dayData.precision >= 0.7) verticalSlot = 4;
+                                else if (dayData.precision >= 0.5) verticalSlot = 2;
+                                else if (dayData.precision >= 0.3) verticalSlot = 5;
+                                else verticalSlot = 1;
+                            }
 
-                            // Mock logic for demo purposes based on 'precision'
-                            if (dayData.precision === 'perfect') verticalSlot = 3;
-                            else if (dayData.precision === 'close') verticalSlot = i % 2 === 0 ? 4 : 2;
-                            else if (isActive) verticalSlot = i % 2 === 0 ? 5 : 1;
-
-                            // Map 1-5 to exact % positions relative to container
                             const slotPositions = {
                                 1: 12, // Bottom
                                 2: 38,
@@ -798,18 +854,15 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                                 4: 90,
                                 5: 116 // Top
                             };
-                            // NOTE: We keep pixel based snapping for now as flex alignment handles it better than %
                             const heightPercent = slotPositions[verticalSlot] || 64;
 
                             return (
                                 <div key={i} className="flex flex-col items-center relative flex-1">
-                                    {/* Vertical grid line */}
                                     <div
                                         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-20 opacity-20"
                                         style={{ background: config.textMain }}
                                     />
 
-                                    {/* Textured blob marker */}
                                     <div className="relative mb-2" style={{ height: '60px', display: 'flex', alignItems: 'flex-end' }}>
                                         {isLight && isActive ? (
                                             <div
@@ -822,7 +875,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                                                 <img
                                                     src={`${import.meta.env.BASE_URL}assets/${config.dabAssets[i % config.dabAssets.length]}`}
                                                     className="w-7 h-7 object-contain"
-                                                    style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))' }}
+                                                    style={{ 
+                                                        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))',
+                                                        mixBlendMode: 'multiply'
+                                                    }}
                                                     alt=""
                                                 />
                                             </div>
@@ -831,8 +887,9 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                                                 <div
                                                     className="w-3 h-3 rounded-full border-2 transition-all duration-300"
                                                     style={{
-                                                        background: config.accent,
-                                                        borderColor: config.accent,
+                                                        background: `rgb(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b})`,
+                                                        borderColor: `rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.5)`,
+                                                        boxShadow: `0 0 10px rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.3)`,
                                                         transform: `translateY(-${heightPercent}px)`
                                                     }}
                                                 />
@@ -865,7 +922,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                     </span>
                 </div>
             </div>
+                </div>
+            </div>
         </div>
+    </div>
     );
 }
 

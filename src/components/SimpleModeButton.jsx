@@ -63,27 +63,31 @@ export function SimpleModeButton({ title, onClick, icon }) {
             <div
                 className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
                 style={{
-                    width: '70px',
-                    height: '70px',
+                    width: '76px',
+                    height: '76px',
                     borderRadius: '50%',
                     backgroundImage: `url(${getBackgroundImage()})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
+                    border: isLight ? '2px solid rgba(180, 140, 60, 0.7)' : '2px solid rgba(255, 215, 120, 0.2)',
                     boxShadow: isLight
-                        ? '0 4px 12px rgba(100, 80, 60, 0.15), 0 2px 4px rgba(100, 80, 60, 0.1)'
-                        : '0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3)',
+                        ? '0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9)'
+                        : '0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)',
+                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+                    e.currentTarget.style.borderColor = isLight ? 'rgba(200, 160, 80, 0.9)' : 'rgba(255, 215, 120, 0.4)';
                     e.currentTarget.style.boxShadow = isLight
-                        ? '0 8px 20px rgba(100, 80, 60, 0.25), 0 4px 8px rgba(100, 80, 60, 0.15)'
-                        : '0 8px 24px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35)';
+                        ? '0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2)'
+                        : '0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5)';
                 }}
                 onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                    e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 60, 0.7)' : 'rgba(255, 215, 120, 0.2)';
                     e.currentTarget.style.boxShadow = isLight
-                        ? '0 4px 12px rgba(100, 80, 60, 0.15), 0 2px 4px rgba(100, 80, 60, 0.1)'
-                        : '0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3)';
+                        ? '0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9)'
+                        : '0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)';
                 }}
             >
                 {/* Dark overlay for text legibility (dark mode only) */}

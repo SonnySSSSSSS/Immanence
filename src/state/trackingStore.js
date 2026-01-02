@@ -228,6 +228,18 @@ export const useTrackingStore = create(
                     // Circuit data
                     circuitExercises: sessionData.circuitExercises || null,
 
+                    // Layer 1: Post-Session Micro-Note (Journal)
+                    journal: sessionData.journal || null,
+                    /*
+                    journal: {
+                        attentionQuality: 'scattered' | 'settling' | 'stable' | 'absorbed' | null,
+                        technicalNote: string | null,     // 140 char max
+                        resistanceFlag: boolean,
+                        challengeTag: 'physical' | 'attention' | 'emotional' | 'consistency' | 'technique' | null,
+                        submittedAt: timestamp | null,
+                    }
+                    */
+
                     // Pass-through metadata
                     metadata: sessionData.metadata || {},
                 };
