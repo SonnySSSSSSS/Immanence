@@ -19,7 +19,7 @@ export function SessionHistoryView({ onClose }) {
     const isLight = colorScheme === 'light';
     
     const circuitEntries = useCircuitJournalStore(s => s.getAllEntries());
-    const sessionEntries = useProgressStore(s => s.sessions.filter(s => s.journal));
+    const sessionEntries = useProgressStore(s => s.getSessionsWithJournal());
     const { deleteSession } = useProgressStore();
 
     const [activeTab, setActiveTab] = useState('all');

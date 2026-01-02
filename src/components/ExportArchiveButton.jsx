@@ -11,7 +11,7 @@ import { useProgressStore } from '../state/progressStore';
 
 export function ExportArchiveButton({ entries: customEntries }) {
     const circuitEntries = useCircuitJournalStore(s => s.getAllEntries());
-    const sessionEntries = useProgressStore(s => s.sessions.filter(s => s.journal));
+    const sessionEntries = useProgressStore(s => s.getSessionsWithJournal());
     
     // Use custom entries if provided, otherwise combine both stores
     const entries = customEntries || [...circuitEntries, ...sessionEntries];

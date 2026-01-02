@@ -7,7 +7,6 @@ import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { VipassanaVariantSelector } from "./vipassana/VipassanaVariantSelector.jsx";
 import { RitualPortal } from "./RitualPortal.jsx";
-import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
@@ -793,18 +792,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // ───────────────────────────────────────────────────────────
   if (isRunning) {
     // RITUAL MODE - Different running view
-    if (practice === "Ritual" && activeRitual) {
+    if (practice === "Ritual") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
           <RitualPortal
-            ritual={activeRitual}
-            currentStepIndex={currentStepIndex}
-            onNextStep={handleNextStep}
             onComplete={handleRitualComplete}
             onStop={handleStop}
-            onSwitch={instrumentation.recordSwitch}
-            onPause={instrumentation.recordPause}
-            onAliveSignal={instrumentation.recordAliveSignal}
           />
         </section>
       );
@@ -830,16 +823,56 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
 
       return (
-        <VipassanaVisual
-          variant={vipassanaVariant}
-          wallpaperId={vipassanaTheme}
-          themeId={vipassanaElement}
-          durationSeconds={duration * 60}
-          stage={theme.stage || 'flame'}
-          onComplete={handleExerciseComplete}
-          onExit={activeCircuitId ? handleCircuitComplete : handleStop}
-          onCancel={handleStop}
-        />
+        <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
+          <div className="flex-1 flex items-center justify-center w-full relative">
+            <VipassanaVisual
+              isActive={isRunning}
+              variant={vipassanaVariant}
+              wallpaperId={vipassanaTheme}
+              themeId={vipassanaElement}
+              durationSeconds={duration * 60}
+              stage={theme.stage || 'flame'}
+              onComplete={handleExerciseComplete}
+              onExit={activeCircuitId ? handleCircuitComplete : handleStop}
+              onCancel={handleStop}
+            />
+          </div>
+
+          <div className="flex flex-col items-center z-50 mt-8">
+            <button
+              onClick={handleStop}
+              className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "11px",
+                letterSpacing: "var(--tracking-mythic)",
+                textTransform: "uppercase",
+                fontWeight: 600,
+                background: buttonBg,
+                color: "#050508",
+                boxShadow: radialGlow
+                  ? `${radialGlow}, ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`
+                  : `0 0 24px var(--accent-30), ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`,
+                borderRadius: "999px",
+              }}
+            >
+              <span>Stop</span>
+            </button>
+            <div
+              className="mt-5"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "12px",
+                fontWeight: 600,
+                letterSpacing: "var(--tracking-mythic)",
+                textTransform: "uppercase",
+                color: "var(--text-primary)",
+              }}
+            >
+              {formatTime(timeLeft)}
+            </div>
+          </div>
+        </section>
       );
     }
 
@@ -1502,12 +1535,36 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             </button>
           </div>
 
-          {/* RITUAL MODE: Show deck instead of duration/timer/start */}
+          {/* RITUAL MODE: Simple begin button, no configuration */}
           {practice === "Ritual" ? (
-            <RitualSelectionDeck
-              onSelectRitual={handleSelectRitual}
-              selectedRitualId={activeRitual?.id}
-            />
+            <div className="flex flex-col items-center pt-12 pb-8">
+              <button
+                onClick={handleStart}
+                disabled={isStarting}
+                className="group relative px-16 py-5 rounded-full transition-all duration-300 overflow-hidden"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  letterSpacing: "var(--tracking-mythic)",
+                  textTransform: "uppercase",
+                  background: isStarting
+                    ? 'linear-gradient(135deg, rgba(212,184,122,0.4) 0%, rgba(160,120,85,0.3) 100%)'
+                    : 'linear-gradient(135deg, rgba(212,184,122,0.25) 0%, rgba(160,120,85,0.2) 100%)',
+                  color: isStarting ? 'rgba(212,184,122,0.8)' : 'var(--accent-color)',
+                  border: '1px solid var(--accent-30)',
+                  boxShadow: isStarting
+                    ? '0 0 40px var(--accent-20), inset 0 0 30px var(--accent-10)'
+                    : '0 0 25px var(--accent-15), inset 0 0 20px var(--accent-08)',
+                  transform: isStarting ? 'scale(1.02)' : 'scale(1)',
+                  cursor: isStarting ? 'default' : 'pointer',
+                }}
+                onMouseEnter={(e) => !isStarting && (e.currentTarget.style.boxShadow = '0 0 35px var(--accent-25), inset 0 0 25px var(--accent-12)')}
+                onMouseLeave={(e) => !isStarting && (e.currentTarget.style.boxShadow = '0 0 25px var(--accent-15), inset 0 0 20px var(--accent-08)')}
+              >
+                {isStarting ? 'Opening Portal...' : '✦ Begin Ritual'}
+              </button>
+            </div>
           ) : (
             <>
               {/* ═══════════════════════════════════════════════════════════ */}

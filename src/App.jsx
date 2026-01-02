@@ -129,7 +129,7 @@ function App() {
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
-  const [showFxGallery, setShowFxGallery] = useState(true); // FX Gallery dev mode
+  const showFxGallery = true; // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
   const [isSigilTrackerOpen, setIsSigilTrackerOpen] = useState(false);
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);

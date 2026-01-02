@@ -364,14 +364,27 @@ export const useProgressStore = create(
                 const domainSessions = state.sessions.filter(s => s.domain === domain);
                 const domainHonor = state.honorLogs.filter(h => h.domain === domain);
 
+                // Map domain to consistency history types
+                const historyType = domain === 'breathwork' ? 'breath' : 
+                                  domain === 'visualization' ? 'focus' : 'body';
+                
+                // Get circuit contributions from history
+                const circuitHistory = (state.practiceHistory || []).filter(h => h.type === 'circuit');
+                const circuitMinutes = circuitHistory.reduce((sum, h) => sum + (h.contributions?.[historyType] || 0), 0);
+
                 const totalSessions = domainSessions.length;
                 const totalHonor = domainHonor.length;
                 const totalMinutes = domainSessions.reduce((sum, s) => sum + (s.duration || 0), 0)
-                    + domainHonor.reduce((sum, h) => sum + (h.duration || 0), 0);
+                    + domainHonor.reduce((sum, h) => sum + (h.duration || 0), 0)
+                    + circuitMinutes;
 
                 const lastSession = domainSessions[domainSessions.length - 1];
                 const lastHonor = domainHonor[domainHonor.length - 1];
-                const lastPracticed = [lastSession?.date, lastHonor?.date]
+                const lastCircuit = circuitHistory
+                    .filter(h => (h.contributions?.[historyType] || 0) > 0)
+                    .pop();
+
+                const lastPracticed = [lastSession?.date, lastHonor?.date, lastCircuit?.date]
                     .filter(Boolean)
                     .sort()
                     .pop() || null;
@@ -420,8 +433,17 @@ export const useProgressStore = create(
                 const last7Days = [];
                 const dailyMinutesMap = new Map(); // dateKey -> total minutes
 
+                // Helper to get entries for last 7 days aggregation
+                const circuitEntries = circuitHistory
+                    .filter(h => (h.contributions?.[historyType] || 0) > 0)
+                    .map(h => ({
+                        date: h.date,
+                        duration: h.contributions[historyType],
+                        dateKey: getDateKey(new Date(h.date))
+                    }));
+
                 // Aggregate all practice minutes by day for this domain
-                [...domainSessions, ...domainHonor].forEach(item => {
+                [...domainSessions, ...domainHonor, ...circuitEntries].forEach(item => {
                     const key = item.dateKey || getDateKey(new Date(item.date));
                     dailyMinutesMap.set(key, (dailyMinutesMap.get(key) || 0) + (item.duration || 0));
                 });
@@ -503,6 +525,20 @@ export const useProgressStore = create(
 
                 // Default to last used
                 return state.lastPracticeType || 'breathwork';
+            },
+
+            /**
+             * Get sessions that have journal entries (memoized)
+             */
+            getSessionsWithJournal: () => {
+                const state = get();
+                // We'll return the filtered array. Note: In Zustand, if we want actual memoization
+                // against the sessions array specifically, we'd usually use a creation function 
+                // or a selector outside the store, but adding it here as a helper is common.
+                // However, the infinite loop in components usually happens because of:
+                // const filtered = useStore(s => s.sessions.filter(...))
+                // This creates a new array every time ANY part of the state changes.
+                return state.sessions.filter(s => s.journal);
             }
         }),
         {

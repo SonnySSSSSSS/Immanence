@@ -1,365 +1,318 @@
-// src/components/RitualPortal.jsx
-// "The Stage" - Oculus-style ritual interface with Focus Mode
-// Displays ritual steps with SVG HUD frame, sigil progress, and gemstone buttons
-// Now with scrying mirror image masking and glow bleed
+import React, { useState, useEffect } from 'react';
+import { useRitualStore } from '../state/ritualStore';
+import { RitualStepContainer } from './ritual/RitualStepContainer';
+import { RitualProgressBar } from './ritual/RitualProgressBar';
+import { RitualAudioPrompt } from './ritual/RitualAudioPrompt';
+import { InstructionalOverlay } from './ritual/InstructionalOverlay';
+import { VisualMapDisplay } from './ritual/VisualMapDisplay';
+import { MemorySelector } from './ritual/MemorySelector';
+import { CameraCapture } from './ritual/CameraCapture';
+import { ThoughtObservation } from './ritual/ThoughtObservation';
+import { SummaryView } from './ritual/SummaryView';
+import { BreathingRing } from './BreathingRing';
+import { logRitualResult } from '../services/ritualService';
+import { useDisplayModeStore } from '../state/displayModeStore';
+import { loadPreferences } from '../state/practiceStore';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { OculusRing } from './OculusRing.jsx';
-import { SigilSlider } from './SigilSlider.jsx';
-import { audioGuidance } from '../services/audioGuidanceService.js';
+const BASE = import.meta.env.BASE_URL || '/';
 
-export function RitualPortal({
-    ritual,
-    currentStepIndex,
-    onNextStep,
-    onComplete,
-    onStop,
-    onSwitch,
-    onPause,
-    onAliveSignal,
-}) {
-    const [stepTimeRemaining, setStepTimeRemaining] = useState(0);
-    const [cueIndex, setCueIndex] = useState(0);
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [canAdvance, setCanAdvance] = useState(false);
-    const timerRef = useRef(null);
-    const cueTimerRef = useRef(null);
-
-    const currentStep = ritual?.steps?.[currentStepIndex];
-    const totalSteps = ritual?.steps?.length || 0;
-    const isLastStep = currentStepIndex >= totalSteps - 1;
-
-    // Initialize step timer
-    useEffect(() => {
-        if (!currentStep) return;
-
-        setStepTimeRemaining(currentStep.duration || 60);
-        setCueIndex(0);
-        setImageLoaded(false);
-        setCanAdvance(false); // Reset advance permission for new step
-
-        // Clear existing timers
-        if (timerRef.current) clearInterval(timerRef.current);
-        if (cueTimerRef.current) clearInterval(cueTimerRef.current);
-
-        // Countdown timer
-        timerRef.current = setInterval(() => {
-            setStepTimeRemaining(prev => {
-                if (prev <= 1) {
-                    // Auto-advance or complete
-                    if (isLastStep) {
-                        onComplete?.();
-                    } else {
-                        onNextStep?.();
-                    }
-                    return 0;
-                }
-
-                // Enable advance button after 50% of duration has elapsed
-                const stepDuration = currentStep.duration || 60;
-                const halfwayPoint = stepDuration * 0.5;
-                if (!canAdvance && (stepDuration - prev) >= halfwayPoint) {
-                    setCanAdvance(true);
-                }
-
-                return prev - 1;
-            });
-        }, 1000);
-
-        // Rotate sensory cues every 8 seconds
-        if (currentStep.sensoryCues?.length > 1) {
-            cueTimerRef.current = setInterval(() => {
-                setCueIndex(prev => (prev + 1) % currentStep.sensoryCues.length);
-            }, 8000);
+const RITUAL_STEPS = [
+    {
+        id: 1,
+        title: "Incense + Setup",
+        background: `${BASE}assets/ritual/incense_bg_v1.jpg`,
+        audio: `${BASE}assets/audio/ritual_step_1.mp3`,
+        guide: {
+            image: `${BASE}assets/ritual/guide_lighting_incense.png`,
+            caption: "Light your incense. Focus on the rising smoke as a symbolic offering of your attention."
         }
+    },
+    {
+        id: 2,
+        title: "Visual Map Review",
+        background: `${BASE}assets/ritual/visual_map_v1.png`,
+        audio: `${BASE}assets/audio/ritual_step_2.mp3`,
+        guide: {
+            image: `${BASE}assets/ritual/guide_reviewing_map.png`,
+            caption: "Gaze upon the emotional map. See your feelings as distinct nodes within this container."
+        }
+    },
+    {
+        id: 3,
+        title: "Container Holding",
+        background: `${BASE}assets/ritual/visual_map_v1.png`,
+        audio: `${BASE}assets/audio/ritual_step_3.mp3`,
+        guide: {
+            image: `${BASE}assets/ritual/guide_holding_container.png`,
+            caption: "Imagine your hands gently cradling this container. Feel the weight and warmth of your awareness."
+        }
+    },
+    {
+        id: 4,
+        title: "Random Select + Feel",
+        background: `${BASE}assets/ritual/visual_map_v1.png`,
+        audio: `${BASE}assets/audio/ritual_step_4.mp3`,
+        guide: {
+            image: `${BASE}assets/ritual/guide_selecting_memory.png`,
+            caption: "Allow a random memory to emerge. Witness it without judgment or entanglement."
+        }
+    },
+    {
+        id: 5,
+        title: "3rd Person Photo",
+        background: `${BASE}assets/ritual/incense_bg_v1.jpg`,
+        audio: `${BASE}assets/audio/ritual_step_5.mp3`,
+        guide: {
+            image: `${BASE}assets/ritual/guide_taking_photo.png`,
+            caption: "Take a photo of yourself from a 3rd-person perspective. Observe the witness witnessing."
+        }
+    },
+    {
+        id: 6,
+        title: "Transition to Journal",
+        background: `${BASE}assets/ritual/journaling_bg_v1.jpg`,
+        audio: `${BASE}assets/audio/ritual_step_6.mp3`,
+        guide: null
+    },
+    {
+        id: 7,
+        title: "Seal the Experience",
+        background: `${BASE}assets/ritual/journaling_bg_v1.jpg`,
+        audio: null,
+        guide: null
+    }
+];
 
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-            if (cueTimerRef.current) clearInterval(cueTimerRef.current);
-        };
-    }, [currentStepIndex, currentStep, isLastStep, onNextStep, onComplete]);
+export function RitualPortal({ onComplete, onStop }) {
+    const { 
+        currentStep, 
+        startRitual, 
+        advanceStep, 
+        status, 
+        resetRitual,
+        selectedMemory,
+        photoUrl
+    } = useRitualStore();
+    const [showGuide, setShowGuide] = useState(true);
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
 
-    // Audio guidance - speak instructions when step changes
     useEffect(() => {
-        if (!currentStep) return;
+        if (status === 'idle') {
+            startRitual();
+        }
+    }, [status, startRitual]);
 
-        // Speak the instruction after a brief delay (let visual transition settle)
-        const speakTimeout = setTimeout(() => {
-            audioGuidance.speak(currentStep.instruction);
-        }, 800);
-
-        return () => {
-            clearTimeout(speakTimeout);
-            audioGuidance.stop(); // Stop audio when step changes or component unmounts
-        };
-    }, [currentStepIndex, currentStep]);
-
-    const formatTime = (seconds) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
+    const handleStepComplete = () => {
+        if (currentStep < 6) {
+            advanceStep();
+            setShowGuide(true);
+        } else if (currentStep === 6) {
+            // Log results BEFORE moving to the final summary step
+            const ritualState = useRitualStore.getState();
+            logRitualResult(ritualState);
+            advanceStep();
+            setShowGuide(false);
+        } else {
+            // Final completion from step 7
+            onComplete();
+        }
     };
 
-    if (!ritual || !currentStep) {
-        return (
-            <div className="flex items-center justify-center h-64 text-white/50">
-                No ritual loaded
-            </div>
-        );
-    }
+    const currentStepConfig = RITUAL_STEPS[currentStep - 1];
 
-    const currentCue = currentStep.sensoryCues?.[cueIndex];
-    const stepNames = ritual.steps?.map(s => s.name) || [];
+    if (!currentStepConfig) return null;
+
+    const renderStepContent = () => {
+        switch(currentStep) {
+            case 1:
+                const preferences = loadPreferences();
+                const breathPattern = preferences.pattern || { inhale: 4, hold1: 4, exhale: 4, hold2: 4 };
+                return (
+                    <div className="flex flex-col items-center gap-2 w-full">
+                        {/* Breathing Ring - Visual only, no FX */}
+                        <div className="scale-75">
+                            <BreathingRing 
+                                breathPattern={{
+                                    inhale: breathPattern.inhale,
+                                    holdTop: breathPattern.hold1,
+                                    exhale: breathPattern.exhale,
+                                    holdBottom: breathPattern.hold2
+                                }}
+                                fxPreset="none"
+                                pathId={null}
+                                onTap={null}
+                                onCycleComplete={null}
+                            />
+                        </div>
+                        <p className="italic text-sm mt-4" style={{ color: isLight ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)' }}>
+                            Watch the smoke rise with each breath...
+                        </p>
+                    </div>
+                );
+            case 2:
+            case 3:
+                return <VisualMapDisplay isPulsing={currentStep === 3} />;
+            case 4:
+                return <MemorySelector onSelect={() => {}} />;
+            case 5:
+                if (photoUrl) return <ThoughtObservation photoUrl={photoUrl} onComplete={handleStepComplete} />;
+                return <CameraCapture onCapture={() => {}} />;
+            case 6:
+                return (
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="h-48 w-48 rounded-full border flex items-center justify-center"
+                            style={{
+                                borderColor: isLight ? 'rgba(160,120,85,0.2)' : 'rgba(212,184,122,0.2)',
+                                backgroundColor: isLight ? 'rgba(160,120,85,0.05)' : 'rgba(212,184,122,0.05)',
+                                boxShadow: isLight 
+                                    ? '0 0 30px rgba(160,120,85,0.15)' 
+                                    : '0 0 30px rgba(212,184,122,0.2)'
+                            }}
+                        >
+                            <span className="text-5xl">✍️</span>
+                        </div>
+                        <p className="font-display tracking-widest text-lg"
+                            style={{ color: isLight ? '#A07855' : '#D4B87A' }}
+                        >
+                            THE SEAL IS PREPARED
+                        </p>
+                    </div>
+                );
+            case 7:
+                return (
+                    <SummaryView 
+                        memory={selectedMemory} 
+                        photoUrl={photoUrl} 
+                        onComplete={onComplete} 
+                    />
+                );
+            default:
+                return null;
+        }
+    };
 
     return (
-        <div className="flex flex-col items-center w-full max-w-md px-4 ritual-portal-enter">
-
-            {/* ═══════════════════════════════════════════════════════════════
-          THE OCULUS - Central HUD Frame (Scrying Mirror)
-          ═══════════════════════════════════════════════════════════════ */}
-            <div className="mt-12">
-                <OculusRing
-                    size={494}
-                    totalSteps={totalSteps}
-                    currentStep={currentStepIndex}
-                >
-                    {/* Scrying Mirror Content - Image with glow bleed */}
-                    <div className="relative w-full h-full flex items-center justify-center overflow-visible">
-
-                        {/* Background glow layer - bleeds outside the mask */}
-                        <div
-                            className="absolute inset-[-20%] rounded-full pointer-events-none"
-                            style={{
-                                background: 'radial-gradient(circle at center, var(--accent-20) 0%, transparent 50%)',
-                                filter: 'blur(20px)',
-                            }}
+        <div className="fixed inset-0 z-50 flex flex-col"
+            style={{ backgroundColor: isLight ? '#F5F5F0' : '#000000' }}
+        >
+            <RitualStepContainer 
+                backgroundUrl={currentStepConfig.background} 
+                stepNumber={currentStep}
+            >
+                <div className="flex flex-col items-center gap-8 text-center w-full">
+                    <motion.div
+                        key={`header-${currentStep}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center gap-2"
+                    >
+                        <h2 className="text-4xl font-display tracking-widest uppercase mb-1"
+                            style={{ color: isLight ? '#A07855' : '#D4B87A' }}
+                        >
+                            {currentStepConfig.title}
+                        </h2>
+                        <div className="h-0.5 w-12 rounded-full"
+                            style={{ backgroundColor: isLight ? 'rgba(160,120,85,0.3)' : 'rgba(212,184,122,0.3)' }}
                         />
+                    </motion.div>
 
-                        {/* Image container with soft edge mask */}
-                        <div
-                            className="relative w-full h-full rounded-full overflow-hidden"
-                            style={{
-                                maskImage: 'radial-gradient(circle at center, black 60%, transparent 100%)',
-                                WebkitMaskImage: 'radial-gradient(circle at center, black 60%, transparent 100%)',
-                            }}
-                        >
-                            {currentStep.image && (
-                                <img
-                                    src={`${import.meta.env.BASE_URL}${currentStep.image}`}
-                                    alt={currentStep.name}
-                                    className="w-full h-full object-cover transition-opacity duration-500"
-                                    style={{
-                                        opacity: imageLoaded ? 0.95 : 0,
-                                        filter: 'saturate(1.1) contrast(1.05)',
-                                    }}
-                                    onLoad={() => setImageLoaded(true)}
-                                    onError={(e) => {
-                                        e.target.style.display = 'none';
-                                        setImageLoaded(false);
-                                    }}
-                                />
-                            )}
-                        </div>
-
-                        {/* Fallback glyph when no image or loading */}
-                        {(!currentStep.image || !imageLoaded) && (
-                            <div
-                                className="absolute text-7xl animate-pulse-slow"
-                                style={{
-                                    color: 'var(--accent-60)',
-                                    textShadow: '0 0 40px var(--accent-40), 0 0 80px var(--accent-30)',
-                                    filter: 'drop-shadow(0 0 30px var(--accent-color))',
-                                }}
-                            >
-                                {ritual.icon || '☉'}
-                            </div>
-                        )}
-
-                        {/* Timer overlay (bottom of frame) */}
-                        <div
-                            className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full"
-                            style={{
-                                background: 'rgba(0,0,0,0.8)',
-                                border: '1px solid var(--accent-40)',
-                                backdropFilter: 'blur(8px)',
-                                boxShadow: '0 0 20px rgba(0,0,0,0.5)',
-                            }}
-                        >
-                            <span
-                                style={{
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '20px',
-                                    fontWeight: 600,
-                                    letterSpacing: 'var(--tracking-wide)',
-                                    color: stepTimeRemaining < 30 ? '#fcd34d' : '#fefce8',
-                                    textShadow: '0 0 10px var(--accent-60)',
-                                }}
-                            >
-                                {formatTime(stepTimeRemaining)}
-                            </span>
-                        </div>
+                    <div className="w-full flex justify-center py-4">
+                        {renderStepContent()}
                     </div>
-                </OculusRing>
-            </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-          SIGIL SLIDER - Rune Progress Track (Icons Only)
-          ═══════════════════════════════════════════════════════════════ */}
-            <div className="mt-6 w-full">
-                <SigilSlider
-                    totalSteps={totalSteps}
-                    currentStep={currentStepIndex}
-                    variant="planetary"
-                    stepNames={stepNames}
-                />
-            </div>
-
-            {/* ═══════════════════════════════════════════════════════════════
-          INSTRUCTION TEXT
-          ═══════════════════════════════════════════════════════════════ */}
-            <div className="mt-4 text-center">
-                <div
-                    className="max-w-sm mx-auto mb-3"
-                    style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '14px',
-                        lineHeight: 1.7,
-                        color: 'rgba(253,251,245,0.9)',
-                    }}
-                >
-                    {currentStep.instruction}
+                    {/* Step Navigation */}
+                    {((currentStep < 5 && (currentStep !== 4 || selectedMemory)) || (currentStep === 6)) && (
+                        <motion.button 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            onClick={handleStepComplete}
+                            className="group relative px-12 py-4 rounded-full bg-transparent border transition-all active:scale-95 overflow-hidden"
+                            style={{
+                                borderColor: isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
+                                color: isLight ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.9)'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = isLight ? '#A07855' : '#D4B87A';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)';
+                            }}
+                        >
+                            <span className="relative z-10 text-sm font-black tracking-widest uppercase group-hover:transition-colors"
+                                style={{
+                                    color: 'inherit'
+                                }}
+                            >
+                                {currentStep === 6 ? "Begin Journaling" : "Proceed"}
+                            </span>
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                style={{ backgroundColor: isLight ? 'rgba(160,120,85,0.05)' : 'rgba(212,184,122,0.05)' }}
+                            />
+                        </motion.button>
+                    )}
                 </div>
-            </div>
+            </RitualStepContainer>
 
-            {/* ═══════════════════════════════════════════════════════════════
-          SENSORY CUE - Rotating guidance text
-          ═══════════════════════════════════════════════════════════════ */}
-            {currentCue && (
-                <div
-                    key={cueIndex}
-                    className="text-center mb-3 px-6 max-w-sm animate-fade-in"
-                    style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '11px',
-                        fontStyle: 'italic',
-                        color: 'var(--accent-70)',
-                        minHeight: '36px',
-                        borderLeft: '2px solid var(--accent-40)',
-                        paddingLeft: '14px',
-                        textAlign: 'left',
-                    }}
-                >
-                    "{currentCue}"
-                </div>
-            )}
-
-            {/* ═══════════════════════════════════════════════════════════════
-          ACTION BUTTONS - Gemstone Style
-          ═══════════════════════════════════════════════════════════════ */}
-            <div className="flex gap-4 mt-6">
-                {/* Abandon button - Subdued */}
-                <button
-                    onClick={() => {
-                        onAliveSignal?.();
-                        onStop?.();
-                    }}
-                    className="px-5 py-2.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
-                    style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        textTransform: 'uppercase',
-                        background: 'linear-gradient(180deg, rgba(60,60,60,0.8) 0%, rgba(30,30,30,0.9) 100%)',
-                        color: 'rgba(253,251,245,0.5)',
-                        border: '1px solid rgba(253,251,245,0.12)',
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
-                    }}
-                >
-                    Dissolve
-                </button>
-
-                {/* NEXT STEP / TRANSMUTE button - Gemstone PBR style */}
-                <button
-                    onClick={() => {
-                        if (!canAdvance) return; // Prevent advance if not ready
-                        // Track switch for attention path instrumentation
-                        onSwitch?.();
-                        onAliveSignal?.();
-                        if (isLastStep) {
-                            onComplete?.();
-                        } else {
-                            onNextStep?.();
-                        }
-                    }}
-                    disabled={!canAdvance}
-                    className="px-7 py-2.5 rounded-full transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95"
-                    style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '11px',
-                        letterSpacing: 'var(--tracking-mythic)',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                        background: canAdvance
-                            ? 'linear-gradient(180deg, #fcd34d 0%, #b45309 100%)'
-                            : 'linear-gradient(180deg, rgba(60,60,60,0.5) 0%, rgba(30,30,30,0.6) 100%)',
-                        color: canAdvance ? '#1a0a04' : 'rgba(253,251,245,0.3)',
-                        border: canAdvance ? '1px solid #fef3c7' : '1px solid rgba(253,251,245,0.1)',
-                        boxShadow: canAdvance ? `
-              0 0 20px rgba(252, 211, 77, 0.5),
-              0 0 40px rgba(252, 211, 77, 0.25),
-              inset 0 2px 6px rgba(255, 255, 255, 0.6),
-              inset 0 -2px 4px rgba(0, 0, 0, 0.2)
-            ` : 'inset 0 1px 0 rgba(255,255,255,0.05)',
-                        cursor: canAdvance ? 'pointer' : 'not-allowed',
-                        opacity: canAdvance ? 1 : 0.5,
-                        pointerEvents: canAdvance ? 'auto' : 'none',
-                    }}
-                >
-                    {isLastStep ? '✦ TRANSMUTE' : 'NEXT STEP'}
-                </button>
-            </div>
-
-            {/* ═══════════════════════════════════════════════════════════════
-          RITUAL INFO - Bottom metadata
-          ═══════════════════════════════════════════════════════════════ */}
-            <div
-                className="mt-4 text-center"
+            <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col items-center pb-8 p-6"
                 style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '9px',
-                    fontWeight: 600,
-                    letterSpacing: 'var(--tracking-mythic)',
-                    textTransform: 'uppercase',
-                    color: 'var(--accent-30)',
+                    background: isLight 
+                        ? 'linear-gradient(to top, rgba(245,245,240,1), transparent)'
+                        : 'linear-gradient(to top, rgba(0,0,0,1), transparent)'
                 }}
             >
-                {ritual.tradition}
+                <RitualProgressBar currentStep={currentStep} />
+                
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => setShowGuide(true)}
+                        className="text-[10px] uppercase font-bold tracking-widest transition-colors"
+                        style={{
+                            color: isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = isLight ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+                        }}
+                    >
+                        Show Guidance
+                    </button>
+                    <span style={{ color: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>|</span>
+                    <button 
+                        onClick={() => {
+                            resetRitual();
+                            onStop();
+                        }}
+                        className="text-[10px] uppercase font-bold tracking-widest transition-colors"
+                        style={{
+                            color: isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = isLight ? 'rgba(180,50,50,0.6)' : 'rgba(255, 100, 100, 0.6)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+                        }}
+                    >
+                        Abandon Ritual
+                    </button>
+                </div>
             </div>
 
-            <style>{`
-        @keyframes fade-in {
-          0% { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out forwards;
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.7; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 3s ease-in-out infinite;
-        }
-        .ritual-portal-enter {
-          animation: portal-enter 0.5s ease-out forwards;
-        }
-        @keyframes portal-enter {
-          0% { opacity: 0; transform: translateY(30px) scale(0.95); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
+            <RitualAudioPrompt 
+                audioUrl={currentStepConfig.audio} 
+                onComplete={() => console.log("Audio finished")} 
+            />
+
+            <InstructionalOverlay 
+                isOpen={showGuide && currentStepConfig.guide}
+                imageUrl={currentStepConfig.guide?.image}
+                caption={currentStepConfig.guide?.caption}
+                onDismiss={() => setShowGuide(false)}
+            />
         </div>
     );
 }
