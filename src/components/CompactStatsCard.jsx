@@ -7,6 +7,7 @@ import { useProgressStore } from '../state/progressStore.js';
 import { useTrackingStore } from '../state/trackingStore.js';
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * THEME CONFIGURATION
@@ -500,27 +501,50 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     const domainStats = allStats[domain] || { count: 0, totalMinutes: 0 };
     const streak = streakInfo?.currentStreak || 0;
 
+    // Get stage accent color from theme
+    const theme = useTheme();
+    const primaryHex = theme?.accent?.primary || '#4ade80';
+    
+    // Parse hex to RGB
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : { r: 126, g: 217, b: 87 };
+    };
+    
+    const baseAccent = hexToRgb(primaryHex);
+    
+    // Create shade variations of the stage accent (adjust lightness)
+    const adjustBrightness = (rgb, factor) => ({
+        r: Math.min(255, Math.round(rgb.r * factor)),
+        g: Math.min(255, Math.round(rgb.g * factor)),
+        b: Math.min(255, Math.round(rgb.b * factor))
+    });
+    
     const domainConfig = {
         wisdom: {
             title: 'Cognitive Vipassana',
             metricLabel: 'Focus Stability',
             curriculumLabel: 'Sanctuary of Mind',
             unit: '%',
-            r: 126, g: 217, b: 87 // Lime green for wisdom
+            ...adjustBrightness(baseAccent, 1.0) // Base shade
         },
         breathwork: {
             title: 'Rhythm Calibration',
             metricLabel: 'Breath Precision',
             curriculumLabel: 'Pranic Regulation',
             unit: '%',
-            r: 80, g: 180, b: 230 // Air blue for breath
+            ...adjustBrightness(baseAccent, 0.8) // Darker shade
         },
         visualization: {
             title: 'Radiant Schematics',
             metricLabel: 'Vividness Depth',
             curriculumLabel: 'Conceptual Mapping',
             unit: '%',
-            r: 255, g: 180, b: 50 // Gold for visualization
+            ...adjustBrightness(baseAccent, 1.15) // Lighter shade
         }
     };
 

@@ -11,6 +11,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
 import { SessionHistoryView } from './SessionHistoryView.jsx';
 import { AnimatePresence } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 // Domain configuration - using icon names for Icon component
 const DOMAINS = [
@@ -83,6 +84,27 @@ const CYMATIC_GLYPHS = {
 function StatsCard({ domain, stats, isLight }) {
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
+    const theme = useTheme();
+    
+    // Calculate hue rotation to match stage accent
+    // Green orbs are ~120deg hue, so we rotate from that baseline
+    const primaryColor = theme?.accent?.primary || '#4ade80';
+    const baseHue = 120; // Green baseline of the orbs/progress bar
+    // Parse hex to get approximate hue
+    const hex = primaryColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16) / 255;
+    const g = parseInt(hex.substr(2, 2), 16) / 255;
+    const b = parseInt(hex.substr(4, 2), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0;
+    if (max !== min) {
+        const d = max - min;
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        else if (max === g) h = ((b - r) / d + 2) / 6;
+        else h = ((r - g) / d + 4) / 6;
+    }
+    const targetHue = Math.round(h * 360);
+    const stageHueRotate = targetHue - baseHue;
 
     useEffect(() => {
         if (cardRef.current) {
@@ -114,7 +136,7 @@ function StatsCard({ domain, stats, isLight }) {
     return (
         <div
             ref={cardRef}
-            className="relative rounded-3xl overflow-hidden"
+            className="relative overflow-hidden"
             style={{
                 backgroundImage: isLight 
                     ? `url(${import.meta.env.BASE_URL}mode_buttons/light_mode_tracking_card_1767105882932.png)`
@@ -123,7 +145,13 @@ function StatsCard({ domain, stats, isLight }) {
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 border: 'none',
-                boxShadow: 'none'
+                boxShadow: 'none',
+                // Exaggerated organic parchment edges
+                borderRadius: '28px 35px 30px 33px',
+                transform: 'rotate(-0.3deg)',
+                filter: isLight
+                    ? 'drop-shadow(0 3px 6px rgba(0,0,0,0.12)) drop-shadow(0 10px 20px rgba(0,0,0,0.06))'
+                    : 'drop-shadow(0 4px 12px rgba(0,0,0,0.4)) drop-shadow(0 12px 28px rgba(0,0,0,0.25))'
             }}
         >
             {/* Parchment image already includes all background decoration */}
@@ -298,9 +326,9 @@ function StatsCard({ domain, stats, isLight }) {
                 </div>
             </div>
 
-            {/* Regiment Progress Section */}
+            {/* Regiment Progress Section - Shortened to avoid feather overlap */}
             <div className="px-5 mb-4 relative z-10">
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1" style={{ width: '140px' }}>
                     <span
                         className="text-[9px] font-bold tracking-widest opacity-40 uppercase"
                         style={{ fontFamily: 'var(--font-display)' }}
@@ -315,8 +343,9 @@ function StatsCard({ domain, stats, isLight }) {
                     </span>
                 </div>
                 <div
-                    className="h-[14px] w-full rounded-full relative overflow-hidden"
+                    className="h-[14px] rounded-full relative overflow-hidden"
                     style={{
+                        width: '140px',
                         background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
                         border: isLight ? '0.5px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.05)',
                         boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
@@ -329,7 +358,8 @@ function StatsCard({ domain, stats, isLight }) {
                             backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/progress_texture.png)`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
-                            boxShadow: isLight ? 'none' : '0 0 10px rgba(212, 184, 122, 0.4)'
+                            boxShadow: isLight ? 'none' : '0 0 10px rgba(212, 184, 122, 0.4)',
+                            filter: `hue-rotate(${stageHueRotate}deg)`
                         }}
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -433,7 +463,7 @@ function StatsCard({ domain, stats, isLight }) {
                                             style={{
                                                 backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/${orbImg})`,
                                                 transform: `scale(${scale})`,
-                                                filter: isLight ? (minutes === 0 ? 'grayscale(0.5) opacity(0.3)' : 'none') : 'none',
+                                                filter: `${isLight && minutes === 0 ? 'grayscale(0.5) opacity(0.3)' : ''} ${stageHueRotate ? `hue-rotate(${stageHueRotate}deg)` : ''}`.trim() || 'none',
                                                 boxShadow: glow
                                             }}
                                         >

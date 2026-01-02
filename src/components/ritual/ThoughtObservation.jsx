@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDisplayModeStore } from '../../state/displayModeStore';
 
@@ -32,6 +32,15 @@ export function ThoughtObservation({ photoUrl, onComplete }) {
     const isLight = colorScheme === 'light';
     const timerRef = useRef(null);
     const startTimeRef = useRef(Date.now());
+    const selectedThoughtsRef = useRef([]);
+    const thoughtIndexRef = useRef(0);
+
+    // Select 3 random thoughts at initialization
+    useEffect(() => {
+        const allThoughts = [...POSITIVE_THOUGHTS, ...NEGATIVE_THOUGHTS];
+        const shuffled = [...allThoughts].sort(() => Math.random() - 0.5);
+        selectedThoughtsRef.current = shuffled.slice(0, 3);
+    }, []);
 
     // Track observation duration
     useEffect(() => {
@@ -41,32 +50,28 @@ export function ThoughtObservation({ photoUrl, onComplete }) {
         return () => clearInterval(interval);
     }, []);
 
-    // Continuous random thought cycle
+    // Continuous thought cycle through selected 3 thoughts
     useEffect(() => {
-        const showRandomThought = () => {
-            // Combine all thoughts and pick one randomly
-            const allThoughts = [...POSITIVE_THOUGHTS, ...NEGATIVE_THOUGHTS];
-            const randomIndex = Math.floor(Math.random() * allThoughts.length);
-            const randomThought = allThoughts[randomIndex];
-            const isPositive = randomIndex < POSITIVE_THOUGHTS.length;
+        const showNextThought = () => {
+            if (selectedThoughtsRef.current.length === 0) return;
+
+            // Get the next thought in the cycle
+            const thought = selectedThoughtsRef.current[thoughtIndexRef.current];
+            thoughtIndexRef.current = (thoughtIndexRef.current + 1) % selectedThoughtsRef.current.length;
+
+            // Determine if it's positive or negative
+            const isPositive = POSITIVE_THOUGHTS.includes(thought);
             
             setThoughtType(isPositive ? 'positive' : 'negative');
-            setCurrentThought(randomThought);
+            setCurrentThought(thought);
 
-            // Show thought for 3-4 seconds
-            const displayDuration = 3000 + Math.random() * 1000;
-            
-            setTimeout(() => {
-                setCurrentThought(null);
-                
-                // Wait 8-12 seconds before next thought (10 +/- 2)
-                const nextInterval = 8000 + Math.random() * 4000;
-                timerRef.current = setTimeout(showRandomThought, nextInterval);
-            }, displayDuration);
+            // Wait 8-12 seconds before transitioning to next thought (10 +/- 2)
+            const nextInterval = 8000 + Math.random() * 4000;
+            timerRef.current = setTimeout(showNextThought, nextInterval);
         };
 
         // Start the cycle
-        showRandomThought();
+        showNextThought();
 
         return () => {
             if (timerRef.current) clearTimeout(timerRef.current);
