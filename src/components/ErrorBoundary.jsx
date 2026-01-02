@@ -43,7 +43,7 @@ function ErrorDisplay({ error, errorInfo, onReset }) {
                 {error && (
                     <details style={{ marginBottom: '20px', padding: '12px', backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)', borderRadius: '6px', border: `1px solid ${borderColor}`, cursor: 'pointer' }}>
                         <summary style={{ fontWeight: '600', fontSize: '12px', userSelect: 'none' }}>Error details</summary>
-                        <pre style={{ margin: '12px 0 0 0', fontSize: '11px', overflow: 'auto', maxHeight: '200px', opacity: 0.7', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{error.toString()}{errorInfo?.componentStack}</pre>
+                        <pre style={{ margin: '12px 0 0 0', fontSize: '11px', overflow: 'auto', maxHeight: '200px', opacity: 0.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{error.toString()}{errorInfo?.componentStack}</pre>
                     </details>
                 )}
                 <button onClick={onReset} style={{ padding: '12px 24px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Try Again</button>
