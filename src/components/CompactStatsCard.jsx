@@ -13,24 +13,24 @@ import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLightin
  */
 const THEME_CONFIG = {
     light: {
-        accent: 'var(--light-accent)',
-        glow: 'var(--light-accent-muted)',
-        wellBg: 'rgba(255, 252, 245, 0.8)',
-        barBg: 'rgba(180, 160, 130, 0.15)',
-        textMain: 'rgba(60, 45, 35, 0.95)',
-        textSub: 'rgba(100, 80, 60, 0.75)',
-        bgAsset: 'watercolor_bg.png',
+        accent: 'rgba(139, 159, 136, 0.85)', // Muted sage green, not bright lime
+        glow: 'rgba(139, 159, 136, 0.4)',
+        wellBg: 'rgba(245, 239, 230, 0.6)', // Warm cream
+        barBg: 'rgba(139, 115, 85, 0.12)', // Earth brown
+        textMain: 'rgba(35, 20, 10, 0.98)', // Even darker for maximum readability
+        textSub: 'rgba(65, 45, 25, 0.9)',
+        bgAsset: 'painted_card_organic.png', // Organic edges version
         dabAssets: [
-            'brush_dab_1.png',
-            'brush_dab_2.png',
-            'brush_dab_3.png',
-            'brush_dab_4.png'
+            'textured_blob_1.png',
+            'textured_blob_2.png',
+            'textured_blob_3.png',
+            'textured_blob_4.png',
+            'textured_blob_5.png'
         ],
-        emptyGem: 'gem_empty_alpha.png',
-        progressAsset: 'progress_glow_alpha.png',
-        border: 'rgba(160, 120, 80, 0.35)',
-        wellBorder: 'rgba(180, 140, 90, 0.25)',
-        threadColor: 'var(--light-accent)'
+        canvasGrain: 'canvas_grain.png',
+        border: 'rgba(139, 115, 85, 0.25)',
+        wellBorder: 'rgba(139, 115, 85, 0.15)',
+        threadColor: 'rgba(139, 159, 136, 0.7)'
     },
     dark: {
         accent: 'var(--accent-color)',
@@ -524,233 +524,348 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
     return (
         <div
             ref={cardRef}
-            className="w-full rounded-[24px] px-6 py-5 relative overflow-hidden transition-all duration-700 ease-in-out"
+            className="w-full relative transition-all duration-700 ease-in-out"
             style={{
                 maxWidth: isSanctuary ? '600px' : '430px',
                 margin: '0 auto',
-                border: '2px solid transparent',
-                backgroundImage: isLight
-                    ? `linear-gradient(rgba(252, 248, 240, 0.98), rgba(248, 244, 235, 0.96)), 
-                       linear-gradient(135deg, rgba(200, 160, 110, 0.4), rgba(180, 140, 90, 0.3))`
-                    : `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98)), 
-                       linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.02))`,
-                backgroundOrigin: 'padding-box, border-box',
-                backgroundClip: 'padding-box, border-box',
-                boxShadow: isLight
-                    ? `0 0 0 1px rgba(160, 120, 80, 0.3),
-                       0 12px 40px rgba(120, 90, 60, 0.12), 
-                       0 4px 16px rgba(200, 160, 110, 0.08),
-                       inset 0 2px 0 rgba(255, 255, 255, 0.8),
-                       inset 0 -1px 0 rgba(160, 120, 80, 0.15)`
-                    : `0 30px 80px rgba(0, 0, 0, 0.7), 
-                       inset 0 1px 0 rgba(255, 255, 255, 0.08)`,
+                overflow: 'visible' // Allow background to bleed beyond
             }}
         >
-            {/* Impasto Background Overlay */}
+            {/* Painted Surface Background Layer */}
             {isLight && (
                 <div
-                    className="absolute inset-0 opacity-100 pointer-events-none rounded-[24px]"
+                    className="absolute inset-0 pointer-events-none"
                     style={{
-                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/impasto_bg.png)`,
+                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
                         backgroundSize: 'cover',
-                        mixBlendMode: 'multiply'
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        transform: 'scale(1.04)', // Reduced scale for better containment
+                        transformOrigin: 'center'
                     }}
                 />
             )}
 
-            {/* Header Row: Category + Date */}
-            <div className="flex justify-between items-center mb-4 relative z-10">
-                <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: config.textMain }}>
-                        {domainLabels[domain]}
-                    </span>
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: config.accent }} />
-                    <span className="text-[9px] font-black uppercase tracking-[0.15em] opacity-40" style={{ color: config.textMain }}>
-                        COGNITIVE.STREAM.V4
-                    </span>
-                </div>
-                <div className="text-[10px] font-black tabular-nums tracking-wide opacity-50" style={{ color: config.textSub }}>{today}</div>
-            </div>
+            {/* Canvas Grain Overlay - subtle texture */}
+            {isLight && (
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.canvasGrain})`,
+                        backgroundSize: '256px 256px',
+                        backgroundRepeat: 'repeat',
+                        mixBlendMode: 'multiply',
+                        opacity: 0.05,
+                        transform: 'scale(1.04)', // Match scale of background
+                        transformOrigin: 'center'
+                    }}
+                />
+            )}
 
-            {/* Primary Section: Curriculum Progress */}
-            <div className="mb-5 relative z-10">
-                <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-[13px] font-bold tracking-wide" style={{ color: config.textMain }}>
-                        Curriculum: Morning Awareness
-                    </span>
-                    <span className="text-[18px] font-black tabular-nums" style={{ color: config.accent }}>
-                        {Math.round(regimentProgress * 100)}%
-                    </span>
+
+            {/* Dark mode background */}
+            {!isLight && (
+                <div
+                    className="absolute inset-0 rounded-[24px]"
+                    style={{
+                        backgroundImage: `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98)), 
+                           linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.02))`,
+                        boxShadow: `0 30px 80px rgba(0, 0, 0, 0.7), 
+                           inset 0 1px 0 rgba(255, 255, 255, 0.08)`
+                    }}
+                />
+            )}
+
+            {/* Content Container - Shortened bottom to pull parchment edge up */}
+            <div className={`relative px-9 ${isLight ? 'pt-7 pb-4' : 'py-5'} z-10`} style={{ background: 'transparent' }}>
+
+                {/* Header Row: Category + Date */}
+                <div className="flex justify-between items-center mb-4 relative z-10">
+                    <div className="flex items-center gap-2">
+                        <span
+                            className="text-[11px] font-black uppercase tracking-[0.2em]"
+                            style={{
+                                color: config.textMain,
+                                textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none' // Embedded text
+                            }}
+                        >
+                            {domainLabels[domain]}
+                        </span>
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: config.accent }} />
+                        <span
+                            className="text-[9px] font-black uppercase tracking-[0.15em] opacity-50"
+                            style={{
+                                color: config.textMain,
+                                textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none'
+                            }}
+                        >
+                            COGNITIVE.STREAM.V4
+                        </span>
+                    </div>
+                    <div
+                        className="text-[10px] font-black tabular-nums tracking-wide opacity-50"
+                        style={{
+                            color: config.textSub,
+                            textShadow: isLight ? '0 1px 1px rgba(0, 0, 0, 0.06)' : 'none'
+                        }}
+                    >
+                        {today}
+                    </div>
                 </div>
-                {/* Thick Impasto Progress Bar */}
-                {isLight ? (
-                    <div className="w-full h-[28px] relative flex flex-col justify-center">
-                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 30" preserveAspectRatio="none">
-                            <defs>
-                                <clipPath id="curriculumClip">
-                                    <rect x="0" y="0" width={Math.round(regimentProgress * 100) * 2} height="30" />
-                                </clipPath>
-                            </defs>
-                            {/* Background stroke */}
-                            <path
-                                d="M2,15 Q50,12 100,15 T198,15"
-                                fill="none"
-                                stroke="rgba(180, 160, 140, 0.15)"
-                                strokeWidth="14"
-                                strokeLinecap="round"
-                            />
-                            {/* Progress stroke */}
-                            <path
-                                d="M2,15 Q50,12 100,15 T198,15"
-                                fill="none"
-                                stroke={`rgb(${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-r')) || 126}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-g')) || 217}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-b')) || 87})`}
-                                strokeWidth="16"
-                                strokeLinecap="round"
-                                style={{ opacity: 0.85, filter: 'blur(0.5px)' }}
-                                clipPath="url(#curriculumClip)"
-                                className="transition-all duration-1000"
-                            />
-                        </svg>
-                        <img
-                            src={`${import.meta.env.BASE_URL}assets/impasto_dab_1.png`}
-                            className="absolute inset-0 w-full h-full object-cover opacity-15 pointer-events-none mix-blend-overlay"
-                            alt=""
+
+                {/* Primary Section: Curriculum Progress - Added Mist Overlay for Legibility */}
+                <div className="mb-6 relative">
+                    {isLight && (
+                        <div
+                            className="absolute -inset-x-6 -inset-y-4 pointer-events-none opacity-30 blur-2xl"
+                            style={{
+                                background: 'radial-gradient(circle, rgba(245, 239, 230, 0.95) 0%, rgba(245, 239, 230, 0) 80%)',
+                                zIndex: -1
+                            }}
                         />
-                    </div>
-                ) : (
-                    <RegimentProgress progress={regimentProgress} isLight={isLight} r={126} g={217} b={87} />
-                )}
-            </div>
-
-            {/* Secondary Section: Stats Grid (2 columns) */}
-            <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b relative z-10" style={{ borderColor: isLight ? 'rgba(160, 140, 120, 0.2)' : config.border }}>
-                {/* Streak Column */}
-                <div className="flex flex-col">
-                    <span className="text-[11px] font-bold uppercase tracking-wide mb-1 opacity-60" style={{ color: config.textSub }}>Streak:</span>
-                    <div className="flex items-center gap-3">
-                        <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
-                            {streak}
+                    )}
+                    <div className="relative z-10 flex flex-col items-end text-right mb-3 px-2">
+                        <span
+                            className="text-[13px] font-bold tracking-wide mb-1"
+                            style={{
+                                color: config.textMain,
+                                textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none'
+                            }}
+                        >
+                            Curriculum: Morning Awareness
                         </span>
-                        {isLight ? (
-                            <img
-                                src={`${import.meta.env.BASE_URL}assets/impasto_fire.png`}
-                                className="w-8 h-8 object-contain opacity-90"
-                                alt="Fire"
-                            />
-                        ) : (
-                            <span className="text-2xl">🔥</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="text-[24px] font-black tabular-nums leading-none"
+                                style={{
+                                    color: config.textMain,
+                                    textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none',
+                                    opacity: 0.9
+                                }}
+                            >
+                                {Math.round(regimentProgress * 100)}%
+                            </span>
+                        </div>
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wide mt-0.5 opacity-40" style={{ color: config.textSub }}>Days</span>
-                </div>
-
-                {/* Sessions Column */}
-                <div className="flex flex-col items-end">
-                    <span className="text-[11px] font-bold uppercase tracking-wide mb-1 opacity-60" style={{ color: config.textSub }}>Total Sessions:</span>
-                    <div className="flex items-center gap-3">
-                        <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
-                            {domainStats.count || 0}
-                        </span>
-                        {isLight ? (
-                            <img
-                                src={`${import.meta.env.BASE_URL}assets/impasto_meditator.png`}
-                                className="w-8 h-8 object-contain opacity-70"
-                                alt="Meditator"
-                            />
-                        ) : (
-                            <span className="text-2xl">🧘</span>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Tertiary Section: Practice Precision */}
-            <div className="relative z-10">
-                <div className="text-center mb-3">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: config.textMain }}>
-                        Practice Precision (Last 7 Days)
-                    </span>
-                    {/* Dashed separator */}
-                    <div className="mt-2 flex justify-center">
-                        <svg className="w-full h-[1px]" viewBox="0 0 200 1" preserveAspectRatio="none">
-                            <line
-                                x1="0" y1="0.5" x2="200" y2="0.5"
-                                stroke={isLight ? 'rgba(140, 120, 100, 0.3)' : config.border}
-                                strokeWidth="1"
-                                strokeDasharray="3 3"
-                            />
-                        </svg>
-                    </div>
-                </div>
-
-                {/* Precision Markers with Vertical Grid */}
-                <div className="flex justify-between items-end px-2 relative h-24">
-                    {mockWeekData.map((dayData, i) => {
-                        const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                        const isActive = dayData.precision !== 'missed';
-                        const heightPercent = dayData.precision === 'perfect' ? 80 : dayData.precision === 'close' ? 50 : 20;
-
-                        return (
-                            <div key={i} className="flex flex-col items-center relative flex-1">
-                                {/* Vertical grid line */}
-                                <div
-                                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-20 opacity-20"
-                                    style={{ background: config.textMain }}
+                    {/* Painted Progress Bar with Muted Sage Green */}
+                    {isLight ? (
+                        <div className="w-full h-[28px] relative flex flex-col justify-center">
+                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 30" preserveAspectRatio="none">
+                                <defs>
+                                    <clipPath id="curriculumClip">
+                                        <rect x="0" y="0" width={Math.round(regimentProgress * 100) * 2} height="30" />
+                                    </clipPath>
+                                </defs>
+                                {/* Background stroke */}
+                                <path
+                                    d="M2,15 Q50,12 100,15 T198,15"
+                                    fill="none"
+                                    stroke="rgba(139, 115, 85, 0.15)"
+                                    strokeWidth="14"
+                                    strokeLinecap="round"
                                 />
+                                {/* Progress stroke - MUTED SAGE GREEN */}
+                                <path
+                                    d="M2,15 Q50,12 100,15 T198,15"
+                                    fill="none"
+                                    stroke="rgba(139, 159, 136, 0.85)"
+                                    strokeWidth="16"
+                                    strokeLinecap="round"
+                                    style={{ opacity: 0.9, filter: 'blur(0.3px)' }}
+                                    clipPath="url(#curriculumClip)"
+                                    className="transition-all duration-1000"
+                                />
+                            </svg>
+                        </div>
+                    ) : (
+                        <RegimentProgress progress={regimentProgress} isLight={isLight} r={126} g={217} b={87} />
+                    )}
+                </div>
 
-                                {/* Brush dab marker */}
-                                <div className="relative mb-2" style={{ height: '60px', display: 'flex', alignItems: 'flex-end' }}>
-                                    {isLight && isActive ? (
-                                        <div
-                                            className="transition-all duration-500 ease-out"
-                                            style={{
-                                                transform: `translateY(-${heightPercent}px)`,
-                                                opacity: 0.85
-                                            }}
-                                        >
-                                            <img
-                                                src={`${import.meta.env.BASE_URL}assets/impasto_dab_${(i % 2) + 1}.png`}
-                                                className="w-7 h-7 object-contain"
-                                                alt=""
-                                            />
-                                        </div>
-                                    ) : (
-                                        !isLight && isActive && (
-                                            <div
-                                                className="w-3 h-3 rounded-full border-2 transition-all duration-300"
-                                                style={{
-                                                    background: config.accent,
-                                                    borderColor: config.accent,
-                                                    transform: `translateY(-${heightPercent}px)`
-                                                }}
-                                            />
-                                        )
-                                    )}
-                                </div>
+                {/* Secondary Section: Stats Grid (2 columns) - Centered & Symmetrical */}
+                <div className="relative mb-6">
+                    {/* Ornamental Partition 1 */}
+                    <div className="flex items-center justify-center opacity-20 my-5 gap-3">
+                        <div className="h-px w-16" style={{ background: config.textSub }} />
+                        <div className="w-1 h-1 rounded-full" style={{ background: config.textSub }} />
+                        <div className="h-px w-16" style={{ background: config.textSub }} />
+                    </div>
 
-                                {/* Day label */}
-                                <span
-                                    className="text-[10px] font-black relative z-10"
-                                    style={{
-                                        color: config.textMain,
-                                        opacity: isActive ? 0.7 : 0.25
-                                    }}
-                                >
-                                    {days[i]}
+                    {isLight && (
+                        <div
+                            className="absolute -inset-x-4 -inset-y-2 pointer-events-none opacity-25 blur-xl"
+                            style={{
+                                background: 'radial-gradient(circle, rgba(245, 239, 230, 0.9) 0%, rgba(245, 239, 230, 0) 70%)',
+                                zIndex: -1
+                            }}
+                        />
+                    )}
+                    <div className="grid grid-cols-2 gap-8 relative z-10">
+                        {/* Streak Column - Align LEFT to avoid feather */}
+                        <div className="flex flex-col items-start pl-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60" style={{ color: config.textSub }}>Streak</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
+                                    {streak}
                                 </span>
+                                {isLight ? (
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}assets/impasto_fire.png`}
+                                        className="w-6 h-6 object-contain opacity-90"
+                                        alt="Fire"
+                                    />
+                                ) : (
+                                    <span className="text-2xl">🔥</span>
+                                )}
                             </div>
-                        );
-                    })}
+                            <span className="text-[8px] font-bold uppercase tracking-widest mt-1 opacity-40 text-left" style={{ color: config.textSub }}>Days</span>
+                        </div>
+
+                        {/* Sessions Column - Align RIGHT to avoid feather */}
+                        <div className="flex flex-col items-end pr-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60" style={{ color: config.textSub }}>Sessions</span>
+                            <div className="flex items-center gap-2 flex-row-reverse">
+                                <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
+                                    {domainStats.count || 0}
+                                </span>
+                                {isLight ? (
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}assets/impasto_meditator.png`}
+                                        className="w-6 h-6 object-contain opacity-80"
+                                        alt="Meditator"
+                                    />
+                                ) : (
+                                    <span className="text-2xl">🧘</span>
+                                )}
+                            </div>
+                            <span className="text-[8px] font-bold uppercase tracking-widest mt-1 opacity-40 text-right" style={{ color: config.textSub }}>Total</span>
+                        </div>
+                    </div>
+                    {/* Ornamental Partition 2 */}
+                    <div className="flex items-center justify-center opacity-20 mt-6 mb-2 gap-3">
+                        <div className="h-px w-24" style={{ background: config.textSub }} />
+                    </div>
+                </div>
+
+                {/* Tertiary Section: Practice Precision - Added Mist Overlay */}
+                <div className="relative z-10">
+                    {isLight && (
+                        <div
+                            className="absolute -inset-x-8 -inset-y-4 pointer-events-none opacity-20 blur-3xl"
+                            style={{
+                                background: 'radial-gradient(circle, rgba(245, 239, 230, 0.98) 0%, rgba(245, 239, 230, 0) 80%)',
+                                zIndex: -1
+                            }}
+                        />
+                    )}
+                    <div className="text-center mb-3">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: config.textMain }}>
+                            Practice Precision (Last 7 Days)
+                        </span>
+                        {/* Dashed separator */}
+                        <div className="mt-2 flex justify-center">
+                            <svg className="w-full h-[1px]" viewBox="0 0 200 1" preserveAspectRatio="none">
+                                <line
+                                    x1="0" y1="0.5" x2="200" y2="0.5"
+                                    stroke={isLight ? 'rgba(140, 120, 100, 0.3)' : config.border}
+                                    strokeWidth="1"
+                                    strokeDasharray="3 3"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Precision Markers with Vertical Grid - NARROWED & SNAPPED */}
+                    <div className="flex justify-between items-end px-4 relative h-32 max-w-[280px] mx-auto">
+                        {mockWeekData.map((dayData, i) => {
+                            const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                            const isActive = dayData.precision !== 'missed';
+
+                            // 5-Row Precision Mapping (0%, 25%, 50%, 75%, 100%)
+                            // Slot 1 (Bottom/Late), Slot 2, Slot 3 (Center), Slot 4, Slot 5 (Top/Early)
+                            let verticalSlot = 3; // Default to Center (On-Time)
+
+                            // Mock logic for demo purposes based on 'precision'
+                            if (dayData.precision === 'perfect') verticalSlot = 3;
+                            else if (dayData.precision === 'close') verticalSlot = i % 2 === 0 ? 4 : 2;
+                            else if (isActive) verticalSlot = i % 2 === 0 ? 5 : 1;
+
+                            // Map 1-5 to exact % positions relative to container
+                            const slotPositions = {
+                                1: 12, // Bottom
+                                2: 38,
+                                3: 64, // Center
+                                4: 90,
+                                5: 116 // Top
+                            };
+                            // NOTE: We keep pixel based snapping for now as flex alignment handles it better than %
+                            const heightPercent = slotPositions[verticalSlot] || 64;
+
+                            return (
+                                <div key={i} className="flex flex-col items-center relative flex-1">
+                                    {/* Vertical grid line */}
+                                    <div
+                                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-20 opacity-20"
+                                        style={{ background: config.textMain }}
+                                    />
+
+                                    {/* Textured blob marker */}
+                                    <div className="relative mb-2" style={{ height: '60px', display: 'flex', alignItems: 'flex-end' }}>
+                                        {isLight && isActive ? (
+                                            <div
+                                                className="transition-all duration-500 ease-out"
+                                                style={{
+                                                    transform: `translateY(-${heightPercent}px)`,
+                                                    opacity: 0.9
+                                                }}
+                                            >
+                                                <img
+                                                    src={`${import.meta.env.BASE_URL}assets/${config.dabAssets[i % config.dabAssets.length]}`}
+                                                    className="w-7 h-7 object-contain"
+                                                    style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))' }}
+                                                    alt=""
+                                                />
+                                            </div>
+                                        ) : (
+                                            !isLight && isActive && (
+                                                <div
+                                                    className="w-3 h-3 rounded-full border-2 transition-all duration-300"
+                                                    style={{
+                                                        background: config.accent,
+                                                        borderColor: config.accent,
+                                                        transform: `translateY(-${heightPercent}px)`
+                                                    }}
+                                                />
+                                            )
+                                        )}
+                                    </div>
+
+                                    {/* Day label */}
+                                    <span
+                                        className="text-[10px] font-black relative z-10"
+                                        style={{
+                                            color: config.textMain,
+                                            opacity: isActive ? 0.8 : 0.3,
+                                            textShadow: isLight ? '0 1px 1px rgba(0, 0, 0, 0.08)' : 'none',
+                                            transform: 'translateY(12px)' // Pull labels closer to dots
+                                        }}
+                                    >
+                                        {days[i]}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Bottom Status Line - Pulled up */}
+                <div className={`mt-3 flex items-center justify-center px-2 ${isLight ? 'opacity-25' : 'opacity-15'}`}>
+                    <span className="text-[8px] font-black uppercase tracking-[0.5em]" style={{ color: config.textMain }}>
+                        NEURAL.LINK.SYNCHRONIZED
+                    </span>
                 </div>
             </div>
-
-            {/* Bottom Status Line */}
-            <div className={`mt-5 flex items-center justify-center px-2 ${isLight ? 'opacity-30' : 'opacity-20'}`}>
-                <span className="text-[8px] font-black uppercase tracking-[0.5em]" style={{ color: config.textMain }}>
-                    NEURAL.LINK.SYNCHRONIZED
-                </span>
-            </div>
-        </div >
+        </div>
     );
 }
 

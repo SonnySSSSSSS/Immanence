@@ -267,7 +267,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       <div className="w-full px-4 flex flex-col items-center gap-4 pb-4">
 
         {/* TRACKING HUB - Swipeable Stats Cards */}
-        <div className="w-full">
+        <div className="w-full mb-4">
           <HubCardSwiper cards={[
             <CompactStatsCard key="compact" domain="wisdom" streakInfo={streakInfo} />,
             <TrajectoryCard key="trajectory" onTap={() => console.log('TODO: Open TrajectoryReport')} />,

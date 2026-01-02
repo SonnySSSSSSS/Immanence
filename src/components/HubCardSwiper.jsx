@@ -40,8 +40,8 @@ export function HubCardSwiper({ cards }) {
 
     return (
         <div className="relative w-full" style={{ maxWidth: '430px', margin: '0 auto' }}>
-            {/* Swipeable Card Container */}
-            <div className="relative overflow-hidden" style={{ minHeight: '400px' }}>
+            {/* Swipeable Card Container - Tightened min-height */}
+            <div className="relative overflow-visible" style={{ minHeight: '480px' }}>
                 <AnimatePresence initial={false} custom={direction} mode="wait">
                     <motion.div
                         key={page}
@@ -73,9 +73,9 @@ export function HubCardSwiper({ cards }) {
                 </AnimatePresence>
             </div>
 
-            {/* Dot Indicators */}
+            {/* Dot Indicators - Relaxed margin */}
             {cards.length > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-6">
+                <div className="flex justify-center items-center gap-2 mt-4">
                     {cards.map((_, index) => (
                         <button
                             key={index}
