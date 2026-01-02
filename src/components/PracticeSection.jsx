@@ -407,14 +407,39 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Log completion
     logCircuitCompletion('custom', circuitConfig.exercises);
 
+    // Calculate total duration
+    const totalDuration = circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0);
+
+    // Record circuit session in progress store (same as single sessions)
+    let recordedSession = null;
+    try {
+      recordedSession = useProgressStore.getState().recordSession({
+        domain: 'circuit-training',
+        duration: totalDuration, // minutes
+        metadata: {
+          circuitName: 'Custom Circuit',
+          exerciseCount: circuitConfig.exercises.length,
+          legacyImport: false
+        },
+      });
+    } catch (e) {
+      console.error("Failed to save circuit session:", e);
+    }
+
     // Show summary
     setSessionSummary({
       type: 'circuit',
       circuitName: 'Custom Circuit',
       exercisesCompleted: circuitConfig.exercises.length,
-      totalDuration: circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0),
+      totalDuration: totalDuration,
     });
     setShowSummary(true);
+
+    // Trigger journal micro-note flow (PHASE 2 FIX: Wire circuit journal)
+    if (recordedSession) {
+      setLastSessionId(recordedSession.id);
+      startMicroNote(recordedSession.id);
+    }
 
     // Reset circuit state
     setActiveCircuitId(null);
@@ -530,9 +555,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setCurrentStepIndex(0);
     setTimeLeft(duration * 60);
 
-    // Show summary if this was a completed session (for non-ritual practices)
+    // Show summary and trigger journal for any meaningful session (>30s), excluding Ritual
     // RitualPortal handles its own completion UI
-    if (exitType === 'completed' && practice !== 'Ritual') {
+    const actualDuration = duration * 60 - timeLeft; // seconds practiced
+    const shouldJournal = practice !== 'Ritual' && actualDuration >= 30;
+
+    if (shouldJournal) {
       setSessionSummary({
         practice,
         duration,

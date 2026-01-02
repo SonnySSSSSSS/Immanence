@@ -3,6 +3,7 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Avatar } from "./avatar";
 import { StageTitle } from "./StageTitle.jsx";
 import { STAGE_COLORS } from "../constants/stageColors.js";
@@ -13,6 +14,7 @@ import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
+import { SessionHistoryView } from "./SessionHistoryView.jsx";
 import { SideNavigation } from "./SideNavigation.jsx";
 import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
@@ -53,6 +55,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
   // Honor log modal state (moved from TrackingHub)
   const [showHonorModal, setShowHonorModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-[580px]';
@@ -269,13 +272,18 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {/* TRACKING HUB - Swipeable Stats Cards */}
         <div className="w-full mb-4">
           <HubCardSwiper cards={[
-            <CompactStatsCard key="compact" domain="wisdom" streakInfo={streakInfo} />,
+            <CompactStatsCard key="wisdom" domain="wisdom" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
+            <CompactStatsCard key="breathwork" domain="breathwork" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
+            <CompactStatsCard key="visualization" domain="visualization" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
             <TrajectoryCard key="trajectory" onTap={() => console.log('TODO: Open TrajectoryReport')} />,
             <ApplicationTrackingCard key="application" />
           ]} />
         </div>
 
         {/* MODES SELECTION - Container with consistent width */}
+
+        {/* Session History Overlay */}
+        {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
         <div
           className="w-full"
           style={{
@@ -420,6 +428,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           </div>
         </div>
       </div>
+      {/* Session History Overlay - Placed at root for visibility */}
+      {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
     </div>
   );
 }

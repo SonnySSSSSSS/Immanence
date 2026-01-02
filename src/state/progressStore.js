@@ -265,6 +265,37 @@ export const useProgressStore = create(
             },
 
             /**
+             * Delete a session
+             */
+            deleteSession: (sessionId) => {
+                const state = get();
+                const newSessions = state.sessions.filter(s => s.id !== sessionId);
+                
+                // Re-calculate lastPracticeDate if we deleted the latest one
+                const sortedDates = [...new Set([...newSessions.map(s => s.dateKey), ...state.honorLogs.map(h => h.dateKey)])].sort();
+                const lastPracticeDate = sortedDates[sortedDates.length - 1] || null;
+
+                set({
+                    sessions: newSessions,
+                    streak: {
+                        ...state.streak,
+                        lastPracticeDate
+                    }
+                });
+            },
+
+            /**
+             * Update session journal or metadata
+             */
+            updateSession: (sessionId, updates) => {
+                set(state => ({
+                    sessions: state.sessions.map(s =>
+                        s.id === sessionId ? { ...s, ...updates } : s
+                    )
+                }));
+            },
+
+            /**
              * Set daily goal for a domain
              */
             setGoal: (domain, minutes) => {

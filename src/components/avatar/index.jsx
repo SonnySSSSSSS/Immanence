@@ -127,7 +127,11 @@ export function Avatar({
     };
 
     return (
-        <div className="relative flex flex-col items-center cursor-pointer overflow-visible" onClick={handleSigilClick}>
+        <div 
+            className="relative flex flex-col items-center overflow-visible" 
+            onClick={mode === 'hub' ? undefined : handleSigilClick}
+            style={{ cursor: mode === 'hub' ? 'default' : 'pointer' }}
+        >
             <AvatarContainer
                 mode={mode}
                 breathPattern={patternForBreath}

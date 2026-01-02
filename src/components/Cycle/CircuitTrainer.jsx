@@ -1,19 +1,17 @@
 // src/components/Cycle/CircuitTrainer.jsx
 // Circuit selection UI with custom circuit builder
-import { useState, useEffect } from 'react';
+// Phase 2: Wired to Zustand store via useCircuitManager
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { getAvailableCircuits } from '../../services/circuitManager';
+import { useCircuitManager } from '../../state/circuitManager';
 import { CircuitConfig } from './CircuitConfig';
 
 export function CircuitTrainer({ onSelectCircuit }) {
-    const [circuits, setCircuits] = useState([]);
+    const allCircuits = useCircuitManager(s => s.getAllCircuits());
+    const circuits = allCircuits || [];
+    
     const [showCustomBuilder, setShowCustomBuilder] = useState(false);
     const [customCircuitConfig, setCustomCircuitConfig] = useState(null);
-
-    useEffect(() => {
-        const available = getAvailableCircuits();
-        setCircuits(available);
-    }, []);
 
     const handleStartPresetCircuit = (circuit) => {
         if (onSelectCircuit) {
@@ -24,7 +22,6 @@ export function CircuitTrainer({ onSelectCircuit }) {
     const handleStartCustomCircuit = () => {
         if (!customCircuitConfig || customCircuitConfig.exercises.length === 0) return;
 
-        // Build circuit object from custom config
         const customCircuit = {
             id: 'custom_circuit',
             name: 'Custom Circuit',
@@ -49,171 +46,64 @@ export function CircuitTrainer({ onSelectCircuit }) {
     return (
         <div className="space-y-4">
             <div className="mb-4">
-                <h3
-                    className="text-xl font-bold tracking-wide text-white/90 mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                >
-                    Circuit Trainer
-                </h3>
-                <p
-                    className="text-sm text-white/60 font-medium"
-                    style={{ fontFamily: 'var(--font-body)' }}
-                >
-                    Sequential practice sessions across multiple paths
-                </p>
+                <h3 className="text-xl font-bold tracking-wide text-white/90 mb-1" style={{ fontFamily: 'var(--font-display)' }}>Circuit Trainer</h3>
+                <p className="text-sm text-white/60 font-medium" style={{ fontFamily: 'var(--font-body)' }}>Sequential practice sessions across multiple paths</p>
             </div>
 
-            {/* Toggle between preset and custom */}
             <div className="flex gap-2 mb-4">
-                <button
-                    onClick={() => setShowCustomBuilder(false)}
-                    className={`flex-1 px-4 py-2 rounded font-bold tracking-wide text-sm transition-all ${!showCustomBuilder
-                        ? 'bg-[#fcd34d] text-black'
-                        : 'bg-white/10 text-white/60 hover:bg-white/15'
-                        }`}
-                    style={{ fontFamily: 'var(--font-body)' }}
-                >
-                    Preset Circuits
-                </button>
-                <button
-                    onClick={() => setShowCustomBuilder(true)}
-                    className={`flex-1 px-4 py-2 rounded font-bold tracking-wide text-sm transition-all ${showCustomBuilder
-                        ? 'bg-[#fcd34d] text-black'
-                        : 'bg-white/10 text-white/60 hover:bg-white/15'
-                        }`}
-                    style={{ fontFamily: 'var(--font-body)' }}
-                >
-                    Custom Circuit
-                </button>
+                <button onClick={() => setShowCustomBuilder(false)} className={`flex-1 px-4 py-2 rounded font-bold tracking-wide text-sm transition-all ${!showCustomBuilder ? 'bg-[#fcd34d] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'}`} style={{ fontFamily: 'var(--font-body)' }}>Preset Circuits</button>
+                <button onClick={() => setShowCustomBuilder(true)} className={`flex-1 px-4 py-2 rounded font-bold tracking-wide text-sm transition-all ${showCustomBuilder ? 'bg-[#fcd34d] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'}`} style={{ fontFamily: 'var(--font-body)' }}>Custom Circuit</button>
             </div>
 
-            {/* Preset Circuits */}
             {!showCustomBuilder && (
                 <div className="space-y-4">
                     {circuits.map((circuit) => (
-                        <motion.div
-                            key={circuit.id}
-                            className="p-6 bg-gradient-to-br from-[#161625] to-[#1a1a2e] border border-white/10 rounded-lg"
-                            whileHover={{ scale: 1.01 }}
-                        >
+                        <motion.div key={circuit.id} className="p-6 bg-gradient-to-br from-[#161625] to-[#1a1a2e] border border-white/10 rounded-lg" whileHover={{ scale: 1.01 }}>
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h4
-                                        className="text-lg font-bold tracking-wide text-white/90 mb-1"
-                                        style={{ fontFamily: 'var(--font-display)' }}
-                                    >
-                                        {circuit.name}
-                                    </h4>
-                                    <p
-                                        className="text-sm text-white/60 font-medium"
-                                        style={{ fontFamily: 'var(--font-body)' }}
-                                    >
-                                        {circuit.description}
-                                    </p>
+                                    <h4 className="text-lg font-bold tracking-wide text-white/90 mb-1" style={{ fontFamily: 'var(--font-display)' }}>{circuit.name}</h4>
+                                    <p className="text-sm text-white/60 font-medium" style={{ fontFamily: 'var(--font-body)' }}>{circuit.description}</p>
                                 </div>
-                                <div
-                                    className="text-sm text-white/50 font-medium"
-                                    style={{ fontFamily: 'var(--font-body)' }}
-                                >
-                                    {circuit.totalDuration} min
-                                </div>
+                                <div className="text-sm text-white/50 font-medium" style={{ fontFamily: 'var(--font-body)' }}>{circuit.totalDuration} min</div>
                             </div>
 
-                            {/* Exercises Preview */}
                             <div className="space-y-2 mb-4">
                                 {circuit.exercises.map((ex, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="flex items-center gap-3 p-3 bg-white/5 rounded border border-white/10"
-                                    >
-                                        <div className="text-2xl">
-                                            {ex.type === 'breath' && '🌬️'}
-                                            {ex.type === 'focus' && '🔥'}
-                                            {ex.type === 'body' && '✨'}
-                                        </div>
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded border border-white/10">
+                                        <div className="text-2xl">{ex.targetDomain === 'breath' && '🌬️'}{ex.targetDomain === 'focus' && '🔥'}{ex.targetDomain === 'body' && '✨'}</div>
                                         <div className="flex-1">
-                                            <div
-                                                className="text-sm font-bold tracking-wide text-white/80 mb-1"
-                                                style={{ fontFamily: 'var(--font-display)' }}
-                                            >
-                                                {ex.name}
-                                            </div>
-                                            <div
-                                                className="text-xs text-white/50 font-medium"
-                                                style={{ fontFamily: 'var(--font-body)' }}
-                                            >
-                                                {ex.instructions}
-                                            </div>
+                                            <div className="text-sm font-bold tracking-wide text-white/80 mb-1" style={{ fontFamily: 'var(--font-display)' }}>{ex.name}</div>
+                                            <div className="text-xs text-white/50 font-medium" style={{ fontFamily: 'var(--font-body)' }}>{ex.practiceType || ex.name}</div>
                                         </div>
-                                        <div
-                                            className="text-xs text-white/50 font-bold"
-                                            style={{ fontFamily: 'var(--font-body)' }}
-                                        >
-                                            {ex.duration}m
-                                        </div>
+                                        <div className="text-xs text-white/50 font-bold" style={{ fontFamily: 'var(--font-body)' }}>{ex.duration}m</div>
                                     </div>
                                 ))}
                             </div>
 
-                            <button
-                                onClick={() => handleStartPresetCircuit(circuit)}
-                                className="w-full px-4 py-2 bg-[#fcd34d] text-black rounded font-bold tracking-wide hover:bg-[#fcd34d]/90 transition-colors"
-                                style={{ fontFamily: 'var(--font-body)' }}
-                            >
-                                Start Circuit
-                            </button>
+                            <button onClick={() => handleStartPresetCircuit(circuit)} className="w-full px-4 py-2 bg-[#fcd34d] text-black rounded font-bold tracking-wide hover:bg-[#fcd34d]/90 transition-colors" style={{ fontFamily: 'var(--font-body)' }}>Start Circuit</button>
                         </motion.div>
                     ))}
 
                     {circuits.length === 0 && (
                         <div className="p-6 bg-white/5 rounded border border-white/10 text-center">
-                            <p
-                                className="text-sm text-white/50 font-medium"
-                                style={{ fontFamily: 'var(--font-body)' }}
-                            >
-                                No preset circuits available
-                            </p>
+                            <p className="text-sm text-white/50 font-medium" style={{ fontFamily: 'var(--font-body)' }}>No preset circuits available</p>
                         </div>
                     )}
                 </div>
             )}
 
-            {/* Custom Circuit Builder */}
             {showCustomBuilder && (
                 <div className="p-6 bg-gradient-to-br from-[#161625] to-[#1a1a2e] border border-white/10 rounded-lg">
                     <div className="mb-4">
-                        <h4
-                            className="text-lg font-bold tracking-wide text-white/90 mb-1"
-                            style={{ fontFamily: 'var(--font-display)' }}
-                        >
-                            Build Your Circuit
-                        </h4>
-                        <p
-                            className="text-sm text-white/60 font-medium"
-                            style={{ fontFamily: 'var(--font-body)' }}
-                        >
-                            Choose exercises and set durations
-                        </p>
+                        <h4 className="text-lg font-bold tracking-wide text-white/90 mb-1" style={{ fontFamily: 'var(--font-display)' }}>Build Your Circuit</h4>
+                        <p className="text-sm text-white/60 font-medium" style={{ fontFamily: 'var(--font-body)' }}>Choose exercises and set durations</p>
                     </div>
-
-                    <CircuitConfig
-                        value={customCircuitConfig}
-                        onChange={setCustomCircuitConfig}
-                    />
-
-                    <button
-                        onClick={handleStartCustomCircuit}
-                        disabled={!customCircuitConfig || customCircuitConfig.exercises.length === 0}
-                        className={`w-full mt-4 px-4 py-2 rounded font-bold tracking-wide transition-all ${customCircuitConfig && customCircuitConfig.exercises.length > 0
-                            ? 'bg-[#fcd34d] text-black hover:bg-[#fcd34d]/90'
-                            : 'bg-white/10 text-white/30 cursor-not-allowed'
-                            }`}
-                        style={{ fontFamily: 'var(--font-body)' }}
-                    >
-                        Start Custom Circuit
-                    </button>
+                    <CircuitConfig value={customCircuitConfig} onChange={setCustomCircuitConfig} />
+                    <button onClick={handleStartCustomCircuit} disabled={!customCircuitConfig || customCircuitConfig.exercises.length === 0} className={`w-full mt-4 px-4 py-2 rounded font-bold tracking-wide transition-all ${customCircuitConfig && customCircuitConfig.exercises.length > 0 ? 'bg-[#fcd34d] text-black hover:bg-[#fcd34d]/90' : 'bg-white/10 text-white/30 cursor-not-allowed'}`} style={{ fontFamily: 'var(--font-body)' }}>Start Custom Circuit</button>
                 </div>
             )}
         </div>
     );
 }
+
+export default CircuitTrainer;

@@ -23,6 +23,7 @@ import { InstallPrompt } from "./components/InstallPrompt.jsx";
 import { SigilTracker } from "./components/SigilTracker.jsx";
 import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./App.css";
 
 const SECTION_LABELS = {
@@ -510,4 +511,12 @@ function App() {
   );
 }
 
-export default App;
+function AppWithBoundary() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+export default AppWithBoundary;

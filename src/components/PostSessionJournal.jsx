@@ -1,13 +1,38 @@
 // src/components/PostSessionJournal.jsx
-// Post-Session Micro-Note Capture Modal
+// Post-Session Capture Modal
+// Phase 2: Routes to CircuitJournalForm for circuits, micro-note form for sessions
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useJournalStore, ATTENTION_QUALITIES, TECH_NOTE_PLACEHOLDERS, CHALLENGE_TAXONOMY } from '../state/journalStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { useLunarStore } from '../state/lunarStore.js';
+import { CircuitJournalForm } from './CircuitJournalForm.jsx';
 
-export function PostSessionJournal({ sessionId, onComplete }) {
+export function PostSessionJournal({ sessionId, completedCircuitLog, onComplete }) {
+    // Phase 2: Check if this is a circuit or single session
+    // If completedCircuitLog is provided, it's a circuit
+    const isCircuit = !!completedCircuitLog;
+    
+    if (isCircuit) {
+        // Route to circuit-specific form
+        return (
+            <CircuitJournalForm
+                completedCircuitLog={completedCircuitLog}
+                onClose={onComplete}
+            />
+        );
+    }
+    
+    // Otherwise, show single session micro-note form (Phase 1 behavior)
+    return <SingleSessionJournalForm sessionId={sessionId} onComplete={onComplete} />;
+}
+
+/**
+ * SingleSessionJournalForm
+ * Original micro-note capture for single practice sessions (Phase 1)
+ */
+function SingleSessionJournalForm({ sessionId, onComplete }) {
     const { stage } = useLunarStore();
     const {
         pendingMicroNote,
@@ -40,7 +65,7 @@ export function PostSessionJournal({ sessionId, onComplete }) {
 
     // Complete and close
     const handleComplete = () => {
-        completeMicroNote(progressStore);
+        completeMicroNote();
         onComplete?.();
     };
 
@@ -202,7 +227,7 @@ export function PostSessionJournal({ sessionId, onComplete }) {
                             </motion.div>
                         )}
 
-                        {/* Step 4: Challenge Tag (Conditional) */}
+                        {/* Step 4: Challenge Tag */}
                         {step === 'challenge' && (
                             <motion.div
                                 key="challenge"
@@ -214,57 +239,49 @@ export function PostSessionJournal({ sessionId, onComplete }) {
                                 <p className="text-center text-sm font-medium" style={{ color: textSub }}>
                                     What was the main challenge?
                                 </p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {Object.keys(CHALLENGE_TAXONOMY).map((tag) => (
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.entries(CHALLENGE_TAXONOMY).map(([key, category]) => (
                                         <button
-                                            key={tag}
-                                            onClick={() => updateMicroNote('challengeTag', tag)}
-                                            className="px-4 py-3 rounded-lg font-medium text-sm capitalize transition-all hover:scale-105"
+                                            key={key}
+                                            onClick={() => {
+                                                updateMicroNote('challengeTag', key);
+                                                setTimeout(() => nextMicroNoteStep(), 300);
+                                            }}
+                                            className="px-3 py-2 rounded-lg font-medium text-xs transition-all hover:scale-105"
                                             style={{
-                                                backgroundColor: formData.challengeTag === tag ? accentColor : borderColor,
-                                                color: formData.challengeTag === tag ? '#fff' : textMain,
+                                                backgroundColor: formData.challengeTag === key ? accentColor : borderColor,
+                                                color: formData.challengeTag === key ? '#fff' : textMain,
                                                 border: `1px solid ${borderColor}`
                                             }}
                                         >
-                                            {CHALLENGE_TAXONOMY[tag].label}
+                                            {category.label}
                                         </button>
                                     ))}
                                 </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => nextMicroNoteStep()}
-                                        className="flex-1 py-3 rounded-lg font-medium text-sm transition-all hover:scale-105"
-                                        style={{
-                                            backgroundColor: borderColor,
-                                            color: textMain,
-                                            border: `1px solid ${borderColor}`
-                                        }}
-                                    >
-                                        Skip
-                                    </button>
-                                    <button
-                                        onClick={() => nextMicroNoteStep()}
-                                        disabled={!formData.challengeTag}
-                                        className="flex-1 py-3 rounded-lg font-medium text-sm transition-all hover:scale-105 disabled:opacity-50"
-                                        style={{ backgroundColor: accentColor, color: '#fff' }}
-                                    >
-                                        Continue
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => nextMicroNoteStep()}
+                                    className="w-full py-2 rounded-lg font-medium text-sm mt-2"
+                                    style={{ backgroundColor: borderColor, color: textMain }}
+                                >
+                                    Skip Challenge Tag
+                                </button>
                             </motion.div>
                         )}
 
-                        {/* Step 5: Done */}
+                        {/* Step 5: Complete */}
                         {step === 'done' && (
                             <motion.div
                                 key="done"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="text-center space-y-6"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="space-y-4 text-center"
                             >
-                                <div className="text-4xl">✨</div>
-                                <p className="text-lg font-medium" style={{ color: textMain }}>
-                                    Thank you for reflecting
+                                <p className="text-lg font-bold" style={{ color: textMain }}>
+                                    âœ“ Session logged
+                                </p>
+                                <p className="text-sm" style={{ color: textSub }}>
+                                    Your practice reflects the nature of your being
                                 </p>
                                 <button
                                     onClick={handleComplete}
@@ -277,6 +294,19 @@ export function PostSessionJournal({ sessionId, onComplete }) {
                         )}
                     </AnimatePresence>
                 </div>
+
+                {/* Footer: Cancel Button */}
+                {step !== 'done' && (
+                    <div className="px-6 pb-6">
+                        <button
+                            onClick={() => cancelMicroNote()}
+                            className="w-full py-2 text-sm font-medium rounded-lg"
+                            style={{ backgroundColor: borderColor, color: textSub }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
             </motion.div>
         </motion.div>
     );

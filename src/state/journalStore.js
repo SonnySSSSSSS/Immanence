@@ -4,6 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useProgressStore } from './progressStore.js';
 
 // Challenge taxonomy (static reference)
 export const CHALLENGE_TAXONOMY = {
@@ -165,7 +166,7 @@ export const useJournalStore = create(
             /**
              * Complete micro-note and save to progress store
              */
-            completeMicroNote: (progressStore) => {
+            completeMicroNote: () => {
                 const state = get();
                 if (!state.pendingMicroNote) return;
 
@@ -178,7 +179,7 @@ export const useJournalStore = create(
                 };
 
                 // Update the session in progress store
-                const sessions = progressStore.getState().sessions;
+                const sessions = useProgressStore.getState().sessions;
                 const sessionIndex = sessions.findIndex(s => s.id === state.pendingMicroNote.sessionId);
 
                 if (sessionIndex !== -1) {
@@ -188,7 +189,7 @@ export const useJournalStore = create(
                         journal
                     };
 
-                    progressStore.setState({ sessions: updatedSessions });
+                    useProgressStore.setState({ sessions: updatedSessions });
                 }
 
                 // Clear pending state

@@ -485,7 +485,7 @@ function MetricRing({ label, value, isLight }) {
 /**
  * Main CompactStatsCard Component
  */
-export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
+export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
@@ -531,11 +531,17 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
     
     const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount, logsCount]);
     
-    const weekData = useMemo(() => trajectory.weeks.map(w => ({
-        precision: w.avgPrecision.breath !== null ? w.avgPrecision.breath : 'missed',
-        time: w.totalMinutes > 0 ? `${Math.floor(w.totalMinutes / 60)}h ${w.totalMinutes % 60}m` : null,
-        practiced: w.daysActive > 0
-    })), [trajectory]);
+    const weekData = useMemo(() => {
+        const precisionKey = domain === 'breathwork' ? 'breath' : 
+                            domain === 'visualization' ? 'visualization' : 
+                            'wisdom';
+        
+        return trajectory.weeks.map(w => ({
+            precision: w.avgPrecision[precisionKey] !== null ? w.avgPrecision[precisionKey] : 'missed',
+            time: w.totalMinutes > 0 ? `${Math.floor(w.totalMinutes / 60)}h ${w.totalMinutes % 60}m` : null,
+            practiced: w.daysActive > 0
+        }));
+    }, [trajectory, domain]);
 
     // Calculate actual regiment progress based on past 7 weeks or path completion
     const activePath = useTrackingStore(s => s.activePath);
@@ -657,6 +663,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                             COGNITIVE.STREAM.V4
                         </span>
                     </div>
+
                     <div
                         className="text-[10px] font-black tabular-nums tracking-wide opacity-50"
                         style={{
@@ -915,11 +922,19 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo }) {
                     </div>
                 </div>
 
-                {/* Bottom Status Line - Pulled up */}
-                <div className={`mt-3 flex items-center justify-center px-2 ${isLight ? 'opacity-25' : 'opacity-15'}`}>
-                    <span className="text-[8px] font-black uppercase tracking-[0.5em]" style={{ color: config.textMain }}>
-                        NEURAL.LINK.SYNCHRONIZED
-                    </span>
+                {/* Bottom Section - Archive Link */}
+                <div className={`mt-3 flex items-center justify-center px-2`}>
+                    <button
+                        onClick={(e) => {
+                            console.log('BOTTOM Archive clicked');
+                            e.stopPropagation();
+                            onOpenArchive?.();
+                        }}
+                        className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                        style={{ color: config.textMain }}
+                    >
+                        ⟨ VIEW ARCHIVE ⟩
+                    </button>
                 </div>
             </div>
                 </div>
