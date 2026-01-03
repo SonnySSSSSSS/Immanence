@@ -174,7 +174,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const isLight = colorScheme === 'light';
   const savedPrefs = loadPreferences();
 
-  const [practice, setPractice] = useState(savedPrefs.practice);
+  const [practice, setPractice] = useState(savedPrefs.practice || PRACTICES[0]);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
 
   // CURRICULUM INTEGRATION
@@ -184,10 +184,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     clearActivePracticeSession,
   } = useCurriculumStore();
 
-  // Load curriculum day settings when active session changes
+  // Ref to track if we've already auto-started for this session
+  const autoStartedRef = useRef(null);
+
+  // Load curriculum day settings when active session changes AND auto-start
   useEffect(() => {
     const curriculumDay = getActivePracticeDay();
-    if (curriculumDay && activePracticeSession) {
+    if (curriculumDay && activePracticeSession && autoStartedRef.current !== activePracticeSession) {
+      // Mark this session as auto-started to prevent re-triggering
+      autoStartedRef.current = activePracticeSession;
+      
       setPractice(curriculumDay.practiceType);
       
       if (curriculumDay.circuit) {
@@ -212,8 +218,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setDuration(curriculumDay.duration);
         setTimeLeft(curriculumDay.duration * 60);
       }
+
+      // Auto-start the practice session immediately
+      setIsRunning(true);
+      onPracticingChange && onPracticingChange(true);
+      setSessionStartTime(performance.now());
     }
-  }, [activePracticeSession, getActivePracticeDay]);
+  }, [activePracticeSession, getActivePracticeDay, onPracticingChange]);
 
   const [chevronAngle, setChevronAngle] = useState(0);
   const [haloPulse, setHaloPulse] = useState(0);
@@ -451,6 +462,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleStop = () => {
+    // Capture the active session before clearing it (needed for summary logic)
+    const wasFromCurriculum = activePracticeSession;
     clearActivePracticeSession();
     setIsRunning(false);
     onPracticingChange && onPracticingChange(false);
@@ -537,12 +550,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setTimeLeft(duration * 60);
 
     const actualDuration = duration * 60 - timeLeft;
-    const shouldJournal = practice !== 'Ritual' && actualDuration >= 30;
+    // Show summary for any curriculum session, or for manual sessions >= 30s
+    const shouldShowSummary = wasFromCurriculum || (practice !== 'Ritual' && actualDuration >= 30);
 
-if (shouldJournal) {
+if (shouldShowSummary) {
     // Check if there's a next leg in curriculum
     const { getNextLeg } = useCurriculumStore.getState();
-    const nextLeg = activePracticeSession ? getNextLeg(activePracticeSession, 1) : null;
+    const nextLeg = wasFromCurriculum ? getNextLeg(wasFromCurriculum, 1) : null;
 
     setSessionSummary({
         practice,
@@ -1334,6 +1348,8 @@ if (shouldJournal) {
 
         <PracticeSelectionModal
           isOpen={true}
+          practices={PRACTICES}
+          currentPractice={practice}
           onSelectPractice={(p) => {
             setPractice(p);
             setPracticeModalOpen(false);
