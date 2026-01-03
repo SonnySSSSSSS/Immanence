@@ -240,11 +240,26 @@ WisdomSection.jsx
 - Video hearth with ember glow when playing
 - Isolated with `z-index: 50` to hide PathParticles decorations
 
+**Category Sigils (Recommendations):**
+
+The `CategorySigil` component renders symbolic icons for each of the 8 recommendation categories using inline SVGs. This approach was chosen over external PNG assets for performance, scalability, and visual consistency.
+
+| Category Key           | Symbol Description           |
+| ---------------------- | ---------------------------- |
+| `focus-presence`       | Crosshair/target             |
+| `emotional-regulation` | Balanced waves               |
+| `grounding-safety`     | Grounding chevron            |
+| `shadow-integration`   | Moon phases                  |
+| `expression-voice`     | Radiating circle             |
+| `heart-connection`     | Heart outline                |
+| `resonance-alignment`  | Concentric tuning fork waves |
+| `self-knowledge`       | Eye of awareness             |
+
 **Components:**
 
 - `ChapterModal` - Full-screen chapter reading
 - `PartAccordion` - Collapsible treatise sections
-- `CategoryCard` - Needs assessment cards
+- `CategoryCard` - Needs assessment cards (uses `CategorySigil`)
 - `SelfKnowledgeView` - Wave Function personality viz
 - `VideoToken` - Minimal video selector
 
@@ -511,6 +526,19 @@ The avatar is a multi-layer visual system representing the user's spiritual stat
 - **Teal-tinted stone frame**: Rune ring uses `hue-rotate(-10deg)` for color harmony
 - **Toned background haze**: Conic gradient at 30% opacity
 - **Counter-rotation**: Avatar sigil rotates opposite to rune ring at 25% speed
+
+**Avatar Asset Naming Conventions:**
+
+The system supports two naming conventions, controlled by `useNewAvatars` in `settingsStore`. The default is `false` (legacy).
+
+| Convention | Example Filename                          | Default? | Use Case                      |
+| ---------- | ----------------------------------------- | -------- | ----------------------------- |
+| Legacy     | `Flame-Dhyana.png`                        | ✅ Yes   | Standard user fallback        |
+| New        | `avatar-flame-dhyana-ekagrata_00001_.png` | No       | Extended attention variations |
+
+- **Legacy Path Construction**: `avatars/${Stage}-${Path}.png` (e.g., `Seedling-Soma.png`)
+- **New Path Construction**: `avatars/avatar-${stage}-${path}-${attention}_0000${n}_.png`
+- **Core Avatar**: `avatars/${stage}-core.png` (used when `showCore=true` or no path selected)
 
 **Settings:**
 
@@ -916,6 +944,43 @@ Each stage has primary/accent/glow colors:
   --stage-accent: var(--seedling-accent);
 }
 ```
+
+---
+
+## Asset Management
+
+The `public/` directory contains all static assets served by the application. A systematic audit and cleanup was performed to remove unused legacy assets and improve project maintainability.
+
+### Directory Structure
+
+| Directory              | Contents                                                             |
+| ---------------------- | -------------------------------------------------------------------- |
+| `public/avatars/`      | Avatar core and stage-path combination PNGs (125 files)              |
+| `public/titles/`       | Stage and path title images for `StageTitle.jsx` (5 sets, 114 files) |
+| `public/sigils/`       | Rune ring and inner lip textures for `RuneRingLayer.jsx` (5 files)   |
+| `public/mode_buttons/` | Theme-aware button assets for `SimpleModeButton.jsx`                 |
+| `public/backgrounds/`  | Stage-specific light mode cloud overlays (`{stage}_{cloud}.png`)     |
+
+### Backup Directory (`_backup_assets/`)
+
+Unused or legacy assets identified during cleanup were moved here for archival. This directory is not served by the application.
+
+| Subdirectory      | Contents                                                               |
+| ----------------- | ---------------------------------------------------------------------- |
+| `avatars_legacy/` | Experimental `{stage}_{attention}_{path}_seed*.png` files (~545 files) |
+| `sigils/`         | Unused category sigil PNGs (now replaced by inline SVGs)               |
+| `misc/`           | Orphaned experiment assets (clouds, orbs, step images)                 |
+| `screenshots/`    | Debug and development screenshots                                      |
+| `titles/`         | Older title asset sets                                                 |
+
+### Dynamic Asset Loading
+
+Several components dynamically construct asset paths. Ensure new assets follow these patterns:
+
+- **Avatars**: `StaticSigilCore.jsx` constructs paths using `stage`, `path`, and `attention` props.
+- **Cloud Backgrounds**: `HomeHub.jsx` uses `{stage}_{cloudVariant}.png`.
+- **Stage Titles**: `StageTitle.jsx` uses `titles/set{n}/{mode}/stage_{stage}.png`.
+- **Mode Buttons**: `SimpleModeButton.jsx` uses `mode_buttons/{icon}_{theme}_{mode}.png`.
 
 ---
 

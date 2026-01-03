@@ -507,37 +507,26 @@ function PartAccordion({ part, chapters, isExpanded, onToggle, onChapterClick, b
 // CATEGORY SIGIL - Archetypal visual anchors
 // ─────────────────────────────────────────────────────────────────────────────
 function CategorySigil({ categoryKey }) {
-  const SIGIL_MAP = {
-    'focus-presence': 'focus-presence.png',
-    'emotional-regulation': 'emotional-regulation.png',
-    'grounding-safety': 'grounding-safety.png',
-    'shadow-integration': 'shadow-integration.png',
-    'expression-voice': 'expression-voice.png',
-    'heart-connection': 'heart-connection.png',
-    'resonance-alignment': 'resonance-alignment.png',
-    'self-knowledge': 'self-knowledge.png',
-  };
-
-  // Use PNG if available, otherwise SVG placeholder
-  if (SIGIL_MAP[categoryKey]) {
-    return (
-      <img
-        src={`${import.meta.env.BASE_URL} sigils / ${SIGIL_MAP[categoryKey]} `}
-        alt=""
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{
-          width: '80px',
-          height: '80px',
-          opacity: 0.16,
-          filter: 'blur(0.5px)',
-          zIndex: 1
-        }}
-      />
-    );
-  }
-
-  // SVG placeholders for remaining sigils
+  // SVG symbols for all categories - consistent visual language
   const SVG_SIGILS = {
+    'focus-presence': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <circle cx="40" cy="40" r="22" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <circle cx="40" cy="40" r="4" fill="var(--accent-color)" />
+      </svg>
+    ),
+    'emotional-regulation': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <path d="M20,35 Q30,25 40,35 T60,35" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <path d="M20,45 Q30,35 40,45 T60,45" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+      </svg>
+    ),
+    'grounding-safety': (
+      <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
+        <path d="M40,60 L20,25 L60,25 Z" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
+        <line x1="25" y1="65" x2="55" y2="65" stroke="var(--accent-color)" strokeWidth="1.5" />
+      </svg>
+    ),
     'shadow-integration': (
       <svg width="80" height="80" viewBox="0 0 80 80" className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: 0.16, zIndex: 1 }}>
         <circle cx="40" cy="40" r="20" fill="none" stroke="var(--accent-color)" strokeWidth="1.5" />
