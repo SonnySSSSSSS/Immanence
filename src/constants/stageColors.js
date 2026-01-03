@@ -2,12 +2,12 @@
 
 export const STAGE_COLORS = {
     seedling: {
-        gradient: ["#4ade80", "#22c55e", "#16a34a"],
-        glow: "#22c55e",
-        simple: '#4ade80',
-        shadow: 'rgba(34, 197, 94, 0.3)',
-        shadowDark: 'rgba(34, 197, 94, 0.5)',
-        shadowDeep: 'rgba(22, 163, 74, 0.6)' // Darker green
+        gradient: ["#16a34a", "#15803d", "#166534"], // Darker green transition
+        glow: "#15803d",
+        simple: '#15803d',
+        shadow: 'rgba(21, 128, 61, 0.3)',
+        shadowDark: 'rgba(21, 128, 61, 0.5)',
+        shadowDeep: 'rgba(22, 101, 52, 0.6)' 
     },
     ember: {
         gradient: ["#fb923c", "#f97316", "#ea580c"],

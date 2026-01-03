@@ -24,6 +24,7 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
+import { DailyPracticeTracker } from "./DailyPracticeTracker.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 
@@ -239,20 +240,21 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full px-4 flex flex-col items-center gap-4 pb-4">
+      <div className="w-full px-4 flex flex-col items-center gap-2 pb-4">
 
-        {/* DAILY PRACTICE CARD (Curriculum) */}
-        {curriculumActive && (
-          <div className="w-full">
-            <DailyPracticeCard 
-              onStartPractice={() => onSelectSection('practice')}
-              onViewCurriculum={() => setShowCurriculumHub(true)}
-            />
-          </div>
-        )}
+{/* DAILY PRACTICE CARD (Curriculum) */}
+{curriculumActive && (
+  <div className="w-full space-y-3">
+    <DailyPracticeCard 
+      onStartPractice={() => onSelectSection('practice')}
+      onViewCurriculum={() => setShowCurriculumHub(true)}
+    />
+    <DailyPracticeTracker />
+  </div>
+)}
 
         {/* TRACKING HUB - Swipeable Stats Cards */}
-        <div className="w-full mb-4">
+        <div className="w-full">
           <HubCardSwiper cards={[
             <CompactStatsCard key="breathwork" domain="breathwork" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
             <TrajectoryCard key="trajectory" onTap={() => console.log('TODO: Open TrajectoryReport')} />,
@@ -283,9 +285,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           </div>
         )}
         <div
-          className="w-full"
+          className="w-full mt-2 transition-all duration-700"
           style={{
-            maxWidth: '430px',
+            maxWidth: isSanctuary ? '600px' : '430px',
             margin: '0 auto',
           }}
         >

@@ -4,32 +4,32 @@ export const STAGE_THEMES = {
     SEEDLING: {
         name: 'Seedling',
         accent: {
-            primary: '#4ade80',      // Bright green
-            secondary: '#22c55e',    // Medium green
-            muted: '#166534',        // Dark green
-            glow: 'rgba(74, 222, 128, 0.4)',
+            primary: '#15803d',      // Earthy forest green (was #22c55e)
+            secondary: '#166534',    // Darker forest green (was #16a34a)
+            muted: '#064e3b',        // Very dark teal/green (was #14532d)
+            glow: 'rgba(21, 128, 61, 0.4)',
             particleColor: '#86efac',
         },
         text: {
-            accent: '#4ade80',
-            accentMuted: 'rgba(74, 222, 128, 0.7)',
+            accent: '#15803d',
+            accentMuted: 'rgba(21, 128, 61, 0.7)',
         },
         ui: {
-            selectedBg: 'rgba(74, 222, 128, 0.15)',
-            selectedBorder: 'rgba(74, 222, 128, 0.4)',
-            hoverBg: 'rgba(74, 222, 128, 0.08)',
-            progressBar: '#4ade80',
-            buttonGradient: 'linear-gradient(135deg, #4ade80, #22c55e)',
+            selectedBg: 'rgba(21, 128, 61, 0.15)',
+            selectedBorder: 'rgba(21, 128, 61, 0.4)',
+            hoverBg: 'rgba(21, 128, 61, 0.08)',
+            progressBar: '#15803d',
+            buttonGradient: 'linear-gradient(135deg, #15803d, #166534)',
         },
         light: {
             bgBase: '#F5F8F2',          // Sage cream
             bgSurface: '#FFFDF9',       // Soft white
-            textPrimary: '#2D3D2A',     // Forest
-            textSecondary: '#4A6B41',   // Moss
-            accent: '#4A6B41',          // Moss green
-            accentMuted: '#8BA888',     // Light sage
-            border: 'rgba(74,107,65,0.25)',
-            shadowTint: 'rgba(45,61,42,0.12)',
+            textPrimary: '#166534',     // Dark forest (was #2D3D2A)
+            textSecondary: '#15803d',   // Forest (was #4A6B41)
+            accent: '#15803d',          // Forest green (was #4A6B41)
+            accentMuted: '#4ade80',     // Brighter sage for contrast
+            border: 'rgba(21, 128, 61, 0.25)',
+            shadowTint: 'rgba(22, 101, 52, 0.12)',
         }
     },
 

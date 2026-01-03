@@ -1,4 +1,3 @@
-// src/components/PracticeSection.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
@@ -33,13 +32,11 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { PostSessionJournal } from "./PostSessionJournal.jsx";
 import { useJournalStore } from "../state/journalStore.js";
 
-// DEV GALLERY MODE - now controlled via prop from App.jsx
-const DEV_FX_GALLERY_ENABLED = true; // Fallback if prop not passed
+const DEV_FX_GALLERY_ENABLED = true;
 
 const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
-// Scrolling Wheel Component
 function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   const isLight = colorScheme === 'light';
   const wheelRef = useRef(null);
@@ -96,7 +93,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
       ref={wheelRef}
       className="relative overflow-hidden select-none"
       style={{
-        height: `${itemHeight * visibleItems} px`,
+        height: `${itemHeight * visibleItems}px`,
         width: "120px",
       }}
       onMouseDown={handleMouseDown}
@@ -108,7 +105,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
       <div
         className="absolute top-0 left-0 right-0 pointer-events-none z-10"
         style={{
-          height: `${itemHeight} px`,
+          height: `${itemHeight}px`,
           background: isLight
             ? "linear-gradient(180deg, var(--light-bg-surface) 0%, transparent 100%)"
             : "linear-gradient(180deg, rgba(15,15,26,1) 0%, transparent 100%)"
@@ -118,7 +115,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
       <div
         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
         style={{
-          height: `${itemHeight} px`,
+          height: `${itemHeight}px`,
           background: isLight
             ? "linear-gradient(0deg, var(--light-bg-surface) 0%, transparent 100%)"
             : "linear-gradient(0deg, rgba(15,15,26,1) 0%, transparent 100%)"
@@ -128,8 +125,8 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
       <div
         className="absolute left-0 right-0 pointer-events-none z-10"
         style={{
-          top: `${itemHeight} px`,
-          height: `${itemHeight} px`,
+          top: `${itemHeight}px`,
+          height: `${itemHeight}px`,
           border: "1px solid var(--accent-20)",
           borderRadius: "8px",
           background: "rgba(255,255,255,0.02)"
@@ -172,23 +169,52 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
 }
 
 export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED }) {
-  // Avatar path determines particle effects (Soma, Prana, Dhyana, Drishti, Jnana, Samyoga)
-  // When showCore is true, use default particles (no path-specific effects)
-
-  // Attention path instrumentation
   const instrumentation = useSessionInstrumentation();
-
-  // Get color scheme for light mode support
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
-
-  // Load saved preferences or use defaults
   const savedPrefs = loadPreferences();
 
   const [practice, setPractice] = useState(savedPrefs.practice);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
 
-  // Animation states for selectable header affordance
+  // CURRICULUM INTEGRATION
+  const { 
+    getActivePracticeDay, 
+    activePracticeSession,
+    clearActivePracticeSession,
+  } = useCurriculumStore();
+
+  // Load curriculum day settings when active session changes
+  useEffect(() => {
+    const curriculumDay = getActivePracticeDay();
+    if (curriculumDay && activePracticeSession) {
+      setPractice(curriculumDay.practiceType);
+      
+      if (curriculumDay.circuit) {
+        const exercises = curriculumDay.circuit.exercises.map(ex => ({
+          exercise: {
+            id: ex.id,
+            name: ex.name,
+            type: ex.type,
+            practiceType: ex.practiceType,
+            preset: ex.preset,
+            sensoryType: ex.sensoryType,
+          },
+          duration: ex.duration,
+        }));
+        setCircuitConfig({
+          exercises,
+          exerciseDuration: curriculumDay.circuit.totalDuration,
+        });
+      }
+      
+      if (curriculumDay.duration) {
+        setDuration(curriculumDay.duration);
+        setTimeLeft(curriculumDay.duration * 60);
+      }
+    }
+  }, [activePracticeSession, getActivePracticeDay]);
+
   const [chevronAngle, setChevronAngle] = useState(0);
   const [haloPulse, setHaloPulse] = useState(0);
   const [duration, setDuration] = useState(savedPrefs.duration);
@@ -200,46 +226,37 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [vipassanaTheme, setVipassanaTheme] = useState(savedPrefs.vipassanaTheme);
   const [vipassanaElement, setVipassanaElement] = useState(savedPrefs.vipassanaElement);
 
-  // Vipassana variant selection state (Thought Labeling vs Sakshi)
   const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
   const [showVipassanaVariantModal, setShowVipassanaVariantModal] = useState(false);
 
-  // Sound configuration state
-  const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]); // Alpha - default
-  const [isochronicPreset, setIsochronicPreset] = useState(ISOCHRONIC_PRESETS[1]); // Relaxation
+  const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]);
+  const [isochronicPreset, setIsochronicPreset] = useState(ISOCHRONIC_PRESETS[1]);
   const [mantraPreset, setMantraPreset] = useState(null);
   const [naturePreset, setNaturePreset] = useState(null);
   const [carrierFrequency, setCarrierFrequency] = useState(200);
   const [soundVolume, setSoundVolume] = useState(0.5);
 
-
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10 * 60);
 
-  // 3-tier card collapse states (default expanded)
   const [tier2Expanded, setTier2Expanded] = useState(true);
   const [tier3Expanded, setTier3Expanded] = useState(true);
 
-  // Lock & Begin transition state
   const [isStarting, setIsStarting] = useState(false);
 
-  // Session summary state (Ritual Seal)
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
 
-  // Journal state
   const [lastSessionId, setLastSessionId] = useState(null);
   const { startMicroNote, pendingMicroNote } = useJournalStore();
 
-  // Hover states for peripheral halos
   const [tier2Hovered, setTier2Hovered] = useState(false);
   const [tier3Hovered, setTier3Hovered] = useState(false);
 
-  // Circuit training state - PracticeSection orchestrates the circuit internally
   const [activeCircuitId, setActiveCircuitId] = useState(null);
-  const [circuitConfig, setCircuitConfig] = useState(null); // User's custom circuit configuration
-  const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0); // Current exercise in circuit
-  const [circuitSavedPractice, setCircuitSavedPractice] = useState(null); // Original practice before circuit started
+  const [circuitConfig, setCircuitConfig] = useState(null);
+  const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
+  const [circuitSavedPractice, setCircuitSavedPractice] = useState(null);
 
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
@@ -256,22 +273,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [visualizationCycles, setVisualizationCycles] = useState(0);
 
-  // Cymatics state
   const [frequencySet, setFrequencySet] = useState('solfeggio');
-  const [selectedFrequency, setSelectedFrequency] = useState(SOLFEGGIO_SET[4]); // 528 Hz - Love
+  const [selectedFrequency, setSelectedFrequency] = useState(SOLFEGGIO_SET[4]);
   const [driftEnabled, setDriftEnabled] = useState(false);
 
-  // Ritual Mode state
   const [activeRitual, setActiveRitual] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // FX Gallery state (DEV MODE - controlled by showFxGallery prop)
   const [currentFxIndex, setCurrentFxIndex] = useState(0);
   const currentFxPreset = showFxGallery ? ringFXPresets[currentFxIndex] : null;
 
   const handlePrevFx = () => {
     setCurrentFxIndex(prev => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
   };
+  
   const handleNextFx = () => {
     setCurrentFxIndex(prev => (prev + 1) % ringFXPresets.length);
   };
@@ -282,22 +297,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [duration, isRunning]);
 
-  // Selectable header animation loop (chevron sway + halo pulse)
   useEffect(() => {
-    // Animations continue even when modal is open (portal renders separately)
-
     let animationId;
     const startTime = Date.now();
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
 
-      // Chevron sway: ±8 degrees over 3 second period
       const chevronPhase = (elapsed % 3000) / 3000;
       const angle = Math.sin(chevronPhase * Math.PI * 2) * 8;
       setChevronAngle(angle);
 
-      // Halo pulse: 0-1 over 5 second period
       const haloPhase = (elapsed % 5000) / 5000;
       const pulse = (Math.sin(haloPhase * Math.PI * 2) + 1) / 2;
       setHaloPulse(pulse);
@@ -315,11 +325,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [preset]);
 
-  // Initialize circuitConfig when switching to Circuit practice
-  // This ensures START works even if Options panel hasn't been expanded
   useEffect(() => {
     if (practice === "Circuit" && !circuitConfig) {
-      // Default exercises matching CircuitConfig.jsx defaults
       const defaultExercises = [
         { exercise: { id: 'breath', name: 'Breath Training', type: 'breath', practiceType: 'Breath & Stillness', preset: 'box' }, duration: 5 },
         { exercise: { id: 'cognitive', name: 'Cognitive Vipassana', type: 'focus', practiceType: 'Cognitive Vipassana' }, duration: 5 },
@@ -332,11 +339,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setupCircuitExercise = (exerciseItem) => {
     const { exercise, duration: exDuration } = exerciseItem;
 
-    // Map exercise to practice type and configure settings
     if (exercise.practiceType === 'Breath & Stillness') {
       setPractice('Breath & Stillness');
-      // Set breath pattern from preset if provided
-      // Handle case-insensitive preset lookup (CircuitConfig uses 'box', BREATH_PRESETS uses 'Box')
       if (exercise.preset) {
         const presetKey = Object.keys(BREATH_PRESETS).find(
           k => k.toLowerCase() === exercise.preset.toLowerCase()
@@ -354,15 +358,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setSensoryType(exercise.sensoryType);
       }
     } else {
-      // Fallback - use the practiceType directly if recognized
       setPractice(exercise.practiceType || 'Breath & Stillness');
     }
 
-    // Set duration for this exercise
     setDuration(exDuration);
     setTimeLeft(exDuration * 60);
 
-    // Start running
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true);
     setSessionStartTime(performance.now());
@@ -374,47 +375,39 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const handleExerciseComplete = () => {
     if (activeCircuitId && circuitConfig) {
-      // In circuit mode - advance to next exercise
       advanceCircuitExercise();
     } else {
-      // Normal mode - stop the session
       handleStop();
     }
   };
 
-  // Advance to next circuit exercise or complete circuit
   const advanceCircuitExercise = () => {
     if (!activeCircuitId || !circuitConfig) return;
 
     const nextIndex = circuitExerciseIndex + 1;
     if (nextIndex < circuitConfig.exercises.length) {
-      // More exercises remain
       setCircuitExerciseIndex(nextIndex);
       const nextExercise = circuitConfig.exercises[nextIndex];
       setupCircuitExercise(nextExercise);
     } else {
-      // Circuit complete!
       handleCircuitComplete();
     }
   };
 
-  // Circuit completion handler
   const handleCircuitComplete = () => {
+    clearActivePracticeSession();
     setIsRunning(false);
     onPracticingChange && onPracticingChange(false);
 
-    // Log completion
     logCircuitCompletion('custom', circuitConfig.exercises);
 
-    // Calculate total duration
     const totalDuration = circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0);
 
-    // Record circuit session in progress store (same as single sessions)
     let recordedSession = null;
     try {
       recordedSession = useProgressStore.getState().recordSession({
         domain: 'circuit-training',
-        duration: totalDuration, // minutes
+        duration: totalDuration,
         metadata: {
           circuitName: 'Custom Circuit',
           exerciseCount: circuitConfig.exercises.length,
@@ -425,7 +418,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       console.error("Failed to save circuit session:", e);
     }
 
-    // Show summary
     setSessionSummary({
       type: 'circuit',
       circuitName: 'Custom Circuit',
@@ -434,16 +426,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     });
     setShowSummary(true);
 
-    // Trigger journal micro-note flow (PHASE 2 FIX: Wire circuit journal)
     if (recordedSession) {
       setLastSessionId(recordedSession.id);
       startMicroNote(recordedSession.id);
     }
 
-    // Reset circuit state
     setActiveCircuitId(null);
     setCircuitExerciseIndex(0);
-    setPractice('Circuit'); // Restore to Circuit selection
+    setPractice('Circuit');
   };
 
   const handlePatternChange = (key, value) => {
@@ -461,14 +451,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleStop = () => {
+    clearActivePracticeSession();
     setIsRunning(false);
     onPracticingChange && onPracticingChange(false);
     onBreathStateChange && onBreathStateChange(null);
 
-    // Determine exit type: completed if timer reached 0, abandoned otherwise
     const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
-
-    // End instrumentation and get session data
     const instrumentationData = instrumentation.endSession(exitType);
 
     const id =
@@ -508,7 +496,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     let recordedSession = null;
     try {
-      // Map practice to domain for Path calculation
       let domain = 'breathwork';
       const p = practice.toLowerCase();
       if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
@@ -516,10 +503,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
-      // Record in progress store (single source of truth) and capture the returned session
       recordedSession = useProgressStore.getState().recordSession({
         domain,
-        duration: duration, // minutes
+        duration: duration,
         metadata: {
           subType,
           pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
@@ -527,11 +513,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           ritualId: activeRitual?.id,
           legacyImport: false
         },
-        // Pass instrumentation data for attention path calculation
         instrumentation: instrumentationData,
       });
 
-      // Log to cycle system (if 10+ minutes)
       if (duration >= 10) {
         const now = new Date();
         const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -543,43 +527,36 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         });
       }
 
-      // Sync mandala store
       syncFromProgressStore();
     } catch (e) {
       console.error("Failed to save session:", e);
     }
 
-    // Reset ritual state
     setActiveRitual(null);
     setCurrentStepIndex(0);
     setTimeLeft(duration * 60);
 
-    // Show summary and trigger journal for any meaningful session (>30s), excluding Ritual
-    // RitualPortal handles its own completion UI
-    const actualDuration = duration * 60 - timeLeft; // seconds practiced
+    const actualDuration = duration * 60 - timeLeft;
     const shouldJournal = practice !== 'Ritual' && actualDuration >= 30;
 
-    if (shouldJournal) {
-      setSessionSummary({
+if (shouldJournal) {
+    // Check if there's a next leg in curriculum
+    const { getNextLeg } = useCurriculumStore.getState();
+    const nextLeg = activePracticeSession ? getNextLeg(activePracticeSession, 1) : null;
+
+    setSessionSummary({
         practice,
         duration,
         tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
         breathCount,
         exitType,
-      });
-      setShowSummary(true);
-
-      // Trigger journal micro-note flow using the recorded session ID
-      if (recordedSession) {
-        setLastSessionId(recordedSession.id);
-        startMicroNote(recordedSession.id);
-      }
-    }
+        nextLeg: nextLeg,
+    });
+    setShowSummary(true);
+  }
   };
 
-  // The actual start logic (called after ceremony)
   const executeStart = () => {
-    // Save current preferences for next session
     savePreferences({
       practice,
       duration,
@@ -592,24 +569,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       geometry,
     });
 
-    // For Circuit practice, set up the first exercise and run it using existing practice UI
     if (practice === "Circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {
-        // No exercises configured, don't start
         return;
       }
-      // Save original practice so we can restore after circuit ends
       setCircuitSavedPractice(practice);
       setActiveCircuitId('custom');
       setCircuitExerciseIndex(0);
 
-      // Set up the first exercise
       const firstExercise = circuitConfig.exercises[0];
       setupCircuitExercise(firstExercise);
       return;
     }
 
-    // For Cognitive Vipassana, show variant selector before starting
     if (practice === "Cognitive Vipassana") {
       setShowVipassanaVariantModal(true);
     }
@@ -622,7 +594,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setLastSignedErrorMs(null);
     setBreathCount(0);
 
-    // Start instrumentation tracking
     const p = practice.toLowerCase();
     let domain = 'breathwork';
     if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
@@ -637,27 +608,21 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     );
   };
 
-  // Lock & Begin: ceremonial transition before start
   const handleStart = () => {
-    // Trigger the "locking" animation
     setIsStarting(true);
 
-    // After 1.4s pause, actually start
     setTimeout(() => {
       setIsStarting(false);
       executeStart();
     }, 1400);
   };
 
-  // Ritual-specific handlers
   const handleSelectRitual = (ritual) => {
     setActiveRitual(ritual);
     setCurrentStepIndex(0);
-    // Calculate total duration from steps
     const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
     setDuration(Math.ceil(totalSeconds / 60));
     setTimeLeft(totalSeconds);
-    // Auto-start ritual
     handleStart();
   };
 
@@ -676,7 +641,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleAccuracyTap = (errorMs) => {
     if (!isRunning) return;
 
-    // Track tap as alive signal for attention path
     instrumentation.recordAliveSignal();
 
     setLastErrorMs(Math.abs(errorMs));
@@ -691,7 +655,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     if (!isRunning) return;
-    // Skip timer countdown for Ritual mode (handled by RitualPortal)
     if (practice === "Ritual") return;
 
     let interval = null;
@@ -700,7 +663,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-      // If in circuit mode, advance to next exercise instead of stopping
       if (activeCircuitId && circuitConfig) {
         advanceCircuitExercise();
       } else {
@@ -710,7 +672,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return () => {
       if (interval) clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft, practice, activeCircuitId]);
 
   useEffect(() => {
@@ -787,11 +748,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
 
-  // ───────────────────────────────────────────────────────────
-  // RUNNING VIEW
-  // ───────────────────────────────────────────────────────────
   if (isRunning) {
-    // RITUAL MODE - Different running view
     if (practice === "Ritual") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
@@ -803,20 +760,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    // Cognitive Vipassana MODE - Show variant selector or run practice
     if (practice === "Cognitive Vipassana") {
-      // If variant modal should be shown (triggered by start button)
       if (showVipassanaVariantModal) {
         return (
           <VipassanaVariantSelector
             onSelect={(variant) => {
               setVipassanaVariant(variant);
               setShowVipassanaVariantModal(false);
-              // Practice will continue since isRunning is true
             }}
             onCancel={() => {
               setShowVipassanaVariantModal(false);
-              handleStop(); // Cancel the practice
+              handleStop();
             }}
           />
         );
@@ -848,11 +802,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 letterSpacing: "var(--tracking-mythic)",
                 textTransform: "uppercase",
                 fontWeight: 600,
-                background: buttonBg,
+                background: 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
                 color: "#050508",
-                boxShadow: radialGlow
-                  ? `${radialGlow}, ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`
-                  : `0 0 24px var(--accent-30), ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`,
+                boxShadow: '0 0 24px var(--accent-30), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)',
                 borderRadius: "999px",
               }}
             >
@@ -875,7 +827,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </section>
       );
     }
-
 
     let buttonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
     let radialGlow = '';
@@ -923,7 +874,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     return (
       <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
-        {/* Circuit Progress Indicator */}
         {activeCircuitId && circuitConfig && (
           <div
             className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
@@ -990,7 +940,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 pathId={showCore ? null : avatarPath}
                 fxPreset={currentFxPreset}
               />
-              {/* FX GALLERY SWITCHER - controlled by prop */}
               {showFxGallery && (
                 <div
                   className="flex items-center gap-3 mt-4 px-4 py-2 rounded-full"
@@ -1061,7 +1010,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 <div className="text-4xl opacity-80">✦</div>
               </div>
 
-              {/* Volume Control */}
               <div className="mt-6 w-64">
                 <div
                   className="mb-2 flex items-center justify-between"
@@ -1086,40 +1034,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   onChange={(e) => setSoundVolume(Number(e.target.value))}
                   className="w-full sound-volume-slider"
                 />
-                <style>{`
-                  .sound-volume-slider::-webkit-slider-thumb {
-                    appearance: none;
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 50%;
-                    background: var(--accent-color);
-                    cursor: pointer;
-                    box-shadow: 0 0 8px var(--accent-50);
-                  }
-                  .sound-volume-slider::-webkit-slider-runnable-track {
-                    height: 4px;
-                    border-radius: 2px;
-                    background: rgba(255, 255, 255, 0.2);
-                  }
-                  .sound-volume-slider::-moz-range-thumb {
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 50%;
-                    background: var(--accent-color);
-                    cursor: pointer;
-                    border: none;
-                    box-shadow: 0 0 8px var(--accent-50);
-                  }
-                  .sound-volume-slider::-moz-range-track {
-                    height: 4px;
-                    border-radius: 2px;
-                    background: isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255, 255, 255, 0.2)',
-                  }}
-                `}</style>
               </div>
             </div>
           )}
-        </div >
+        </div>
 
         <div className="flex flex-col items-center z-50">
           <div className="h-6 mb-3 flex items-center justify-center">
@@ -1161,7 +1079,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             <span style={{ position: 'relative', zIndex: 2 }}>Stop</span>
-            {/* Radial gradient overlay */}
             <div
               className="absolute inset-0 rounded-full pointer-events-none"
               style={{
@@ -1170,7 +1087,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 zIndex: 1,
               }}
             />
-            {/* Grain texture overlay */}
             <div
               className="absolute inset-0 rounded-full pointer-events-none"
               style={{
@@ -1214,21 +1130,45 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
 
         <style>{`
-@keyframes fade -in -up {
-  0 % { opacity: 0; transform: translateY(5px); }
-  100 % { opacity: 1; transform: translateY(0); }
-}
-          .animate - fade -in -up {
-  animation: fade -in -up 0.2s ease - out forwards;
-}
-`}</style>
-      </section >
+          @keyframes fade-in-up {
+            0% { opacity: 0; transform: translateY(5px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in-up {
+            animation: fade-in-up 0.2s ease-out forwards;
+          }
+          .sound-volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-50);
+          }
+          .sound-volume-slider::-webkit-slider-runnable-track {
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.2);
+          }
+          .sound-volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px var(--accent-50);
+          }
+          .sound-volume-slider::-moz-range-track {
+            background: transparent;
+            border: none;
+          }
+        `}</style>
+      </section>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RITUAL SEAL - SESSION SUMMARY VIEW
-  // ═══════════════════════════════════════════════════════════════════════════
   if (showSummary && sessionSummary) {
     return (
       <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
@@ -1243,11 +1183,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               : '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
           }}
         >
-          {/* Inner glow */}
           <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
 
           <div className="relative px-8 py-10 text-center">
-            {/* Seal Icon */}
             <div
               style={{
                 fontSize: '48px',
@@ -1258,7 +1196,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               ⚜
             </div>
 
-            {/* Title */}
             <div
               style={{
                 fontFamily: 'var(--font-display)',
@@ -1273,7 +1210,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               SESSION COMPLETE
             </div>
 
-            {/* Stats */}
             <div
               style={{
                 padding: '20px',
@@ -1303,7 +1239,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 }}>
                   {sessionSummary.practice}
                 </div>
-              </div>
+              </div> 
+
 
               <div style={{ marginBottom: '12px' }}>
                 <span style={{
@@ -1328,73 +1265,49 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               </div>
 
               {sessionSummary.tapStats && (
-                <>
-                  <div style={{ marginBottom: '12px' }}>
-                    <span style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      letterSpacing: 'var(--tracking-mythic)',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-muted)',
-                    }}>
-                      Breath Count
-                    </span>
-                    <div style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      marginTop: '4px',
-                    }}>
-                      {sessionSummary.breathCount} cycles
-                    </div>
+                <div>
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-muted)',
+                  }}>
+                    Accuracy
+                  </span>
+                  <div style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginTop: '4px',
+                  }}>
+                    {sessionSummary.tapStats.avgErrorMs}ms avg
                   </div>
-
-                  <div>
-                    <span style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      letterSpacing: 'var(--tracking-mythic)',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-muted)',
-                    }}>
-                      Best Tap Accuracy
-                    </span>
-                    <div style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      marginTop: '4px',
-                    }}>
-                      ±{sessionSummary.tapStats.bestErrorMs}ms
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
             </div>
-
-            {/* Seal & Return Button */}
+			
+			
             <button
               onClick={() => {
                 setShowSummary(false);
-                setSessionSummary(null);
+                if (pendingMicroNote) {
+                  // Journal is already open
+                } else {
+                  // Return to practice selection
+                  setPractice(PRACTICES[0]);
+                }
               }}
-              className="w-full rounded-full py-3 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-wider transition-all hover:scale-105"
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '11px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                textTransform: 'uppercase',
                 background: 'var(--accent-color)',
-                color: '#0B1F16',
-                boxShadow: '0 0 18px rgba(120,255,190,0.35), inset 0 2px 6px rgba(255,255,255,0.15)',
+                color: '#fff',
+                boxShadow: '0 8px 20px var(--accent-30)',
               }}
             >
-              Seal & Return
+              Continue
             </button>
           </div>
         </div>
@@ -1402,621 +1315,34 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     );
   }
 
-  // ───────────────────────────────────────────────────────────
-  // CONFIG VIEW - OPTIMIZED LAYOUT
-  // ───────────────────────────────────────────────────────────
+  // DEFAULT VIEW - Practice Selection
   return (
-    <section className="w-full flex flex-col items-center pt-8 pb-24">
-      {/* 3-TIER CEREMONIAL CARD */}
-      <div
-        className="relative w-full max-w-[420px] overflow-hidden transition-all duration-300"
-        style={{
-          // Stage-adaptive background for light/dark mode
-          background: isLight ? 'var(--light-bg-surface)' : 'rgba(10,14,18,0.6)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          // Stage-adaptive border
-          border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255, 147, 0, 0.15)',
-          // Stage-adaptive shadow
-          boxShadow: isLight
-            ? '0 4px 20px var(--light-shadow-tint), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-            : '0 20px 50px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.2)',
-          borderRadius: '32px',
-          opacity: isStarting ? 0.92 : 1,
-          transform: isStarting ? 'scale(1.02)' : 'scale(1)',
-        }}
-      >
-        {/* Mandala background - hidden in light mode to avoid broken image edge */}
-        {!isLight && (
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-            {/* Mandala image - dark mode only */}
-            <img
-              src={`${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`}
-              alt="Breath mandala"
-              className="object-contain w-full h-full"
-              style={{
-                opacity: 0.2,
-                transform: 'scale(1.25) translateY(-8%)',
-                transformOrigin: 'center',
-              }}
-            />
-          </div>
-        )}
-
+    <section className="w-full h-full flex flex-col items-center justify-center pb-24">
+      <div className="flex flex-col items-center gap-8">
         <div
-          className="absolute top-3 left-4"
-          style={{ color: 'var(--accent-40)', fontSize: "6px" }}
-        >
-          ◆
-        </div>
-        <div
-          className="absolute top-3 right-4"
-          style={{ color: 'var(--accent-40)', fontSize: "6px" }}
-        >
-          ◆
-        </div>
-
-        <div className="relative px-8 py-10">
-          {/* Practice selector - LEVEL 2: Primary Decision (Selectable Header Pattern) */}
-          <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-            {/* Text prompt above button */}
-            <div
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '11px',
-                letterSpacing: 'var(--tracking-mythic)',
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                fontStyle: 'italic'
-              }}
-            >
-              Choose your practice mode..
-            </div>
-            <button
-              onClick={() => setPracticeModalOpen(true)}
-              className="px-6 py-3 rounded-full relative overflow-hidden"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
-                fontWeight: 500,
-                letterSpacing: 'var(--tracking-wide)',
-                color: 'var(--accent-color)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                // State-driven background
-                background: practiceModalOpen
-                  ? 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
-                  : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-                // Accent color border
-                border: '1px solid var(--accent-30)',
-                // State-driven halo pulse + asymmetric inner shadow (ember core)
-                boxShadow: practiceModalOpen
-                  ? `0 0 35px var(--accent-15), inset 0 0 25px var(--accent-08), inset 3px 4px 8px rgba(0,0,0,0.4), inset -2px -3px 6px var(--accent-20)`
-                  : `0 0 ${20 + haloPulse * 30}px var(--accent-${Math.round(5 + haloPulse * 8)}), inset 0 0 ${20 + haloPulse * 15}px var(--accent-${Math.round(3 + haloPulse * 5)}), inset 3px 4px 8px rgba(0,0,0,0.35), inset -2px -3px 6px var(--accent-15)`,
-                // State-driven scale + press feedback
-                transform: practiceModalOpen ? 'scale(1.06)' : 'scale(1)',
-                transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = practiceModalOpen ? 'scale(1.04)' : 'scale(0.97)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = practiceModalOpen ? 'scale(1.06)' : 'scale(1)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = practiceModalOpen ? 'scale(1.06)' : 'scale(1)'}
-            >
-              <span>{practice}</span>
-              {/* Chevron: static when closed, rotates 180° when open */}
-              <span
-                style={{
-                  display: 'inline-block',
-                  transition: 'transform 300ms ease-out',
-                  transform: practiceModalOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  fontSize: '14px',
-                  opacity: 0.85,
-                }}
-              >
-                ▾
-              </span>
-              {/* Radial gradient overlay for depth */}
-              <div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={{
-                  background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.12) 0%, transparent 60%)',
-                  mixBlendMode: 'soft-light',
-                }}
-              />
-              {/* Grain texture overlay */}
-              <div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={{
-                  background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                  opacity: 0.08,
-                  mixBlendMode: 'overlay',
-                }}
-              />
-            </button>
-          </div>
-
-          {/* RITUAL MODE: Simple begin button, no configuration */}
-          {practice === "Ritual" ? (
-            <div className="flex flex-col items-center pt-12 pb-8">
-              <button
-                onClick={handleStart}
-                disabled={isStarting}
-                className="group relative px-16 py-5 rounded-full transition-all duration-300 overflow-hidden"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  letterSpacing: "var(--tracking-mythic)",
-                  textTransform: "uppercase",
-                  background: isStarting
-                    ? 'linear-gradient(135deg, rgba(212,184,122,0.4) 0%, rgba(160,120,85,0.3) 100%)'
-                    : 'linear-gradient(135deg, rgba(212,184,122,0.25) 0%, rgba(160,120,85,0.2) 100%)',
-                  color: isStarting ? 'rgba(212,184,122,0.8)' : 'var(--accent-color)',
-                  border: '1px solid var(--accent-30)',
-                  boxShadow: isStarting
-                    ? '0 0 40px var(--accent-20), inset 0 0 30px var(--accent-10)'
-                    : '0 0 25px var(--accent-15), inset 0 0 20px var(--accent-08)',
-                  transform: isStarting ? 'scale(1.02)' : 'scale(1)',
-                  cursor: isStarting ? 'default' : 'pointer',
-                }}
-                onMouseEnter={(e) => !isStarting && (e.currentTarget.style.boxShadow = '0 0 35px var(--accent-25), inset 0 0 25px var(--accent-12)')}
-                onMouseLeave={(e) => !isStarting && (e.currentTarget.style.boxShadow = '0 0 25px var(--accent-15), inset 0 0 20px var(--accent-08)')}
-              >
-                {isStarting ? 'Opening Portal...' : '✦ Begin Ritual'}
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* ═══════════════════════════════════════════════════════════ */}
-              {/* TIER 1 — INTENTION (Always Visible, Ceremonial, Decisive)   */}
-              {/* ═══════════════════════════════════════════════════════════ */}
-              <div
-                className="mb-7"
-                style={{
-                  transition: 'opacity 200ms ease-out',
-                  opacity: isStarting ? 0.6 : 1,
-                }}
-              >
-                {/* Duration - centered, large - HIDE FOR CIRCUIT MODE */}
-                {practice !== "Circuit" && (
-                  <div className="flex flex-col items-center mb-5">
-                    <div
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        letterSpacing: "var(--tracking-mythic)",
-                        textTransform: "uppercase",
-                        color: "var(--text-muted)",
-                        marginBottom: '10px',
-                      }}
-                    >
-                      Duration
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: "38px",
-                        fontWeight: 500,
-                        letterSpacing: "0.08em",
-                        color: "var(--text-primary)",
-                        textShadow: isLight ? 'none' : '0 0 6px rgba(0,0,0,0.6), 0 0 32px var(--accent-30)',
-                      }}
-                    >
-                      {formatTime(timeLeft)}
-                    </div>
-                    <SacredTimeSlider
-                      value={duration}
-                      onChange={setDuration}
-                      options={DURATIONS}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* ═══════════════════════════════════════════════════════════ */}
-              {/* TIER 2 — FORM (Collapsed by default, selection-focused)     */}
-              {/* ═══════════════════════════════════════════════════════════ */}
-              <div
-                style={{
-                  transition: 'opacity 200ms ease-out, max-height 260ms ease-in-out',
-                  opacity: isStarting ? 0 : 1,
-                  pointerEvents: isStarting ? 'none' : 'auto',
-                }}
-              >
-                {/* Collapsible Header */}
-                <button
-                  onClick={() => setTier2Expanded(!tier2Expanded)}
-                  onMouseEnter={() => setTier2Hovered(true)}
-                  onMouseLeave={() => setTier2Hovered(false)}
-                  className="w-full flex items-center justify-between py-2 mb-2 relative"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    letterSpacing: "var(--tracking-mythic)",
-                    textTransform: "uppercase",
-                    color: "var(--text-secondary)",
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: 600,
-                      letterSpacing: 'var(--tracking-mythic)',
-                      animation: tier2Expanded || tier2Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
-                      opacity: tier2Hovered ? 0.85 : 0.6,
-                    }}
-                  >
-                    Options
-                  </span>
-                  <span style={{
-                    fontFamily: 'var(--font-display)',
-                    transition: 'transform 200ms ease-out',
-                    transform: tier2Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                    opacity: 0.6,
-                  }}>▾</span>
-                </button>
-
-                <style>{`
-                  @keyframes text-pulse {
-                    0%, 100% { opacity: 0.5; }
-                    50% { opacity: 0.75; }
-                  }
-                `}</style>
-
-                {/* Collapsible Content */}
-                <div
-                  style={{
-                    overflow: tier2Expanded ? 'visible' : 'hidden',
-                    opacity: tier2Expanded ? 1 : 0,
-                    transition: 'opacity 180ms ease-in-out',
-                    paddingBottom: tier2Expanded ? '12px' : '0',
-                  }}
-                >
-                  {/* Practice-specific config components */}
-                  {practice === "Breath & Stillness" && (
-                    <BreathConfig
-                      pattern={pattern}
-                      setPattern={setPattern}
-                      preset={preset}
-                      setPreset={setPreset}
-                      isLight={isLight}
-                    />
-                  )}
-
-                  {practice === "Somatic Vipassana" && (
-                    <SensoryConfig
-                      sensoryType={sensoryType}
-                      setSensoryType={setSensoryType}
-                      isLight={isLight}
-                    />
-                  )}
-
-                  {practice === "Circuit" && (
-                    <CircuitConfig
-                      value={circuitConfig}
-                      onChange={setCircuitConfig}
-                      isLight={isLight}
-                    />
-                  )}
-
-                  {practice === "Cognitive Vipassana" && (
-                    <div className="mb-4">
-                      <div
-                        className="mb-3"
-                        style={{
-                          fontFamily: "var(--font-display)",
-                          fontWeight: 600,
-                          fontSize: "9px",
-                          letterSpacing: "var(--tracking-mythic)",
-                          textTransform: "uppercase",
-                          color: "var(--text-muted)",
-                          textAlign: "center"
-                        }}
-                      >
-                        Theme
-                      </div>
-                      <div
-                        className="flex gap-2 p-1 rounded-full flex-wrap justify-center"
-                        style={{
-                          background: isLight ? 'rgba(60,50,35,0.05)' : "rgba(0,0,0,0.3)",
-                          border: `1px solid ${isLight ? 'var(--light-border)' : 'var(--accent-10)'}`,
-                        }}
-                      >
-                        {Object.values(VIPASSANA_THEMES).map((theme) => (
-                          <button
-                            key={theme.id}
-                            onClick={() => setVipassanaTheme(theme.id)}
-                            className="rounded-full px-3 py-1.5 transition-all duration-200"
-                            style={{
-                              fontFamily: "var(--font-display)",
-                              fontWeight: 500,
-                              fontSize: "10px",
-                              letterSpacing: "var(--tracking-wide)",
-                              textTransform: "uppercase",
-                              background:
-                                vipassanaTheme === theme.id
-                                  ? 'var(--accent-color)'
-                                  : "transparent",
-                              color:
-                                vipassanaTheme === theme.id
-                                  ? (isLight ? 'var(--light-bg-base)' : "#050508")
-                                  : "var(--text-secondary)",
-                              opacity: vipassanaTheme && vipassanaTheme !== theme.id ? (isLight ? 0.5 : 0.35) : 1,
-                              boxShadow:
-                                vipassanaTheme === theme.id
-                                  ? (isLight ? '0 2px 8px var(--light-shadow-tint)' : '0 0 10px rgba(120,255,190,0.25)')
-                                  : "none",
-                              transform: vipassanaTheme === theme.id ? 'scale(1.05)' : 'scale(1)',
-                              transition: 'transform 160ms ease-out, background 200ms, color 200ms, box-shadow 200ms, opacity 200ms',
-                            }}
-                          >
-                            {theme.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {practice === "Sound" && (
-                    <SoundConfig
-                      soundType={soundType}
-                      setSoundType={setSoundType}
-                      binauralPreset={binauralPreset}
-                      setBinauralPreset={setBinauralPreset}
-                      isochronicPreset={isochronicPreset}
-                      setIsochronicPreset={setIsochronicPreset}
-                      mantraPreset={mantraPreset}
-                      setMantraPreset={setMantraPreset}
-                      naturePreset={naturePreset}
-                      setNaturePreset={setNaturePreset}
-                      carrierFrequency={carrierFrequency}
-                      setCarrierFrequency={setCarrierFrequency}
-                      volume={soundVolume}
-                      setVolume={setSoundVolume}
-                      isLight={isLight}
-                    />
-                  )}
-
-                  {practice === "Visualization" && (
-                    <VisualizationConfig
-                      geometry={geometry}
-                      setGeometry={setGeometry}
-                      fadeInDuration={fadeInDuration}
-                      setFadeInDuration={setFadeInDuration}
-                      displayDuration={displayDuration}
-                      setDisplayDuration={setDisplayDuration}
-                      fadeOutDuration={fadeOutDuration}
-                      setFadeOutDuration={setFadeOutDuration}
-                      voidDuration={voidDuration}
-                      setVoidDuration={setVoidDuration}
-                      duration={duration}
-                      setDuration={setDuration}
-                      audioEnabled={audioEnabled}
-                      setAudioEnabled={setAudioEnabled}
-                      isLight={isLight}
-                    />
-                  )}
-
-                  {practice === "Cymatics" && (
-                    <CymaticsConfig
-                      frequencySet={frequencySet}
-                      setFrequencySet={setFrequencySet}
-                      selectedFrequency={selectedFrequency}
-                      setSelectedFrequency={setSelectedFrequency}
-                      fadeInDuration={fadeInDuration}
-                      setFadeInDuration={setFadeInDuration}
-                      displayDuration={displayDuration}
-                      setDisplayDuration={setDisplayDuration}
-                      fadeOutDuration={fadeOutDuration}
-                      setFadeOutDuration={setFadeOutDuration}
-                      voidDuration={voidDuration}
-                      setVoidDuration={setVoidDuration}
-                      driftEnabled={driftEnabled}
-                      setDriftEnabled={setDriftEnabled}
-                      audioEnabled={audioEnabled}
-                      setAudioEnabled={setAudioEnabled}
-                      isLight={isLight}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* ═══════════════════════════════════════════════════════════ */}
-              {/* TIER 3 — BREATH MECHANICS (Advanced, Collapsed)             */}
-              {/* ═══════════════════════════════════════════════════════════ */}
-              {practice === "Breath & Stillness" && (
-                <div
-                  style={{
-                    marginTop: '20px',
-                    transition: 'opacity 200ms ease-out',
-                    opacity: isStarting ? 0 : 1,
-                    pointerEvents: isStarting ? 'none' : 'auto',
-                  }}
-                >
-                  {/* Pattern preview collapsed header */}
-                  <button
-                    onClick={() => setTier3Expanded(!tier3Expanded)}
-                    onMouseEnter={() => setTier3Hovered(true)}
-                    onMouseLeave={() => setTier3Hovered(false)}
-                    className="w-full flex items-center justify-between py-2"
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontSize: "10px",
-                      fontWeight: 600,
-                      letterSpacing: "var(--tracking-mythic)",
-                      textTransform: "uppercase",
-                      color: "var(--text-muted)",
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        animation: tier3Expanded || tier3Hovered ? 'none' : 'text-pulse 3.2s ease-in-out infinite',
-                        opacity: tier3Hovered ? 0.75 : undefined,
-                      }}
-                    >
-                      Pattern Preview
-                    </span>
-                    <span style={{
-                      transition: 'transform 200ms ease-out',
-                      transform: tier3Expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                      opacity: 0.5,
-                    }}>▾</span>
-                  </button>
-
-                  <div
-                    style={{
-                      maxHeight: tier3Expanded ? '200px' : '0',
-                      overflow: 'hidden',
-                      opacity: tier3Expanded ? 1 : 0,
-                      transition: 'max-height 260ms ease-in-out, opacity 180ms ease-in-out',
-                    }}
-                  >
-                    {/* Pattern preview with animated tracer */}
-                    <BreathPatternPreview
-                      pattern={pattern}
-                      key={`${pattern.inhale}-${pattern.hold1}-${pattern.exhale}-${pattern.hold2}`}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* START BUTTON — DOMINANT ANCHOR with Breathing Ring */}
-              <div className="relative mt-6">
-                {/* Breathing Ring - signals readiness */}
-                {!isStarting && (
-                  <svg
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                    style={{
-                      transform: 'scale(1.1)',
-                      opacity: 0.25,
-                    }}
-                  >
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="48%"
-                      fill="none"
-                      stroke="var(--accent-color)"
-                      strokeWidth="1.5"
-                      style={{
-                        animation: 'breathing-ring 4s ease-in-out infinite',
-                        transformOrigin: 'center',
-                      }}
-                    />
-                  </svg>
-                )}
-
-                <button
-                  onClick={handleStart}
-                  disabled={isStarting}
-                  className="w-full rounded-full py-3 transition-all duration-150 relative overflow-hidden"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    letterSpacing: "var(--tracking-mythic)",
-                    textTransform: "uppercase",
-                    height: '46px',
-                    // Circuit mode: glassmorphic pulsing
-                    ...(practice === "Circuit" ? {
-                      background: isStarting
-                        ? 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25)'
-                        : 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                      backdropFilter: 'blur(10px)',
-                      color: "var(--accent-color)",
-                      border: "1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)",
-                      boxShadow: isStarting
-                        ? 'inset 0 0 25px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.35), 0 0 50px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)'
-                        : 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25), 0 0 40px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.2)',
-                      animation: isStarting ? 'none' : 'heartbeat 1s ease-in-out infinite',
-                    } : {
-                      // Default styling for other practices
-                      background: isStarting
-                        ? 'rgba(120,255,190,0.4)'
-                        : 'var(--accent-color)',
-                      color: "#0B1F16",
-                      border: "none",
-                      boxShadow: isStarting
-                        ? '0 0 30px rgba(120,255,190,0.5), inset 3px 4px 10px rgba(0,0,0,0.3), inset -2px -3px 8px rgba(255,255,255,0.25)'
-                        : '0 0 18px rgba(120,255,190,0.35), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.2)',
-                    }),
-                    transform: isStarting ? 'scale(1.015)' : 'scale(1)',
-                    cursor: isStarting ? 'default' : 'pointer',
-                  }}
-                  onMouseDown={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(0.97)')}
-                  onMouseUp={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
-                  onMouseLeave={(e) => !isStarting && (e.currentTarget.style.transform = 'scale(1)')}
-                >
-                  {isStarting ? 'Initiating...' : 'Start'}
-                  {/* Radial gradient overlay for depth */}
-                  <div
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{
-                      background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)',
-                      mixBlendMode: 'soft-light',
-                    }}
-                  />
-                  {/* Grain texture overlay */}
-                  <div
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{
-                      background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                      opacity: 0.06,
-                      mixBlendMode: 'overlay',
-                    }}
-                  />
-                </button>
-
-                {/* CSS for breathing ring animation */}
-                <style>{`
-                  @keyframes breathing-ring {
-                    0%, 100% { 
-                      transform: scale(1);
-                      opacity: 0.2;
-                    }
-                    50% { 
-                      transform: scale(1.08);
-                      opacity: 0.35;
-                    }
-                  }
-                `}</style>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Practice Selection Modal */}
-      <PracticeSelectionModal
-        isOpen={practiceModalOpen}
-        onClose={() => setPracticeModalOpen(false)}
-        practices={PRACTICES}
-        currentPractice={practice}
-        onSelectPractice={setPractice}
-      />
-
-      {/* Post-Session Journal Modal */}
-      {pendingMicroNote && lastSessionId && (
-        <PostSessionJournal
-          sessionId={lastSessionId}
-          onComplete={() => {
-            setLastSessionId(null);
-            // Summary modal continues to show after journal
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '24px',
+            fontWeight: 600,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            color: 'var(--text-primary)',
           }}
+        >
+          Select Practice
+        </div>
+
+        <PracticeSelectionModal
+          isOpen={true}
+          onSelectPractice={(p) => {
+            setPractice(p);
+            setPracticeModalOpen(false);
+          }}
+          onClose={() => setPracticeModalOpen(false)}
         />
-      )}
+      </div>
     </section>
   );
 }
 
+export default PracticeSection;

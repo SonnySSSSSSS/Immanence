@@ -712,7 +712,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
             )}
 
             {/* Content Container - Shortened bottom to pull parchment edge up */}
-            <div className={`relative px-9 ${isLight ? 'pt-7 pb-4' : 'py-5'} z-10`} style={{ background: 'transparent' }}>
+            <div className={`relative px-9 ${isLight ? 'pt-5 pb-2' : 'py-3'} z-10`} style={{ background: 'transparent' }}>
 
                 {/* Header Row: Category + Date */}
                 <div className="flex justify-between items-center mb-4 relative z-10">
@@ -752,9 +752,9 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
 
 
                 {/* Secondary Section: Stats Grid (2 columns) - Centered & Symmetrical */}
-                <div className="relative mb-6">
+                <div className="relative mb-2">
                     {/* Ornamental Partition 1 */}
-                    <div className="flex items-center justify-center opacity-20 my-5 gap-3">
+                    <div className="flex items-center justify-center opacity-20 my-2 gap-3">
                         <div className="h-px w-16" style={{ background: config.textSub }} />
                         <div className="w-1 h-1 rounded-full" style={{ background: config.textSub }} />
                         <div className="h-px w-16" style={{ background: config.textSub }} />
@@ -811,7 +811,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                         </div>
                     </div>
                     {/* Ornamental Partition 2 */}
-                    <div className="flex items-center justify-center opacity-20 mt-6 mb-2 gap-3">
+                    <div className="flex items-center justify-center opacity-20 mt-2 mb-1 gap-3">
                         <div className="h-px w-24" style={{ background: config.textSub }} />
                     </div>
                 </div>
@@ -827,7 +827,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                             }}
                         />
                     )}
-                    <div className="text-center mb-3">
+                    <div className="text-center mb-1">
                         <span className="text-[11px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: config.textMain }}>
                             {currentDomain.metricLabel} (Last 7 Days)
                         </span>

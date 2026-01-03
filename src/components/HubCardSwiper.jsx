@@ -14,6 +14,8 @@ export function HubCardSwiper({ cards }) {
     const [[page, direction], setPage] = useState([0, 0]);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const displayMode = useDisplayModeStore(s => s.mode);
+    const isSanctuary = displayMode === 'sanctuary';
 
     const cardIndex = ((page % cards.length) + cards.length) % cards.length;
 
@@ -39,7 +41,7 @@ export function HubCardSwiper({ cards }) {
     };
 
     return (
-        <div className="relative w-full" style={{ maxWidth: '430px', margin: '0 auto' }}>
+        <div className="relative w-full transition-all duration-700" style={{ maxWidth: isSanctuary ? '600px' : '430px', margin: '0 auto' }}>
             {/* Dot Indicators - Moved above card */}
             {cards.length > 1 && (
                 <div className="flex justify-center items-center gap-2 mb-3">
@@ -67,8 +69,8 @@ export function HubCardSwiper({ cards }) {
                 </div>
             )}
 
-            {/* Swipeable Card Container - Tightened for symmetry (matches card height) */}
-            <div className="relative overflow-visible" style={{ minHeight: '500px' }}>
+            {/* Swipeable Card Container - Tightened for symmetry */}
+            <div className="relative overflow-visible" style={{ minHeight: isSanctuary ? '420px' : '400px' }}>
                 <AnimatePresence initial={false} custom={direction} mode="wait">
                     <motion.div
                         key={page}
