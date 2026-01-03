@@ -620,13 +620,14 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                 margin: '0 auto',
             }}
         >
-            {/* OUTER: Golden Border Frame - Never Clipped */}
+            {/* OUTER: Golden Border Frame - Using reliable box-shadow for depth */}
             <div
                 className="w-full relative"
                 style={{
-                    filter: isLight 
-                        ? 'drop-shadow(0 0 0 2px rgba(180, 140, 60, 0.5)) drop-shadow(0 0 0 1px rgba(220, 180, 100, 0.3)) drop-shadow(0 12px 40px rgba(120, 90, 60, 0.15)) drop-shadow(0 4px 16px rgba(200, 160, 110, 0.1))'
-                        : 'drop-shadow(0 30px 80px rgba(0, 0, 0, 0.8))'
+                    borderRadius: '24px',
+                    boxShadow: isLight 
+                        ? '0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 0 1px rgba(180, 140, 60, 0.3)'
+                        : '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
                 }}
             >
                 {/* MIDDLE: Parchment Background Container */}
@@ -748,74 +749,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                     </div>
                 </div>
 
-                {/* Primary Section: Curriculum Progress - Added Mist Overlay for Legibility */}
-                <div className="mb-6 relative">
-                    {isLight && (
-                        <div
-                            className="absolute -inset-x-6 -inset-y-4 pointer-events-none opacity-30 blur-2xl"
-                            style={{
-                                background: 'radial-gradient(circle, rgba(245, 239, 230, 0.95) 0%, rgba(245, 239, 230, 0) 80%)',
-                                zIndex: -1
-                            }}
-                        />
-                    )}
-                    <div className="relative z-10 flex flex-col items-end text-right mb-3 px-2">
-                        <span
-                            className="text-[13px] font-bold tracking-wide mb-1"
-                            style={{
-                                color: config.textMain,
-                                textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none'
-                            }}
-                        >
-                            Curriculum: {currentDomain.curriculumLabel}
-                        </span>
-                        <div className="flex items-center gap-2">
-                            <span
-                                className="text-[24px] font-black tabular-nums leading-none"
-                                style={{
-                                    color: config.textMain,
-                                    textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none',
-                                    opacity: 0.9
-                                }}
-                            >
-                                {Math.round(regimentProgress * 100)}%
-                            </span>
-                        </div>
-                    </div>
-                    {/* Painted Progress Bar - Shortened to avoid dominant image (feather/galaxy) */}
-                    <div className="h-[28px] relative flex flex-col justify-center ml-auto" style={{ width: '50%' }}>
-                        {isLight ? (
-                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-                                <defs>
-                                    <clipPath id="curriculumClip">
-                                        <rect x="0" y="0" width={Math.round(regimentProgress * 100)} height="30" />
-                                    </clipPath>
-                                </defs>
-                                {/* Background stroke */}
-                                <path
-                                    d="M2,15 Q25,12 50,15 T98,15"
-                                    fill="none"
-                                    stroke="rgba(139, 115, 85, 0.15)"
-                                    strokeWidth="14"
-                                    strokeLinecap="round"
-                                />
-                                {/* Progress stroke */}
-                                <path
-                                    d="M2,15 Q25,12 50,15 T98,15"
-                                    fill="none"
-                                    stroke={`rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.85)`}
-                                    strokeWidth="16"
-                                    strokeLinecap="round"
-                                    style={{ opacity: 0.9, filter: 'blur(0.3px)' }}
-                                    clipPath="url(#curriculumClip)"
-                                    className="transition-all duration-1000"
-                                />
-                            </svg>
-                        ) : (
-                            <RegimentProgress progress={regimentProgress} isLight={isLight} r={currentDomain.r} g={currentDomain.g} b={currentDomain.b} />
-                        )}
-                    </div>
-                </div>
+
 
                 {/* Secondary Section: Stats Grid (2 columns) - Centered & Symmetrical */}
                 <div className="relative mb-6">

@@ -12,6 +12,9 @@ import { NavigationSection } from "./components/NavigationSection.jsx";
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
 import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
+import { CurriculumOnboarding } from "./components/CurriculumOnboarding.jsx";
+import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
+import { useCurriculumStore } from "./state/curriculumStore.js";
 import { AvatarPreview } from "./components/AvatarPreview.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
@@ -99,6 +102,17 @@ function App() {
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const isLight = colorScheme === 'light';
 
+  // Curriculum state
+  const { 
+    shouldShowOnboarding, 
+    isCurriculumComplete,
+    onboardingComplete: curriculumOnboardingComplete,
+  } = useCurriculumStore();
+  const [showCurriculumOnboarding, setShowCurriculumOnboarding] = useState(false);
+  const [showCurriculumReport, setShowCurriculumReport] = useState(false);
+
+
+
   // Check if user has seen welcome screen
   const getHasSeenWelcome = () => {
     try {
@@ -175,6 +189,18 @@ function App() {
     startImagePreloading(import.meta.env.BASE_URL);
   }, []);
 
+  // Check curriculum state (after showWelcome is declared)
+  useEffect(() => {
+    // Show onboarding if needed (after welcome screen is dismissed)
+    if (!showWelcome && shouldShowOnboarding()) {
+      setShowCurriculumOnboarding(true);
+    }
+    // Show completion report if curriculum complete and not dismissed
+    if (curriculumOnboardingComplete && isCurriculumComplete()) {
+      setShowCurriculumReport(true);
+    }
+  }, [showWelcome, curriculumOnboardingComplete]);
+
   // Note: CSS variables now set by ThemeProvider based on avatarStage
 
   const handleDismissWelcome = () => {
@@ -204,6 +230,21 @@ function App() {
 
       {/* Show welcome screen on first visit */}
       {showWelcome && <WelcomeScreen onDismiss={handleDismissWelcome} />}
+
+      {/* Curriculum Onboarding (skippable) */}
+      {showCurriculumOnboarding && (
+        <CurriculumOnboarding 
+          onDismiss={() => setShowCurriculumOnboarding(false)}
+          onComplete={() => setShowCurriculumOnboarding(false)}
+        />
+      )}
+
+      {/* Curriculum Completion Report */}
+      {showCurriculumReport && (
+        <CurriculumCompletionReport
+          onDismiss={() => setShowCurriculumReport(false)}
+        />
+      )}
 
       {/* Avatar Preview Debug Panel */}
       {showAvatarPreview && (

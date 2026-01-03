@@ -23,6 +23,9 @@ import { STAGES } from "../state/stageConfig.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
+import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
+import { CurriculumHub } from "./CurriculumHub.jsx";
+import { useCurriculumStore } from "../state/curriculumStore.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -37,20 +40,18 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
 
-  // Dynamic lighting for Transmission section
-  const transmissionRef = useRef(null);
-  const [transmissionAngle, setTransmissionAngle] = useState(135);
-
   // Cloud background test state
   const [cloudBackground, setCloudBackground] = useState('cloudier'); // 'light_clouds', 'cloudier', 'cloudiest', or 'none'
+  
+  // Curriculum state
+  const curriculumActive = useCurriculumStore(s => s.onboardingComplete);
+  const [showCurriculumHub, setShowCurriculumHub] = useState(false);
 
   useEffect(() => {
-    if (transmissionRef.current) {
-      const rect = transmissionRef.current.getBoundingClientRect();
-      const avatarCenter = getAvatarCenter();
-      const angle = calculateGradientAngle(rect, avatarCenter);
-      setTransmissionAngle(angle);
-    }
+    // Listen for DevPanel cloud background changes
+    const handleCloudChange = (e) => setCloudBackground(e.detail);
+    window.addEventListener('dev-cloud-change', handleCloudChange);
+    return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
   }, []);
 
   // Honor log modal state (moved from TrackingHub)
@@ -76,35 +77,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     ? (STAGES[lunarStage]?.duration - daysUntilNext) / STAGES[lunarStage]?.duration
     : 0;
 
-  // Determine insight state for contextual colors
-  const insightState =
-    currentStreak >= 7 ? 'achievement' :
-      avgAccuracy < 0.5 ? 'caution' :
-        weeklyConsistency < 4 ? 'warning' :
-          'neutral';
-
-  const insightColors = {
-    achievement: {
-      border: isLight ? 'rgba(255, 215, 0, 0.3)' : 'rgba(139, 92, 246, 0.3)',
-      glow: isLight ? 'rgba(255, 215, 0, 0.2)' : 'rgba(139, 92, 246, 0.2)',
-      accent: isLight ? 'rgba(255, 215, 0, 0.9)' : 'rgba(167, 139, 250, 0.9)',
-    },
-    caution: {
-      border: isLight ? 'rgba(255, 145, 0, 0.3)' : 'rgba(244, 63, 94, 0.3)',
-      glow: isLight ? 'rgba(255, 145, 0, 0.2)' : 'rgba(244, 63, 94, 0.2)',
-      accent: isLight ? 'rgba(255, 145, 0, 0.9)' : 'rgba(251, 113, 133, 0.9)',
-    },
-    warning: {
-      border: 'rgba(100, 150, 255, 0.3)', // Calming blue for drop-off
-      glow: 'rgba(100, 150, 255, 0.2)',
-      accent: isLight ? 'rgba(59, 130, 246, 0.9)' : 'rgba(150, 180, 255, 0.9)',
-    },
-    neutral: {
-      border: isLight ? 'rgba(139, 92, 246, 0.3)' : 'rgba(253, 251, 245, 0.15)',
-      glow: isLight ? 'rgba(139, 92, 246, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-      accent: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
-    }
-  };
 
   // Format last practiced time
   const formatLastPracticed = (isoDate) => {
@@ -147,7 +119,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              backgroundImage: `url(${import.meta.env.BASE_URL}backgrounds/${currentStage.toLowerCase()}_${cloudBackground}.png)`,
+              backgroundImage: `url(${import.meta.env.BASE_URL}${currentStage.toLowerCase()}_${cloudBackground}.png)`,
               backgroundSize: 'auto 100%',  // Height fills screen
               backgroundPosition: 'center bottom',  // Anchor clouds at bottom
               backgroundRepeat: 'no-repeat',
@@ -269,21 +241,47 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full px-4 flex flex-col items-center gap-4 pb-4">
 
+        {/* DAILY PRACTICE CARD (Curriculum) */}
+        {curriculumActive && (
+          <div className="w-full">
+            <DailyPracticeCard 
+              onStartPractice={() => onSelectSection('practice')}
+              onViewCurriculum={() => setShowCurriculumHub(true)}
+            />
+          </div>
+        )}
+
         {/* TRACKING HUB - Swipeable Stats Cards */}
         <div className="w-full mb-4">
           <HubCardSwiper cards={[
-            <CompactStatsCard key="wisdom" domain="wisdom" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
             <CompactStatsCard key="breathwork" domain="breathwork" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
-            <CompactStatsCard key="visualization" domain="visualization" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
             <TrajectoryCard key="trajectory" onTap={() => console.log('TODO: Open TrajectoryReport')} />,
             <ApplicationTrackingCard key="application" />
           ]} />
         </div>
 
+
         {/* MODES SELECTION - Container with consistent width */}
 
         {/* Session History Overlay */}
         {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
+        
+        {/* Curriculum Hub Modal */}
+        {showCurriculumHub && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl relative">
+              <button 
+                onClick={() => setShowCurriculumHub(false)}
+                className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
+              >
+                ✕
+              </button>
+              <div className="overflow-y-auto max-h-[90vh]">
+                <CurriculumHub onClose={() => setShowCurriculumHub(false)} />
+              </div>
+            </div>
+          </div>
+        )}
         <div
           className="w-full"
           style={{
@@ -329,104 +327,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           </div>
         </div>
 
-        {/* TRANSMISSION - Quick Insights */}
-        <div
-          className="w-full"
-          style={{
-            maxWidth: '430px',
-            margin: '0 auto',
-          }}
-        >
-          <div
-            ref={transmissionRef}
-            className="w-full rounded-3xl px-4 py-3 relative overflow-hidden transition-all duration-500"
-            style={{
-              // Soft Watercolor Border
-              border: '2px solid transparent',
-              backgroundImage: isLight
-                ? `
-                linear-gradient(145deg, rgba(252, 248, 240, 0.96) 0%, rgba(248, 242, 232, 0.98) 100%),
-                ${getDynamicGoldGradient(transmissionAngle, true)}
-              `
-                : `
-                linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%),
-                linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))
-              `,
-              backgroundOrigin: 'padding-box, border-box',
-              backgroundClip: 'padding-box, border-box',
 
-              boxShadow: isLight
-                ? `
-                0 0 0 1px rgba(160, 120, 80, 0.3),
-                inset 1px 1px 0 0.5px rgba(255, 250, 235, 0.9),
-                0 8px 32px rgba(120, 90, 60, 0.1),
-                0 3px 12px rgba(200, 160, 110, 0.08),
-                inset 0 2px 0 rgba(255, 255, 255, 0.7)
-              `
-                : `
-                0 0 0 0.5px rgba(255, 255, 255, 0.1),
-                0 8px 32px rgba(0, 0, 0, 0.6),
-                0 2px 8px var(--accent-15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08)
-              `,
-              transition: 'all 0.6s ease',
-            }}
-          >
-            {/* Scan-line animation overlay */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: `linear-gradient(180deg, 
-                transparent 0%, 
-                ${insightColors[insightState].glow} 50%, 
-                transparent 100%
-              )`,
-                animation: 'scan-line 3s ease-in-out infinite',
-                opacity: 0.3,
-              }}
-            />
-
-            {/* Inner glow */}
-            <div style={innerGlowStyle} />
-
-            {/* Noise texture */}
-            <div style={noiseOverlayStyle} />
-
-            {/* Sheen */}
-            <div style={sheenOverlayStyle} />
-
-            <div className="relative z-10">
-              <div
-                className="text-[10px] mb-2 uppercase tracking-[0.15em]"
-                style={{
-                  color: isLight ? 'var(--light-accent)' : insightColors[insightState].accent,
-                  textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
-                }}
-              >
-                ⟨ Transmission ⟩
-              </div>
-              <div
-                className="text-[11px] leading-relaxed"
-                style={{
-                  color: isLight ? 'rgba(60, 45, 35, 0.90)' : 'rgba(253, 251, 245, 0.85)',
-                  fontFamily: "'Courier New', monospace",
-                  letterSpacing: '0.02em',
-                  textShadow: isLight ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.4)',
-                }}
-              >
-                {currentStreak >= 7
-                  ? "🔥 You're building momentum. Keep the streak alive—7+ days unlocks deeper practice."
-                  : avgAccuracy < 0.5
-                    ? "Slow down. Focus on breath timing rather than speed. Accuracy compounds over time."
-                    : weeklyConsistency < 4
-                      ? "You're inconsistent this week. One practice per day keeps the alignment alive."
-                      : totalSessions > 0
-                        ? "You're in rhythm. Consider exploring the Wisdom section to deepen your understanding."
-                        : "Welcome. Begin your practice to see your progress reflected here."}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
       {/* Session History Overlay - Placed at root for visibility */}
       {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
