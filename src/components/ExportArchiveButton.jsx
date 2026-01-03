@@ -1,7 +1,7 @@
 // src/components/ExportArchiveButton.jsx
 // Phase 4: Export all or selected entries
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCircuitJournalStore } from '../state/circuitJournalStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { exportAsJSON, exportAsCSV, getExportFilename } from '../utils/entryExport';
@@ -10,11 +10,17 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { useProgressStore } from '../state/progressStore';
 
 export function ExportArchiveButton({ entries: customEntries }) {
-    const circuitEntries = useCircuitJournalStore(s => s.getAllEntries());
-    const sessionEntries = useProgressStore(s => s.getSessionsWithJournal());
+    // Get the raw store methods (not calling them in selector to avoid new refs)
+    const getAllCircuitEntries = useCircuitJournalStore(s => s.getAllEntries);
+    const getSessionsWithJournal = useProgressStore(s => s.getSessionsWithJournal);
     
-    // Use custom entries if provided, otherwise combine both stores
-    const entries = customEntries || [...circuitEntries, ...sessionEntries];
+    // Memoize to prevent infinite re-renders from new array references
+    const entries = useMemo(() => {
+        if (customEntries) return customEntries;
+        const circuit = getAllCircuitEntries?.() || [];
+        const sessions = getSessionsWithJournal?.() || [];
+        return [...circuit, ...sessions];
+    }, [customEntries, getAllCircuitEntries, getSessionsWithJournal]);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const [showMenu, setShowMenu] = useState(false);

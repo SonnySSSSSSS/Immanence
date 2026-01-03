@@ -58,6 +58,15 @@ function applyColorSchemeClass(scheme) {
     }
 }
 
+function loadStoredStageAssetStyle() {
+    try {
+        const stored = localStorage.getItem('immanenceOS.stageAssetStyle');
+        return stored ? parseInt(stored, 10) : 1;
+    } catch {
+        return 1;
+    }
+}
+
 // Initialize on load
 const initialColorScheme = loadStoredColorScheme();
 applyColorSchemeClass(initialColorScheme);
@@ -71,6 +80,9 @@ export const useDisplayModeStore = create((set, get) => ({
 
     // Color Scheme: 'dark' | 'light'
     colorScheme: initialColorScheme,
+
+    // Stage Asset Style Set: 1-5
+    stageAssetStyle: loadStoredStageAssetStyle(),
 
     // Toggle between display modes
     toggleMode: () => {
@@ -119,6 +131,19 @@ export const useDisplayModeStore = create((set, get) => ({
 
         try {
             localStorage.setItem('immanenceOS.colorScheme', scheme);
+        } catch {
+            // ignore
+        }
+    },
+
+    // Set stage asset style set
+    setStageAssetStyle: (style) => {
+        const styleNum = parseInt(style, 10);
+        if (isNaN(styleNum) || styleNum < 1 || styleNum > 5) return;
+        set({ stageAssetStyle: styleNum });
+
+        try {
+            localStorage.setItem('immanenceOS.stageAssetStyle', styleNum);
         } catch {
             // ignore
         }

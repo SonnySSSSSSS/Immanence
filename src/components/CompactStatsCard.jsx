@@ -86,7 +86,7 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
     const accentRGB = `rgb(${r}, ${g}, ${b})`;
 
     return (
-        <div className="flex flex-col items-center gap-1 flex-1 max-w-[140px]">
+        <div className="flex flex-col items-end gap-1 flex-1 w-full">
             {isLight ? (
                 <div className="w-full h-[32px] relative flex flex-col justify-center">
                     {/* Background brush stroke shape */}
@@ -126,12 +126,12 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
                 </div>
             ) : (
                 <div
-                    className="w-full h-[24px] rounded-full relative overflow-hidden backdrop-blur-sm"
+                    className="w-full h-[18px] rounded-full relative overflow-hidden backdrop-blur-sm"
                     style={{
                         background: 'linear-gradient(135deg, rgba(15, 10, 20, 0.8), rgba(10, 5, 15, 0.9))',
                         border: `1.5px solid rgba(${r}, ${g}, ${b}, 0.3)`,
                         boxShadow: `inset 0 4px 12px rgba(0, 0, 0, 0.7),
-        inset 0 - 1px 2px rgba(255, 255, 255, 0.05),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.05),
             0 3px 8px rgba(${r}, ${g}, ${b}, 0.25)`,
                         padding: '2px'
                     }}
@@ -140,14 +140,14 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
                     <div
                         className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 blur-lg opacity-40"
                         style={{
-                            width: `${percentage}% `,
-                            background: `radial - gradient(ellipse at center, ${accentRGB}, transparent 70 %)`
+                            width: `${percentage}%`,
+                            background: `radial-gradient(ellipse at center, ${accentRGB}, transparent 70%)`
                         }}
                     />
                     <div
                         className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 blur-md opacity-30"
                         style={{
-                            width: `${percentage}% `,
+                            width: `${percentage}%`,
                             background: accentRGB
                         }}
                     />
@@ -156,11 +156,11 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
                     <div
                         className="h-full rounded-full transition-all duration-1000 ease-out relative z-10"
                         style={{
-                            width: `${percentage}% `,
-                            background: `linear - gradient(135deg,
-                    rgba(${r}, ${g}, ${b}, 0.85) 0 %,
-                    rgba(${r}, ${g}, ${b}, 1) 50 %,
-                    rgba(${r}, ${g}, ${b}, 0.75) 100 %)`,
+                            width: `${percentage}%`,
+                            background: `linear-gradient(135deg,
+                    rgba(${r}, ${g}, ${b}, 0.85) 0%,
+                    rgba(${r}, ${g}, ${b}, 1) 50%,
+                    rgba(${r}, ${g}, ${b}, 0.75) 100%)`,
                             boxShadow: `0 0 12px rgba(${r}, ${g}, ${b}, 0.5),
         inset 0 1px 2px rgba(255, 255, 255, 0.3)`
                         }}
@@ -193,18 +193,12 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
                 </div>
             )}
 
-            <div className="flex items-center gap-2 pt-0.5">
-                <span className="text-[13px] font-black tracking-tighter tabular-nums" style={{ color: config.textMain }}>{percentage}%</span>
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-50" style={{ color: config.textSub }}>REGIMENT</span>
-            </div>
-
             {/* Shimmer Animation */}
             <style>{`
 @keyframes shimmer {
-    0 % { background- position: -200 % 0;
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
-100 % { background- position: 200 % 0; }
-                }
 `}</style>
         </div>
     );
@@ -535,6 +529,23 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     
     const baseAccent = hexToRgb(primaryHex);
     
+    // Calculate hue rotation from cyan/teal baseline (~180deg) to stage accent
+    const stageHueRotate = (() => {
+        const { r, g, b } = baseAccent;
+        const max = Math.max(r, g, b) / 255;
+        const min = Math.min(r, g, b) / 255;
+        let h = 0;
+        if (max !== min) {
+            const d = max - min;
+            const rn = r / 255, gn = g / 255, bn = b / 255;
+            if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+            else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+            else h = ((rn - gn) / d + 4) / 6;
+        }
+        const targetHue = Math.round(h * 360);
+        return targetHue - 180; // Subtly shift from the cyan/purple baseline of the milky way
+    })();
+    
     // Create shade variations of the stage accent (adjust lightness)
     const adjustBrightness = (rgb, factor) => ({
         r: Math.min(255, Math.round(rgb.r * factor)),
@@ -668,15 +679,35 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
 
             {/* Dark mode background */}
             {!isLight && (
-                <div
-                    className="absolute inset-0 rounded-[24px]"
-                    style={{
-                        backgroundImage: `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98)), 
-                           linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.02))`,
-                        boxShadow: `0 30px 80px rgba(0, 0, 0, 0.7), 
-                           inset 0 1px 0 rgba(255, 255, 255, 0.08)`
-                    }}
-                />
+                <>
+                    <div
+                        className="absolute inset-0 rounded-[24px]"
+                        style={{
+                            backgroundImage: `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98)), 
+                               linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.02))`,
+                            boxShadow: `0 30px 80px rgba(0, 0, 0, 0.7), 
+                               inset 0 1px 0 rgba(255, 255, 255, 0.08)`
+                        }}
+                    />
+                    
+                    {/* Cosmic Feather - Single Dominant Object (Mirrors light mode feather) */}
+                    <div 
+                        className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none"
+                        style={{ opacity: 0.6, mixBlendMode: 'screen' }}
+                    >
+                        <div 
+                            className="absolute inset-0 transition-all duration-1000"
+                            style={{
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/dark_mode_cosmic_feather.png)`,
+                                backgroundSize: '100% 100%', 
+                                backgroundPosition: 'center',
+                                filter: `hue-rotate(${stageHueRotate}deg) contrast(1.1) saturate(1.2)`,
+                                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)',
+                                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)'
+                            }}
+                        />
+                    </div>
+                </>
             )}
 
             {/* Content Container - Shortened bottom to pull parchment edge up */}
@@ -751,9 +782,9 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                             </span>
                         </div>
                     </div>
-                    {/* Painted Progress Bar - Shortened to avoid feather */}
-                    {isLight ? (
-                        <div className="h-[28px] relative flex flex-col justify-center ml-auto" style={{ width: '50%' }}>
+                    {/* Painted Progress Bar - Shortened to avoid dominant image (feather/galaxy) */}
+                    <div className="h-[28px] relative flex flex-col justify-center ml-auto" style={{ width: '50%' }}>
+                        {isLight ? (
                             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
                                 <defs>
                                     <clipPath id="curriculumClip">
@@ -780,10 +811,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                                     className="transition-all duration-1000"
                                 />
                             </svg>
-                        </div>
-                    ) : (
-                        <RegimentProgress progress={regimentProgress} isLight={isLight} r={currentDomain.r} g={currentDomain.g} b={currentDomain.b} />
-                    )}
+                        ) : (
+                            <RegimentProgress progress={regimentProgress} isLight={isLight} r={currentDomain.r} g={currentDomain.g} b={currentDomain.b} />
+                        )}
+                    </div>
                 </div>
 
                 {/* Secondary Section: Stats Grid (2 columns) - Centered & Symmetrical */}

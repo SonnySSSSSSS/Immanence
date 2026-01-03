@@ -18,9 +18,14 @@ export function SessionHistoryView({ onClose }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     
-    const circuitEntries = useCircuitJournalStore(s => s.getAllEntries());
-    const sessionEntries = useProgressStore(s => s.getSessionsWithJournal());
+    // Get the store methods as references (not calling them to avoid new array on every render)
+    const getAllCircuitEntries = useCircuitJournalStore(s => s.getAllEntries);
+    const getSessionsWithJournal = useProgressStore(s => s.getSessionsWithJournal);
     const { deleteSession } = useProgressStore();
+
+    // Memoize the entries to prevent infinite re-renders
+    const circuitEntries = useMemo(() => getAllCircuitEntries?.() || [], [getAllCircuitEntries]);
+    const sessionEntries = useMemo(() => getSessionsWithJournal?.() || [], [getSessionsWithJournal]);
 
     const [activeTab, setActiveTab] = useState('all');
     const [filterDate, setFilterDate] = useState(null);

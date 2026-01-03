@@ -62,6 +62,8 @@ export function DevPanel({
 
     // Color scheme detection
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
+    const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
 
     // Collapsible sections
@@ -335,6 +337,25 @@ export function DevPanel({
                                 >
                                     NEW
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Stage Asset Style Toggle */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Title Set</label>
+                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                                {[1, 2, 3, 4, 5].map(styleSet => (
+                                    <button
+                                        key={styleSet}
+                                        onClick={() => setStageAssetStyle(styleSet)}
+                                        className={`w-7 h-7 flex items-center justify-center rounded text-[10px] font-bold transition-all ${stageAssetStyle === styleSet
+                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                                            }`}
+                                    >
+                                        {styleSet}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 

@@ -40,8 +40,35 @@ export function HubCardSwiper({ cards }) {
 
     return (
         <div className="relative w-full" style={{ maxWidth: '430px', margin: '0 auto' }}>
-            {/* Swipeable Card Container - Tightened min-height */}
-            <div className="relative overflow-visible" style={{ minHeight: '480px' }}>
+            {/* Dot Indicators - Moved above card */}
+            {cards.length > 1 && (
+                <div className="flex justify-center items-center gap-2 mb-3">
+                    {cards.map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => {
+                                const newDirection = index > cardIndex ? 1 : -1;
+                                setPage([index, newDirection]);
+                            }}
+                            className="w-2 h-2 rounded-full transition-all duration-300"
+                            style={{
+                                background: index === cardIndex
+                                    ? (isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)')
+                                    : (isLight ? 'rgba(180, 120, 40, 0.2)' : 'rgba(253, 251, 245, 0.2)'),
+                                boxShadow: index === cardIndex
+                                    ? `0 0 8px ${isLight ? 'rgba(180, 120, 40, 0.4)' : 'var(--accent-glow)'}`
+                                    : 'none',
+                                transform: index === cardIndex ? 'scale(1.3)' : 'scale(1)',
+                                cursor: 'pointer'
+                            }}
+                            aria-label={`Go to card ${index + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Swipeable Card Container - Tightened for symmetry (matches card height) */}
+            <div className="relative overflow-visible" style={{ minHeight: '500px' }}>
                 <AnimatePresence initial={false} custom={direction} mode="wait">
                     <motion.div
                         key={page}
@@ -72,33 +99,6 @@ export function HubCardSwiper({ cards }) {
                     </motion.div>
                 </AnimatePresence>
             </div>
-
-            {/* Dot Indicators - Relaxed margin */}
-            {cards.length > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-4">
-                    {cards.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => {
-                                const newDirection = index > cardIndex ? 1 : -1;
-                                setPage([index, newDirection]);
-                            }}
-                            className="w-2 h-2 rounded-full transition-all duration-300"
-                            style={{
-                                background: index === cardIndex
-                                    ? (isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)')
-                                    : (isLight ? 'rgba(180, 120, 40, 0.2)' : 'rgba(253, 251, 245, 0.2)'),
-                                boxShadow: index === cardIndex
-                                    ? `0 0 8px ${isLight ? 'rgba(180, 120, 40, 0.4)' : 'var(--accent-glow)'}`
-                                    : 'none',
-                                transform: index === cardIndex ? 'scale(1.3)' : 'scale(1)',
-                                cursor: 'pointer'
-                            }}
-                            aria-label={`Go to card ${index + 1}`}
-                        />
-                    ))}
-                </div>
-            )}
 
             {/* Swipe Hint (subtle, fades after first interaction) */}
             {page === 0 && cards.length > 1 && (

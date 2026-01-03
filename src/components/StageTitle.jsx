@@ -200,6 +200,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
     const [tooltip, setTooltip] = useState(null); // 'stage', 'path', or null
     const [tooltipTimer, setTooltipTimer] = useState(null);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
     const isLight = colorScheme === 'light';
 
     const stageLower = (stage || "flame").toLowerCase();
@@ -331,11 +332,15 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                                 onMouseLeave={handleMouseLeave}
                             >
                                 <img
-                                    src={`${import.meta.env.BASE_URL}titles/stage_${stageLower}.png`}
+                                    src={`${import.meta.env.BASE_URL}titles/set${stageAssetStyle}/${isLight ? 'light' : 'dark'}/stage_${stageLower}.png?v=${stageAssetStyle}`}
                                     alt={stageLower}
-                                    className="h-16 w-auto object-contain"
+                                    className="h-20 w-auto object-contain transition-transform duration-500"
                                     style={{
-                                        filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                                        filter: isLight 
+                                            ? 'brightness(0.95) contrast(1.1)' 
+                                            : 'brightness(1.15) contrast(1.15) drop-shadow(0 0 12px rgba(255,255,255,0.3))',
+                                        transform: `scale(${stageAssetStyle === 1 ? 1 : 1.8})`,
+                                        imageRendering: 'crisp-edges'
                                     }}
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
@@ -436,11 +441,15 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                                     onMouseLeave={handleMouseLeave}
                                 >
                                     <img
-                                        src={`${import.meta.env.BASE_URL}titles/path_${pathLower}.png`}
+                                        src={`${import.meta.env.BASE_URL}titles/set${stageAssetStyle}/${isLight ? 'light' : 'dark'}/path_${pathLower}.png?v=${stageAssetStyle}`}
                                         alt={pathLower}
-                                        className="h-16 w-auto object-contain"
+                                        className="h-20 w-auto object-contain transition-transform duration-500"
                                         style={{
-                                            filter: isLight ? 'none' : 'brightness(1.15) drop-shadow(0 0 8px rgba(253,251,245,0.12))',
+                                            filter: isLight 
+                                                ? 'brightness(0.95) contrast(1.1)' 
+                                                : 'brightness(1.15) contrast(1.15) drop-shadow(0 0 12px rgba(255,255,255,0.3))',
+                                            transform: `scale(${stageAssetStyle === 1 ? 1 : 1.8})`,
+                                            imageRendering: 'crisp-edges'
                                         }}
                                         onError={(e) => {
                                             e.currentTarget.style.display = 'none';
