@@ -221,40 +221,65 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                 </>
                             )}
                             
-                            {/* Day Number Overlay */}
+                            {/* Day Number Overlay with Labels */}
+                            {/* Day Number Overlay with Labels */}
                             <div 
                                 className="absolute top-4 left-4 z-10"
-                                style={{
-                                    width: '48px',
-                                    height: '48px',
-                                }}
+                                style={{ width: '48px', height: '48px' }}
                             >
-                                <svg width="48" height="48" viewBox="0 0 44 44">
-                                    <circle cx="22" cy="22" r="20" fill="none" stroke={isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'} strokeWidth="1" />
-                                    <circle 
-                                        cx="22" cy="22" r="20" 
-                                        fill="none" 
-                                        stroke="var(--accent-color)" 
-                                        strokeWidth="2.5" 
-                                        strokeDasharray={`${(progress.completed / 14) * 126} 126`}
-                                        strokeLinecap="round"
-                                        style={{ 
-                                            transition: 'stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            filter: isLight ? 'none' : 'blur(0.5px) drop-shadow(0 0 3px var(--accent-color))'
-                                        }}
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <span 
-                                        className="text-[18px] font-black" 
-                                        style={{ 
-                                            color: isLight ? config.textMain : 'var(--accent-color)',
-                                            fontFamily: 'var(--font-display)',
-                                            textShadow: isLight ? '0 1px 2px rgba(255,255,255,0.8)' : '0 0 12px var(--accent-40)'
-                                        }}
-                                    >
-                                        {isComplete ? '✓' : dayNumber}
-                                    </span>
+                                {/* DAY label - Top Left inside badge area */}
+                                <div 
+                                    className="absolute top-0 left-0 text-[10px] font-black uppercase tracking-[0.2em]"
+                                    style={{ 
+                                        color: '#000',
+                                        opacity: 0.6,
+                                        fontFamily: 'var(--font-display)' 
+                                    }}
+                                >
+                                    Day
+                                </div>
+                                
+                                {/* Badge with number */}
+                                <div className="w-full h-full relative">
+                                    <svg width="48" height="48" viewBox="0 0 44 44">
+                                        <circle cx="22" cy="22" r="20" fill="none" stroke={isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)'} strokeWidth="1" />
+                                        <circle 
+                                            cx="22" cy="22" r="20" 
+                                            fill="none" 
+                                            stroke="var(--accent-color)" 
+                                            strokeWidth="2.5" 
+                                            strokeDasharray={`${(progress.completed / 14) * 126} 126`}
+                                            strokeLinecap="round"
+                                            style={{ 
+                                                transition: 'stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                filter: isLight ? 'none' : 'blur(0.5px) drop-shadow(0 0 3px var(--accent-color))'
+                                            }}
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center pt-2">
+                                        <span 
+                                            className="text-[20px] font-black" 
+                                            style={{ 
+                                                color: isLight ? '#000' : 'var(--accent-color)',
+                                                fontFamily: 'var(--font-display)',
+                                                textShadow: isLight ? '0 1px 2px rgba(255,255,255,0.8)' : '0 0 12px var(--accent-40)'
+                                            }}
+                                        >
+                                            {isComplete ? '✓' : dayNumber}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                {/* "OF 14" label - Centered Right */}
+                                <div 
+                                    className="absolute top-1/2 -translate-y-1/2 left-[44px] text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
+                                    style={{ 
+                                        color: '#000',
+                                        opacity: 0.6,
+                                        fontFamily: 'var(--font-display)'
+                                    }}
+                                >
+                                    of 14
                                 </div>
                             </div>
 
@@ -274,14 +299,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                             className="flex-1 flex flex-col p-5"
                             style={{ minHeight: '280px' }}
                         >
-                            {/* Header */}
+                            {/* Header - Title only, day info moved to left badge */}
                             <div className="mb-3">
-                                <div 
-                                    className="text-[9px] uppercase font-black tracking-[0.25em] opacity-50 mb-1" 
-                                    style={{ color: config.textMain }}
-                                >
-                                    Day {dayNumber} of 14
-                                </div>
                                 <div 
                                     className="text-[17px] font-black leading-tight" 
                                     style={{ 
