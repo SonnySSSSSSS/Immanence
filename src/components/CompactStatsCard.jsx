@@ -656,7 +656,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                                 textShadow: isLight 
                                     ? '0 1px 3px rgba(255,255,255,0.8), 0 0 6px rgba(255,255,255,0.6)' 
                                     : '0 0 8px rgba(0,0,0,0.8)',
-                                opacity: 0.9
+                                opacity: 0.9,
+                                textDecoration: 'underline',
+                                textDecorationThickness: '1px',
+                                textUnderlineOffset: '0px'
                             }}
                         >
                             {domainLabels[domain]}
