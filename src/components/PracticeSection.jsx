@@ -32,6 +32,11 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { PostSessionJournal } from "./PostSessionJournal.jsx";
 import { useJournalStore } from "../state/journalStore.js";
 
+// New modular practice components
+import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
+import { PracticeConfigCard } from "./practice/PracticeConfigCard.jsx";
+import { PracticeControls } from "./practice/PracticeControls.jsx";
+
 const DEV_FX_GALLERY_ENABLED = true;
 
 const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
@@ -1221,247 +1226,33 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   console.log('[RENDER] Checking summary condition:', { showSummary, sessionSummary, result: showSummary && sessionSummary });
   if (showSummary && sessionSummary) {
     return (
-      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
-        <div
-          className="rounded-[32px] relative overflow-hidden"
-          style={{
-            width: '460px',
-            ...(isLight ? getCardMaterial(true) : plateauMaterial),
-            border: isLight ? '1px solid var(--light-border, rgba(60,50,35,0.15))' : '1px solid var(--accent-20)',
-            boxShadow: isLight
-              ? '0 4px 24px rgba(60,50,35,0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
-              : '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
-          }}
-        >
-          <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
-
-          <div className="relative px-8 py-10 text-center">
-            <div
-              style={{
-                fontSize: '48px',
-                marginBottom: '16px',
-                filter: 'drop-shadow(0 0 20px var(--accent-40))',
-              }}
-            >
-              ⚜
-            </div>
-
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '18px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                color: 'var(--text-primary)',
-                marginBottom: '24px',
-                textShadow: isLight ? 'none' : '0 0 10px var(--accent-30)',
-              }}
-            >
-              SESSION COMPLETE
-            </div>
-
-            <div
-              style={{
-                padding: '20px',
-                borderRadius: '16px',
-                background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.3)',
-                border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-10)',
-                marginBottom: '24px',
-              }}
-            >
-              <div style={{ marginBottom: '12px' }}>
-                <span style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-muted)',
-                }}>
-                  Practice
-                </span>
-                <div style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  marginTop: '4px',
-                }}>
-                  {sessionSummary.practice}
-                </div>
-              </div> 
-
-
-              <div style={{ marginBottom: '12px' }}>
-                <span style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-muted)',
-                }}>
-                  Duration
-                </span>
-                <div style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  marginTop: '4px',
-                }}>
-                  {sessionSummary.duration} minutes
-                </div>
-              </div>
-
-              {sessionSummary.tapStats && (
-                <div>
-                  <span style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    letterSpacing: 'var(--tracking-mythic)',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                  }}>
-                    Accuracy
-                  </span>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginTop: '4px',
-                  }}>
-                    {sessionSummary.tapStats.avgErrorMs}ms avg
-                  </div>
-                </div>
-              )}
-            </div>
-			
-			
-            <button
-              onClick={() => {
-                setShowSummary(false);
-                if (pendingMicroNote) {
-                  // Journal is already open
-                } else {
-                  // Return to practice selection
-                  setPractice(PRACTICES[0]);
-                }
-              }}
-              className="px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-wider transition-all hover:scale-105"
-              style={{
-                background: 'var(--accent-color)',
-                color: '#fff',
-                boxShadow: '0 8px 20px var(--accent-30)',
-              }}
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      </section>
+      <SessionSummaryModal
+        summary={sessionSummary}
+        onContinue={() => {
+          setShowSummary(false);
+          if (pendingMicroNote) {
+            // Journal is already open
+          } else {
+            // Return to practice selection
+            setPractice(PRACTICES[0]);
+          }
+        }}
+      />
     );
   }
 
   // DEFAULT VIEW - Practice Selection with Start Button
   return (
-    <section className="w-full h-full flex flex-col items-center justify-center pb-24">
-      <div className="flex flex-col items-center gap-8">
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '24px',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            color: 'var(--text-primary)',
-          }}
-        >
-          Select Practice
-        </div>
-
-        {/* Practice Type Selector */}
-        <div className="flex flex-wrap justify-center gap-3 max-w-md">
-          {PRACTICES.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPractice(p)}
-              className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-              style={{
-                background: practice === p 
-                  ? 'var(--accent-color)' 
-                  : isLight ? 'rgba(60, 50, 35, 0.08)' : 'rgba(255, 255, 255, 0.08)',
-                color: practice === p 
-                  ? '#fff' 
-                  : isLight ? 'var(--light-text-secondary)' : 'var(--text-secondary)',
-                border: practice === p 
-                  ? '1px solid var(--accent-color)' 
-                  : isLight ? '1px solid rgba(60, 50, 35, 0.15)' : '1px solid rgba(255, 255, 255, 0.15)',
-              }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-
-        {/* Duration Selector */}
-        <div className="flex flex-col items-center gap-2">
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: isLight ? 'var(--light-text-secondary)' : 'var(--text-secondary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-            }}
-          >
-            Duration
-          </div>
-          <div className="flex gap-2">
-            {[5, 10, 15, 20, 30].map((d) => (
-              <button
-                key={d}
-                onClick={() => {
-                  setDuration(d);
-                  setTimeLeft(d * 60);
-                }}
-                className="w-12 h-12 rounded-full text-sm font-bold transition-all"
-                style={{
-                  background: duration === d 
-                    ? 'var(--accent-color)' 
-                    : isLight ? 'rgba(60, 50, 35, 0.08)' : 'rgba(255, 255, 255, 0.08)',
-                  color: duration === d 
-                    ? '#fff' 
-                    : isLight ? 'var(--light-text-secondary)' : 'var(--text-secondary)',
-                  border: duration === d 
-                    ? '1px solid var(--accent-color)' 
-                    : isLight ? '1px solid rgba(60, 50, 35, 0.15)' : '1px solid rgba(255, 255, 255, 0.15)',
-                }}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Start Button */}
-        <button
-          onClick={handleStart}
-          disabled={!practice}
-          className="px-12 py-4 rounded-full text-lg font-bold uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background: 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
-            color: '#050508',
-            boxShadow: '0 8px 24px var(--accent-30), inset 0 1px 0 rgba(255,255,255,0.2)',
-          }}
-        >
-          Start Practice
-        </button>
-      </div>
-    </section>
+    <PracticeConfigCard
+      practice={practice}
+      duration={duration}
+      onPracticeChange={setPractice}
+      onDurationChange={(d) => {
+        setDuration(d);
+        setTimeLeft(d * 60);
+      }}
+      onStart={handleStart}
+    />
   );
 }
 
