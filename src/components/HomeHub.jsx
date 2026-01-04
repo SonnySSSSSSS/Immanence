@@ -24,7 +24,6 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
-import { DailyPracticeTracker } from "./DailyPracticeTracker.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 
@@ -244,12 +243,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
 {curriculumActive && (
-  <div className="w-full space-y-3">
+  <div className="w-full">
     <DailyPracticeCard 
       onStartPractice={() => onSelectSection('practice')}
       onViewCurriculum={() => setShowCurriculumHub(true)}
     />
-    <DailyPracticeTracker />
   </div>
 )}
 

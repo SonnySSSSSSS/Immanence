@@ -841,6 +841,65 @@ export const useTrackingStore = create(
                 };
             },
 
+            /**
+             * Get timing offsets for the past 7 days (Mon-Sun)
+             * Used for the 5-level timing precision chart
+             */
+            getWeeklyTimingOffsets: (domain = 'breath') => {
+                const state = get();
+                const now = new Date();
+                
+                // Get Monday of current week
+                const dayOfWeek = now.getDay();
+                const mondayOffset = dayOfWeek === 0 ? -6 : -(dayOfWeek - 1);
+                const monday = new Date(now);
+                monday.setDate(now.getDate() + mondayOffset);
+                monday.setHours(0, 0, 0, 0);
+
+                const weekOffsets = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(monday);
+                    d.setDate(monday.getDate() + i);
+                    const dateKey = getDateKey(d);
+
+                    // Find sessions for this day and domain
+                    const daySessions = state.sessions.filter(s => 
+                        s.dateKey === dateKey && s.practiceType === domain
+                    );
+
+                    if (daySessions.length === 0) {
+                        weekOffsets.push({ dateKey, offsetMinutes: null, practiced: false });
+                        continue;
+                    }
+
+                    // Calculate average offset for the day
+                    let totalOffset = 0;
+                    let count = 0;
+
+                    daySessions.forEach(s => {
+                        if (s.scheduledTime && s.actualTime) {
+                            const [sH, sM] = s.scheduledTime.split(':').map(Number);
+                            const [aH, aM] = s.actualTime.split(':').map(Number);
+                            
+                            // Offset in minutes: positive = early, negative = late
+                            const scheduledTotal = sH * 60 + sM;
+                            const actualTotal = aH * 60 + aM;
+                            
+                            totalOffset += (scheduledTotal - actualTotal);
+                            count++;
+                        }
+                    });
+
+                    weekOffsets.push({
+                        dateKey,
+                        offsetMinutes: count > 0 ? totalOffset / count : 0,
+                        practiced: true
+                    });
+                }
+
+                return weekOffsets;
+            },
+
             // ═══════════════════════════════════════════════════════════════
             // EXPORT
             // ═══════════════════════════════════════════════════════════════

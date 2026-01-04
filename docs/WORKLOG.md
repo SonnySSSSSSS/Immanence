@@ -11,7 +11,8 @@
 ### Current Status (Last Updated: 2026-01-04)
 
 - **Claude Code**: ✅ Curriculum flow improvements complete (v3.15.16)
-- **Gemini/Antigravity**: 🔄 Adopting Multi-AI Protocol (v3.15.15)
+- **Claude Code**: ✅ Curriculum flow improvements complete (v3.15.16)
+- **Gemini/Antigravity**: 🔄 Refining Tracking Card (v3.15.17)
 
 ### ⚠️ CRITICAL: Working Directory
 
@@ -25,16 +26,54 @@ D:\Unity Apps\immanence-os
 
 ---
 
+- **COMPLETED** (v3.15.19): Refined `CompactStatsCard.jsx` and fixed ReferenceError.
+  - Refactored top section to two-column layout (graphics left, stats right).
+  - Added "Celestial Thread" vertical divider with glowing ornaments.
+  - Implemented 5-level timing precision chart (+10m to -10m snap levels).
+  - Added `getWeeklyTimingOffsets` selector to `trackingStore.js`.
+  - Integrated timing offset tooltips and guide threads.
+  - Fixed `ReferenceError: weekData is not defined` in `regimentProgress` calculation.
+
+---
+
+## 2026-01-04 12:47 - Gemini/Antigravity - COMPLETED
+
+**Task**: Consolidate curriculum card layout (merge DailyPracticeTracker into DailyPracticeCard)
+
+**Files Modified**:
+
+- `src/components/DailyPracticeCard.jsx` (complete rewrite - two-column layout with legs list)
+- `src/components/HomeHub.jsx` (lines 26, 246-253 - removed DailyPracticeTracker)
+- `src/App.jsx` (lines 392, 466 - version bump to v3.15.17)
+
+**Changes**:
+
+- Rewrote DailyPracticeCard with two-column flex layout (42% left / 58% right)
+- Left column: Background image (inkwell/cosmic feather) with day number overlay
+- Right column: Day info, practice legs list with START buttons, completion status
+- Removed separate DailyPracticeTracker component from HomeHub
+- Integrated `getDayLegsWithStatus` logic into DailyPracticeCard
+
+**Version**: v3.15.17
+
+**Status**: COMPLETED
+
+**Notes**: The DailyPracticeTracker.jsx file is now orphaned and could be deleted.
+
+---
+
 ## 2026-01-04 21:00 - Claude Code - COMPLETED
 
 **Task**: Streamline curriculum ritual flow - auto-start practice, track leg completion, add focus rating
 
 **Files Modified**:
+
 - `src/components/PracticeSection.jsx` (lines 237-240: auto-start after curriculum load, lines 585-610: leg completion tracking, lines 633-648: focus rating handler, lines 1292-1314: replaced inline summary with SessionSummaryModal)
 - `src/components/practice/SessionSummaryModal.jsx` (lines 27-44: added onFocusRating prop and focus rating state, lines 199-237: added focus rating UI, lines 332: added "See you tomorrow" message)
 - `src/App.jsx` (lines 392, 466: version bump to v3.15.16)
 
 **Changes**:
+
 - **Auto-start curriculum practice**: Added `setTimeout(() => handleStart(), 800)` after curriculum day loads, eliminating unnecessary circuit selection menu
 - **Leg completion tracking**: Moved `logLegCompletion` logic from REPAIR file to main `handleStop` function with proper leg number detection
 - **Focus rating collection**: Added 5-star rating selector in SessionSummaryModal for curriculum sessions, updates leg completion data
@@ -47,6 +86,7 @@ D:\Unity Apps\immanence-os
 **Status**: COMPLETED
 
 **Notes**:
+
 - Flow now: Onboarding → Click "Start" → Practice auto-starts → Session complete → Rate focus → See next leg or "See you tomorrow"
 - No more redundant practice selection screens when curriculum is active
 - Focus ratings are now properly stored in `legCompletions` for progress tracking

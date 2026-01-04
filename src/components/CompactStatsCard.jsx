@@ -205,264 +205,181 @@ function RegimentProgress({ progress, isLight, r, g, b }) {
 }
 
 /**
- * Precision Timeline - Neural Thread SVG Architecture
+ * Precision Timeline - 5-Level Timing Architecture
  */
-function PrecisionTimeline({ weekData, isLight, r, g, b }) {
+function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const [hoverInfo, setHoverInfo] = useState(null);
-    const containerRef = useRef(null);
 
-    // Calculate path with subtle drift (not straight, not squiggly)
-    const getPathData = () => {
-        const points = days.map((_, i) => {
-            // Base positions
-            const baseX = 35 + i * (310 / 6);
-            const baseY = (weekData[i]?.precision === 'perfect') ? 35 :
-                (weekData[i]?.precision === 'close' ? 60 : 85);
-
-            // Add subtle drift: small random-ish offsets based on index
-            // Using sine waves for controlled, repeatable "imperfection"
-            const driftX = Math.sin(i * 0.7) * 3; // ±3px horizontal drift
-            const driftY = Math.cos(i * 1.3) * 2; // ±2px vertical drift
-
-            return {
-                x: baseX + driftX,
-                y: baseY + driftY
-            };
-        });
-
-        let d = `M ${points[0].x} ${points[0].y} `;
-        for (let i = 0; i < points.length - 1; i++) {
-            const p0 = points[i];
-            const p1 = points[i + 1];
-
-            // Gentle curve with micro-variation
-            const cpX = (p0.x + p1.x) / 2 + Math.sin(i * 2.1) * 4;
-            const cpY = (p0.y + p1.y) / 2 + Math.cos(i * 1.7) * 3;
-
-            d += ` Q ${cpX} ${cpY}, ${p1.x} ${p1.y} `;
+    // 5-Level Snap Logic
+    const getVerticalPosition = (offset) => {
+        if (offset === null) return null;
+        
+        // Exact: +/- 1 min (Level 3 - Center)
+        if (Math.abs(offset) <= 1) return 3;
+        
+        // Early
+        if (offset > 1) {
+            if (offset >= 8) return 5; // Level 5 (Top) - ≥ 10m (using 8 as snap threshold)
+            return 4; // Level 4 - ~5m
         }
-        return d;
-    };
-
-    const handleMouseEnter = (index, event, dayData, dayName) => {
-        if (!dayData.time) return;
-        const rect = event.currentTarget.getBoundingClientRect();
-        setHoverInfo({
-            day: dayName + ' PRACTICE',
-            time: dayData.time,
-            x: rect.left + rect.width / 2,
-            y: rect.top
-        });
-    };
-
-    // Calculate dynamic scale based on precision data
-    const calculateDynamicScale = () => {
-        const offsets = weekData
-            .filter(day => day.precision !== 'missed' && day.offsetSeconds !== undefined)
-            .map(day => Math.abs(day.offsetSeconds || 0));
-
-        if (offsets.length === 0) return { unit: 'seconds', maxRange: 60 };
-
-        const median = offsets.sort((a, b) => a - b)[Math.floor(offsets.length / 2)];
-        const max = Math.max(...offsets);
-
-        // If median is under 60 seconds and max under 120, use seconds scale
-        if (median < 60 && max < 120) {
-            return { unit: 'seconds', maxRange: Math.max(60, max * 1.2) };
+        
+        // Late
+        if (offset < -1) {
+            if (offset <= -8) return 1; // Level 1 (Bottom) - ≥ 10m
+            return 2; // Level 2 - ~5m
         }
-        // Otherwise use minutes scale
-        return { unit: 'minutes', maxRange: Math.max(15, (max / 60) * 1.2) };
+        
+        return 3;
     };
 
-    const scale = calculateDynamicScale();
+    const slotHeights = {
+        5: 15,  // Top (Early 10m+)
+        4: 35,  // Upper (Early 5m)
+        3: 55,  // Center (Exact)
+        2: 75,  // Lower (Late 5m)
+        1: 95   // Bottom (Late 10m+)
+    };
 
     return (
         <div
-            ref={containerRef}
-            className="w-full relative mt-4 pt-5 pb-6 rounded-[28px] overflow-hidden transition-all duration-700"
+            className="w-full relative mt-4 pt-5 pb-6 rounded-[28px] transition-all duration-700"
             style={{
                 background: isLight
-                    ? 'linear-gradient(135deg, rgba(252, 248, 240, 0.85) 0%, rgba(248, 244, 235, 0.9) 50%, rgba(245, 240, 230, 0.85) 100%)'
+                    ? 'linear-gradient(135deg, rgba(252, 248, 240, 0.45) 0%, rgba(248, 244, 235, 0.5) 50%, rgba(245, 240, 230, 0.45) 100%)'
                     : config.wellBg,
                 backdropFilter: 'blur(15px)',
                 WebkitBackdropFilter: 'blur(15px)',
                 border: `1px solid ${config.border}`,
                 borderRadius: '28px',
                 boxShadow: isLight
-                    ? 'inset 0 2px 6px rgba(255,255,255,0.5), 0 15px 35px rgba(0,0,0,0.08)'
-                    : 'inset 0 6px 25px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5)'
+                    ? 'inset 0 2px 6px rgba(255,255,255,0.5), 0 10px 25px rgba(0,0,0,0.05)'
+                    : 'inset 0 6px 25px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5)',
+                marginLeft: '40px' // Make room for labels on the left
             }}
         >
-            {/* Watercolor Background Overlay */}
-            {isLight && (
-                <div
-                    className="absolute inset-0 opacity-20 pointer-events-none"
-                    style={{
-                        background: 'radial-gradient(ellipse at 20% 30%, rgba(180, 160, 130, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(200, 180, 140, 0.25) 0%, transparent 50%)',
-                    }}
-                />
-            )}
-
-            {/* Header Text Overlay */}
+            {/* Header Text - ABOVE the chart, more legible */}
             <div
-                className="absolute top-4 inset-x-0 text-[10px] font-black uppercase tracking-[0.4em] text-center opacity-20 pointer-events-none"
-                style={{ color: config.textMain, fontFamily: 'var(--font-display)' }}
+                className="text-[9px] font-black uppercase tracking-[0.3em] text-center mb-2 relative z-10"
+                style={{ 
+                    color: config.textMain, 
+                    fontFamily: 'var(--font-display)',
+                    opacity: 0.7,
+                    textShadow: isLight 
+                        ? '0 1px 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.5)' 
+                        : '0 1px 2px rgba(0,0,0,0.5)'
+                }}
             >
-                Precision Vector • {scale.unit === 'seconds' ? 'Seconds' : 'Minutes'} Scale
+                Timing Precision • 5-Level Scale
             </div>
 
-            {/* Dynamic Precision Wave Visualization - Hidden in Light mode for Watercolor style */}
-            {!isLight && (
-                <svg className="absolute inset-x-0 bottom-0 w-full h-20 pointer-events-none z-0" viewBox="0 0 380 80" preserveAspectRatio="none">
-                    <defs>
-                        {/* Gradient for the wave fill */}
-                        <linearGradient id="waveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor={`rgba(${r}, ${g}, ${b}, 0.4)`} />
-                            <stop offset="50%" stopColor={`rgba(${r}, ${g}, ${b}, 0.25)`} />
-                            <stop offset="100%" stopColor={`rgba(${r}, ${g}, ${b}, 0.1)`} />
-                        </linearGradient>
-                        {/* Soft blur for watercolor effect */}
-                        <filter id="watercolorBlur">
-                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" />
-                        </filter>
-                    </defs>
+            {/* Chart Container */}
+            <div className="relative">
+                {/* Guide Threads (Horizontal lines) */}
+                <div className="absolute inset-x-0 top-0 bottom-[40px] px-8 flex flex-col justify-between pointer-events-none opacity-10">
+                {[5, 4, 3, 2, 1].map(lvl => (
+                    <div key={lvl} className="w-full h-px" style={{ background: config.textMain, borderTop: lvl === 3 ? '1px dashed' : 'none' }} />
+                ))}
+            </div>
 
-                    {/* Gradient wave path - showing timing offset precision */}
-                    <path
-                        d={(() => {
-                            const baseY = 60;
-                            const wavePoints = weekData.map((day, i) => {
-                                const x = 15 + (i * 50);
-                                let offsetValue = Math.abs(day.offsetSeconds || 0);
+            {/* Scale Labels - OUTSIDE chart on the left */}
+            <div 
+                className="absolute left-[-38px] top-[20px] bottom-[40px] w-[32px] flex flex-col justify-between items-end text-[8px] font-bold opacity-50 pointer-events-none uppercase tracking-tight pr-1" 
+                style={{ color: config.textMain }}
+            >
+                <span>+10m</span>
+                <span>+5m</span>
+                <span className="opacity-100 font-black">Exact</span>
+                <span>-5m</span>
+                <span>-10m</span>
+            </div>
 
-                                if (scale.unit === 'minutes') {
-                                    offsetValue = offsetValue / 60;
-                                }
-
-                                // Calculate height based on offset (more offset = taller wave)
-                                const heightRatio = Math.min(offsetValue / scale.maxRange, 1);
-                                const height = 10 + (heightRatio * 40); // 10-50 range
-
-                                return { x, y: baseY - height };
-                            });
-
-                            // Build smooth curve
-                            let d = `M 0 ${baseY}`;
-                            wavePoints.forEach((p, i) => {
-                                if (i === 0) {
-                                    d += ` L ${p.x} ${p.y}`;
-                                } else {
-                                    const prev = wavePoints[i - 1];
-                                    const cpX = (prev.x + p.x) / 2;
-                                    d += ` Q ${cpX} ${prev.y}, ${p.x} ${p.y}`;
-                                }
-                            });
-                            d += ` L 380 ${baseY} L 380 80 L 0 80 Z`;
-                            return d;
-                        })()}
-                        fill="url(#waveGradient)"
-                        filter="url(#watercolorBlur)"
-                        className="transition-all duration-1000"
-                    />
-                </svg>
-            )}
-
-            {/* Day markers with offset indicators */}
-            <div className="flex justify-between items-end px-8 relative z-10 h-24 pb-2">
+            {/* Main Chart Area */}
+            <div className="flex justify-between items-start pl-1 pr-6 relative z-10 h-[110px] pt-2">
                 {days.map((day, i) => {
-                    const dayData = weekData[i] || { precision: 'missed', offsetSeconds: null };
-                    const isActive = dayData.precision !== 'missed';
-                    const offsetValue = Math.abs(dayData.offsetSeconds || 0);
-                    const isPrecise = scale.unit === 'seconds' ? offsetValue < 10 : offsetValue < 600; // <10s or <10min
+                    const data = weekOffsets[i] || { offsetMinutes: null, practiced: false };
+                    const slot = getVerticalPosition(data.offsetMinutes);
+                    const yPos = slot ? slotHeights[slot] : null;
+                    const isActive = data.practiced && slot !== null;
 
                     return (
                         <div
                             key={i}
-                            className="flex flex-col items-center relative group cursor-help"
+                            className="flex flex-col items-center relative flex-1"
                             onMouseEnter={(e) => {
                                 if (!isActive) return;
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 setHoverInfo({
-                                    day: day + ' OFFSET',
-                                    time: scale.unit === 'seconds'
-                                        ? `${offsetValue.toFixed(0)}s`
-                                        : `${(offsetValue / 60).toFixed(1)}m`,
+                                    day: day + ' TIMING',
+                                    time: data.offsetMinutes === 0 ? 'Exactly on time' : 
+                                          data.offsetMinutes > 0 ? `${data.offsetMinutes.toFixed(0)}m early` : 
+                                          `${Math.abs(data.offsetMinutes).toFixed(0)}m late`,
                                     x: rect.left + rect.width / 2,
-                                    y: rect.top
+                                    y: rect.top + (yPos || 0)
                                 });
                             }}
                             onMouseLeave={() => setHoverInfo(null)}
                         >
+                            {/* Neural Connectors (Vertical Lines) */}
+                            <div 
+                                className="absolute top-0 bottom-[-30px] w-px opacity-5" 
+                                style={{ background: config.textMain, left: '50%' }} 
+                            />
+
+                            {/* Data Point - Always show blob, adjust opacity for inactive */}
+                            <div 
+                                className="relative transition-all duration-700 ease-out"
+                                style={{ 
+                                    transform: `translateY(${isActive ? yPos : 55}px)`,
+                                    opacity: isActive ? 1 : 0.25
+                                }}
+                            >
+                                {isLight ? (
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}assets/textured_blob_${(i % 5) + 1}.png`}
+                                        className="w-7 h-7 object-contain"
+                                        alt=""
+                                        style={{
+                                            filter: isActive ? (() => {
+                                                const max = Math.max(r, g, b) / 255;
+                                                const min = Math.min(r, g, b) / 255;
+                                                let h = 0;
+                                                if (max !== min) {
+                                                    const d = max - min;
+                                                    const rn = r / 255, gn = g / 255, bn = b / 255;
+                                                    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+                                                    else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+                                                    else h = ((rn - gn) / d + 4) / 6;
+                                                }
+                                                const targetHue = Math.round(h * 360);
+                                                return `hue-rotate(${targetHue - 120}deg) saturate(1.2)`;
+                                            })() : 'grayscale(100%)'
+                                        }}
+                                    />
+                                ) : (
+                                    <div
+                                        className="w-3 h-3 rounded-full border-2 transition-all duration-300"
+                                        style={{
+                                            background: isActive ? `rgb(${r}, ${g}, ${b})` : 'transparent',
+                                            borderColor: isActive ? `rgba(${r}, ${g}, ${b}, 0.5)` : config.border,
+                                            boxShadow: isActive ? `0 0 10px rgba(${r}, ${g}, ${b}, 0.3)` : 'none'
+                                        }}
+                                    />
+                                )}
+                            </div>
+
                             {/* Day label */}
                             <span
-                                className="text-[10px] font-black mb-2 transition-all duration-300"
+                                className="absolute bottom-[-25px] text-[10px] font-black transition-all duration-300"
                                 style={{
                                     color: config.textMain,
-                                    opacity: isActive ? 0.8 : 0.25,
+                                    opacity: data.practiced ? 0.8 : 0.2,
                                     fontFamily: 'var(--font-display)'
                                 }}
                             >
                                 {day}
                             </span>
-
-                            {/* Precision indicator brush dab (Light) or circle (Dark) */}
-                            <div className="relative">
-                                {isLight ? (
-                                    isActive && (
-                                        <div
-                                            className="transition-all duration-500 ease-out"
-                                            style={{
-                                                transform: `translateY(${(1 - (offsetValue / scale.maxRange)) * -40}px) scale(${1 + (1 - offsetValue / scale.maxRange) * 0.4})`,
-                                                opacity: 0.85
-                                            }}
-                                        >
-                                            <img
-                                                src={`${import.meta.env.BASE_URL}assets/brush_dab_${(i % 4) + 1}.png`}
-                                                className="w-8 h-8 object-contain"
-                                                alt=""
-                                                style={{
-                                                    filter: (() => {
-                                                        // Calculate hue rotation from green (120deg) to target color
-                                                        const max = Math.max(r, g, b) / 255;
-                                                        const min = Math.min(r, g, b) / 255;
-                                                        let h = 0;
-                                                        if (max !== min) {
-                                                            const d = max - min;
-                                                            const rn = r / 255, gn = g / 255, bn = b / 255;
-                                                            if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
-                                                            else if (max === gn) h = ((bn - rn) / d + 2) / 6;
-                                                            else h = ((rn - gn) / d + 4) / 6;
-                                                        }
-                                                        const targetHue = Math.round(h * 360);
-                                                        const rotation = targetHue - 120; // Green baseline
-                                                        return `hue-rotate(${rotation}deg)`;
-                                                    })()
-                                                }}
-                                            />
-                                        </div>
-                                    )
-                                ) : (
-                                    <>
-                                        {isPrecise && isActive && (
-                                            <div
-                                                className="absolute inset-0 rounded-full blur-md opacity-40 pointer-events-none"
-                                                style={{ background: config.accent, transform: 'scale(2)' }}
-                                            />
-                                        )}
-                                        <div
-                                            className="w-3 h-3 rounded-full border-2 transition-all duration-300"
-                                            style={{
-                                                background: isActive ? config.accent : 'transparent',
-                                                borderColor: isActive ? config.accent : config.border,
-                                                opacity: isActive ? 1 : 0.3,
-                                                transform: isPrecise ? 'scale(1.3)' : 'scale(1)'
-                                            }}
-                                        />
-                                    </>
-                                )}
-                            </div>
                         </div>
                     );
                 })}
@@ -470,6 +387,7 @@ function PrecisionTimeline({ weekData, isLight, r, g, b }) {
 
             {/* Tooltip Overlay */}
             <Tooltip text={hoverInfo} position={hoverInfo} />
+            </div>{/* End Chart Container */}
         </div>
     );
 }
@@ -584,23 +502,18 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     
     const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount, logsCount]);
     
-    const weekData = useMemo(() => {
-        const precisionKey = domain === 'breathwork' ? 'breath' : 
-                            domain === 'visualization' ? 'visualization' : 
-                            'wisdom';
-        
-        return trajectory.weeks.map(w => ({
-            precision: w.avgPrecision[precisionKey] !== null ? w.avgPrecision[precisionKey] : 'missed',
-            time: w.totalMinutes > 0 ? `${Math.floor(w.totalMinutes / 60)}h ${w.totalMinutes % 60}m` : null,
-            practiced: w.daysActive > 0
-        }));
-    }, [trajectory, domain]);
+    // New: Get Timing Offsets for the 5-level chart
+    const getWeeklyTimingOffsets = useTrackingStore(s => s.getWeeklyTimingOffsets);
+    const trackingDomain = domain === 'breathwork' ? 'breath' : 
+                          domain === 'wisdom' ? 'cognitive_vipassana' : 
+                          'visualization';
+    const weekOffsets = useMemo(() => getWeeklyTimingOffsets(trackingDomain), [getWeeklyTimingOffsets, trackingDomain, sessionsCount]);
 
     // Calculate actual regiment progress based on past 7 weeks or path completion
     const activePath = useTrackingStore(s => s.activePath);
     const regimentProgress = activePath 
         ? (activePath.completedWeeks.length / activePath.totalWeeks)
-        : (weekData.filter(d => d.practiced).length / 7);
+        : (weekOffsets.filter(d => d.practiced).length / 7);
 
     useEffect(() => {
         if (cardRef.current) {
@@ -714,30 +627,8 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
             {/* Content Container - Shortened bottom to pull parchment edge up */}
             <div className={`relative px-9 ${isLight ? 'pt-5 pb-2' : 'py-3'} z-10`} style={{ background: 'transparent' }}>
 
-                {/* Header Row: Category + Date */}
-                <div className="flex justify-between items-center mb-4 relative z-10">
-                    <div className="flex items-center gap-2">
-                        <span
-                            className="text-[11px] font-black uppercase tracking-[0.2em]"
-                            style={{
-                                color: config.textMain,
-                                textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none' // Embedded text
-                            }}
-                        >
-                            {domainLabels[domain]}
-                        </span>
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: config.accent }} />
-                        <span
-                            className="text-[9px] font-black uppercase tracking-[0.15em] opacity-50"
-                            style={{
-                                color: config.textMain,
-                                textShadow: isLight ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none'
-                            }}
-                        >
-                            COGNITIVE.STREAM.V4
-                        </span>
-                    </div>
-
+                {/* Header Row: Date only (domain label moved to vertical) */}
+                <div className="flex justify-end items-center mb-2 relative z-10">
                     <div
                         className="text-[10px] font-black tabular-nums tracking-wide opacity-50"
                         style={{
@@ -751,198 +642,124 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
 
 
 
-                {/* Secondary Section: Stats Grid (2 columns) - Centered & Symmetrical */}
-                <div className="relative mb-2">
-                    {/* Ornamental Partition 1 */}
-                    <div className="flex items-center justify-center opacity-20 my-2 gap-3">
-                        <div className="h-px w-16" style={{ background: config.textSub }} />
-                        <div className="w-1 h-1 rounded-full" style={{ background: config.textSub }} />
-                        <div className="h-px w-16" style={{ background: config.textSub }} />
+                {/* Secondary Section: Two-Column Stats Layout */}
+                <div className="relative mb-4 flex gap-0 h-[140px]">
+                    {/* Vertical Domain Label - Left Edge, Aligned to VERY TOP */}
+                    <div 
+                        className="absolute left-[-8px] top-[-8px] flex items-start justify-center z-20"
+                        style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                    >
+                        <span
+                            className="text-[11px] font-black uppercase tracking-[0.35em]"
+                            style={{
+                                color: config.textMain,
+                                textShadow: isLight 
+                                    ? '0 1px 3px rgba(255,255,255,0.8), 0 0 6px rgba(255,255,255,0.6)' 
+                                    : '0 0 8px rgba(0,0,0,0.8)',
+                                opacity: 0.9
+                            }}
+                        >
+                            {domainLabels[domain]}
+                        </span>
                     </div>
 
-                    {isLight && (
-                        <div
-                            className="absolute -inset-x-4 -inset-y-2 pointer-events-none opacity-25 blur-xl"
-                            style={{
-                                background: 'radial-gradient(circle, rgba(245, 239, 230, 0.9) 0%, rgba(245, 239, 230, 0) 70%)',
-                                zIndex: -1
-                            }}
+                    {/* Left Column: Graphics (Feather) - REDUCED WIDTH */}
+                    <div className="w-[25%] relative">
+                        {/* Dark mode feather centered on left */}
+                        {!isLight && (
+                            <div 
+                                className="absolute inset-x-[-20%] inset-y-0 opacity-80 mix-blend-screen"
+                                style={{
+                                    backgroundImage: `url(${import.meta.env.BASE_URL}assets/dark_mode_cosmic_feather.png)`,
+                                    backgroundSize: '180% 100%',
+                                    backgroundPosition: 'left center',
+                                    filter: `hue-rotate(${stageHueRotate}deg) contrast(1.1) saturate(1.2)`,
+                                    WebkitMaskImage: 'linear-gradient(to right, black 50%, transparent 100%)',
+                                    maskImage: 'linear-gradient(to right, black 50%, transparent 100%)'
+                                }}
+                            />
+                        )}
+                        {/* Light mode - feather is in the bg, leave graphic area empty or smaller icon */}
+                    </div>
+
+                    {/* Celestial Thread Divider */}
+                    <div className="w-px h-full relative overflow-visible">
+                        <div 
+                            className="absolute inset-0 blur-[1px]" 
+                            style={{ 
+                                background: `linear-gradient(to bottom, transparent, ${config.accent}, transparent)`,
+                                opacity: 0.6
+                            }} 
                         />
-                    )}
-                    <div className="grid grid-cols-2 gap-8 relative z-10">
-                        {/* Streak Column - Align LEFT to avoid feather */}
-                        <div className="flex flex-col items-start pl-2">
-                            <span className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60" style={{ color: config.textSub }}>Streak</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
+                        <div 
+                            className="absolute inset-y-2 left-[-1px] right-[-1px]" 
+                            style={{ 
+                                background: config.accent,
+                                boxShadow: `0 0 10px ${config.accent}`
+                            }} 
+                        />
+                        {/* Ornamental beads on the thread */}
+                        <div className="absolute top-[20%] left-[-2px] w-1.5 h-1.5 rounded-full" style={{ background: config.accent, border: `1px solid ${config.wellBg}` }} />
+                        <div className="absolute top-[80%] left-[-2px] w-1.5 h-1.5 rounded-full" style={{ background: config.accent, border: `1px solid ${config.wellBg}` }} />
+                    </div>
+
+                    {/* Right Column: Data - VERTICALLY STACKED, RIGHT ALIGNED */}
+                    <div className="flex-1 flex flex-col justify-center items-end pr-4">
+                        {/* Streak */}
+                        <div className="mb-3 text-right">
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>Streak</span>
+                            <div className="flex items-center justify-end gap-2">
+                                <div className="flex flex-col items-center">
+                                    {isLight ? (
+                                        <img
+                                            src={`${import.meta.env.BASE_URL}assets/impasto_fire.png`}
+                                            className="w-5 h-5 object-contain"
+                                            alt="Fire"
+                                        />
+                                    ) : (
+                                        <span className="text-xl">🔥</span>
+                                    )}
+                                    <span className="text-[7px] font-bold uppercase tracking-[0.15em] opacity-40" style={{ color: config.textSub }}>Days</span>
+                                </div>
+                                <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
                                     {streak}
                                 </span>
-                                {isLight ? (
-                                    <img
-                                        src={`${import.meta.env.BASE_URL}assets/impasto_fire.png`}
-                                        className="w-6 h-6 object-contain opacity-90"
-                                        alt="Fire"
-                                    />
-                                ) : (
-                                    <span className="text-2xl">🔥</span>
-                                )}
                             </div>
-                            <span className="text-[8px] font-bold uppercase tracking-widest mt-1 opacity-40 text-left" style={{ color: config.textSub }}>Days</span>
                         </div>
 
-                        {/* Sessions Column - Align RIGHT to avoid feather */}
-                        <div className="flex flex-col items-end pr-2">
-                            <span className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60" style={{ color: config.textSub }}>Sessions</span>
-                            <div className="flex items-center gap-2 flex-row-reverse">
-                                <span className="text-[28px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
+                        {/* Sessions */}
+                        <div className="text-right">
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>Sessions</span>
+                            <div className="flex items-center justify-end gap-2">
+                                <div className="flex flex-col items-center">
+                                    {isLight ? (
+                                        <img
+                                            src={`${import.meta.env.BASE_URL}assets/impasto_meditator.png`}
+                                            className="w-5 h-5 object-contain"
+                                            alt="Meditator"
+                                        />
+                                    ) : (
+                                        <span className="text-xl">🧘</span>
+                                    )}
+                                    <span className="text-[7px] font-bold uppercase tracking-[0.15em] opacity-40" style={{ color: config.textSub }}>Total</span>
+                                </div>
+                                <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
                                     {domainStats.count || 0}
                                 </span>
-                                {isLight ? (
-                                    <img
-                                        src={`${import.meta.env.BASE_URL}assets/impasto_meditator.png`}
-                                        className="w-6 h-6 object-contain opacity-80"
-                                        alt="Meditator"
-                                    />
-                                ) : (
-                                    <span className="text-2xl">🧘</span>
-                                )}
                             </div>
-                            <span className="text-[8px] font-bold uppercase tracking-widest mt-1 opacity-40 text-right" style={{ color: config.textSub }}>Total</span>
                         </div>
-                    </div>
-                    {/* Ornamental Partition 2 */}
-                    <div className="flex items-center justify-center opacity-20 mt-2 mb-1 gap-3">
-                        <div className="h-px w-24" style={{ background: config.textSub }} />
                     </div>
                 </div>
 
-                {/* Tertiary Section: Practice Precision - Added Mist Overlay */}
+                {/* Tertiary Section: Practice Precision - Timing Offset Scale */}
                 <div className="relative z-10">
-                    {isLight && (
-                        <div
-                            className="absolute -inset-x-8 -inset-y-4 pointer-events-none opacity-20 blur-3xl"
-                            style={{
-                                background: 'radial-gradient(circle, rgba(245, 239, 230, 0.98) 0%, rgba(245, 239, 230, 0) 80%)',
-                                zIndex: -1
-                            }}
-                        />
-                    )}
-                    <div className="text-center mb-1">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: config.textMain }}>
-                            {currentDomain.metricLabel} (Last 7 Days)
-                        </span>
-                        {/* Dashed separator */}
-                        <div className="mt-2 flex justify-center">
-                            <svg className="w-full h-[1px]" viewBox="0 0 200 1" preserveAspectRatio="none">
-                                <line
-                                    x1="0" y1="0.5" x2="200" y2="0.5"
-                                    stroke={isLight ? 'rgba(140, 120, 100, 0.3)' : config.border}
-                                    strokeWidth="1"
-                                    strokeDasharray="3 3"
-                                />
-                            </svg>
-                        </div>
-                    </div>
-
-                    {/* Precision Markers with Vertical Grid - NARROWED & SNAPPED */}
-                    <div className="flex justify-between items-end px-4 relative h-32 max-w-[280px] mx-auto">
-                        {weekData.map((dayData, i) => {
-                            const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                            const isActive = dayData.practiced;
-
-                            // 5-Row Precision Mapping (0%, 25%, 50%, 75%, 100%)
-                            let verticalSlot = 3; // Default to Center (On-Time)
-                            
-                            if (isActive) {
-                                if (dayData.precision >= 0.9) verticalSlot = 3;
-                                else if (dayData.precision >= 0.7) verticalSlot = 4;
-                                else if (dayData.precision >= 0.5) verticalSlot = 2;
-                                else if (dayData.precision >= 0.3) verticalSlot = 5;
-                                else verticalSlot = 1;
-                            }
-
-                            const slotPositions = {
-                                1: 12, // Bottom
-                                2: 38,
-                                3: 64, // Center
-                                4: 90,
-                                5: 116 // Top
-                            };
-                            const heightPercent = slotPositions[verticalSlot] || 64;
-
-                            return (
-                                <div key={i} className="flex flex-col items-center relative flex-1">
-                                    <div
-                                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-20 opacity-20"
-                                        style={{ background: config.textMain }}
-                                    />
-
-                                    <div className="relative mb-2" style={{ height: '60px', display: 'flex', alignItems: 'flex-end' }}>
-                                        {isLight && isActive ? (
-                                            <div
-                                                className="transition-all duration-500 ease-out"
-                                                style={{
-                                                    transform: `translateY(-${heightPercent}px)`,
-                                                    opacity: 0.9
-                                                }}
-                                            >
-                                                <img
-                                                    src={`${import.meta.env.BASE_URL}assets/${config.dabAssets[i % config.dabAssets.length]}`}
-                                                    className="w-7 h-7 object-contain"
-                                                    style={{ 
-                                                        filter: (() => {
-                                                            // Calculate hue rotation from green (120deg) to target color
-                                                            const r = currentDomain.r, g = currentDomain.g, b = currentDomain.b;
-                                                            const max = Math.max(r, g, b) / 255;
-                                                            const min = Math.min(r, g, b) / 255;
-                                                            let h = 0;
-                                                            if (max !== min) {
-                                                                const d = max - min;
-                                                                const rn = r / 255, gn = g / 255, bn = b / 255;
-                                                                if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
-                                                                else if (max === gn) h = ((bn - rn) / d + 2) / 6;
-                                                                else h = ((rn - gn) / d + 4) / 6;
-                                                            }
-                                                            const targetHue = Math.round(h * 360);
-                                                            const rotation = targetHue - 120; // Green baseline
-                                                            return `hue-rotate(${rotation}deg) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))`;
-                                                        })(),
-                                                        mixBlendMode: 'multiply'
-                                                    }}
-                                                    alt=""
-                                                />
-                                            </div>
-                                        ) : (
-                                            !isLight && isActive && (
-                                                <div
-                                                    className="w-3 h-3 rounded-full border-2 transition-all duration-300"
-                                                    style={{
-                                                        background: `rgb(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b})`,
-                                                        borderColor: `rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.5)`,
-                                                        boxShadow: `0 0 10px rgba(${currentDomain.r}, ${currentDomain.g}, ${currentDomain.b}, 0.3)`,
-                                                        transform: `translateY(-${heightPercent}px)`
-                                                    }}
-                                                />
-                                            )
-                                        )}
-                                    </div>
-
-                                    {/* Day label */}
-                                    <span
-                                        className="text-[10px] font-black relative z-10"
-                                        style={{
-                                            color: config.textMain,
-                                            opacity: isActive ? 0.8 : 0.3,
-                                            textShadow: isLight ? '0 1px 1px rgba(0, 0, 0, 0.08)' : 'none',
-                                            transform: 'translateY(12px)' // Pull labels closer to dots
-                                        }}
-                                    >
-                                        {days[i]}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <PrecisionTimeline 
+                        weekOffsets={weekOffsets} 
+                        isLight={isLight} 
+                        r={currentDomain.r} 
+                        g={currentDomain.g} 
+                        b={currentDomain.b} 
+                    />
                 </div>
 
                 {/* Bottom Section - Archive Link */}
