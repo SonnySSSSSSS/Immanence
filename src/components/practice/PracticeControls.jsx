@@ -9,22 +9,33 @@ import { useDisplayModeStore } from '../../state/displayModeStore.js';
  * @param {object} props
  * @param {function} props.onStop - Callback when Stop button is clicked
  * @param {string} props.formattedTime - Formatted time string (MM:SS)
- * @param {object} props.buttonStyle - Optional custom button styling overrides
  * @param {string} props.feedbackText - Optional feedback text to display
  * @param {string} props.feedbackColor - Optional feedback text color
+ * @param {string} props.feedbackShadow - Optional text shadow for feedback
+ * @param {string} props.buttonBg - Optional custom button background gradient
+ * @param {string} props.radialGlow - Optional radial glow effect for button
+ * @param {React.ReactNode} props.children - Optional additional content (e.g., breath count)
  */
 export function PracticeControls({
   onStop,
   formattedTime,
-  buttonStyle = {},
   feedbackText = '',
   feedbackColor = 'var(--accent-primary)',
+  feedbackShadow = 'none',
+  buttonBg = null,
+  radialGlow = null,
+  children,
 }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
 
   const defaultButtonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
-  const defaultShadow = '0 0 24px var(--accent-30), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)';
+  const defaultShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
+  
+  const finalButtonBg = buttonBg || defaultButtonBg;
+  const finalBoxShadow = radialGlow
+    ? `${radialGlow}, ${defaultShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`
+    : `0 0 24px var(--accent-30), ${defaultShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`;
 
   return (
     <div className="flex flex-col items-center z-50">
@@ -38,7 +49,7 @@ export function PracticeControls({
               fontWeight: 600,
               letterSpacing: "var(--tracking-wide)",
               color: feedbackColor,
-              textShadow: `0 0 8px ${feedbackColor}40`,
+              textShadow: feedbackShadow,
             }}
           >
             {feedbackText}
@@ -48,10 +59,7 @@ export function PracticeControls({
 
       {/* Stop Button */}
       <button
-        onClick={() => {
-          console.log('[PracticeControls] Stop clicked');
-          onStop();
-        }}
+        onClick={onStop}
         className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
         style={{
           fontFamily: "var(--font-display)",
@@ -59,11 +67,10 @@ export function PracticeControls({
           letterSpacing: "var(--tracking-mythic)",
           textTransform: "uppercase",
           fontWeight: 600,
-          background: buttonStyle.background || defaultButtonBg,
+          background: finalButtonBg,
           color: "#050508",
-          boxShadow: buttonStyle.boxShadow || defaultShadow,
+          boxShadow: finalBoxShadow,
           borderRadius: "999px",
-          ...buttonStyle,
         }}
         onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
         onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -105,6 +112,9 @@ export function PracticeControls({
       >
         {formattedTime}
       </div>
+
+      {/* Optional children (e.g., breath count) */}
+      {children}
     </div>
   );
 }
