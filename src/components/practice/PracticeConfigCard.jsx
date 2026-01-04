@@ -1,20 +1,20 @@
 // PracticeConfigCard.jsx
-// Pre-session configuration UI - practice type and duration selection
+// Pre-session configuration UI - shows current practice and duration selection
 
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 
-const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
 const QUICK_DURATIONS = [5, 10, 15, 20, 30];
 
 /**
- * Practice Configuration Card - allows users to select practice type and duration
+ * Practice Configuration Card - shows current practice and duration
  * @param {object} props
  * @param {string} props.practice - Currently selected practice type
  * @param {number} props.duration - Currently selected duration in minutes
- * @param {function} props.onPracticeChange - Callback when practice type changes
+ * @param {function} props.onPracticeChange - Callback to open practice selection modal
  * @param {function} props.onDurationChange - Callback when duration changes
  * @param {function} props.onStart - Callback when Start button is clicked
+ * @param {boolean} props.showChangePracticeButton - Whether to show Change Practice button
  */
 export function PracticeConfigCard({
   practice,
@@ -22,6 +22,7 @@ export function PracticeConfigCard({
   onPracticeChange,
   onDurationChange,
   onStart,
+  showChangePracticeButton = false,
 }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
@@ -29,42 +30,44 @@ export function PracticeConfigCard({
   return (
     <section className="w-full h-full flex flex-col items-center justify-center pb-24">
       <div className="flex flex-col items-center gap-8">
-        {/* Title */}
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '24px',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            color: 'var(--text-primary)',
-          }}
-        >
-          Select Practice
-        </div>
-
-        {/* Practice Type Selector */}
-        <div className="flex flex-wrap justify-center gap-3 max-w-md">
-          {PRACTICES.map((p) => (
+        {/* Current Practice Display */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '10px',
+              fontWeight: 600,
+              letterSpacing: 'var(--tracking-mythic)',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+            }}
+          >
+            Practice
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '20px',
+              fontWeight: 600,
+              letterSpacing: '0.02em',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {practice}
+          </div>
+          {showChangePracticeButton && (
             <button
-              key={p}
-              onClick={() => onPracticeChange(p)}
-              className="px-4 py-2 rounded-full text-sm font-medium transition-all"
+              onClick={onPracticeChange}
+              className="px-4 py-2 rounded-full text-[10px] font-semibold transition-all hover:scale-105"
               style={{
-                background: practice === p 
-                  ? 'var(--accent-color)' 
-                  : isLight ? 'rgba(60, 50, 35, 0.08)' : 'rgba(255, 255, 255, 0.08)',
-                color: practice === p 
-                  ? '#fff' 
-                  : isLight ? 'var(--light-text-secondary)' : 'var(--text-secondary)',
-                border: practice === p 
-                  ? '1px solid var(--accent-color)' 
-                  : isLight ? '1px solid rgba(60, 50, 35, 0.15)' : '1px solid rgba(255, 255, 255, 0.15)',
+                background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
+                color: isLight ? 'var(--light-text-secondary)' : 'var(--text-secondary)',
+                border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid var(--accent-20)',
               }}
             >
-              {p}
+              Change Practice
             </button>
-          ))}
+          )}
         </div>
 
         {/* Duration Selector */}
@@ -72,11 +75,11 @@ export function PracticeConfigCard({
           <div
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: isLight ? 'var(--light-text-secondary)' : 'var(--text-secondary)',
+              fontSize: '10px',
+              fontWeight: 600,
+              letterSpacing: 'var(--tracking-mythic)',
               textTransform: 'uppercase',
-              letterSpacing: '0.1em',
+              color: 'var(--text-muted)',
             }}
           >
             Duration
@@ -123,5 +126,4 @@ export function PracticeConfigCard({
   );
 }
 
-export { PRACTICES };
 export default PracticeConfigCard;

@@ -487,6 +487,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleStop = () => {
+    console.log('═══════════════════════════════════════');
+    console.log('[handleStop] START');
+    console.log('[handleStop] Current state:', { 
+      practice, 
+      duration, 
+      timeLeft,
+      isRunning,
+      activePracticeSession 
+    });
     try {
       // Capture the active session before clearing it (needed for summary logic)
       const wasFromCurriculum = activePracticeSession;
@@ -574,12 +583,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
       setActiveRitual(null);
       setCurrentStepIndex(0);
+      
+      // Calculate actualDuration BEFORE resetting timeLeft
+      const actualDuration = duration * 60 - timeLeft;
+      
+      // Now reset timeLeft
       setTimeLeft(duration * 60);
 
-      const actualDuration = duration * 60 - timeLeft;
       // Show summary for any curriculum session, or for manual sessions >= 30s
       const shouldShowSummary = wasFromCurriculum || (practice !== 'Ritual' && actualDuration >= 30);
-      console.log('[handleStop] shouldShowSummary:', shouldShowSummary, '{ wasFromCurriculum:', wasFromCurriculum, ', practice:', practice, ', actualDuration:', actualDuration, '}');
+      console.log('[handleStop] 🔍 Summary Decision Logic:');
+      console.log('  - wasFromCurriculum:', wasFromCurriculum);
+      console.log('  - practice:', practice);
+      console.log('  - practice !== Ritual:', practice !== 'Ritual');
+      console.log('  - actualDuration:', actualDuration, 'seconds');
+      console.log('  - actualDuration >= 30:', actualDuration >= 30);
+      console.log('  - shouldShowSummary:', shouldShowSummary);
 
       if (shouldShowSummary) {
         // Check if there's a next leg in curriculum
@@ -594,13 +613,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             exitType,
             nextLeg: nextLeg,
         };
-        console.log('[handleStop] Setting summary:', summaryData);
+        console.log('[handleStop] ✅ SHOWING SUMMARY - Setting summaryData:', summaryData);
         setSessionSummary(summaryData);
         setShowSummary(true);
-        console.log('[handleStop] setShowSummary(true) called');
+        console.log('[handleStop] State update complete: showSummary=true, sessionSummary=', summaryData);
       } else {
-        console.log('[handleStop] NOT showing summary');
+        console.log('[handleStop] ❌ NOT showing summary - criteria not met');
       }
+      console.log('[handleStop] END');
+      console.log('═══════════════════════════════════════');
     } catch (error) {
       console.error('[handleStop] ERROR:', error);
       console.error('[handleStop] Stack:', error.stack);
@@ -1128,36 +1149,58 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     );
   }
 
-  console.log('[RENDER] Checking summary condition:', { showSummary, sessionSummary, result: showSummary && sessionSummary });
+
   if (showSummary && sessionSummary) {
     return (
       <SessionSummaryModal
         summary={sessionSummary}
         onContinue={() => {
           setShowSummary(false);
-          if (pendingMicroNote) {
-            // Journal is already open
-          } else {
+          setSessionSummary(null);
+          if (!pendingMicroNote) {
             // Return to practice selection
             setPractice(PRACTICES[0]);
           }
+        }}
+        onStartNext={(nextPractice) => {
+          setShowSummary(false);
+          setSessionSummary(null);
+          setPractice(nextPractice);
+          // Auto-start the next practice after a short delay
+          setTimeout(() => {
+            executeStart();
+          }, 100);
         }}
       />
     );
   }
 
-  // DEFAULT VIEW - Practice Selection with Start Button
+  // DEFAULT VIEW - Last Practice with Change Button
   return (
-    <PracticeConfigCard
-      practice={practice}
-      duration={duration}
-      onPracticeChange={setPractice}
-      onDurationChange={(d) => {
-        setDuration(d);
-        setTimeLeft(d * 60);
-      }}
-      onStart={handleStart}
-    />
+    <>
+      <PracticeSelectionModal
+        isOpen={practiceModalOpen}
+        onClose={() => setPracticeModalOpen(false)}
+        practices={PRACTICES}
+        currentPractice={practice}
+        onSelectPractice={(selectedPractice) => {
+          setPractice(selectedPractice);
+          setPracticeModalOpen(false);
+        }}
+      />
+
+      <PracticeConfigCard
+        practice={practice}
+        duration={duration}
+        onPracticeChange={() => setPracticeModalOpen(true)} // Open modal instead of direct change
+        onDurationChange={(d) => {
+          setDuration(d);
+          setTimeLeft(d * 60);
+        }}
+        onStart={handleStart}
+        showChangePracticeButton={true}
+      />
+    </>
   );
 }
 
