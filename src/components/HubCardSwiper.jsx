@@ -41,7 +41,7 @@ export function HubCardSwiper({ cards }) {
     };
 
     return (
-        <div className="relative w-full transition-all duration-700" style={{ maxWidth: isSanctuary ? '600px' : '430px', margin: '0 auto' }}>
+        <div className="relative w-full transition-all duration-700" style={{ maxWidth: isSanctuary ? '700px' : '430px', margin: '0 auto' }}>
             {/* Dot Indicators - Moved above card */}
             {cards.length > 1 && (
                 <div className="flex justify-center items-center gap-2 mb-3">

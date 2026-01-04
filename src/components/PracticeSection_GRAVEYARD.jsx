@@ -182,7 +182,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // CURRICULUM INTEGRATION
   const {
     getActivePracticeDay,
-    getActivePracticeLeg,
     activePracticeSession,
     clearActivePracticeSession,
   } = useCurriculumStore();
@@ -191,21 +190,49 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     if (!activePracticeSession) return;
 
-    // Get the active leg (specific practice within the day)
-    const activeLeg = getActivePracticeLeg();
+    const curriculumDay = getActivePracticeDay();
 
-    if (activeLeg) {
-      // Load practice config from the active leg
-      setPractice(activeLeg.practiceType);
+    if (curriculumDay) {
+      // Extract practice info from first leg
+      const firstLeg = curriculumDay.legs?.[0];
 
-      if (activeLeg.practiceConfig?.duration) {
-        setDuration(activeLeg.practiceConfig.duration);
-        setTimeLeft(activeLeg.practiceConfig.duration * 60);
+      if (firstLeg) {
+        setPractice(firstLeg.practiceType);
+
+        if (firstLeg.duration) {
+          setDuration(firstLeg.duration);
+          setTimeLeft(firstLeg.duration * 60);
+        }
+
+        // If there's a preset specified, set it
+        if (firstLeg.preset) {
+          setPreset(firstLeg.preset);
+        }
       }
 
-      // If there's a breathPattern specified, set it as preset
-      if (activeLeg.practiceConfig?.breathPattern) {
-        setPreset(activeLeg.practiceConfig.breathPattern);
+      // Handle circuit mode if curriculum has multiple legs
+      if (curriculumDay.legs?.length > 1) {
+        const exercises = curriculumDay.legs.map(leg => ({
+          exercise: {
+            id: leg.id,
+            name: leg.name || leg.practiceType,
+            type: leg.type || 'practice',
+            practiceType: leg.practiceType,
+            preset: leg.preset,
+            sensoryType: leg.sensoryType,
+          },
+          duration: leg.duration,
+        }));
+        const totalDuration = curriculumDay.legs.reduce((sum, leg) => sum + leg.duration, 0);
+
+        setCircuitConfig({
+          exercises,
+          exerciseDuration: totalDuration,
+        });
+        setActiveCircuitId('curriculum');
+        setPractice('Circuit');
+        setDuration(totalDuration);
+        setTimeLeft(totalDuration * 60);
       }
 
       // Auto-start the practice after a brief delay (skip configuration screen)
@@ -213,7 +240,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         handleStart();
       }, 800);
     } else {
-      console.warn('[useEffect] No active leg found for session:', activePracticeSession);
+      console.warn('[useEffect] No curriculum day found for session:', activePracticeSession);
     }
   }, [activePracticeSession]);
 
@@ -1344,11 +1371,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // RENDER PRIORITY 3: Practice Configuration/Selection View
   // If there's an active curriculum session, show a "Ready to Start" screen instead of selection modal
   if (activePracticeSession) {
-    const activeLeg = getActivePracticeLeg();
+    const curriculumDay = getActivePracticeDay();
 
     // Get display values with fallbacks
-    const displayPractice = activeLeg?.practiceType || practice || 'Breath & Stillness';
-    const displayDuration = activeLeg?.practiceConfig?.duration || duration || 5;
+    const displayPractice = curriculumDay?.practiceType || practice || 'Breath & Stillness';
+    const displayDuration = curriculumDay?.duration || duration || 5;
 
     return (
       <section className="w-full h-full flex flex-col items-center justify-center pb-24">
@@ -1432,13 +1459,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     );
   }
 
-  // Default: Free practice configuration with dedicated config panels
+  // Default: Free practice configuration
   return (
     <section className="w-full h-full flex flex-col items-center justify-center pb-24">
       <div
         className="rounded-[32px] relative overflow-hidden"
         style={{
-          width: '580px',
+          width: '480px',
           ...(isLight ? getCardMaterial(true) : plateauMaterial),
           border: isLight ? '2px solid var(--light-border)' : '2px solid var(--accent-20)',
         }}
@@ -1446,139 +1473,63 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
 
         <div className="relative px-8 py-8">
-          {/* Practice Type Switcher - Horizontal pills */}
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2 justify-center">
+          {/* Header */}
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: 'var(--tracking-mythic)',
+              textTransform: 'uppercase',
+              color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
+              textAlign: 'center',
+              marginBottom: '24px',
+            }}
+          >
+            Configure Practice
+          </div>
+
+          {/* Practice Selection */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '9px',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
+                textTransform: 'uppercase',
+                color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
+                marginBottom: '12px',
+              }}
+            >
+              Practice Type
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               {PRACTICES.map((p) => (
                 <button
                   key={p}
                   onClick={() => setPractice(p)}
-                  className="px-3 py-1.5 rounded-full transition-all duration-200"
+                  className="px-4 py-3 rounded-full transition-all duration-200"
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontSize: '9px',
+                    fontSize: '10px',
                     letterSpacing: 'var(--tracking-mythic)',
                     textTransform: 'uppercase',
                     border: practice === p
                       ? (isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-40)')
-                      : (isLight ? '1px solid rgba(160,120,60,0.2)' : '1px solid var(--accent-10)'),
+                      : '1px solid transparent',
                     background: practice === p
-                      ? (isLight ? 'rgba(180,140,90,0.15)' : 'rgba(255,255,255,0.08)')
-                      : 'transparent',
+                      ? (isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)')
+                      : (isLight ? 'rgba(60,50,35,0.03)' : 'rgba(0,0,0,0.2)'),
                     color: practice === p
                       ? 'var(--accent-color)'
-                      : (isLight ? 'var(--light-muted)' : 'var(--text-muted)'),
-                    boxShadow: practice === p
-                      ? (isLight ? '0 0 8px rgba(180,140,90,0.2)' : '0 0 12px var(--accent-15)')
-                      : 'none',
+                      : (isLight ? 'var(--light-text)' : 'var(--text-primary)'),
                   }}
                 >
                   {p}
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Dedicated Configuration Panels */}
-          <div className="mb-6">
-            {practice === "Breath & Stillness" && (
-              <BreathConfig
-                pattern={pattern}
-                setPattern={setPattern}
-                preset={preset}
-                setPreset={setPreset}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Sound" && (
-              <SoundConfig
-                soundType={soundType}
-                setSoundType={setSoundType}
-                binauralPreset={binauralPreset}
-                setBinauralPreset={setBinauralPreset}
-                isochronicPreset={isochronicPreset}
-                setIsochronicPreset={setIsochronicPreset}
-                mantraPreset={mantraPreset}
-                setMantraPreset={setMantraPreset}
-                naturePreset={naturePreset}
-                setNaturePreset={setNaturePreset}
-                carrierFrequency={carrierFrequency}
-                setCarrierFrequency={setCarrierFrequency}
-                volume={soundVolume}
-                setVolume={setSoundVolume}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Cymatics" && (
-              <CymaticsConfig
-                frequencySet={frequencySet}
-                setFrequencySet={setFrequencySet}
-                selectedFrequency={selectedFrequency}
-                setSelectedFrequency={setSelectedFrequency}
-                fadeInDuration={fadeInDuration}
-                setFadeInDuration={setFadeInDuration}
-                displayDuration={displayDuration}
-                setDisplayDuration={setDisplayDuration}
-                fadeOutDuration={fadeOutDuration}
-                setFadeOutDuration={setFadeOutDuration}
-                voidDuration={voidDuration}
-                setVoidDuration={setVoidDuration}
-                driftEnabled={driftEnabled}
-                setDriftEnabled={setDriftEnabled}
-                audioEnabled={audioEnabled}
-                setAudioEnabled={setAudioEnabled}
-                isLight={isLight}
-              />
-            )}
-
-            {(practice === "Somatic Vipassana" || practice === "Cognitive Vipassana") && (
-              <SensoryConfig
-                sensoryType={sensoryType}
-                setSensoryType={setSensoryType}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Visualization" && (
-              <VisualizationConfig
-                geometry={geometry}
-                setGeometry={setGeometry}
-                fadeInDuration={fadeInDuration}
-                setFadeInDuration={setFadeInDuration}
-                displayDuration={displayDuration}
-                setDisplayDuration={setDisplayDuration}
-                fadeOutDuration={fadeOutDuration}
-                setFadeOutDuration={setFadeOutDuration}
-                voidDuration={voidDuration}
-                setVoidDuration={setVoidDuration}
-                duration={duration}
-                setDuration={setDuration}
-                audioEnabled={audioEnabled}
-                setAudioEnabled={setAudioEnabled}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Circuit" && (
-              <CircuitConfig
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Ritual" && (
-              <div
-                className="text-center py-4"
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
-                }}
-              >
-                Ritual practices are pre-configured sequences.
-              </div>
-            )}
           </div>
 
           {/* Duration Selection */}
@@ -1592,7 +1543,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 textTransform: 'uppercase',
                 color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
                 marginBottom: '12px',
-                textAlign: 'center',
               }}
             >
               Duration (minutes)

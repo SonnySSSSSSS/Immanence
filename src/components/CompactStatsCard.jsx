@@ -368,10 +368,19 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
                                     />
                                 )}
                             </div>
-
-                            {/* Day label */}
+                        </div>
+                    );
+                })}
+            </div>
+            
+            {/* Day Labels Row - Below chart area */}
+            <div className="flex justify-between items-center pl-1 pr-6 mt-4 relative z-10">
+                {days.map((day, i) => {
+                    const data = weekOffsets[i] || { practiced: false };
+                    return (
+                        <div key={i} className="flex-1 flex justify-center">
                             <span
-                                className="absolute bottom-[-25px] text-[10px] font-black transition-all duration-300"
+                                className="text-[10px] font-black"
                                 style={{
                                     color: config.textMain,
                                     opacity: data.practiced ? 0.8 : 0.2,
@@ -568,8 +577,9 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
-                        transform: 'scale(1.04)', // Reduced scale for better containment
-                        transformOrigin: 'center'
+                        transform: 'scale(1.04)',
+                        transformOrigin: 'center',
+                        opacity: 0.95,
                     }}
                 />
             )}
@@ -655,7 +665,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                                 color: config.textMain,
                                 textShadow: isLight 
                                     ? '0 1px 3px rgba(255,255,255,0.8), 0 0 6px rgba(255,255,255,0.6)' 
-                                    : '0 0 8px rgba(0,0,0,0.8)',
+                                    : 'none',
                                 opacity: 0.9,
                                 textDecoration: 'underline',
                                 textDecorationThickness: '1px',

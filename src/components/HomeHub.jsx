@@ -25,6 +25,7 @@ import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from 
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
+import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 
 // Available paths that match image filenames
@@ -45,6 +46,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   
   // Curriculum state
   const curriculumActive = useCurriculumStore(s => s.onboardingComplete);
+  const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);
 
   useEffect(() => {
@@ -110,46 +112,12 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
-      {/* Background is handled by Background.jsx in App.jsx - removed duplicate here to prevent ghosting */}
-
-      {/* FULL-PAGE CLOUD BACKGROUND (LIGHT MODE ONLY) - Positioned at bottom with top fade */}
-      {cloudBackground !== 'none' && isLight && (
-        <>
-          {/* Cloud layer - anchored at bottom */}
-          <div
-            className="fixed inset-0 pointer-events-none"
-            style={{
-              backgroundImage: `url(${import.meta.env.BASE_URL}${currentStage.toLowerCase()}_${cloudBackground}.png)`,
-              backgroundSize: 'auto 100%',  // Height fills screen
-              backgroundPosition: 'center bottom',  // Anchor clouds at bottom
-              backgroundRepeat: 'no-repeat',
-              opacity: 0.85,
-              zIndex: 0,
-              filter: 'contrast(1.1) saturate(1.1)',
-              animation: 'cloudDrift 60s ease-in-out infinite',
-            }}
-          />
-          {/* Top fade - soft transition from clouds to parchment */}
-          <div
-            className="fixed inset-0 pointer-events-none"
-            style={{
-              background: 'linear-gradient(to bottom, rgba(245, 240, 230, 0.95) 0%, rgba(245, 240, 230, 0.7) 15%, transparent 35%, transparent 100%)',
-              zIndex: 1,
-            }}
-          />
-          <style>{`
-            @keyframes cloudDrift {
-              0%, 100% { background-position: center bottom; }
-              50% { background-position: calc(50% + 30px) bottom; }
-            }
-          `}</style>
-        </>
-      )}
+      {/* Background is handled by Background.jsx globally */}
 
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR & HUB INSTRUMENT - Full-Bleed Altar (Cosmic Zone)
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full flex flex-col items-center gap-2 py-4 transition-all duration-500 overflow-visible">
+      <div className="w-full flex flex-col items-center gap-0 py-1 transition-all duration-500 overflow-visible">
         <div className="relative w-full flex items-center justify-center overflow-visible">
           {/* Cloud Background - NO LONGER HERE, moved to full-page layer */}
 
@@ -239,14 +207,15 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full px-4 flex flex-col items-center gap-2 pb-4">
+      <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
 {curriculumActive && (
   <div className="w-full">
-    <DailyPracticeCard 
+    <DailyPracticeCard
       onStartPractice={() => onSelectSection('practice')}
       onViewCurriculum={() => setShowCurriculumHub(true)}
+      onNavigate={onSelectSection}
     />
   </div>
 )}
@@ -266,21 +235,29 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {/* Session History Overlay */}
         {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
         
-        {/* Curriculum Hub Modal */}
+        {/* Curriculum Hub/Report Modal */}
         {showCurriculumHub && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl relative">
-              <button 
-                onClick={() => setShowCurriculumHub(false)}
-                className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
-              >
-                ✕
-              </button>
-              <div className="overflow-y-auto max-h-[90vh]">
-                <CurriculumHub onClose={() => setShowCurriculumHub(false)} />
+          isCurriculumComplete() ? (
+            // Show completion report if curriculum is done
+            <CurriculumCompletionReport
+              onDismiss={() => setShowCurriculumHub(false)}
+            />
+          ) : (
+            // Show curriculum hub if still in progress
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+              <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl relative">
+                <button
+                  onClick={() => setShowCurriculumHub(false)}
+                  className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
+                >
+                  ✕
+                </button>
+                <div className="overflow-y-auto max-h-[90vh]">
+                  <CurriculumHub onClose={() => setShowCurriculumHub(false)} />
+                </div>
               </div>
             </div>
-          </div>
+          )
         )}
         <div
           className="w-full mt-2 transition-all duration-700"

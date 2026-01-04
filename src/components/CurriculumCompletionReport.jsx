@@ -38,26 +38,26 @@ function StatCard({ icon, label, value, sublabel, isLight, highlight = false }) 
                 border: highlight ? '1px solid var(--accent-30)' : 'none',
             }}
         >
-            <span className="text-2xl">{icon}</span>
+            <span className="text-3xl">{icon}</span>
             <p
-                className="text-2xl font-bold mt-2"
+                className="text-3xl font-bold mt-2"
                 style={{
                     fontFamily: 'var(--font-display)',
-                    color: highlight ? 'var(--accent-color)' : isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.95)',
+                    color: highlight ? 'var(--accent-color)' : isLight ? 'rgba(60, 50, 40, 0.95)' : 'rgba(253,251,245,0.98)',
                 }}
             >
                 {value}
             </p>
             <p
-                className="text-sm mt-1"
-                style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}
+                className="text-base font-medium mt-1"
+                style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}
             >
                 {label}
             </p>
             {sublabel && (
                 <p
-                    className="text-xs mt-0.5"
-                    style={{ color: isLight ? 'rgba(60, 50, 40, 0.4)' : 'rgba(253,251,245,0.4)' }}
+                    className="text-sm mt-0.5"
+                    style={{ color: isLight ? 'rgba(60, 50, 40, 0.55)' : 'rgba(253,251,245,0.55)' }}
                 >
                     {sublabel}
                 </p>
@@ -127,44 +127,57 @@ function ChallengeChart({ challengeStats, isLight }) {
 // FOCUS QUALITY TREND
 // ═══════════════════════════════════════════════════════════════════════════
 
-function FocusTrend({ dayCompletions, isLight }) {
+function FocusTrend({ dayCompletions, isLight, totalDays }) {
     const focusData = [];
-    for (let day = 1; day <= 14; day++) {
+    for (let day = 1; day <= totalDays; day++) {
         const completion = dayCompletions[day];
         focusData.push({
             day,
             rating: completion?.focusRating || null,
             completed: !!completion?.completed,
+            percentage: ((day - 1) / (totalDays - 1)) * 100, // 0% to 100%
         });
     }
 
     return (
-        <div className="flex items-end justify-between h-16 gap-1">
-            {focusData.map(data => (
-                <div
-                    key={data.day}
-                    className="flex-1 flex flex-col items-center gap-1"
-                >
+        <div className="relative h-24 w-full">
+            {/* Percentage markers */}
+            <div className="absolute inset-x-0 bottom-0 flex justify-between text-[9px] font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.4)' : 'rgba(253,251,245,0.4)' }}>
+                <span>0%</span>
+                <span>25%</span>
+                <span>50%</span>
+                <span>75%</span>
+                <span>100%</span>
+            </div>
+
+            {/* Bar chart with absolute positioning */}
+            <div className="absolute inset-0 bottom-5">
+                {focusData.map(data => (
                     <div
-                        className="w-full rounded-t transition-all"
+                        key={data.day}
+                        className="absolute bottom-0 flex flex-col items-center"
                         style={{
-                            height: data.rating ? `${(data.rating / 5) * 100}%` : '4px',
-                            background: data.completed
-                                ? data.rating
-                                    ? `var(--accent-${20 + data.rating * 15})`
-                                    : 'var(--accent-30)'
-                                : isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)',
-                            minHeight: '4px',
+                            left: `${data.percentage}%`,
+                            transform: 'translateX(-50%)',
+                            width: totalDays <= 14 ? '8px' : totalDays <= 30 ? '4px' : '2px',
                         }}
-                    />
-                    <span
-                        className="text-[9px]"
-                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.4)' : 'rgba(253,251,245,0.4)' }}
                     >
-                        {data.day}
-                    </span>
-                </div>
-            ))}
+                        <div
+                            className="rounded-t transition-all"
+                            style={{
+                                width: '100%',
+                                height: data.rating ? `${(data.rating / 5) * 100}%` : '4px',
+                                background: data.completed
+                                    ? data.rating
+                                        ? `var(--accent-${20 + data.rating * 15})`
+                                        : 'var(--accent-30)'
+                                    : isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)',
+                                minHeight: '4px',
+                            }}
+                        />
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -175,7 +188,9 @@ function FocusTrend({ dayCompletions, isLight }) {
 
 export function CurriculumCompletionReport({ onDismiss, onRestart }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
+    const isSanctuary = displayMode === 'sanctuary';
 
     const {
         getProgress,
@@ -185,6 +200,7 @@ export function CurriculumCompletionReport({ onDismiss, onRestart }) {
         getChallengeStats,
         dayCompletions,
         curriculumStartDate,
+        getActiveCurriculum,
     } = useCurriculumStore();
 
     const progress = getProgress();
@@ -193,14 +209,17 @@ export function CurriculumCompletionReport({ onDismiss, onRestart }) {
     const totalMinutes = getTotalPracticeMinutes();
     const challengeStats = getChallengeStats();
 
+    // Get curriculum data for dynamic totals
+    const curriculum = getActiveCurriculum();
+    const totalDays = curriculum?.duration || 14;
+
     // Calculate consistency rate (% of expected days actually practiced)
-    const expectedDays = 14;
-    const consistencyRate = Math.round((progress.completed / expectedDays) * 100);
+    const consistencyRate = Math.round((progress.completed / progress.total) * 100);
 
     // Calculate date range
     const startDate = curriculumStartDate ? new Date(curriculumStartDate) : new Date();
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 13);
+    endDate.setDate(endDate.getDate() + (totalDays - 1));
 
     const dateRangeStr = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
@@ -216,12 +235,17 @@ export function CurriculumCompletionReport({ onDismiss, onRestart }) {
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto py-8"
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto py-8 px-4"
             style={{
                 background: isLight ? 'rgba(245, 240, 235, 0.98)' : 'rgba(5, 5, 8, 0.98)',
             }}
         >
-            <div className="max-w-lg w-full mx-4">
+            <div
+                className="w-full mx-auto"
+                style={{
+                    maxWidth: isSanctuary ? '700px' : '500px',
+                }}
+            >
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div
@@ -289,12 +313,15 @@ export function CurriculumCompletionReport({ onDismiss, onRestart }) {
                     }}
                 >
                     <h3
-                        className="text-sm font-medium mb-3"
-                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}
+                        className="text-base font-semibold mb-4"
+                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}
                     >
-                        Focus Quality Over 14 Days
+                        Focus Quality Over Time
                     </h3>
-                    <FocusTrend dayCompletions={dayCompletions} isLight={isLight} />
+                    <div className="text-xs mb-3" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
+                        {totalDays} days of practice
+                    </div>
+                    <FocusTrend dayCompletions={dayCompletions} isLight={isLight} totalDays={totalDays} />
                 </div>
 
                 {/* Challenge Summary */}
@@ -305,8 +332,8 @@ export function CurriculumCompletionReport({ onDismiss, onRestart }) {
                     }}
                 >
                     <h3
-                        className="text-sm font-medium mb-3"
-                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}
+                        className="text-base font-semibold mb-4"
+                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)' }}
                     >
                         Challenges Encountered
                     </h3>

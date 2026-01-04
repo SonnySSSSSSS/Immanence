@@ -153,3 +153,13 @@
     opacity: 1;
   }
 }
+
+/* Radial glow animation for active practice buttons */
+@keyframes radialGlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

@@ -20,6 +20,8 @@ export function HubStagePanel({
 }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const stageKey = (stage || 'flame').toLowerCase();
+    const auroraAsset = `aurora_${stageKey}.png`;
 
     // Color tokens
     const textPrimary = isLight ? 'rgba(45, 40, 35, 0.98)' : 'rgba(253, 251, 245, 1)';
@@ -29,13 +31,28 @@ export function HubStagePanel({
     const accentColor = isLight ? 'var(--light-accent)' : 'var(--accent-color)';
 
     return (
-        <div className="w-full flex flex-col items-center px-4" style={{ maxWidth: '430px' }}>
-
+        <div className="w-full flex flex-col items-center px-4 relative" style={{ maxWidth: '430px' }}>
+            {/* Global Aurora "Crown" for Stage Title Backdrop (Light Mode) */}
+            {isLight && !hideStageTitle && (
+                <div
+                    className="absolute inset-x-0 -top-24 pointer-events-none z-0"
+                    style={{
+                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/${auroraAsset})`,
+                        backgroundSize: '150% auto',
+                        backgroundPosition: 'top center',
+                        height: '240px',
+                        opacity: 0.5,
+                        mixBlendMode: 'multiply',
+                        maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 60%, transparent 95%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 60%, transparent 95%)',
+                    }}
+                />
+            )}
             {/* ══════════════════════════════════════════════════════════════════
                 STAGE NAME — Shared ceremonial inscription
                ══════════════════════════════════════════════════════════════════ */}
             {!hideStageTitle && (
-                <div className="-mt-16 mb-1.5 relative overflow-visible">
+                <div className="-mt-16 mb-1.5 relative overflow-visible z-10">
                     <StageTitle
                         stage={stage}
                         path={path}

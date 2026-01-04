@@ -44,6 +44,7 @@ export const useCurriculumStore = create(
             onboardingDismissed: false,
             onboardingDismissedAt: null,
             practiceTimeSlots: [],
+            thoughtCatalog: [], // User's 5-8 personal thoughts for ritual observation
 
             // CURRICULUM STATE
             activeCurriculumId: 'ritual-foundation-14',
@@ -53,6 +54,7 @@ export const useCurriculumStore = create(
 
             // ACTIVE PRACTICE SESSION
             activePracticeSession: null,
+            activePracticeLeg: null,
             activePracticeStartedAt: null,
 
             // LEGACY STATE
@@ -65,12 +67,18 @@ export const useCurriculumStore = create(
             progress: {},
 
             // ONBOARDING ACTIONS
-            completeOnboarding: (timeSlots = []) => {
+            completeOnboarding: (timeSlots = [], thoughts = []) => {
                 const now = new Date().toISOString();
                 set({
                     onboardingComplete: true,
                     onboardingDismissed: false,
                     practiceTimeSlots: timeSlots,
+                    thoughtCatalog: thoughts.map((t, idx) => ({
+                        id: `thought-${Date.now()}-${idx}`,
+                        text: t.text,
+                        weight: t.weight || 0, // 0 = normal, 1 = priority
+                        createdAt: now,
+                    })),
                     curriculumStartDate: now,
                 });
             },
@@ -122,6 +130,29 @@ export const useCurriculumStore = create(
                 return curriculum.days.find(d => d.dayNumber === dayNumber) || null;
             },
 
+            /**
+             * Get a weighted random thought from the catalog
+             * Weight 1 (priority) thoughts are 3x more likely to be selected
+             */
+            getWeightedRandomThought: () => {
+                const state = get();
+                const { thoughtCatalog } = state;
+                if (!thoughtCatalog || thoughtCatalog.length === 0) return null;
+
+                // Build weighted array (priority thoughts appear 3x)
+                const weighted = [];
+                thoughtCatalog.forEach(thought => {
+                    const count = thought.weight === 1 ? 3 : 1;
+                    for (let i = 0; i < count; i++) {
+                        weighted.push(thought);
+                    }
+                });
+
+                // Random selection
+                const randomIndex = Math.floor(Math.random() * weighted.length);
+                return weighted[randomIndex];
+            },
+
             getCurriculumDay: (dayNumber) => {
                 const state = get();
                 const curriculum = state.getActiveCurriculum();
@@ -136,9 +167,10 @@ export const useCurriculumStore = create(
             },
 
             // ACTIVE PRACTICE SESSION ACTIONS
-            setActivePracticeSession: (dayNumber) => {
+            setActivePracticeSession: (dayNumber, legNumber = null) => {
                 set({
                     activePracticeSession: dayNumber,
+                    activePracticeLeg: legNumber,
                     activePracticeStartedAt: new Date().toISOString(),
                 });
             },
@@ -146,6 +178,7 @@ export const useCurriculumStore = create(
             clearActivePracticeSession: () => {
                 set({
                     activePracticeSession: null,
+                    activePracticeLeg: null,
                     activePracticeStartedAt: null,
                 });
             },
@@ -156,6 +189,14 @@ export const useCurriculumStore = create(
                 const curriculum = state.getActiveCurriculum();
                 if (!curriculum) return null;
                 return curriculum.days.find(d => d.dayNumber === state.activePracticeSession) || null;
+            },
+
+            getActivePracticeLeg: () => {
+                const state = get();
+                if (!state.activePracticeSession || !state.activePracticeLeg) return null;
+                const day = state.getActivePracticeDay();
+                if (!day || !day.legs) return null;
+                return day.legs.find(leg => leg.legNumber === state.activePracticeLeg) || null;
             },
 
             getDayStatus: (dayNumber) => {
@@ -242,18 +283,22 @@ getNextIncompleteLeg: () => {
 },
 
 /**
- * Get all legs for a day with their completion status
+ * Get all legs for a day with their completion status and time slots
  */
 getDayLegsWithStatus: (dayNumber) => {
     const state = get();
     const curriculum = state.getActiveCurriculum();
     if (!curriculum) return [];
-    
+
     const day = curriculum.days.find(d => d.dayNumber === dayNumber);
     if (!day || !day.legs) return [];
-    
-    return day.legs.map(leg => ({
+
+    const { practiceTimeSlots } = state;
+
+    return day.legs.map((leg, index) => ({
         ...leg,
+        // Inject time from onboarding slots (leg 1 = slot 0, leg 2 = slot 1, etc.)
+        time: practiceTimeSlots && practiceTimeSlots[index] ? practiceTimeSlots[index] : leg.time,
         completed: state.isLegComplete(dayNumber, leg.legNumber),
         completion: state.legCompletions[`${dayNumber}-${leg.legNumber}`] || null,
     }));
@@ -264,12 +309,27 @@ getDayLegsWithStatus: (dayNumber) => {
                 const state = get();
                 const curriculum = state.getActiveCurriculum();
                 if (!curriculum) return { completed: 0, total: 0, rate: 0 };
-                const completedDays = Object.values(state.dayCompletions).filter(d => d.completed).length;
-                const totalDays = curriculum.duration;
+
+                // Calculate based on leg completions for flexibility
+                let totalLegs = 0;
+                let completedLegs = 0;
+
+                curriculum.days.forEach(day => {
+                    if (day.legs && Array.isArray(day.legs)) {
+                        totalLegs += day.legs.length;
+                        day.legs.forEach(leg => {
+                            const legKey = `${day.dayNumber}-${leg.legNumber}`;
+                            if (state.legCompletions[legKey]?.completed) {
+                                completedLegs++;
+                            }
+                        });
+                    }
+                });
+
                 return {
-                    completed: completedDays,
-                    total: totalDays,
-                    rate: totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0,
+                    completed: completedLegs,
+                    total: totalLegs,
+                    rate: totalLegs > 0 ? Math.round((completedLegs / totalLegs) * 100) : 0,
                 };
             },
 
@@ -346,11 +406,13 @@ getDayLegsWithStatus: (dayNumber) => {
                     onboardingDismissed: false,
                     onboardingDismissedAt: null,
                     practiceTimeSlots: [],
+                    thoughtCatalog: [],
                     activeCurriculumId: 'ritual-foundation-14',
                     curriculumStartDate: null,
                     dayCompletions: {},
 					legCompletions: {},
                     activePracticeSession: null,
+                    activePracticeLeg: null,
                     activePracticeStartedAt: null,
                     paths: {
                         breath: { name: 'Breath Path', description: '', exercises: [] },

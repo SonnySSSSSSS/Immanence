@@ -13,7 +13,7 @@ const THEME_CONFIG = {
         accent: 'rgba(139, 159, 136, 0.85)',
         textMain: 'rgba(35, 20, 10, 0.98)',
         textSub: 'rgba(65, 45, 25, 0.9)',
-        bgAsset: 'ink_well_card_organic.png',
+        bgAsset: 'ancient_relic_focus.png',
         canvasGrain: 'canvas_grain.png',
         border: 'rgba(139, 115, 85, 0.25)',
         shadow: '0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 0 1px rgba(180, 140, 60, 0.3)'
@@ -22,26 +22,26 @@ const THEME_CONFIG = {
         accent: 'var(--accent-color)',
         textMain: 'rgba(253, 251, 245, 0.95)',
         textSub: 'rgba(253, 251, 245, 0.5)',
-        cosmicAsset: 'dark_mode_cosmic_feather.png',
+        cosmicAsset: 'celestial_black_hole.png',
         border: 'var(--accent-20)',
         shadow: '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
     }
 };
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
     const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
-    
+
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
 
-    const { 
+    const {
         onboardingComplete,
         getCurrentDayNumber,
         getTodaysPractice,
@@ -50,6 +50,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
         getStreak,
         getDayLegsWithStatus,
         setActivePracticeSession,
+        _devReset,
     } = useCurriculumStore();
 
     // Parse hex to RGB for dynamic effects
@@ -96,34 +97,99 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
 
-    if (dayNumber > 14 || progress.completed >= 14) {
+
+    if (dayNumber > 14 || progress.completed >= progress.total) {
+        const bgAsset = isLight ? 'ancient_relic_focus.png' : 'celestial_black_hole.png';
         return (
             <div
-                className="w-full relative p-8 text-center rounded-[24px]"
+                className="w-full relative p-8 text-center rounded-[24px] overflow-hidden"
                 style={{
-                    background: isLight ? '#f5efe5' : 'rgba(20, 15, 25, 0.95)',
+                    background: isLight ? '#f5efe5' : 'rgb(10, 10, 15)',
                     border: `1px solid ${config.border}`,
                     boxShadow: config.shadow,
                 }}
             >
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-display)' }}>
-                    Curriculum Complete!
-                </h3>
-                <p className="mb-4 opacity-70" style={{ color: config.textSub }}>
-                    You completed {progress.completed} of 14 days
-                </p>
-                <button
-                    onClick={onViewCurriculum}
-                    className="px-6 py-2 rounded-full font-bold transition-all hover:scale-105 active:scale-95"
+                {/* Relic/Cosmic Background Wallpaper */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
                     style={{
-                        background: 'var(--accent-color)',
-                        color: isLight ? '#fff' : '#000',
-                        boxShadow: '0 4px 20px var(--accent-30)'
+                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: isLight ? 0.35 : 0.6,
+                        mixBlendMode: isLight ? 'multiply' : 'screen',
                     }}
-                >
-                    View Report
-                </button>
+                />
+
+                {/* Canvas Grain Texture (Light mode only) */}
+                {isLight && (
+                    <div
+                        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                        style={{
+                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.png)`,
+                            backgroundSize: '200px',
+                            mixBlendMode: 'multiply',
+                        }}
+                    />
+                )}
+
+                <div className="relative z-10">
+                    <div className="text-4xl mb-4">🏆</div>
+                    <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-display)' }}>
+                        Curriculum Complete!
+                    </h3>
+                    <p className="mb-6 opacity-70" style={{ color: config.textSub }}>
+                        You completed {progress.completed} of {progress.total} practices
+                    </p>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={onViewCurriculum}
+                            className="px-6 py-2.5 rounded-full font-bold transition-all hover:scale-105 active:scale-95"
+                            style={{
+                                background: 'var(--accent-color)',
+                                color: isLight ? '#fff' : '#000',
+                                boxShadow: '0 4px 20px var(--accent-30)',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                        >
+                            View Report
+                        </button>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('Reset this curriculum? All progress will be cleared.')) {
+                                        _devReset();
+                                    }
+                                }}
+                                className="flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                    background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
+                                    border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
+                                    color: config.textMain,
+                                    fontFamily: 'var(--font-display)',
+                                }}
+                            >
+                                Reset Program
+                            </button>
+
+                            <button
+                                onClick={() => onNavigate?.('navigation')}
+                                className="flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                    background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
+                                    border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid rgba(255,255,255,0.15)',
+                                    color: config.textMain,
+                                    fontFamily: 'var(--font-display)',
+                                }}
+                            >
+                                New Curriculum
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -131,7 +197,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
     if (!todaysPractice) return null;
 
     const handleStartLeg = (leg) => {
-        setActivePracticeSession(dayNumber);
+        setActivePracticeSession(dayNumber, leg.legNumber);
         onStartPractice?.();
     };
 
@@ -158,7 +224,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                     ref={cardRef}
                     className="w-full relative overflow-hidden rounded-[24px]"
                     style={{
-                        background: isLight ? '#faf6ee' : 'rgba(20, 15, 25, 0.98)',
+                        background: isLight ? '#faf6ee' : 'rgb(20, 15, 25)',
                         border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
                     }}
                 >
@@ -181,6 +247,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                             backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
                                             backgroundSize: 'cover',
                                             backgroundPosition: 'center left',
+                                            opacity: 0.9,
                                         }}
                                     />
                                     {/* Canvas Grain */}
@@ -203,10 +270,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                             backgroundImage: `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98))`,
                                         }}
                                     />
-                                    {/* Cosmic Feather */}
+                                    {/* Cosmic Feather / Black Hole */}
                                     <div 
-                                        className="absolute inset-0 overflow-hidden pointer-events-none"
-                                        style={{ opacity: 0.6, mixBlendMode: 'screen' }}
+                                        className="absolute inset-0 overflow-hidden pointer-events-none z-1"
+                                        style={{ opacity: 0.4, mixBlendMode: 'screen' }}
                                     >
                                         <div 
                                             className="absolute inset-0"
@@ -233,7 +300,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                     style={{ 
                                         writingMode: 'vertical-rl', 
                                         transform: 'rotate(180deg)',
-                                        color: '#000',
+                                        color: isLight ? '#000' : '#fff',
                                         opacity: 0.8,
                                         fontFamily: 'var(--font-display)',
                                         fontSize: '10px',
@@ -282,7 +349,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                 <div 
                                     className="absolute top-1/2 -translate-y-1/2 left-[44px] text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
                                     style={{ 
-                                        color: '#000',
+                                        color: isLight ? '#000' : '#fff',
                                         opacity: 0.6,
                                         fontFamily: 'var(--font-display)'
                                     }}
@@ -357,7 +424,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                                 {leg.completed ? '✓' : leg.legNumber}
                                             </div>
 
-                                            {/* Time + Description */}
+                                            {/* Label + Time */}
                                             <div className="min-w-0 flex-1">
                                                 <div style={{
                                                     fontSize: '11px',
@@ -365,9 +432,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                                     fontWeight: 700,
                                                     color: config.textMain,
                                                 }}>
-                                                    {leg.time ? leg.time.substring(0, 5) : 'Anytime'}
+                                                    {leg.label || leg.practiceType}
                                                 </div>
-                                                <div 
+                                                <div
                                                     className="truncate"
                                                     style={{
                                                         fontSize: '9px',
@@ -375,24 +442,36 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                                         color: config.textMain,
                                                     }}
                                                 >
-                                                    {leg.description || leg.practiceType}
+                                                    {leg.time ? (typeof leg.time === 'string' ? leg.time.substring(0, 5) : String(leg.time)) : 'Anytime'}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Right: Action */}
                                         {!leg.completed ? (
-                                            <button
-                                                onClick={() => handleStartLeg(leg)}
-                                                className="px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 flex-shrink-0"
-                                                style={{
-                                                    background: 'var(--accent-color)',
-                                                    color: isLight ? '#fff' : '#000',
-                                                    boxShadow: '0 3px 10px var(--accent-30)',
-                                                }}
-                                            >
-                                                Start
-                                            </button>
+                                            <div className="relative flex-shrink-0">
+                                                {/* Radial glow animation */}
+                                                <div
+                                                    className="absolute inset-0 rounded-full pointer-events-none"
+                                                    style={{
+                                                        background: `conic-gradient(from 0deg, transparent 0deg, var(--accent-color) 60deg, transparent 120deg)`,
+                                                        filter: 'blur(8px)',
+                                                        opacity: 0.6,
+                                                        animation: 'radialGlow 3s linear infinite',
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={() => handleStartLeg(leg)}
+                                                    className="relative px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    style={{
+                                                        background: 'var(--accent-color)',
+                                                        color: isLight ? '#fff' : '#000',
+                                                        boxShadow: '0 3px 10px var(--accent-30)',
+                                                    }}
+                                                >
+                                                    Start
+                                                </button>
+                                            </div>
                                         ) : (
                                             <div style={{
                                                 fontSize: '9px',

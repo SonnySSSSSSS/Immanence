@@ -26,7 +26,7 @@ const PRACTICE_SUGGESTIONS = {
  * @param {function} props.onStartNext - Callback to start next practice (receives practice type)
  * @param {function} props.onFocusRating - Callback when focus rating is selected (1-5)
  */
-export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusRating }) {
+export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusRating, practiceTimeSlots = [], legNumber = 1, totalLegs = 2 }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const [focusRating, setFocusRating] = React.useState(null);
@@ -36,6 +36,8 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
   const suggestions = PRACTICE_SUGGESTIONS[summary.practice] || ["Breath & Stillness", "Visualization"];
   const isFromCurriculum = summary.curriculumDayNumber !== null && summary.curriculumDayNumber !== undefined;
   const allLegsComplete = isFromCurriculum && !summary.nextLeg;
+  const isFirstLeg = isFromCurriculum && legNumber === 1 && totalLegs > 1;
+  const isLastLeg = isFromCurriculum && legNumber === totalLegs;
 
   const handleRatingSelect = (rating) => {
     setFocusRating(rating);
@@ -257,7 +259,7 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
                 textTransform: 'uppercase',
                 color: 'var(--accent-color)',
               }}>
-                ✦ Next in Curriculum
+                {isFirstLeg ? '✦ What\'s Up Next' : '✦ Next in Curriculum'}
               </span>
               <div style={{
                 fontFamily: 'var(--font-display)',
@@ -268,7 +270,18 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
               }}>
                 {summary.nextLeg.practiceType || summary.nextLeg.label}
               </div>
-              {onStartNext && (
+              {/* Show time for first leg completion */}
+              {isFirstLeg && summary.nextLeg.time && (
+                <div style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '11px',
+                  color: 'var(--text-muted)',
+                  marginTop: '4px',
+                }}>
+                  at {summary.nextLeg.time}
+                </div>
+              )}
+              {onStartNext && !isFirstLeg && (
                 <button
                   onClick={() => onStartNext(summary.nextLeg.practiceType)}
                   className="mt-3 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all hover:scale-105"
@@ -284,8 +297,119 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
             </div>
           )}
 
+          {/* Daily Summary for Last Leg */}
+          {isLastLeg && allLegsComplete && summary.dailyStats && (
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '16px',
+                background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.3)',
+                border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-10)',
+                marginBottom: '20px',
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  letterSpacing: 'var(--tracking-mythic)',
+                  textTransform: 'uppercase',
+                  color: 'var(--accent-color)',
+                  marginBottom: '12px',
+                  textAlign: 'center',
+                }}
+              >
+                ✦ Today's Practice Complete
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '9px',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-muted)',
+                  }}>
+                    Total Time
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginTop: '4px',
+                  }}>
+                    {summary.dailyStats.totalMinutes}m
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '9px',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-muted)',
+                  }}>
+                    Precision
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'var(--accent-color)',
+                    marginTop: '4px',
+                  }}>
+                    {summary.dailyStats.precisionScore || 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tomorrow's Practice Time */}
+              {summary.dailyStats.nextPracticeTime && (
+                <div style={{
+                  textAlign: 'center',
+                  paddingTop: '12px',
+                  borderTop: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid var(--accent-10)',
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '9px',
+                    fontWeight: 600,
+                    letterSpacing: 'var(--tracking-mythic)',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-muted)',
+                    marginBottom: '4px',
+                  }}>
+                    Next Practice
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                  }}>
+                    {summary.dailyStats.nextPracticeType}
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '11px',
+                    color: 'var(--accent-color)',
+                    marginTop: '2px',
+                  }}>
+                    Tomorrow at {summary.dailyStats.nextPracticeTime}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* What's Next Section */}
-          {!summary.nextLeg && onStartNext && (
+          {!summary.nextLeg && !allLegsComplete && onStartNext && (
             <div style={{ marginBottom: '16px' }}>
               <div
                 style={{

@@ -67,7 +67,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
       )}
 
       <div className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
-        {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} showFxGallery={showFxGallery} />}
+        {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} />}
 
         {section === "wisdom" && (
           <Suspense fallback={
@@ -389,7 +389,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.15.19</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.15.50</div>
                   </div>
                 </div>
               )}
@@ -402,12 +402,12 @@ function App() {
               className="sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500"
               style={{
                 background: isLight
-                  ? 'linear-gradient(180deg, rgba(200,185,165,0.95) 0%, rgba(210,195,175,0.85) 60%, rgba(220,205,185,0.5) 100%)'
+                  ? 'linear-gradient(180deg, rgba(200,185,165,0.1) 0%, rgba(210,195,175,0.05) 60%, transparent 100%)'
                   : 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
                 borderBottom: isLight
-                  ? '1px solid rgba(140,120,90,0.25)'
+                  ? '1px solid rgba(140,120,90,0.15)'
                   : '1px solid rgba(255,255,255,0.05)',
               }}
             >
@@ -463,7 +463,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.15.19
+                        v3.15.50
                       </div>
                     </div>
                   )}

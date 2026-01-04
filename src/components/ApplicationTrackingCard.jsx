@@ -7,6 +7,7 @@ import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
+import { useTheme } from '../context/ThemeContext.jsx';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
 
 export function ApplicationTrackingCard() {
@@ -14,6 +15,8 @@ export function ApplicationTrackingCard() {
     const { activePath } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.mode);
+    const theme = useTheme();
+    const stage = theme?.stage || 'flame';
     const isLight = colorScheme === 'light';
     const isSanctuary = displayMode === 'sanctuary';
 

@@ -14,6 +14,8 @@ export function ConsistencyFoundation() {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
+    const [showCycleChoice, setShowCycleChoice] = useState(false);
+
     // No cycle active - show call to action
     if (!currentCycle) {
         return (

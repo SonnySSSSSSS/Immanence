@@ -67,13 +67,14 @@ All state is managed with Zustand stores, persisted to localStorage.
 
 | Store                 | Purpose                        | Key Data                                                                                            |
 | --------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `trackingStore`       | **AUTHORITATIVE TRACKING CENTER** | sessions[], dailyLogs, streak, schedule - ALL practice data flows here                              |
 | `progressStore`       | Session tracking, streaks      | sessions[], streaks, benchmarks, practiceHistory                                                    |
 | `applicationStore`    | Awareness tracking & Intention | awarenessLogs[], intention, getWeekLogs()                                                           |
 | `chainStore`          | Four Modes chains              | activeChain, completedChains                                                                        |
 | `cycleStore`          | Cycle & consistency tracking   | currentCycle, history, checkpoints, modeHistory                                                     |
 | `settingsStore`       | App settings & preferences     | displayMode, llmModel, themeStageOverride, volume, useNewAvatars, buttonThemeDark, buttonThemeLight |
 | `historyStore`        | Undo/redo for modes            | histories{}, positions{}, snapshots                                                                 |
-| `curriculumStore`     | Circuit definitions            | circuits, exercises                                                                                 |
+| `curriculumStore`     | 14-day curriculum & onboarding | thoughtCatalog[], dayCompletions, legCompletions, practiceTimeSlots                                 |
 | `waveStore`           | Personality profile (Big Five) | traits, assessmentHistory                                                                           |
 | `lunarStore`          | Lunar cycle tracking           | currentPhase, ritualCompletions                                                                     |
 | `attentionStore`      | Attention path inference       | weeklyData, dominantPath                                                                            |
@@ -898,6 +899,93 @@ User submits rich technical notes / attention ratings
 circuitJournalStore.createEntry()
     ↓
 Archive: SessionHistoryView reflects new data
+```
+
+### Thought Tracking Flow (Evening Ritual)
+
+The 14-day curriculum includes a daily **Evening Ritual** (2nd leg) where users observe their relationship with recurring thoughts over time. This creates a longitudinal dataset showing how thought resonance evolves through consistent practice.
+
+**Architecture: Single Source of Truth (`trackingStore`)**
+
+```
+Onboarding
+    ↓
+User creates 5-8 custom thoughts (with speech-to-text option)
+    ↓
+curriculumStore.thoughtCatalog[]
+    ↓
+Evening Ritual starts
+    ↓
+curriculumStore.getWeightedRandomThought()
+  - Weight 0 (normal) = 1x selection probability
+  - Weight 1 (priority) = 3x selection probability
+    ↓
+Ritual flow (15 min):
+  1. Incense + silence (2 min)
+  2. Thought selection (2 min)
+  3. Self-observation with thought overlay (8 min)
+  4. Closing journal (3 min)
+    ↓
+User marks thought resonance:
+  - Resonant (feels true/sticky)
+  - Dissonant (feels false/foreign)
+  - Neither (neutral)
+    ↓
+trackingStore.recordSession({
+  practiceType: 'ritual',
+  duration: 15,
+  metadata: {
+    curriculumDay: 2,
+    curriculumLeg: 2,
+    thoughtId: 'thought-3',
+    thoughtText: 'I am not good enough',
+    thoughtResonance: 'dissonant',
+    photoUrl: 'base64...',
+    stepTimings: { incense: 120, selection: 120, observation: 480, journal: 180 }
+  }
+})
+    ↓
+Data persisted to localStorage
+    ↓
+Visualization queries trackingStore.sessions[] filtered by thoughtId
+to show resonance changes over weeks/months
+```
+
+**Key Design Decisions:**
+
+1. **Thought catalog in `curriculumStore`** - Configuration data specific to curriculum onboarding
+2. **Session data in `trackingStore`** - All practice tracking centralized in single source of truth
+3. **Metadata field** - Extensible object for practice-specific data (ritual, circuit, etc.)
+4. **No data duplication** - Avoids splitting ritual data across multiple stores
+5. **Easy querying** - `sessions.filter(s => s.metadata.thoughtId === 'X')` for timeline viz
+6. **Speech-to-text** - Native Web Speech API (no cost, works offline, Chrome/Safari/Edge)
+
+**Data Structure:**
+
+```javascript
+// curriculumStore
+thoughtCatalog: [
+  {
+    id: 'thought-1',
+    text: 'I am not good enough',
+    weight: 1, // 0 = normal, 1 = priority (3x selection chance)
+    createdAt: '2026-01-04T...'
+  }
+]
+
+// trackingStore.sessions[]
+{
+  id: 'session-123',
+  practiceType: 'ritual',
+  dateKey: '2026-01-05',
+  duration: 15,
+  metadata: {
+    thoughtId: 'thought-1',
+    thoughtText: 'I am not good enough',
+    thoughtResonance: 'dissonant', // 'resonant' | 'dissonant' | 'neither'
+    photoUrl: 'base64...'
+  }
+}
 ```
 
 ### Awareness Tracking Flow

@@ -4,12 +4,15 @@
 import React, { useMemo } from 'react';
 import { useTrackingStore } from '../state/trackingStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
+import { useTheme } from '../context/ThemeContext';
 
 export function TrajectoryCard({ onTap }) {
     // Get raw sessions data as dependency
     const sessions = useTrackingStore(s => s.sessions);
     const dailyLogs = useTrackingStore(s => s.dailyLogs);
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
+    const theme = useTheme();
+    const stage = theme?.stage || 'flame';
 
     // Memoize trajectory computation - only recalculate when sessions/dailyLogs change
     const trajectory = useMemo(() => {

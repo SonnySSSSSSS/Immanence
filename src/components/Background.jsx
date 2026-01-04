@@ -1,9 +1,9 @@
 // src/components/Background.jsx
 // Stage-specific cosmic backgrounds with colored vignettes
-// Light mode: Hides nebula, shows warm cream gradient
+// Light mode: Unified stacking (Parchment -> Clouds -> Aurora -> Textures)
 
-import React from "react";
-import { useDisplayModeStore } from "../state/displayModeStore.js";
+import React, { useState, useEffect } from "react";
+import { useDisplayModeStore } from "../state/displayModeStore";
 
 // Vignette edge colors for each stage
 const STAGE_VIGNETTE_COLOR = {
@@ -32,6 +32,19 @@ export function Background({ stage = 'flame' }) {
     ? (STAGE_VIGNETTE_LIGHT[stageLower] ?? 'rgba(180, 155, 110, 0.12)')
     : (STAGE_VIGNETTE_COLOR[stageLower] ?? 'rgba(150, 40, 20, 0.3)');
 
+  // Cloud background state (synced with DevPanel)
+  const [cloudBackground, setCloudBackground] = useState('cloudier');
+
+  useEffect(() => {
+    // Listen for DevPanel cloud background changes
+    const handleCloudChange = (e) => setCloudBackground(e.detail);
+    window.addEventListener('dev-cloud-change', handleCloudChange);
+    return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
+  }, []);
+
+  // Stage-based watercolor aurora asset
+  const auroraAsset = `aurora_${stageLower}.png`;
+
   // Use stage-specific background image (only in dark mode)
   const backgroundImage = `${import.meta.env.BASE_URL}bg/bg-${stageLower}.png`;
 
@@ -39,51 +52,86 @@ export function Background({ stage = 'flame' }) {
   if (isLight) {
     return (
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden transition-colors duration-500">
-        {/* Base parchment gradient */}
+        {/* Base parchment gradient (z-0) */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 z-0"
           style={{
             background: 'linear-gradient(180deg, #F5F0E6 0%, #EDE5D8 50%, #E8DFD0 100%)',
           }}
         />
 
-        {/* Organic texture layer - SVG noise (EXAGGERATED) */}
-        <svg className="absolute inset-0 w-full h-full opacity-[0.045]" style={{ mixBlendMode: 'multiply' }}>
+        {/* FULL-PAGE CLOUD BACKGROUND (z-1) */}
+        {cloudBackground !== 'none' && (
+          <>
+            <div
+              className="absolute inset-0 pointer-events-none z-[1]"
+              style={{
+                backgroundImage: `url(${import.meta.env.BASE_URL}${stageLower}_${cloudBackground}.png)`,
+                backgroundSize: 'auto 100%',
+                backgroundPosition: 'center bottom',
+                backgroundRepeat: 'no-repeat',
+                opacity: 0.85,
+                filter: 'contrast(1.1) saturate(1.1)',
+                animation: 'cloudDriftGlobal 60s ease-in-out infinite',
+              }}
+            />
+            <div
+              className="absolute inset-0 pointer-events-none z-[2]"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(245, 240, 230, 0.7) 0%, rgba(245, 240, 230, 0.4) 30%, transparent 75%)',
+              }}
+            />
+          </>
+        )}
+
+        {/* Watercolor Aurora - Global "Crown" (z-3) - ON TOP OF CLOUDS */}
+        <div
+          className="absolute inset-x-0 top-0 pointer-events-none z-[3]"
+          style={{
+            backgroundImage: `url(${import.meta.env.BASE_URL}assets/${auroraAsset})`,
+            backgroundSize: '115% auto',
+            backgroundPosition: 'top center',
+            backgroundRepeat: 'no-repeat',
+            height: '500px',
+            opacity: 0.85,
+            mixBlendMode: 'multiply',
+            maskImage: 'linear-gradient(to bottom, black 0%, transparent 90%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 90%)',
+          }}
+        />
+
+        {/* Organic texture layer (z-4) */}
+        <svg className="absolute inset-0 w-full h-full opacity-[0.045] z-[4]" style={{ mixBlendMode: 'multiply' }}>
           <filter id="organic-noise">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.75"
-              numOctaves="5"
-              seed="2"
-              stitchTiles="stitch"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0.6 0.3 0.2 0 0
-                      0.3 0.5 0.2 0 0
-                      0.2 0.2 0.4 0 0
-                      0 0 0 1 0"
-            />
+            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="5" seed="2" stitchTiles="stitch" />
+            <feColorMatrix type="matrix" values="0.6 0.3 0.2 0 0 0.3 0.5 0.2 0 0 0.2 0.2 0.4 0 0 0 0 0 1 0" />
           </filter>
           <rect width="100%" height="100%" filter="url(#organic-noise)" />
         </svg>
 
-        {/* Luminance drift - subtle uneven paper feel (±2-3%) */}
+        {/* Luminance drift (z-5) */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 z-[5]"
           style={{
             background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 30%, rgba(0,0,0,0.02) 70%, transparent 100%)',
             opacity: 0.6,
           }}
         />
 
-        {/* Subtle warm radial glow for avatar area */}
+        {/* Radial glow for avatar area (z-6) */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 z-[6]"
           style={{
             background: 'radial-gradient(ellipse 60% 40% at 50% 25%, rgba(212, 168, 75, 0.06) 0%, transparent 70%)',
           }}
         />
+
+        <style>{`
+          @keyframes cloudDriftGlobal {
+            0%, 100% { background-position: center bottom; }
+            50% { background-position: calc(50% + 30px) bottom; }
+          }
+        `}</style>
 
         {/* Relic marbling - ultra-faint large-scale veins (aged vellum) */}
         <div
@@ -115,7 +163,6 @@ export function Background({ stage = 'flame' }) {
             background: 'linear-gradient(90deg, rgba(200, 185, 160, 0.05) 0%, transparent 15%, transparent 85%, rgba(200, 185, 160, 0.05) 100%)',
           }}
         />
-
       </div>
     );
   }
