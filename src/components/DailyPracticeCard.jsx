@@ -250,6 +250,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             opacity: 0.9,
                                         }}
                                     />
+                                    {/* Parchment Base */}
+                                    <div
+                                        className="absolute inset-0 pointer-events-none"
+                                        style={{
+                                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.png)`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center',
+                                            opacity: 0.85,
+                                            mixBlendMode: 'multiply',
+                                        }}
+                                    />
                                     {/* Canvas Grain */}
                                     <div
                                         className="absolute inset-0 pointer-events-none"
