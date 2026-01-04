@@ -35,17 +35,8 @@ export const CRITICAL_IMAGES = [
     'avatars/beacon-core.png',
     'avatars/stellar-core.png',
 
-    // Codex/Compass icons (small, quick to load)
-    'codex/mirror.png',
-    'codex/resonator.png',
-    'codex/prism.png',
-    'codex/sword.png',
-
-    // Mode icons (navigation section)
-    'modes/mode-navigation_00001_.png',
-    'modes/mode-practice_00001_.png',
-    'modes/mode-wisdom_00001_.png',
-    'modes/mode-application_00001_.png',
+    // Codex/Compass icons (small, quick to load) - Removed missing: mirror, resonator, prism, sword
+    // Mode icons (navigation section) - Removed missing: mode-navigation, mode-practice, mode-wisdom, mode-application
 ];
 
 /**
