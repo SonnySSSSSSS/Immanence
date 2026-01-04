@@ -249,7 +249,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       onStartPractice={() => onSelectSection('practice')}
       onViewCurriculum={() => setShowCurriculumHub(true)}
     />
-    <DailyPracticeTracker onSelectSection={onSelectSection} />
+    <DailyPracticeTracker />
   </div>
 )}
 

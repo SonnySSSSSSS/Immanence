@@ -2,7 +2,7 @@ import React from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function DailyPracticeTracker({ onSelectSection }) {
+export function DailyPracticeTracker() {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
@@ -24,9 +24,6 @@ export function DailyPracticeTracker({ onSelectSection }) {
 
     const handleStartLeg = (leg) => {
         setActivePracticeSession(dayNumber);
-        if (onSelectSection) {
-            onSelectSection('practice');
-        }
     };
 
     const completedCount = legs.filter(l => l.completed).length;
@@ -82,7 +79,7 @@ export function DailyPracticeTracker({ onSelectSection }) {
                             fontWeight: 600,
                             color: 'var(--accent-color)',
                         }}>
-                            ðŸ”¥ {streak} Day Streak
+                            🔥 {streak} Day Streak
                         </div>
                     )}
                 </div>
@@ -116,7 +113,7 @@ export function DailyPracticeTracker({ onSelectSection }) {
                                     background: leg.completed ? 'var(--accent-color)' : (isLight ? 'rgba(60, 50, 35, 0.1)' : 'rgba(255, 255, 255, 0.1)'),
                                     color: leg.completed ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
                                 }}>
-                                    {leg.completed ? 'âœ“' : leg.legNumber}
+                                    {leg.completed ? '✓' : leg.legNumber}
                                 </div>
 
                                 {/* Time + Description */}

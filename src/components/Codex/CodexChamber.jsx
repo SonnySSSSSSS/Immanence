@@ -232,16 +232,13 @@ export function CodexChamber({ onClose, onNavigate }) {
                                 background: `radial-gradient(circle, ${CODEX_MODES.mirror.color}20, transparent 70%)`,
                                 opacity: activeQuestion === 'mirror' ? 1 : 0,
                             }} />
-                        {/* CSS-based Mirror placeholder icon */}
-                        <div style={{
-                            width: '100px', height: '100px',
-                            display: 'flex', alignItems: 'center', justifyCenter: 'center',
-                            fontSize: '40px', color: CODEX_MODES.mirror.color,
-                            opacity: 0.6,
-                            animation: activeQuestion === 'mirror' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
-                        }}>
-                            ✧
-                        </div>
+                        <img src={`${import.meta.env.BASE_URL}codex/mirror.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'mirror' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
                     </div>
                     {/* Top-right: Sword */}
                     <div className="absolute transition-all duration-700"
@@ -258,16 +255,13 @@ export function CodexChamber({ onClose, onNavigate }) {
                                 background: `radial-gradient(circle, ${CODEX_MODES.sword.color}20, transparent 70%)`,
                                 opacity: activeQuestion === 'sword' ? 1 : 0,
                             }} />
-                        {/* CSS-based Sword placeholder icon */}
-                        <div style={{
-                            width: '100px', height: '100px',
-                            display: 'flex', alignItems: 'center', justifyCenter: 'center',
-                            fontSize: '40px', color: CODEX_MODES.sword.color,
-                            opacity: 0.6,
-                            animation: activeQuestion === 'sword' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
-                        }}>
-                            ✦
-                        </div>
+                        <img src={`${import.meta.env.BASE_URL}codex/sword.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'sword' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
                     </div>
                     {/* Bottom-left: Resonator */}
                     <div className="absolute transition-all duration-700"
@@ -284,16 +278,13 @@ export function CodexChamber({ onClose, onNavigate }) {
                                 background: `radial-gradient(circle, ${CODEX_MODES.resonator.color}20, transparent 70%)`,
                                 opacity: activeQuestion === 'resonator' ? 1 : 0,
                             }} />
-                        {/* CSS-based Resonator placeholder icon */}
-                        <div style={{
-                            width: '100px', height: '100px',
-                            display: 'flex', alignItems: 'center', justifyCenter: 'center',
-                            fontSize: '40px', color: CODEX_MODES.resonator.color,
-                            opacity: 0.6,
-                            animation: activeQuestion === 'resonator' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
-                        }}>
-                            ❂
-                        </div>
+                        <img src={`${import.meta.env.BASE_URL}codex/resonator.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'resonator' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
                     </div>
                     {/* Bottom-right: Prism */}
                     <div className="absolute transition-all duration-700"
@@ -310,16 +301,13 @@ export function CodexChamber({ onClose, onNavigate }) {
                                 background: `radial-gradient(circle, ${CODEX_MODES.prism.color}20, transparent 70%)`,
                                 opacity: activeQuestion === 'prism' ? 1 : 0,
                             }} />
-                        {/* CSS-based Prism placeholder icon */}
-                        <div style={{
-                            width: '100px', height: '100px',
-                            display: 'flex', alignItems: 'center', justifyCenter: 'center',
-                            fontSize: '40px', color: CODEX_MODES.prism.color,
-                            opacity: 0.6,
-                            animation: activeQuestion === 'prism' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
-                        }}>
-                            ◇
-                        </div>
+                        <img src={`${import.meta.env.BASE_URL}codex/prism.png`} alt=""
+                            style={{
+                                width: '100px', height: '100px', objectFit: 'contain',
+                                mixBlendMode: 'lighten',
+                                filter: 'hue-rotate(180deg) saturate(0.5)',
+                                animation: activeQuestion === 'prism' ? 'icon-breathe 7s ease-in-out infinite' : 'none',
+                            }} />
                     </div>
                 </div>
 

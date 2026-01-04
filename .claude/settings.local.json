@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm install)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(robocopy:*)",
+      "Bash(powershell -Command \"robocopy ''C:\\Users\\trinh\\.claude-worktrees\\immanence-os\\suspicious-cori'' ''D:\\Unity Apps\\immanence-os'' /E /XD node_modules .git dist .vite .cache .agent /XF *.log /NFL /NDL /NJH /NJS\")"
+    ]
+  }
+}

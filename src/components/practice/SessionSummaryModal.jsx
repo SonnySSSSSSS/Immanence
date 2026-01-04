@@ -24,14 +24,25 @@ const PRACTICE_SUGGESTIONS = {
  * @param {object} props.summary - Session summary data
  * @param {function} props.onContinue - Callback when user clicks Continue (returns to selection)
  * @param {function} props.onStartNext - Callback to start next practice (receives practice type)
+ * @param {function} props.onFocusRating - Callback when focus rating is selected (1-5)
  */
-export function SessionSummaryModal({ summary, onContinue, onStartNext }) {
+export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusRating }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+  const [focusRating, setFocusRating] = React.useState(null);
 
   if (!summary) return null;
 
   const suggestions = PRACTICE_SUGGESTIONS[summary.practice] || ["Breath & Stillness", "Visualization"];
+  const isFromCurriculum = summary.curriculumDayNumber !== null && summary.curriculumDayNumber !== undefined;
+  const allLegsComplete = isFromCurriculum && !summary.nextLeg;
+
+  const handleRatingSelect = (rating) => {
+    setFocusRating(rating);
+    if (onFocusRating) {
+      onFocusRating(rating);
+    }
+  };
 
   return (
     <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
@@ -186,6 +197,46 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext }) {
             )}
           </div>
 
+          {/* Focus Rating (if from curriculum) */}
+          {isFromCurriculum && (
+            <div style={{ marginBottom: '20px' }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  letterSpacing: 'var(--tracking-mythic)',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-muted)',
+                  marginBottom: '10px',
+                  textAlign: 'center',
+                }}
+              >
+                How was your focus?
+              </div>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    onClick={() => handleRatingSelect(rating)}
+                    className="transition-all duration-200 hover:scale-110"
+                    style={{
+                      fontSize: '24px',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      opacity: focusRating === null ? 0.4 : (focusRating >= rating ? 1 : 0.3),
+                      color: focusRating >= rating ? 'var(--accent-color)' : (isLight ? 'rgba(60,50,35,0.3)' : 'rgba(255,255,255,0.2)'),
+                      filter: focusRating >= rating ? 'drop-shadow(0 0 8px var(--accent-40))' : 'none',
+                    }}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Next Leg Info (if from curriculum) */}
           {summary.nextLeg && (
             <div
@@ -278,7 +329,7 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext }) {
               boxShadow: summary.nextLeg || !onStartNext ? '0 8px 20px var(--accent-30)' : 'none',
             }}
           >
-            {summary.nextLeg ? 'Continue' : (onStartNext ? 'Done for Now' : 'Continue')}
+            {allLegsComplete ? 'See You Tomorrow ✦' : (summary.nextLeg ? 'Continue' : (onStartNext ? 'Done for Now' : 'Continue'))}
           </button>
         </div>
       </div>

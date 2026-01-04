@@ -27,15 +27,11 @@ import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
 import { BreathPatternPreview } from "./BreathPatternPreview.jsx";
+import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { PostSessionJournal } from "./PostSessionJournal.jsx";
 import { useJournalStore } from "../state/journalStore.js";
-
-// New modular practice components
-import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
-import { PracticeConfigCard } from "./practice/PracticeConfigCard.jsx";
-import { PracticeControls } from "./practice/PracticeControls.jsx";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -179,77 +175,74 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const isLight = colorScheme === 'light';
   const savedPrefs = loadPreferences();
 
+  // FIX: Guard practice initialization with fallback to first practice
   const [practice, setPractice] = useState(savedPrefs.practice || PRACTICES[0]);
   const [practiceModalOpen, setPracticeModalOpen] = useState(false);
 
   // CURRICULUM INTEGRATION
-  const { 
-    getActivePracticeDay, 
+  const {
+    getActivePracticeDay,
     activePracticeSession,
     clearActivePracticeSession,
   } = useCurriculumStore();
 
-  // Ref to track if we've already auto-started for this session
-  const autoStartedRef = useRef(null);
-
-  // Load curriculum day settings when active session changes AND auto-start
+  // Load curriculum day settings when active session changes
   useEffect(() => {
-    const curriculumDay = getActivePracticeDay();
-    if (curriculumDay && activePracticeSession && autoStartedRef.current !== activePracticeSession) {
-      // Mark this session as auto-started to prevent re-triggering
-      autoStartedRef.current = activePracticeSession;
-      
-      const legs = curriculumDay.legs || [];
-      const firstLeg = legs[0];
-      
-      if (!firstLeg) return;
+    if (!activePracticeSession) return;
 
-      // Determine if this is a circuit (multiple legs) or a single practice
-      if (legs.length > 1) {
-        setPractice("Circuit");
-        const exercises = legs.map((leg, index) => ({
+    const curriculumDay = getActivePracticeDay();
+
+    if (curriculumDay) {
+      // Extract practice info from first leg
+      const firstLeg = curriculumDay.legs?.[0];
+
+      if (firstLeg) {
+        setPractice(firstLeg.practiceType);
+
+        if (firstLeg.duration) {
+          setDuration(firstLeg.duration);
+          setTimeLeft(firstLeg.duration * 60);
+        }
+
+        // If there's a preset specified, set it
+        if (firstLeg.preset) {
+          setPreset(firstLeg.preset);
+        }
+      }
+
+      // Handle circuit mode if curriculum has multiple legs
+      if (curriculumDay.legs?.length > 1) {
+        const exercises = curriculumDay.legs.map(leg => ({
           exercise: {
-            id: leg.id || `leg-${index}`,
-            name: leg.label || leg.practiceType,
-            type: leg.practiceType,
+            id: leg.id,
+            name: leg.name || leg.practiceType,
+            type: leg.type || 'practice',
             practiceType: leg.practiceType,
             preset: leg.preset,
             sensoryType: leg.sensoryType,
           },
           duration: leg.duration,
         }));
+        const totalDuration = curriculumDay.legs.reduce((sum, leg) => sum + leg.duration, 0);
 
         setCircuitConfig({
           exercises,
-          exerciseDuration: legs.reduce((acc, leg) => acc + (leg.duration || 0), 0),
+          exerciseDuration: totalDuration,
         });
-        
-        setDuration(legs.reduce((acc, leg) => acc + (leg.duration || 0), 0));
-        setTimeLeft(legs.reduce((acc, leg) => acc + (leg.duration || 0), 0) * 60);
-      } else {
-        // Single leg practice
-        setPractice(firstLeg.practiceType);
-        setDuration(firstLeg.duration || 10);
-        setTimeLeft((firstLeg.duration || 10) * 60);
-        
-        if (firstLeg.preset) {
-           if (firstLeg.practiceType === "Breath & Stillness") setPreset(firstLeg.preset);
-           if (firstLeg.practiceType === "Somatic Vipassana") setSensoryType(firstLeg.preset);
-           if (firstLeg.practiceType === "Sound") setSoundType(firstLeg.preset);
-           if (firstLeg.practiceType === "Visualization") setGeometry(firstLeg.preset);
-        }
-        
-        if (firstLeg.pattern) {
-          setPattern(firstLeg.pattern);
-        }
+        setActiveCircuitId('curriculum');
+        setPractice('Circuit');
+        setDuration(totalDuration);
+        setTimeLeft(totalDuration * 60);
       }
 
-      // Auto-start the practice session immediately
-      setIsRunning(true);
-      onPracticingChange && onPracticingChange(true);
-      setSessionStartTime(performance.now());
+      // Auto-start the practice after a brief delay (skip configuration screen)
+      setTimeout(() => {
+        handleStart();
+      }, 800);
+    } else {
+      console.warn('[useEffect] No curriculum day found for session:', activePracticeSession);
     }
-  }, [activePracticeSession, getActivePracticeDay, onPracticingChange]);
+  }, [activePracticeSession]);
 
   const [chevronAngle, setChevronAngle] = useState(0);
   const [haloPulse, setHaloPulse] = useState(0);
@@ -322,7 +315,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handlePrevFx = () => {
     setCurrentFxIndex(prev => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
   };
-  
+
   const handleNextFx = () => {
     setCurrentFxIndex(prev => (prev + 1) % ringFXPresets.length);
   };
@@ -487,148 +480,181 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleStop = () => {
-    console.log('═══════════════════════════════════════');
-    console.log('[handleStop] START');
-    console.log('[handleStop] Current state:', { 
-      practice, 
-      duration, 
-      timeLeft,
-      isRunning,
-      activePracticeSession 
-    });
+    // Capture curriculum context BEFORE clearing
+    const savedActivePracticeSession = activePracticeSession;
+    const isCircuitSession = activeCircuitId && circuitConfig;
+
+    // If this is a circuit session, delegate to circuit handler
+    if (isCircuitSession) {
+      handleCircuitComplete();
+      return;
+    }
+    const wasFromCurriculum = savedActivePracticeSession;
+
+    // Now clear the session
+    clearActivePracticeSession();
+    setIsRunning(false);
+    onPracticingChange && onPracticingChange(false);
+    onBreathStateChange && onBreathStateChange(null);
+
+    const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
+    const instrumentationData = instrumentation.endSession(exitType);
+
+    const id =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : String(Date.now());
+
+    const tapCount = tapErrors.length;
+    let avgErrorMs = null;
+    let bestErrorMs = null;
+
+    if (tapCount > 0) {
+      avgErrorMs = Math.round(
+        tapErrors.reduce((sum, v) => sum + Math.abs(v), 0) / tapCount
+      );
+      bestErrorMs = Math.round(
+        Math.min(...tapErrors.map(e => Math.abs(e)))
+      );
+    }
+
+    let subType = null;
+    if (practice === "Somatic Vipassana") subType = sensoryType;
+    if (practice === "Sound") subType = soundType;
+    if (practice === "Visualization") subType = geometry;
+    if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
+    if (practice === "Ritual") subType = activeRitual?.id;
+
+    const sessionPayload = {
+      id,
+      date: new Date().toISOString(),
+      type: practice.toLowerCase(),
+      subType,
+      durationMinutes: duration,
+      pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
+      tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+    };
+
+    let recordedSession = null;
     try {
-      // Capture the active session before clearing it (needed for summary logic)
-      const wasFromCurriculum = activePracticeSession;
-      console.log('[handleStop] wasFromCurriculum:', wasFromCurriculum);
-      clearActivePracticeSession();
-      setIsRunning(false);
-      onPracticingChange && onPracticingChange(false);
-      onBreathStateChange && onBreathStateChange(null);
+      let domain = 'breathwork';
+      const p = practice.toLowerCase();
+      if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
+      else if (p === 'somatic vipassana') domain = sensoryType;
+      else if (p === 'ritual') domain = 'ritual';
+      else if (p === 'sound') domain = 'sound';
 
-      const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
-      const instrumentationData = instrumentation.endSession(exitType);
+      recordedSession = useProgressStore.getState().recordSession({
+        domain,
+        duration: duration,
+        metadata: {
+          subType,
+          pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
+          tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+          ritualId: activeRitual?.id,
+          legacyImport: false
+        },
+        instrumentation: instrumentationData,
+      });
 
-      const id =
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : String(Date.now());
+      if (duration >= 10) {
+        const now = new Date();
+        const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      const tapCount = tapErrors.length;
-      let avgErrorMs = null;
-      let bestErrorMs = null;
-
-      if (tapCount > 0) {
-        avgErrorMs = Math.round(
-          tapErrors.reduce((sum, v) => sum + Math.abs(v), 0) / tapCount
-        );
-        bestErrorMs = Math.round(
-          Math.min(...tapErrors.map(e => Math.abs(e)))
-        );
+        logPractice({
+          type: domain === 'breathwork' ? 'breath' : domain === 'visualization' ? 'focus' : 'body',
+          duration: duration,
+          timeOfDay: timeOfDay,
+        });
       }
 
-      let subType = null;
-      if (practice === "Somatic Vipassana") subType = sensoryType;
-      if (practice === "Sound") subType = soundType;
-      if (practice === "Visualization") subType = geometry;
-      if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
-      if (practice === "Ritual") subType = activeRitual?.id;
+      syncFromProgressStore();
+    } catch (e) {
+      console.error("Failed to save session:", e);
+    }
 
-      const sessionPayload = {
-        id,
-        date: new Date().toISOString(),
-        type: practice.toLowerCase(),
-        subType,
-        durationMinutes: duration,
-        pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
-        tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-      };
+    setActiveRitual(null);
+    setCurrentStepIndex(0);
 
-      let recordedSession = null;
-      try {
-        let domain = 'breathwork';
-        const p = practice.toLowerCase();
-        if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
-        else if (p === 'somatic vipassana') domain = sensoryType;
-        else if (p === 'ritual') domain = 'ritual';
-        else if (p === 'sound') domain = 'sound';
+    // Use instrumentation duration (in milliseconds) for accurate session length
+    const actualDurationSeconds = Math.floor(instrumentationData.duration_ms / 1000);
+    const shouldJournal = practice !== 'Ritual' && actualDurationSeconds >= 30;
 
-        recordedSession = useProgressStore.getState().recordSession({
-          domain,
-          duration: duration,
-          metadata: {
-            subType,
-            pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
-            tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-            ritualId: activeRitual?.id,
-            legacyImport: false
-          },
-          instrumentation: instrumentationData,
+    // Reset timeLeft for next session
+    setTimeLeft(duration * 60);
+
+    // Log leg completion if from curriculum
+    let nextLegInfo = null;
+    if (wasFromCurriculum && exitType === 'completed') {
+      const { logLegCompletion, getNextIncompleteLeg, getDayLegsWithStatus } = useCurriculumStore.getState();
+      const curriculumDay = getActivePracticeDay();
+
+      if (curriculumDay) {
+        // Find which leg was just completed
+        const completedLegs = getDayLegsWithStatus(savedActivePracticeSession).filter(leg => leg.completed);
+        const currentLegNumber = completedLegs.length + 1; // Next leg to complete
+
+        // Log this leg as complete
+        logLegCompletion(savedActivePracticeSession, currentLegNumber, {
+          duration: actualDurationSeconds / 60,
+          focusRating: null, // Will be collected in session summary
+          challenges: [],
+          notes: '',
         });
 
-        if (duration >= 10) {
-          const now = new Date();
-          const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-          logPractice({
-            type: domain === 'breathwork' ? 'breath' : domain === 'visualization' ? 'focus' : 'body',
-            duration: duration,
-            timeOfDay: timeOfDay,
-          });
+        // Get next incomplete leg for "What's Next" display
+        const nextLeg = getNextIncompleteLeg();
+        if (nextLeg) {
+          nextLegInfo = nextLeg.leg;
         }
-
-        syncFromProgressStore();
-      } catch (e) {
-        console.error("Failed to save session:", e);
       }
+    }
 
-      setActiveRitual(null);
-      setCurrentStepIndex(0);
-      
-      // Calculate actualDuration BEFORE resetting timeLeft
-      const actualDuration = duration * 60 - timeLeft;
-      
-      // Now reset timeLeft
-      setTimeLeft(duration * 60);
+    // Show summary if session was long enough
+    if (shouldJournal) {
+      setSessionSummary({
+        practice,
+        duration,
+        tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+        breathCount,
+        exitType,
+        nextLeg: nextLegInfo,
+        curriculumDayNumber: wasFromCurriculum ? savedActivePracticeSession : null,
+      });
+      setShowSummary(true);
 
-      // Show summary for any curriculum session, or for manual sessions >= 30s
-      const shouldShowSummary = wasFromCurriculum || (practice !== 'Ritual' && actualDuration >= 30);
-      console.log('[handleStop] 🔍 Summary Decision Logic:');
-      console.log('  - wasFromCurriculum:', wasFromCurriculum);
-      console.log('  - practice:', practice);
-      console.log('  - practice !== Ritual:', practice !== 'Ritual');
-      console.log('  - actualDuration:', actualDuration, 'seconds');
-      console.log('  - actualDuration >= 30:', actualDuration >= 30);
-      console.log('  - shouldShowSummary:', shouldShowSummary);
-
-      if (shouldShowSummary) {
-        // Check if there's a next leg in curriculum
-        const { getNextLeg } = useCurriculumStore.getState();
-        const nextLeg = wasFromCurriculum ? getNextLeg(wasFromCurriculum, 1) : null;
-
-        const summaryData = {
-            practice,
-            duration,
-            tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-            breathCount,
-            exitType,
-            nextLeg: nextLeg,
-        };
-        console.log('[handleStop] ✅ SHOWING SUMMARY - Setting summaryData:', summaryData);
-        setSessionSummary(summaryData);
-        setShowSummary(true);
-        console.log('[handleStop] State update complete: showSummary=true, sessionSummary=', summaryData);
-      } else {
-        console.log('[handleStop] ❌ NOT showing summary - criteria not met');
+      if (recordedSession) {
+        setLastSessionId(recordedSession.id);
+        startMicroNote(recordedSession.id);
       }
-      console.log('[handleStop] END');
-      console.log('═══════════════════════════════════════');
-    } catch (error) {
-      console.error('[handleStop] ERROR:', error);
-      console.error('[handleStop] Stack:', error.stack);
+    }
+  };
+
+  const handleFocusRating = (rating) => {
+    // Update the leg completion with focus rating
+    if (sessionSummary?.curriculumDayNumber) {
+      const { logLegCompletion, getDayLegsWithStatus } = useCurriculumStore.getState();
+      const completedLegs = getDayLegsWithStatus(sessionSummary.curriculumDayNumber).filter(leg => leg.completed);
+      const currentLegNumber = completedLegs.length; // The one that was just marked complete
+
+      // Re-log with focus rating
+      logLegCompletion(sessionSummary.curriculumDayNumber, currentLegNumber, {
+        duration: sessionSummary.duration,
+        focusRating: rating,
+        challenges: [],
+        notes: '',
+      });
     }
   };
 
   const executeStart = () => {
+    // FIX: Guard against null practice
+    if (!practice) {
+      console.error("Cannot start practice: practice is null or undefined");
+      return;
+    }
+
+
     savePreferences({
       practice,
       duration,
@@ -643,6 +669,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     if (practice === "Circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {
+        console.error('[executeStart] Circuit practice but no config');
         return;
       }
       setCircuitSavedPractice(practice);
@@ -656,6 +683,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     if (practice === "Cognitive Vipassana") {
       setShowVipassanaVariantModal(true);
+      // NOTE: After modal selection, the modal's onSelect will close itself
+      // We need to start the session AFTER the variant is selected
+      // So we don't set isRunning here - the modal callback should do it
+      return; // IMPORTANT: Return here to prevent auto-starting
     }
 
     setIsRunning(true);
@@ -820,6 +851,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
 
+  // RENDER PRIORITY 1: Active Practice Session
   if (isRunning) {
     if (practice === "Ritual") {
       return (
@@ -839,6 +871,21 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             onSelect={(variant) => {
               setVipassanaVariant(variant);
               setShowVipassanaVariantModal(false);
+
+              // NOW start the session after variant is selected
+              setIsRunning(true);
+              onPracticingChange && onPracticingChange(true);
+              setSessionStartTime(performance.now());
+              setTapErrors([]);
+              setLastErrorMs(null);
+              setLastSignedErrorMs(null);
+              setBreathCount(0);
+
+              instrumentation.startSession(
+                'focus', // Cognitive Vipassana maps to focus domain
+                null,
+                null
+              );
             }}
             onCancel={() => {
               setShowVipassanaVariantModal(false);
@@ -864,10 +911,38 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             />
           </div>
 
-          <PracticeControls
-            onStop={handleStop}
-            formattedTime={formatTime(timeLeft)}
-          />
+          <div className="flex flex-col items-center z-50 mt-8">
+            <button
+              onClick={handleStop}
+              className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "11px",
+                letterSpacing: "var(--tracking-mythic)",
+                textTransform: "uppercase",
+                fontWeight: 600,
+                background: 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
+                color: "#050508",
+                boxShadow: '0 0 24px var(--accent-30), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)',
+                borderRadius: "999px",
+              }}
+            >
+              <span>Stop</span>
+            </button>
+            <div
+              className="mt-5"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "12px",
+                fontWeight: 600,
+                letterSpacing: "var(--tracking-mythic)",
+                textTransform: "uppercase",
+                color: "var(--text-primary)",
+              }}
+            >
+              {formatTime(timeLeft)}
+            </div>
+          </div>
         </section>
       );
     }
@@ -1083,15 +1158,79 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           )}
         </div>
 
-        <PracticeControls
-          onStop={handleStop}
-          formattedTime={formatTime(timeLeft)}
-          feedbackText={practice === "Breath & Stillness" && lastSignedErrorMs !== null ? feedbackText : ''}
-          feedbackColor={feedbackColor}
-          feedbackShadow={feedbackShadow}
-          buttonBg={buttonBg}
-          radialGlow={radialGlow}
-        >
+        <div className="flex flex-col items-center z-50">
+          <div className="h-6 mb-3 flex items-center justify-center">
+            {lastSignedErrorMs !== null && practice === "Breath & Stillness" && (
+              <div
+                key={lastSignedErrorMs}
+                className="text-[11px] font-medium tracking-[0.15em] uppercase animate-fade-in-up"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 600,
+                  letterSpacing: "var(--tracking-wide)",
+                  color: feedbackColor,
+                  textShadow: feedbackShadow
+                }}
+              >
+                {feedbackText}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleStop}
+            className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "11px",
+              letterSpacing: "var(--tracking-mythic)",
+              textTransform: "uppercase",
+              fontWeight: 600,
+              background: buttonBg,
+              color: "#050508",
+              boxShadow: radialGlow
+                ? `${radialGlow}, ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`
+                : `0 0 24px var(--accent-30), ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`,
+              borderRadius: "999px",
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <span style={{ position: 'relative', zIndex: 2 }}>Stop</span>
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.12) 0%, transparent 60%)',
+                mixBlendMode: 'soft-light',
+                zIndex: 1,
+              }}
+            />
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                opacity: 0.06,
+                mixBlendMode: 'overlay',
+                zIndex: 1,
+              }}
+            />
+          </button>
+
+          <div
+            className="mt-5"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "12px",
+              fontWeight: 600,
+              letterSpacing: "var(--tracking-mythic)",
+              textTransform: "uppercase",
+              color: "var(--text-primary)",
+            }}
+          >
+            {formatTime(timeLeft)}
+          </div>
+
           {breathCount > 0 && practice === "Breath & Stillness" && (
             <div
               className="mt-2"
@@ -1107,7 +1246,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               Breath {breathCount}
             </div>
           )}
-        </PracticeControls>
+        </div>
 
         <style>{`
           @keyframes fade-in-up {
@@ -1149,58 +1288,246 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     );
   }
 
-
+  // RENDER PRIORITY 2: Session Summary Modal
   if (showSummary && sessionSummary) {
     return (
       <SessionSummaryModal
         summary={sessionSummary}
         onContinue={() => {
           setShowSummary(false);
-          setSessionSummary(null);
-          if (!pendingMicroNote) {
-            // Return to practice selection
+          if (pendingMicroNote) {
+            // Journal is already open
+          } else {
+            // Return to home or practice selection
             setPractice(PRACTICES[0]);
           }
         }}
-        onStartNext={(nextPractice) => {
+        onStartNext={(practiceType) => {
           setShowSummary(false);
-          setSessionSummary(null);
-          setPractice(nextPractice);
-          // Auto-start the next practice after a short delay
-          setTimeout(() => {
-            executeStart();
-          }, 100);
+          setPractice(practiceType);
+          // Auto-start the next practice
+          setTimeout(() => handleStart(), 500);
         }}
+        onFocusRating={handleFocusRating}
       />
     );
   }
 
-  // DEFAULT VIEW - Last Practice with Change Button
-  return (
-    <>
-      <PracticeSelectionModal
-        isOpen={practiceModalOpen}
-        onClose={() => setPracticeModalOpen(false)}
-        practices={PRACTICES}
-        currentPractice={practice}
-        onSelectPractice={(selectedPractice) => {
-          setPractice(selectedPractice);
-          setPracticeModalOpen(false);
-        }}
-      />
+  // RENDER PRIORITY 3: Practice Configuration/Selection View
+  // If there's an active curriculum session, show a "Ready to Start" screen instead of selection modal
+  if (activePracticeSession) {
+    const curriculumDay = getActivePracticeDay();
 
-      <PracticeConfigCard
-        practice={practice}
-        duration={duration}
-        onPracticeChange={() => setPracticeModalOpen(true)} // Open modal instead of direct change
-        onDurationChange={(d) => {
-          setDuration(d);
-          setTimeLeft(d * 60);
+    // Get display values with fallbacks
+    const displayPractice = curriculumDay?.practiceType || practice || 'Breath & Stillness';
+    const displayDuration = curriculumDay?.duration || duration || 5;
+
+    return (
+      <section className="w-full h-full flex flex-col items-center justify-center pb-24">
+        <div
+          className="rounded-[32px] relative overflow-hidden"
+          style={{
+            width: '460px',
+            ...(isLight ? getCardMaterial(true) : plateauMaterial),
+            border: isLight ? '1px solid var(--light-border, rgba(60,50,35,0.15))' : '1px solid var(--accent-20)',
+            boxShadow: isLight
+              ? '0 4px 24px rgba(60,50,35,0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
+              : '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}
+        >
+          <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
+
+          <div className="relative px-8 py-10 text-center">
+            <div
+              style={{
+                fontSize: '48px',
+                marginBottom: '16px',
+                filter: 'drop-shadow(0 0 20px var(--accent-40))',
+              }}
+            >
+              ✦
+            </div>
+
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '18px',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
+                color: 'var(--text-primary)',
+                marginBottom: '8px',
+                textShadow: isLight ? 'none' : '0 0 10px var(--accent-30)',
+              }}
+            >
+              {displayPractice}
+            </div>
+
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '12px',
+                color: 'var(--text-muted)',
+                marginBottom: '24px',
+              }}
+            >
+              {displayDuration} minutes
+            </div>
+
+            <button
+              onClick={handleStart}
+              disabled={isStarting || !practice}
+              className="px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-50"
+              style={{
+                background: 'var(--accent-color)',
+                color: '#fff',
+                boxShadow: '0 8px 20px var(--accent-30)',
+                fontFamily: 'var(--font-display)',
+              }}
+            >
+              {!practice ? 'Loading...' : isStarting ? 'Starting...' : 'Start Practice'}
+            </button>
+
+            <button
+              onClick={() => clearActivePracticeSession()}
+              className="mt-4 px-6 py-2 rounded-full text-[9px] uppercase tracking-wider transition-all hover:opacity-70"
+              style={{
+                fontFamily: 'var(--font-display)',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--accent-20)',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Default: Free practice configuration
+  return (
+    <section className="w-full h-full flex flex-col items-center justify-center pb-24">
+      <div
+        className="rounded-[32px] relative overflow-hidden"
+        style={{
+          width: '480px',
+          ...(isLight ? getCardMaterial(true) : plateauMaterial),
+          border: isLight ? '2px solid var(--light-border)' : '2px solid var(--accent-20)',
         }}
-        onStart={handleStart}
-        showChangePracticeButton={true}
-      />
-    </>
+      >
+        <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
+
+        <div className="relative px-8 py-8">
+          {/* Header */}
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: 'var(--tracking-mythic)',
+              textTransform: 'uppercase',
+              color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
+              textAlign: 'center',
+              marginBottom: '24px',
+            }}
+          >
+            Configure Practice
+          </div>
+
+          {/* Practice Selection */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '9px',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
+                textTransform: 'uppercase',
+                color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
+                marginBottom: '12px',
+              }}
+            >
+              Practice Type
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {PRACTICES.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPractice(p)}
+                  className="px-4 py-3 rounded-full transition-all duration-200"
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '10px',
+                    letterSpacing: 'var(--tracking-mythic)',
+                    textTransform: 'uppercase',
+                    border: practice === p
+                      ? (isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-40)')
+                      : '1px solid transparent',
+                    background: practice === p
+                      ? (isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)')
+                      : (isLight ? 'rgba(60,50,35,0.03)' : 'rgba(0,0,0,0.2)'),
+                    color: practice === p
+                      ? 'var(--accent-color)'
+                      : (isLight ? 'var(--light-text)' : 'var(--text-primary)'),
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Duration Selection */}
+          <div style={{ marginBottom: '32px' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '9px',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-mythic)',
+                textTransform: 'uppercase',
+                color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
+                marginBottom: '12px',
+              }}
+            >
+              Duration (minutes)
+            </div>
+            <SacredTimeSlider
+              value={duration}
+              onChange={setDuration}
+              options={DURATIONS}
+            />
+          </div>
+
+          {/* Start Button */}
+          <button
+            onClick={handleStart}
+            disabled={isStarting || !practice}
+            className="w-full px-8 py-4 rounded-full transition-all duration-200 hover:scale-[1.02]"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '12px',
+              fontWeight: 600,
+              letterSpacing: 'var(--tracking-mythic)',
+              textTransform: 'uppercase',
+              background: isStarting || !practice
+                ? (isLight ? 'rgba(60,50,35,0.2)' : 'rgba(255,255,255,0.1)')
+                : 'var(--accent-color)',
+              color: isStarting || !practice
+                ? (isLight ? 'rgba(60,50,35,0.4)' : 'rgba(255,255,255,0.3)')
+                : '#fff',
+              border: '1px solid transparent',
+              boxShadow: !isStarting && practice
+                ? '0 8px 20px var(--accent-30)'
+                : 'none',
+              cursor: isStarting || !practice ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {!practice ? 'Select Practice' : isStarting ? 'Preparing...' : 'Begin Practice'}
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 
