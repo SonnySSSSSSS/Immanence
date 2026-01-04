@@ -227,13 +227,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum }) {
                                 className="absolute top-4 left-4 z-10"
                                 style={{ width: '48px', height: '48px' }}
                             >
-                                {/* DAY label - Top Left inside badge area */}
+                                {/* DAY label - Vertical on the left, matching Breathwork style */}
                                 <div 
-                                    className="absolute top-0 left-0 text-[10px] font-black uppercase tracking-[0.2em]"
+                                    className="absolute left-[2px] top-0 h-full flex items-center justify-center"
                                     style={{ 
+                                        writingMode: 'vertical-rl', 
+                                        transform: 'rotate(180deg)',
                                         color: '#000',
-                                        opacity: 0.6,
-                                        fontFamily: 'var(--font-display)' 
+                                        opacity: 0.8,
+                                        fontFamily: 'var(--font-display)',
+                                        fontSize: '10px',
+                                        fontWeight: 900,
+                                        letterSpacing: '0.2em',
+                                        textDecoration: 'underline',
+                                        textDecorationThickness: '1px',
+                                        textUnderlineOffset: '2px'
                                     }}
                                 >
                                     Day
