@@ -518,6 +518,106 @@ const UNION = {
     }
 };
 
+// ============ THOUGHT DETACHMENT ============
+const THOUGHT_DETACHMENT = {
+    id: 'thoughtDetachment',
+    name: 'Thought Detachment',
+    tradition: 'Vipassana / CBT',
+    category: 'liberation',
+    icon: '👁️',
+    iconName: 'eye',
+    unlockStage: 'seedling',
+    prerequisite: null,
+    duration: { min: 3, max: 5 },
+    recommendation: 'Use when recurring thought patterns or sticky emotions arise.',
+    description: 'Observe the movement of the mind without participation. Create space between the witness and the thought.',
+    history: 'A modern synthesis of ancient Vipassana "noting" and contemporary psychological detachment techniques.',
+    steps: [
+        {
+            id: 'arrival',
+            name: 'Arrival',
+            duration: 30,
+            instruction: 'Sit comfortably. Close your eyes. Notice the natural space that exists between your thoughts.',
+            sensoryCues: ['The silence behind the noise.', 'The stillness that holds the movement.'],
+            image: 'rituals/ritual_00010_.png',
+        },
+        {
+            id: 'observation',
+            name: 'Observation',
+            duration: 120,
+            instruction: 'Observe a specific recurring thought as it arises. Watch its texture and movement without judgment.',
+            sensoryCues: ['Watch the thought like a cloud passing in the sky.', 'Notice where it appears and where it disappears.'],
+            image: 'rituals/ritual_00011_.png',
+        },
+        {
+            id: 'release',
+            name: 'Detachment',
+            duration: 30,
+            instruction: 'Gently release the thought. Return your focus to the breath. Recognize the stillness that remains.',
+            sensoryCues: ['The thought dissolves back into the field of awareness.', 'Breath is the anchor.'],
+            image: 'rituals/ritual_00012_.png',
+        }
+    ],
+    completion: {
+        expectedOutput: ['Increased mental distance', 'Recognition of thought patterns', 'Calm awareness'],
+        closingInstruction: 'Carry this detachment into your day. You are the sky, not the clouds.'
+    }
+};
+
+// ============ INCENSE & WITNESS ============
+const INCENSE_RITUAL = {
+    id: 'incenseWitness',
+    name: 'Incense & Witness',
+    tradition: 'Alchemical / Legacy',
+    category: 'presence',
+    icon: '🕯️',
+    iconName: 'candle',
+    unlockStage: 'seedling',
+    prerequisite: null,
+    duration: { min: 10, max: 15 },
+    recommendation: 'Best performed in a quiet, dedicated space for reflection.',
+    description: 'A multi-sensory ritual using incense and self-observation to anchor awareness in the present moment.',
+    history: 'A legacy ritual designed to bridge the gap between internal feeling and external observation.',
+    steps: [
+        {
+            id: 'incense',
+            name: 'Incense & Setup',
+            duration: 60,
+            instruction: 'Light your incense. Focus on the rising smoke as a symbolic offering of your attention.',
+            sensoryCues: ['The scent of burning wood or resin.', 'The visual dance of the smoke rising.'],
+            image: 'assets/ritual/incense_bg_v1.jpg',
+        },
+        {
+            id: 'map',
+            name: 'Visual Map Review',
+            duration: 90,
+            instruction: 'Gaze upon the emotional map. See your feelings as distinct nodes within this container.',
+            sensoryCues: ['The colors of the map pulsing slightly.', 'The interconnected nature of sensations.'],
+            image: 'assets/ritual/visual_map_v1.png',
+        },
+        {
+            id: 'photo',
+            name: '3rd Person Photo',
+            duration: 60,
+            instruction: 'Take a photo of yourself from a 3rd-person perspective. Observe the witness witnessing.',
+            sensoryCues: ['Shift from the felt self to the seen self.', 'Notice the posture of the one who practices.'],
+            image: 'assets/ritual/incense_bg_v1.jpg',
+        },
+        {
+            id: 'seal',
+            name: 'Seal the Experience',
+            duration: 60,
+            instruction: 'Sit in the afterglow. Recognize that the observer is independent of the observed.',
+            sensoryCues: ['The residue of the ritual in the room.', 'A deeper grounding in the body.'],
+            image: 'assets/ritual/journaling_bg_v1.jpg',
+        }
+    ],
+    completion: {
+        expectedOutput: ['A sense of objective presence', 'Externalization of internal states'],
+        closingInstruction: 'Breathe once deeply and extinguish the flame if safe to do so.'
+    }
+};
+
 // Registry of all rituals
 export const RITUAL_REGISTRY = {
     sankalpa: SANKALPA,
@@ -531,6 +631,8 @@ export const RITUAL_REGISTRY = {
     union: UNION,
     gratitude: GRATITUDE,
     metta: METTA,
+    thoughtDetachment: THOUGHT_DETACHMENT,
+    incenseWitness: INCENSE_RITUAL,
 };
 
 // Debug log to verify all rituals are loaded

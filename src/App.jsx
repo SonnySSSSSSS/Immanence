@@ -9,6 +9,7 @@ import { HomeHub } from "./components/HomeHub.jsx";
 const WisdomSection = lazy(() => import("./components/WisdomSection.jsx").then(m => ({ default: m.WisdomSection })));
 const ApplicationSection = lazy(() => import("./components/ApplicationSection.jsx").then(m => ({ default: m.ApplicationSection })));
 import { NavigationSection } from "./components/NavigationSection.jsx";
+import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.jsx";
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
 import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
@@ -29,9 +30,10 @@ import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./App.css";
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete }) {
   // Navigation and Application sections handle their own avatars and stage titles
-  const showAvatar = section !== 'navigation' && section !== 'application';
+  // RitualLibrary also handles its own UI (no avatar needed)
+  const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary';
 
   return (
     <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
@@ -512,6 +514,7 @@ function App() {
                   showFxGallery={showFxGallery}
                   onNavigate={setActiveSection}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
+                  onRitualComplete={() => setActiveSection(null)}
                 />
               )}
             </div>

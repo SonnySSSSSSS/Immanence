@@ -40,65 +40,6 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     } = useCurriculumStore();
 
     const [activeThought, setActiveThought] = useState(null);
-    const modalRef = useRef(null);
-
-    // Diagnostic: Find ancestor creating containing block for fixed positioning
-    useEffect(() => {
-        if (!isOpen || !modalRef.current) return;
-        
-        const runDiagnostic = (trigger) => {
-            console.group(`🔍 ThoughtDetachmentOnboarding: ${trigger}`);
-            console.log('Modal element:', modalRef.current);
-            console.log('Modal computed position:', getComputedStyle(modalRef.current).position);
-            console.log('Modal getBoundingClientRect:', modalRef.current.getBoundingClientRect());
-            console.log('Window dimensions:', { innerWidth: window.innerWidth, innerHeight: window.innerHeight });
-            console.log('DisplayMode:', displayMode, 'ColorScheme:', colorScheme);
-            
-            let el = modalRef.current.parentElement;
-            let depth = 0;
-            
-            while (el && depth < 20) {
-                const styles = getComputedStyle(el);
-                const issues = [];
-                const rect = el.getBoundingClientRect();
-                
-                if (styles.transform !== 'none') issues.push(`transform: ${styles.transform}`);
-                if (styles.filter !== 'none') issues.push(`filter: ${styles.filter}`);
-                if (styles.backdropFilter !== 'none') issues.push(`backdropFilter: ${styles.backdropFilter}`);
-                if (styles.willChange !== 'auto') issues.push(`willChange: ${styles.willChange}`);
-                if (styles.contain !== 'none') issues.push(`contain: ${styles.contain}`);
-                if (styles.perspective !== 'none') issues.push(`perspective: ${styles.perspective}`);
-                if (styles.overflow !== 'visible') issues.push(`overflow: ${styles.overflow}`);
-                
-                // Also log if element is narrower than viewport
-                if (rect.width < window.innerWidth * 0.9) {
-                    issues.push(`NARROW: ${rect.width}px < viewport ${window.innerWidth}px`);
-                }
-                
-                if (issues.length > 0) {
-                    console.warn(`⚠️ Depth ${depth}: ISSUE FOUND!`, {
-                        element: el,
-                        tagName: el.tagName,
-                        className: el.className?.substring?.(0, 80) || '',
-                        issues,
-                        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
-                    });
-                }
-                
-                el = el.parentElement;
-                depth++;
-            }
-            console.groupEnd();
-        };
-        
-        runDiagnostic('Initial Mount / Mode Change');
-        
-        // Also listen for resize
-        const handleResize = () => runDiagnostic('Window Resize');
-        window.addEventListener('resize', handleResize);
-        
-        return () => window.removeEventListener('resize', handleResize);
-    }, [isOpen, colorScheme, displayMode]);
 
     if (!isOpen) return null;
 
@@ -219,25 +160,52 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
         }
 
         if (onboardingComplete) {
+            const ritual = getRitualData();
             return (
-                <div className="space-y-8 text-center animate-in fade-in zoom-in duration-500 py-4 px-6">
-                    <div className="space-y-4">
-                        <div className="text-4xl mb-2">🌊</div>
-                        <h2 className="uppercase text-[clamp(20px,6vw,28px)] tracking-widest font-display text-accent">
+                <div className="w-full h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 text-center animate-in fade-in zoom-in duration-500 overflow-y-auto">
+                    <div className="w-full max-w-lg flex flex-col gap-4 sm:gap-5 py-8 sm:py-12">
+                        {/* Icon */}
+                        <div className="flex items-center justify-center text-4xl sm:text-5xl mb-1" style={{ color: 'var(--accent-color)' }}>
+                            🌊
+                        </div>
+                        
+                        {/* Title */}
+                        <h2 className="uppercase text-[clamp(20px,6vw,28px)] tracking-widest font-display text-accent leading-tight">
                             Ritual Ready
                         </h2>
-                        <p className="text-sm opacity-70 max-w-xs mx-auto">
-                            The space is prepared. Begin your observation.
+                        
+                        {/* Ritual Name */}
+                        <h3 className="text-xl sm:text-2xl font-light text-[var(--accent-primary)] font-h1">
+                            {ritual.name}
+                        </h3>
+                        
+                        {/* Tradition & Duration */}
+                        <div className="text-[var(--accent-muted)] font-mono text-[10px] sm:text-xs uppercase tracking-widest">
+                            {ritual.tradition} • {ritual.duration.min}-{ritual.duration.max} Minutes
+                        </div>
+                        
+                        {/* History Quote */}
+                        <p 
+                            className="text-sm sm:text-base text-white/80 leading-relaxed font-body italic border-l-2 border-[var(--accent-secondary)] pl-4 sm:pl-5 text-left my-2 mx-auto max-w-md" 
+                            style={{ wordWrap: 'break-word', overflowWrap: 'break-word', hyphens: 'auto' }}
+                        >
+                            {ritual.history}
                         </p>
-                    </div>
-                    
-                    <div className="flex flex-col gap-3 items-center">
-                        <PillButton onClick={handleStartRitual} variant="primary" className="w-full max-w-[200px]">
-                            BEGIN RITUAL
-                        </PillButton>
-                        <button onClick={onClose} className="text-xs opacity-40 hover:opacity-100 transition-opacity">
-                            Not now
-                        </button>
+                        
+                        {/* Description */}
+                        <p className="text-xs sm:text-sm opacity-70 max-w-xs mx-auto">
+                            {ritual.description}
+                        </p>
+                        
+                        {/* Actions */}
+                        <div className="flex flex-col gap-3 items-center mt-2 sm:mt-4">
+                            <PillButton onClick={handleStartRitual} variant="primary" className="w-full max-w-[240px]">
+                                BEGIN RITUAL
+                            </PillButton>
+                            <button onClick={onClose} className="text-xs opacity-40 hover:opacity-100 transition-opacity">
+                                Not now
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -368,37 +336,81 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
         : 'min(640px, calc(100vw - 48px))';
     
     const containerMaxWidth = displayMode === 'hearth' ? '430px' : '100%';
+    
+    const ritual = getRitualData();
 
     return createPortal(
-        <div 
-            ref={modalRef} 
-            className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-4 sm:p-8 lg:p-12"
-            style={{ maxWidth: containerMaxWidth, margin: '0 auto', left: 0, right: 0 }}
-        >
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} />
-            
-            <div 
-                className={`relative w-full mx-auto p-4 sm:p-8 lg:p-12 rounded-[2rem] border transition-all duration-500 overflow-hidden ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
-                style={{ boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxWidth: panelMaxWidth }}
-            >
-                {/* Step indicator */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={`h-1 rounded-full transition-all ${i === step ? 'w-8 bg-accent' : i < step ? 'w-4 bg-accent/40' : 'w-4 bg-white/10'}`} />
-                    ))}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+            {/* 1. Ritual Session: Fullscreen Takeover (when active) */}
+            {showSession && (
+                <div 
+                    className="absolute inset-0 z-[110] bg-black pointer-events-auto"
+                    style={{ maxWidth: displayMode === 'hearth' ? '430px' : '100%', margin: displayMode === 'hearth' ? '0 auto' : undefined }}
+                >
+                    <RitualSession 
+                        ritual={ritual}
+                        onComplete={handleRitualComplete}
+                        onExit={() => setShowSession(false)}
+                        isLight={false}
+                    />
                 </div>
+            )}
 
-                <div className="relative pt-4">
-                    {renderContent()}
-                </div>
-            </div>
+            {/* 2. Launcher / Onboarding: Modal Surface (when session not active) */}
+            {!showSession && (
+                <>
+                    {/* Translucent Backdrop */}
+                    <div 
+                        className={`absolute inset-0 transition-opacity duration-500 pointer-events-auto ${isLight ? 'bg-black/20 backdrop-blur-md' : 'bg-black/40 backdrop-blur-xl'}`}
+                        onClick={onClose} 
+                    />
+                    
+                    {/* Centered Panel Container */}
+                    <div 
+                        className="relative flex items-center justify-center p-3 py-6 sm:p-8 lg:p-12 w-full h-full pointer-events-none"
+                        style={{ maxWidth: containerMaxWidth, margin: '0 auto' }}
+                    >
+                        <div 
+                            className={`relative w-full flex flex-col rounded-[2.5rem] border transition-all duration-500 overflow-hidden pointer-events-auto ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
+                            style={{ 
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.5)', 
+                                maxWidth: panelMaxWidth,
+                                minHeight: displayMode === 'hearth' ? '480px' : '520px',
+                                maxHeight: 'min(800px, calc(100dvh - 24px))'
+                            }}
+                        >
+                            {/* Modal Close Button: Absolute inside the panel */}
+                            <button 
+                                onClick={onClose}
+                                className={`absolute top-4 right-4 z-[150] p-2.5 rounded-full transition-all ${isLight ? 'hover:bg-black/5 text-black/40 hover:text-black' : 'hover:bg-white/5 text-white/40 hover:text-white'}`}
+                                aria-label="Close"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            {/* Step indicator (launcher only) */}
+                            {!onboardingComplete && (
+                                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className={`h-1 rounded-full transition-all ${i === step ? 'w-8 bg-accent' : i < step ? 'w-4 bg-accent/40' : 'w-4 bg-white/10'}`} />
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar pt-14 min-h-0 rounded-[2.5rem]">
+                                {renderContent()}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-                @font-face { font-family: 'Outfit'; src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;400;700&display=swap'); }
-                :root { --font-display: 'Outfit', sans-serif; --font-body: 'Outfit', sans-serif; }
             `}</style>
         </div>,
         document.body

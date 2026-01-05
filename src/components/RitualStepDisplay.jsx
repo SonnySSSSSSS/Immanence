@@ -1,7 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = false }) => {
+    const containerRef = useRef(null);
+
+    // DIAGNOSTIC: Log props and container dimensions
+    useEffect(() => {
+        console.group('\ud83d\udd0d RitualStepDisplay Diagnostic');
+        console.log('isLight:', isLight);
+        console.log('step.name:', step?.name);
+        console.log('stepIndex:', stepIndex);
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            console.log('Container rect:', { width: rect.width, height: rect.height, x: rect.x, y: rect.y });
+        }
+        console.groupEnd();
+    }, [isLight, step, stepIndex]);
+
     // Construct simplified image path that works with the public folder structure
     // If the step provides a full path like 'rituals/standing-meditation/step-1.png', use it
     // Otherwise fallback or handle appropriately. 
@@ -12,9 +27,9 @@ const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = fa
         : null;
 
     return (
-        <div className="w-full h-full flex flex-col md:flex-row gap-4 p-4 relative overflow-visible">
-            {/* Image Section - Left/Top */}
-            <div className="flex-1 flex items-center justify-center relative min-h-[40vh] md:min-h-full">
+        <div ref={containerRef} className="w-full h-full flex flex-col gap-4 p-4 relative overflow-y-auto">
+            {/* Image/Content Section - Top */}
+            <div className="flex items-center justify-center relative min-h-[20vh] sm:min-h-[30vh]">
                 <AnimatePresence mode="wait">
                     {imagePath ? (
                         <motion.img
@@ -57,8 +72,8 @@ const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = fa
                 )}
             </div>
 
-            {/* Instructions Section - Right/Bottom */}
-            <div className={`flex-1 flex flex-col gap-4 ${isLight ? 'bg-white/40' : 'bg-black/60'} backdrop-blur-md p-6 rounded-2xl border ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} shadow-xl md:min-w-[400px] max-h-[60vh] md:max-h-full overflow-y-auto`}>
+            {/* Instructions Section - Bottom */}
+            <div className={`w-full max-w-lg mx-auto flex flex-col gap-4 ${isLight ? 'bg-white/40' : 'bg-black/60'} backdrop-blur-md p-5 sm:p-6 rounded-2xl border ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} shadow-xl overflow-y-auto`}>
                 {/* Header */}
                 <div className={`flex justify-between items-baseline border-b ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} pb-3`}>
                     <h3 className="text-2xl font-light text-[var(--accent-primary)] font-h1">

@@ -5,7 +5,7 @@ import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
 import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { VipassanaVariantSelector } from "./vipassana/VipassanaVariantSelector.jsx";
-import { RitualPortal } from "./RitualPortal.jsx";
+import { NavigationRitualLibrary } from "./NavigationRitualLibrary.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
@@ -882,10 +882,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Ritual") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <RitualPortal
-            onComplete={handleRitualComplete}
-            onStop={handleStop}
-          />
+          <NavigationRitualLibrary onComplete={handleStop} />
         </section>
       );
     }
@@ -1567,19 +1564,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               <CircuitConfig
                 isLight={isLight}
               />
-            )}
-
-            {practice === "Ritual" && (
-              <div
-                className="text-center py-4"
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
-                }}
-              >
-                Ritual practices are pre-configured sequences.
-              </div>
             )}
           </div>
 
