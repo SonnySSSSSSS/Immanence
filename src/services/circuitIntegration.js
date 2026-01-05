@@ -6,7 +6,6 @@ import { useCircuitManager } from '../state/circuitManager';
 import { useCircuitJournalStore } from '../state/circuitJournalStore';
 import { useProgressStore } from '../state/progressStore';
 import { useLunarStore } from '../state/lunarStore';
-import { getDateKey } from '../utils/dateUtils';
 
 /**
  * Convert circuit UI selection to Zustand store session

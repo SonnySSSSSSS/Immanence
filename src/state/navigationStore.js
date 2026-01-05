@@ -114,7 +114,7 @@ export const useNavigationStore = create(
         {
             name: 'immanenceOS.navigationState',
             version: 2,  // Bumped version for new fields
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 return persistedState;
             }
         }

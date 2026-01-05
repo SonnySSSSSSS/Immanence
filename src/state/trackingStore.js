@@ -1015,7 +1015,7 @@ export const useTrackingStore = create(
         {
             name: 'immanenceOS.tracking',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 return persistedState;
             },
         }

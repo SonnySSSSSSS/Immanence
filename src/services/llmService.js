@@ -139,7 +139,7 @@ export async function sendToLLMForJSON(systemPrompt, userPrompt, options = {}) {
             raw: result.raw,
         };
 
-    } catch (parseError) {
+    } catch {
         return {
             success: false,
             error: 'parse_error',

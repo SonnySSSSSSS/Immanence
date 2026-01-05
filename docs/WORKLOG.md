@@ -1311,3 +1311,41 @@ D:\Unity Apps\immanence-os
 **Notes**: Hooks/utils cleanup for TASK-2026-01-05-B
 
 ---
+
+## 2026-01-05 11:31 - Codex CLI - COMPLETED
+
+**Task**: TASK-2026-01-05-B - Remove no-unused-vars in state/services
+
+**Files Modified**:
+- src/services/circuitIntegration.js (removed unused: getDateKey import)
+- src/services/circuitManager.js (removed unused: result assignment)
+- src/services/llmService.js (removed unused: parseError param)
+- src/services/ritualService.js (removed unused: useProgressStore import, stepData)
+- src/state/applicationStore.js (removed unused: migrate version param)
+- src/state/attentionStore.js (removed unused: currentWeek, abandoned; fixed unused destructuring)
+- src/state/chainStore.js (removed unused: state destructuring)
+- src/state/cycleStore.js (removed unused: oldBaseline)
+- src/state/lunarStore.js (removed unused: migrate version param)
+- src/state/navigationStore.js (removed unused: migrate version param)
+- src/state/pathStore.js (removed unused: migrate version param; fixed unused destructuring)
+- src/state/progressStore.js (removed unused: migrate version param, longest destructuring)
+- src/state/settingsStore.js (removed unused: get param)
+- src/state/sigilStore.js (removed unused: get param)
+- src/state/trackingStore.js (removed unused: migrate version param)
+- src/state/videoStore.js (removed unused: migrate version param; fixed unused destructuring)
+- src/state/wisdomStore.js (removed unused: migrate version param; fixed unused destructuring)
+
+**Changes**:
+- Removed unused imports, variables, and parameters
+- Adjusted unused Object.entries destructuring
+- No behavior changes
+
+**Version**: v3.15.X (no version bump)
+
+**Status**: COMPLETED
+
+**Commit**: (see git log)
+
+**Notes**: Part 7 of 7 - state/services cleanup for TASK-2026-01-05-B
+
+---

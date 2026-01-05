@@ -84,7 +84,7 @@ export function logCircuitCompletion(circuitId, exercisesCompleted) {
     const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     // Log to practice history
-    const result = logPractice({
+    logPractice({
         type: 'circuit',
         duration: totalDuration,
         timeOfDay,
@@ -106,6 +106,7 @@ export function logCircuitCompletion(circuitId, exercisesCompleted) {
  * @param {string} circuitId
  */
 export function getCircuitStats(circuitId) {
+    void circuitId;
     // TODO: Implement circuit-specific stats from practiceHistory
     // For now, return placeholder
     return {

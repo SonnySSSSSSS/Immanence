@@ -1,4 +1,3 @@
-import { useProgressStore } from '../state/progressStore';
 import { useJournalStore } from '../state/journalStore';
 import { logPractice } from './cycleManager';
 
@@ -7,7 +6,7 @@ import { logPractice } from './cycleManager';
  * @param {Object} ritualData - Data from ritualStore
  */
 export function logRitualResult(ritualData) {
-    const { id, startTime, stepData, photoUrl, selectedMemory } = ritualData;
+    const { id, startTime, photoUrl, selectedMemory } = ritualData;
     const endTime = Date.now();
     const durationMs = endTime - new Date(startTime).getTime();
     const durationMin = Math.max(1, Math.round(durationMs / 60000));

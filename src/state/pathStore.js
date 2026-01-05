@@ -247,7 +247,7 @@ export const usePathStore = create(
         {
             name: 'immanenceOS.path',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 return persistedState;
             }
         }
@@ -307,7 +307,7 @@ function calculatePathFromLog(practiceLog, firstPracticeDate) {
     Object.keys(totals).forEach(k => pct[k] = totals[k] / total);
 
     // Dominant (>50%)
-    const dominant = Object.entries(pct).find(([_, p]) => p > 0.5);
+    const dominant = Object.entries(pct).find(([, p]) => p > 0.5);
     if (dominant) {
         const complementary = Object.entries(pct).filter(([k, p]) => k !== dominant[0] && p >= 0.2).map(([k]) => DOMAIN_TO_PATH[k]);
         return { path: DOMAIN_TO_PATH[dominant[0]], status: 'established', complementary };
@@ -324,7 +324,7 @@ function calculatePathFromLog(practiceLog, firstPracticeDate) {
 
     // Default to highest
     const sorted = Object.entries(pct).sort((a, b) => b[1] - a[1]);
-    const complementary = sorted.slice(1, 3).filter(([_, p]) => p >= 0.2).map(([k]) => DOMAIN_TO_PATH[k]);
+    const complementary = sorted.slice(1, 3).filter(([, p]) => p >= 0.2).map(([k]) => DOMAIN_TO_PATH[k]);
     return { path: DOMAIN_TO_PATH[sorted[0][0]], status: 'established', complementary };
 }
 

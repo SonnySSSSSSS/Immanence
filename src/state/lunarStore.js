@@ -268,7 +268,7 @@ export const useLunarStore = create(
         {
             name: 'immanence-lunar',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 return persistedState;
             },
         }

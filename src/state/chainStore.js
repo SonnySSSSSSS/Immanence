@@ -123,8 +123,6 @@ export const useChainStore = create(
                 const { activeChain } = get();
                 if (!activeChain) return modeId === 'mirror'; // Only Mirror accessible without chain
 
-                const { state } = activeChain;
-
                 switch (modeId) {
                     case 'mirror':
                         // Mirror always accessible if not locked

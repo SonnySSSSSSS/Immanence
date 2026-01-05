@@ -544,7 +544,7 @@ export const useProgressStore = create(
         {
             name: 'immanenceOS.progress',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 // Handle migrations between versions
                 // For version 1, just return the state as-is
                 return persistedState;
@@ -599,7 +599,7 @@ function calculateStreakUpdate(state, dateKey) {
  * (We don't store current, we derive it)
  */
 function deriveCurrentStreak(state) {
-    const { lastPracticeDate, longest } = state.streak;
+    const { lastPracticeDate } = state.streak;
 
     if (!lastPracticeDate) return 0;
 

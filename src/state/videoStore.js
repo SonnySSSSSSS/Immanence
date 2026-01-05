@@ -145,7 +145,7 @@ export const useVideoStore = create(
             getCompletedVideoIds: () => {
                 const state = get();
                 return Object.entries(state.byId)
-                    .filter(([_, data]) => data.completed)
+                    .filter(([, data]) => data.completed)
                     .map(([id]) => id);
             },
 
@@ -155,7 +155,7 @@ export const useVideoStore = create(
             getInProgressVideoIds: () => {
                 const state = get();
                 return Object.entries(state.byId)
-                    .filter(([_, data]) => data.progress > 0 && !data.completed)
+                    .filter(([, data]) => data.progress > 0 && !data.completed)
                     .map(([id]) => id);
             },
 
@@ -204,7 +204,7 @@ export const useVideoStore = create(
         {
             name: 'immanenceOS.videos',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 return persistedState;
             }
         }

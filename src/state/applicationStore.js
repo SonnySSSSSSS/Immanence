@@ -104,7 +104,7 @@ export const useApplicationStore = create(
         {
             name: 'immanenceOS.applicationState',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 return persistedState;
             }
         }

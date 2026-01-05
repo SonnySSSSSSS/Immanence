@@ -17,7 +17,7 @@ const storage = {
 
 export const useSigilStore = create(
     persist(
-        (set, get) => ({
+        (set) => ({
             sigils: [],
 
             addSigil: (pathData, intention = '') => {

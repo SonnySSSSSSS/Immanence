@@ -287,7 +287,7 @@ export const useWisdomStore = create(
                 const now = new Date();
 
                 return Object.entries(state.flashcardState)
-                    .filter(([_, data]) => new Date(data.nextReview) <= now)
+                    .filter(([, data]) => new Date(data.nextReview) <= now)
                     .map(([cardId]) => cardId);
             },
 
@@ -301,7 +301,7 @@ export const useWisdomStore = create(
         {
             name: 'immanenceOS.wisdom',
             version: 1,
-            migrate: (persistedState, version) => {
+            migrate: (persistedState) => {
                 // Handle migrations between versions
                 // For version 1, just return the state as-is
                 return persistedState;

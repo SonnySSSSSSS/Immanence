@@ -195,7 +195,6 @@ export const useCycleStore = create(
                 }
 
                 const oldMode = state.currentCycle.mode;
-                const oldBaseline = MODE_BASELINES[oldMode];
                 const newBaseline = MODE_BASELINES[newMode];
 
                 const { consistencyRate, practiceDays } = state.currentCycle;

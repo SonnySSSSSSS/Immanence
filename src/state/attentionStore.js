@@ -163,9 +163,9 @@ export const useAttentionStore = create(
 
                 // Get all valid weeks, sorted by date (oldest first)
                 const validWeeks = Object.entries(weeklyFeatures)
-                    .filter(([_, f]) => f.valid_week)
+                    .filter(([, f]) => f.valid_week)
                     .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([_, f]) => f);
+                    .map(([, f]) => f);
 
                 if (validWeeks.length === 0) {
                     set({ windows: { short: null, mid: null, long: null } });
@@ -221,14 +221,12 @@ export const useAttentionStore = create(
              */
             getValidWeekCount: (lastNWeeks = 12) => {
                 const { weeklyFeatures } = get();
-                const currentWeek = getWeekKey();
-
                 let count = 0;
                 const weeks = Object.entries(weeklyFeatures)
                     .sort((a, b) => b[0].localeCompare(a[0])) // Newest first
                     .slice(0, lastNWeeks);
 
-                for (const [_, features] of weeks) {
+                for (const [, features] of weeks) {
                     if (features.valid_week) count++;
                 }
                 return count;
@@ -322,7 +320,6 @@ function computeWeeklyFeatures(sessions) {
 
     // === Engagement Quality ===
     const completed = sessions.filter(s => s.exit_type === 'completed').length;
-    const abandoned = sessions.filter(s => s.exit_type === 'abandoned').length;
     const completion_rate = n > 0 ? completed / n : 0;
 
     // Interrupt rate: sessions with pause_count > 0

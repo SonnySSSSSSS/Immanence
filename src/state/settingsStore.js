@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 
 export const useSettingsStore = create(
     persist(
-        (set, get) => ({
+        (set) => ({
             // Display mode: 'sanctuary' (default cosmic UI) or 'hearth' (alternative)
             displayMode: 'sanctuary',
 
