@@ -1,7 +1,7 @@
-// src/components/Cycle/ConsistencyFoundation.jsx
-// Navigation component showing current cycle status
+import { ThoughtDetachmentOnboarding } from '../ThoughtDetachmentOnboarding.jsx';
+import { motion } from 'framer-motion';
 import { useCycleStore } from '../../state/cycleStore';
-import { useDisplayModeStore } from '../../state/displayMode.js';
+import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { useState } from 'react';
 import { CycleChoiceModal } from './CycleChoiceModal';
 
@@ -14,65 +14,108 @@ export function ConsistencyFoundation() {
     const isLight = colorScheme === 'light';
 
     const [showCycleChoice, setShowCycleChoice] = useState(false);
+    const [showThoughtDetachmentOnboarding, setShowThoughtDetachmentOnboarding] = useState(false);
 
     // No cycle active - show call to action
     if (!currentCycle) {
         return (
             <>
-                <motion.div
-                    className="p-6 rounded-3xl mb-4 border transition-all duration-500"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    style={{
-                        background: isLight
-                            ? 'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%)'
-                            : 'linear-gradient(135deg, #161625 0%, #1a1a2e 100%)',
-                        borderColor: isLight ? 'rgba(180, 140, 90, 0.25)' : 'rgba(255,255,255,0.1)',
-                        boxShadow: isLight ? '0 10px 30px rgba(180, 140, 90, 0.1)' : '0 10px 30px rgba(0,0,0,0.3)',
-                    }}
-                >
-                    <div className="flex items-center justify-between mb-3">
-                        <h3
-                            className="text-lg font-bold tracking-wide"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'white'
-                            }}
-                        >
-                            Consistency Foundation
-                        </h3>
-                        <div className="text-2xl" style={{ color: isLight ? 'rgba(180, 140, 90, 0.6)' : 'rgba(252, 211, 77, 0.6)' }}>◯</div>
-                    </div>
-
-                    <p
-                        className="text-sm font-medium mb-6 leading-relaxed"
-                        style={{
-                            fontFamily: 'var(--font-body)',
-                            color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(255, 255, 255, 0.6)'
-                        }}
-                    >
-                        Ready to establish your practice foundation? Choose your commitment structure.
-                    </p>
-
-                    <button
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    {/* Card 1: Foundation Cycle */}
+                    <motion.div
+                        className="p-6 rounded-3xl border transition-all duration-300 cursor-pointer group"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
                         onClick={() => setShowCycleChoice(true)}
-                        className="w-full px-4 py-3 rounded-xl font-bold tracking-wide transition-all active:scale-95"
                         style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '12px',
-                            background: isLight ? 'rgba(180, 140, 90, 0.8)' : '#fcd34d',
-                            color: isLight ? 'white' : 'black',
-                            boxShadow: isLight ? '0 4px 12px rgba(180, 140, 90, 0.3)' : '0 4px 12px rgba(252, 211, 77, 0.2)'
+                            background: isLight
+                                ? 'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%)'
+                                : 'linear-gradient(135deg, #161625 0%, #1a1a2e 100%)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.25)' : 'rgba(255,255,255,0.1)',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.5)' : 'rgba(252, 211, 77, 0.4)';
+                            e.currentTarget.style.boxShadow = isLight ? '0 10px 30px rgba(180, 140, 90, 0.15)' : '0 10px 30px rgba(0,0,0,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.25)' : 'rgba(255,255,255,0.1)';
+                            e.currentTarget.style.boxShadow = 'none';
                         }}
                     >
-                        BEGIN FOUNDATION CYCLE
-                    </button>
-                </motion.div>
+                        <div className="flex flex-col h-full">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="text-2xl">🌱</div>
+                            </div>
+                            <h3 className="text-sm font-bold tracking-wide mb-2" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'white' }}>
+                                Foundation Cycle
+                            </h3>
+                            <p className="text-[10px] opacity-60 leading-relaxed mb-4 flex-1">
+                                14-day structured practice to build consistency.
+                            </p>
+                            <div className="w-full py-2 rounded-xl text-[10px] font-bold text-center uppercase tracking-widest transition-colors"
+                                style={{
+                                    background: isLight ? 'rgba(180, 140, 90, 0.1)' : 'rgba(252, 211, 77, 0.1)',
+                                    color: isLight ? 'rgba(140, 100, 40, 0.8)' : '#fcd34d'
+                                }}
+                            >
+                                Begin
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Card 2: Thought Detachment Ritual */}
+                    <motion.div
+                        className="p-6 rounded-3xl border transition-all duration-300 cursor-pointer group"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        onClick={() => setShowThoughtDetachmentOnboarding(true)}
+                        style={{
+                            background: isLight
+                                ? 'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%)'
+                                : 'linear-gradient(135deg, #161625 0%, #1a1a2e 100%)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.25)' : 'rgba(255,255,255,0.1)',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.5)' : 'rgba(252, 211, 77, 0.4)';
+                            e.currentTarget.style.boxShadow = isLight ? '0 10px 30px rgba(180, 140, 90, 0.15)' : '0 10px 30px rgba(0,0,0,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.25)' : 'rgba(255,255,255,0.1)';
+                            e.currentTarget.style.boxShadow = 'none';
+                        }}
+                    >
+                        <div className="flex flex-col h-full">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="text-2xl">🌊</div>
+                            </div>
+                            <h3 className="text-sm font-bold tracking-wide mb-2" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'white' }}>
+                                Thought Ritual
+                            </h3>
+                            <p className="text-[10px] opacity-60 leading-relaxed mb-4 flex-1">
+                                5-8 recurring thoughts observation practice.
+                            </p>
+                            <div className="w-full py-2 rounded-xl text-[10px] font-bold text-center uppercase tracking-widest transition-colors"
+                                style={{
+                                    background: isLight ? 'rgba(180, 140, 90, 0.1)' : 'rgba(252, 211, 77, 0.1)',
+                                    color: isLight ? 'rgba(140, 100, 40, 0.8)' : '#fcd34d'
+                                }}
+                            >
+                                Setup
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
 
                 <CycleChoiceModal
                     isOpen={showCycleChoice}
                     onClose={() => setShowCycleChoice(false)}
                     cycleType="foundation"
+                />
+
+                <ThoughtDetachmentOnboarding
+                    isOpen={showThoughtDetachmentOnboarding}
+                    onClose={() => setShowThoughtDetachmentOnboarding(false)}
                 />
             </>
         );

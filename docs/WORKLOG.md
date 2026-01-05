@@ -10,10 +10,35 @@
 
 ### Current Status (Last Updated: 2026-01-05)
 
-- **Claude Code**: ✅ Curriculum UX improvements (v3.15.52 → v3.15.57)
-- **Gemini/Antigravity**: ✅ ESLint Semantic Cleanup - Category 5 & 9 (v3.15.60)
+- **Gemini/Antigravity**: ✅ Added Thought Detachment Ritual Card (v3.15.61)
 - **Codex CLI**: 🔄 PENDING - Timing precision meters task below
 - Codex CLI: ✅ COMPLETED — TASK-2026-01-05-A — commit 082d962 — lint 458 → 453
+
+---
+
+## 2026-01-05 12:15 - Gemini/Antigravity - COMPLETED
+
+**Task**: TASK-2026-01-05-C - Add Thought Detachment Ritual program card
+
+**Files Modified**:
+
+- `src/components/ThoughtDetachmentOnboarding.jsx` (new: 4-step onboarding modal)
+- `src/components/Cycle/ConsistencyFoundation.jsx` (added program card grid)
+- `src/App.jsx` (Bumped version to v3.15.61)
+
+**Changes**:
+
+- Added new program card in Navigation section Programs grid
+- Implemented 4-step onboarding: Welcome, Thought Collection, Priority Marking, Time Selection
+- Cancel flow returns to grid without state changes
+- Complete flow calls curriculumStore.completeOnboarding(timeSlots, thoughts)
+- Existing Foundation Cycle program functionality preserved
+
+**Version**: v3.15.61
+
+**Status**: COMPLETED
+
+**Commit**: [commit hash after commit]
 
 ---
 

@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { useCurriculumStore } from '../state/curriculumStore.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { PillButton } from './ui/PillButton';
+
+const TIME_OPTIONS = [
+    { value: '05:00', label: '5:00 AM', period: 'early' },
+    { value: '06:00', label: '6:00 AM', period: 'morning' },
+    { value: '07:00', label: '7:00 AM', period: 'morning' },
+    { value: '08:00', label: '8:00 AM', period: 'morning' },
+    { value: '09:00', label: '9:00 AM', period: 'morning' },
+    { value: '12:00', label: '12:00 PM', period: 'midday' },
+    { value: '17:00', label: '5:00 PM', period: 'evening' },
+    { value: '18:00', label: '6:00 PM', period: 'evening' },
+    { value: '19:00', label: '7:00 PM', period: 'evening' },
+    { value: '20:00', label: '8:00 PM', period: 'evening' },
+    { value: '21:00', label: '9:00 PM', period: 'night' },
+    { value: '22:00', label: '10:00 PM', period: 'night' },
+];
+
+export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
+    const [step, setStep] = useState(1);
+    const [thoughts, setThoughts] = useState([]);
+    const [currentInput, setCurrentInput] = useState('');
+    const [selectedTimes, setSelectedTimes] = useState([]);
+    
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
+    const { completeOnboarding } = useCurriculumStore();
+
+    if (!isOpen) return null;
+
+    const handleAddThought = () => {
+        if (currentInput.trim() && thoughts.length < 8) {
+            setThoughts([...thoughts, { text: currentInput.trim(), weight: 0 }]);
+            setCurrentInput('');
+        }
+    };
+
+    const handleTogglePriority = (index) => {
+        const priorityCount = thoughts.filter(t => t.weight === 1).length;
+        const newThoughts = [...thoughts];
+        if (newThoughts[index].weight === 1) {
+            newThoughts[index].weight = 0;
+        } else if (priorityCount < 2) {
+            newThoughts[index].weight = 1;
+        }
+        setThoughts(newThoughts);
+    };
+
+    const handleToggleTime = (time) => {
+        if (selectedTimes.includes(time)) {
+            setSelectedTimes(selectedTimes.filter(t => t !== time));
+        } else if (selectedTimes.length < 2) {
+            setSelectedTimes([...selectedTimes, time]);
+        }
+    };
+
+    const handleComplete = () => {
+        // Pass array of strings (e.g., ['19:00', '21:00']) as expected by curiculumStore and used in DailyPracticeCard
+        completeOnboarding(selectedTimes, thoughts);
+        onClose();
+    };
+
+    const renderStep = () => {
+        switch (step) {
+            case 1:
+                return (
+                    <div className="space-y-6 text-center animate-in fade-in duration-500">
+                        <div className="space-y-4">
+                            <h2 className="text-2xl font-display tracking-widest uppercase mb-1" style={{ color: 'var(--accent-color)' }}>
+                                Thought Detachment Ritual
+                            </h2>
+                            <p className="text-sm opacity-80 leading-relaxed">
+                                A 14-day practice observing recurring thoughts without engagement. 
+                                Not about changing thoughts, but changing your relationship to them.
+                            </p>
+                        </div>
+                        <div className="flex gap-4 justify-center pt-4">
+                            <PillButton onClick={onClose} variant="secondary">Cancel</PillButton>
+                            <PillButton onClick={() => setStep(2)} variant="primary">Continue</PillButton>
+                        </div>
+                    </div>
+                );
+            case 2:
+                return (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        <div className="text-center space-y-2">
+                            <h2 className="text-xl font-display tracking-widest uppercase" style={{ color: 'var(--accent-color)' }}>
+                                Thought Collection
+                            </h2>
+                            <p className="text-xs opacity-70">Enter 5-8 recurring thoughts that occupy your mind.</p>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text"
+                                    value={currentInput}
+                                    onChange={(e) => setCurrentInput(e.target.value)}
+                                    placeholder="I'm not good enough..."
+                                    className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-accent"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddThought()}
+                                />
+                                <PillButton onClick={handleAddThought} disabled={!currentInput.trim() || thoughts.length >= 8}>Add</PillButton>
+                            </div>
+                            
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                {thoughts.map((t, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                        <span className="text-sm italic">"{t.text}"</span>
+                                        <button onClick={() => setThoughts(thoughts.filter((_, idx) => idx !== i))} className="opacity-40 hover:opacity-100 italic text-[10px]">Remove</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 justify-center pt-4 border-t border-white/5">
+                            <PillButton onClick={() => setStep(1)} variant="secondary">Back</PillButton>
+                            <PillButton onClick={() => setStep(3)} variant="primary" disabled={thoughts.length < 5}>Continue ({thoughts.length}/8)</PillButton>
+                        </div>
+                    </div>
+                );
+            case 3:
+                return (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        <div className="text-center space-y-2">
+                            <h2 className="text-xl font-display tracking-widest uppercase" style={{ color: 'var(--accent-color)' }}>
+                                Priority Marking
+                            </h2>
+                            <p className="text-xs opacity-70">Mark 1-2 thoughts as "priority" to appear more frequently.</p>
+                        </div>
+
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                            {thoughts.map((t, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => handleTogglePriority(i)}
+                                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${t.weight === 1 ? 'bg-accent/20 border-accent' : 'bg-white/5 border-white/5 opacity-60'}`}
+                                >
+                                    <span className="text-sm italic">"{t.text}"</span>
+                                    {t.weight === 1 && <span className="text-[10px] uppercase font-bold tracking-widest text-accent">Priority</span>}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-4 justify-center pt-4 border-t border-white/5">
+                            <PillButton onClick={() => setStep(2)} variant="secondary">Back</PillButton>
+                            <PillButton onClick={() => setStep(4)} variant="primary" disabled={thoughts.filter(t => t.weight === 1).length === 0}>Continue</PillButton>
+                        </div>
+                    </div>
+                );
+            case 4:
+                return (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        <div className="text-center space-y-2">
+                            <h2 className="text-xl font-display tracking-widest uppercase" style={{ color: 'var(--accent-color)' }}>
+                                Time Selection
+                            </h2>
+                            <p className="text-xs opacity-70">Select 2 practice times for your daily rituals.</p>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-2 py-4">
+                            {TIME_OPTIONS.map(opt => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => handleToggleTime(opt.value)}
+                                    className={`p-2 rounded-lg text-[10px] border transition-all ${selectedTimes.includes(opt.value) ? 'bg-accent text-black border-accent' : 'bg-white/5 border-white/10 opacity-60'}`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-4 justify-center pt-4 border-t border-white/5">
+                            <PillButton onClick={() => setStep(3)} variant="secondary">Back</PillButton>
+                            <PillButton onClick={handleComplete} variant="primary" disabled={selectedTimes.length < 2}>Start Program</PillButton>
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} />
+            
+            <div 
+                className={`relative w-full max-w-xl p-8 sm:p-12 rounded-[2rem] border transition-all duration-500 overflow-hidden ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
+                style={{ boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
+            >
+                {/* Step indicator */}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className={`h-1 rounded-full transition-all ${i === step ? 'w-8 bg-accent' : i < step ? 'w-4 bg-accent/40' : 'w-4 bg-white/10'}`} />
+                    ))}
+                </div>
+
+                <div className="relative pt-4">
+                    {renderStep()}
+                </div>
+            </div>
+
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+                @font-face { font-family: 'Outfit'; src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;400;700&display=swap'); }
+                :root { --font-display: 'Outfit', sans-serif; --font-body: 'Outfit', sans-serif; }
+            `}</style>
+        </div>
+    );
+}
