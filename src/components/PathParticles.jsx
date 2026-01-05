@@ -104,13 +104,14 @@ export function PathParticles({
             const colorVar = getColorVariation(i, fx.particleCount);
 
             switch (fx.motionPattern) {
-                case 'ember-mixed':
+                case 'ember-mixed': {
                     // ALL embers spawn from the ring itself
                     const emberAngle = angle + (Math.random() - 0.5) * 0.3;
                     x = centerX + Math.cos(emberAngle) * ringRadius;
                     y = centerY + Math.sin(emberAngle) * ringRadius;
                     distance = ringRadius;
                     break;
+                }
                 case 'electric-varied':
                     distance = ringRadius;
                     x = centerX + Math.cos(angle) * distance;

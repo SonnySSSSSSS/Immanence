@@ -126,7 +126,7 @@ export function RitualPortal({ onComplete, onStop }) {
 
     const renderStepContent = () => {
         switch(currentStep) {
-            case 1:
+            case 1: {
                 const preferences = loadPreferences();
                 const breathPattern = preferences.pattern || { inhale: 4, hold1: 4, exhale: 4, hold2: 4 };
                 return (
@@ -151,6 +151,7 @@ export function RitualPortal({ onComplete, onStop }) {
                         </p>
                     </div>
                 );
+            }
             case 2:
             case 3:
                 return <VisualMapDisplay isPulsing={currentStep === 3} />;

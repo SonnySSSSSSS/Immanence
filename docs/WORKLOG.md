@@ -11,9 +11,34 @@
 ### Current Status (Last Updated: 2026-01-05)
 
 - **Claude Code**: ✅ Curriculum UX improvements (v3.15.52 → v3.15.57)
-- **Gemini/Antigravity**: ✅ Layout Overflow Fix & Aesthetic Polishing (v3.15.59)
+- **Gemini/Antigravity**: ✅ ESLint Semantic Cleanup - Category 5 & 9 (v3.15.60)
 - **Codex CLI**: 🔄 PENDING - Timing precision meters task below
 - Codex CLI: ✅ COMPLETED — TASK-2026-01-05-A — commit 082d962 — lint 458 → 453
+
+---
+
+## 2026-01-05 12:05 - Gemini/Antigravity - COMPLETED
+
+**Task**: ESLint Semantic Cleanup - Category 5 & 9 (Immutability & Case Declarations)
+
+**Files Modified**:
+
+- `src/components/BreathingRing.jsx` (Category 5: Moved function declarations above useEffect usage)
+- `src/components/VideoPlayer.jsx` (Category 5: Moved useCallback handlers above useEffect and updated dependencies)
+- `src/components/PathParticles.jsx` (Category 9: Wrapped `ember-mixed` case in braces to allow lexical declarations)
+- `src/components/SensorySession.jsx` (Category 9: Wrapped `bodyScan` case in braces)
+- `src/components/RitualPortal.jsx` (Category 9: Wrapped step 1 case in braces)
+- `src/App.jsx` (Bumped version to v3.15.60)
+
+**Changes**:
+
+- **Correctness**: Fixed immutability issues where functions/callbacks were being accessed before their initialization in the render cycle.
+- **Lint Compliance**: Resolved `no-case-declarations` errors by scoping lexical declarations within switch-case blocks.
+- **Aesthetic Stability**: Ensured all behavior is preserved by strictly following minimal refactoring patterns.
+
+**Version**: v3.15.60
+
+**Status**: COMPLETED
 
 ---
 
@@ -1208,15 +1233,16 @@ D:\Unity Apps\immanence-os
 ---
 ```
 
-
 ## 2026-01-05 10:22 - Codex CLI - COMPLETED
 
 **Task**: TASK-2026-01-05-B - Remove no-unused-vars in App entrypoints
 
 **Files Modified**:
+
 - src/App.jsx (removed unused: React default import, SECTION_LABELS, setDefaultView, setIsMinimized, currentLabel, updateDefaultView, handleDoubleTap param)
 
 **Changes**:
+
 - Removed 1 unused import
 - Removed 6 unused variables/functions
 - No behavior changes
@@ -1236,12 +1262,14 @@ D:\Unity Apps\immanence-os
 **Task**: TASK-2026-01-05-B - Remove no-unused-vars in src/components (slice 1)
 
 **Files Modified**:
+
 - src/components/ActivePathState.jsx (removed unused: isFuture)
 - src/components/ApplicationSection.jsx (removed unused: React default import, previewAttention)
 - src/components/ApplicationTrackingCard.jsx (removed unused: React default import, getWeekLogs, stage, isSanctuary, weekLogs, respondedDifferently)
 - src/components/Application/PatternReview.jsx (removed unused: React default import, completedChains)
 
 **Changes**:
+
 - Removed 2 unused imports
 - Removed 7 unused variables
 - No behavior changes
@@ -1261,11 +1289,13 @@ D:\Unity Apps\immanence-os
 **Task**: TASK-2026-01-05-B - Remove no-unused-vars in src/components (slice 2)
 
 **Files Modified**:
+
 - src/components/Application/SentenceBuilder.jsx (removed unused: React default import, Token type prop)
 - src/components/Application/VoiceInput.jsx (removed unused: React default import, onEdit prop)
 - src/components/Application/ModeTraining.jsx (removed unused: React default import, activeChain, isModeAccessible)
 
 **Changes**:
+
 - Removed 3 unused imports
 - Removed 4 unused variables/props
 - No behavior changes
@@ -1285,18 +1315,20 @@ D:\Unity Apps\immanence-os
 **Task**: TASK-2026-01-05-B - Remove no-unused-vars in hooks/utils
 
 **Files Modified**:
+
 - src/hooks/useCymaticsAudio.js (removed unused: catch param)
 - src/hooks/useEntryMemoization.js (removed unused: useCallback import)
 - src/hooks/useLockPulse.js (removed unused: animationRef, loop index)
 - src/utils/devHelpers.js (removed unused: getStageForDays, recentActivity)
-- src/utils/dynamicLighting.js (prefixed unused: _isLight)
+- src/utils/dynamicLighting.js (prefixed unused: \_isLight)
 - src/utils/geometryRenderers.js (removed unused: progressPerSegment)
 - src/utils/imagePreloader.js (removed unused: reject param)
 - src/utils/mockAttentionData.js (removed unused: variance param)
-- src/utils/stamps.js (prefixed unused: _category)
-- src/utils/thoughtRenderers.js (prefixed unused: _theme)
+- src/utils/stamps.js (prefixed unused: \_category)
+- src/utils/thoughtRenderers.js (prefixed unused: \_theme)
 
 **Changes**:
+
 - Removed 4 unused imports/variables
 - Removed 4 unused parameters
 - Prefixed 4 unused parameters
@@ -1317,6 +1349,7 @@ D:\Unity Apps\immanence-os
 **Task**: TASK-2026-01-05-B - Remove no-unused-vars in state/services
 
 **Files Modified**:
+
 - src/services/circuitIntegration.js (removed unused: getDateKey import)
 - src/services/circuitManager.js (removed unused: result assignment)
 - src/services/llmService.js (removed unused: parseError param)
@@ -1336,6 +1369,7 @@ D:\Unity Apps\immanence-os
 - src/state/wisdomStore.js (removed unused: migrate version param; fixed unused destructuring)
 
 **Changes**:
+
 - Removed unused imports, variables, and parameters
 - Adjusted unused Object.entries destructuring
 - No behavior changes

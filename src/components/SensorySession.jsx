@@ -210,7 +210,7 @@ export function SensorySession({
         switch (sensoryType) {
             case 'sakshi':
                 return <SakshiVisual elapsedSeconds={elapsedSeconds} />;
-            case 'bodyScan':
+            case 'bodyScan': {
                 const activeScan = BODY_SCANS[selectedScanId] || BODY_SCANS.full;
                 return (
                     <BodyScanVisual
@@ -222,6 +222,7 @@ export function SensorySession({
                         isLight={isLight}
                     />
                 );
+            }
             default:
                 return null;
         }
