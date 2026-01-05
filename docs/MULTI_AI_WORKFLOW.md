@@ -315,3 +315,8 @@ This ensures all AIs work in harmony without stepping on each other's toes.
 - Every spec MUST include a Recommended Executor (Codex or Antigravity). This is advisory only.
 - Claude defaults to planning/spec writing.
 - Claude implements ONLY when explicitly assigned by the human.
+
+## Worklog Exception Rule
+
+- `docs/WORKLOG.md` is ALWAYS allowed to be edited for mandatory task completion logging.
+- This exception overrides any DENYLIST in individual task specs.
