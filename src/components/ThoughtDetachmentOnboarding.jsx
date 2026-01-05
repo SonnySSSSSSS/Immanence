@@ -125,10 +125,10 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 return (
                     <div className="space-y-6 animate-in fade-in duration-500">
                         <div className="text-center space-y-2">
-                            <h2 className="text-xl font-display tracking-widest uppercase" style={{ color: 'var(--accent-color)' }}>
+                            <h2 className="uppercase text-[clamp(16px,4.8vw,22px)] tracking-[clamp(0.06em,0.8vw,0.16em)] leading-tight text-center font-display" style={{ color: 'var(--accent-color)' }}>
                                 Priority Marking
                             </h2>
-                            <p className="text-xs opacity-70">Mark 1-2 thoughts as "priority" to appear more frequently.</p>
+                            <p className="text-[clamp(11px,3.2vw,13px)] opacity-70 text-center">Mark 1-2 thoughts as "priority" to appear more frequently.</p>
                         </div>
 
                         <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -138,7 +138,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                                     onClick={() => handleTogglePriority(i)}
                                     className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${t.weight === 1 ? 'bg-accent/20 border-accent' : 'bg-white/5 border-white/5 opacity-60'}`}
                                 >
-                                    <span className="text-sm italic">"{t.text}"</span>
+                                    <span className="text-sm italic truncate flex-1 min-w-0">"{t.text}"</span>
                                     {t.weight === 1 && <span className="text-[10px] uppercase font-bold tracking-widest text-accent">Priority</span>}
                                 </button>
                             ))}
@@ -154,10 +154,10 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 return (
                     <div className="space-y-6 animate-in fade-in duration-500">
                         <div className="text-center space-y-2">
-                            <h2 className="text-xl font-display tracking-widest uppercase" style={{ color: 'var(--accent-color)' }}>
+                            <h2 className="uppercase text-[clamp(16px,4.8vw,22px)] tracking-[clamp(0.06em,0.8vw,0.16em)] leading-tight text-center font-display" style={{ color: 'var(--accent-color)' }}>
                                 Time Selection
                             </h2>
-                            <p className="text-xs opacity-70">Select 2 practice times for your daily rituals.</p>
+                            <p className="text-[clamp(11px,3.2vw,12px)] opacity-70 text-center">Select 2 practice times for your daily rituals.</p>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-4">
