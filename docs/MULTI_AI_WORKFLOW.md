@@ -3,6 +3,25 @@
 ## Purpose
 This document defines the protocol for coordinating work between multiple AI assistants (Claude Code, Gemini/Antigravity, etc.) to prevent merge conflicts, code overwrites, and lost work.
 
+## Mandatory Worklog Rule (No Exceptions)
+
+**Any task is NOT DONE until `Development Worklog.md` is updated.**
+
+Implementer responsibilities for every coding task:
+- Add/update the entry under the correct date with:
+  - TASK ID
+  - Agent name
+  - Files modified
+  - Result summary (1–2 lines)
+  - Commit hash
+  - Status: COMPLETED
+
+**The worklog update MUST be included in the SAME commit as the code change.**
+
+If not included, the task is considered INCOMPLETE.
+
+---
+
 ## Core Principles
 
 1. **Atomic File Ownership**: Only ONE AI works on a given file at a time
