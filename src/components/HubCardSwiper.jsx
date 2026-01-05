@@ -14,8 +14,11 @@ export function HubCardSwiper({ cards }) {
     const [[page, direction], setPage] = useState([0, 0]);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const displayMode = useDisplayModeStore(s => s.mode);
+    const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isSanctuary = displayMode === 'sanctuary';
+    
+    const cardMaxWidth = isSanctuary ? '100%' : 'min(430px, 94vw)';
+    console.log('[HubCardSwiper] viewportMode:', displayMode, 'isSanctuary:', isSanctuary, 'cardMaxWidth:', cardMaxWidth);
 
     const cardIndex = ((page % cards.length) + cards.length) % cards.length;
 
@@ -41,7 +44,7 @@ export function HubCardSwiper({ cards }) {
     };
 
     return (
-        <div className="relative w-full transition-all duration-700" style={{ maxWidth: '430px', margin: '0 auto' }}>
+        <div className="relative w-full transition-all duration-700" style={{ maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)', margin: '0 auto' }}>
             {/* Dot Indicators - Moved above card */}
             {cards.length > 1 && (
                 <div className="flex justify-center items-center gap-2 mb-3">

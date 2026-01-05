@@ -234,8 +234,8 @@ export function FourModesHome({ onSelectMode, onClose }) {
                 </div>
             )}
 
-            {/* The Chain - Horizontal Layout - Focused Centering */}
-            <div className="flex items-start justify-center gap-0 px-4">
+            {/* The Chain - 2x2 Grid on Mobile, Horizontal on Small Desktop or larger */}
+            <div className="grid grid-cols-2 sm:flex sm:items-start sm:justify-center gap-4 sm:gap-0 px-4">
                 {FOUR_MODES.map((mode, idx) => {
                     const isAccessible = isModeAccessible(mode.id);
                     const isComplete = activeChain?.[mode.id]?.locked || activeChain?.[mode.id]?.skipped || activeChain?.[mode.id]?.aborted;

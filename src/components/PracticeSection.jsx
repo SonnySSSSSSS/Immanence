@@ -1450,12 +1450,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div className="relative px-8 py-8">
           {/* Practice Type Switcher - Horizontal pills */}
           <div className="mb-6">
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 justify-items-center">
               {PRACTICES.map((p) => (
                 <button
                   key={p}
                   onClick={() => setPractice(p)}
-                  className="px-3 py-1.5 rounded-full transition-all duration-200"
+                  className="w-full mini:w-auto px-3 py-1.5 rounded-full transition-all duration-200 min-w-0"
                   style={{
                     fontFamily: 'var(--font-display)',
                     fontSize: '9px',

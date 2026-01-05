@@ -30,24 +30,31 @@ npm run deploy
 ## Critical Development Rules
 
 ### ⚠️ MANDATORY: Increment Build Version
+
 **Location**: `src/App.jsx` (around line 369)
 **Action**: Increment the patch number (last digit) after ANY code modification
 **Current format**: `v3.14.15`
 
 ### Protected Files (Show Diff First, Wait for Approval)
+
 - `src/components/Avatar.jsx`
 - `src/components/MoonOrbit.jsx`
 - `src/components/MoonGlowLayer.jsx`
 
-### Other Rules
-1. **NEVER restore from git** without explicit user permission
-2. **Avoid multi-line replacements** — Use single-line anchors for edits
-3. **Small changes only** — One thing at a time, verify before next change
-4. **DO NOT guess** — If something is missing, ASK instead of improvising
+### Turbo Execution & Verification Rules
+
+1. **TURBO-ALL**: Always set `SafeToAutoRun: true` for build, lint, formatting, and browser verification commands. Do not wait for manual approval on these.
+2. **BROWSER AUDITS**: Use `browser_subagent` proactively for visual verification at the target viewports (320px, 1080px).
+3. **NEVER restore from git** without explicit user permission.
+4. **Avoid multi-line replacements** — Use single-line anchors for edits.
+5. **Small changes only** — One thing at a time, verify before next change.
+6. **DO NOT guess** — If something is missing, ASK instead of improvising.
+7. **STOP ON FAILURE**: Only stop the flow if a build error or logical block occurs. Report success only at the end of the task.
 
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Frontend**: React 19 with JSX (no TypeScript)
 - **Build Tool**: Vite (using Rolldown variant: `rolldown-vite@7.2.5`)
 - **State Management**: Zustand with localStorage persistence
@@ -57,34 +64,40 @@ npm run deploy
 - **LLM Integration**: Ollama (local) via `/api/ollama` proxy
 
 ### Base URL Configuration
+
 The app is deployed to GitHub Pages with base path `/Immanence/` (configured in `vite.config.js`).
 
 ### Display Modes
+
 Two layout modes controlled by `displayModeStore`:
+
 - **Sanctuary**: iPad landscape width (1366px) — spacious reading mode
 - **Hearth**: Standard desktop width (1080px) — focused practice mode
 
 Two color schemes:
+
 - **Dark**: Default cosmic gradient backgrounds
 - **Light**: Warm parchment aesthetic
 
 ## Key Architectural Patterns
 
 ### State Management (Zustand)
+
 All stores use the `persist` middleware with localStorage. Key stores:
 
-| Store | Purpose | Storage Key |
-|-------|---------|-------------|
-| `progressStore` | Session tracking, streaks, benchmarks | `immanence-progress` |
-| `applicationStore` | Awareness tracking & Intention | `immanence-application` |
-| `chainStore` | Four Modes chains | `immanence-chains` |
-| `cycleStore` | Cycle & consistency tracking | `immanence-cycle` |
-| `waveStore` | Big Five personality profile | `immanence-wave-profile` |
-| `lunarStore` | Lunar cycle tracking | `immanence-lunar` |
-| `attentionStore` | Attention path inference | `immanence-attention` |
-| `settingsStore` | App settings & preferences | `immanence-settings` |
+| Store              | Purpose                               | Storage Key              |
+| ------------------ | ------------------------------------- | ------------------------ |
+| `progressStore`    | Session tracking, streaks, benchmarks | `immanence-progress`     |
+| `applicationStore` | Awareness tracking & Intention        | `immanence-application`  |
+| `chainStore`       | Four Modes chains                     | `immanence-chains`       |
+| `cycleStore`       | Cycle & consistency tracking          | `immanence-cycle`        |
+| `waveStore`        | Big Five personality profile          | `immanence-wave-profile` |
+| `lunarStore`       | Lunar cycle tracking                  | `immanence-lunar`        |
+| `attentionStore`   | Attention path inference              | `immanence-attention`    |
+| `settingsStore`    | App settings & preferences            | `immanence-settings`     |
 
 ### Component Hierarchy
+
 ```
 App.jsx (Root)
 ├── Background.jsx          # Cosmic/parchment background
@@ -102,6 +115,7 @@ App.jsx (Root)
 ```
 
 ### Four Modes System
+
 Sequential cognitive processing chain: **Mirror → Prism → Wave → Sword**
 
 - **Mirror**: Neutral observation with E-Prime validation (LLM-powered)
@@ -112,21 +126,26 @@ Sequential cognitive processing chain: **Mirror → Prism → Wave → Sword**
 **Chain State Flow**: Each mode must be "locked" before proceeding to the next. Chains are stored in `chainStore` with detailed validation results.
 
 ### Cycle & Consistency System
+
 Three cycle types:
+
 - **Foundation**: 14 days (for beginners)
 - **Transformation**: 90 days (for intermediate)
 - **Integration**: 180 days (for advanced)
 
 Two modes:
+
 - **Consecutive**: 100% consistency required
 - **Flexible**: 67% consistency required
 
 **Checkpoints** occur every 14 days. Users can switch modes at checkpoints based on consistency rate.
 
 ### LLM Integration (Ollama)
+
 Local LLM service at `http://localhost:11434` proxied through Vite as `/api/ollama`.
 
 **Key Functions** (in `src/services/llmService.js`):
+
 - `validateMirrorEntry()` - E-Prime compliance check
 - `evaluatePrismInterpretations()` - Interpretation quality check
 - `evaluateWaveCoherence()` - Emotional coherence validation
@@ -135,7 +154,9 @@ Local LLM service at `http://localhost:11434` proxied through Vite as `/api/olla
 **Setup**: Install Ollama and run `ollama pull gemma3:1b`
 
 ### Avatar System
+
 Multi-layer 3D avatar with:
+
 - **Rune Ring**: Outer rotating ring (62.4s clockwise)
 - **Sigil Core**: Inner rotating sigil (249.6s counter-clockwise, 25% speed of ring)
 - **PathParticles**: Canvas-based particle system with 12+ breath-synced motion patterns
@@ -146,6 +167,7 @@ Multi-layer 3D avatar with:
 Each stage/path combo has unique accent colors and particle effects defined in `src/theme/stageColors.js` and `src/data/pathFX.js`.
 
 ### Practice Types
+
 1. **Breath & Stillness**: Configurable patterns (Box, 4-7-8, Resonance, Custom) with tap timing accuracy
 2. **Visualization**: Sacred geometry with 3D rendering (Flower of Life, Sri Yantra, etc.)
 3. **Vipassana**: Cognitive & Somatic observation with themed visuals
@@ -156,6 +178,7 @@ Each stage/path combo has unique accent colors and particle effects defined in `
 8. **Circuit Mode**: Multi-path sequential practice sessions
 
 ### Awareness Tracking
+
 Temporal resonance model: **Gesture → Trace → Pattern → Direction**
 
 1. **Gesture** (`AwarenessCompass.jsx`): Swipe-based logging with 8 directions (N, NE, E, SE, S, SW, W, NW)
@@ -168,6 +191,7 @@ Temporal resonance model: **Gesture → Trace → Pattern → Direction**
 ## UI/UX Design Principles
 
 ### Meditative Practice Aesthetic
+
 - **High-tech HUD over cosmic chaos**: Interface that listens, not demands
 - **One dominant visual anchor** per screen
 - **Local quiet zones**: Glass capsule containers with backdrop blur
@@ -175,6 +199,7 @@ Temporal resonance model: **Gesture → Trace → Pattern → Direction**
 - **Motion transfers**: Animation flows, doesn't stack; freeze everything except focus point
 
 ### Visual Elements
+
 - **Glass capsules**: Thin white strokes, `backdrop-filter: blur(12px)`
 - **Serif fonts**: Cinzel (sacred), Playfair Display (headers), Crimson Pro (body)
 - **Fine gold hairline rules**: Avoid thick glows
@@ -182,7 +207,9 @@ Temporal resonance model: **Gesture → Trace → Pattern → Direction**
 - **Text pulsing**: Collapsible affordances pulse when idle, stop on hover
 
 ### Color Mapping
+
 **Stage Colors** (defined in `src/theme/stageColors.js`):
+
 - Seedling: Soft greens, pale gold
 - Ember: Warm oranges, copper
 - Flame: Deep reds, bright gold
@@ -190,6 +217,7 @@ Temporal resonance model: **Gesture → Trace → Pattern → Direction**
 - Stellar: Cosmic purples, white
 
 **Sound Frequencies** (100-500Hz):
+
 - 100-200Hz: Warm Orange #FF8C42 (grounding)
 - 200-300Hz: Yellow #FFD93D (energizing)
 - 300-400Hz: Green #6BCF7F (balance)
@@ -239,6 +267,7 @@ public/
 ## DevPanel Access
 
 Press **Ctrl+Shift+D** or click 🎨 button in header to open developer panel:
+
 - Avatar preview with stage/path selection
 - Lunar progress controls
 - Path ceremony triggers
@@ -249,29 +278,34 @@ Press **Ctrl+Shift+D** or click 🎨 button in header to open developer panel:
 ## Common Development Tasks
 
 ### Adding a New Practice Type
+
 1. Define practice in `src/data/practiceFamily.js`
 2. Create visual component in `src/components/`
 3. Add session recording logic to `practiceStore.js`
 4. Update `PracticeSection.jsx` to render new type
 
 ### Adding a New Ritual
+
 1. Create ritual definition in `src/data/rituals/{category}/{name}.js`
 2. Follow structure: `{ id, name, category, steps[], pathImpact, frictionMapping }`
 3. Import in `src/data/rituals/ritualCategories.js`
 
 ### Modifying Avatar Appearance
+
 1. **PROTECTED FILE**: Show diff first, wait for approval
 2. Edit `src/components/Avatar.jsx`
 3. Test all stage/path combinations in DevPanel
 4. Increment version in App.jsx
 
 ### Adding a New Zustand Store
+
 1. Create in `src/state/{name}Store.js`
 2. Use `persist` middleware with unique storage key
 3. Define clear actions and selectors
 4. Import and use in components
 
 ### Updating LLM Prompts
+
 1. Edit system prompts in `src/services/llmService.js`
 2. Test validation in DevPanel → LLM Test Panel
 3. Ensure Ollama is running (`ollama list`)
@@ -279,6 +313,7 @@ Press **Ctrl+Shift+D** or click 🎨 button in header to open developer panel:
 ## Backup & Restore Strategy
 
 **Structure**:
+
 - `D:\Unity Apps\immanence-os` — Main development folder
 - `D:\Unity Apps\immanence-os-backup` — Git backup repository
 
@@ -289,21 +324,25 @@ Press **Ctrl+Shift+D** or click 🎨 button in header to open developer panel:
 ## Troubleshooting
 
 ### Dev server won't start
+
 ```bash
 rm -rf node_modules/.vite
 npm run dev
 ```
 
 ### LLM validation failing
+
 1. Check Ollama: `ollama list`
 2. DevPanel → LLM Test Panel → Test Connection
 3. See `docs/LLM_INTEGRATION.md`
 
 ### State corruption
+
 DevPanel → Data Management → Clear All Data
 Or: `localStorage.clear(); location.reload();`
 
 ### Module not found
+
 ```bash
 npm install
 ```
@@ -311,6 +350,7 @@ npm install
 ## Design Philosophy
 
 Immanence OS is a **constraint-based practice instrument**:
+
 - Observes behavior, does not prescribe
 - Provides structure without judgment
 - Uses AI for validation, not recommendation

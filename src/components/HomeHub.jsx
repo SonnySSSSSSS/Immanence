@@ -37,7 +37,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const displayMode = useDisplayModeStore(s => s.mode);
+  const displayMode = useDisplayModeStore(s => s.viewportMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
 
@@ -262,7 +262,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         <div
           className="w-full mt-2 transition-all duration-700"
           style={{
-            maxWidth: isSanctuary ? '600px' : '430px',
+            maxWidth: isSanctuary ? '600px' : 'min(430px, 94vw)',
             margin: '0 auto',
           }}
         >

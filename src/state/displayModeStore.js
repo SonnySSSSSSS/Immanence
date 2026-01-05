@@ -75,8 +75,11 @@ applyColorSchemeClass(initialColorScheme);
 // DISPLAY MODE STORE
 // ═══════════════════════════════════════════════════════════════════════════
 export const useDisplayModeStore = create((set, get) => ({
-    // Mode: 'sanctuary' | 'hearth'
+    // Mode: 'sanctuary' | 'hearth' (user preference)
     mode: loadStoredMode() ?? detectDefaultMode(),
+
+    // Viewport Mode: live viewport-based mode (updates on resize)
+    viewportMode: detectDefaultMode(),
 
     // Color Scheme: 'dark' | 'light'
     colorScheme: initialColorScheme,
@@ -147,6 +150,28 @@ export const useDisplayModeStore = create((set, get) => ({
         } catch {
             // ignore
         }
+    },
+
+    // Set viewport mode (for live resize updates)
+    setViewportMode: (viewportMode) => set({ viewportMode }),
+
+    // Initialize viewport resize listener
+    initViewportListener: () => {
+        if (typeof window === 'undefined') return;
+
+        const update = () => {
+            const next = detectDefaultMode();
+            const cur = get().viewportMode;
+            console.log('[displayModeStore] resize check - next:', next, 'cur:', cur, 'windowW:', window.innerWidth);
+            if (next !== cur) {
+                console.log('[displayModeStore] UPDATING viewportMode to:', next);
+                get().setViewportMode(next);
+            }
+        };
+
+        window.addEventListener('resize', update, { passive: true });
+        window.addEventListener('orientationchange', update, { passive: true });
+        update();
     },
 
     // Helpers

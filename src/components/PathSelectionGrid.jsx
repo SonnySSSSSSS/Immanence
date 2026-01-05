@@ -56,7 +56,7 @@ export function PathSelectionGrid() {
                 Select Your Path
             </div>
 
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {combinedEntries.map((entry) => {
                     const isSelected = selectedPathId === entry.id;
                     const isActive = entry.isProgram ? entry.isActive : activePath?.pathId === entry.id;
@@ -73,7 +73,7 @@ export function PathSelectionGrid() {
                                 }
                             }}
                             disabled={isPlaceholder}
-                            className="relative px-4 py-6 rounded-3xl border transition-all text-left overflow-hidden group"
+                            className="relative px-3 py-5 sm:px-4 sm:py-6 rounded-3xl border transition-all text-left overflow-hidden group"
                             style={{
                                 background: isLight
                                     ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%)'

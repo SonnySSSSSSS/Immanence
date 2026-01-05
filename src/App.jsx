@@ -181,6 +181,12 @@ function App() {
     startImagePreloading(import.meta.env.BASE_URL);
   }, []);
 
+  // Initialize viewport resize listener
+  const initViewportListener = useDisplayModeStore((s) => s.initViewportListener);
+  useEffect(() => {
+    initViewportListener();
+  }, [initViewportListener]);
+
   // Check curriculum state (after showWelcome is declared)
   useEffect(() => {
     // Show onboarding if needed (after welcome screen is dismissed)

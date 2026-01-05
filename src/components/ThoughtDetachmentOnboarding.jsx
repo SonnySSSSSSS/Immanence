@@ -68,10 +68,10 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 return (
                     <div className="space-y-6 text-center animate-in fade-in duration-500">
                         <div className="space-y-4">
-                            <h2 className="text-2xl font-display tracking-widest uppercase mb-1" style={{ color: 'var(--accent-color)' }}>
+                            <h2 className="uppercase text-[clamp(18px,5.2vw,26px)] tracking-[clamp(0.08em,0.9vw,0.18em)] leading-tight text-center font-display mb-1" style={{ color: 'var(--accent-color)' }}>
                                 Thought Detachment Ritual
                             </h2>
-                            <p className="text-sm opacity-80 leading-relaxed">
+                            <p className="text-[clamp(12px,3.6vw,14px)] opacity-80 leading-relaxed text-center">
                                 A 14-day practice observing recurring thoughts without engagement. 
                                 Not about changing thoughts, but changing your relationship to them.
                             </p>
@@ -86,10 +86,10 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 return (
                     <div className="space-y-6 animate-in fade-in duration-500">
                         <div className="text-center space-y-2">
-                            <h2 className="text-xl font-display tracking-widest uppercase" style={{ color: 'var(--accent-color)' }}>
+                            <h2 className="uppercase text-[clamp(18px,5.2vw,26px)] tracking-[clamp(0.08em,0.9vw,0.18em)] leading-tight text-center font-display" style={{ color: 'var(--accent-color)' }}>
                                 Thought Collection
                             </h2>
-                            <p className="text-xs opacity-70">Enter 5-8 recurring thoughts that occupy your mind.</p>
+                            <p className="text-[clamp(11px,3.2vw,12px)] opacity-70 text-center">Enter 5-8 recurring thoughts that occupy your mind.</p>
                         </div>
                         
                         <div className="space-y-4">
@@ -160,7 +160,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                             <p className="text-xs opacity-70">Select 2 practice times for your daily rituals.</p>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-2 py-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-4">
                             {TIME_OPTIONS.map(opt => (
                                 <button
                                     key={opt.value}
@@ -184,11 +184,11 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 py-6 sm:p-8 lg:p-12">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} />
             
             <div 
-                className={`relative w-full max-w-xl p-8 sm:p-12 rounded-[2rem] border transition-all duration-500 overflow-hidden ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
+                className={`relative w-full mx-auto max-w-[min(640px,calc(100vw-48px))] p-8 sm:p-10 lg:p-12 rounded-[2rem] border transition-all duration-500 overflow-hidden ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
                 style={{ boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
             >
                 {/* Step indicator */}

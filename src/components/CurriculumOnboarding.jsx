@@ -96,7 +96,7 @@ function StepPracticeExplain({ onNext, onBack, isLight }) {
                     How Practice Works
                 </h2>
 
-                <div className="grid grid-cols-3 gap-4 py-4">
+                <div className="flex flex-col sm:grid sm:grid-cols-3 gap-4 py-4">
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-15)' }}>
                             <span className="text-2xl">🌬️</span>
@@ -254,14 +254,14 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
             </p>
 
             {/* Time Grid */}
-            <div className="grid grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto custom-scrollbar">
                 {TIME_OPTIONS.map(option => {
                     const isSelected = selectedTimes.includes(option.value);
                     return (
                         <button
                             key={option.value}
                             onClick={() => toggleTime(option.value)}
-                            className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                            className="px-3 py-2 rounded-lg text-sm font-medium transition-all min-w-0"
                             style={{
                                 background: isSelected 
                                     ? 'var(--accent-color)' 
