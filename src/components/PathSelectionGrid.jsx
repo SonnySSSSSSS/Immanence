@@ -3,12 +3,49 @@ import React from 'react';
 import { getAllPaths } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { useCycleStore } from '../state/cycleStore.js';
+import { useCurriculumStore } from '../state/curriculumStore.js';
+import { CycleChoiceModal } from './Cycle/CycleChoiceModal.jsx';
+import { ThoughtDetachmentOnboarding } from './ThoughtDetachmentOnboarding.jsx';
+import { useState } from 'react';
 
 export function PathSelectionGrid() {
     const paths = getAllPaths();
     const { selectedPathId, setSelectedPath, activePath } = useNavigationStore();
+    const { currentCycle } = useCycleStore();
+    const { onboardingComplete } = useCurriculumStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+
+    const [showCycleChoice, setShowCycleChoice] = useState(false);
+    const [showThoughtDetachmentOnboarding, setShowThoughtDetachmentOnboarding] = useState(false);
+
+    // Define special program entries
+    const programs = [
+        {
+            id: "program-foundation",
+            title: "Foundation Cycle",
+            subtitle: "14-day consistency ritual",
+            glyph: "🌱",
+            duration: "14 days",
+            isProgram: true,
+            isActive: !!currentCycle,
+            onClick: () => !currentCycle && setShowCycleChoice(true)
+        },
+        {
+            id: "program-thought-detachment",
+            title: "Thought Ritual",
+            subtitle: "Detach from recurring thoughts",
+            glyph: "🌊",
+            duration: "Daily",
+            isProgram: true,
+            isActive: onboardingComplete,
+            onClick: () => setShowThoughtDetachmentOnboarding(true)
+        }
+    ];
+
+    // Combine programs and paths
+    const combinedEntries = [...programs, ...paths];
 
     return (
         <div className="w-full">
@@ -20,15 +57,21 @@ export function PathSelectionGrid() {
             </div>
 
             <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                {paths.map((path) => {
-                    const isSelected = selectedPathId === path.id;
-                    const isActive = activePath?.pathId === path.id;
-                    const isPlaceholder = path.placeholder;
+                {combinedEntries.map((entry) => {
+                    const isSelected = selectedPathId === entry.id;
+                    const isActive = entry.isProgram ? entry.isActive : activePath?.pathId === entry.id;
+                    const isPlaceholder = entry.placeholder;
 
                     return (
                         <button
-                            key={path.id}
-                            onClick={() => !isPlaceholder && setSelectedPath(path.id)}
+                            key={entry.id}
+                            onClick={() => {
+                                if (entry.isProgram) {
+                                    entry.onClick();
+                                } else if (!isPlaceholder) {
+                                    setSelectedPath(entry.id);
+                                }
+                            }}
                             disabled={isPlaceholder}
                             className="relative px-4 py-6 rounded-3xl border transition-all text-left overflow-hidden group"
                             style={{
@@ -103,7 +146,7 @@ export function PathSelectionGrid() {
                                 />
                             )}
 
-                            {/* Active path indicator */}
+                            {/* Active indicator */}
                             {isActive && (
                                 <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--accent-color)] shadow-[0_0_8px_var(--accent-60)] z-10" />
                             )}
@@ -119,7 +162,7 @@ export function PathSelectionGrid() {
                                             : 'var(--accent-70)'
                                     }}
                                 >
-                                    {path.glyph}
+                                    {entry.glyph}
                                 </div>
 
                                 {/* Title */}
@@ -130,7 +173,7 @@ export function PathSelectionGrid() {
                                         color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'rgba(253,251,245,0.92)'
                                     }}
                                 >
-                                    {path.title}
+                                    {entry.title}
                                 </h3>
 
                                 {/* Subtitle */}
@@ -143,7 +186,7 @@ export function PathSelectionGrid() {
                                         color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.65)'
                                     }}
                                 >
-                                    {path.subtitle}
+                                    {entry.subtitle}
                                 </p>
 
                                 {/* Duration */}
@@ -152,7 +195,7 @@ export function PathSelectionGrid() {
                                         className="text-[10px] uppercase tracking-wider font-bold"
                                         style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
                                     >
-                                        {path.duration} weeks
+                                        {typeof entry.duration === 'number' ? `${entry.duration} weeks` : entry.duration}
                                     </div>
                                 )}
 
@@ -169,6 +212,17 @@ export function PathSelectionGrid() {
                     );
                 })}
             </div>
+
+            <CycleChoiceModal
+                isOpen={showCycleChoice}
+                onClose={() => setShowCycleChoice(false)}
+                cycleType="foundation"
+            />
+
+            <ThoughtDetachmentOnboarding
+                isOpen={showThoughtDetachmentOnboarding}
+                onClose={() => setShowThoughtDetachmentOnboarding(false)}
+            />
         </div>
     );
 }

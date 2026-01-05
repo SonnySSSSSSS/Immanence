@@ -16,6 +16,31 @@
 
 ---
 
+## 2026-01-05 13:10 - Gemini/Antigravity - COMPLETED
+
+**Task**: TASK-2026-01-05-C (Correction 2) - Integrate Programs into Path Grid
+
+**Files Modified**:
+
+- `src/components/Cycle/ConsistencyFoundation.jsx` (removed top grid)
+- `src/components/PathSelectionGrid.jsx` (integrated programs into grid)
+
+**Changes**:
+
+- Removed the redundant 2-up program grid at the top
+- "Foundation Cycle" and "Thought Ritual" now appear as cards in the "SELECT YOUR PATH" grid
+- Used standard path card styling and active state indicators (dot)
+- clicking cards triggers respective onboarding modals
+- Programs display appropriate duration labels ("14 days", "Daily")
+
+**Version**: v3.15.62
+
+**Status**: COMPLETED
+
+**Commit**: [commit hash after commit]
+
+---
+
 ## 2026-01-05 12:55 - Gemini/Antigravity - COMPLETED
 
 **Task**: TASK-2026-01-05-C (Spec Correction) - Always-visible program grid
@@ -35,7 +60,7 @@
 
 **Status**: COMPLETED
 
-**Commit**: [commit hash after commit]
+**Commit**: 96c96a7
 
 ---
 
