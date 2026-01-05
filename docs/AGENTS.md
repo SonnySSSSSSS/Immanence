@@ -23,6 +23,7 @@ No agent may override a higher authority.
 - Produces task specs
 - Defines file scope and constraints
 - Does NOT implement unless explicitly assigned
+- **MUST follow "Planning Constraint — Reuse First" when creating specs (see below)**
 
 ### Gemini / Antigravity
 - Implements complex or multi-file tasks
@@ -56,6 +57,61 @@ If any of the above are missing, the task is invalid.
 - Files listed in an ACTIVE task are LOCKED.
 - Other agents must not modify locked files.
 - No “small fixes” or “while I’m here” edits.
+
+---
+
+## Planning Constraint — Reuse First
+
+**Applies to:** All planning agents (Claude Code, Codex CLI, Gemini/Antigravity when creating specs, any LLM writing task specs)
+
+Before proposing any NEW component, hook, store, or utility, you MUST:
+
+1. **Explicitly list existing components or systems** that may already serve this role
+2. **State whether each can be:**
+   - Reused AS-IS
+   - Reused with minor extension
+   - Unsuitable (with specific reason)
+3. **Only propose a new component** if reuse would cause more complexity than it removes
+
+**If reuse is possible, the plan MUST prefer reuse.**
+
+### Example (Good)
+
+```markdown
+## Component Analysis
+
+**Requirement:** Display ritual session with timer and step progression
+
+**Existing Components:**
+1. `RitualSession.jsx` - Can be reused AS-IS
+   - Already has intro/active/completion flow
+   - Already has timer logic with pause/resume
+   - Already has step progression
+   - **Decision: REUSE**
+
+2. `RitualStepDisplay.jsx` - Can be reused with minor extension
+   - Already displays step instructions and images
+   - Needs addition of thought text display for Step 2
+   - **Decision: REUSE + EXTEND**
+
+**New Components:**
+None required. Reusing existing ritual components.
+```
+
+### Example (Bad)
+
+```markdown
+## Component Analysis
+
+**Requirement:** Display ritual session with timer and step progression
+
+**New Components:**
+- `ThoughtDetachmentRitualSession.jsx` - New session component
+- `ThoughtDetachmentRitualTimer.jsx` - Custom timer
+- `ThoughtDetachmentStepDisplay.jsx` - Step display
+
+❌ REJECTED: Did not analyze existing components for reuse
+```
 
 ---
 

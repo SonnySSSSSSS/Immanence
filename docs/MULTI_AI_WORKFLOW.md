@@ -316,6 +316,23 @@ This ensures all AIs work in harmony without stepping on each other's toes.
 - Claude defaults to planning/spec writing.
 - Claude implements ONLY when explicitly assigned by the human.
 
+## Planning Constraint — Reuse First
+
+**Applies to:** All planning agents (Claude Code, Codex CLI, Gemini/Antigravity when creating specs, any LLM writing task specs)
+
+Before proposing any NEW component, hook, store, or utility, you MUST:
+
+1. **Explicitly list existing components or systems** that may already serve this role
+2. **State whether each can be:**
+   - Reused AS-IS
+   - Reused with minor extension
+   - Unsuitable (with specific reason)
+3. **Only propose a new component** if reuse would cause more complexity than it removes
+
+**If reuse is possible, the plan MUST prefer reuse.**
+
+See `docs/AGENTS.md` for detailed examples of good vs. bad component analysis.
+
 ## Worklog Exception Rule
 
 - `docs/WORKLOG.md` is ALWAYS allowed to be edited for mandatory task completion logging.

@@ -50,6 +50,25 @@ D:\Unity Apps\immanence-os
 
 ---
 
+## PLANNING CONSTRAINT — REUSE FIRST
+
+**Applies to:** All planning agents (Claude Code, Codex CLI, Gemini/Antigravity when creating specs, any LLM writing task specs)
+
+Before proposing any NEW component, hook, store, or utility, you MUST:
+
+1. **Explicitly list existing components or systems** that may already serve this role
+2. **State whether each can be:**
+   - Reused AS-IS
+   - Reused with minor extension
+   - Unsuitable (with specific reason)
+3. **Only propose a new component** if reuse would cause more complexity than it removes
+
+**If reuse is possible, the plan MUST prefer reuse.**
+
+See `docs/AGENTS.md` for detailed examples of good vs. bad component analysis.
+
+---
+
 ## HANDOFF PROCESS
 
 1. **Claude creates component skeleton:**
@@ -57,7 +76,7 @@ D:\Unity Apps\immanence-os
    export function ExampleComponent() {
      const { data } = useStore();
      const handleClick = () => { /* logic */ };
-     
+
      return (
        <div className="placeholder">
          <h1>{data.title}</h1>
