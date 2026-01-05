@@ -205,15 +205,13 @@ export function ApplicationTrackingCard() {
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-2 opacity-20">
-                <div className="h-[1px] flex-1 bg-current" style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }} />
+            <div className="flex items-center justify-center px-2 opacity-20">
                 <span
-                    className="text-[7px] font-black uppercase tracking-[0.6em] mx-3"
+                    className="text-[7px] font-black uppercase tracking-[0.6em]"
                     style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }}
                 >
                     FIELD
                 </span>
-                <div className="h-[1px] flex-1 bg-current" style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }} />
             </div>
         </div>
     );

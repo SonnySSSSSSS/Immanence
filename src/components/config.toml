@@ -1,0 +1,13 @@
+# Fast-safe defaults
+model = "gpt-5-codex-mini"
+review_model = "gpt-5-codex-mini"
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Reduce latency / overthinking on mechanical tasks
+model_reasoning_effort = "low"
+
+[features]
+# Speeds up repeated commands by reusing environment snapshots
+shell_snapshot = true

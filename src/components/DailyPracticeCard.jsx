@@ -116,7 +116,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        opacity: isLight ? 0.35 : 0.6,
+                        opacity: isLight ? 0.21 : 0.36,
                         mixBlendMode: isLight ? 'multiply' : 'screen',
                     }}
                 />
@@ -207,7 +207,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         <div
             className="w-full relative transition-all duration-700 ease-in-out"
             style={{
-                maxWidth: isSanctuary ? '700px' : '430px',
+                maxWidth: '430px',
                 margin: '0 auto',
             }}
         >
@@ -228,6 +228,32 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
                     }}
                 >
+                    {/* Parchment Base Wallpaper (Entire Card) */}
+                    {isLight && (
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.png)`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                opacity: 0.85,
+                                mixBlendMode: 'multiply',
+                            }}
+                        />
+                    )}
+
+                    {/* Canvas Grain Texture (Entire Card) */}
+                    {isLight && (
+                        <div
+                            className="absolute inset-0 pointer-events-none opacity-[0.05]"
+                            style={{
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.png)`,
+                                backgroundSize: '200px',
+                                mixBlendMode: 'multiply',
+                            }}
+                        />
+                    )}
+
                     {/* TWO-COLUMN LAYOUT */}
                     <div className="flex">
                         {/* LEFT COLUMN: Background Image */}
@@ -247,28 +273,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
                                             backgroundSize: 'cover',
                                             backgroundPosition: 'center left',
-                                            opacity: 0.9,
-                                        }}
-                                    />
-                                    {/* Parchment Base */}
-                                    <div
-                                        className="absolute inset-0 pointer-events-none"
-                                        style={{
-                                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.png)`,
-                                            backgroundSize: 'cover',
-                                            backgroundPosition: 'center',
-                                            opacity: 0.85,
+                                            opacity: 0.54,
                                             mixBlendMode: 'multiply',
-                                        }}
-                                    />
-                                    {/* Canvas Grain */}
-                                    <div
-                                        className="absolute inset-0 pointer-events-none"
-                                        style={{
-                                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.canvasGrain})`,
-                                            backgroundSize: '256px 256px',
-                                            mixBlendMode: 'multiply',
-                                            opacity: 0.05,
                                         }}
                                     />
                                 </>
@@ -282,9 +288,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         }}
                                     />
                                     {/* Cosmic Feather / Black Hole */}
-                                    <div 
+                                    <div
                                         className="absolute inset-0 overflow-hidden pointer-events-none z-1"
-                                        style={{ opacity: 0.4, mixBlendMode: 'screen' }}
+                                        style={{ opacity: 0.24, mixBlendMode: 'screen' }}
                                     >
                                         <div 
                                             className="absolute inset-0"
@@ -299,7 +305,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 </>
                             )}
                             
-                            {/* Day Number Overlay with Labels */}
                             {/* Day Number Overlay with Labels */}
                             <div 
                                 className="absolute top-4 left-4 z-10"
@@ -371,7 +376,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                             {/* Soft fade edge to right */}
                             <div 
-                                className="absolute inset-y-0 right-0 w-8 pointer-events-none"
+                                className="absolute inset-y-0 right-0 w-6 pointer-events-none"
                                 style={{
                                     background: isLight 
                                         ? 'linear-gradient(to right, transparent, #faf6ee)'
@@ -406,97 +411,132 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                             {/* Practice Legs List */}
                             <div className="flex-1 space-y-2">
-                                {legs.map((leg) => (
-                                    <div
-                                        key={`${dayNumber}-${leg.legNumber}`}
-                                        className="flex items-center justify-between gap-2 p-2.5 rounded-xl transition-all"
-                                        style={{
-                                            background: leg.completed 
-                                                ? (isLight ? 'rgba(100, 150, 100, 0.08)' : 'rgba(100, 150, 100, 0.1)') 
-                                                : (isLight ? 'rgba(60, 50, 35, 0.03)' : 'rgba(255, 255, 255, 0.03)'),
-                                        }}
-                                    >
-                                        {/* Left: Status + Info */}
-                                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                            {/* Status Icon */}
-                                            <div style={{
-                                                width: '22px',
-                                                height: '22px',
-                                                borderRadius: '50%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '10px',
-                                                fontWeight: 700,
-                                                flexShrink: 0,
-                                                background: leg.completed ? 'var(--accent-color)' : (isLight ? 'rgba(60, 50, 35, 0.1)' : 'rgba(255, 255, 255, 0.1)'),
-                                                color: leg.completed ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
-                                            }}>
-                                                {leg.completed ? '✓' : leg.legNumber}
-                                            </div>
+                                {legs.map((leg, index) => {
+                                    // Determine if this is the next leg to complete
+                                    const isNextLeg = !leg.completed && legs.slice(0, index).every(l => l.completed);
+                                    const isLockedLeg = !leg.completed && !isNextLeg;
 
-                                            {/* Label + Time */}
-                                            <div className="min-w-0 flex-1">
+                                    return (
+                                        <div
+                                            key={`${dayNumber}-${leg.legNumber}`}
+                                            className="flex items-center justify-between gap-2 p-2.5 rounded-xl transition-all"
+                                            style={{
+                                                background: leg.completed
+                                                    ? (isLight ? 'rgba(100, 150, 100, 0.08)' : 'rgba(100, 150, 100, 0.1)')
+                                                    : (isLight ? 'rgba(60, 50, 35, 0.03)' : 'rgba(255, 255, 255, 0.03)'),
+                                                opacity: isLockedLeg ? 0.5 : 1,
+                                            }}
+                                        >
+                                            {/* Left: Status + Info */}
+                                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                                {/* Status Icon */}
                                                 <div style={{
-                                                    fontSize: '11px',
-                                                    fontFamily: 'var(--font-display)',
+                                                    width: '22px',
+                                                    height: '22px',
+                                                    borderRadius: '50%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '10px',
                                                     fontWeight: 700,
-                                                    color: config.textMain,
+                                                    flexShrink: 0,
+                                                    background: leg.completed ? 'var(--accent-color)' : (isLight ? 'rgba(60, 50, 35, 0.1)' : 'rgba(255, 255, 255, 0.1)'),
+                                                    color: leg.completed ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
                                                 }}>
-                                                    {leg.label || leg.practiceType}
+                                                    {leg.completed ? '✓' : leg.legNumber}
                                                 </div>
-                                                <div
-                                                    className="truncate"
-                                                    style={{
-                                                        fontSize: '9px',
-                                                        opacity: 0.6,
-                                                        color: config.textMain,
-                                                    }}
-                                                >
-                                                    {leg.time ? (typeof leg.time === 'string' ? leg.time.substring(0, 5) : String(leg.time)) : 'Anytime'}
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        {/* Right: Action */}
-                                        {!leg.completed ? (
-                                            <div className="relative flex-shrink-0">
-                                                {/* Radial glow animation */}
-                                                <div
-                                                    className="absolute inset-0 rounded-full pointer-events-none"
-                                                    style={{
-                                                        background: `conic-gradient(from 0deg, transparent 0deg, var(--accent-color) 60deg, transparent 120deg)`,
-                                                        filter: 'blur(8px)',
-                                                        opacity: 0.6,
-                                                        animation: 'radialGlow 3s linear infinite',
-                                                    }}
-                                                />
-                                                <button
-                                                    onClick={() => handleStartLeg(leg)}
-                                                    className="relative px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
-                                                    style={{
-                                                        background: 'var(--accent-color)',
-                                                        color: isLight ? '#fff' : '#000',
-                                                        boxShadow: '0 3px 10px var(--accent-30)',
-                                                    }}
-                                                >
-                                                    Start
-                                                </button>
+                                                {/* Label + Time */}
+                                                <div className="min-w-0 flex-1">
+                                                    <div style={{
+                                                        fontSize: '11px',
+                                                        fontFamily: 'var(--font-display)',
+                                                        fontWeight: 700,
+                                                        color: config.textMain,
+                                                    }}>
+                                                        {leg.label || leg.practiceType}
+                                                    </div>
+                                                    <div
+                                                        className="truncate"
+                                                        style={{
+                                                            fontSize: '9px',
+                                                            opacity: 0.6,
+                                                            color: config.textMain,
+                                                        }}
+                                                    >
+                                                        {leg.time ? (typeof leg.time === 'string' ? leg.time.substring(0, 5) : String(leg.time)) : 'Anytime'}
+                                                    </div>
+                                                    {/* Warning for locked legs */}
+                                                    {isLockedLeg && (
+                                                        <div
+                                                            style={{
+                                                                fontSize: '8px',
+                                                                fontWeight: 600,
+                                                                color: isLight ? '#D97706' : '#FBBF24',
+                                                                marginTop: '2px',
+                                                            }}
+                                                        >
+                                                            Complete previous first
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <div style={{
-                                                fontSize: '9px',
-                                                fontFamily: 'var(--font-display)',
-                                                fontWeight: 600,
-                                                color: 'var(--accent-color)',
-                                                opacity: 0.8,
-                                                flexShrink: 0,
-                                            }}>
-                                                Done
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+
+                                            {/* Right: Action */}
+                                            {!leg.completed ? (
+                                                <div className="relative flex-shrink-0">
+                                                    {/* Radial glow animation - only for next leg */}
+                                                    {isNextLeg && (
+                                                        <div
+                                                            className="absolute inset-0 rounded-full pointer-events-none"
+                                                            style={{
+                                                                background: `conic-gradient(from 0deg, transparent 0deg, var(--accent-color) 60deg, transparent 120deg)`,
+                                                                filter: 'blur(8px)',
+                                                                opacity: 0.6,
+                                                                animation: 'radialGlow 3s linear infinite',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleStartLeg(leg)}
+                                                        disabled={isLockedLeg}
+                                                        className="relative px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all"
+                                                        style={{
+                                                            background: isLockedLeg
+                                                                ? (isLight ? 'rgba(60, 50, 35, 0.2)' : 'rgba(255, 255, 255, 0.15)')
+                                                                : 'var(--accent-color)',
+                                                            color: isLockedLeg
+                                                                ? (isLight ? 'rgba(60, 50, 35, 0.4)' : 'rgba(255, 255, 255, 0.3)')
+                                                                : (isLight ? '#fff' : '#000'),
+                                                            boxShadow: isLockedLeg ? 'none' : '0 3px 10px var(--accent-30)',
+                                                            cursor: isLockedLeg ? 'not-allowed' : 'pointer',
+                                                            ...(isNextLeg && {
+                                                                transform: 'scale(1)',
+                                                            }),
+                                                            ...(!isLockedLeg && {
+                                                                '&:hover': { transform: 'scale(1.05)' },
+                                                                '&:active': { transform: 'scale(0.95)' },
+                                                            }),
+                                                        }}
+                                                    >
+                                                        Start
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{
+                                                    fontSize: '9px',
+                                                    fontFamily: 'var(--font-display)',
+                                                    fontWeight: 600,
+                                                    color: 'var(--accent-color)',
+                                                    opacity: 0.8,
+                                                    flexShrink: 0,
+                                                }}>
+                                                    Done
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                             {/* Footer */}

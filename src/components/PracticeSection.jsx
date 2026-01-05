@@ -208,10 +208,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setPreset(activeLeg.practiceConfig.breathPattern);
       }
 
-      // Auto-start the practice after a brief delay (skip configuration screen)
+      // Auto-start the practice immediately (skip configuration screen entirely)
+      // Set isRunning first to hide the config screen, then execute start
+      setIsRunning(true);
       setTimeout(() => {
-        handleStart();
-      }, 800);
+        executeStart();
+      }, 100);
     } else {
       console.warn('[useEffect] No active leg found for session:', activePracticeSession);
     }

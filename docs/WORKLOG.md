@@ -10,8 +10,448 @@
 
 ### Current Status (Last Updated: 2026-01-05)
 
-- **Claude Code**: ✅ Fixed card widths and background bleed in sanctuary mode (v3.15.44)
-- **Gemini/Antigravity**: ✅ Finalized Aurora & Completion UI (v3.15.47)
+- **Claude Code**: ✅ Curriculum UX improvements (v3.15.52 → v3.15.57)
+- **Gemini/Antigravity**: ✅ UI Refinements & Blending (v3.15.58)
+- **Codex CLI**: 🔄 PENDING - Timing precision meters task below
+
+---
+
+## 2026-01-05 08:16 - Gemini/Antigravity - COMPLETED
+
+**Task**: Refine Precision Meter layout and narrow column separator gradient
+
+**Files Modified**:
+
+- `src/components/CompactStatsCard.jsx` (shifted precision meter left by increasing right padding; improved alignment with header text)
+- `src/components/DailyPracticeCard.jsx` (narrowed vertical column separator gradient by 20% by reducing width from w-8 to w-6)
+- `src/App.jsx` (bumped version to v3.15.58)
+
+**Changes**:
+
+- **Precision Meter**: Enhanced the layout and spacing to prevent data points from touching the card's right border.
+- **Visual Polish**: Refined the transition between relic imagery and task lists for a cleaner, more integrated aesthetic.
+
+**Version**: v3.15.58
+
+**Status**: COMPLETED
+
+---
+
+## 2026-01-05 (Evening) - Claude Code - COMPLETED
+
+**Task**: Curriculum card UX improvements - sequential leg logic and auto-start optimization
+
+**Files Modified**:
+
+- `src/components/ApplicationTrackingCard.jsx` (lines 208-215: simplified footer, removed horizontal rules)
+- `src/components/DailyPracticeCard.jsx` (lines 210-250, 412-540: reduced wallpaper opacity by 40%, added sequential leg logic with visual states)
+- `src/components/CompactStatsCard.jsx` (line 541: standardized card width to 430px)
+- `src/components/HubCardSwiper.jsx` (line 44: standardized card width to 430px)
+- `src/components/PracticeSection.jsx` (lines 211-216: immediate auto-start, set isRunning=true to skip config screen)
+- `src/App.jsx` (lines 392, 466: version bump v3.15.52 → v3.15.57)
+
+**Changes**:
+
+1. **Card Width Standardization (v3.15.52)**:
+
+   - All HomeHub cards now use consistent 430px width in both Hearth and Sanctuary modes
+   - Removed sanctuary-specific width variations (600px, 700px)
+
+2. **ApplicationTrackingCard Footer Cleanup (v3.15.51)**:
+
+   - Simplified footer by removing horizontal rules
+   - Centered "FIELD" label
+
+3. **Curriculum Card Wallpaper Opacity (v3.15.51)**:
+
+   - Reduced background wallpaper opacity by 40% for better text readability
+   - Light mode: 0.9 → 0.54 (painted surface), 0.35 → 0.21 (completion card)
+   - Dark mode: 0.4 → 0.24 (cosmic asset), 0.6 → 0.36 (completion card)
+
+4. **Sequential Leg Logic (v3.15.55)**:
+
+   - Only the next incomplete leg shows glowing animation
+   - Locked legs (future legs) are dimmed to 50% opacity with muted colors
+   - Locked leg buttons are disabled with "not-allowed" cursor
+   - Warning text "Complete previous first" shown below locked legs in amber color
+   - Visual hierarchy: Next leg (bright + glow) → Completed (green check) → Locked (dimmed)
+
+5. **Curriculum Auto-Start Optimization (v3.15.56-57)**:
+   - Completely removed intermediate configuration screens
+   - Set `isRunning = true` immediately when curriculum practice starts
+   - Reduced delays from 800ms + 1400ms to just 100ms
+   - Flow now: Click Start → Direct to practice (no "BREATH & STILLNESS" screen, no Circuit screen)
+
+**Version**: v3.15.52 → v3.15.57
+
+**Status**: COMPLETED
+
+---
+
+## 2026-01-05 07:44 - Gemini/Antigravity - COMPLETED
+
+**Task**: Restore parchment background image to DailyPracticeCard
+
+**Files Modified**:
+
+- `src/components/DailyPracticeCard.jsx` (lines 225-255: applied parchment_blank.png and grain across entire card; simplified left column layers)
+- `src/App.jsx` (lines 392, 466: version bump to v3.15.54)
+- `public/assets/parchment_blank.png` ([NEW]: Generated missing asset via ComfyUI)
+
+**Changes**:
+
+- **Card Elevation**: Applied the parchment texture to the entire card middle container instead of just a column.
+- **Improved Blending**: Set `mix-blend-mode: multiply` on the ancient relic image to allow the underlying parchment texture to show through, creating a more professional "painted on paper" look.
+- **Unified Texture**: Spread the canvas grain texture across the whole card for a tactile feel.
+
+**Version**: v3.15.54
+
+**Status**: COMPLETED
+
+**Notes**: Parchment asset generated to match established "Ancient Relic" aesthetic.
+
+---
+
+## 2026-01-05 (Evening) - Codex CLI - PENDING TASK 2
+
+**Task**: Wire up timing precision meters to track practice time accuracy
+
+**Context**: The DailyPracticeCard needs to display a "TIMING PRECISION • 5-LEVEL SCALE" meter showing how close to scheduled time each practice was completed over the last 7 days. The data is already being collected but not displayed.
+
+**Files to Modify**:
+
+- `src/components/DailyPracticeCard.jsx`
+- `src/state/curriculumStore.js` (add helper function)
+
+**Implementation Instructions**:
+
+### 1. Add timing calculation helper to curriculumStore.js
+
+Add this function to the store (around line 310, after `getDayLegsWithStatus`):
+
+```javascript
+/**
+ * Calculate timing precision for a leg completion
+ * @param {string} scheduledTime - Time from practiceTimeSlots (e.g., "07:00")
+ * @param {string} completedAt - ISO timestamp from legCompletions.date
+ * @returns {number} - Minutes difference (positive = late, negative = early)
+ */
+getTimingPrecision: (scheduledTime, completedAt) => {
+    if (!scheduledTime || !completedAt) return null;
+
+    const completedDate = new Date(completedAt);
+    const [schedHours, schedMins] = scheduledTime.split(':').map(Number);
+
+    // Create scheduled date (same day as completion)
+    const scheduled = new Date(completedDate);
+    scheduled.setHours(schedHours, schedMins, 0, 0);
+
+    // Calculate difference in minutes
+    const diffMs = completedDate - scheduled;
+    const diffMins = Math.round(diffMs / 60000);
+
+    return diffMins;
+},
+
+/**
+ * Get timing precision data for last 7 days
+ * Returns array of {day, precision, category} objects
+ */
+getWeekTimingPrecision: () => {
+    const state = get();
+    const { practiceTimeSlots, legCompletions } = state;
+    const currentDay = state.getCurrentDayNumber();
+
+    // Look back 7 days
+    const data = [];
+    for (let day = Math.max(1, currentDay - 6); day <= currentDay; day++) {
+        const legs = state.getDayLegsWithStatus(day);
+
+        // For each leg, calculate precision
+        legs.forEach((leg, index) => {
+            if (leg.completed && leg.completion) {
+                const scheduledTime = practiceTimeSlots[index];
+                const precision = state.getTimingPrecision(scheduledTime, leg.completion.date);
+
+                if (precision !== null) {
+                    // Categorize: -10 to +10 mins
+                    let category = 'exact'; // within ±2 mins
+                    if (precision > 10) category = 'late-10';
+                    else if (precision > 5) category = 'late-5';
+                    else if (precision < -10) category = 'early-10';
+                    else if (precision < -5) category = 'early-5';
+
+                    data.push({
+                        day,
+                        legNumber: leg.legNumber,
+                        precision,
+                        category,
+                        scheduledTime,
+                        completedAt: leg.completion.date,
+                    });
+                }
+            }
+        });
+    }
+
+    return data;
+},
+```
+
+### 2. Add precision meter UI to DailyPracticeCard.jsx
+
+Insert this section **after the footer** (around line 560, before the closing `</div>` tags):
+
+```jsx
+{
+  /* Timing Precision Meter */
+}
+<div
+  className="mt-4 pt-4"
+  style={{
+    borderTop: isLight
+      ? "1px solid rgba(160, 120, 60, 0.1)"
+      : "1px solid var(--accent-10)",
+  }}
+>
+  {/* Header */}
+  <div className="text-center mb-3">
+    <div
+      style={{
+        fontSize: "8px",
+        fontFamily: "var(--font-display)",
+        fontWeight: 700,
+        letterSpacing: "0.2em",
+        color: config.textSub,
+        opacity: 0.6,
+      }}
+    >
+      TIMING PRECISION • 5-LEVEL SCALE
+    </div>
+  </div>
+
+  {/* Precision Chart */}
+  <div className="relative" style={{ height: "120px" }}>
+    {/* Y-axis labels */}
+    <div
+      className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[7px] font-black uppercase tracking-wider"
+      style={{
+        color: config.textSub,
+        opacity: 0.4,
+        fontFamily: "var(--font-display)",
+        width: "32px",
+      }}
+    >
+      <div>+10M</div>
+      <div>+5M</div>
+      <div style={{ opacity: 0.8 }}>EXACT</div>
+      <div>-5M</div>
+      <div>-10M</div>
+    </div>
+
+    {/* Chart area */}
+    <div className="absolute left-[36px] right-0 top-0 bottom-0">
+      {/* Grid lines */}
+      {[0, 25, 50, 75, 100].map((percent) => (
+        <div
+          key={percent}
+          className="absolute left-0 right-0 h-px"
+          style={{
+            top: `${percent}%`,
+            background: isLight
+              ? "rgba(160, 120, 60, 0.08)"
+              : "rgba(255, 255, 255, 0.05)",
+          }}
+        />
+      ))}
+
+      {/* Data points */}
+      {(() => {
+        const timingData = getWeekTimingPrecision();
+        const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
+        const currentDay = getCurrentDayNumber();
+
+        return weekdays.map((day, index) => {
+          const dayNumber = Math.max(1, currentDay - 6 + index);
+          const dayData = timingData.filter((d) => d.day === dayNumber);
+
+          return (
+            <div
+              key={index}
+              className="absolute"
+              style={{
+                left: `${(index / 6) * 100}%`,
+                transform: "translateX(-50%)",
+                top: 0,
+                bottom: 0,
+                width: "2px",
+              }}
+            >
+              {/* Weekday label */}
+              <div
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-black"
+                style={{
+                  color: config.textSub,
+                  opacity: 0.5,
+                }}
+              >
+                {day}
+              </div>
+
+              {/* Precision dots */}
+              {dayData.map((data, dotIndex) => {
+                // Map precision to Y position (-10 to +10 → 100% to 0%)
+                const clampedPrecision = Math.max(
+                  -10,
+                  Math.min(10, data.precision)
+                );
+                const yPercent = ((10 - clampedPrecision) / 20) * 100;
+
+                const dotColor =
+                  data.category === "exact"
+                    ? "var(--accent-color)"
+                    : data.category.startsWith("late")
+                    ? isLight
+                      ? "#D97706"
+                      : "#FBBF24"
+                    : isLight
+                    ? "#0891B2"
+                    : "#22D3EE";
+
+                return (
+                  <div
+                    key={dotIndex}
+                    className="absolute left-1/2 -translate-x-1/2 rounded-full"
+                    style={{
+                      top: `${yPercent}%`,
+                      width: "6px",
+                      height: "6px",
+                      background: dotColor,
+                      boxShadow: `0 0 6px ${dotColor}`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          );
+        });
+      })()}
+    </div>
+  </div>
+</div>;
+```
+
+### 3. Import the new function
+
+At the top of `DailyPracticeCard.jsx` (around line 50), add to the destructured imports:
+
+```javascript
+const {
+  onboardingComplete,
+  getCurrentDayNumber,
+  getTodaysPractice,
+  isTodayComplete,
+  getProgress,
+  getStreak,
+  getDayLegsWithStatus,
+  setActivePracticeSession,
+  getWeekTimingPrecision, // ADD THIS
+} = useCurriculumStore();
+```
+
+### 4. Visual Design Notes:
+
+- **5-level scale**: +10M (very late), +5M (late), EXACT (±2 mins), -5M (early), -10M (very early)
+- **Color coding**:
+  - Green (accent color): Exact timing (within ±2 mins)
+  - Amber: Late (+5M to +10M)
+  - Cyan: Early (-5M to -10M)
+- **Y-axis**: Time offset from scheduled
+- **X-axis**: Last 7 days (M T W T F S S)
+- **Multiple dots per day**: If both morning and evening practices were done
+
+### 5. Version bump
+
+Update to v3.15.54 in `src/App.jsx` (two locations around lines 392 and 466)
+
+**Expected Result**:
+
+- Timing precision chart appears at bottom of curriculum card
+- Shows weekday practice timing accuracy over last 7 days
+- Color-coded dots show if practice was done on time, early, or late
+- Multiple dots per day if both morning/evening practices completed
+
+**Status**: PENDING (assigned to Codex CLI)
+
+---
+
+## 2026-01-05 (Evening) - Codex CLI - PENDING TASK 1
+
+**Task**: Restore parchment background image to DailyPracticeCard
+
+**Context**: The curriculum card previously had a parchment background image layer that was removed. User wants it restored.
+
+**Files to Modify**:
+
+- `src/components/DailyPracticeCard.jsx`
+
+**Implementation Instructions**:
+
+1. **Locate the main card container** (around line 206-230):
+
+   - Look for the two-column layout section with `{/* LEFT COLUMN: Background Image */}`
+   - This contains the light/dark mode background logic
+
+2. **Add parchment background layer for light mode**:
+
+   - In the light mode section (around lines 241-263), there are currently two layers:
+
+     - Painted Surface (the relic image at 0.54 opacity)
+     - Canvas Grain (the texture at 0.05 opacity)
+
+   - **Add a third layer BETWEEN these two**:
+     ```jsx
+     {
+       /* Parchment Base */
+     }
+     <div
+       className="absolute inset-0 pointer-events-none"
+       style={{
+         backgroundImage: `url(${
+           import.meta.env.BASE_URL
+         }assets/parchment_blank.png)`,
+         backgroundSize: "cover",
+         backgroundPosition: "center",
+         opacity: 0.85,
+         mixBlendMode: "multiply",
+       }}
+     />;
+     ```
+
+3. **Layer Order** (from bottom to top):
+
+   - Parchment Base (new layer)
+   - Painted Surface (relic image)
+   - Canvas Grain (texture)
+
+4. **Notes**:
+
+   - Only add to light mode section
+   - Parchment provides base paper texture
+   - Painted surface (relic) sits on top with multiply blend
+   - Canvas grain adds final texture detail
+   - Adjust opacity values if needed for proper visual balance
+
+5. **Version bump**: Update to v3.15.53 in `src/App.jsx` (two locations around lines 392 and 466)
+
+**Expected Result**:
+
+- Light mode curriculum card should have visible parchment paper texture as background
+- The ancient relic image should blend naturally on top of the parchment
+- Canvas grain should add final detail without overpowering
+
+**Status**: PENDING (assigned to Codex CLI)
 
 ---
 
@@ -167,6 +607,7 @@ D:\Unity Apps\immanence-os
 **Changes**:
 
 - **Restructured 14-Day Curriculum**: Simplified from complex varied practices to consistent 2-practice daily pattern
+
   - **Version**: Updated from v1.0 to v2.0
   - **Description**: "A 2-week foundation program: morning breath meditation and evening thought observation ritual."
   - **Daily Structure** (all 14 days):
@@ -177,6 +618,7 @@ D:\Unity Apps\immanence-os
   - **User-Friendly**: Same pattern every day makes it easy for beginners to establish routine
 
 - **Wired Onboarding Time Slots to Curriculum**:
+
   - Modified `getDayLegsWithStatus()` in curriculumStore to inject user's practice times
   - Maps `practiceTimeSlots[0]` (first time slot from onboarding) → Leg 1 (morning breath)
   - Maps `practiceTimeSlots[1]` (second time slot from onboarding) → Leg 2 (evening ritual)
@@ -198,6 +640,7 @@ D:\Unity Apps\immanence-os
 **Status**: COMPLETED
 
 **Notes**:
+
 - Dev server tested successfully at http://localhost:5177/Immanence/ with hot module replacement
 - Simplified curriculum makes it ideal for training beginners in consistent daily practice
 - Time slots from onboarding automatically populate practice times throughout 14 days

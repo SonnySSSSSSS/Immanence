@@ -296,7 +296,7 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
             </div>
 
             {/* Main Chart Area */}
-            <div className="flex justify-between items-start pl-1 pr-6 relative z-10 h-[110px] pt-2">
+            <div className="flex justify-between items-start pl-3 pr-12 relative z-10 h-[110px] pt-2">
                 {days.map((day, i) => {
                     const data = weekOffsets[i] || { offsetMinutes: null, practiced: false };
                     const slot = getVerticalPosition(data.offsetMinutes);
@@ -538,7 +538,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
         <div
             className="w-full relative transition-all duration-700 ease-in-out"
             style={{
-                maxWidth: isSanctuary ? '600px' : '430px',
+                maxWidth: '430px',
                 margin: '0 auto',
             }}
         >
