@@ -5,7 +5,7 @@
 import { useLunarStore } from '../state/lunarStore';
 import { usePathStore } from '../state/pathStore';
 import { useProgressStore } from '../state/progressStore';
-import { STAGES, STAGE_THRESHOLDS, getStageForDays } from '../state/stageConfig';
+import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
 
 /**
  * Simulate multiple practice days
@@ -39,7 +39,7 @@ export function simulatePracticeDays(count = 1) {
  */
 export function simulateDrift(days = 7) {
     const lunarStore = useLunarStore.getState();
-    const { recentActivity, progress } = lunarStore;
+    const { progress } = lunarStore;
 
     // Create an array of missed days
     const driftActivity = [];

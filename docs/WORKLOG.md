@@ -1274,8 +1274,40 @@ D:\Unity Apps\immanence-os
 
 **Status**: COMPLETED
 
-**Commit**: [pending]
+**Commit**: c02fc02
 
 **Notes**: Part 3 of 7 - src/components cleanup for TASK-2026-01-05-B
+
+---
+
+## 2026-01-05 11:13 - Codex CLI - COMPLETED
+
+**Task**: TASK-2026-01-05-B - Remove no-unused-vars in hooks/utils
+
+**Files Modified**:
+- src/hooks/useCymaticsAudio.js (removed unused: catch param)
+- src/hooks/useEntryMemoization.js (removed unused: useCallback import)
+- src/hooks/useLockPulse.js (removed unused: animationRef, loop index)
+- src/utils/devHelpers.js (removed unused: getStageForDays, recentActivity)
+- src/utils/dynamicLighting.js (prefixed unused: _isLight)
+- src/utils/geometryRenderers.js (removed unused: progressPerSegment)
+- src/utils/imagePreloader.js (removed unused: reject param)
+- src/utils/mockAttentionData.js (removed unused: variance param)
+- src/utils/stamps.js (prefixed unused: _category)
+- src/utils/thoughtRenderers.js (prefixed unused: _theme)
+
+**Changes**:
+- Removed 4 unused imports/variables
+- Removed 4 unused parameters
+- Prefixed 4 unused parameters
+- No behavior changes
+
+**Version**: v3.15.X (no version bump)
+
+**Status**: COMPLETED
+
+**Commit**: 58e6476
+
+**Notes**: Hooks/utils cleanup for TASK-2026-01-05-B
 
 ---

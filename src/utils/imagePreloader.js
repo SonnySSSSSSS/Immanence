@@ -10,7 +10,7 @@
 export function preloadImages(imagePaths, baseUrl = '') {
     return Promise.all(
         imagePaths.map(path => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => resolve(path);
                 img.onerror = () => {

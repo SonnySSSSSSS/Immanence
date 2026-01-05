@@ -161,7 +161,7 @@ export const MOCK_PROFILES = {
         name: 'Chaotic Beginner',
         description: 'New practitioner with erratic patterns. Frequent abandonment, short sessions.',
         expectedPath: 'FORMING',
-        generateWeek: (variance = 0) => ({
+        generateWeek: () => ({
             session_count: 2 + Math.floor(Math.random() * 4),
             total_minutes: 15 + Math.floor(Math.random() * 20),
             duration_p50: 5 + Math.floor(Math.random() * 5),

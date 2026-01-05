@@ -1,7 +1,7 @@
 // src/hooks/useEntryMemoization.js
 // Phase 5: Optimize re-renders with memoization
 
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 
 /**
  * Memoize circuit entries with filtering/sorting

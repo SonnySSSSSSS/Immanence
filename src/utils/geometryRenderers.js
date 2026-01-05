@@ -106,7 +106,6 @@ export function drawTriangle(ctx, progress, config) {
 
     // Total perimeter = 3 segments
     const totalSegments = 3;
-    const progressPerSegment = 1 / totalSegments;
     const currentSegment = Math.floor(progress * totalSegments);
     const withinSegment = (progress * totalSegments) - currentSegment;
 

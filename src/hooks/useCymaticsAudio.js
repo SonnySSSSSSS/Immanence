@@ -207,7 +207,7 @@ export function useCymaticsAudio() {
                     nodes.osc.stop();
                     nodes.osc.disconnect();
                     nodes.gain.disconnect();
-                } catch (e) {
+                } catch {
                     // Oscillator may already be stopped
                 }
             }

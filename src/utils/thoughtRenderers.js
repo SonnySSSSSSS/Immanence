@@ -39,7 +39,7 @@ function createGradient(ctx, type, color, radius) {
 /**
  * Draw a bird silhouette
  */
-export function drawBird(ctx, thought, theme) {
+export function drawBird(ctx, thought, _theme) {
     const categoryData = THOUGHT_CATEGORIES[thought.category] || THOUGHT_CATEGORIES.neutral;
 
     ctx.save();
@@ -65,7 +65,7 @@ export function drawBird(ctx, thought, theme) {
 /**
  * Draw a leaf shape
  */
-export function drawLeaf(ctx, thought, theme) {
+export function drawLeaf(ctx, thought, _theme) {
     const categoryData = THOUGHT_CATEGORIES[thought.category] || THOUGHT_CATEGORIES.neutral;
 
     ctx.save();
@@ -88,7 +88,7 @@ export function drawLeaf(ctx, thought, theme) {
 /**
  * Draw a cloud (multiple overlapping circles)
  */
-export function drawCloud(ctx, thought, theme) {
+export function drawCloud(ctx, thought, _theme) {
     const categoryData = THOUGHT_CATEGORIES[thought.category] || THOUGHT_CATEGORIES.neutral;
 
     ctx.save();
@@ -116,7 +116,7 @@ export function drawCloud(ctx, thought, theme) {
 /**
  * Draw a lantern (ellipse with glow)
  */
-export function drawLantern(ctx, thought, theme) {
+export function drawLantern(ctx, thought, _theme) {
     const categoryData = THOUGHT_CATEGORIES[thought.category] || THOUGHT_CATEGORIES.neutral;
 
     ctx.save();

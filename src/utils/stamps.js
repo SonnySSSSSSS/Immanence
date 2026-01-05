@@ -120,7 +120,7 @@ export function initializeStamps() {
  * @param {string} category - 'neutral' | 'future' | 'past' | 'body' | 'evaluating'
  * @returns {{element: HTMLImageElement|HTMLVideoElement, type: 'image'|'video'}|null}
  */
-export function getStamp(theme, variant, category = 'neutral') {
+export function getStamp(theme, variant, _category = 'neutral') {
     if (!stampCache) return null;
 
     const fileNumbers = STAMP_FILES[theme];

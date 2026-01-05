@@ -22,7 +22,6 @@ export function useLockPulse() {
     const [scale, setScale] = useState(1);
     const [opacity, setOpacity] = useState(1);
     const [isPulsing, setIsPulsing] = useState(false);
-    const animationRef = useRef(null);
 
     const triggerLockPulse = useCallback((intensity = 1.0) => {
         if (isPulsing) return; // Prevent overlapping pulses
@@ -44,7 +43,7 @@ export function useLockPulse() {
         ];
 
         let totalDelay = 0;
-        sequence.forEach((step, i) => {
+        sequence.forEach((step) => {
             setTimeout(() => {
                 setScale(step.scale);
                 if (step.opacity !== undefined) {
