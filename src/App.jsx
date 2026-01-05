@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Avatar } from "./components/avatar";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
@@ -28,14 +28,6 @@ import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./App.css";
-
-const SECTION_LABELS = {
-  practice: "Practice",
-  wisdom: "Wisdom",
-  application: "Application",
-  navigation: "Navigation",
-};
-
 
 function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide }) {
   // Navigation and Application sections handle their own avatars and stage titles
@@ -134,7 +126,7 @@ function App() {
   };
 
   const [showWelcome, setShowWelcome] = useState(!getHasSeenWelcome());
-  const [defaultView, setDefaultView] = useState(getDefaultView());
+  const [defaultView] = useState(getDefaultView());
   const [activeSection, setActiveSection] = useState(() => {
     // If default view is 'navigation', start there
     return defaultView === 'navigation' ? 'navigation' : null;
@@ -147,13 +139,13 @@ function App() {
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
   const [isSigilTrackerOpen, setIsSigilTrackerOpen] = useState(false);
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized] = useState(false);
   const lastTapRef = useRef(0);
 
   // Screen Wake Lock when in Vigilance Mode
   useWakeLock(isMinimized);
 
-  const handleDoubleTap = (e) => {
+  const handleDoubleTap = () => {
     const now = Date.now();
     const delay = now - lastTapRef.current;
     if (delay < 300 && delay > 0) {
@@ -213,18 +205,6 @@ function App() {
   };
 
   const isHub = activeSection === null;
-  const currentLabel = isHub ? "Home" : SECTION_LABELS[activeSection];
-
-  // Persist default view preference
-  const updateDefaultView = (view) => {
-    setDefaultView(view);
-    try {
-      localStorage.setItem('immanenceOS.defaultView', view);
-    } catch {
-      // ignore
-    }
-  };
-
   return (
     <ThemeProvider currentStage={avatarStage}>
 

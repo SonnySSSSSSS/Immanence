@@ -13,6 +13,7 @@
 - **Claude Code**: ✅ Curriculum UX improvements (v3.15.52 → v3.15.57)
 - **Gemini/Antigravity**: ✅ Layout Overflow Fix & Aesthetic Polishing (v3.15.59)
 - **Codex CLI**: 🔄 PENDING - Timing precision meters task below
+- Codex CLI: ✅ COMPLETED — TASK-2026-01-05-A — commit 082d962 — lint 458 → 453
 
 ---
 
@@ -1206,3 +1207,26 @@ D:\Unity Apps\immanence-os
 
 ---
 ```
+
+
+## 2026-01-05 10:22 - Codex CLI - COMPLETED
+
+**Task**: TASK-2026-01-05-B - Remove no-unused-vars in App entrypoints
+
+**Files Modified**:
+- src/App.jsx (removed unused: React default import, SECTION_LABELS, setDefaultView, setIsMinimized, currentLabel, updateDefaultView, handleDoubleTap param)
+
+**Changes**:
+- Removed 1 unused import
+- Removed 6 unused variables/functions
+- No behavior changes
+
+**Version**: v3.15.X (no version bump)
+
+**Status**: COMPLETED
+
+**Commit**: bbbcf84
+
+**Notes**: Part 1 of 7 - App entrypoints cleanup for TASK-2026-01-05-B
+
+---
