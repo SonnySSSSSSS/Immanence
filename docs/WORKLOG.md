@@ -16,6 +16,29 @@
 
 ---
 
+## 2026-01-05 12:55 - Gemini/Antigravity - COMPLETED
+
+**Task**: TASK-2026-01-05-C (Spec Correction) - Always-visible program grid
+
+**Files Modified**:
+
+- `src/components/Cycle/ConsistencyFoundation.jsx` (refactored to always show grid)
+
+**Changes**:
+
+- Program grid now always visible regardless of active cycle state
+- Active program card shows "Active" badge and enhanced border styling
+- Inactive card remains fully selectable
+- Cycle summary panel preserved alongside grid when cycle is active
+
+**Version**: v3.15.61
+
+**Status**: COMPLETED
+
+**Commit**: [commit hash after commit]
+
+---
+
 ## 2026-01-05 12:15 - Gemini/Antigravity - COMPLETED
 
 **Task**: TASK-2026-01-05-C - Add Thought Detachment Ritual program card
@@ -38,7 +61,7 @@
 
 **Status**: COMPLETED
 
-**Commit**: [commit hash after commit]
+**Commit**: a262a99
 
 ---
 
