@@ -289,3 +289,10 @@ User should periodically verify:
 - [ ] Verify version matches worklog
 
 This ensures all AIs work in harmony without stepping on each other's toes.
+
+## Persistent Spec Rules
+
+- Every spec MUST start with a TASK ID in the format `TASK-YYYY-MM-DD-A`.
+- Every spec MUST include a Recommended Executor (Codex or Antigravity). This is advisory only.
+- Claude defaults to planning/spec writing.
+- Claude implements ONLY when explicitly assigned by the human.
