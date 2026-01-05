@@ -1355,9 +1355,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return (
       <section className="w-full h-full flex flex-col items-center justify-center pb-24">
         <div
-          className="rounded-[32px] relative overflow-hidden"
+          className="rounded-[32px] relative overflow-hidden w-full"
           style={{
-            width: '460px',
+            maxWidth: 'min(460px, 94vw)',
             ...(isLight ? getCardMaterial(true) : plateauMaterial),
             border: isLight ? '1px solid var(--light-border, rgba(60,50,35,0.15))' : '1px solid var(--accent-20)',
             boxShadow: isLight
@@ -1438,9 +1438,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   return (
     <section className="w-full h-full flex flex-col items-center justify-center pb-24">
       <div
-        className="rounded-[32px] relative overflow-hidden"
+        className="rounded-[32px] relative overflow-hidden w-full"
         style={{
-          width: '580px',
+          maxWidth: 'min(580px, 94vw)',
           ...(isLight ? getCardMaterial(true) : plateauMaterial),
           border: isLight ? '2px solid var(--light-border)' : '2px solid var(--accent-20)',
         }}

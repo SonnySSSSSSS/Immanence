@@ -1075,7 +1075,7 @@ export function WisdomSection() {
 
         {/* Compass container */}
         <div
-          className="relative mx-auto rounded-full"
+          className="relative mx-auto rounded-full w-full"
           style={{
             width: `${size}px`,
             height: `${size}px`,

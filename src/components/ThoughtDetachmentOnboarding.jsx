@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
@@ -27,6 +28,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     const [showSession, setShowSession] = useState(false);
     
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
     const { 
         completeOnboarding, 
@@ -38,6 +40,65 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     } = useCurriculumStore();
 
     const [activeThought, setActiveThought] = useState(null);
+    const modalRef = useRef(null);
+
+    // Diagnostic: Find ancestor creating containing block for fixed positioning
+    useEffect(() => {
+        if (!isOpen || !modalRef.current) return;
+        
+        const runDiagnostic = (trigger) => {
+            console.group(`🔍 ThoughtDetachmentOnboarding: ${trigger}`);
+            console.log('Modal element:', modalRef.current);
+            console.log('Modal computed position:', getComputedStyle(modalRef.current).position);
+            console.log('Modal getBoundingClientRect:', modalRef.current.getBoundingClientRect());
+            console.log('Window dimensions:', { innerWidth: window.innerWidth, innerHeight: window.innerHeight });
+            console.log('DisplayMode:', displayMode, 'ColorScheme:', colorScheme);
+            
+            let el = modalRef.current.parentElement;
+            let depth = 0;
+            
+            while (el && depth < 20) {
+                const styles = getComputedStyle(el);
+                const issues = [];
+                const rect = el.getBoundingClientRect();
+                
+                if (styles.transform !== 'none') issues.push(`transform: ${styles.transform}`);
+                if (styles.filter !== 'none') issues.push(`filter: ${styles.filter}`);
+                if (styles.backdropFilter !== 'none') issues.push(`backdropFilter: ${styles.backdropFilter}`);
+                if (styles.willChange !== 'auto') issues.push(`willChange: ${styles.willChange}`);
+                if (styles.contain !== 'none') issues.push(`contain: ${styles.contain}`);
+                if (styles.perspective !== 'none') issues.push(`perspective: ${styles.perspective}`);
+                if (styles.overflow !== 'visible') issues.push(`overflow: ${styles.overflow}`);
+                
+                // Also log if element is narrower than viewport
+                if (rect.width < window.innerWidth * 0.9) {
+                    issues.push(`NARROW: ${rect.width}px < viewport ${window.innerWidth}px`);
+                }
+                
+                if (issues.length > 0) {
+                    console.warn(`⚠️ Depth ${depth}: ISSUE FOUND!`, {
+                        element: el,
+                        tagName: el.tagName,
+                        className: el.className?.substring?.(0, 80) || '',
+                        issues,
+                        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+                    });
+                }
+                
+                el = el.parentElement;
+                depth++;
+            }
+            console.groupEnd();
+        };
+        
+        runDiagnostic('Initial Mount / Mode Change');
+        
+        // Also listen for resize
+        const handleResize = () => runDiagnostic('Window Resize');
+        window.addEventListener('resize', handleResize);
+        
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isOpen, colorScheme, displayMode]);
 
     if (!isOpen) return null;
 
@@ -159,7 +220,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
 
         if (onboardingComplete) {
             return (
-                <div className="space-y-8 text-center animate-in fade-in zoom-in duration-500 py-4">
+                <div className="space-y-8 text-center animate-in fade-in zoom-in duration-500 py-4 px-6">
                     <div className="space-y-4">
                         <div className="text-4xl mb-2">🌊</div>
                         <h2 className="uppercase text-[clamp(20px,6vw,28px)] tracking-widest font-display text-accent">
@@ -185,7 +246,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
         switch (step) {
             case 1:
                 return (
-                    <div className="space-y-6 text-center animate-in fade-in duration-500">
+                    <div className="space-y-6 text-center animate-in fade-in duration-500 px-6">
                         <div className="space-y-4">
                             <h2 className="uppercase text-[clamp(18px,5.2vw,26px)] tracking-[clamp(0.08em,0.9vw,0.18em)] leading-tight text-center font-display mb-1" style={{ color: 'var(--accent-color)' }}>
                                 Thought Detachment Ritual
@@ -203,7 +264,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 );
             case 2:
                 return (
-                    <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="space-y-6 animate-in fade-in duration-500 px-6">
                         <div className="text-center space-y-2">
                             <h2 className="uppercase text-[clamp(18px,5.2vw,26px)] tracking-[clamp(0.08em,0.9vw,0.18em)] leading-tight text-center font-display" style={{ color: 'var(--accent-color)' }}>
                                 Thought Collection
@@ -242,7 +303,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 );
             case 3:
                 return (
-                    <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="space-y-6 animate-in fade-in duration-500 px-6">
                         <div className="text-center space-y-2">
                             <h2 className="uppercase text-[clamp(16px,4.8vw,22px)] tracking-[clamp(0.06em,0.8vw,0.16em)] leading-tight text-center font-display" style={{ color: 'var(--accent-color)' }}>
                                 Priority Marking
@@ -271,7 +332,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 );
             case 4:
                 return (
-                    <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="space-y-6 animate-in fade-in duration-500 px-6">
                         <div className="text-center space-y-2">
                             <h2 className="uppercase text-[clamp(16px,4.8vw,22px)] tracking-[clamp(0.06em,0.8vw,0.16em)] leading-tight text-center font-display" style={{ color: 'var(--accent-color)' }}>
                                 Time Selection
@@ -301,14 +362,24 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 return null;
         }
     };
+    // Calculate max-width based on display mode
+    const panelMaxWidth = displayMode === 'hearth' 
+        ? 'min(400px, calc(100vw - 24px))' 
+        : 'min(640px, calc(100vw - 48px))';
+    
+    const containerMaxWidth = displayMode === 'hearth' ? '430px' : '100%';
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6 py-6 sm:p-8 lg:p-12">
+    return createPortal(
+        <div 
+            ref={modalRef} 
+            className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-4 sm:p-8 lg:p-12"
+            style={{ maxWidth: containerMaxWidth, margin: '0 auto', left: 0, right: 0 }}
+        >
             <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose} />
             
             <div 
-                className={`relative w-full mx-auto max-w-[min(640px,calc(100vw-48px))] p-8 sm:p-10 lg:p-12 rounded-[2rem] border transition-all duration-500 overflow-hidden ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
-                style={{ boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
+                className={`relative w-full mx-auto p-4 sm:p-8 lg:p-12 rounded-[2rem] border transition-all duration-500 overflow-hidden ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
+                style={{ boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxWidth: panelMaxWidth }}
             >
                 {/* Step indicator */}
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -329,6 +400,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 @font-face { font-family: 'Outfit'; src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;400;700&display=swap'); }
                 :root { --font-display: 'Outfit', sans-serif; --font-body: 'Outfit', sans-serif; }
             `}</style>
-        </div>
+        </div>,
+        document.body
     );
 }
