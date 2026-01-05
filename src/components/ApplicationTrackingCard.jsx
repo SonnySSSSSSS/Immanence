@@ -2,7 +2,7 @@
 // Displays awareness tracking metrics on the Home Hub
 // Read-only information card showing Application section stats
 
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -11,14 +11,12 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
 
 export function ApplicationTrackingCard() {
-    const { getWeekLogs, getStats, intention } = useApplicationStore();
+    const { getStats, intention } = useApplicationStore();
     const { activePath } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.mode);
     const theme = useTheme();
-    const stage = theme?.stage || 'flame';
     const isLight = colorScheme === 'light';
-    const isSanctuary = displayMode === 'sanctuary';
 
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
@@ -32,7 +30,6 @@ export function ApplicationTrackingCard() {
 
     // Get week stats
     const weekStats = getStats(7);
-    const weekLogs = getWeekLogs();
 
     // Get path application items if available
     const path = activePath ? getPathById(activePath.pathId) : null;
@@ -63,7 +60,6 @@ export function ApplicationTrackingCard() {
     };
 
     const totalGestures = weekStats.total || 0;
-    const respondedDifferently = weekStats.respondedDifferentlyPercent || 0;
 
     return (
         <div

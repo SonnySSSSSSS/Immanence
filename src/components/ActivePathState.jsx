@@ -99,8 +99,6 @@ export function ActivePathState() {
                     {path.weeks.map((week, idx) => {
                         const isCompleted = isWeekCompleted(week.number);
                         const isCurrent = activePath.currentWeek === week.number;
-                        const isFuture = week.number > activePath.currentWeek;
-
                         return (
                             <React.Fragment key={week.number}>
                                 <div

@@ -1230,3 +1230,28 @@ D:\Unity Apps\immanence-os
 **Notes**: Part 1 of 7 - App entrypoints cleanup for TASK-2026-01-05-B
 
 ---
+
+## 2026-01-05 10:44 - Codex CLI - COMPLETED
+
+**Task**: TASK-2026-01-05-B - Remove no-unused-vars in src/components (slice 1)
+
+**Files Modified**:
+- src/components/ActivePathState.jsx (removed unused: isFuture)
+- src/components/ApplicationSection.jsx (removed unused: React default import, previewAttention)
+- src/components/ApplicationTrackingCard.jsx (removed unused: React default import, getWeekLogs, stage, isSanctuary, weekLogs, respondedDifferently)
+- src/components/Application/PatternReview.jsx (removed unused: React default import, completedChains)
+
+**Changes**:
+- Removed 2 unused imports
+- Removed 7 unused variables
+- No behavior changes
+
+**Version**: v3.15.X (no version bump)
+
+**Status**: COMPLETED
+
+**Commit**: 5f29330
+
+**Notes**: Part 2 of 7 - src/components cleanup for TASK-2026-01-05-B
+
+---

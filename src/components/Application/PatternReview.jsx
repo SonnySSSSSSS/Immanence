@@ -2,7 +2,6 @@
 // Pattern Review: Aggregate Statistics - Mechanical Reporting Only
 // IE v1 Spec: Counts, frequencies, timelines, distributions - NO scores, judgments, or recommendations
 
-import React from 'react';
 import { useChainStore } from '../../state/chainStore.js';
 import { ACTION_TYPES, CONTEXT_CATEGORIES } from '../../data/fourModes.js';
 
@@ -47,7 +46,7 @@ function StatCard({ label, value, sublabel, color }) {
 }
 
 export function PatternReview() {
-    const { getPatternStats, completedChains } = useChainStore();
+    const { getPatternStats } = useChainStore();
     const stats = getPatternStats();
 
     if (!stats || stats.totalChains === 0) {

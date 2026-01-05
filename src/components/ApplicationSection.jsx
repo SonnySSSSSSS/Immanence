@@ -1,5 +1,5 @@
 // src/components/ApplicationSection.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { Avatar } from './avatar';
 import { StageTitle } from './StageTitle.jsx';
@@ -7,7 +7,7 @@ import { SigilSealingArea } from './SigilSealingArea.jsx';
 import { FourModesHome } from './FourModesHome.jsx';
 import { ModeDetail } from './ModeDetail.jsx';
 
-export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate }) {
+export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, onNavigate }) {
   const { activePath } = useNavigationStore();
   const [selectedModeId, setSelectedModeId] = useState(null);
   const [showFourModes, setShowFourModes] = useState(false);
