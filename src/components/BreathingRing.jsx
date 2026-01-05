@@ -75,6 +75,36 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     scale = minScale;
   }
 
+  // Trigger echo visual effect
+  const triggerEcho = () => {
+    setEcho({ id: Date.now() });
+  };
+
+  // Web Audio API sound generation
+  const playSound = (frequency) => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const ctx = audioContextRef.current;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.frequency.value = frequency;
+    osc.type = "sine";
+
+    // Quick attack, exponential decay
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+    osc.start(now);
+    osc.stop(now + 0.12);
+  };
+
   // Detect phase transitions and trigger sounds + echo
   useEffect(() => {
     const prevP = previousProgressRef.current;
@@ -131,11 +161,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     };
   }, [total, startTime]); // Re-sync when startTime changes
 
-  // Trigger echo visual effect
-  const triggerEcho = () => {
-    setEcho({ id: Date.now() });
-  };
-
   // Remove echo after animation completes
   useEffect(() => {
     if (echo) {
@@ -143,31 +168,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       return () => clearTimeout(timer);
     }
   }, [echo]);
-
-  // Web Audio API sound generation
-  const playSound = (frequency) => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    const ctx = audioContextRef.current;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.frequency.value = frequency;
-    osc.type = "sine";
-
-    // Quick attack, exponential decay
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-
-    osc.start(now);
-    osc.stop(now + 0.12);
-  };
 
   // Handle click on breathing ring - calculate error and call onTap
   const handleRingClick = () => {

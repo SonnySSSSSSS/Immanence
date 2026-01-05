@@ -2,7 +2,6 @@
 // Circuit selection UI with custom circuit builder
 // Phase 2: Wired to Zustand store via useCircuitManager
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useCircuitManager } from '../../state/circuitManager';
 import { CircuitConfig } from './CircuitConfig';
 

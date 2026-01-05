@@ -1,0 +1,13 @@
+# Exclude graveyard and backup files from ESLint
+**/*_GRAVEYARD.*
+**/*_REPAIR.*
+**/*_BACKUP.*
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Dependencies
+.vite/

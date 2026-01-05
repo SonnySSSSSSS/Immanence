@@ -42,6 +42,46 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
         };
     }, [video.id, setCurrentVideo, clearCurrentVideo]);
 
+    const handlePlayerReady = useCallback(() => {
+        setIsLoading(false);
+
+        // Start progress tracking (every 2 seconds)
+        progressIntervalRef.current = setInterval(() => {
+            if (!playerRef.current || !playerRef.current.getCurrentTime) return;
+
+            try {
+                const currentTime = playerRef.current.getCurrentTime();
+                const duration = playerRef.current.getDuration();
+
+                if (duration > 0) {
+                    const progress = currentTime / duration;
+                    updateProgress(video.id, progress, currentTime);
+
+                    // Check for completion (90%)
+                    if (progress >= 0.9) {
+                        markCompleted(video.id);
+                        onComplete?.();
+                    }
+                }
+            } catch (_e) {
+                // Player might be destroyed
+            }
+        }, 2000);
+    }, [video.id, updateProgress, markCompleted, onComplete]);
+
+    const handleStateChange = useCallback((event) => {
+        // YT.PlayerState.ENDED = 0
+        if (event.data === 0) {
+            markCompleted(video.id);
+            onComplete?.();
+        }
+    }, [video.id, markCompleted, onComplete]);
+
+    const handlePlayerError = useCallback(() => {
+        setHasError(true);
+        setIsLoading(false);
+    }, []);
+
     // Initialize YouTube Player API
     useEffect(() => {
         if (video.provider !== 'youtube') return;
@@ -79,47 +119,7 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
                 playerRef.current.destroy();
             }
         };
-    }, [video.id, video.provider]);
-
-    const handlePlayerReady = useCallback(() => {
-        setIsLoading(false);
-
-        // Start progress tracking (every 2 seconds)
-        progressIntervalRef.current = setInterval(() => {
-            if (!playerRef.current || !playerRef.current.getCurrentTime) return;
-
-            try {
-                const currentTime = playerRef.current.getCurrentTime();
-                const duration = playerRef.current.getDuration();
-
-                if (duration > 0) {
-                    const progress = currentTime / duration;
-                    updateProgress(video.id, progress, currentTime);
-
-                    // Check for completion (90%)
-                    if (progress >= 0.9) {
-                        markCompleted(video.id);
-                        onComplete?.();
-                    }
-                }
-            } catch (e) {
-                // Player might be destroyed
-            }
-        }, 2000);
-    }, [video.id, updateProgress, markCompleted, onComplete]);
-
-    const handleStateChange = useCallback((event) => {
-        // YT.PlayerState.ENDED = 0
-        if (event.data === 0) {
-            markCompleted(video.id);
-            onComplete?.();
-        }
-    }, [video.id, markCompleted, onComplete]);
-
-    const handlePlayerError = useCallback(() => {
-        setHasError(true);
-        setIsLoading(false);
-    }, []);
+    }, [video.id, video.provider, handlePlayerReady, handleStateChange, handlePlayerError]);
 
     const handleIframeLoad = () => {
         // For non-YouTube providers

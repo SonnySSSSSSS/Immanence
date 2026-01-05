@@ -14,8 +14,6 @@ export function ApplicationTrackingCard() {
     const { getStats, intention } = useApplicationStore();
     const { activePath } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.mode);
-    const theme = useTheme();
     const isLight = colorScheme === 'light';
 
     const cardRef = useRef(null);

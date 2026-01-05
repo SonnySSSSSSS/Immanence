@@ -1,10 +1,9 @@
 // src/components/Cycle/ConsistencyFoundation.jsx
 // Navigation component showing current cycle status
 import { useCycleStore } from '../../state/cycleStore';
-import { useDisplayModeStore } from '../../state/displayModeStore.js';
+import { useDisplayModeStore } from '../../state/displayMode.js';
 import { useState } from 'react';
 import { CycleChoiceModal } from './CycleChoiceModal';
-import { motion } from 'framer-motion';
 
 export function ConsistencyFoundation() {
     const currentCycle = useCycleStore((state) => state.currentCycle);
