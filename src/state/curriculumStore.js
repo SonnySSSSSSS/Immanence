@@ -238,19 +238,33 @@ export const useCurriculumStore = create(
  */
 logLegCompletion: (dayNumber, legNumber, data = {}) => {
     const legKey = `${dayNumber}-${legNumber}`;
-    set((state) => ({
-        legCompletions: {
-            ...state.legCompletions,
-            [legKey]: {
-                completed: true,
-                date: new Date().toISOString(),
-                duration: data.duration || 0,
-                focusRating: data.focusRating || null,
-                challenges: data.challenges || [],
-                notes: data.notes || '',
+    set((state) => {
+        const existingLeg = state.legCompletions[legKey] || {};
+        const existingMeta = existingLeg.meta || {};
+        
+        // Pattern A: Safe merge of metadata
+        const newMeta = { ...existingMeta };
+        
+        // Explicitly add fields from data if they are not undefined
+        if (data.durationSeconds !== undefined) newMeta.durationSeconds = data.durationSeconds;
+        if (data.thoughtObserved !== undefined) newMeta.thoughtObserved = data.thoughtObserved;
+        if (data.thoughtId !== undefined) newMeta.thoughtId = data.thoughtId;
+
+        return {
+            legCompletions: {
+                ...state.legCompletions,
+                [legKey]: {
+                    completed: true,
+                    date: new Date().toISOString(),
+                    duration: data.duration !== undefined ? data.duration : (existingLeg.duration || 0),
+                    focusRating: data.focusRating !== undefined ? data.focusRating : (existingLeg.focusRating || null),
+                    challenges: data.challenges || existingLeg.challenges || [],
+                    notes: data.notes !== undefined ? data.notes : (existingLeg.notes || ''),
+                    meta: newMeta
+                },
             },
-        },
-    }));
+        };
+    });
 },
 
 /**

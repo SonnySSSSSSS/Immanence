@@ -16,7 +16,7 @@ const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = fa
             {/* Image Section - Left/Top */}
             <div className="flex-1 flex items-center justify-center relative min-h-[40vh] md:min-h-full">
                 <AnimatePresence mode="wait">
-                    {imagePath && (
+                    {imagePath ? (
                         <motion.img
                             key={step.id}
                             src={imagePath}
@@ -31,7 +31,22 @@ const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = fa
                             exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                         />
-                    )}
+                    ) : step.content ? (
+                        <motion.div
+                            key={step.id}
+                            className={`flex items-center justify-center text-center p-8 w-full h-full`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                        >
+                            <span 
+                                className={`text-[clamp(1.5rem,5vw,3rem)] font-serif italic ${isLight ? 'text-[#5A4D3C]' : 'text-white/90'} leading-snug`}
+                                style={{ maxWidth: '90%' }}
+                            >
+                                "{step.content}"
+                            </span>
+                        </motion.div>
+                    ) : null}
                 </AnimatePresence>
 
                 {/* Pause Overlay Indicator */}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
+import RitualSession from './RitualSession.jsx';
 
 const TIME_OPTIONS = [
     { value: '05:00', label: '5:00 AM', period: 'early' },
@@ -23,10 +24,20 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     const [thoughts, setThoughts] = useState([]);
     const [currentInput, setCurrentInput] = useState('');
     const [selectedTimes, setSelectedTimes] = useState([]);
+    const [showSession, setShowSession] = useState(false);
     
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const { completeOnboarding } = useCurriculumStore();
+    const { 
+        completeOnboarding, 
+        onboardingComplete, 
+        thoughtCatalog, 
+        logLegCompletion,
+        getCurrentDayNumber,
+        getWeightedRandomThought
+    } = useCurriculumStore();
+
+    const [activeThought, setActiveThought] = useState(null);
 
     if (!isOpen) return null;
 
@@ -59,10 +70,118 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     const handleComplete = () => {
         // Pass array of strings (e.g., ['19:00', '21:00']) as expected by curiculumStore and used in DailyPracticeCard
         completeOnboarding(selectedTimes, thoughts);
+        setStep(1); // Reset step for next open
+    };
+
+    const handleRitualComplete = () => {
+        const day = getCurrentDayNumber();
+        const observedThought = activeThought ? activeThought.text : 'N/A';
+        const observedThoughtId = activeThought ? activeThought.id : null;
+        
+        // Phase 1.1 Hotfix: Explicit payload fields 
+        // duration: 3 is minutes (Legacy convention)
+        // durationSeconds: 180 is explicitly requested analytics
+        logLegCompletion(day, 1, {
+            duration: 3, 
+            durationSeconds: 180, 
+            thoughtObserved: observedThought,
+            thoughtId: observedThoughtId,
+            notes: '' 
+        });
+        
+        setActiveThought(null);
+        setShowSession(false);
         onClose();
     };
 
-    const renderStep = () => {
+    const handleStartRitual = () => {
+        const thought = getWeightedRandomThought();
+        setActiveThought(thought);
+        setShowSession(true);
+    };
+
+    // Phase 1: Define ritual locally
+    const getRitualData = () => {
+        const observedThought = activeThought ? activeThought.text : 'No thoughts found';
+        
+        return {
+            id: 'thought-detachment-ritual',
+            name: 'Thought Detachment',
+            tradition: 'Cognitive Vipassana',
+            duration: { min: 3, max: 3 },
+            history: 'Observing the movement of the mind without participation.',
+            description: 'A 3-step ritual to create distance from recurring patterns.',
+            steps: [
+                {
+                    id: 'step-1',
+                    name: 'Arrival',
+                    duration: 30,
+                    instruction: 'Sit comfortably. Close your eyes. Notice space between thoughts.',
+                },
+                {
+                    id: 'step-2',
+                    name: 'Observation',
+                    duration: 120,
+                    instruction: 'Observe this recurring thought as it arises. Watch it without judgment.',
+                    content: observedThought,
+                },
+                {
+                    id: 'step-3',
+                    name: 'Detachment',
+                    duration: 30,
+                    instruction: 'Release the thought. Return to breath. Recognize the stillness.',
+                }
+            ],
+            completion: {
+                expectedOutput: [
+                    'Increased mental distance',
+                    'Recognition of thought patterns',
+                    'Calm awareness'
+                ],
+                closingInstruction: 'Carry this detachment into your day.'
+            }
+        };
+    };
+
+    const renderContent = () => {
+        if (showSession) {
+            return (
+                <div className="absolute inset-0 z-[110] bg-black">
+                    <RitualSession 
+                        ritual={getRitualData()}
+                        onComplete={handleRitualComplete}
+                        onExit={() => setShowSession(false)}
+                        isLight={false} // Force dark for session
+                    />
+                </div>
+            );
+        }
+
+        if (onboardingComplete) {
+            return (
+                <div className="space-y-8 text-center animate-in fade-in zoom-in duration-500 py-4">
+                    <div className="space-y-4">
+                        <div className="text-4xl mb-2">🌊</div>
+                        <h2 className="uppercase text-[clamp(20px,6vw,28px)] tracking-widest font-display text-accent">
+                            Ritual Ready
+                        </h2>
+                        <p className="text-sm opacity-70 max-w-xs mx-auto">
+                            The space is prepared. Begin your observation.
+                        </p>
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 items-center">
+                        <PillButton onClick={handleStartRitual} variant="primary" className="w-full max-w-[200px]">
+                            BEGIN RITUAL
+                        </PillButton>
+                        <button onClick={onClose} className="text-xs opacity-40 hover:opacity-100 transition-opacity">
+                            Not now
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         switch (step) {
             case 1:
                 return (
@@ -199,7 +318,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                 </div>
 
                 <div className="relative pt-4">
-                    {renderStep()}
+                    {renderContent()}
                 </div>
             </div>
 
