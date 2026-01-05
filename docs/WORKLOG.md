@@ -11,8 +11,29 @@
 ### Current Status (Last Updated: 2026-01-05)
 
 - **Claude Code**: ✅ Curriculum UX improvements (v3.15.52 → v3.15.57)
-- **Gemini/Antigravity**: ✅ UI Refinements & Blending (v3.15.58)
+- **Gemini/Antigravity**: ✅ Layout Overflow Fix & Aesthetic Polishing (v3.15.59)
 - **Codex CLI**: 🔄 PENDING - Timing precision meters task below
+
+---
+
+## 2026-01-05 08:35 - Gemini/Antigravity - COMPLETED
+
+**Task**: Fix Precision Meter overflow and optimize curriculum card blending
+
+**Files Modified**:
+
+- `src/components/CompactStatsCard.jsx` (Fixed `width: calc(100% - 40px)` bug where `marginLeft` caused the card to overflow its container by 40px)
+- `src/components/DailyPracticeCard.jsx` (Aggressively reduced central gradient width to `w-4` (50% reduction) for cleaner image/text separation)
+- `src/App.jsx` (Bumped version to v3.15.59)
+
+**Changes**:
+
+- **Structural Integrity**: Resolved a hidden CSS overflow issue in the stats section that prevented previous spacing adjustments from being correctly visualized.
+- **Visual Clarity**: Significant reduction in "washout" gradient between card halves.
+
+**Version**: v3.15.59
+
+**Status**: COMPLETED
 
 ---
 

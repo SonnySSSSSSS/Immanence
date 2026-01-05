@@ -1,7 +1,24 @@
 # Immanence OS Development Workflow
 
-**Last Updated:** January 3, 2026  
+**Last Updated:** January 5, 2026
 **Dual-AI Development Model:** Claude (Backend) + Gemini/Antigravity (Frontend)
+
+---
+
+## ⚠️ CRITICAL: Working Directory
+
+**ALL AI assistants (Claude Code, Gemini/Antigravity, Codex CLI, and any other LLMs) MUST work directly in:**
+
+```
+D:\Unity Apps\immanence-os
+```
+
+**DO NOT use git worktrees.** All development happens in the main repository directory.
+
+**Why:**
+- This is the main repository with all backup systems configured
+- Git worktrees have been deprecated to maintain compatibility with existing backup workflows
+- The `work-manager.bat` backup system requires work in the main directory
 
 ---
 

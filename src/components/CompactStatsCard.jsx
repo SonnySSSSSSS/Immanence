@@ -256,7 +256,8 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
                 boxShadow: isLight
                     ? 'inset 0 2px 6px rgba(255,255,255,0.5), 0 10px 25px rgba(0,0,0,0.05)'
                     : 'inset 0 6px 25px rgba(0,0,0,0.6), 0 20px 50px rgba(0,0,0,0.5)',
-                marginLeft: '40px' // Make room for labels on the left
+                marginLeft: '40px', // Make room for labels on the left
+                width: 'calc(100% - 40px)'
             }}
         >
             {/* Header Text - ABOVE the chart, more legible */}

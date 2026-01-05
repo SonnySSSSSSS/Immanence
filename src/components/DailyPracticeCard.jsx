@@ -376,7 +376,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                             {/* Soft fade edge to right */}
                             <div 
-                                className="absolute inset-y-0 right-0 w-6 pointer-events-none"
+                                className="absolute inset-y-0 right-0 w-4 pointer-events-none"
                                 style={{
                                     background: isLight 
                                         ? 'linear-gradient(to right, transparent, #faf6ee)'
