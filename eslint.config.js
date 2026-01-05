@@ -26,4 +26,33 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['*.config.js', '*.config.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        module: 'readonly',
+        require: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['tools/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['src/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+      },
+    },
+  },
 ])
