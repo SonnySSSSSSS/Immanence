@@ -1255,3 +1255,27 @@ D:\Unity Apps\immanence-os
 **Notes**: Part 2 of 7 - src/components cleanup for TASK-2026-01-05-B
 
 ---
+
+## 2026-01-05 10:52 - Codex CLI - COMPLETED
+
+**Task**: TASK-2026-01-05-B - Remove no-unused-vars in src/components (slice 2)
+
+**Files Modified**:
+- src/components/Application/SentenceBuilder.jsx (removed unused: React default import, Token type prop)
+- src/components/Application/VoiceInput.jsx (removed unused: React default import, onEdit prop)
+- src/components/Application/ModeTraining.jsx (removed unused: React default import, activeChain, isModeAccessible)
+
+**Changes**:
+- Removed 3 unused imports
+- Removed 4 unused variables/props
+- No behavior changes
+
+**Version**: v3.15.X (no version bump)
+
+**Status**: COMPLETED
+
+**Commit**: [pending]
+
+**Notes**: Part 3 of 7 - src/components cleanup for TASK-2026-01-05-B
+
+---

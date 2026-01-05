@@ -2,7 +2,7 @@
 // Voice-to-text input with preview modal
 // Uses Web Speech API (works on Chrome, Safari iOS 14.5+, Edge)
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Check if Speech Recognition is available
@@ -11,7 +11,7 @@ const SpeechRecognition = typeof window !== 'undefined'
     : null;
 
 // Preview Modal - shows transcription before confirming
-function VoicePreviewModal({ isOpen, transcript, onConfirm, onEdit, onCancel, onRetry }) {
+function VoicePreviewModal({ isOpen, transcript, onConfirm, onCancel, onRetry }) {
     const [editMode, setEditMode] = useState(false);
     const [editedText, setEditedText] = useState(transcript);
     const inputRef = useRef(null);
@@ -399,7 +399,6 @@ export function VoiceInput({ onTranscription, lang = 'en-US', className = '' }) 
                 isOpen={showPreview}
                 transcript={transcript}
                 onConfirm={handleConfirm}
-                onEdit={() => { }}
                 onCancel={handleCancel}
                 onRetry={handleRetry}
             />

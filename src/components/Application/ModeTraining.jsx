@@ -1,6 +1,6 @@
 // src/components/Application/ModeTraining.jsx
 // Modal container for mode-based training practices
-import React, { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useModeTrainingStore, PRACTICE_STATES } from '../../state/modeTrainingStore.js';
 import { PRACTICE_DEFINITIONS, MODE_CHECK_OPTIONS } from '../../state/practiceConfig.js';
 import { useChainStore } from '../../state/chainStore.js';
@@ -84,7 +84,7 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
         shouldTriggerHarmony,
     } = useModeTrainingStore();
 
-    const { activeChain, isModeAccessible } = useChainStore();
+    useChainStore();
 
     // Chain transition state - shown after completing a chain mode
     const [showChainTransition, setShowChainTransition] = useState(false);

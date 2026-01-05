@@ -2,7 +2,7 @@
 // Natural language sentence builder - "Mad Libs" style input
 // Replaces form fields with tappable tokens in a sentence
 
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VoiceInput } from './VoiceInput.jsx';
 
@@ -123,7 +123,7 @@ function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
 }
 
 // Tappable Token within the sentence
-function Token({ value, placeholder, type, onClick, isActive }) {
+function Token({ value, placeholder, onClick, isActive }) {
     return (
         <motion.button
             onClick={onClick}
@@ -185,7 +185,6 @@ export function SentenceBuilder({ values = {}, onChange }) {
                 <Token
                     value={values.date}
                     placeholder="when?"
-                    type="date"
                     onClick={() => handleTokenClick('date')}
                     isActive={activeToken === 'date'}
                 />
@@ -193,7 +192,6 @@ export function SentenceBuilder({ values = {}, onChange }) {
                 <Token
                     value={values.time}
                     placeholder="what time?"
-                    type="time"
                     onClick={() => handleTokenClick('time')}
                     isActive={activeToken === 'time'}
                 />
@@ -201,7 +199,6 @@ export function SentenceBuilder({ values = {}, onChange }) {
                 <Token
                     value={values.location}
                     placeholder="where?"
-                    type="location"
                     onClick={() => handleTokenClick('location')}
                     isActive={activeToken === 'location'}
                 />
