@@ -123,7 +123,7 @@ export function SoundConfig({
             {/* Binaural Beats Options */}
             {soundType === 'Binaural Beats' && (
                 <div className="animate-fade-in">
-                    <BinauralTrainerPanel />
+                    <BinauralTrainerPanel isLight={isLight} />
                 </div>
             )}
 
