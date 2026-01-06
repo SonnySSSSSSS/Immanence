@@ -1,3 +1,4 @@
+// src/components/DailyPracticeCard.jsx
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -43,6 +44,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const {
         onboardingComplete,
+        activeCurriculumId,
         getCurrentDayNumber,
         getTodaysPractice,
         isTodayComplete,
@@ -197,8 +199,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     if (!todaysPractice) return null;
 
     const handleStartLeg = (leg) => {
+        if (leg.launcherId) {
+            onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId });
+            return;
+        }
         setActivePracticeSession(dayNumber, leg.legNumber);
-        onStartPractice?.();
+        onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId });
     };
 
     const completedLegs = legs.filter(l => l.completed).length;
@@ -258,265 +264,131 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     <div className="flex">
                         {/* LEFT COLUMN: Background Image */}
                         <div 
-                            className="relative overflow-hidden"
+                            className="relative w-1/2 min-h-[220px] hidden sm:block"
                             style={{
-                                width: '42%',
-                                minHeight: '280px',
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                filter: isLight ? 'saturate(1.1)' : 'brightness(0.8)',
                             }}
                         >
-                            {isLight ? (
-                                <>
-                                    {/* Painted Surface */}
-                                    <div
-                                        className="absolute inset-0 pointer-events-none"
-                                        style={{
-                                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
-                                            backgroundSize: 'cover',
-                                            backgroundPosition: 'center left',
-                                            opacity: 0.54,
-                                            mixBlendMode: 'multiply',
-                                        }}
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    {/* Cosmic Surface */}
-                                    <div
-                                        className="absolute inset-0"
-                                        style={{
-                                            backgroundImage: `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98))`,
-                                        }}
-                                    />
-                                    {/* Cosmic Feather / Black Hole */}
-                                    <div
-                                        className="absolute inset-0 overflow-hidden pointer-events-none z-1"
-                                        style={{ opacity: 0.24, mixBlendMode: 'screen' }}
-                                    >
-                                        <div 
-                                            className="absolute inset-0"
-                                            style={{
-                                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.cosmicAsset})`,
-                                                backgroundSize: 'cover', 
-                                                backgroundPosition: 'center',
-                                                filter: `hue-rotate(${stageHueRotate}deg) contrast(1.1) saturate(1.2)`,
-                                            }}
-                                        />
-                                    </div>
-                                </>
-                            )}
-                            
-                            {/* Day Number Overlay with Labels */}
-                            <div 
-                                className="absolute top-4 left-4 z-10"
-                                style={{ width: '48px', height: '48px' }}
-                            >
-                                {/* DAY label - Vertical on the left, matching Breathwork style */}
-                                <div 
-                                    className="absolute left-[2px] top-0 h-full flex items-center justify-center"
-                                    style={{ 
-                                        writingMode: 'vertical-rl', 
-                                        transform: 'rotate(180deg)',
-                                        color: isLight ? '#000' : '#fff',
-                                        opacity: 0.8,
-                                        fontFamily: 'var(--font-display)',
-                                        fontSize: '10px',
-                                        fontWeight: 900,
-                                        letterSpacing: '0.2em',
-                                        textDecoration: 'underline',
-                                        textDecorationThickness: '1px',
-                                        textUnderlineOffset: '2px'
-                                    }}
-                                >
-                                    Day
-                                </div>
-                                
-                                {/* Badge with number */}
-                                <div className="w-full h-full relative">
-                                    <svg width="48" height="48" viewBox="0 0 44 44">
-                                        <circle cx="22" cy="22" r="20" fill="none" stroke={isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)'} strokeWidth="1" />
-                                        <circle 
-                                            cx="22" cy="22" r="20" 
-                                            fill="none" 
-                                            stroke="var(--accent-color)" 
-                                            strokeWidth="2.5" 
-                                            strokeDasharray={`${(progress.completed / 14) * 126} 126`}
-                                            strokeLinecap="round"
-                                            style={{ 
-                                                transition: 'stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                filter: isLight ? 'none' : 'blur(0.5px) drop-shadow(0 0 3px var(--accent-color))'
-                                            }}
-                                        />
-                                    </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center pt-2">
-                                        <span 
-                                            className="text-[20px] font-black" 
-                                            style={{ 
-                                                color: isLight ? '#000' : 'var(--accent-color)',
-                                                fontFamily: 'var(--font-display)',
-                                                textShadow: isLight ? '0 1px 2px rgba(255,255,255,0.8)' : '0 0 12px var(--accent-40)'
-                                            }}
-                                        >
-                                            {isComplete ? '✓' : dayNumber}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                {/* "OF 14" label - Centered Right */}
-                                <div 
-                                    className="absolute top-1/2 -translate-y-1/2 left-[44px] text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
-                                    style={{ 
-                                        color: isLight ? '#000' : '#fff',
-                                        opacity: 0.6,
-                                        fontFamily: 'var(--font-display)'
-                                    }}
-                                >
-                                    of 14
-                                </div>
-                            </div>
-
-                            {/* Soft fade edge to right */}
-                            <div 
-                                className="absolute inset-y-0 right-0 w-4 pointer-events-none"
-                                style={{
-                                    background: isLight 
-                                        ? 'linear-gradient(to right, transparent, #faf6ee)'
-                                        : 'linear-gradient(to right, transparent, rgba(20, 15, 25, 0.98))',
-                                }}
-                            />
+                            {/* Overlay for readability */}
+                            <div className="absolute inset-0" style={{ background: isLight ? 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%)' : 'linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.35) 100%)' }} />
                         </div>
 
-                        {/* RIGHT COLUMN: Data */}
-                        <div 
-                            className="flex-1 flex flex-col p-5"
-                            style={{ minHeight: '280px' }}
-                        >
-                            {/* Header - Title only, day info moved to left badge */}
-                            <div className="mb-3">
-                                <div 
-                                    className="text-[17px] font-black leading-tight" 
-                                    style={{ 
-                                        color: config.textMain,
-                                        fontFamily: 'var(--font-display)',
-                                    }}
-                                >
-                                    {todaysPractice.title}
+                        {/* RIGHT COLUMN: Content */}
+                        <div className="flex-1 p-6 sm:p-7 relative">
+                            {/* Decorative corner embellishments */}
+                            <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between gap-3 mb-3">
+                                <div>
+                                    <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
+                                        Today's Practice
+                                    </div>
+                                    <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                        {todaysPractice.title || `Day ${dayNumber}`}
+                                    </div>
+                                    <div className="text-[10px] uppercase tracking-widest opacity-60 mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                        {todaysPractice.subtitle || 'Curriculum'}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-1">
+                                    <div className="text-xs font-bold" style={{ color: isLight ? config.accent : 'var(--accent-color)' }}>
+                                        {completedLegs}/{legs.length} Complete
+                                    </div>
+                                    {streak > 1 && (
+                                        <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: isLight ? 'rgba(255, 200, 0, 0.12)' : 'rgba(255, 200, 0, 0.1)', border: isLight ? '1px solid rgba(255, 200, 0, 0.3)' : '1px solid rgba(255, 200, 0, 0.3)', color: isLight ? '#8b6b2c' : 'var(--accent-color)' }}>
+                                            🔥 {streak}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Divider */}
-                            <div 
-                                className="w-full h-px mb-3"
-                                style={{ background: isLight ? 'rgba(160, 120, 60, 0.15)' : 'var(--accent-15)' }}
-                            />
-
-                            {/* Practice Legs List */}
-                            <div className="flex-1 space-y-2">
+                            {/* Legs List */}
+                            <div className="space-y-3">
                                 {legs.map((leg, index) => {
-                                    // Determine if this is the next leg to complete
                                     const isNextLeg = !leg.completed && legs.slice(0, index).every(l => l.completed);
                                     const isLockedLeg = !leg.completed && !isNextLeg;
-
                                     return (
                                         <div
                                             key={`${dayNumber}-${leg.legNumber}`}
-                                            className="flex items-center justify-between gap-2 p-2.5 rounded-xl transition-all"
+                                            className="rounded-2xl border p-4 flex items-center gap-3 transition-all"
                                             style={{
-                                                background: leg.completed
-                                                    ? (isLight ? 'rgba(100, 150, 100, 0.08)' : 'rgba(100, 150, 100, 0.1)')
-                                                    : (isLight ? 'rgba(60, 50, 35, 0.03)' : 'rgba(255, 255, 255, 0.03)'),
+                                                borderColor: isLight ? 'rgba(160, 120, 60, 0.18)' : 'var(--accent-15)',
+                                                background: isLight
+                                                    ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)'
+                                                    : 'linear-gradient(135deg, rgba(30, 25, 35, 0.95) 0%, rgba(24, 20, 30, 0.92) 100%)',
+                                                boxShadow: isLight
+                                                    ? '0 6px 18px rgba(120, 90, 60, 0.12)'
+                                                    : '0 10px 30px rgba(0,0,0,0.45)',
                                                 opacity: isLockedLeg ? 0.5 : 1,
                                             }}
                                         >
-                                            {/* Left: Status + Info */}
-                                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                                {/* Status Icon */}
-                                                <div style={{
-                                                    width: '22px',
-                                                    height: '22px',
-                                                    borderRadius: '50%',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    flexShrink: 0,
-                                                    background: leg.completed ? 'var(--accent-color)' : (isLight ? 'rgba(60, 50, 35, 0.1)' : 'rgba(255, 255, 255, 0.1)'),
+                                            {/* Leg Number / Status */}
+                                            <div
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
+                                                style={{
+                                                    background: leg.completed
+                                                        ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
+                                                        : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
                                                     color: leg.completed ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
-                                                }}>
-                                                    {leg.completed ? '✓' : leg.legNumber}
-                                                </div>
+                                                    boxShadow: leg.completed ? '0 6px 20px var(--accent-25)' : 'none',
+                                                    transform: isNextLeg ? 'scale(1.05)' : 'scale(1)',
+                                                }}
+                                            >
+                                                {leg.completed ? '✓' : leg.legNumber}
+                                            </div>
 
-                                                {/* Label + Time */}
-                                                <div className="min-w-0 flex-1">
-                                                    <div style={{
-                                                        fontSize: '11px',
-                                                        fontFamily: 'var(--font-display)',
-                                                        fontWeight: 700,
-                                                        color: config.textMain,
-                                                    }}>
+                                            {/* Leg Details */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <div className="text-sm font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                                         {leg.label || leg.practiceType}
                                                     </div>
-                                                    <div
-                                                        className="truncate"
-                                                        style={{
-                                                            fontSize: '9px',
-                                                            opacity: 0.6,
-                                                            color: config.textMain,
-                                                        }}
-                                                    >
-                                                        {leg.time ? (typeof leg.time === 'string' ? leg.time.substring(0, 5) : String(leg.time)) : 'Anytime'}
-                                                    </div>
-                                                    {/* Warning for locked legs */}
-                                                    {isLockedLeg && (
-                                                        <div
-                                                            style={{
-                                                                fontSize: '8px',
-                                                                fontWeight: 600,
-                                                                color: isLight ? '#D97706' : '#FBBF24',
-                                                                marginTop: '2px',
-                                                            }}
-                                                        >
-                                                            Complete previous first
+                                                    {leg.time && (
+                                                        <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                            {typeof leg.time === 'string' ? leg.time.substring(0, 5) : String(leg.time).substring(0, 5)}
                                                         </div>
                                                     )}
                                                 </div>
+                                                <div className="text-[11px] opacity-70 leading-snug mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                    {leg.description || 'Guided practice'}
+                                                </div>
+                                                {leg.practiceConfig?.duration && (
+                                                    <div className="text-[10px] uppercase tracking-[0.18em] font-black mt-1" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                        {leg.practiceConfig.duration} min
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {/* Right: Action */}
+                                            {/* Action */}
                                             {!leg.completed ? (
-                                                <div className="relative flex-shrink-0">
-                                                    {/* Radial glow animation - only for next leg */}
+                                                <div className="flex flex-col items-end gap-1">
                                                     {isNextLeg && (
-                                                        <div
-                                                            className="absolute inset-0 rounded-full pointer-events-none"
-                                                            style={{
-                                                                background: `conic-gradient(from 0deg, transparent 0deg, var(--accent-color) 60deg, transparent 120deg)`,
-                                                                filter: 'blur(8px)',
-                                                                opacity: 0.6,
-                                                                animation: 'radialGlow 3s linear infinite',
-                                                            }}
-                                                        />
+                                                        <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b6b2c' : 'var(--accent-50)' }}>
+                                                            Next Up
+                                                        </div>
                                                     )}
                                                     <button
                                                         onClick={() => handleStartLeg(leg)}
                                                         disabled={isLockedLeg}
-                                                        className="relative px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all"
+                                                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                         style={{
                                                             background: isLockedLeg
-                                                                ? (isLight ? 'rgba(60, 50, 35, 0.2)' : 'rgba(255, 255, 255, 0.15)')
+                                                                ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
                                                                 : 'var(--accent-color)',
-                                                            color: isLockedLeg
-                                                                ? (isLight ? 'rgba(60, 50, 35, 0.4)' : 'rgba(255, 255, 255, 0.3)')
-                                                                : (isLight ? '#fff' : '#000'),
+                                                            color: isLockedLeg ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
                                                             boxShadow: isLockedLeg ? 'none' : '0 3px 10px var(--accent-30)',
                                                             cursor: isLockedLeg ? 'not-allowed' : 'pointer',
                                                             ...(isNextLeg && {
-                                                                transform: 'scale(1)',
+                                                                boxShadow: '0 8px 20px var(--accent-30)',
                                                             }),
                                                             ...(!isLockedLeg && {
-                                                                '&:hover': { transform: 'scale(1.05)' },
-                                                                '&:active': { transform: 'scale(0.95)' },
-                                                            }),
+                                                                background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                            })
                                                         }}
                                                     >
                                                         Start
@@ -585,7 +457,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         {progress.rate}%
                                     </div>
                                     <button 
-                                        onClick={onViewCurriculum}
+                                        onClick={() => {
+                                            console.log('[DailyPracticeCard] Path button clicked, calling onViewCurriculum');
+                                            onViewCurriculum();
+                                        }}
                                         className="text-[8px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-all"
                                         style={{ color: config.textMain }}
                                     >

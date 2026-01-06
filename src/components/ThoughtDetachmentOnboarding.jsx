@@ -1,3 +1,4 @@
+// src/components/ThoughtDetachmentOnboarding.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useCurriculumStore } from '../state/curriculumStore.js';
@@ -20,7 +21,7 @@ const TIME_OPTIONS = [
     { value: '22:00', label: '10:00 PM', period: 'night' },
 ];
 
-export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
+export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExit, dayNumber = null, legNumber = null }) {
     const [step, setStep] = useState(1);
     const [thoughts, setThoughts] = useState([]);
     const [currentInput, setCurrentInput] = useState('');
@@ -42,6 +43,17 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     const [activeThought, setActiveThought] = useState(null);
 
     if (!isOpen) return null;
+
+    const resolvedDayNumber = dayNumber || getCurrentDayNumber();
+    const resolvedLegNumber = legNumber || 1;
+
+    const handleClose = () => {
+        setActiveThought(null);
+        setShowSession(false);
+        setStep(1);
+        onExit?.();
+        onClose?.();
+    };
 
     const handleAddThought = () => {
         if (currentInput.trim() && thoughts.length < 8) {
@@ -76,14 +88,13 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
     };
 
     const handleRitualComplete = () => {
-        const day = getCurrentDayNumber();
         const observedThought = activeThought ? activeThought.text : 'N/A';
         const observedThoughtId = activeThought ? activeThought.id : null;
         
         // Phase 1.1 Hotfix: Explicit payload fields 
         // duration: 3 is minutes (Legacy convention)
         // durationSeconds: 180 is explicitly requested analytics
-        logLegCompletion(day, 1, {
+        logLegCompletion(resolvedDayNumber, resolvedLegNumber, {
             duration: 3, 
             durationSeconds: 180, 
             thoughtObserved: observedThought,
@@ -93,7 +104,8 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
         
         setActiveThought(null);
         setShowSession(false);
-        onClose();
+        onComplete?.({ dayNumber: resolvedDayNumber, legNumber: resolvedLegNumber });
+        handleClose();
     };
 
     const handleStartRitual = () => {
@@ -152,7 +164,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                     <RitualSession 
                         ritual={getRitualData()}
                         onComplete={handleRitualComplete}
-                        onExit={() => setShowSession(false)}
+                        onExit={handleClose}
                         isLight={false} // Force dark for session
                     />
                 </div>
@@ -202,7 +214,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                             <PillButton onClick={handleStartRitual} variant="primary" className="w-full max-w-[240px]">
                                 BEGIN RITUAL
                             </PillButton>
-                            <button onClick={onClose} className="text-xs opacity-40 hover:opacity-100 transition-opacity">
+                            <button onClick={handleClose} className="text-xs opacity-40 hover:opacity-100 transition-opacity">
                                 Not now
                             </button>
                         </div>
@@ -225,7 +237,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                             </p>
                         </div>
                         <div className="flex gap-4 justify-center pt-4">
-                            <PillButton onClick={onClose} variant="secondary">Cancel</PillButton>
+                            <PillButton onClick={handleClose} variant="secondary">Cancel</PillButton>
                             <PillButton onClick={() => setStep(2)} variant="primary">Continue</PillButton>
                         </div>
                     </div>
@@ -350,7 +362,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                     <RitualSession 
                         ritual={ritual}
                         onComplete={handleRitualComplete}
-                        onExit={() => setShowSession(false)}
+                        onExit={handleClose}
                         isLight={false}
                     />
                 </div>
@@ -362,7 +374,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                     {/* Translucent Backdrop */}
                     <div 
                         className={`absolute inset-0 transition-opacity duration-500 pointer-events-auto ${isLight ? 'bg-black/20 backdrop-blur-md' : 'bg-black/40 backdrop-blur-xl'}`}
-                        onClick={onClose} 
+                        onClick={handleClose} 
                     />
                     
                     {/* Centered Panel Container */}
@@ -381,7 +393,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose }) {
                         >
                             {/* Modal Close Button: Absolute inside the panel */}
                             <button 
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className={`absolute top-4 right-4 z-[150] p-2.5 rounded-full transition-all ${isLight ? 'hover:bg-black/5 text-black/40 hover:text-black' : 'hover:bg-white/5 text-white/40 hover:text-white'}`}
                                 aria-label="Close"
                             >

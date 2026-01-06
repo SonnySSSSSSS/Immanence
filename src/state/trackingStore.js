@@ -847,6 +847,12 @@ export const useTrackingStore = create(
              */
             getWeeklyTimingOffsets: (domain = 'breath') => {
                 const state = get();
+                
+                // Check for dev mode override first
+                if (state.devModeOverride) {
+                    return state.devModeOverride;
+                }
+                
                 const now = new Date();
                 
                 // Get Monday of current week
@@ -899,6 +905,27 @@ export const useTrackingStore = create(
 
                 return weekOffsets;
             },
+
+            // Dev mode methods
+            setDevModeOverride: (mockData) => {
+                set({ devModeOverride: mockData });
+            },
+
+            clearDevModeOverride: () => {
+                set({ devModeOverride: null });
+            },
+
+            // ═══════════════════════════════════════════════════════════════
+            // DEV MODE OVERRIDE (for testing precision meter)
+            // ═══════════════════════════════════════════════════════════════
+            devModeOverride: null,
+            /*
+            Array of 7 objects (Mon-Sun):
+            [
+                { practiced: boolean, offsetMinutes: number },
+                ...
+            ]
+            */
 
             // ═══════════════════════════════════════════════════════════════
             // EXPORT

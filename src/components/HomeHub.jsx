@@ -1,3 +1,5 @@
+// src/components/HomeHub.jsx
+import { createPortal } from 'react-dom';
 // Improved HomeHub component with stats overview and better visual hierarchy
 // BUILD: 2025-12-31T20:46 - Removed constellation completely
 
@@ -26,7 +28,9 @@ import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
+import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
+import { getProgramLauncher } from "../data/programRegistry.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -47,7 +51,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   // Curriculum state
   const curriculumActive = useCurriculumStore(s => s.onboardingComplete);
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
+  const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);
+  const [launcherContext, setLauncherContext] = useState(null);
 
   useEffect(() => {
     // Listen for DevPanel cloud background changes
@@ -109,6 +115,27 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     window.addEventListener('dev-cloud-change', handleCloudChange);
     return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
   }, []);
+
+  const handleStartPractice = (leg, context = {}) => {
+    if (leg?.launcherId) {
+      setLauncherContext({
+        leg,
+        programId: context.programId || activeCurriculumId,
+        dayNumber: context.dayNumber,
+      });
+      return;
+    }
+    onSelectSection('practice');
+  };
+
+  const handleCloseLauncher = () => {
+    setLauncherContext(null);
+    onSelectSection(null);
+  };
+
+  const activeLauncher = launcherContext
+    ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
+    : null;
 
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
@@ -204,6 +231,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         onClose={() => setShowHonorModal(false)}
       />
 
+      {activeLauncher?.id === 'thought-detachment-onboarding' && launcherContext && (
+        <ThoughtDetachmentOnboarding
+          isOpen
+          dayNumber={launcherContext.dayNumber}
+          legNumber={launcherContext.leg?.legNumber}
+          onClose={handleCloseLauncher}
+          onExit={handleCloseLauncher}
+          onComplete={handleCloseLauncher}
+        />
+      )}
+
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
@@ -213,7 +251,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 {curriculumActive && (
   <div className="w-full">
     <DailyPracticeCard
-      onStartPractice={() => onSelectSection('practice')}
+      onStartPractice={handleStartPractice}
       onViewCurriculum={() => setShowCurriculumHub(true)}
       onNavigate={onSelectSection}
     />
@@ -235,29 +273,81 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {/* Session History Overlay */}
         {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
         
-        {/* Curriculum Hub/Report Modal */}
-        {showCurriculumHub && (
-          isCurriculumComplete() ? (
-            // Show completion report if curriculum is done
-            <CurriculumCompletionReport
-              onDismiss={() => setShowCurriculumHub(false)}
-            />
-          ) : (
-            // Show curriculum hub if still in progress
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-              <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl relative">
-                <button
-                  onClick={() => setShowCurriculumHub(false)}
-                  className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
-                >
-                  ✕
-                </button>
-                <div className="overflow-y-auto max-h-[90vh]">
-                  <CurriculumHub onClose={() => setShowCurriculumHub(false)} />
+        {/* Curriculum Hub/Report Modal - Portaled to document.body */}
+        {showCurriculumHub && createPortal(
+          (() => {
+            console.log('[HomeHub] Rendering curriculum modal, showCurriculumHub:', showCurriculumHub, 'isComplete:', isCurriculumComplete());
+            return isCurriculumComplete() ? (
+              // Show completion report if curriculum is done
+              <CurriculumCompletionReport
+                onDismiss={() => setShowCurriculumHub(false)}
+              />
+            ) : (
+              // Show curriculum hub - PORTAL with frame wrapper
+              <div className="fixed inset-0 z-[9999] isolate">
+                {/* Backdrop */}
+                <div 
+                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                  onClick={() => {
+                    console.log('[HomeHub] Backdrop clicked');
+                    setShowCurriculumHub(false);
+                  }}
+                />
+
+                {/* Width-sync frame (mirrors App.jsx content frame) */}
+                <div className="relative h-full w-full">
+                  <div className="mx-auto h-full w-full max-w-5xl px-4 flex items-start justify-center py-6">
+                    {/* PANEL - now constrained within app frame */}
+                    <div 
+                      className="w-full flex flex-col rounded-3xl shadow-2xl overflow-hidden"
+                      style={{
+                        maxWidth: isSanctuary ? '900px' : '430px',
+                        maxHeight: 'calc(100vh - 48px)',
+                        background: isLight ? 'rgba(250, 245, 235, 1)' : 'rgba(10, 10, 15, 1)',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Header - fixed, non-scrolling */}
+                      <div className="shrink-0 px-6 pt-6 pb-4 flex items-center justify-between" style={{
+                        background: isLight ? 'rgba(250, 245, 235, 1)' : 'rgba(10, 10, 15, 1)',
+                        borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                      }}>
+                        <h2
+                          className="text-xl font-semibold"
+                          style={{
+                            fontFamily: 'var(--font-display)',
+                            color: 'var(--accent-color)',
+                          }}
+                        >
+                          Ritual Foundation
+                        </h2>
+                        <button
+                          onClick={() => {
+                            console.log('[HomeHub] Close button clicked');
+                            setShowCurriculumHub(false);
+                          }}
+                          className="p-2 rounded-full transition-colors"
+                          style={{
+                            background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Body - THE ONLY SCROLL CONTAINER */}
+                      <div className="flex-1 min-h-0 overflow-y-auto">
+                        <CurriculumHub onClose={() => setShowCurriculumHub(false)} isInModal />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          )
+            );
+          })(),
+          document.body
         )}
         <div
           className="w-full mt-2 transition-all duration-700"

@@ -1,3 +1,4 @@
+// src/components/DailyPracticeTracker.jsx
 import React from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -23,7 +24,8 @@ export function DailyPracticeTracker() {
     if (legs.length === 0) return null;
 
     const handleStartLeg = (leg) => {
-        setActivePracticeSession(dayNumber);
+        if (leg.launcherId) return;
+        setActivePracticeSession(dayNumber, leg.legNumber);
     };
 
     const completedCount = legs.filter(l => l.completed).length;

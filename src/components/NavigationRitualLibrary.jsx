@@ -3,7 +3,7 @@ import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function NavigationRitualLibrary({ onComplete }) {
+export function NavigationRitualLibrary({ onComplete, onNavigate }) {
     const [selectedRitual, setSelectedRitual] = useState(null);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -13,12 +13,18 @@ export function NavigationRitualLibrary({ onComplete }) {
         setSelectedRitual(null);
     };
 
+    // Full completion: stop practice AND navigate to hub
+    const handleFullComplete = () => {
+        onComplete(); // This cleans up the PracticeSection state
+        if (onNavigate) onNavigate(null); // This returns to HomeHub
+    };
+
     // If ritual is selected, show RitualSession
     if (selectedRitual) {
         return (
             <RitualSession
                 ritual={selectedRitual}
-                onComplete={handleReturnToDeck}
+                onComplete={handleFullComplete}
                 onExit={handleReturnToDeck}
                 isLight={isLight}
             />

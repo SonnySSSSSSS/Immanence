@@ -335,29 +335,7 @@ export function FourModesHome({ onSelectMode, onClose }) {
                         })}
                     </div>
                 )}
-                {/* Return Button */}
-                <div className="flex justify-center mt-4">
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold transition-all"
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.4)',
-                            border: isLight ? '1px solid rgba(0, 0, 0, 0.05)' : '1px solid rgba(255, 255, 255, 0.1)',
-                            background: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.02)',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.color = isLight ? 'rgba(100, 80, 60, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-                            e.target.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.3)' : 'rgba(255, 255, 255, 0.2)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.color = isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.4)';
-                            e.target.style.borderColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)';
-                        }}
-                    >
-                        Return to Sealing
-                    </button>
-                </div>
+
             </div>
         </div>
     );

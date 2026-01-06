@@ -6,11 +6,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useVideoStore } from '../state/videoStore.js';
 import { VIDEOS, getEmbedUrl } from '../data/videoData.js';
 import { IdleHearth } from './IdleHearth.jsx';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // VIDEO HEARTH - The active video player (fixed aspect ratio, centered)
 // ═══════════════════════════════════════════════════════════════════════════
-function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear }) {
+function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear, isLight }) {
     const videoRef = useRef(null);
     const { updateProgress, markCompleted } = useVideoStore();
 
@@ -29,11 +30,15 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear 
         <section
             className="w-full flex flex-col items-center justify-center px-4 pt-4 pb-8 relative z-10"
             style={{
-                // Solid dark background to hide decorative elements
-                background: 'rgba(10,10,15,0.98)',
+                // Solid background to hide decorative elements
+                background: isLight
+                    ? 'rgba(250, 245, 235, 0.98)'
+                    : 'rgba(10,10,15,0.98)',
                 // Subtle warmth when playing
                 boxShadow: isPlaying
-                    ? 'inset 0 0 80px rgba(255,120,40,0.08)'
+                    ? isLight
+                        ? 'inset 0 0 80px rgba(180, 140, 100, 0.15)'
+                        : 'inset 0 0 80px rgba(255,120,40,0.08)'
                     : 'none',
                 transition: 'all 0.5s ease',
             }}
@@ -138,7 +143,7 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear 
 // ═══════════════════════════════════════════════════════════════════════════
 // VIDEO TOKEN - Minimal selector (icon + title + duration, no thumbnail)
 // ═══════════════════════════════════════════════════════════════════════════
-function VideoToken({ video, isSelected, onClick }) {
+function VideoToken({ video, isSelected, onClick, isLight }) {
     const icons = {
         featured: '◈',
         foundations: '△',
@@ -157,13 +162,23 @@ function VideoToken({ video, isSelected, onClick }) {
             className="flex-shrink-0 w-40 p-3 text-left transition-all duration-200 rounded-lg border"
             style={{
                 background: isSelected
-                    ? 'rgba(255,140,50,0.1)'
-                    : 'rgba(255,255,255,0.02)',
+                    ? isLight
+                        ? 'rgba(180, 140, 100, 0.2)'
+                        : 'rgba(255,140,50,0.1)'
+                    : isLight
+                        ? 'rgba(80, 60, 40, 0.08)'
+                        : 'rgba(255,255,255,0.02)',
                 borderColor: isSelected
-                    ? 'rgba(255,140,50,0.5)'
-                    : 'rgba(255,255,255,0.08)',
+                    ? isLight
+                        ? 'rgba(180, 140, 100, 0.6)'
+                        : 'rgba(255,140,50,0.5)'
+                    : isLight
+                        ? 'rgba(80, 60, 40, 0.2)'
+                        : 'rgba(255,255,255,0.08)',
                 boxShadow: isSelected
-                    ? '0 0 20px rgba(255,120,40,0.2)'
+                    ? isLight
+                        ? '0 0 20px rgba(180, 140, 100, 0.3)'
+                        : '0 0 20px rgba(255,120,40,0.2)'
                     : 'none',
                 transform: isSelected ? 'scale(1.02)' : 'scale(1)',
             }}
@@ -172,13 +187,19 @@ function VideoToken({ video, isSelected, onClick }) {
             <div className="flex justify-between items-center mb-2">
                 <span
                     className="text-sm"
-                    style={{ color: isSelected ? 'rgba(255,180,100,0.9)' : 'rgba(255,255,255,0.3)' }}
+                    style={{ color: isSelected 
+                        ? isLight ? 'rgba(140, 100, 60, 0.9)' : 'rgba(255,180,100,0.9)' 
+                        : isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(255,255,255,0.3)' 
+                    }}
                 >
                     {icon}
                 </span>
                 <span
                     className="text-[9px] font-mono"
-                    style={{ color: isSelected ? 'rgba(255,180,100,0.7)' : 'rgba(255,255,255,0.3)' }}
+                    style={{ color: isSelected 
+                        ? isLight ? 'rgba(140, 100, 60, 0.8)' : 'rgba(255,180,100,0.7)' 
+                        : isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(255,255,255,0.3)' 
+                    }}
                 >
                     {video.duration}
                 </span>
@@ -187,7 +208,9 @@ function VideoToken({ video, isSelected, onClick }) {
             <h3
                 className="text-[11px] leading-tight line-clamp-2"
                 style={{
-                    color: isSelected ? 'rgba(255,220,180,0.95)' : 'rgba(255,255,255,0.6)',
+                    color: isSelected 
+                        ? isLight ? 'rgba(80, 60, 40, 0.95)' : 'rgba(255,220,180,0.95)' 
+                        : isLight ? 'rgba(80, 60, 40, 0.8)' : 'rgba(255,255,255,0.6)',
                     fontFamily: 'var(--font-display)',
                     fontWeight: 600,
                     letterSpacing: 'var(--tracking-wide)',
@@ -202,7 +225,7 @@ function VideoToken({ video, isSelected, onClick }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // OFFERING BAND - Horizontal scrolling row with category label
 // ═══════════════════════════════════════════════════════════════════════════
-function OfferingBand({ label, videos, activeVideoId, onSelect }) {
+function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
     const scrollRef = useRef(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -248,7 +271,7 @@ function OfferingBand({ label, videos, activeVideoId, onSelect }) {
                 <div
                     className="text-[10px] uppercase tracking-[0.2em]"
                     style={{
-                        color: 'rgba(255,200,120,0.6)',
+                        color: isLight ? 'rgba(140, 100, 60, 0.8)' : 'rgba(255,200,120,0.6)',
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
                         letterSpacing: 'var(--tracking-mythic)',
@@ -292,7 +315,10 @@ function OfferingBand({ label, videos, activeVideoId, onSelect }) {
                 {canScrollLeft && (
                     <div
                         className="absolute left-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
-                        style={{ background: 'linear-gradient(to right, rgba(10,10,15,1), transparent)' }}
+                        style={{ background: isLight 
+                            ? 'linear-gradient(to right, rgba(250, 245, 235, 1), transparent)' 
+                            : 'linear-gradient(to right, rgba(10,10,15,1), transparent)' 
+                        }}
                     />
                 )}
 
@@ -317,6 +343,7 @@ function OfferingBand({ label, videos, activeVideoId, onSelect }) {
                             video={video}
                             isSelected={video.id === activeVideoId}
                             onClick={onSelect}
+                            isLight={isLight}
                         />
                     ))}
                 </div>
@@ -325,7 +352,10 @@ function OfferingBand({ label, videos, activeVideoId, onSelect }) {
                 {canScrollRight && (
                     <div
                         className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
-                        style={{ background: 'linear-gradient(to left, rgba(10,10,15,1), transparent)' }}
+                        style={{ background: isLight 
+                            ? 'linear-gradient(to left, rgba(250, 245, 235, 1), transparent)' 
+                            : 'linear-gradient(to left, rgba(10,10,15,1), transparent)' 
+                        }}
                     />
                 )}
             </div>
@@ -351,6 +381,10 @@ function AshFadeBoundary() {
 // VIDEO LIBRARY - Main component (the Hearth)
 // ═══════════════════════════════════════════════════════════════════════════
 export function VideoLibrary() {
+    // Theme context
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
+
     // Idle state by default (null = no video selected)
     const [activeVideo, setActiveVideo] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -398,7 +432,9 @@ export function VideoLibrary() {
         <div
             className="w-full min-h-[70vh] flex flex-col relative"
             style={{
-                background: 'rgba(10,10,15,1)', // Fully opaque
+                background: isLight
+                    ? 'rgba(250, 245, 235, 1)'
+                    : 'rgba(10,10,15,1)', // Fully opaque
                 zIndex: 50 // Above PathParticles and other decorations
             }}
         >
@@ -409,6 +445,7 @@ export function VideoLibrary() {
                 setIsPlaying={setIsPlaying}
                 isTransitioning={isTransitioning}
                 onClear={clearVideo}
+                isLight={isLight}
             />
 
             {/* THE OFFERINGS - Horizontal bands */}
@@ -420,6 +457,7 @@ export function VideoLibrary() {
                         videos={featuredVideos}
                         activeVideoId={activeVideo?.id}
                         onSelect={tendFire}
+                        isLight={isLight}
                     />
                 )}
 
@@ -429,6 +467,7 @@ export function VideoLibrary() {
                     videos={allVideos}
                     activeVideoId={activeVideo?.id}
                     onSelect={tendFire}
+                    isLight={isLight}
                 />
             </div>
 

@@ -111,8 +111,9 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     // Common wrapper for all ritual surfaces - respects Hearth mode constraints
     const RitualSurface = ({ children }) => (
         <div 
-            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/98"
+            className={`fixed inset-0 z-[200] flex items-center justify-center p-4 ${isLight ? 'bg-[#FDFBF5]/90 backdrop-blur-md' : 'bg-black/98'}`}
             style={{ maxWidth: isHearthMode ? '430px' : '100%', margin: isHearthMode ? '0 auto' : undefined }}
+            onPointerDown={(e) => e.stopPropagation()}
         >
             <div 
                 className={`relative w-full flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
@@ -192,15 +193,18 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     if (sessionState === 'completion') {
         return (
             <RitualSurface>
-                <div className="w-full flex flex-col items-center justify-center text-center py-6 sm:py-10">
-                    <div className="w-full max-w-lg flex flex-col gap-6 animate-in fade-in duration-700">
-                        <h2 className="text-3xl sm:text-4xl text-[var(--accent-primary)] font-h1">Ritual Complete</h2>
+                <div className="w-full flex flex-col items-center justify-center text-center py-4 sm:py-6">
+                    <div className="w-full max-w-lg flex flex-col gap-5 animate-in fade-in duration-700 items-center">
+                        <div className="flex items-center justify-center text-4xl sm:text-5xl" style={{ color: 'var(--accent-color)' }}>
+                            {ritual.iconName ? <Icon name={ritual.iconName} size={48} /> : ritual.icon}
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl text-[var(--accent-primary)] font-h1 mt-2">Ritual Complete</h2>
 
-                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-left w-full">
+                        <div className={`${isLight ? 'bg-black/5 border-black/10' : 'bg-white/5 border-white/10'} border rounded-2xl p-6 sm:p-8 text-left w-full`}>
                             <h3 className="text-[var(--accent-secondary)] text-sm uppercase tracking-widest mb-6">Observation</h3>
                             <ul className="space-y-4">
                                 {ritual.completion.expectedOutput.map((item, idx) => (
-                                    <li key={idx} className="flex items-start gap-4 text-white/85 text-sm sm:text-base">
+                                    <li key={idx} className={`flex items-start gap-4 ${isLight ? 'text-black/85' : 'text-white/85'} text-sm sm:text-base`}>
                                         <span className="text-[var(--accent-primary)] text-lg">✓</span>
                                         {item}
                                     </li>
@@ -208,12 +212,15 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                             </ul>
                         </div>
 
-                        <p className="text-white/60 italic text-base py-4">
+                        <p className={`${isLight ? 'text-black/60' : 'text-white/60'} italic text-base py-2 px-4`}>
                             "{ritual.completion.closingInstruction}"
                         </p>
 
                         <button
-                            onClick={onComplete}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onComplete();
+                            }}
                             className="mt-4 px-12 py-4 border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black transition-all rounded-full tracking-widest text-xs sm:text-base font-bold"
                         >
                             COMPLETE
@@ -249,7 +256,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     // Render Active Session
     return (
         <div 
-            className="fixed inset-0 z-[200] bg-black/98 flex flex-col"
+            className={`fixed inset-0 z-[200] flex flex-col ${isLight ? 'bg-[#FDFBF5]' : 'bg-black/98'}`}
             style={{ 
                 maxWidth: isHearthMode ? '430px' : '100%', 
                 margin: isHearthMode ? '0 auto' : undefined,
@@ -264,10 +271,10 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                         onClick={onExit}
                         className="flex flex-col items-center gap-1 group"
                     >
-                        <div className="text-[10px] uppercase tracking-widest text-white/40 group-hover:text-white/80 transition-colors font-mono">
+                        <div className={`text-[10px] uppercase tracking-widest transition-colors font-mono ${isLight ? 'text-amber-900/30 group-hover:text-amber-900/70' : 'text-white/40 group-hover:text-white/80'}`}>
                             Exit
                         </div>
-                        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/40 group-hover:text-white group-hover:bg-white/10 transition-all">
+                        <div className={`w-10 h-10 flex items-center justify-center rounded-full border transition-all ${isLight ? 'bg-amber-900/5 border-amber-900/10 text-amber-900/30 group-hover:text-amber-900 group-hover:bg-amber-900/10' : 'bg-white/5 border-white/10 text-white/40 group-hover:text-white group-hover:bg-white/10'}`}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <path d="M18 6L6 18M6 6l12 12" />
                             </svg>
@@ -282,14 +289,14 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                 </div>
 
                 {/* Bottom Status / Controls */}
-                <div className="p-6 sm:p-8 bg-gradient-to-t from-black to-transparent">
+                <div className={`p-6 sm:p-8 bg-gradient-to-t ${isLight ? 'from-white/80 to-transparent' : 'from-black to-transparent'}`}>
                     <div className="max-w-4xl mx-auto space-y-6">
                         {/* Progress Strip */}
                         <div className="flex gap-2">
                             {ritual.steps.map((_, idx) => (
                                 <div 
                                     key={idx}
-                                    className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden"
+                                    className={`flex-1 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-amber-900/5' : 'bg-white/5'}`}
                                 >
                                     <div 
                                         className="h-full bg-[var(--accent-primary)] transition-all duration-300"
@@ -304,20 +311,20 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                         </div>
 
                         <div className="flex justify-between items-center text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em]">
-                            <span className="text-[var(--accent-muted)]">Step {currentStepIndex + 1}</span>
+                            <span className={isLight ? 'text-amber-900/50' : 'text-[var(--accent-muted)]'}>Step {currentStepIndex + 1}</span>
                             <span className="text-[var(--accent-primary)] mx-auto">{formatTime(currentStep.duration - stepTimeRemaining)}</span>
-                            <span className="text-[var(--accent-muted)]">Total {formatTime(totalTimeElapsed)}</span>
+                            <span className={isLight ? 'text-amber-900/50' : 'text-[var(--accent-muted)]'}>Total {formatTime(totalTimeElapsed)}</span>
                         </div>
 
                         {/* Navigation Controls */}
                         <div className="flex justify-center items-center gap-8">
-                            <button onClick={prevStep} className="p-2 text-white/50 hover:text-white">
+                            <button onClick={prevStep} className={`p-2 transition-colors ${isLight ? 'text-amber-900/40 hover:text-amber-900/80' : 'text-white/50 hover:text-white'}`}>
                                 ← Prev
                             </button>
-                            <button onClick={togglePause} className="w-12 h-12 flex items-center justify-center rounded-full border border-white/20 text-white/80 hover:bg-white/10">
+                            <button onClick={togglePause} className={`w-12 h-12 flex items-center justify-center rounded-full border transition-colors ${isLight ? 'border-amber-900/20 text-amber-900/60 hover:bg-amber-900/10' : 'border-white/20 text-white/80 hover:bg-white/10'}`}>
                                 {isPaused ? '▶' : '⏸'}
                             </button>
-                            <button onClick={nextStep} className="p-2 text-white/50 hover:text-white">
+                            <button onClick={nextStep} className={`p-2 transition-colors ${isLight ? 'text-amber-900/40 hover:text-amber-900/80' : 'text-white/50 hover:text-white'}`}>
                                 Next →
                             </button>
                         </div>

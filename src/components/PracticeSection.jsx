@@ -169,7 +169,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate }) {
   const instrumentation = useSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
@@ -882,7 +882,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Ritual") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <NavigationRitualLibrary onComplete={handleStop} />
+          <NavigationRitualLibrary onComplete={handleStop} onNavigate={onNavigate} />
         </section>
       );
     }

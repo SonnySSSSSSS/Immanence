@@ -190,7 +190,7 @@ function StatsSummary({ isLight }) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function CurriculumHub({ onSelectDay, onClose }) {
+export function CurriculumHub({ onSelectDay, onClose, isInModal = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     
@@ -211,40 +211,19 @@ export function CurriculumHub({ onSelectDay, onClose }) {
         ? new Date(curriculumStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : 'Not started';
 
+    console.log('[CurriculumHub] Rendering, isLight:', isLight, 'currentDay:', currentDay, 'isInModal:', isInModal);
+
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2
-                        className="text-xl font-semibold"
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            color: 'var(--accent-color)',
-                        }}
-                    >
-                        {curriculum.name}
-                    </h2>
-                    <p
-                        className="text-sm mt-1"
-                        style={{
-                            color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)',
-                        }}
-                    >
-                        Started {startDateStr} • Day {currentDay} of 14
-                    </p>
-                </div>
-                {onClose && (
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-full transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
-                    </button>
-                )}
-            </div>
+        <div className="px-6 py-6 space-y-6">
+            {/* Subtitle */}
+            <p
+                className="text-sm"
+                style={{
+                    color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)',
+                }}
+            >
+                Started {startDateStr} • Day {currentDay} of 14
+            </p>
 
             {/* Progress bar */}
             <div className="relative h-2 rounded-full overflow-hidden" style={{ background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)' }}>

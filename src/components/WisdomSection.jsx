@@ -11,6 +11,7 @@ import {
 import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 
 const TABS = [
   "Recommendations",
@@ -821,51 +822,65 @@ function CategorySigil({ categoryKey }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // CATEGORY CARD - For Recommendations
 // ─────────────────────────────────────────────────────────────────────────────
-function CategoryCard({ category, isSelected, onClick }) {
+function CategoryCard({ category, isSelected, onClick, isLight }) {
+  const cardBg = isLight
+    ? 'linear-gradient(145deg, rgba(255, 250, 240, 0.9) 0%, rgba(250, 240, 230, 0.95) 100%)'
+    : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)';
+  
+  const borderColor = isLight
+    ? 'rgba(180, 140, 100, 0.3)'
+    : 'rgba(138, 43, 226, 0.2)';
+  
+  const textColor = isLight
+    ? 'rgba(80, 60, 40, 0.9)'
+    : 'rgba(253, 251, 245, 0.9)';
+  
+  const symptomColor = isLight
+    ? 'rgba(80, 60, 40, 0.6)'
+    : 'rgba(253, 251, 245, 0.55)';
+
   return (
     <button
       onClick={onClick}
       className="relative p-4 rounded-2xl border text-left transition-all overflow-hidden"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)",
-        border: "1px solid transparent",
-        backgroundImage: isSelected
-          ? `linear - gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-  linear - gradient(135deg, var(--accent - 50) 0 %, var(--accent - 40) 50 %, var(--accent - 50) 100 %)`
-          : `linear - gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-  linear - gradient(135deg, var(--accent - 40) 0 %, rgba(138, 43, 226, 0.2) 50 %, var(--accent - 30) 100 %)`,
-        backgroundOrigin: "border-box",
-        backgroundClip: "padding-box, border-box",
+        background: cardBg,
+        border: `1px solid ${borderColor}`,
         boxShadow: isSelected
-          ? `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px var(--accent - 25), 0 0 80px var(--accent - 10), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 - 3px 12px rgba(0, 0, 0, 0.4)`
-          : "0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)",
+          ? isLight
+            ? '0 12px 40px rgba(80, 60, 40, 0.2), 0 0 40px var(--accent-25), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+            : '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px var(--accent-25), 0 0 80px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)'
+          : isLight
+            ? '0 8px 32px rgba(80, 60, 40, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
         minHeight: "140px",
       }}
       onMouseEnter={(e) => {
         if (!isSelected) {
-          e.currentTarget.style.boxShadow =
-            "0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)";
+          e.currentTarget.style.boxShadow = isLight
+            ? '0 12px 40px rgba(80, 60, 40, 0.25), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+            : '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
         }
       }}
       onMouseLeave={(e) => {
         if (!isSelected) {
-          e.currentTarget.style.boxShadow =
-            "0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)";
+          e.currentTarget.style.boxShadow = isLight
+            ? '0 8px 32px rgba(80, 60, 40, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-15), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
         }
       }}
     >
       {/* Symbolic sigil anchor - quiet archetypal visual */}
       <CategorySigil categoryKey={category.key} />
 
-      {/* Volcanic glass texture overlay */}
+      {/* Texture overlay */}
       <div
         className="absolute inset-0 pointer-events-none rounded-2xl"
         style={{
-          background: `
-radial - gradient(circle at 30 % 20 %, rgba(255, 255, 255, 0.02) 0 %, transparent 50 %),
-  repeating - linear - gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)
-    `,
+          background: isLight
+            ? 'radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 50%)'
+            : `radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+               repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.015) 3px, rgba(0, 0, 0, 0.015) 6px)`,
           opacity: 0.7,
         }}
       />
@@ -874,7 +889,7 @@ radial - gradient(circle at 30 % 20 %, rgba(255, 255, 255, 0.02) 0 %, transparen
       <div
         className="absolute inset-0 pointer-events-none rounded-2xl"
         style={{
-          background: `radial - gradient(circle at 50 % 0 %, ${isSelected ? "var(--accent-glow)15" : "var(--accent-glow)08"} 0 %, transparent 60 %)`,
+          background: `radial-gradient(circle at 50% 0%, ${isSelected ? "var(--accent-glow)15" : "var(--accent-glow)08"} 0%, transparent 60%)`,
         }}
       />
 
@@ -892,7 +907,7 @@ radial - gradient(circle at 30 % 20 %, rgba(255, 255, 255, 0.02) 0 %, transparen
             <span
               key={i}
               className="text-[11px]"
-              style={{ color: "rgba(253,251,245,0.55)" }}
+              style={{ color: symptomColor }}
             >
               {symptom}
             </span>
@@ -907,6 +922,10 @@ radial - gradient(circle at 30 % 20 %, rgba(255, 255, 255, 0.02) 0 %, transparen
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export function WisdomSection() {
+  // Theme context
+  const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const isLight = colorScheme === 'light';
+
   const [activeTab, setActiveTab] = useState("Recommendations");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [expandedPart, setExpandedPart] = useState(null);
@@ -916,6 +935,27 @@ export function WisdomSection() {
   const [wisdomModalOpen, setWisdomModalOpen] = useState(false);
   const { bookmarks, addBookmark, removeBookmark } = useWisdomStore();
   const bookmarkedIds = bookmarks.map((b) => b.sectionId);
+
+  // Theme configuration
+  const THEME_CONFIG = isLight ? {
+    containerBg: 'rgba(255, 250, 240, 0.95)',
+    cardBg: 'rgba(255, 250, 240, 0.6)',
+    textMain: 'rgba(80, 60, 40, 0.95)',
+    textSub: 'rgba(80, 60, 40, 0.7)',
+    border: 'var(--accent-20)',
+    searchBg: 'rgba(255, 250, 240, 0.8)',
+    searchText: 'rgba(80, 60, 40, 0.9)',
+    searchPlaceholder: 'rgba(80, 60, 40, 0.4)',
+  } : {
+    containerBg: 'rgba(10, 10, 15, 0.95)',
+    cardBg: 'rgba(26, 15, 28, 0.92)',
+    textMain: 'rgba(253, 251, 245, 0.9)',
+    textSub: 'rgba(253, 251, 245, 0.5)',
+    border: 'var(--accent-15)',
+    searchBg: 'rgba(0, 0, 0, 0.2)',
+    searchText: 'rgba(253, 251, 245, 0.9)',
+    searchPlaceholder: 'rgba(255, 255, 255, 0.4)',
+  };
 
   const toggleBookmark = (chapterId) => {
     const exists = bookmarks.some((b) => b.sectionId === chapterId);
@@ -973,7 +1013,7 @@ export function WisdomSection() {
           <div
             className="text-[14px] italic leading-relaxed"
             style={{
-              color: "rgba(253,251,245,0.7)",
+              color: THEME_CONFIG.textSub,
               fontFamily: "var(--font-body)",
             }}
           >
@@ -991,8 +1031,8 @@ export function WisdomSection() {
                   key={idx}
                   className="p-5 rounded-2xl border cursor-pointer transition-all group"
                   style={{
-                    background: "rgba(0,0,0,0.2)",
-                    border: "1px solid var(--accent-15)",
+                    background: THEME_CONFIG.cardBg,
+                    border: `1px solid ${THEME_CONFIG.border}`,
                     borderLeft: "3px solid var(--accent-30)",
                   }}
                   onClick={() => chapter && openChapterModal(chapter)}
@@ -1002,7 +1042,7 @@ export function WisdomSection() {
                       className="text-[15px] font-semibold group-hover:text-white transition-colors"
                       style={{
                         fontFamily: "var(--font-body)",
-                        color: "rgba(253,251,245,0.9)",
+                        color: THEME_CONFIG.textMain,
                       }}
                     >
                       {sanitizeText(rec.title)}
@@ -1025,7 +1065,7 @@ export function WisdomSection() {
                   </div>
                   <div
                     className="text-[13px] leading-relaxed"
-                    style={{ color: "rgba(253,251,245,0.6)" }}
+                    style={{ color: THEME_CONFIG.textSub }}
                   >
                     <span style={{ color: "var(--accent-color)" }}>Why: </span>
                     {sanitizeText(rec.reasoning)}
@@ -1053,6 +1093,21 @@ export function WisdomSection() {
   // COMPASS VIEW - Radial Navigation
   // ─────────────────────────────────────────────────────────────────────────
   const renderCompassView = () => {
+    // Get categories
+    const categories = getAllCategories();
+    
+    // Archetypal icons for each category (image assets)
+    const categoryIcons = {
+      "focus-presence": `${import.meta.env.BASE_URL}icons/compass/eye.png`,
+      "emotional-regulation": `${import.meta.env.BASE_URL}icons/compass/balance.png`,
+      "shadow-integration": `${import.meta.env.BASE_URL}icons/compass/moon.png`,
+      "heart-connection": `${import.meta.env.BASE_URL}icons/compass/heart.png`,
+      "grounding-safety": `${import.meta.env.BASE_URL}icons/compass/mountain.png`,
+      "expression-voice": `${import.meta.env.BASE_URL}icons/compass/wave.png`,
+      "resonance-alignment": `${import.meta.env.BASE_URL}icons/compass/star.png`,
+      "self-knowledge": `${import.meta.env.BASE_URL}icons/compass/fire.png`,
+    };
+    
     // Hardened Radial Layout Constants (no IIFE inside JSX)
     const containerWidth = 320; // base fallback until a measured container is added
     const containerHeight = 320; // base fallback until a measured container is added
@@ -1080,11 +1135,15 @@ export function WisdomSection() {
             width: `${size}px`,
             height: `${size}px`,
             maxWidth: "min(320px, 100vw)",
-            background:
-              "radial-gradient(circle, rgba(15,10,25,0.9) 0%, rgba(5,2,10,0.95) 70%, rgba(0,0,0,0.98) 100%)",
-            border: "1px solid rgba(100,80,150,0.2)",
-            boxShadow:
-              "0 0 60px rgba(100,80,150,0.1), inset 0 0 40px rgba(0,0,0,0.3)",
+            background: isLight
+              ? "radial-gradient(circle, rgba(250, 245, 235, 0.95) 0%, rgba(240, 230, 220, 0.98) 70%, rgba(230, 220, 210, 1) 100%)"
+              : "radial-gradient(circle, rgba(15,10,25,0.9) 0%, rgba(5,2,10,0.95) 70%, rgba(0,0,0,0.98) 100%)",
+            border: isLight
+              ? "1px solid rgba(180, 140, 100, 0.3)"
+              : "1px solid rgba(100,80,150,0.2)",
+            boxShadow: isLight
+              ? "0 0 60px rgba(180, 140, 100, 0.2), inset 0 0 40px rgba(255, 255, 255, 0.3)"
+              : "0 0 60px rgba(100,80,150,0.1), inset 0 0 40px rgba(0,0,0,0.3)",
           }}
         >
           {/* Compass center point */}
@@ -1236,8 +1295,12 @@ export function WisdomSection() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search treatise..."
-                className="wisdom-search w-full px-4 py-3 text-[13px] placeholder:text-white/40"
-                style={{ color: "rgba(253,251,245,0.9)" }}
+                className="wisdom-search w-full px-4 py-3 text-[13px]"
+                style={{ 
+                  color: THEME_CONFIG.searchText,
+                  background: THEME_CONFIG.searchBg,
+                  border: `1px solid ${THEME_CONFIG.border}`,
+                }}
               />
             </div>
             <button
@@ -1323,8 +1386,12 @@ export function WisdomSection() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search chapters..."
-            className="wisdom-search w-full px-4 py-3 text-[13px] placeholder:text-white/40"
-            style={{ color: "rgba(253,251,245,0.9)" }}
+            className="wisdom-search w-full px-4 py-3 text-[13px]"
+            style={{ 
+              color: THEME_CONFIG.searchText,
+              background: THEME_CONFIG.searchBg,
+              border: `1px solid ${THEME_CONFIG.border}`,
+            }}
           />
         </div>
 

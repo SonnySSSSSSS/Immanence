@@ -1,6 +1,8 @@
+// src/state/curriculumStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
+import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 
 export const FOUNDATION_CIRCUIT = {
     id: 'intro_circuit',
@@ -105,6 +107,8 @@ export const useCurriculumStore = create(
             // CURRICULUM ACTIONS
             getActiveCurriculum: () => {
                 const state = get();
+                const program = getProgramDefinition(state.activeCurriculumId);
+                if (program?.curriculum) return program.curriculum;
                 if (state.activeCurriculumId === 'ritual-foundation-14') {
                     return RITUAL_FOUNDATION_14;
                 }
@@ -124,10 +128,8 @@ export const useCurriculumStore = create(
 
             getTodaysPractice: () => {
                 const state = get();
-                const curriculum = state.getActiveCurriculum();
-                if (!curriculum) return null;
                 const dayNumber = state.getCurrentDayNumber();
-                return curriculum.days.find(d => d.dayNumber === dayNumber) || null;
+                return state.getCurriculumDay(dayNumber);
             },
 
             /**
@@ -155,6 +157,9 @@ export const useCurriculumStore = create(
 
             getCurriculumDay: (dayNumber) => {
                 const state = get();
+                const programDay = getProgramDay(state.activeCurriculumId, dayNumber);
+                if (programDay) return programDay;
+
                 const curriculum = state.getActiveCurriculum();
                 if (!curriculum) return null;
                 return curriculum.days.find(d => d.dayNumber === dayNumber) || null;
@@ -186,9 +191,7 @@ export const useCurriculumStore = create(
             getActivePracticeDay: () => {
                 const state = get();
                 if (!state.activePracticeSession) return null;
-                const curriculum = state.getActiveCurriculum();
-                if (!curriculum) return null;
-                return curriculum.days.find(d => d.dayNumber === state.activePracticeSession) || null;
+                return state.getCurriculumDay(state.activePracticeSession);
             },
 
             getActivePracticeLeg: () => {
@@ -282,10 +285,7 @@ isLegComplete: (dayNumber, legNumber) => {
 getNextIncompleteLeg: () => {
     const state = get();
     const dayNumber = state.getCurrentDayNumber();
-    const curriculum = state.getActiveCurriculum();
-    if (!curriculum) return null;
-    
-    const day = curriculum.days.find(d => d.dayNumber === dayNumber);
+    const day = state.getCurriculumDay(dayNumber);
     if (!day || !day.legs) return null;
     
     for (const leg of day.legs) {
@@ -297,31 +297,44 @@ getNextIncompleteLeg: () => {
 },
 
 /**
+ * Get the next available leg for a given day (respects completion state)
+ */
+getNextLeg: (dayNumber, offset = 1) => {
+    const state = get();
+    const day = state.getCurriculumDay(dayNumber);
+    if (!day?.legs) return null;
+
+    const remainingLegs = day.legs.filter(leg => !state.isLegComplete(dayNumber, leg.legNumber));
+    if (remainingLegs.length === 0) return null;
+
+    const targetIndex = Math.min(offset - 1, remainingLegs.length - 1);
+    return remainingLegs[targetIndex] || null;
+},
+
+/**
  * Get all legs for a day with their completion status and time slots
  */
-getDayLegsWithStatus: (dayNumber) => {
-    const state = get();
-    const curriculum = state.getActiveCurriculum();
-    if (!curriculum) return [];
+            getDayLegsWithStatus: (dayNumber) => {
+                const state = get();
+                const day = state.getCurriculumDay(dayNumber);
+                if (!day || !day.legs) return [];
 
-    const day = curriculum.days.find(d => d.dayNumber === dayNumber);
-    if (!day || !day.legs) return [];
+                const { practiceTimeSlots } = state;
 
-    const { practiceTimeSlots } = state;
-
-    return day.legs.map((leg, index) => ({
-        ...leg,
-        // Inject time from onboarding slots (leg 1 = slot 0, leg 2 = slot 1, etc.)
-        time: practiceTimeSlots && practiceTimeSlots[index] ? practiceTimeSlots[index] : leg.time,
-        completed: state.isLegComplete(dayNumber, leg.legNumber),
-        completion: state.legCompletions[`${dayNumber}-${leg.legNumber}`] || null,
-    }));
-},
+                return day.legs.map((leg, index) => ({
+                    ...leg,
+                    // Inject time from onboarding slots (leg 1 = slot 0, leg 2 = slot 1, etc.)
+                    time: practiceTimeSlots && practiceTimeSlots[index] ? practiceTimeSlots[index] : leg.time,
+                    completed: state.isLegComplete(dayNumber, leg.legNumber),
+                    completion: state.legCompletions[`${dayNumber}-${leg.legNumber}`] || null,
+                }));
+            },
 
             // PROGRESS & STATS
             getProgress: () => {
                 const state = get();
-                const curriculum = state.getActiveCurriculum();
+                const program = getProgramDefinition(state.activeCurriculumId);
+                const curriculum = program?.curriculum || state.getActiveCurriculum();
                 if (!curriculum) return { completed: 0, total: 0, rate: 0 };
 
                 // Calculate based on leg completions for flexibility
@@ -329,7 +342,22 @@ getDayLegsWithStatus: (dayNumber) => {
                 let completedLegs = 0;
 
                 curriculum.days.forEach(day => {
-                    if (day.legs && Array.isArray(day.legs)) {
+                    const mergedDay = state.getCurriculumDay(day.dayNumber) || day;
+                    if (!mergedDay.legs || !Array.isArray(mergedDay.legs)) return;
+
+                    totalLegs += mergedDay.legs.length;
+                    mergedDay.legs.forEach(leg => {
+                        const legKey = `${mergedDay.dayNumber}-${leg.legNumber}`;
+                        if (state.legCompletions[legKey]?.completed) {
+                            completedLegs++;
+                        }
+                    });
+                });
+
+                // Legacy fallback if no merged days were processed
+                if (totalLegs === 0 && curriculum.days) {
+                    curriculum.days.forEach(day => {
+                        if (!day.legs || !Array.isArray(day.legs)) return;
                         totalLegs += day.legs.length;
                         day.legs.forEach(leg => {
                             const legKey = `${day.dayNumber}-${leg.legNumber}`;
@@ -337,8 +365,8 @@ getDayLegsWithStatus: (dayNumber) => {
                                 completedLegs++;
                             }
                         });
-                    }
-                });
+                    });
+                }
 
                 return {
                     completed: completedLegs,

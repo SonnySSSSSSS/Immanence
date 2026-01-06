@@ -7,7 +7,8 @@ import { useProgressStore } from '../state/progressStore.js';
 import { useTrackingStore } from '../state/trackingStore.js';
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext.jsx';
+import { PrecisionMeterDevPanel } from './dev/PrecisionMeterDevPanel.jsx';
 
 /**
  * THEME CONFIGURATION
@@ -328,47 +329,48 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
                                 style={{ background: config.textMain, left: '50%' }} 
                             />
 
-                            {/* Data Point - Always show blob, adjust opacity for inactive */}
-                            <div 
-                                className="relative transition-all duration-700 ease-out"
-                                style={{ 
-                                    transform: `translateY(${isActive ? yPos : 55}px)`,
-                                    opacity: isActive ? 1 : 0.25
-                                }}
-                            >
-                                {isLight ? (
-                                    <img
-                                        src={`${import.meta.env.BASE_URL}assets/textured_blob_${(i % 5) + 1}.png`}
-                                        className="w-7 h-7 object-contain"
-                                        alt=""
-                                        style={{
-                                            filter: isActive ? (() => {
-                                                const max = Math.max(r, g, b) / 255;
-                                                const min = Math.min(r, g, b) / 255;
-                                                let h = 0;
-                                                if (max !== min) {
-                                                    const d = max - min;
-                                                    const rn = r / 255, gn = g / 255, bn = b / 255;
-                                                    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
-                                                    else if (max === gn) h = ((bn - rn) / d + 2) / 6;
-                                                    else h = ((rn - gn) / d + 4) / 6;
-                                                }
-                                                const targetHue = Math.round(h * 360);
-                                                return `hue-rotate(${targetHue - 120}deg) saturate(1.2)`;
-                                            })() : 'grayscale(100%)'
-                                        }}
-                                    />
-                                ) : (
-                                    <div
-                                        className="w-3 h-3 rounded-full border-2 transition-all duration-300"
-                                        style={{
-                                            background: isActive ? `rgb(${r}, ${g}, ${b})` : 'transparent',
-                                            borderColor: isActive ? `rgba(${r}, ${g}, ${b}, 0.5)` : config.border,
-                                            boxShadow: isActive ? `0 0 10px rgba(${r}, ${g}, ${b}, 0.3)` : 'none'
-                                        }}
-                                    />
-                                )}
-                            </div>
+                            {/* Data Point - Only show if active */}
+                            {isActive && (
+                                <div 
+                                    className="relative transition-all duration-700 ease-out"
+                                    style={{ 
+                                        transform: `translateY(${yPos}px)`
+                                    }}
+                                >
+                                    {isLight ? (
+                                        <img
+                                            src={`${import.meta.env.BASE_URL}assets/textured_blob_${(i % 5) + 1}.png`}
+                                            className="w-7 h-7 object-contain"
+                                            alt=""
+                                            style={{
+                                                filter: (() => {
+                                                    const max = Math.max(r, g, b) / 255;
+                                                    const min = Math.min(r, g, b) / 255;
+                                                    let h = 0;
+                                                    if (max !== min) {
+                                                        const d = max - min;
+                                                        const rn = r / 255, gn = g / 255, bn = b / 255;
+                                                        if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+                                                        else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+                                                        else h = ((rn - gn) / d + 4) / 6;
+                                                    }
+                                                    const targetHue = Math.round(h * 360);
+                                                    return `hue-rotate(${targetHue - 120}deg) saturate(1.2)`;
+                                                })()
+                                            }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="w-3 h-3 rounded-full border-2 transition-all duration-300"
+                                            style={{
+                                                background: `rgb(${r}, ${g}, ${b})`,
+                                                borderColor: `rgba(${r}, ${g}, ${b}, 0.5)`,
+                                                boxShadow: `0 0 10px rgba(${r}, ${g}, ${b}, 0.3)`
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -435,6 +437,18 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
 
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
+    const [showDevPanel, setShowDevPanel] = useState(false);
+
+    // Keyboard shortcut for dev panel (Shift+P)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.shiftKey && e.key === 'P') {
+                setShowDevPanel(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const getAllStats = useProgressStore(s => s.getAllStats);
     const allStats = getAllStats?.() || {};
@@ -536,6 +550,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     const today = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
     return (
+        <>
         <div
             className="w-full relative transition-all duration-700 ease-in-out"
             style={{
@@ -795,6 +810,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
             </div>
         </div>
     </div>
+
+    {/* Dev Panel */}
+    {showDevPanel && <PrecisionMeterDevPanel onClose={() => setShowDevPanel(false)} />}
+    </>
     );
 }
 

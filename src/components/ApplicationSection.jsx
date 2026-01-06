@@ -111,7 +111,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
                 : '0 0 25px rgba(251, 191, 36, 0.15), inset 0 0 20px rgba(251, 191, 36, 0.08)',
             }}
           >
-            {showFourModes ? 'Hide Four Modes' : 'Explore Four Modes'}
+            {showFourModes ? 'Switch to Four Modes' : 'Explore Four Modes'}
           </button>
         )}
       </div>
