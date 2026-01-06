@@ -60,7 +60,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
         </div>
       )}
 
-      <div className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
+      <div data-app-frame className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} />}
 
         {section === "wisdom" && (

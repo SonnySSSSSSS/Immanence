@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 // BUILD: 2025-12-31T20:46 - Removed constellation completely
 
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Avatar } from "./avatar";
 import { StageTitle } from "./StageTitle.jsx";
@@ -54,6 +54,66 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);
   const [launcherContext, setLauncherContext] = useState(null);
+  const [frameRect, setFrameRect] = useState(null);
+
+  useLayoutEffect(() => {
+    const update = (tag = "update") => {
+      const el =
+        document.querySelector("[data-hub-spine]") ||
+        document.querySelector("[data-app-frame]");
+
+      console.groupCollapsed(`[CurriculumModal] ${tag}`);
+
+      if (!el) {
+        console.warn("No frame element found. Tried [data-hub-spine], then [data-app-frame].");
+        console.groupEnd();
+        return;
+      }
+
+      const rect = el.getBoundingClientRect();
+      const cs = window.getComputedStyle(el);
+
+      console.log("frame element:", el);
+      console.table({
+        rect_left: rect.left,
+        rect_right: rect.right,
+        rect_width: rect.width,
+        rect_top: rect.top,
+        rect_bottom: rect.bottom,
+        rect_height: rect.height,
+        vw: window.innerWidth,
+        vh: window.innerHeight,
+        dpr: window.devicePixelRatio,
+        maxWidth: cs.maxWidth,
+        width: cs.width,
+        paddingLeft: cs.paddingLeft,
+        paddingRight: cs.paddingRight,
+        marginLeft: cs.marginLeft,
+        marginRight: cs.marginRight,
+        position: cs.position,
+        overflowX: cs.overflowX,
+        overflowY: cs.overflowY,
+        transform: cs.transform,
+        filter: cs.filter,
+        contain: cs.contain,
+      });
+
+      setFrameRect(rect);
+      console.groupEnd();
+    };
+
+    update("initial");
+    // Multi-stage stabilization
+    requestAnimationFrame(() => update("rAF"));
+    const timer = setTimeout(() => update("timeout-150"), 150);
+
+    window.addEventListener("resize", () => update("resize"));
+
+    return () => {
+      window.removeEventListener("resize", () => update("resize"));
+      clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
     // Listen for DevPanel cloud background changes
@@ -245,7 +305,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
+      <div data-hub-spine className="w-full px-4 flex flex-col items-center gap-1 pb-4">
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
 {curriculumActive && (
@@ -277,7 +337,32 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {showCurriculumHub && createPortal(
           (() => {
             console.log('[HomeHub] Rendering curriculum modal, showCurriculumHub:', showCurriculumHub, 'isComplete:', isCurriculumComplete());
-            return isCurriculumComplete() ? (
+            const isComplete = isCurriculumComplete();
+            
+            // Calculate clamped bounds for the host
+            const getHostStyle = () => {
+              if (!frameRect) return { left: 0, right: 0 };
+              const vw = window.innerWidth;
+              const rawLeft = frameRect.left;
+              const rawRight = frameRect.left + frameRect.width;
+              const left = Math.max(0, rawLeft);
+              const right = Math.max(0, vw - rawRight);
+
+              console.log("[CurriculumModal] bounds", {
+                vw,
+                rawLeft,
+                rawRight,
+                frameWidth: frameRect.width,
+                clampedLeft: left,
+                clampedRight: right,
+                clampedWidth: vw - left - right,
+              });
+              return { left, right };
+            };
+
+            const hostStyle = getHostStyle();
+
+            return isComplete ? (
               // Show completion report if curriculum is done
               <CurriculumCompletionReport
                 onDismiss={() => setShowCurriculumHub(false)}
@@ -285,62 +370,81 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             ) : (
               // Show curriculum hub - PORTAL with frame wrapper
               <div className="fixed inset-0 z-[9999] isolate">
-                {/* Backdrop */}
+                {/* backdrop */}
                 <div 
-                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                  className="absolute inset-0 bg-black/40 backdrop-blur-xl"
                   onClick={() => {
                     console.log('[HomeHub] Backdrop clicked');
                     setShowCurriculumHub(false);
                   }}
                 />
 
-                {/* Width-sync frame (mirrors App.jsx content frame) */}
-                <div className="relative h-full w-full">
-                  <div className="mx-auto h-full w-full max-w-5xl px-4 flex items-start justify-center py-6">
-                    {/* PANEL - now constrained within app frame */}
-                    <div 
-                      className="w-full flex flex-col rounded-3xl shadow-2xl overflow-hidden"
-                      style={{
-                        maxWidth: isSanctuary ? '900px' : '430px',
-                        maxHeight: 'calc(100vh - 48px)',
-                        background: isLight ? 'rgba(250, 245, 235, 1)' : 'rgba(10, 10, 15, 1)',
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {/* Header - fixed, non-scrolling */}
-                      <div className="shrink-0 px-6 pt-6 pb-4 flex items-center justify-between" style={{
-                        background: isLight ? 'rgba(250, 245, 235, 1)' : 'rgba(10, 10, 15, 1)',
-                        borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                      }}>
-                        <h2
-                          className="text-xl font-semibold"
-                          style={{
-                            fontFamily: 'var(--font-display)',
-                            color: 'var(--accent-color)',
-                          }}
-                        >
-                          Ritual Foundation
-                        </h2>
-                        <button
-                          onClick={() => {
-                            console.log('[HomeHub] Close button clicked');
-                            setShowCurriculumHub(false);
-                          }}
-                          className="p-2 rounded-full transition-colors"
-                          style={{
-                            background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
-                          }}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
+                {/* frame-aligned modal host - ALWAYS RENDER with fail-safe clamping */}
+                <div
+                  className="absolute top-0 bottom-0 flex justify-center py-6"
+                  style={hostStyle}
+                  ref={(node) => {
+                    if (!node) return;
+                    const s = node.style;
+                    console.log("[CurriculumModal] host style", {
+                      left: s.left,
+                      width: s.width,
+                      right: s.right,
+                      top: s.top,
+                      bottom: s.bottom,
+                    });
+                  }}
+                >
+                  {/* PANEL - now always mounts to avoid "ghosted app" state */}
+                  <div 
+                    className="w-full max-w-5xl px-4 overflow-hidden rounded-[28px] flex flex-col shadow-2xl"
+                    style={{
+                      background: isLight ? '#f6f1e6' : 'rgba(10, 10, 15, 1)',
+                      maxHeight: 'calc(100vh - 48px)',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    ref={(node) => {
+                      if (!node) return;
+                      const cs = getComputedStyle(node);
+                      console.log("[CurriculumModal] panel computed", {
+                        width: cs.width,
+                        maxWidth: cs.maxWidth,
+                      });
+                    }}
+                  >
+                    {/* Header - fixed, non-scrolling */}
+                    <div className="shrink-0 px-6 pt-6 pb-4 flex items-center justify-between" style={{
+                      background: isLight ? '#f6f1e6' : 'rgba(10, 10, 15, 1)',
+                      borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                    }}>
+                      <h2
+                        className="text-xl font-semibold"
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          color: 'var(--accent-color)',
+                        }}
+                      >
+                        Ritual Foundation
+                      </h2>
+                      <button
+                        onClick={() => {
+                          console.log('[HomeHub] Close button clicked');
+                          setShowCurriculumHub(false);
+                        }}
+                        className="p-2 rounded-full transition-colors"
+                        style={{
+                          background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                        }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
 
-                      {/* Body - THE ONLY SCROLL CONTAINER */}
-                      <div className="flex-1 min-h-0 overflow-y-auto">
-                        <CurriculumHub onClose={() => setShowCurriculumHub(false)} isInModal />
-                      </div>
+                    {/* Body - THE ONLY SCROLL CONTAINER */}
+                    <div className="flex-1 min-h-0 overflow-y-auto">
+                      <CurriculumHub onClose={() => setShowCurriculumHub(false)} isInModal />
                     </div>
                   </div>
                 </div>
