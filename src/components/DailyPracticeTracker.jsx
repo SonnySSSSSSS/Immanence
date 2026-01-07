@@ -126,7 +126,9 @@ export function DailyPracticeTracker() {
                                         fontWeight: 600,
                                         color: isLight ? '#3c3020' : '#fdfbf5',
                                     }}>
-                                        {leg.time ? leg.time.substring(0, 5) : 'Anytime'}
+                                        {leg.time 
+                                            ? (typeof leg.time === 'string' ? leg.time.substring(0, 5) : (leg.time.time ? String(leg.time.time).substring(0, 5) : String(leg.time).substring(0, 5)))
+                                            : 'Anytime'}
                                     </div>
                                     <div style={{
                                         fontSize: '10px',

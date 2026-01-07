@@ -362,13 +362,9 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
     const { completeOnboarding, dismissOnboarding } = useCurriculumStore();
 
     const handleComplete = () => {
-        // Convert selected times to time slot objects
-        const timeSlots = selectedTimes.map(time => {
-            const option = TIME_OPTIONS.find(o => o.value === time);
-            return { time, period: option?.period || 'morning' };
-        });
-        
-        completeOnboarding(timeSlots);
+        // Store selected times as strings (e.g., "08:00")
+        // This ensures DailyPracticeCard can render them correctly
+        completeOnboarding(selectedTimes);
         onComplete?.();
     };
 
