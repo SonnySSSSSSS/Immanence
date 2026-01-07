@@ -28,9 +28,10 @@ import { SigilTracker } from "./components/SigilTracker.jsx";
 import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import "./App.css";
 
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete }) {
+function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
   // Navigation and Application sections handle their own avatars and stage titles
   // RitualLibrary also handles its own UI (no avatar needed)
   const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary';
@@ -61,7 +62,7 @@ function SectionView({ section, isPracticing, onPracticingChange, breathState, o
       )}
 
       <div data-app-frame className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
-        {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} />}
+        {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} onOpenPhotic={onOpenPhotic} />}
 
         {section === "wisdom" && (
           <Suspense fallback={
@@ -141,6 +142,7 @@ function App() {
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
   const [isSigilTrackerOpen, setIsSigilTrackerOpen] = useState(false);
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
+  const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
   const lastTapRef = useRef(0);
 
@@ -294,6 +296,11 @@ function App() {
           }}
         />
 
+        <PhoticCirclesOverlay
+          isOpen={isPhoticOpen}
+          onClose={() => setIsPhoticOpen(false)}
+        />
+
         {/* Inner App Container */}
         <div
           className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
@@ -377,7 +384,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.15.60</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.15.64</div>
                   </div>
                 </div>
               )}
@@ -451,7 +458,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.15.62
+                        v3.15.64
                       </div>
                     </div>
                   )}
@@ -515,6 +522,7 @@ function App() {
                   onNavigate={setActiveSection}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                   onRitualComplete={() => setActiveSection(null)}
+                  onOpenPhotic={() => setIsPhoticOpen(true)}
                 />
               )}
             </div>

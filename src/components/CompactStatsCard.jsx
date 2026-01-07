@@ -638,8 +638,8 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                         <div 
                             className="absolute inset-0 transition-all duration-1000"
                             style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/dark_mode_cosmic_feather.png)`,
-                                backgroundSize: '100% 100%', 
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/ritual_aligned_singularity.png)`,
+                                backgroundSize: 'cover', 
                                 backgroundPosition: 'center',
                                 filter: `hue-rotate(${stageHueRotate}deg) contrast(1.1) saturate(1.2)`,
                                 WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)',
@@ -692,45 +692,11 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                         </span>
                     </div>
 
-                    {/* Left Column: Graphics (Feather) - REDUCED WIDTH */}
+                    {/* Left Column: Graphics (Feather) - REDUCED WIDTH - Background removed to fix nested wallpaper bug */}
                     <div className="w-[25%] relative">
-                        {/* Dark mode feather centered on left */}
-                        {!isLight && (
-                            <div 
-                                className="absolute inset-x-[-20%] inset-y-0 opacity-80 mix-blend-screen"
-                                style={{
-                                    backgroundImage: `url(${import.meta.env.BASE_URL}assets/dark_mode_cosmic_feather.png)`,
-                                    backgroundSize: '180% 100%',
-                                    backgroundPosition: 'left center',
-                                    filter: `hue-rotate(${stageHueRotate}deg) contrast(1.1) saturate(1.2)`,
-                                    WebkitMaskImage: 'linear-gradient(to right, black 50%, transparent 100%)',
-                                    maskImage: 'linear-gradient(to right, black 50%, transparent 100%)'
-                                }}
-                            />
-                        )}
                         {/* Light mode - feather is in the bg, leave graphic area empty or smaller icon */}
                     </div>
 
-                    {/* Celestial Thread Divider */}
-                    <div className="w-px h-full relative overflow-visible">
-                        <div 
-                            className="absolute inset-0 blur-[1px]" 
-                            style={{ 
-                                background: `linear-gradient(to bottom, transparent, ${config.accent}, transparent)`,
-                                opacity: 0.6
-                            }} 
-                        />
-                        <div 
-                            className="absolute inset-y-2 left-[-1px] right-[-1px]" 
-                            style={{ 
-                                background: config.accent,
-                                boxShadow: `0 0 10px ${config.accent}`
-                            }} 
-                        />
-                        {/* Ornamental beads on the thread */}
-                        <div className="absolute top-[20%] left-[-2px] w-1.5 h-1.5 rounded-full" style={{ background: config.accent, border: `1px solid ${config.wellBg}` }} />
-                        <div className="absolute top-[80%] left-[-2px] w-1.5 h-1.5 rounded-full" style={{ background: config.accent, border: `1px solid ${config.wellBg}` }} />
-                    </div>
 
                     {/* Right Column: Data - VERTICALLY STACKED, RIGHT ALIGNED */}
                     <div className="flex-1 flex flex-col justify-center items-end pr-4">

@@ -1,1315 +1,201 @@
-diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
-index c02bda501703929a70f7f03a7a8aeb9e337e95d0..04051cf3ae753e31674689d85e27ab185a3a26a5 100644
---- a/docs/ARCHITECTURE.md
-+++ b/docs/ARCHITECTURE.md
-@@ -1,1185 +1,125 @@
--# Immanence OS — Architecture Overview
--
--## System Philosophy
--
--Immanence OS is a **local-first, constraint-based practice instrument**. The system:
--
--- Observes behavior, does not prescribe
--- Stores all data locally (no cloud)
--- Provides structure without judgment
--- Uses AI for validation, not recommendation
--
--### UI/UX Design Principles (Meditative Practice)
--
--The interface follows a **"high-tech HUD over cosmic chaos"** philosophy, where the cosmology bows during practice:
--
--1. **One Dominant Visual Anchor** - Each screen has one clear focus
--2. **Local Quiet Zones** - Islands of calm within the cosmic background
--3. **Compressed Luminance** - Softer contrasts during active practice (lifted blacks, capped highlights)
--4. **Motion Transfers** - Animation flows, doesn't stack; freeze everything except the locus of attention
--5. **UI Waits for User** - Interface that listens, not demands; text appears after visuals settle
--
--**Key Aesthetic Choices:**
--
--- Glass capsule containers with thin white strokes and backdrop blur
--- Serif fonts (Cinzel, Playfair Display) for headers with wide letter-spacing
--- Fine gold hairline rules instead of thick glows
--- Defined frames with rounded corners for visualizations
--- Text pulsing effects for collapsible affordances (pulse when idle, stop on hover/expand)
--
-----
--
--## High-Level Architecture
--
--```
--┌─────────────────────────────────────────────────────────────┐
--│                        App.jsx                               │
--│                    (Root Component)                          │
--├─────────────────────────────────────────────────────────────┤
--│                                                              │
--│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
--│  │ HomeHub     │  │ Practice    │  │ Four Modes          │  │
--│  │ (Dashboard) │  │ Section     │  │ (ApplicationSection)│  │
--│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
--│                                                              │
--│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
--│  │ WisdomHub   │  │ Navigation  │  │ DevPanel            │  │
--│  │ (Library)   │  │ Section     │  │ (Ctrl+Shift+D)      │  │
--│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
--│                                                              │
--├─────────────────────────────────────────────────────────────┤
--│                    Zustand State Layer                       │
--│  progressStore | chainStore | cycleStore | settingsStore |  │
--│  historyStore | curriculumStore | waveStore | lunarStore    │
--├─────────────────────────────────────────────────────────────┤
--│                    Service Layer                             │
--│  llmService | cycleManager | benchmarkManager | circuitMgr  │
--└─────────────────────────────────────────────────────────────┘
--```
--
-----
--
--## State Management (Zustand)
--
--All state is managed with Zustand stores, persisted to localStorage.
--
--### Core Stores
--
--| Store                 | Purpose                        | Key Data                                                                                            |
--| --------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
--| `trackingStore`       | **AUTHORITATIVE TRACKING CENTER** | sessions[], dailyLogs, streak, schedule - ALL practice data flows here                              |
--| `progressStore`       | Session tracking, streaks      | sessions[], streaks, benchmarks, practiceHistory                                                    |
--| `applicationStore`    | Awareness tracking & Intention | awarenessLogs[], intention, getWeekLogs()                                                           |
--| `chainStore`          | Four Modes chains              | activeChain, completedChains                                                                        |
--| `cycleStore`          | Cycle & consistency tracking   | currentCycle, history, checkpoints, modeHistory                                                     |
--| `settingsStore`       | App settings & preferences     | displayMode, llmModel, themeStageOverride, volume, useNewAvatars, buttonThemeDark, buttonThemeLight |
--| `historyStore`        | Undo/redo for modes            | histories{}, positions{}, snapshots                                                                 |
--| `curriculumStore`     | 14-day curriculum & onboarding | thoughtCatalog[], dayCompletions, legCompletions, practiceTimeSlots                                 |
--| `waveStore`           | Personality profile (Big Five) | traits, assessmentHistory                                                                           |
--| `lunarStore`          | Lunar cycle tracking           | currentPhase, ritualCompletions                                                                     |
--| `attentionStore`      | Attention path inference       | weeklyData, dominantPath                                                                            |
--| `circuitJournalStore` | Practice journaling            | entries[], archivedSessions, insightsData                                                           |
--
--### Supporting Stores
--
--| Store               | Purpose                        |
--| ------------------- | ------------------------------ |
--| `practiceStore`     | Current practice session state |
--| `navigationStore`   | Section navigation state       |
--| `wisdomStore`       | Bookmarks, reading progress    |
--| `videoStore`        | Video library state            |
--| `mandalaStore`      | Mandala visualization state    |
--| `displayModeStore`  | Light/dark mode toggle         |
--| `modeTrainingStore` | Mode training progress         |
--| `pathStore`         | Path recognition data          |
--
-----
--
--## Key Data Structures
--
--### Chain (Four Modes)
--
--```javascript
--{
--  id: 'chain_1702...xxx',
--  startDate: '2024-12-19T...',
--  state: 'MIRROR_ACTIVE' | 'MIRROR_LOCKED' | 'PRISM_ACTIVE' | ...,
--
--  mirror: {
--    locked: false,
--    context: { date, time, location, category },
--    actor: '',
--    action: '',
--    recipient: '',
--    neutralSentence: '',
--    llmValidation: { status, result, lastAttempt }
--  },
--
--  prism: {
--    locked: false,
--    interpretations: [{ id, text, isSupported, evidenceNote }],
--    supportedRatio: 0.25
--  },
--
--  wave: {
--    locked: false,
--    emotions: [],
--    somaticLocation: '',
--    impulses: [],
--    startIntensity: 8,
--    endIntensity: 5
--  },
--
--  sword: {
--    locked: false,
--    value: '',
--    action: '',
--    cost: '',
--    timeBound: ''
--  }
--}
--```
--
--### Wave Profile (Big Five)
--
--```javascript
--{
--  traits: {
--    openness: 0.72,
--    conscientiousness: 0.65,
--    extraversion: 0.45,
--    agreeableness: 0.78,
--    neuroticism: 0.38
--  },
--  lastAssessedAt: '2024-12-19T...',
--  assessmentHistory: [...]
--}
--```
--
--### Cycle (Consistency System)
--
--```javascript
--{
--  id: 'cycle_1702...xxx',
--  type: 'foundation',  // 21 days | 'advanced' = 42 days
--  mode: 'consecutive', // or 'flexible' (67% baseline)
--  startDate: '2024-12-19T...',
--
--  practiceDays: [
--    { date: '...', type: 'breath', duration: 12, sessionId: '...' }
--  ],
--
--  checkpoints: [
--    {
--      date: '...',
--      dayNumber: 14,
--      consistencyRate: 0.85,
--      effectiveDays: 12,
--      canSwitchMode: true,
--      modeLockUntil: '...'
--    }
--  ],
--
--  consistencyMetrics: {
--    rate: 0.82,
--    effectiveDays: 17,
--    projectedCompletion: '...',
--    timeOfDayConsistency: 0.75,
--    durationConsistency: 0.6
--  },
--
--  modeHistory: [
--    { switchedAt: '...', from: 'consecutive', to: 'flexible', reason: '...' }
--  ]
--}
--```
--
--### Circuit Configuration
--
--**Circuit Mode** allows chaining multiple practice types in sequence.
--
--**Key Features:**
--
--- Horizontal scrolling exercise selection ribbon (6 exercises: Breath, Cognitive Vipassana, Somatic Vipassana, Cymatics, Sound Bath, Visualization)
--- Per-exercise duration dropdown (3, 5, 7, 10, 12, 15, 20 min)
--- Auto-calculated total circuit duration
--- Clean linear sequence display with numbered badges
--- Dynamic accent color integration based on stage/path
--- Heartbeat pulse animation on START button (~60 BPM)
--
--**Duration Control:**
--
--- Main duration selector hidden for Circuit mode
--- Per-exercise dropdown updates ALL exercises simultaneously
--- Total circuit time displayed in OPTIONS panel
--
--**Components:**
--
--- `CircuitConfig.jsx` - Main configuration component
--- `OrbitalSequence.jsx` - Unused orbital layout (reference)
--- `CircuitSigil.jsx` - Unused charging ring (reference)
--
--### Wisdom Section
--
--`WisdomSection.jsx` serves as the "Akashic Record" - the library and reflection space.
--
--**Structure:**
--
--```
--WisdomSection.jsx
--├── Recommendations         # Needs-based wisdom (8 categories)
--├── Treatise               # Full text with parts/chapters
--├── Bookmarks              # User-saved chapters
--├── Videos                 # VideoLibrary component
--└── Self-Knowledge         # Big Five + self-described patterns
--```
--
--**Video Library** (`VideoLibrary.jsx`):
--
--- "Flame" metaphor - idle hearth with embers
--- Featured + Library bands (horizontal scroll)
--- Video hearth with ember glow when playing
--- Isolated with `z-index: 50` to hide PathParticles decorations
--
--**Category Sigils (Recommendations):**
--
--The `CategorySigil` component renders symbolic icons for each of the 8 recommendation categories using inline SVGs. This approach was chosen over external PNG assets for performance, scalability, and visual consistency.
--
--| Category Key           | Symbol Description           |
--| ---------------------- | ---------------------------- |
--| `focus-presence`       | Crosshair/target             |
--| `emotional-regulation` | Balanced waves               |
--| `grounding-safety`     | Grounding chevron            |
--| `shadow-integration`   | Moon phases                  |
--| `expression-voice`     | Radiating circle             |
--| `heart-connection`     | Heart outline                |
--| `resonance-alignment`  | Concentric tuning fork waves |
--| `self-knowledge`       | Eye of awareness             |
--
--**Components:**
--
--- `ChapterModal` - Full-screen chapter reading
--- `PartAccordion` - Collapsible treatise sections
--- `CategoryCard` - Needs assessment cards (uses `CategorySigil`)
--- `SelfKnowledgeView` - Wave Function personality viz
--- `VideoToken` - Minimal video selector
--
--### Practice System
--
--The practice system is the core training engine of Immanence OS, managing various meditation and focus exercises.
--
--**Primary Orchestrator:** `PracticeSection.jsx`
--
--- Manages switching between **Configuration** and **Running** views.
--- Loads/Saves user preferences (duration, breath pattern, theme).
--- Records practice metrics (accuracy, duration, breath count) to `progressStore`.
--
--| Practice Mode           | Purpose                                   | Primary Components                                                 |
--| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------ |
--| **Breath & Stillness**  | Rhythmic breathing & timing accuracy      | `BreathingRing.jsx`, `BreathConfig.jsx`, `PathParticles.jsx`       |
--| **Cognitive Vipassana** | Thought labeling & mental observation     | `vipassana/VipassanaVisual.jsx`, `ThoughtLabeling.jsx`             |
--| **Somatic Vipassana**   | Body awareness & sensory tracking         | `SensorySession.jsx`, `BodyScanVisual.jsx`, `SensoryConfig.jsx`    |
--| **Visualization**       | Mental object focus & geometric stability | `VisualizationCanvas.jsx`, `VisualizationConfig.jsx`               |
--| **Cymatics**            | Frequency-to-geometry resonance           | `CymaticsVisualization.jsx`, `CymaticsConfig.jsx`                  |
--| **Sound**               | Binaural beats & frequency entrainment    | `SoundConfig.jsx`, `ToneGenerator` (Web Audio API)                 |
--| **Ritual**              | Multi-step structured rituals             | `RitualPortal.jsx`, `RitualSelectionDeck.jsx`, `RitualSession.jsx` |
--| **Circuit**             | Chained sequence of different practices   | `Cycle/CircuitConfig.jsx`, `CircuitTrainer.jsx`                    |
--
--**Practice Visuals:**
--
--- **BreathingRing**: Central teacher, syncs with breath phases (inhale/hold/exhale/rest).
--- **Vipassana Canvas**: Dynamic visualizers for thought-objects (DynamicClouds, ScrollingFog).
--- **BodyScan silhouette**: Anatomical outline with Ember FX bar for focus tracking.
--
--**Practice Journaling System:**
--The journaling system bridges practice sessions with long-term insights, capturing both structured (circuit) and unstructured (single session) data.
--
--- **Post-Session Routing**: `PostSessionJournal.jsx` acts as a traffic controller, routing users to the appropriate form based on the session type (Single vs. Circuit).
--- **Circuit Assessments**: Maps per-exercise attention quality and technical notes, plus overall circuit challenges and general insights.
--- **Visual Archive**: `SessionHistoryView.jsx` provides a portal-based hub for viewing entries, filtering by date/type, and accessing the Insights dashboard.
--- **Data Portability**: Built-in JSON and CSV export capabilities ensure users own their practice data.
--
--### Application (The Four Modes)
--
--The "Four Modes" workflow moves from observation to action through four distinct recursive chambers.
--
--**Primary Orchestrator:** `ApplicationSection.jsx` -> `ModeTraining.jsx`
--
--1. **Mirror (Observation)**: Pure description of an event.
--
--   - `MirrorObservation.jsx`: Context, Actor, Action, Recipient.
--   - `VoiceInput.jsx`: Transcription with confirm-first preview.
--   - `MirrorValidationFeedback.jsx`: E-Prime check + AI-powered neutrality validation.
--   - `MirrorStillness.jsx`: Post-observation dwell time.
--
--2. **Prism (Separation)**: Breaking one "Truth" into multiple interpretations.
--
--   - `PrismSeparation.jsx`: Identifying subjective filters.
--   - `PrismReframing.jsx`: Creating alternative meanings supported by evidence.
--
--3. **Wave (Capacity)**: Somatic experience and emotional intensity.
--
--   - `WaveRide.jsx`: Tracking somatic locations and emotional impulses.
--   - `ResonatorChambering.jsx`: Increasing capacity for the feeling without reactivity.
--
--4. **Sword (Commitment)**: Precise action aligned with values.
--   - `SwordCommitment.jsx`: Defining small, cost-bound actions.
--   - `SwordCompression.jsx`: Distilling the commitment to its core essence.
--
--### Awareness Tracking Hub
--
--The Tracking Hub (`TrackingHub.jsx`) provides the "Ground" for practice, visualizing behavioral data.
--
--- **AwarenessCompass.jsx**: Cardinal-direction logging (N/E/S/W). Manages "Intention" seal. Features the **Dual-Visual Orb System** where background orbs represent intensity and foreground SVG indicators represent precision (Bullseye ≥90%, Crosshair 70-89%, Dashed <70%).
--- **SevenDayTrendCurve.jsx**: Frequency analysis of logged moments.
--- **PathJourneyLog.jsx**: Long-term alignment with the 6 paths (Soma, Prana, Dhyana, etc.).
--- **HonorLogModal.jsx**: Record of commitments kept or broken.
--
--### Themed Button Assets
--
--The system uses a dynamic, theme-aware button asset system for the mode navigation buttons.
--
--**Key Features:**
--
--- **Mode-Aware Generation:** Distinct themes for light and dark modes (40 total assets).
--- **Themes:**
--  - Dark: `cosmic`, `bioluminescent`, `aurora`, `crystalline`, `electric`.
--  - Light: `watercolor`, `sketch`, `botanical`, `inkwash`, `cloudscape`.
--- **Dynamic Loading:** `SimpleModeButton.jsx` retrieves the active theme from `settingsStore` and constructs paths: `mode_buttons/{icon}_{theme}_{mode}.png`.
--- **Customization:** Themes can be toggled via the Dev Panel.
--
--### Wisdom Hub
--
--The library and reflection space for theoretical understanding.
--
--- **Treatise**: Hierarchical text content (The Book of Immanence).
--- **VideoLibrary.jsx**: Featured and category-based video instruction with "Idle Hearth" metaphors.
--- **Self-Knowledge**: Visualization of self-reported traits and patterns.
--- **Recommendations**: Dynamic content suggestions based on current needs assessment.
--
--### ComfyUI API Integration
--
--The system uses a direct REST API connection to a local ComfyUI instance for generating high-fidelity assets like stage backgrounds.
--
--**Key Features:**
--
--- **Script-based Generation:** `generate_parchment.ps1` allows headless image generation via PowerShell.
--- **API Mapping:** Interacts with `http://127.0.0.1:8188/prompt` to queue workflows.
--- **Workflow Management:** Uses `UnsavedWorkflow.json` (exported in API format) as the base template.
--- **Dynamic Prompts:** Script modifies node values (text prompts, seeds, resolutions) before submission.
--
--**Standard Prompt Structure:**
--
--- **Positive:** High quality parchment paper texture, botanical watercolor accents, minimalist zen style (Seedling theme).
--- **Negative:** Text, watermark, people, harsh colors, neon, oversaturated.
--
--**Components:**
--
--- `generate_parchment.ps1` - API client and generation logic.
--- `comfyui_workflow.json` - Local copy of the generation template.
--
-----
--
--### Sound Practice
--
--Sound-based practices use binaural beats and isochronic tones.
--
--**Frequency-to-Color Mapping:**
--
--- 100-200 Hz → Warm Orange #FF8C42 (grounding)
--- 200-300 Hz → Yellow #FFD93D (energizing)
--- 300-400 Hz → Green #6BCF7F (balance)
--- 400-500 Hz → Blue #4A90E2 (ethereal)
--
--**UI Features:**
--
--- Analog mixer-style fader slider (20x40px thumb)
--- Dynamic color mapping for thumb, track, Hz text
--- Gradient track showing full spectrum
--- Volume slider in practice session (uses avatar accent color)
--
--**Components:**
--
--- `SoundConfig.jsx` - Hz selector, sound type
--- Rendered in `PracticeSection.jsx` with volume control
--
--### Ritual System
--
--Rituals are structured, multi-step meditative practices with specific friction mappings.
--
--**Key Features:**
--
--- **Minimum Dwell Time Enforcement:** Users must spend 50% of step duration before "NEXT STEP" unlocks
--- **Visual Feedback:** Button transitions from grey to golden glow when enabled
--- **Ritual Seal:** Post-session summary card for non-ritual practices showing duration, breath count, accuracy
--- **Crisis Preparation Suite:** Rituals targeting specific emotional states (Agitation, Shame, Overwhelm, Numbness)
--
--**Storm Anchor Ritual** (Crisis Preparation):
--
--- Category: `grounding` → `SETTLE` family
--- 4 steps: Sighting, Physiological Sigh, Weight of Being, Triage Script
--- Friction Mapping: Targets **Agitation** via parasympathetic reset
--- Path Impact: Pre-path foundational work, contributes to Ekagrata path signal
--
--**Components:**
--
--- `RitualPortal.jsx` - Main ritual interface with dwell time enforcement
--- `PracticeSection.jsx` - Ritual Seal summary display
--
-----
--
--### Header & Hamburger Logic
--
--The application header adapts dynamically to the `displayMode` (Sanctuary vs. Hearth) to ensure a clean mobile-first experience.
--
--**Visibility States:**
--
--- **Sanctuary Mode (Wide):**
--  - Full desktop header visible (Branding, Width/Theme Toggles, Dev Panel button, version).
--  - Hamburger menu hidden.
--- **Hearth Mode (iPhone):**
--  - Clean mobile header: Only **StageTitle** remains in the center.
--  - Hamburger menu visible in the top-right.
--  - Desktop controls (Toggles, Version) move inside the hamburger dropdown menu.
--
--**Components:**
--
--- `App.jsx` handles the conditional rendering logic based on `displayMode === 'hearth'`.
--
--### Main Sections
--
--```
--App.jsx
--├── Background.jsx          # Cosmic background
--├── IndrasNet.jsx           # Particle system
--├── SectionView
--│   ├── Avatar.jsx          # Central multi-layer avatar (Canvas + PNGs)
--│   │   ├── AvatarContainer.jsx     # Layer orchestration (z-index management)
--│   │   ├── StaticSigilCore.jsx     # Inner jewel with visual effects
--│   │   ├── RuneRingLayer.jsx       # Rotating rune/astrolabe ring
--│   │   ├── BreathingAura.jsx       # Practice-mode breathing glow
--│   │   └── HaloGate.jsx            # Radial navigation (currently disabled)
--│   ├── StageTitle.jsx      # Stage/path/attention display
--│   │   └── GoldCartouche.jsx   # Gold seal for attention vectors
--│   └── [Section Content]
--│       ├── HomeHub.jsx             # Dashboard
--│       ├── PracticeSection.jsx     # Breathing, visualization, Ember FX
--│       │   └── BodyScanVisual.jsx  # Body scan silhouette + Ember FX bar
--│       ├── WisdomSection.jsx       # Reading content
--│       ├── ApplicationSection.jsx  # Four Modes training
--│       │   ├── TrackingView.jsx    # Gesture → Trace → Pattern → Direction
--│       │   │   ├── AwarenessCompass.jsx        # Includes tracking stats & intention
--│       │   │   ├── TodayAwarenessLog.jsx
--│       │   │   ├── WeeklyReview.jsx
--│       │   │   └── PathJourneyLog.jsx
--│       │   └── FourModesHome.jsx   # 2x2 Mode Grid
--│       └── NavigationSection.jsx   # Settings, profile
--└── DevPanel.jsx            # Developer tools
--```
--
--### StageTitle Component
--
--`StageTitle.jsx` displays the user's current stage, path, and attention vector in a compact, premium gold-bordered capsule.
--
--**Layout Structure (3-column grid):**
--
--1. **Left column**: Stage title image (e.g., "FLAME", "SEEDLING")
--2. **Center column**: Attention Vector as `GoldCartouche` (e.g., "SAHAJA", "EKAGRATA") OR diamond separator when no attention set
--3. **Right column**: Path title image (e.g., "Soma", "Prana")
--
--**Sizing:**
--
--- Images: `h-14` (56px) for balanced proportions
--- Container padding: `4px 34px 4px` (minimal vertical, moderate horizontal)
--- Min width: `300px` to prevent layout shifts
--
--**Visual Design:**
--
--- Dynamic gold gradient border with avatar-based lighting
--- Stage-adaptive tint overlay from stage colors
--- Minimal marble texture (4% opacity)
--- Hover tooltips with stage/path descriptions (2s delay)
--- Light mode uses multiply blend for "FLAME" title
--
--**Components:**
--
--- `GoldCartouche.jsx` - Polished gold seal for attention state indicators
--- `TexturedTitleCard` - Internal wrapper with gold border and lighting effects
--
--### Avatar System
--
--The avatar is a multi-layer visual system representing the user's spiritual state through concentric layers of visual effects.
--
--**Layer Stack (z-index order):**
--
--1. **z-index 0**: Base plate - contrast backing for rings/core
--2. **z-index 1**: Luminous canvas - glowing web pattern
--3. **z-index 5**: Rune ring - rotating PNG with stage-specific markings
--4. **z-index 6**: Decorative outline rings with stage-adaptive colors
--5. **z-index 7-9**: Avatar sigil core with effects (see below)
--6. **z-index 10**: Sigil rotation container
--
--**Avatar Visual Effects ("Captured Star" Aesthetic):**
--
--- **Black separation ring**: 52% backdrop with 48% avatar floating inside
--- **Cyan/teal halo**: `rgba(80, 200, 180)` blurred glow bleeding over rim
--- **Screen blend mode**: Luminous jewel effect on avatar image
--- **Teal-tinted stone frame**: Rune ring uses `hue-rotate(-10deg)` for color harmony
--- **Toned background haze**: Conic gradient at 30% opacity
--- **Counter-rotation**: Avatar sigil rotates opposite to rune ring at 25% speed
--
--**Avatar Asset Naming Conventions:**
--
--The system supports two naming conventions, controlled by `useNewAvatars` in `settingsStore`. The default is `false` (legacy).
--
--| Convention | Example Filename                          | Default? | Use Case                      |
--| ---------- | ----------------------------------------- | -------- | ----------------------------- |
--| Legacy     | `Flame-Dhyana.png`                        | ✅ Yes   | Standard user fallback        |
--| New        | `avatar-flame-dhyana-ekagrata_00001_.png` | No       | Extended attention variations |
--
--- **Legacy Path Construction**: `avatars/${Stage}-${Path}.png` (e.g., `Seedling-Soma.png`)
--- **New Path Construction**: `avatars/avatar-${stage}-${path}-${attention}_0000${n}_.png`
--- **Core Avatar**: `avatars/${stage}-core.png` (used when `showCore=true` or no path selected)
--
--**Settings:**
--
--- `useNewAvatars` (settingsStore): Toggle between old (`Flame-Dhyana.png`) and new (`avatar-flame-dhyana-ekagrata_00001_.png`) naming conventions
--- DevPanel includes "Avatar Set" toggle (OLD/NEW buttons)
--
--**Components:**
--
--- `avatar/index.jsx` - Main component with HaloGate integration
--- `avatar/AvatarContainer.jsx` - Layer orchestration and z-index management
--- `avatar/StaticSigilCore.jsx` - Inner jewel with cyan halo and screen blend
--- `avatar/RuneRingLayer.jsx` - Rotating ring with teal-tinted stone effect
--- `avatar/BreathingAura.jsx` - Practice-mode breathing glow
--- `avatar/HaloGate.jsx` - Radial navigation system (currently disabled)
--- `avatar/constants.js` - Stage colors and glow definitions
--
--### Four Modes Components
--
--```
--ApplicationSection.jsx
--└── ModeTraining.jsx
--    ├── MirrorObservation.jsx      # + MirrorValidationFeedback
--    │   └── VoiceInput.jsx         # Speech-to-text with preview modal
--    ├── PrismSeparation.jsx        # + VoiceInput per field
--    ├── WaveCapacity.jsx           # + VoiceInput per field
--    └── SwordCommitment.jsx        # + VoiceInput per field
--```
--
--**Voice Input System:**
--
--- Uses Web Speech API for speech-to-text
--- "Confirm-first" preview modal pattern
--- Per-field mic buttons with glassmorphic styling
--- Real-time transcription with manual confirmation
--- Fallback messaging for unsupported browsers
--
--### ALPHA UI Element: BreathingRing
--
--`BreathingRing.jsx` is the **central onboarding teacher** — a global overlay element that can appear across all sections, not tied to specific practice components.
--
--**Key Architecture:**
--
--- Independent component, not embedded in Avatar
--- Can be invoked globally for onboarding/teaching
--- Syncs with breath patterns (inhale/exhale/hold phases)
--- Integrated PathParticles for visual energy feedback
--- `practiceEnergy` prop (0.3-1.0) controls particle intensity based on context
--
--**Props:**
--
--```javascript
--<BreathingRing
--  breathPattern={{ inhale, holdTop, exhale, holdBottom }}
--  practiceEnergy={0.5} // 0.3=stillness, 0.5=active, 1.0=intense
--  pathId="prana" // Path-specific FX
--  fxPreset={preset} // Custom particle behavior
--  onTap={handleTap} // Accuracy feedback
--  onCycleComplete={fn} // Breath cycle callback
--  startTime={timestamp}
--/>
--```
--
--### Visual FX System: PathParticles
--
--`PathParticles.jsx` is a canvas-based particle system with 12+ motion patterns synced to breath phases.
--
--**Motion Patterns:**
--
--- `ember-mixed` - Rising fire particles
--- `electric-varied` - Plasma conduit (continuous noise ring)
--- `plasma-directional` - Sci-fi directional flow
--- `starfield-smooth` - Radiating bursts with breath sync
--- `hyperspace-rays` - Dual-layer rays with shimmer
--- `snowglobe-active` - Parallax layers with swirl
--- `meteor-cycle` - 3-layer streaks
--- `wisp-drift`, `ribbon-flow`, `circuit-pulse`, etc.
--
--**Integration:** Rendered inside BreathingRing, responds to:
--
--- Breath phase (`inhale`/`hold`/`exhale`/`rest`)
--- Ring scale (breath-driven expansion)
--- Practice energy (intensity modifier)
--- Path-specific presets (via `pathFX.js`)
--
--### Ember FX & Decorative Layers
--
--- **Ember FX Bar**: A horizontal, glowing, flickering bar added to the top of the `BodyScanVisual` container.
--- **Avatar Rotation**: The central avatar sigil rotates counter-clockwise at 25% the speed of the outer rune ring. Light/Dark modes use explicit opposing classes (`.dark-ring-rotate`, `.light-ring-rotate`) for distinct feels.
--- **Interactive Shadow**: In Light Mode, the inner rim shadow dynamically shifts opposite to the moon's orbital position.
--- **Z-Index Stacking**: Header section (`z-20`) is strictly above content (`z-10`) to prevent tooltip occlusion.
--
--**Key Props:**
--
--- `intensity` (0-1) - Particle visibility/activity
--- `phase` - Current breath phase
--- `ringScale` - Dynamic ring size
--- `pathId` / `fxPreset` - Visual style
--
-----
--
--## Visual Effects & Background Components
--
--This section maps all visual effect components to their module ownership and display mode behavior. Use this as a quick reference when debugging visual elements.
--
--### Component Ownership Map
--
--| Component                         | Location                 | Module     | Render Layer   | Light Mode                  | Dark Mode                            |
--| --------------------------------- | ------------------------ | ---------- | -------------- | --------------------------- | ------------------------------------ |
--| `Background.jsx`                  | `src/components/`        | Background | z-index 0      | Parchment base + clouds     | Cosmic particles (auto 100% height)  |
--| `AvatarLuminousCanvas.jsx`        | `src/components/`        | Avatar     | z-index 1      | **Hidden** (skipHeavyFx)    | Active particles + dust + week nodes |
--| `MoonOrbit.jsx`                   | `src/components/`        | Avatar     | z-index 100    | **Returns null**            | Lunar orbit SVG with glyphs          |
--| `AvatarContainer.jsx`             | `src/components/avatar/` | Avatar     | z-index 6      | Decorative rings **hidden** | Full decorative outline rings        |
--| `StaticSigilCore.jsx`             | `src/components/avatar/` | Avatar     | z-index 7-10   | Gold halo/glow              | Cyan/teal halo + glow                |
--| `RuneRingLayer.jsx`               | `src/components/avatar/` | Avatar     | z-index 5      | Active (rotating)           | Active (rotating)                    |
--| `BreathingAura.jsx`               | `src/components/avatar/` | Avatar     | Practice mode  | Active during practice      | Active during practice               |
--| `PathParticles.jsx`               | `src/components/`        | Practice   | Canvas overlay | Active                      | Active                               |
--| `AvatarLuminousCanvas` week nodes | `src/components/`        | Avatar     | Canvas layer   | Active (sacred geometry)    | Active (week practice dots)          |
--
--**Key Takeaway:** Most heavy visual effects (particles, dust, decorative rings, moon orbit) are **hidden in light mode** to achieve a clean, "handled instrument" aesthetic.
--
--### Background Layer Stack (Bottom to Top)
--
--The complete layering order from base to content:
--
--```
--┌─────────────────────────────────────────────────────────────┐
--│ 1. Background.jsx (z-index 0)                                │
--│    ├─ Light Mode: Parchment base color                       │
--│    └─ Dark Mode: Cosmic background with particles            │
--├─────────────────────────────────────────────────────────────┤
--│ 2. Cloud Overlay (HomeHub.jsx, light mode only)              │
--│    ├─ Stage-specific: {stage}_{cloudVariant}.png             │
--│    ├─ Position: center bottom, auto 100% height              │
--│    ├─ Gradient fade at top for seamless blend                │
--│    └─ Animation: 60s horizontal drift (cloudDrift)           │
--├─────────────────────────────────────────────────────────────┤
--│ 3. ConstellationField.jsx (REMOVED)                          │
--│    └─ Previously: Canvas-based gold constellation            │
--├─────────────────────────────────────────────────────────────┤
--│ 4. Content Layers (z-index 10+)                              │
--│    └─ Avatar, UI, text content                               │
--└─────────────────────────────────────────────────────────────┘
--```
--
--### Avatar Visual Effects Stack (Inside to Outside)
--
--The avatar is composed of multiple visual layers with specific z-index ordering:
--
--```
--Avatar Container (64% of viewport)
--├─ LAYER 0 (z-index 0): Base Plate
--│  ├─ Flame-specific dark backer (dark mode only)
--│  ├─ Universal shadow backer (dark mode only)
--│  └─ Ring rim shadow (both modes)
--│
--├─ LAYER 1 (z-index 1): AvatarLuminousCanvas
--│  ├─ Dark Mode: Particles, dust, nebula, sacred geometry
--│  └─ Light Mode: HIDDEN (skipHeavyFx = true)
--│     - Particles: wrapped in if (!skipHeavyFx)
--│     - Dust: wrapped in if (!skipHeavyFx)
--│     - Sacred geometry: still renders
--│
--├─ LAYER 2 (z-index 5): RuneRingLayer
--│  ├─ Rotating PNG with stage-specific rune markings
--│  ├─ Both modes: Active rotation
--│  └─ Speed: adjustable via ringSpeedMultiplier
--│
--├─ LAYER 3 (z-index 6): Decorative Outline Rings
--│  ├─ Dark Mode: Two concentric rings (108%, 102%) + top pin
--│  └─ Light Mode: HIDDEN (wrapped in {!isLight && (...)})
--│
--├─ LAYER 4 (z-index 2): Mode-specific Glow
--│  ├─ Light Mode: Subtle radial gradient
--│  └─ Dark Mode: None (glow handled by other layers)
--│
--├─ LAYER 5 (z-index 7): Inner Shadow / Depth
--│  ├─ Light Mode: Directional shadow opposite moon position
--│  └─ Dark Mode: Centered shadow
--│
--├─ LAYER 6 (z-index 8-10): StaticSigilCore
--│  ├─ Inner jewel/avatar image with effects
--│  ├─ Light Mode: Gold halo (rgba(200, 160, 110))
--│  ├─ Dark Mode: Cyan/teal halo (rgba(80, 200, 180))
--│  ├─ Conic gradient whirlpool (30% opacity)
--│  ├─ Black separation ring at 52%
--│  └─ Counter-rotation: Opposite to rune ring at 25% speed
--│
--└─ LAYER 7 (z-index 100): MoonOrbit (SVG)
--   ├─ Light Mode: RETURNS NULL (completely hidden)
--   └─ Dark Mode: Lunar orbit track with moon glyphs
--      - Orbit radius: avatarRadius * 1.4
--      - Moon phases: new, crescent, quarter, full
--      - Ghost echo arc on progress change
--```
--
--### Mode-Specific Visibility Quick Reference
--
--Use this table to quickly determine what's visible in each display mode:
--
--| Visual Element          | Light Mode       | Dark Mode           | Notes                                      |
--| ----------------------- | ---------------- | ------------------- | ------------------------------------------ |
--| **Background**          | ✅ Parchment     | ✅ Cosmic particles | Auto 100% height, bottom-anchored          |
--| **Cloud overlay**       | ✅ Visible       | ❌ Hidden           | Stage-specific watercolor clouds           |
--| **Constellation field** | ❌ Removed       | ❌ Removed          | Deleted component (ConstellationField.jsx) |
--| **Avatar particles**    | ❌ Hidden        | ✅ Visible          | AvatarLuminousCanvas skipHeavyFx check     |
--| **Avatar dust**         | ❌ Hidden        | ✅ Visible          | Wrapped in if (!skipHeavyFx)               |
--| **Decorative rings**    | ❌ Hidden        | ✅ Visible          | {!isLight && (...)} conditional            |
--| **Moon orbit SVG**      | ❌ Returns null  | ✅ Visible          | Early return in MoonOrbit.jsx              |
--| **Avatar halo color**   | 🟡 Gold          | 🔵 Cyan/Teal        | StaticSigilCore color swap                 |
--| **Sacred geometry**     | ✅ Visible       | ✅ Visible          | Concentric circles in AvatarLuminousCanvas |
--| **Week practice nodes** | ✅ Visible       | ✅ Visible          | Hexagram markers around avatar             |
--| **Rune ring**           | ✅ Rotating      | ✅ Rotating         | Always visible in both modes               |
--| **Breathing aura**      | ⚡ Practice only | ⚡ Practice only    | BreathingAura.jsx during sessions          |
--
--**Legend:**
--
--- ✅ Fully visible
--- ❌ Completely hidden
--- 🟡 Modified appearance (gold)
--- 🔵 Modified appearance (cyan)
--- ⚡ Conditionally visible
--
--### Debugging Guidelines
--
--When tracking down unexpected visual elements:
--
--1. **Check display mode first**: Use DevPanel (Ctrl+Shift+D) to confirm light/dark mode
--2. **Identify the layer**: Look at z-index to determine which component owns it
--3. **Check conditional rendering**: Search for `isLight`, `skipHeavyFx`, or `colorScheme` checks
--4. **Verify file changes**: Use hard refresh (Ctrl+Shift+R) to clear browser cache
--5. **Restart dev server**: Some canvas-based effects require full rebuild
--
--**Common Issues:**
--
--- **Particles appearing in light mode**: Check `AvatarLuminousCanvas.jsx` lines 795-809 for `skipHeavyFx` wrapping
--- **Cyan circles around avatar**: Check `AvatarContainer.jsx` line 130 for `{!isLight && (...)}` conditional
--- **Moon orbit glyphs in light mode**: Check `MoonOrbit.jsx` line 72 for early `return null`
--- **Constellation stars**: ConstellationField.jsx deleted, check it's not imported in HomeHub.jsx
--
-----
--
--## Service Layer
--
--### LLM Service (`src/services/llmService.js`)
--
--Communicates with local Ollama for AI-powered validation.
--
--```javascript
--// Key exports
--export async function sendToLLM(systemPrompt, userPrompt, options)
--export async function sendToLLMForJSON(systemPrompt, userPrompt, options)
--export async function checkLLMAvailability()
--
--// Mode-specific validators
--export async function validateMirrorEntry(mirrorEntry)
--export async function evaluatePrismInterpretations(...)
--export async function evaluateWaveCoherence(...)
--export async function validateSwordCommitment(...)
--```
--
--**Configuration:**
--
--```javascript
--const USE_OLLAMA = true; // Toggle between Ollama and Gemini API
--const WORKER_URL = "/api/ollama"; // Vite proxy
--```
--
--### Cycle Services
--
--**cycleManager.js** - Practice logging, consistency calculation, mode switching
--**benchmarkManager.js** - Self-reported metrics, stage requirements
--**circuitManager.js** - Multi-path circuit training management
--
--```javascript
--// circuitManager
--export function logPractice(type, durationMin, sessionData)
--export function calculateConsistency(cycle)
--export function switchMode(newMode, reason)
--
--// benchmarkManager
--export function logBenchmark(path, value, notes)
--export function checkStageRequirements(stage, benchmarks)
--
--// circuitManager
--export function getAvailableCircuits()
--export function startCircuit(circuitId)
--export function logCircuitCompletion(circuitId, exercises)
--
--// circuitIntegration (Internal Service)
--export function completeCircuitSession() // Ends session & triggers journaling
--export function saveCircuitJournal(completedCircuitId, assessment) // Stores rich data
--```
--
-----
--
--## Data Flow
--
--### Practice Session Flow
--
--```
--User taps rhythm
--    ↓
--PracticeSection detects tap timing
--    ↓
--practiceStore.recordTap(accuracy)
--    ↓
--Session completes
--    ↓
--progressStore.recordSession({
--  practiceType, duration, accuracy, breathCount
--})
--    ↓
--Streak updated, Honor/Dishonor logged
--    ↓
--localStorage persisted
--```
--
--### Four Modes Chain Flow
--
--```
--User starts chain
--    ↓
--chainStore.startNewChain()
--    ↓
--MirrorObservation.jsx
--    ↓
--User fills form → clicks "Validate with AI"
--    ↓
--llmService.validateMirrorEntry()
--    ↓
--chainStore.setMirrorLLMValidation(status, result)
--    ↓
--User locks → chainStore.lockMirror(neutralSentence)
--    ↓
--Chain state: MIRROR_LOCKED
--    ↓
--[Repeat for Prism, Wave, Sword]
--    ↓
--chainStore.lockSword() → Chain archived to completedChains
--```
--
--### Practice Journaling Flow
--
--```
--Practice Session Completes
--    ↓
--circuitIntegration.completeCircuitSession()
--    ↓
--progressStore.recordSession()
--    ↓
--PostSessionJournal Modal appears
--    ↓
--Route: SingleSessionJournalForm OR CircuitJournalForm
--    ↓
--User submits rich technical notes / attention ratings
--    ↓
--circuitJournalStore.createEntry()
--    ↓
--Archive: SessionHistoryView reflects new data
--```
--
--### Thought Tracking Flow (Evening Ritual)
--
--The 14-day curriculum includes a daily **Evening Ritual** (2nd leg) where users observe their relationship with recurring thoughts over time. This creates a longitudinal dataset showing how thought resonance evolves through consistent practice.
--
--**Architecture: Single Source of Truth (`trackingStore`)**
--
--```
--Onboarding
--    ↓
--User creates 5-8 custom thoughts (with speech-to-text option)
--    ↓
--curriculumStore.thoughtCatalog[]
--    ↓
--Evening Ritual starts
--    ↓
--curriculumStore.getWeightedRandomThought()
--  - Weight 0 (normal) = 1x selection probability
--  - Weight 1 (priority) = 3x selection probability
--    ↓
--Ritual flow (15 min):
--  1. Incense + silence (2 min)
--  2. Thought selection (2 min)
--  3. Self-observation with thought overlay (8 min)
--  4. Closing journal (3 min)
--    ↓
--User marks thought resonance:
--  - Resonant (feels true/sticky)
--  - Dissonant (feels false/foreign)
--  - Neither (neutral)
--    ↓
--trackingStore.recordSession({
--  practiceType: 'ritual',
--  duration: 15,
--  metadata: {
--    curriculumDay: 2,
--    curriculumLeg: 2,
--    thoughtId: 'thought-3',
--    thoughtText: 'I am not good enough',
--    thoughtResonance: 'dissonant',
--    photoUrl: 'base64...',
--    stepTimings: { incense: 120, selection: 120, observation: 480, journal: 180 }
--  }
--})
--    ↓
--Data persisted to localStorage
--    ↓
--Visualization queries trackingStore.sessions[] filtered by thoughtId
--to show resonance changes over weeks/months
--```
--
--**Key Design Decisions:**
--
--1. **Thought catalog in `curriculumStore`** - Configuration data specific to curriculum onboarding
--2. **Session data in `trackingStore`** - All practice tracking centralized in single source of truth
--3. **Metadata field** - Extensible object for practice-specific data (ritual, circuit, etc.)
--4. **No data duplication** - Avoids splitting ritual data across multiple stores
--5. **Easy querying** - `sessions.filter(s => s.metadata.thoughtId === 'X')` for timeline viz
--6. **Speech-to-text** - Native Web Speech API (no cost, works offline, Chrome/Safari/Edge)
--
--**Data Structure:**
--
--```javascript
--// curriculumStore
--thoughtCatalog: [
--  {
--    id: 'thought-1',
--    text: 'I am not good enough',
--    weight: 1, // 0 = normal, 1 = priority (3x selection chance)
--    createdAt: '2026-01-04T...'
--  }
--]
--
--// trackingStore.sessions[]
--{
--  id: 'session-123',
--  practiceType: 'ritual',
--  dateKey: '2026-01-05',
--  duration: 15,
--  metadata: {
--    thoughtId: 'thought-1',
--    thoughtText: 'I am not good enough',
--    thoughtResonance: 'dissonant', // 'resonant' | 'dissonant' | 'neither'
--    photoUrl: 'base64...'
--  }
--}
--```
--
--### Awareness Tracking Flow
--
--Tracking in Immanence OS follows a temporal resonance model: **Gesture → Trace → Pattern → Direction**.
--
--1.  **Gesture** (`AwarenessCompass.jsx`): A rapid, somatic act (swipe) to log a moment of captured pattern. Now includes:
--    - Integrated tracking statistics (count of logged items per direction)
--    - Intention statement display with edit functionality
--    - Direct access to state via `useApplicationStore`
--2.  **Trace** (`TodayAwarenessLog.jsx`): The immediate temporal echo of recent gestures, visualized as a chronological list.
--3.  **Pattern** (`WeeklyReview.jsx`): A medium-term aggregation showing emerging clusters and frequency.
--4.  **Direction** (`PathJourneyLog.jsx`): Long-term narrative alignment, where tracking stats meet the user's defined "Path".
--
--**The Intention "Seal":**
--Intentions are not just text fields; they are "sealed" commitments. The transition from editing to "Sealed" state represents a small ritual of commitment, moving from potentiality to enacted direction.
--
--**Note:** `ActiveTrackingItems` component has been deprecated and removed; `AwarenessCompass` now handles all tracking display functionality.
--
-----
--
--## Theming System
--
--### Stage Colors (`src/theme/stageColors.js`)
--
--Each stage has primary/accent/glow colors:
--
--| Stage    | Primary        | Accent      |
--| -------- | -------------- | ----------- |
--| Seedling | Soft greens    | Pale gold   |
--| Ember    | Warm oranges   | Copper      |
--| Flame    | Deep reds      | Bright gold |
--| Beacon   | Ethereal blues | Silver      |
--| Stellar  | Cosmic purples | White       |
--
--### CSS Variables
--
--```css
--:root {
--  --font-sacred: "Cinzel", serif;
--  --font-ui: "Outfit", sans-serif;
--  --font-body: "Crimson Pro", serif;
--  --stage-primary: var(--seedling-primary);
--  --stage-accent: var(--seedling-accent);
--}
--```
--
-----
--
--## Asset Management
--
--The `public/` directory contains all static assets served by the application. A systematic audit and cleanup was performed to remove unused legacy assets and improve project maintainability.
--
--### Directory Structure
--
--| Directory              | Contents                                                             |
--| ---------------------- | -------------------------------------------------------------------- |
--| `public/avatars/`      | Avatar core and stage-path combination PNGs (125 files)              |
--| `public/titles/`       | Stage and path title images for `StageTitle.jsx` (5 sets, 114 files) |
--| `public/sigils/`       | Rune ring and inner lip textures for `RuneRingLayer.jsx` (5 files)   |
--| `public/mode_buttons/` | Theme-aware button assets for `SimpleModeButton.jsx`                 |
--| `public/backgrounds/`  | Stage-specific light mode cloud overlays (`{stage}_{cloud}.png`)     |
--
--### Backup Directory (`_backup_assets/`)
--
--Unused or legacy assets identified during cleanup were moved here for archival. This directory is not served by the application.
--
--| Subdirectory      | Contents                                                               |
--| ----------------- | ---------------------------------------------------------------------- |
--| `avatars_legacy/` | Experimental `{stage}_{attention}_{path}_seed*.png` files (~545 files) |
--| `sigils/`         | Unused category sigil PNGs (now replaced by inline SVGs)               |
--| `misc/`           | Orphaned experiment assets (clouds, orbs, step images)                 |
--| `screenshots/`    | Debug and development screenshots                                      |
--| `titles/`         | Older title asset sets                                                 |
--
--### Dynamic Asset Loading
--
--Several components dynamically construct asset paths. Ensure new assets follow these patterns:
--
--- **Avatars**: `StaticSigilCore.jsx` constructs paths using `stage`, `path`, and `attention` props.
--- **Cloud Backgrounds**: `HomeHub.jsx` uses `{stage}_{cloudVariant}.png`.
--- **Stage Titles**: `StageTitle.jsx` uses `titles/set{n}/{mode}/stage_{stage}.png`.
--- **Mode Buttons**: `SimpleModeButton.jsx` uses `mode_buttons/{icon}_{theme}_{mode}.png`.
--
-----
--
--## File Structure
--
--```
--src/
--├── components/
--│   ├── Application/          # Four Modes
--│   │   └── practices/        # Mirror, Prism, Wave, Sword
--│   ├── Cycle/                # NEW: Cycle & Circuit components
--│   │   ├── CircuitTrainer.jsx
--│   │   ├── CircuitSession.jsx
--│   │   ├── CircuitConfig.jsx
--│   │   ├── ConsistencyFoundation.jsx
--│   │   ├── CycleChoiceModal.jsx
--│   │   ├── CheckpointReview.jsx
--│   │   ├── ModeSwitchDialog.jsx
--│   │   └── BenchmarkInput.jsx
--│   ├── Avatar.jsx            # Main avatar
--│   ├── BreathingRing.jsx     # Breathing visualization
--│   ├── HomeHub.jsx           # Dashboard
--│   └── ...
--├── state/
--│   ├── progressStore.js      # Sessions, streaks
--│   ├── chainStore.js         # Four Modes
--│   ├── cycleStore.js         # NEW: Cycle state
--│   ├── settingsStore.js      # NEW: App settings
--│   ├── historyStore.js       # NEW: Undo/redo
--│   ├── curriculumStore.js    # NEW: Circuits
--│   ├── circuitJournalStore.js # NEW: Practice Journaling
--│   ├── waveStore.js          # Big Five personality
--│   └── ...
--├── services/
--│   ├── llmService.js         # Ollama integration
--│   ├── cycleManager.js       # NEW: Cycle logic
--│   ├── benchmarkManager.js   # NEW: Metrics
--│   ├── circuitManager.js     # NEW: Circuits
--│   └── circuitIntegration.js  # NEW: Bridge between UI & Stores
--├── data/
--│   ├── fourModes.js          # Mode definitions
--│   ├── rituals/              # Ritual definitions
--│   └── ...
--├── theme/
--│   └── stageColors.js        # Color definitions
--└── utils/
--    └── ...
--
--docs/
--├── ARCHITECTURE.md           # This file
--├── CYCLE_SYSTEM.md           # NEW: Cycle system docs
--├── LLM_INTEGRATION.md        # Ollama setup
--└── DEVELOPMENT.md            # Dev guide
--
--documentation/
--├── 4 Modes User Manual.md    # User guide
--└── attention-axis-logic.md   # Design philosophy
--```
--
-----
--
--## Key Design Decisions
--
--### 1. Local-First
--
--All data in localStorage. No backend required. Survives offline use.
--
--### 2. No Gamification
--
--System observes patterns, does not reward or punish. Honor/Dishonor logs are factual records, not achievements.
--
--### 3. Constraint-Based Validation
--
--Mirror mode uses E-Prime word-list (soft warnings) + LLM (intelligent validation). Users must satisfy constraints before locking entries.
--
--### 4. Hysteresis in Path Inference
--
--Attention paths (Ekagrata, Sahaja, Vigilance) require sustained behavioral signals before recognition. Short-term fluctuations are ignored.
--
--### 5. AI as Validator, Not Advisor
--
--LLM validates neutral language, checks interpretations, confirms commitment clarity. It does not suggest what to think or do.
--
--### 6. Cycle-Based Progression
--
--Avatar advancement requires both cycle completion and demonstrated capacity (see [Cycle & Consistency System](CYCLE_SYSTEM.md)).
--
--### 7. Dashboard Real Data Integration
--
--**Home Hub** displays live user statistics:
--
--- Total Sessions, Streak, Accuracy from `progressStore`
--- Last Practiced, Next Stage, Progress % from `lunarStore`
--- Quick Insights respond to real user behavior patterns
--- All placeholder data removed in favor of actual tracked metrics
--- **Mode-Specific Aesthetics**: Light Mode prioritizes a 'handled instrument' aesthetic with flatter geometry, 2D engraved celestial glyphs, slower rotations, and etched visual treatments. Dark Mode retains a cosmic/mystical feel with volumetric glows and faster rotations.
--
--### 9. Practice Settings Persistence
--
--User's last-used practice settings persist between sessions via `localStorage`:
--
--- Practice type, duration, breath pattern
--- Vipassana theme/element, sound type, geometry
--- Loaded on component mount, saved when session begins
--- Implemented via `loadPreferences()` and `savePreferences()` in `practiceStore.js`
--
--### 9. Accessibility & Input Methods
--
--Multiple input methods supported for inclusive access:
--
--- Traditional keyboard/mouse input
--- Voice input via Web Speech API (with browser fallbacks)
--- Touch gestures for mobile (swiping for awareness logging)
--- All critical workflows remain accessible without speech
-+# Immanence OS — Architecture (Wiring + Ownership Map)
-+
-+## Overview
-+- React single-page app with local state persisted in `localStorage`. Root entry is `src/App.jsx`, wrapped in `ThemeProvider` and guarded by `ErrorBoundary`.
-+- Primary surfaces: **HomeHub** (dashboard), **NavigationSection** (path/program selection), **PracticeSection** (practice runner + configuration), **WisdomSection** (library), plus modal overlays for onboarding and dev tools.
-+- Display framing uses `displayModeStore` for **sanctuary** vs **hearth** widths and **dark** vs **light** color schemes. App container targets `maxWidth: 820px` (sanctuary) or `430px` (hearth).
-+
-+## Routing
-+- **Section switcher**: `App.jsx` owns `activeSection` (`null` = HomeHub, `practice`, `navigation`, `wisdom`, `application`). Default view comes from `localStorage` (`immanenceOS.defaultView`), with a first-run `WelcomeScreen` gate and curriculum onboarding/completion gates from `curriculumStore`.
-+- **Section consumers**: `SectionView` renders the requested section; avatar and stage title are suppressed for `navigation`/`application` (those sections render their own avatars) and for ritual library overlays.
-+- **Navigators**:
-+  - `HomeHub` calls `onSelectSection` to set `activeSection`.
-+  - `ApplicationSection` empty state button calls `onNavigate('navigation')` to send users back to path selection.
-+  - Practice summary flows stay inside `PracticeSection`; returning to HomeHub uses the `Home` button in the header.
-+- **Stage/path preview state**: `App` holds `previewStage`, `previewPath`, `previewAttention`, and `previewShowCore`, updating them via `onStageChange` callbacks from avatars and propagating to `ThemeProvider` + `StageTitle`.
-+
-+## Stores (ownership, key actions, wiring)
-+- **progressStore** (`src/state/progressStore.js`)
-+  - Owns: `sessions`, `honorLogs`, `streak`, `vacation`, `practiceHistory`, `benchmarks`, `consistencyMetrics`, `goals`, display preference.
-+  - Actions: `recordSession`, `logHonorPractice`, display preference setters. Selectors: `getStreakInfo`, `getDomainStats`, `getWeeklyPattern`, `getHonorStatus`, `getSessionsWithJournal`, `getPrimaryDomain`.
-+  - Writers: `PracticeSection` (main session logger, including circuit completions), `cycleManager.logPractice` (called by PracticeSection for 10+ min sessions), DevPanel mock loaders.
-+  - Readers: `HomeHub` (streak/domain stats/weekly pattern), `TrackingHub`, `DishonorBadge`, `CompactStatsCard`, `TrajectoryCard`, `DevPanel`, `SessionHistoryView`.
-+- **trackingStore** (`src/state/trackingStore.js`)
-+  - Owns: authoritative `sessions`, `dailyLogs`, `streak`, `vacation`, `schedule`, `honorLogs`, `activePath`, treatise/video progress caches, rollup caches.
-+  - Actions: `recordSession`, `recordHonorPractice`, `logDaily`, `incrementKarma/Dharma`, `startVacation/endVacation`, `beginPath/completeWeek/abandonPath`, `setSchedule`, `recordTreatiseSession`, `recordVideoProgress`; selectors `getToday/getWeek/getMonth/getLifetime/getTrajectory/getWeeklyTimingOffsets`.
-+  - Readers: `CompactStatsCard`, `TrajectoryCard`, `DevPanel` data tools. **Note**: Practice runs currently log to `progressStore`, not to `trackingStore`.
-+- **curriculumStore** (`src/state/curriculumStore.js`)
-+  - Owns: onboarding flags/time slots/thought catalog, active curriculum id/start date, day+leg completions, active practice session pointers.
-+  - Actions: `completeOnboarding/dismissOnboarding/shouldShowOnboarding`, `getActiveCurriculum/getCurrentDayNumber/getTodaysPractice/getDayLegsWithStatus`, `setActivePracticeSession/clearActivePracticeSession`, `logDayCompletion`, `logLegCompletion`, `getProgress/getStreak/isCurriculumComplete`.
-+  - Writers: `ThoughtDetachmentOnboarding` (collects thoughts/time slots, logs ritual legs), `CurriculumOnboarding`, `PracticeSection` (auto-starts legs, logs completions), `CurriculumHub` and `CurriculumCompletionReport` dev helpers.
-+  - Readers: `App` (onboarding/report gating), `HomeHub` curriculum widgets, `DailyPracticeCard`, `PracticeSection` (loads active leg config).
-+- **navigationStore** (`src/state/navigationStore.js`)
-+  - Owns: `selectedPathId`, `activePath`, quiz unlocks, foundation video flag, assessment prompt, unlocked sections, last activity.
-+  - Actions: `setSelectedPath`, `beginPath/completeWeek/abandonPath`, `setWatchedFoundation`, `setPathAssessment`, `updateActivity`, `unlockSection/isSectionUnlocked/getUnlockedSections`.
-+  - Readers/Writers: `NavigationSection` (PathSelectionGrid, ActivePathState, PathOverviewPanel), `ApplicationSection` (needs `activePath`), `PathFinderCard` recommendations.
-+- **cycleStore** (`src/state/cycleStore.js`)
-+  - Owns: `currentCycle`, `completedCycles`, checkpoints, consistency metrics, `canSwitchMode`, `totalCyclesCompleted`.
-+  - Actions: `startCycle`, `logPracticeDay`, `pauseCycle/resumeCycle/stopCycle`, `switchMode`, `checkCompletion`.
-+  - Writers: `CycleChoiceModal`/`ConsistencyFoundation`, `cycleManager.logPractice` (called from `PracticeSection`).
-+  - Readers: `ConsistencyFoundation`, `HomeHub` cycle indicators, `PathSelectionGrid` program badges.
-+- **displayModeStore** (`src/state/displayModeStore.js`)
-+  - Owns: `mode` (hearth/sanctuary), `viewportMode`, `colorScheme`, `stageAssetStyle`.
-+  - Actions: toggles/setters plus `initViewportListener` applied on app mount. Read across all surfaces for layout and color.
-+- **wisdomStore** (`src/state/wisdomStore.js`)
-+  - Owns: reading sessions, bookmarks, quiz unlocks, flashcard state, recommendation history.
-+  - Actions: `recordReadingSession`, `addBookmark/removeBookmark`, quiz + flashcard helpers.
-+  - Readers/Writers: `WisdomSection` (Treatise reading/bookmarks, recommendations), `VideoLibrary` uses treatise/video data but not the store.
-+- **ritualStore** (`src/state/ritualStore.js`)
-+  - Owns: ritual run state (`id`, `startTime`, `currentStep`, `status`, `stepData`, `photoUrl`, `selectedMemory`).
-+  - Actions: `startRitual/advanceStep/goToStep/recordStepData/setPhotoUrl/setSelectedMemory/resetRitual/completeRitual`.
-+  - Used by legacy `RitualPortal` flow (not wired into current practice selection) to coordinate guided multi-step ritual + `logRitualResult` service call.
-+- **practiceStore helpers** (`src/state/practiceStore.js`)
-+  - Owns: persisted practice preferences and historical sessions via localStorage utilities (`loadPreferences/savePreferences/addSession`).
-+  - Used by `PracticeSection` (loading/saving defaults) and `RitualPortal` (breath pattern seed).
-+- **Other supporting stores**: `lunarStore` (stage progression used by HomeHub), `pathStore` (attention instrumentation fed by progressStore + wisdomStore), `videoStore` (video playback state), `sigilStore`, `mandalaStore`, `applicationStore/attentionStore/historyStore` (used inside Application/Tracking surfaces). These are read-only for this document unless wiring above references them.
-+
-+## Static Data vs. Dynamic State
-+- **Program & path definitions**: `src/data/navigationData.js` exposes path catalog and `getAllPaths()`; combines with program cards declared in `PathSelectionGrid`.
-+- **Ritual definitions**: `src/data/rituals/index.js` (registry + `RITUAL_CATEGORIES`), with category files under `src/data/rituals/*`. Thought Detachment ritual is assembled ad-hoc inside `ThoughtDetachmentOnboarding`.
-+- **Curriculum**: `src/data/ritualFoundation14.js` drives the 14-day ritual foundation program consumed by `curriculumStore`.
-+- **Practice catalogs**: `ringFXPresets`, `vipassanaThemes`, `practiceFamily`, `practice presets` files under `src/data` and `src/utils/frequencyLibrary.js` feed selectors in `PracticeSection`.
-+- **Wisdom content**: `treatise.generated.js` + `treatiseParts.js` (chapters/parts), `wisdomRecommendations.js`, `videoData.js` power `WisdomSection` tabs.
-+
-+## Component boundaries (runners vs. selectors vs. legacy)
-+- **Runners**: `RitualSession` (full-screen ritual playback/timer), `PracticeSection` session renderer, `CircuitTrainer` (via CircuitConfig/execution), `VipassanaVariantSelector` start gate for cognitive vipassana.
-+- **Selectors/Decks**: `RitualSelectionDeck` (ritual grid), `PracticeSelectionModal`, `PathSelectionGrid`, `NavigationSelectionModal`, `WisdomSelectionModal`.
-+- **Portals/Legacy**: `RitualPortal` uses `ritualStore` + static assets; only referenced by legacy practice components (`PracticeSection_REPAIR/GRAVEYARD`) and not invoked by current `PracticeSection` UI.
-+
-+## Critical Flows
-+### Navigation → Program card → onboarding/session → completion write → stats surface update
-+1. **Enter Navigation**: `HomeHub` `onSelectSection` → `App` sets `activeSection` to `navigation` → `NavigationSection` renders with avatar + `ConsistencyFoundation`.
-+2. **Program cards**: `PathSelectionGrid` prepends program entries (Foundation Cycle and Thought Detachment Ritual) to static paths. Program cards fire handlers only; they do not change `selectedPathId`.
-+   - Foundation Cycle → `CycleChoiceModal` → `useCycleStore.startCycle`. Subsequent practice sessions (logged from `PracticeSection` via `progressStore.recordSession` + `cycleManager.logPractice`) mark practice days when duration ≥ 10 minutes. `ConsistencyFoundation` reflects `currentCycle`/checkpoints; `HomeHub` still pulls streaks/time from `progressStore`.
-+   - Thought Detachment → `ThoughtDetachmentOnboarding` collects two daily times + 5–8 thoughts (`curriculumStore.completeOnboarding`). Optional 3-step ritual session runs via `RitualSession`; on completion it logs leg data to `curriculumStore.logLegCompletion` (day/leg metadata) but does **not** create a `progressStore` session.
-+3. **Starting practice from curriculum**: `curriculumStore.setActivePracticeSession` is triggered by curriculum UI (e.g., `CurriculumHub`/`DailyPracticeCard`). `PracticeSection` detects the active leg, auto-loads its config, and immediately starts the session.
-+4. **Completion write path**: `PracticeSection.handleStop` logs the session to `progressStore.recordSession` (domain based on practice type) and, when launched from curriculum, calls `curriculumStore.logLegCompletion` and derives next-leg guidance. `cycleManager.logPractice` updates `cycleStore` when duration ≥ 10 minutes.
-+5. **Stats surfaces**: `HomeHub` (`getStreakInfo`, `getDomainStats`, `getWeeklyPattern`), `CompactStatsCard`, and `TrajectoryCard` react to `progressStore` updates; curriculum progress widgets read `curriculumStore` leg/day completions; `ConsistencyFoundation`/`Cycle` components read `cycleStore`.
-+
-+### Navigation → Ritual Library → selection → session → completion
-+1. **Pick ritual mode**: In `PracticeSection`, selecting the "Ritual" practice type sets `isRunning` and renders `NavigationRitualLibrary` instead of timers.
-+2. **Select ritual**: `RitualSelectionDeck` lists registry entries (`getAllRituals`). Choosing one opens `RitualSession` (runner) in a full-screen overlay.
-+3. **Session behavior**: `RitualSession` handles intro → timed steps → completion screen locally. It does **not** touch any store.
-+4. **Return path**: `RitualSession.onComplete` currently only returns to the selection deck (`NavigationRitualLibrary` lines 16–24). Progress/streak updates only occur if the user clicks “Return to Hub” in the deck, which calls `PracticeSection.handleStop` and records a `progressStore` session with `domain: 'ritual'`. No post-session journal is shown for ritual runs (summary gating excludes `practice === 'Ritual'`).
-+
-+## Wiring Index
-+- **HomeHub** (`src/components/HomeHub.jsx`)
-+  - Primary components: `Avatar`, `HubStagePanel`, `HubCardSwiper`, `CompactStatsCard`, `ApplicationTrackingCard`, `TrajectoryCard`, `CurriculumHub`, `SessionHistoryView` modal, `HonorLogModal`.
-+  - Inputs: props (`currentStage`, `previewPath`, `previewShowCore`, `previewAttention`, `isPracticing`), `progressStore.getStreakInfo/getDomainStats/getWeeklyPattern`, `lunarStore.getCurrentStage/progress`, `curriculumStore` onboarding/completion flags, `displayModeStore` color + viewport.
-+  - Outputs: `onSelectSection` (sets `activeSection`), `onStageChange`, open hardware guide/honor log/history/curriculum hub modals.
-+  - Navigation next: sets `activeSection` to `practice`/`navigation`/`wisdom`/`application` based on card taps.
-+- **NavigationSection** (`src/components/NavigationSection.jsx`)
-+  - Primary components: scaled `Avatar`, `ConsistencyFoundation`, `FoundationCard`, `PathFinderCard`, `PathSelectionGrid`, `PathOverviewPanel`, `ActivePathState`, `NavigationSelectionModal`.
-+  - Inputs: `navigationStore` (`selectedPathId`, `activePath`), `cycleStore.currentCycle`, `curriculumStore.onboardingComplete`, `displayModeStore.colorScheme`.
-+  - Outputs: `setSelectedPath`, `beginPath/completeWeek` via subcomponents, modal toggles; program cards open `CycleChoiceModal` or `ThoughtDetachmentOnboarding`.
-+  - Navigation next: optional scroll to path grid on recommendation; no direct section switch (except Application prompt in `ApplicationSection`).
-+- **PracticeSection** (`src/components/PracticeSection.jsx`)
-+  - Primary components: practice pickers (`PracticeSelectionModal`, `SacredTimeSlider`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`), `SessionSummaryModal`, `PostSessionJournal`.
-+  - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state.
-+  - Outputs: `progressStore.recordSession`, `cycleManager.logPractice`, `syncFromProgressStore`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar.
-+  - Navigation next: none directly; ritual deck “Return to Hub” triggers `handleStop`, home navigation handled by global header button.
-+- **WisdomSection** (`src/components/WisdomSection.jsx`)
-+  - Primary components: tabbed Recommendations/Treatise/Bookmarks/Videos/Self-Knowledge, `WisdomSelectionModal`, `VideoLibrary`, `SelfKnowledgeView`.
-+  - Inputs: static treatise/wisdom/video data, `wisdomStore` bookmarks/reading sessions, `localStorage` scroll positions.
-+  - Outputs: `wisdomStore.recordReadingSession`, `addBookmark/removeBookmark`; records treatise progress to `localStorage`.
-+  - Navigation next: none; section-local tab switches only.
-+- **Modals**
-+  - Global: `WelcomeScreen`, `CurriculumOnboarding`, `CurriculumCompletionReport`, `DevPanel` (tweaks display mode/stage previews), `AvatarPreview`, `SigilTracker`, `HardwareGuide`, `InstallPrompt`.
-+  - Practice-specific: `PracticeSelectionModal`, `VipassanaVariantSelector`, `SessionSummaryModal`, `PostSessionJournal`, `NavigationSelectionModal`, `ThoughtDetachmentOnboarding`, `CycleChoiceModal`.
-+
-+## Guardrails
-+- Prefer **selectors over prop drilling**: lift data into Zustand selectors (e.g., `getStreakInfo`, `getDayLegsWithStatus`) instead of passing nested props between cards.
-+- Program and path cards should reference **program/path ids only**; consume details from registries (`navigationData`, curriculum metadata) inside the target component to avoid stale copies.
-+- **No hidden cards**: placeholder entries in `PathSelectionGrid` remain visibly disabled (opacity/reduced pointer events) rather than conditionally unmounting.
-+- **320px+ hearth safety**: keep interactive elements fluid within `min(<design width>, 94vw)` bounds, honor `min-w-0` on flex children, and match existing modal sizing (`RitualSession` caps at `min(640px, 94vw)`; App hearth container caps at `430px`).
-+
-+## Doc/Code mismatches (follow-up tasks, no code changed)
-+- Ritual runs do not create practice records when the user completes a ritual inside `NavigationRitualLibrary`; `RitualSession.onComplete` returns to the deck without calling `PracticeSection.handleStop`, so streaks/stats stay unchanged unless the user clicks “Return to Hub” manually (`NavigationRitualLibrary.jsx` lines 16–24, 61–76). Consider emitting a completion event that records to `progressStore` and ends instrumentation.
-+
-+## How to update this doc
-+- When adding a feature, update these sections in one pass:
-+  1. **Routing** – note new entry points, section switches, or gatekeeping modals.
-+  2. **Stores** – record new/changed store state, actions, and which components read/write them.
-+  3. **Critical Flows** – append the new end-to-end path (inputs → actions → outputs → surfaces updated).
-+  4. **Wiring Index** – add or adjust the surface where the feature appears (inputs/outputs/navigation).
-+- Keep bullets/diagrams concise; avoid describing modules that do not exist in the repo.
+# Immanence OS — Architecture (Wiring + Ownership Map)
+
+## Overview
+
+- React single-page app with local state persisted in `localStorage`. Root entry is `src/App.jsx`, wrapped in `ThemeProvider` and guarded by `ErrorBoundary`.
+- Primary surfaces: **HomeHub** (dashboard), **NavigationSection** (path/program selection), **PracticeSection** (practice runner + configuration), **WisdomSection** (library), plus modal overlays for onboarding and dev tools.
+- Display framing uses `displayModeStore` for **sanctuary** vs **hearth** widths and **dark** vs **light** color schemes. App container targets `maxWidth: 820px` (sanctuary) or `430px` (hearth).
+
+## Routing
+
+- **Section switcher**: `App.jsx` owns `activeSection` (`null` = HomeHub, `practice`, `navigation`, `wisdom`, `application`). Default view comes from `localStorage` (`immanenceOS.defaultView`), with a first-run `WelcomeScreen` gate and curriculum onboarding/completion gates from `curriculumStore`.
+- **Section consumers**: `SectionView` renders the requested section; avatar and stage title are suppressed for `navigation`/`application` (those sections render their own avatars) and for ritual library overlays.
+- **Navigators**:
+  - `HomeHub` calls `onSelectSection` to set `activeSection`.
+  - `ApplicationSection` empty state button calls `onNavigate('navigation')` to send users back to path selection.
+  - Practice summary flows stay inside `PracticeSection`; returning to HomeHub uses the `Home` button in the header.
+- **Stage/path preview state**: `App` holds `previewStage`, `previewPath`, `previewAttention`, and `previewShowCore`, updating them via `onStageChange` callbacks from avatars and propagating to `ThemeProvider` + `StageTitle`.
+
+## Stores (ownership, key actions, wiring)
+
+- **progressStore** (`src/state/progressStore.js`)
+  - Owns: `sessions`, `honorLogs`, `streak`, `vacation`, `practiceHistory`, `benchmarks`, `consistencyMetrics`, `goals`, display preference.
+  - Actions: `recordSession`, `logHonorPractice`, display preference setters. Selectors: `getStreakInfo`, `getDomainStats`, `getWeeklyPattern`, `getHonorStatus`, `getSessionsWithJournal`, `getPrimaryDomain`.
+  - Writers: `PracticeSection` (main session logger, including circuit completions), `cycleManager.logPractice` (called by PracticeSection for 10+ min sessions), DevPanel mock loaders.
+  - Readers: `HomeHub` (streak/domain stats/weekly pattern), `TrackingHub`, `DishonorBadge`, `CompactStatsCard`, `TrajectoryCard`, `DevPanel`, `SessionHistoryView`.
+- **trackingStore** (`src/state/trackingStore.js`)
+  - Owns: authoritative `sessions`, `dailyLogs`, `streak`, `vacation`, `schedule`, `honorLogs`, `activePath`, treatise/video progress caches, rollup caches.
+  - Actions: `recordSession`, `recordHonorPractice`, `logDaily`, `incrementKarma/Dharma`, `startVacation/endVacation`, `beginPath/completeWeek/abandonPath`, `setSchedule`, `recordTreatiseSession`, `recordVideoProgress`; selectors `getToday/getWeek/getMonth/getLifetime/getTrajectory/getWeeklyTimingOffsets`.
+  - Readers: `CompactStatsCard`, `TrajectoryCard`, `DevPanel` data tools. **Note**: Practice runs currently log to `progressStore`, not to `trackingStore`.
+- **curriculumStore** (`src/state/curriculumStore.js`)
+  - Owns: onboarding flags/time slots/thought catalog, active curriculum id/start date, day+leg completions, active practice session pointers.
+  - Actions: `completeOnboarding/dismissOnboarding/shouldShowOnboarding`, `getActiveCurriculum/getCurrentDayNumber/getTodaysPractice/getDayLegsWithStatus`, `setActivePracticeSession/clearActivePracticeSession`, `logDayCompletion`, `logLegCompletion`, `getProgress/getStreak/isCurriculumComplete`.
+  - Writers: `ThoughtDetachmentOnboarding` (collects thoughts/time slots, logs ritual legs), `CurriculumOnboarding`, `PracticeSection` (auto-starts legs, logs completions), `CurriculumHub` and `CurriculumCompletionReport` dev helpers.
+  - Readers: `App` (onboarding/report gating), `HomeHub` curriculum widgets, `DailyPracticeCard`, `PracticeSection` (loads active leg config).
+- **navigationStore** (`src/state/navigationStore.js`)
+  - Owns: `selectedPathId`, `activePath`, quiz unlocks, foundation video flag, assessment prompt, unlocked sections, last activity.
+  - Actions: `setSelectedPath`, `beginPath/completeWeek/abandonPath`, `setWatchedFoundation`, `setPathAssessment`, `updateActivity`, `unlockSection/isSectionUnlocked/getUnlockedSections`.
+  - Readers/Writers: `NavigationSection` (PathSelectionGrid, ActivePathState, PathOverviewPanel), `ApplicationSection` (needs `activePath`), `PathFinderCard` recommendations.
+- **cycleStore** (`src/state/cycleStore.js`)
+  - Owns: `currentCycle`, `completedCycles`, checkpoints, consistency metrics, `canSwitchMode`, `totalCyclesCompleted`.
+  - Actions: `startCycle`, `logPracticeDay`, `pauseCycle/resumeCycle/stopCycle`, `switchMode`, `checkCompletion`.
+  - Writers: `CycleChoiceModal`/`ConsistencyFoundation`, `cycleManager.logPractice` (called from `PracticeSection`).
+  - Readers: `ConsistencyFoundation`, `HomeHub` cycle indicators, `PathSelectionGrid` program badges.
+- **displayModeStore** (`src/state/displayModeStore.js`)
+  - Owns: `mode` (hearth/sanctuary), `viewportMode`, `colorScheme`, `stageAssetStyle`.
+  - Actions: toggles/setters plus `initViewportListener` applied on app mount. Read across all surfaces for layout and color.
+- **settingsStore** (`src/state/settingsStore.js`)
+  - Owns: app preferences including `displayMode`, `llmModel`, `themeStageOverride`, volume settings, avatar naming convention, button themes, and **photic circles settings**.
+  - Actions: setters for each preference category, `resetSettings`, `setPhoticSetting`, `resetPhoticSettings`.
+  - Readers: All components needing theme/display/audio preferences; `PhoticCirclesOverlay` for photic settings.
+  - **Photic Settings**: Persisted configuration for Photic Circles overlay (rate, brightness, spacing, radius, colors, blur). UI state (`isOpen`, `isRunning`) kept in component state, not persisted.
+- **wisdomStore** (`src/state/wisdomStore.js`)
+  - Owns: reading sessions, bookmarks, quiz unlocks, flashcard state, recommendation history.
+  - Actions: `recordReadingSession`, `addBookmark/removeBookmark`, quiz + flashcard helpers.
+  - Readers/Writers: `WisdomSection` (Treatise reading/bookmarks, recommendations), `VideoLibrary` uses treatise/video data but not the store.
+- **ritualStore** (`src/state/ritualStore.js`)
+  - Owns: ritual run state (`id`, `startTime`, `currentStep`, `status`, `stepData`, `photoUrl`, `selectedMemory`).
+  - Actions: `startRitual/advanceStep/goToStep/recordStepData/setPhotoUrl/setSelectedMemory/resetRitual/completeRitual`.
+  - Used by legacy `RitualPortal` flow (not wired into current practice selection) to coordinate guided multi-step ritual + `logRitualResult` service call.
+- **practiceStore helpers** (`src/state/practiceStore.js`)
+  - Owns: persisted practice preferences and historical sessions via localStorage utilities (`loadPreferences/savePreferences/addSession`).
+  - Used by `PracticeSection` (loading/saving defaults) and `RitualPortal` (breath pattern seed).
+- **Other supporting stores**: `lunarStore` (stage progression used by HomeHub), `pathStore` (attention instrumentation fed by progressStore + wisdomStore), `videoStore` (video playback state), `sigilStore`, `mandalaStore`, `applicationStore/attentionStore/historyStore` (used inside Application/Tracking surfaces). These are read-only for this document unless wiring above references them.
+
+## Static Data vs. Dynamic State
+
+- **Program & path definitions**: `src/data/navigationData.js` exposes path catalog and `getAllPaths()`; combines with program cards declared in `PathSelectionGrid`.
+- **Ritual definitions**: `src/data/rituals/index.js` (registry + `RITUAL_CATEGORIES`), with category files under `src/data/rituals/*`. Thought Detachment ritual is assembled ad-hoc inside `ThoughtDetachmentOnboarding`.
+- **Curriculum**: `src/data/ritualFoundation14.js` drives the 14-day ritual foundation program consumed by `curriculumStore`.
+- **Practice catalogs**: `ringFXPresets`, `vipassanaThemes`, `practiceFamily`, `practice presets` files under `src/data` and `src/utils/frequencyLibrary.js` feed selectors in `PracticeSection`.
+- **Wisdom content**: `treatise.generated.js` + `treatiseParts.js` (chapters/parts), `wisdomRecommendations.js`, `videoData.js` power `WisdomSection` tabs.
+
+## Component boundaries (runners vs. selectors vs. legacy)
+
+- **Runners**: `RitualSession` (full-screen ritual playback/timer), `PracticeSection` session renderer, `CircuitTrainer` (via CircuitConfig/execution), `VipassanaVariantSelector` start gate for cognitive vipassana, `PhoticCirclesOverlay` (photic entrainment).
+- **Selectors/Decks**: `RitualSelectionDeck` (ritual grid), `PracticeSelectionModal`, `PathSelectionGrid`, `NavigationSelectionModal`, `WisdomSelectionModal`.
+- **Portals/Legacy**: `RitualPortal` uses `ritualStore` + static assets; only referenced by legacy practice components (`PracticeSection_REPAIR/GRAVEYARD`) and not invoked by current `PracticeSection` UI.
+
+## Critical Flows
+
+### Navigation → Program card → onboarding/session → completion write → stats surface update
+
+1. **Enter Navigation**: `HomeHub` `onSelectSection` → `App` sets `activeSection` to `navigation` → `NavigationSection` renders with avatar + `ConsistencyFoundation`.
+2. **Program cards**: `PathSelectionGrid` prepends program entries (Foundation Cycle and Thought Detachment Ritual) to static paths. Program cards fire handlers only; they do not change `selectedPathId`.
+   - Foundation Cycle → `CycleChoiceModal` → `useCycleStore.startCycle`. Subsequent practice sessions (logged from `PracticeSection` via `progressStore.recordSession` + `cycleManager.logPractice`) mark practice days when duration ≥ 10 minutes. `ConsistencyFoundation` reflects `currentCycle`/checkpoints; `HomeHub` still pulls streaks/time from `progressStore`.
+   - Thought Detachment → `ThoughtDetachmentOnboarding` collects two daily times + 5–8 thoughts (`curriculumStore.completeOnboarding`). Optional 3-step ritual session runs via `RitualSession`; on completion it logs leg data to `curriculumStore.logLegCompletion` (day/leg metadata) but does **not** create a `progressStore` session.
+3. **Starting practice from curriculum**: `curriculumStore.setActivePracticeSession` is triggered by curriculum UI (e.g., `CurriculumHub`/`DailyPracticeCard`). `PracticeSection` detects the active leg, auto-loads its config, and immediately starts the session.
+4. **Completion write path**: `PracticeSection.handleStop` logs the session to `progressStore.recordSession` (domain based on practice type) and, when launched from curriculum, calls `curriculumStore.logLegCompletion` and derives next-leg guidance. `cycleManager.logPractice` updates `cycleStore` when duration ≥ 10 minutes.
+5. **Stats surfaces**: `HomeHub` (`getStreakInfo`, `getDomainStats`, `getWeeklyPattern`), `CompactStatsCard`, and `TrajectoryCard` react to `progressStore` updates; curriculum progress widgets read `curriculumStore` leg/day completions; `ConsistencyFoundation`/`Cycle` components read `cycleStore`.
+
+### Navigation → Ritual Library → selection → session → completion
+
+1. **Pick ritual mode**: In `PracticeSection`, selecting the "Ritual" practice type sets `isRunning` and renders `NavigationRitualLibrary` instead of timers.
+2. **Select ritual**: `RitualSelectionDeck` lists registry entries (`getAllRituals`). Choosing one opens `RitualSession` (runner) in a full-screen overlay.
+3. **Session behavior**: `RitualSession` handles intro → timed steps → completion screen locally. It does **not** touch any store.
+4. **Return path**: `RitualSession.onComplete` currently only returns to the selection deck (`NavigationRitualLibrary` lines 16–24). Progress/streak updates only occur if the user clicks "Return to Hub" in the deck, which calls `PracticeSection.handleStop` and records a `progressStore` session with `domain: 'ritual'`. No post-session journal is shown for ritual runs (summary gating excludes `practice === 'Ritual'`).
+
+### Photic Circles → Open overlay → Configure → Start/Stop → Close
+
+1. **Entry point**: User clicks "Photic" button in `PracticeSection` practice type switcher.
+2. **Open overlay**: `PhoticCirclesOverlay` renders as full-viewport (`position: fixed`, `z-index: 1000`) layer with two circles and control panel.
+3. **Configure**: User adjusts rate (0.1–20 Hz), brightness (0–1.0), spacing (40–320px), radius (40–240px), blur (0–80px), and colors via `PhoticControlPanel`. Settings persist to `settingsStore.photic`.
+4. **Start pulse**: Click "Start" → `isRunning = true` → `requestAnimationFrame` loop begins, updating circle opacity via refs (no React re-renders).
+5. **Stop pulse**: Click "Stop" → `isRunning = false` → RAF loop exits, circles freeze at current opacity.
+6. **Close overlay**: Click "Close" → `isOpen = false` → overlay unmounts, settings persist.
+
+## Wiring Index
+
+- **HomeHub** (`src/components/HomeHub.jsx`)
+  - Primary components: `Avatar`, `HubStagePanel`, `HubCardSwiper`, `CompactStatsCard`, `ApplicationTrackingCard`, `TrajectoryCard`, `CurriculumHub`, `SessionHistoryView` modal, `HonorLogModal`.
+  - Inputs: props (`currentStage`, `previewPath`, `previewShowCore`, `previewAttention`, `isPracticing`), `progressStore.getStreakInfo/getDomainStats/getWeeklyPattern`, `lunarStore.getCurrentStage/progress`, `curriculumStore` onboarding/completion flags, `displayModeStore` color + viewport.
+  - Outputs: `onSelectSection` (sets `activeSection`), `onStageChange`, open hardware guide/honor log/history/curriculum hub modals.
+  - Navigation next: sets `activeSection` to `practice`/`navigation`/`wisdom`/`application` based on card taps.
+- **NavigationSection** (`src/components/NavigationSection.jsx`)
+  - Primary components: scaled `Avatar`, `ConsistencyFoundation`, `FoundationCard`, `PathFinderCard`, `PathSelectionGrid`, `PathOverviewPanel`, `ActivePathState`, `NavigationSelectionModal`.
+  - Inputs: `navigationStore` (`selectedPathId`, `activePath`), `cycleStore.currentCycle`, `curriculumStore.onboardingComplete`, `displayModeStore.colorScheme`.
+  - Outputs: `setSelectedPath`, `beginPath/completeWeek` via subcomponents, modal toggles; program cards open `CycleChoiceModal` or `ThoughtDetachmentOnboarding`.
+  - Navigation next: optional scroll to path grid on recommendation; no direct section switch (except Application prompt in `ApplicationSection`).
+- **PracticeSection** (`src/components/PracticeSection.jsx`)
+  - Primary components: practice pickers (`PracticeSelectionModal`, `SacredTimeSlider`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`.
+  - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state.
+  - Outputs: `progressStore.recordSession`, `cycleManager.logPractice`, `syncFromProgressStore`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar.
+  - Navigation next: none directly; ritual deck "Return to Hub" triggers `handleStop`, home navigation handled by global header button.
+  - **Photic entry**: "Photic" button opens `PhoticCirclesOverlay` (component state `isOpen`).
+- **WisdomSection** (`src/components/WisdomSection.jsx`)
+  - Primary components: tabbed Recommendations/Treatise/Bookmarks/Videos/Self-Knowledge, `WisdomSelectionModal`, `VideoLibrary`, `SelfKnowledgeView`.
+  - Inputs: static treatise/wisdom/video data, `wisdomStore` bookmarks/reading sessions, `localStorage` scroll positions.
+  - Outputs: `wisdomStore.recordReadingSession`, `addBookmark/removeBookmark`; records treatise progress to `localStorage`.
+  - Navigation next: none; section-local tab switches only.
+- **Modals**
+  - Global: `WelcomeScreen`, `CurriculumOnboarding`, `CurriculumCompletionReport`, `DevPanel` (tweaks display mode/stage previews), `AvatarPreview`, `SigilTracker`, `HardwareGuide`, `InstallPrompt`.
+  - Practice-specific: `PracticeSelectionModal`, `VipassanaVariantSelector`, `SessionSummaryModal`, `PostSessionJournal`, `NavigationSelectionModal`, `ThoughtDetachmentOnboarding`, `CycleChoiceModal`, `PhoticCirclesOverlay`.
+
+## Photic Circles System
+
+### Overview
+
+Experimental photic entrainment overlay for light-based meditation. Renders two pulsing circles at adjustable frequencies (0.1–20 Hz) with configurable visual parameters.
+
+### Components
+
+- **PhoticCirclesOverlay** (`src/components/PhoticCirclesOverlay.jsx`)
+  - Full-viewport overlay (`position: fixed`, `inset: 0`, `z-index: 1000`)
+  - Two circle divs positioned via CSS (left/right of viewport center)
+  - RAF-based pulse loop using refs for direct DOM updates (no React re-renders)
+  - Responsive control panel (bottom sheet in Hearth, right panel in Sanctuary)
+- **PhoticControlPanel** (`src/components/PhoticControlPanel.jsx`)
+  - Rate slider (0.1–12 Hz) + advanced input (12–20 Hz)
+  - Brightness, spacing, radius, blur sliders
+  - Color palette presets (white, amber, red, green, blue, violet)
+  - Link colors toggle, Start/Stop, Close buttons
+
+### State Management
+
+- **Component state** (not persisted):
+  - `isOpen`: Overlay visibility
+  - `isRunning`: Pulse engine active
+- **settingsStore.photic** (persisted):
+  - `rateHz`, `dutyCycle`, `brightness`, `spacingPx`, `radiusPx`, `blurPx`
+  - `colorLeft`, `colorRight`, `linkColors`, `bgOpacity`
+
+### Pulse Engine
+
+- **Square wave** (default): `intensity = isOn ? brightness : 0`
+- **RAF loop**: Updates circle opacity via refs when intensity changes (2x per cycle)
+- **Phase reset**: On `rateHz` or `dutyCycle` change to prevent jumps
+- **Performance**: No React re-renders during pulse (verified via DevTools)
+
+### Safety Constraints
+
+- Default rate: 2 Hz (gentle)
+- Slider soft max: 12 Hz
+- Hard max: 20 Hz (advanced input only)
+- Blur clamped to `min(blurPx, radiusPx)`
+- Circles centered in full viewport (not app frame) for proper eye alignment
+
+### Entry Point
+
+- "Photic" button in `PracticeSection` practice type switcher
+- Opens overlay with last-used settings from `settingsStore.photic`
+
+## Guardrails
+
+- Prefer **selectors over prop drilling**: lift data into Zustand selectors (e.g., `getStreakInfo`, `getDayLegsWithStatus`) instead of passing nested props between cards.
+- Program and path cards should reference **program/path ids only**; consume details from registries (`navigationData`, curriculum metadata) inside the target component to avoid stale copies.
+- **No hidden cards**: placeholder entries in `PathSelectionGrid` remain visibly disabled (opacity/reduced pointer events) rather than conditionally unmounting.
+- **320px+ hearth safety**: keep interactive elements fluid within `min(<design width>, 94vw)` bounds, honor `min-w-0` on flex children, and match existing modal sizing (`RitualSession` caps at `min(640px, 94vw)`; App hearth container caps at `430px`).
+- **Full-viewport overlays**: Use `position: fixed` with `inset: 0` to escape app container constraints (e.g., `PhoticCirclesOverlay` for proper eye alignment).
+
+## Doc/Code mismatches (follow-up tasks, no code changed)
+
+- Ritual runs do not create practice records when the user completes a ritual inside `NavigationRitualLibrary`; `RitualSession.onComplete` returns to the deck without calling `PracticeSection.handleStop`, so streaks/stats stay unchanged unless the user clicks "Return to Hub" manually (`NavigationRitualLibrary.jsx` lines 16–24, 61–76). Consider emitting a completion event that records to `progressStore` and ends instrumentation.
+
+## How to update this doc
+
+- When adding a feature, update these sections in one pass:
+  1. **Routing** – note new entry points, section switches, or gatekeeping modals.
+  2. **Stores** – record new/changed store state, actions, and which components read/write them.
+  3. **Critical Flows** – append the new end-to-end path (inputs → actions → outputs → surfaces updated).
+  4. **Wiring Index** – add or adjust the surface where the feature appears (inputs/outputs/navigation).
+- Keep bullets/diagrams concise; avoid describing modules that do not exist in the repo.

@@ -32,6 +32,28 @@ export const useSettingsStore = create(
             buttonThemeDark: 'cosmic', // 'cosmic', 'bioluminescent', 'aurora', 'crystalline', 'electric'
             buttonThemeLight: 'watercolor', // 'watercolor', 'sketch', 'botanical', 'inkwash', 'cloudscape'
 
+            // Photic Circles settings (persisted)
+            // Note: isOpen and isRunning are component state, not persisted here
+            photic: {
+                // Timing
+                rateHz: 2.0,              // Pulse frequency (0.1-20 Hz, default safe)
+                dutyCycle: 0.5,           // On/off proportion (0.1-0.9)
+
+                // Visual
+                brightness: 0.6,          // Max opacity (0.0-1.0)
+                spacingPx: 160,           // Center-to-center distance (40-320)
+                radiusPx: 120,            // Circle radius (40-240)
+                blurPx: 20,               // Glow blur radius (0-80, clamped to <= radiusPx)
+
+                // Colors
+                colorLeft: '#FFFFFF',     // Left circle color
+                colorRight: '#FFFFFF',    // Right circle color
+                linkColors: true,         // Sync left/right colors
+
+                // Background
+                bgOpacity: 0.95,          // Overlay background darkness (0.7-1.0)
+            },
+
             // Actions
             setButtonThemeDark: (theme) => set({ buttonThemeDark: theme }),
             setButtonThemeLight: (theme) => set({ buttonThemeLight: theme }),
@@ -56,6 +78,62 @@ export const useSettingsStore = create(
 
             setShowFxGallery: (show) => set({ showFxGallery: show }),
 
+            // Photic settings actions
+            setPhoticSetting: (key, value) => set((state) => {
+                // Clamp values to safe ranges
+                let clampedValue = value;
+                
+                switch (key) {
+                    case 'rateHz':
+                        clampedValue = Math.max(0.1, Math.min(20.0, value));
+                        break;
+                    case 'dutyCycle':
+                        clampedValue = Math.max(0.1, Math.min(0.9, value));
+                        break;
+                    case 'brightness':
+                        clampedValue = Math.max(0.0, Math.min(1.0, value));
+                        break;
+                    case 'spacingPx':
+                        clampedValue = Math.max(40, Math.min(320, value));
+                        break;
+                    case 'radiusPx':
+                        clampedValue = Math.max(40, Math.min(240, value));
+                        break;
+                    case 'blurPx':
+                        // Clamp blur to radiusPx to prevent extreme glow
+                        clampedValue = Math.max(0, Math.min(80, Math.min(value, state.photic.radiusPx)));
+                        break;
+                    case 'bgOpacity':
+                        clampedValue = Math.max(0.7, Math.min(1.0, value));
+                        break;
+                    default:
+                        // For colors and booleans, use value as-is
+                        clampedValue = value;
+                }
+
+                return {
+                    photic: {
+                        ...state.photic,
+                        [key]: clampedValue,
+                    },
+                };
+            }),
+
+            resetPhoticSettings: () => set((state) => ({
+                photic: {
+                    rateHz: 2.0,
+                    dutyCycle: 0.5,
+                    brightness: 0.6,
+                    spacingPx: 160,
+                    radiusPx: 120,
+                    blurPx: 20,
+                    colorLeft: '#FFFFFF',
+                    colorRight: '#FFFFFF',
+                    linkColors: true,
+                    bgOpacity: 0.95,
+                },
+            })),
+
             // Reset to defaults
             resetSettings: () => set({
                 displayMode: 'sanctuary',
@@ -69,6 +147,18 @@ export const useSettingsStore = create(
                 useNewAvatars: false,
                 buttonThemeDark: 'cosmic',
                 buttonThemeLight: 'watercolor',
+                photic: {
+                    rateHz: 2.0,
+                    dutyCycle: 0.5,
+                    brightness: 0.6,
+                    spacingPx: 160,
+                    radiusPx: 120,
+                    blurPx: 20,
+                    colorLeft: '#FFFFFF',
+                    colorRight: '#FFFFFF',
+                    linkColors: true,
+                    bgOpacity: 0.95,
+                },
             }),
         }),
         {

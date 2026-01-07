@@ -23,7 +23,7 @@ const THEME_CONFIG = {
         accent: 'var(--accent-color)',
         textMain: 'rgba(253, 251, 245, 0.95)',
         textSub: 'rgba(253, 251, 245, 0.5)',
-        cosmicAsset: 'celestial_black_hole.png',
+        bgAsset: 'ritual_comet_path.png',
         border: 'var(--accent-20)',
         shadow: '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
     }
@@ -237,13 +237,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
                     <div 
                         className="absolute inset-0 pointer-events-none"
-                        style={{
-                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'left center',
-                            filter: isLight ? 'saturate(1.1)' : 'brightness(0.7)',
-                            transition: 'all 0.7s ease-in-out',
-                        }}
+                            style={{
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                filter: isLight ? 'saturate(1.1)' : 'brightness(0.9)',
+                                transition: 'all 0.7s ease-in-out',
+                            }}
                     />
 
                     {/* 2. LEFT BLOOM FADE: image blooms into parchment */}

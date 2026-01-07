@@ -35,7 +35,7 @@ import { useJournalStore } from "../state/journalStore.js";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
-const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics"];
+const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics", "Photic"];
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
 function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
@@ -169,7 +169,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic }) {
   const instrumentation = useSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
@@ -732,6 +732,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleStart = () => {
+    // Special handling for Photic practice
+    if (practice === "Photic") {
+      onOpenPhotic?.();
+      return;
+    }
+
     setIsStarting(true);
 
     setTimeout(() => {
@@ -1618,6 +1624,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           </button>
         </div>
       </div>
+
     </section>
   );
 }

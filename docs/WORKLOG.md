@@ -8,11 +8,78 @@
 
 ## Active Sessions
 
-### Current Status (Last Updated: 2026-01-05)
+### Current Status (Last Updated: 2026-01-07)
 
-- **Gemini/Antigravity**: ✅ Added Thought Detachment Ritual Card (v3.15.61)
+- **Gemini/Antigravity**: ✅ Added Photic Circles Overlay (v3.15.63)
 - **Codex CLI**: 🔄 PENDING - Timing precision meters task below
 - Codex CLI: ✅ COMPLETED — TASK-2026-01-05-A — commit 082d962 — lint 458 → 453
+
+---
+
+## 2026-01-07 22:09 - Gemini/Antigravity - COMPLETED
+
+**Task**: TASK-2026-01-07-A - Implement Photic Circles Overlay
+
+**Files Modified**:
+
+- `src/state/settingsStore.js` (extended with photic settings object)
+- `src/components/PhoticControlPanel.jsx` (new: responsive control panel)
+- `src/components/PhoticCirclesOverlay.jsx` (new: full-viewport overlay with RAF pulse engine)
+- `src/components/PracticeSection.jsx` (added "Photic" practice type, integrated overlay)
+- `docs/ARCHITECTURE.md` (restored from corruption, added Photic Circles system documentation)
+- `src/App.jsx` (version bump to v3.15.63)
+
+**Changes**:
+
+**Step A - Settings Store Extension**:
+
+- Added `photic` settings object with 10 persisted parameters (rateHz, dutyCycle, brightness, spacingPx, radiusPx, blurPx, colors, bgOpacity)
+- Implemented `setPhoticSetting(key, value)` action with hard limit clamping (e.g., rateHz: 0.1-20 Hz, blurPx ≤ radiusPx)
+- Added `resetPhoticSettings()` action for defaults
+- Note: `isOpen` and `isRunning` states are component-local, NOT persisted
+
+**Step B - Control Panel Component**:
+
+- Created responsive control panel (Hearth: bottom sheet, Sanctuary: right side panel)
+- Rate slider (0.1-12 Hz) + advanced numeric input (12-20 Hz access)
+- Brightness, spacing, radius, glow sliders with live readouts
+- Color palette presets (6 colors: white, amber, red, green, blue, violet)
+- Link Colors toggle (sync left/right circles)
+- Start/Stop button with visual state indication (gold → red)
+
+**Step C - Circles Overlay Component**:
+
+- Full-viewport overlay (`position: fixed`, `inset: 0`, `z-index: 1000`) that escapes app container
+- Two circle divs positioned via CSS (`calc(50% ± spacingPx/2)`)
+- RAF-based pulse engine using refs for direct DOM updates (no React re-renders)
+- Square wave implementation: `intensity = isOn ? brightness : 0` (2 DOM updates per cycle instead of 60)
+- Phase reset on `rateHz` or `dutyCycle` change to prevent jarring jumps
+- Clean RAF cleanup on unmount/stop
+
+**Step D - PracticeSection Integration**:
+
+- Added "Photic" to `PRACTICES` array (appears in practice selection modal)
+- Added `isPhoticOpen` component state (non-persisted)
+- Modified `handleStart()` to open overlay instead of timed session when practice === "Photic"
+- Rendered `<PhoticCirclesOverlay isOpen={isPhoticOpen} onClose={...} />` before closing section tag
+
+**Architecture Documentation**:
+
+- Fixed corrupted `ARCHITECTURE.md` (was mixing git diff format with actual content)
+- Extracted clean wiring-focused format (126 lines)
+- Added Photic Circles system documentation: overview, components, state management, pulse engine, safety constraints
+
+**Technical Highlights**:
+
+- **Performance**: No React re-renders during pulse (refs + change detection)
+- **Safety**: Default 2 Hz, slider max 12 Hz, hard max 20 Hz (advanced input only)
+- **Blur clamping**: `blurPx = min(80, min(value, radiusPx))` prevents extreme glow
+- **Viewport centering**: Circles centered in full browser viewport (not app frame) for proper eye alignment
+- **No session logging**: Photic is a tool, not a practice session (no progressStore writes)
+
+**Version**: v3.15.63
+
+**Status**: COMPLETED
 
 ---
 
