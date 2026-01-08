@@ -16,21 +16,33 @@
 
 ---
 
-## 2026-01-08 17:25 - Gemini/Antigravity - COMPLETED
+## 2026-01-08 18:05 - Gemini/Antigravity - COMPLETED
 
-**Task**: Hide Avatar during ALL active practice sessions (Task 3)
+**Task**: Refine Photic Circles Experience & Circuit UI (v3.16.x)
 
 **Files Modified**:
 
-- `src/App.jsx` (Modified `SectionView` avatar logic)
+- `src/components/PhoticCirclesOverlay.jsx` (Major behavior overhaul)
+- `src/components/PhoticControlPanel.jsx` (Added alternating timing and gap controls)
+- `src/state/settingsStore.js` (Added timingMode, gapMs, and increased spacing limits)
+- `src/components/PracticeSection.jsx` (Removed redundant Circuit duration slider)
+- `src/App.jsx` (State integration and version bumps)
 
 **Changes**:
 
-- Updated `showAvatar` in `SectionView` to include `!isPracticing`.
-- Simplified inline styles for Avatar wrapper, removing unused `isPracticing` ternary logic (since the component is now unmounted when practicing).
-- Avatar is now completely hidden during any active practice session, and visible otherwise.
-- Preserved `requiresFullscreen` metadata for future potential use.
-- Bumped version to `v3.15.66`.
+**Photic Circles Overhaul**:
+
+- **Auto-Start**: Pressed "Enter Photic Circles" now starts pulsing immediately (v3.15.67).
+- **Clean Immersion**: Control panel now auto-hides while circles are pulsing (v3.15.68).
+- **Interaction**: Added "Tap anywhere to exit" and "Drag vertically to adjust spacing" (v3.15.69).
+- **Expanded Range**: Increased max spacing from 320px to 800px to allow near-fullscreen separation (v3.15.70).
+- **Alternating Mode**: Added "Alternating" timing mode (180° phase offset) with optional pulse gap control (v3.16.0).
+
+**Circuit UI Refinement**:
+
+- **Redundant Slider Removal**: Removed the global "Sacred Duration" slider from the Circuit card, as Circuits manage their own duration via exercise nodes (v3.16.1).
+
+**Version**: v3.16.1
 
 **Status**: COMPLETED
 

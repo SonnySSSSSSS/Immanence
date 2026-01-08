@@ -13,14 +13,13 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     const { photic } = useSettingsStore();
 
     // Component state (not persisted)
-    const [isRunning, setIsRunning] = useState(false);
+    // Initialize to autoStart value to prevent flash of control panel
+    const [isRunning, setIsRunning] = useState(autoStart);
 
-    // Auto-start when overlay opens with autoStart=true
+    // Sync isRunning with autoStart when overlay opens
     useEffect(() => {
         if (isOpen && autoStart) {
-            // Small delay to ensure DOM is ready
-            const timer = setTimeout(() => setIsRunning(true), 100);
-            return () => clearTimeout(timer);
+            setIsRunning(true);
         }
     }, [isOpen, autoStart]);
 
@@ -40,42 +39,49 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
 
     // Pulse loop using requestAnimationFrame
     const pulseLoop = useCallback(() => {
+        // Fallback for missing startTime
+        if (startTimeRef.current === null) {
+            startTimeRef.current = performance.now();
+        }
+
         const now = performance.now();
-        const periodMs = 1000 / photic.rateHz;
+        const rate = photic.rateHz || 2.0;
+        const duty = photic.dutyCycle || 0.5;
+        const brightness = photic.brightness ?? 0.6;
+        const mode = photic.timingMode || 'simultaneous';
+        const gap = photic.gapMs || 0;
+
+        const periodMs = 1000 / rate;
         const elapsed = (now - startTimeRef.current) % periodMs;
         
-        let leftIntensity, rightIntensity;
+        let leftIntensity = 0, rightIntensity = 0;
 
-        if (photic.timingMode === 'alternating') {
+        if (mode === 'alternating') {
             // Alternating mode: 180° phase offset
-            // Left circle pulses in first half, right in second half
             const halfPeriod = periodMs / 2;
-            const effectiveDutyCycle = photic.dutyCycle * periodMs;
-            const gapMs = photic.gapMs;
+            const effectiveDutyCycle = duty * periodMs;
 
             // Left circle: active in first half of period
             const leftPhase = elapsed;
-            const leftIsOn = leftPhase < (effectiveDutyCycle - gapMs);
-            leftIntensity = leftIsOn ? photic.brightness : 0;
+            const leftIsOn = leftPhase < (effectiveDutyCycle - gap);
+            leftIntensity = leftIsOn ? brightness : 0;
 
             // Right circle: active in second half of period (180° offset)
             const rightPhase = (elapsed + halfPeriod) % periodMs;
-            const rightIsOn = rightPhase < (effectiveDutyCycle - gapMs);
-            rightIntensity = rightIsOn ? photic.brightness : 0;
+            const rightIsOn = rightPhase < (effectiveDutyCycle - gap);
+            rightIntensity = rightIsOn ? brightness : 0;
         } else {
             // Simultaneous mode: both circles pulse together
-            const isOn = elapsed < photic.dutyCycle * periodMs;
-            const intensity = isOn ? photic.brightness : 0;
+            const isOn = elapsed < (duty * periodMs);
+            const intensity = isOn ? brightness : 0;
             leftIntensity = intensity;
             rightIntensity = intensity;
         }
 
-        // Update left circle
+        // Direct DOM updates (no React re-render)
         if (leftCircleRef.current) {
             leftCircleRef.current.style.opacity = leftIntensity;
         }
-
-        // Update right circle
         if (rightCircleRef.current) {
             rightCircleRef.current.style.opacity = rightIntensity;
         }
@@ -85,9 +91,8 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
 
     // Start/stop RAF loop
     useEffect(() => {
-        if (isRunning) {
+        if (isRunning && isOpen) {
             startTimeRef.current = performance.now();
-            lastIntensityRef.current = 0;
             rafRef.current = requestAnimationFrame(pulseLoop);
         } else {
             if (rafRef.current) {
@@ -104,14 +109,14 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                 cancelAnimationFrame(rafRef.current);
             }
         };
-    }, [isRunning, pulseLoop]);
+    }, [isRunning, isOpen, pulseLoop]);
 
     // Reset phase when timing parameters change during running
     useEffect(() => {
         if (isRunning) {
             startTimeRef.current = performance.now();
         }
-    }, [photic.rateHz, photic.dutyCycle, photic.timingMode, photic.gapMs, isRunning]);
+    }, [photic.rateHz, photic.dutyCycle, photic.timingMode, photic.gapMs]);
 
     // Drag state for adjusting spacing
     const [isDragging, setIsDragging] = useState(false);
@@ -123,7 +128,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         if (isRunning) {
             setIsDragging(true);
             dragStartY.current = e.clientY;
-            dragStartSpacing.current = photic.spacingPx;
+            dragStartSpacing.current = photic.spacingPx || 160;
             e.preventDefault();
         }
     };
@@ -153,7 +158,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         }
     };
 
-    // Toggle running state (for control panel button)
+    // Toggle running state (for potential future use, though we skip panel if autoStart is true)
     const handleToggleRunning = () => {
         setIsRunning((prev) => !prev);
     };
@@ -173,25 +178,27 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="photic-circles-overlay"
-                style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 1000,
-                    backgroundColor: `rgba(0, 0, 0, ${photic.bgOpacity})`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: isRunning ? (isDragging ? 'ns-resize' : 'pointer') : 'default',
-                }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 2000, // Very high to cover everything
+                    backgroundColor: `rgba(0, 0, 0, ${photic.bgOpacity || 0.95})`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: isRunning ? (isDragging ? 'ns-resize' : 'pointer') : 'default',
+                    overflow: 'hidden',
+                }}
             >
                 {/* Circles Container */}
                 <div
                     style={{
-                        position: 'relative',
+                        position: 'absolute',
+                        inset: 0,
                         width: '100%',
                         height: '100%',
                         pointerEvents: 'none',
@@ -203,15 +210,15 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                         className="photic-circle-top"
                         style={{
                             position: 'absolute',
-                            top: `calc(50% - ${photic.spacingPx / 2}px)`,
+                            top: `calc(50% - ${(photic.spacingPx || 160) / 2}px)`,
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            width: `${photic.radiusPx * 2}px`,
-                            height: `${photic.radiusPx * 2}px`,
+                            width: `${(photic.radiusPx || 120) * 2}px`,
+                            height: `${(photic.radiusPx || 120) * 2}px`,
                             borderRadius: '9999px',
-                            backgroundColor: photic.colorLeft,
+                            backgroundColor: photic.colorLeft || '#FFFFFF',
                             opacity: 0,
-                            boxShadow: `0 0 ${photic.blurPx}px ${photic.blurPx / 2}px ${photic.colorLeft}`,
+                            boxShadow: `0 0 ${photic.blurPx || 20}px ${ (photic.blurPx || 20) / 2}px ${photic.colorLeft || '#FFFFFF'}`,
                             transition: 'none', // RAF handles timing
                             pointerEvents: 'none',
                         }}
@@ -223,15 +230,15 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                         className="photic-circle-bottom"
                         style={{
                             position: 'absolute',
-                            top: `calc(50% + ${photic.spacingPx / 2}px)`,
+                            top: `calc(50% + ${(photic.spacingPx || 160) / 2}px)`,
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            width: `${photic.radiusPx * 2}px`,
-                            height: `${photic.radiusPx * 2}px`,
+                            width: `${(photic.radiusPx || 120) * 2}px`,
+                            height: `${(photic.radiusPx || 120) * 2}px`,
                             borderRadius: '9999px',
-                            backgroundColor: photic.colorRight,
+                            backgroundColor: photic.colorRight || '#FFFFFF',
                             opacity: 0,
-                            boxShadow: `0 0 ${photic.blurPx}px ${photic.blurPx / 2}px ${photic.colorRight}`,
+                            boxShadow: `0 0 ${photic.blurPx || 20}px ${ (photic.blurPx || 20) / 2}px ${photic.colorRight || '#FFFFFF'}`,
                             transition: 'none', // RAF handles timing
                             pointerEvents: 'none',
                         }}
@@ -256,15 +263,17 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                             textTransform: 'uppercase',
                             color: 'rgba(255,255,255,0.4)',
                             pointerEvents: 'none',
+                            zIndex: 10,
                         }}
                     >
                         Tap to exit • Drag to adjust spacing
                     </motion.div>
                 )}
 
-                {/* Control Panel - Only show when NOT running */}
-                {!isRunning && (
-                    <div onClick={(e) => e.stopPropagation()}>
+                {/* Control Panel - Only show if NOT auto-starting, or if explicitly stopped */}
+                {/* This eliminates the redundant menu when starting from the practice card */}
+                {!isRunning && !autoStart && (
+                    <div onClick={(e) => e.stopPropagation()} style={{ zIndex: 10 }}>
                         <PhoticControlPanel
                             isRunning={isRunning}
                             onToggleRunning={handleToggleRunning}
@@ -276,4 +285,3 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         </AnimatePresence>
     );
 }
-
