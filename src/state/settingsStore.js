@@ -38,10 +38,12 @@ export const useSettingsStore = create(
                 // Timing
                 rateHz: 2.0,              // Pulse frequency (0.1-20 Hz, default safe)
                 dutyCycle: 0.5,           // On/off proportion (0.1-0.9)
+                timingMode: 'simultaneous', // 'simultaneous' or 'alternating' (180° phase shift)
+                gapMs: 0,                 // Optional gap between pulses in alternating mode (0-500ms)
 
                 // Visual
                 brightness: 0.6,          // Max opacity (0.0-1.0)
-                spacingPx: 160,           // Center-to-center distance (40-320)
+                spacingPx: 160,           // Center-to-center distance (40-800)
                 radiusPx: 120,            // Circle radius (40-240)
                 blurPx: 20,               // Glow blur radius (0-80, clamped to <= radiusPx)
 
@@ -94,7 +96,7 @@ export const useSettingsStore = create(
                         clampedValue = Math.max(0.0, Math.min(1.0, value));
                         break;
                     case 'spacingPx':
-                        clampedValue = Math.max(40, Math.min(320, value));
+                        clampedValue = Math.max(40, Math.min(800, value));
                         break;
                     case 'radiusPx':
                         clampedValue = Math.max(40, Math.min(240, value));
@@ -106,8 +108,11 @@ export const useSettingsStore = create(
                     case 'bgOpacity':
                         clampedValue = Math.max(0.7, Math.min(1.0, value));
                         break;
+                    case 'gapMs':
+                        clampedValue = Math.max(0, Math.min(500, value));
+                        break;
                     default:
-                        // For colors and booleans, use value as-is
+                        // For colors, booleans, and timingMode, use value as-is
                         clampedValue = value;
                 }
 
@@ -123,6 +128,8 @@ export const useSettingsStore = create(
                 photic: {
                     rateHz: 2.0,
                     dutyCycle: 0.5,
+                    timingMode: 'simultaneous',
+                    gapMs: 0,
                     brightness: 0.6,
                     spacingPx: 160,
                     radiusPx: 120,
@@ -150,6 +157,8 @@ export const useSettingsStore = create(
                 photic: {
                     rateHz: 2.0,
                     dutyCycle: 0.5,
+                    timingMode: 'simultaneous',
+                    gapMs: 0,
                     brightness: 0.6,
                     spacingPx: 160,
                     radiusPx: 120,

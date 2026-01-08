@@ -30,15 +30,14 @@ import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import "./App.css";
-function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
+function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExperience, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
   // Navigation and Application sections handle their own avatars and stage titles
   // RitualLibrary also handles its own UI (no avatar needed)
-  const isInsightMeditation = isPracticing && currentPracticeId === 'cognitive_vipassana';
-  const isBodyScan = isPracticing && currentPracticeId === 'somatic_vipassana';
-  const isVipassana = isInsightMeditation || isBodyScan;
-  const isInsightMeditationFull = isPracticing && currentPracticeId === "insight_meditation";
-  const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary' && !isVipassana && !isInsightMeditationFull;
+  // Hide avatar during any active practice session
+  const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary' && !isPracticing;
 
+  // Special case: Insight Meditation renders PracticeSection directly (no avatar wrapper)
+  const isInsightMeditation = isPracticing && currentPracticeId === 'cognitive_vipassana';
   if (isInsightMeditation) {
     return <PracticeSection 
       onPracticingChange={onPracticingChange} 
@@ -64,20 +63,16 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
           <div 
             className="w-full relative z-20 flex flex-col items-center"
             style={{
-              marginTop: isVipassana ? '0' : '1.5rem',
-              marginBottom: isVipassana ? '0' : '1rem',
+              marginTop: '1.5rem',
+              marginBottom: '1rem',
             }}
           >
             {/* Avatar with scale/fade during practice */}
             <div
               className="transition-all duration-700 ease-in-out"
               style={{
-                position: isVipassana ? 'fixed' : 'relative',
-                top: isVipassana ? '8px' : 'auto',
-                right: isVipassana ? '8px' : 'auto',
-                transformOrigin: 'top right',
-                transform: isVipassana ? 'scale(0.1)' : (isPracticing ? 'scale(0.65)' : 'scale(1)'),
-                opacity: isVipassana ? 0.3 : (isPracticing ? 0.5 : 1),
+                transform: 'scale(1)',
+                opacity: 1,
                 zIndex: 100,
               }}
             >
@@ -240,11 +235,14 @@ function App() {
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
+  const [isFullscreenExperience, setIsFullscreenExperience] = useState(false);
 
-  const handlePracticingChange = (val, pid = null) => {
+  const handlePracticingChange = (val, pid = null, requiresFullscreen = false) => {
     setIsPracticing(val);
     if (pid) setActivePracticeId(pid);
     else if (!val) setActivePracticeId(null);
+    // Set fullscreen experience based on practice metadata
+    setIsFullscreenExperience(val && requiresFullscreen);
   };
 
   const handleDismissWelcome = () => {
@@ -341,6 +339,7 @@ function App() {
         <PhoticCirclesOverlay
           isOpen={isPhoticOpen}
           onClose={() => setIsPhoticOpen(false)}
+          autoStart={true}
         />
 
         {/* Inner App Container */}
@@ -427,7 +426,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.15.64</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.16.0</div>
                   </div>
                 </div>
               )}
@@ -501,7 +500,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.15.64
+                        v3.16.0
                       </div>
                     </div>
                   )}
@@ -551,6 +550,7 @@ function App() {
                   section={activeSection}
                   isPracticing={isPracticing}
                   currentPracticeId={activePracticeId}
+                  isFullscreenExperience={isFullscreenExperience}
                   onPracticingChange={handlePracticingChange}
                   breathState={breathState}
                   onBreathStateChange={setBreathState}

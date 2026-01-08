@@ -46,6 +46,7 @@ const PRACTICE_REGISTRY = {
     icon: "✦",
     Config: BreathConfig,
     supportsDuration: true,
+    requiresFullscreen: false,
   },
   ritual: {
     id: "ritual",
@@ -53,6 +54,7 @@ const PRACTICE_REGISTRY = {
     icon: "◈",
     supportsDuration: false,
     Config: RitualSelectionDeck,
+    requiresFullscreen: false,
   },
   circuit: {
     id: "circuit",
@@ -60,18 +62,21 @@ const PRACTICE_REGISTRY = {
     icon: "↺",
     Config: CircuitConfig,
     supportsDuration: true,
+    requiresFullscreen: false,
   },
   cognitive_vipassana: {
     id: "cognitive_vipassana",
     label: "Insight Meditation",
     icon: "👁",
     supportsDuration: true,
+    requiresFullscreen: true,
   },
   somatic_vipassana: {
     id: "somatic_vipassana",
     label: "Body Scan",
     icon: "⌬",
     supportsDuration: true,
+    requiresFullscreen: false,
   },
   sound: {
     id: "sound",
@@ -79,6 +84,7 @@ const PRACTICE_REGISTRY = {
     icon: "⌇",
     Config: SoundConfig,
     supportsDuration: true,
+    requiresFullscreen: false,
   },
   visualization: {
     id: "visualization",
@@ -86,6 +92,7 @@ const PRACTICE_REGISTRY = {
     icon: "✧",
     Config: VisualizationConfig,
     supportsDuration: true,
+    requiresFullscreen: false,
   },
   cymatics: {
     id: "cymatics",
@@ -93,6 +100,7 @@ const PRACTICE_REGISTRY = {
     icon: "◍",
     Config: CymaticsConfig,
     supportsDuration: true,
+    requiresFullscreen: false,
   },
   photic: {
     id: "photic",
@@ -100,6 +108,7 @@ const PRACTICE_REGISTRY = {
     icon: "☼",
     supportsDuration: false,
     Config: PhoticControlPanel,
+    requiresFullscreen: false,
   }
 };
 
@@ -238,8 +247,8 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
              )}
           </div>
 
-          {/* Shared Duration Slider */}
-          {p.supportsDuration && (
+          {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
+          {p.supportsDuration && practiceId !== 'circuit' && (
             <div className="mb-12">
               <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-center mb-6 opacity-50" style={{ color: tokens.text }}>
                 Sacred Duration (minutes)
@@ -997,8 +1006,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     if (practiceId === "cognitive_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
+      const practiceConfig = PRACTICE_REGISTRY[practiceId];
       setIsRunning(true);
-      onPracticingChange && onPracticingChange(true, practiceId);
+      onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
       setTapErrors([]);
       setLastErrorMs(null);
@@ -1013,8 +1023,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return; 
     }
 
+    const practiceConfig = PRACTICE_REGISTRY[practiceId];
     setIsRunning(true);
-    onPracticingChange && onPracticingChange(true, practiceId);
+    onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
     setTapErrors([]);
     setLastErrorMs(null);

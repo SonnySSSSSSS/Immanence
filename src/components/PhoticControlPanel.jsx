@@ -189,6 +189,108 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     </div>
                 </div>
 
+                {/* Timing Mode Toggle */}
+                <div className="mb-3 flex items-center justify-between">
+                    <span
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '8px',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
+                            textTransform: 'uppercase',
+                            color: textColors.muted,
+                        }}
+                    >
+                        Timing
+                    </span>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => setPhoticSetting('timingMode', 'simultaneous')}
+                            style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                backgroundColor: photic.timingMode === 'simultaneous'
+                                    ? 'var(--accent-color)'
+                                    : isLight
+                                    ? 'rgba(160, 120, 60, 0.1)'
+                                    : 'rgba(255,255,255,0.05)',
+                                color: photic.timingMode === 'simultaneous' ? '#000' : textColors.secondary,
+                                border: `1px solid ${
+                                    photic.timingMode === 'simultaneous'
+                                        ? 'transparent'
+                                        : isLight
+                                        ? 'rgba(160, 120, 60, 0.2)'
+                                        : 'rgba(255,255,255,0.1)'
+                                }`,
+                                cursor: 'pointer',
+                                transition: 'all 200ms ease',
+                            }}
+                        >
+                            Simultaneous
+                        </button>
+                        <button
+                            onClick={() => setPhoticSetting('timingMode', 'alternating')}
+                            style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                backgroundColor: photic.timingMode === 'alternating'
+                                    ? 'var(--accent-color)'
+                                    : isLight
+                                    ? 'rgba(160, 120, 60, 0.1)'
+                                    : 'rgba(255,255,255,0.05)',
+                                color: photic.timingMode === 'alternating' ? '#000' : textColors.secondary,
+                                border: `1px solid ${
+                                    photic.timingMode === 'alternating'
+                                        ? 'transparent'
+                                        : isLight
+                                        ? 'rgba(160, 120, 60, 0.2)'
+                                        : 'rgba(255,255,255,0.1)'
+                                }`,
+                                cursor: 'pointer',
+                                transition: 'all 200ms ease',
+                            }}
+                        >
+                            Alternating
+                        </button>
+                    </div>
+                </div>
+
+                {/* Gap Slider - Only show in alternating mode */}
+                {photic.timingMode === 'alternating' && (
+                    <div className="mb-3">
+                        <div
+                            className="mb-2 flex items-center justify-between"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
+                                textTransform: 'uppercase',
+                                color: textColors.muted,
+                            }}
+                        >
+                            <span>Gap</span>
+                            <span style={{ color: 'var(--accent-color)' }}>{photic.gapMs}ms</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="500"
+                            step="10"
+                            value={photic.gapMs}
+                            onChange={(e) => setPhoticSetting('gapMs', Number(e.target.value))}
+                            className="w-full"
+                            style={{ accentColor: 'var(--accent-color)' }}
+                        />
+                    </div>
+                )}
+
                 {/* Brightness Slider */}
                 <div className="mb-3">
                     <div
@@ -238,7 +340,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     <input
                         type="range"
                         min="40"
-                        max="320"
+                        max="800"
                         step="10"
                         value={photic.spacingPx}
                         onChange={(e) => setPhoticSetting('spacingPx', Number(e.target.value))}

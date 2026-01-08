@@ -8,11 +8,73 @@
 
 ## Active Sessions
 
-### Current Status (Last Updated: 2026-01-07)
+### Current Status (Last Updated: 2026-01-08)
 
-- **Gemini/Antigravity**: ✅ Added Photic Circles Overlay (v3.15.63)
+- **Gemini/Antigravity**: ✅ Implemented fullscreen practice flag (v3.15.65)
 - **Codex CLI**: 🔄 PENDING - Timing precision meters task below
 - Codex CLI: ✅ COMPLETED — TASK-2026-01-05-A — commit 082d962 — lint 458 → 453
+
+---
+
+## 2026-01-08 17:25 - Gemini/Antigravity - COMPLETED
+
+**Task**: Hide Avatar during ALL active practice sessions (Task 3)
+
+**Files Modified**:
+
+- `src/App.jsx` (Modified `SectionView` avatar logic)
+
+**Changes**:
+
+- Updated `showAvatar` in `SectionView` to include `!isPracticing`.
+- Simplified inline styles for Avatar wrapper, removing unused `isPracticing` ternary logic (since the component is now unmounted when practicing).
+- Avatar is now completely hidden during any active practice session, and visible otherwise.
+- Preserved `requiresFullscreen` metadata for future potential use.
+- Bumped version to `v3.15.66`.
+
+**Status**: COMPLETED
+
+---
+
+## 2026-01-08 16:00 - Gemini/Antigravity - COMPLETED
+
+**Task**: Implement fullscreen practice flag (replace Step 2 of Frame Contract)
+
+**Files Modified**:
+
+- `src/components/PracticeSection.jsx` (added `requiresFullscreen` metadata to PRACTICE_REGISTRY)
+- `src/App.jsx` (added `isFullscreenExperience` state, updated `handlePracticingChange`, simplified `SectionView`)
+
+**Changes**:
+
+**PRACTICE_REGISTRY Metadata**:
+
+- Added `requiresFullscreen: boolean` field to all practice definitions
+- `cognitive_vipassana` (Insight Meditation) set to `true` — hides avatar
+- All other practices set to `false` — avatar renders normally
+
+**App.jsx State & Callback**:
+
+- Added `isFullscreenExperience` state (boolean, default `false`)
+- Extended `handlePracticingChange(val, pid, requiresFullscreen)` to accept third parameter
+- When practice starts with `requiresFullscreen: true`, state is set accordingly
+- When practice ends (`val = false`), fullscreen state is cleared
+
+**SectionView Simplification**:
+
+- Removed hardcoded ID checks (`isInsightMeditation`, `isBodyScan`, `isVipassana`)
+- Avatar visibility now driven by `isFullscreenExperience` prop
+- Removed fixed positioning/scaling logic for vipassana (was Step 2 of Frame Contract, now reverted)
+- Avatar positioning unchanged for non-fullscreen practices
+
+**How to extend**:
+
+- To make any future practice hide the avatar, set `requiresFullscreen: true` in its PRACTICE_REGISTRY entry
+- No code changes required in App.jsx or SectionView
+
+**Version**: v3.15.65
+
+**Status**: COMPLETED
 
 ---
 

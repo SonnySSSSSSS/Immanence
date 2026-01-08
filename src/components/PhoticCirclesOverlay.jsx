@@ -7,13 +7,29 @@ import { PhoticControlPanel } from './PhoticControlPanel';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 
-export function PhoticCirclesOverlay({ isOpen, onClose }) {
+export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
     const isLight = colorScheme === 'light';
     const { photic } = useSettingsStore();
 
     // Component state (not persisted)
     const [isRunning, setIsRunning] = useState(false);
+
+    // Auto-start when overlay opens with autoStart=true
+    useEffect(() => {
+        if (isOpen && autoStart) {
+            // Small delay to ensure DOM is ready
+            const timer = setTimeout(() => setIsRunning(true), 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, autoStart]);
+
+    // Reset running state when overlay closes
+    useEffect(() => {
+        if (!isOpen) {
+            setIsRunning(false);
+        }
+    }, [isOpen]);
 
     // Refs for RAF loop and DOM manipulation
     const rafRef = useRef(null);
@@ -24,42 +40,63 @@ export function PhoticCirclesOverlay({ isOpen, onClose }) {
 
     // Pulse loop using requestAnimationFrame
     const pulseLoop = useCallback(() => {
-        if (!isRunning) return;
-
         const now = performance.now();
         const periodMs = 1000 / photic.rateHz;
         const elapsed = (now - startTimeRef.current) % periodMs;
-        const isOn = elapsed < photic.dutyCycle * periodMs;
+        
+        let leftIntensity, rightIntensity;
 
-        // Square wave: full brightness when on, 0 when off
-        const intensity = isOn ? photic.brightness : 0;
+        if (photic.timingMode === 'alternating') {
+            // Alternating mode: 180° phase offset
+            // Left circle pulses in first half, right in second half
+            const halfPeriod = periodMs / 2;
+            const effectiveDutyCycle = photic.dutyCycle * periodMs;
+            const gapMs = photic.gapMs;
 
-        // Only update DOM when intensity actually changes
-        if (intensity !== lastIntensityRef.current) {
-            lastIntensityRef.current = intensity;
+            // Left circle: active in first half of period
+            const leftPhase = elapsed;
+            const leftIsOn = leftPhase < (effectiveDutyCycle - gapMs);
+            leftIntensity = leftIsOn ? photic.brightness : 0;
 
-            // Direct DOM updates (no React re-render)
-            if (leftCircleRef.current) {
-                leftCircleRef.current.style.opacity = intensity;
-            }
-            if (rightCircleRef.current) {
-                rightCircleRef.current.style.opacity = intensity;
-            }
+            // Right circle: active in second half of period (180° offset)
+            const rightPhase = (elapsed + halfPeriod) % periodMs;
+            const rightIsOn = rightPhase < (effectiveDutyCycle - gapMs);
+            rightIntensity = rightIsOn ? photic.brightness : 0;
+        } else {
+            // Simultaneous mode: both circles pulse together
+            const isOn = elapsed < photic.dutyCycle * periodMs;
+            const intensity = isOn ? photic.brightness : 0;
+            leftIntensity = intensity;
+            rightIntensity = intensity;
+        }
+
+        // Update left circle
+        if (leftCircleRef.current) {
+            leftCircleRef.current.style.opacity = leftIntensity;
+        }
+
+        // Update right circle
+        if (rightCircleRef.current) {
+            rightCircleRef.current.style.opacity = rightIntensity;
         }
 
         rafRef.current = requestAnimationFrame(pulseLoop);
-    }, [isRunning, photic.rateHz, photic.dutyCycle, photic.brightness]);
+    }, [photic.rateHz, photic.dutyCycle, photic.brightness, photic.timingMode, photic.gapMs]);
 
     // Start/stop RAF loop
     useEffect(() => {
         if (isRunning) {
             startTimeRef.current = performance.now();
+            lastIntensityRef.current = 0;
             rafRef.current = requestAnimationFrame(pulseLoop);
         } else {
             if (rafRef.current) {
                 cancelAnimationFrame(rafRef.current);
                 rafRef.current = null;
             }
+            // Reset circle opacity when stopped
+            if (leftCircleRef.current) leftCircleRef.current.style.opacity = 0;
+            if (rightCircleRef.current) rightCircleRef.current.style.opacity = 0;
         }
 
         return () => {
@@ -69,14 +106,54 @@ export function PhoticCirclesOverlay({ isOpen, onClose }) {
         };
     }, [isRunning, pulseLoop]);
 
-    // Reset phase when rate or dutyCycle changes during running
+    // Reset phase when timing parameters change during running
     useEffect(() => {
         if (isRunning) {
             startTimeRef.current = performance.now();
         }
-    }, [photic.rateHz, photic.dutyCycle]);
+    }, [photic.rateHz, photic.dutyCycle, photic.timingMode, photic.gapMs, isRunning]);
 
-    // Toggle running state
+    // Drag state for adjusting spacing
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStartY = useRef(0);
+    const dragStartSpacing = useRef(0);
+
+    // Handle pointer down - start potential drag
+    const handlePointerDown = (e) => {
+        if (isRunning) {
+            setIsDragging(true);
+            dragStartY.current = e.clientY;
+            dragStartSpacing.current = photic.spacingPx;
+            e.preventDefault();
+        }
+    };
+
+    // Handle pointer move - adjust spacing
+    const handlePointerMove = (e) => {
+        if (isDragging && isRunning) {
+            const deltaY = e.clientY - dragStartY.current;
+            // Scale: 1px drag = 1px spacing change
+            const newSpacing = Math.max(40, Math.min(800, dragStartSpacing.current + deltaY));
+            useSettingsStore.getState().setPhoticSetting('spacingPx', newSpacing);
+            e.preventDefault();
+        }
+    };
+
+    // Handle pointer up - end drag or exit if no drag occurred
+    const handlePointerUp = (e) => {
+        if (isRunning) {
+            const dragDistance = Math.abs(e.clientY - dragStartY.current);
+            setIsDragging(false);
+            
+            // If drag distance is small (< 10px), treat as tap to exit
+            if (dragDistance < 10) {
+                setIsRunning(false);
+                onClose();
+            }
+        }
+    };
+
+    // Toggle running state (for control panel button)
     const handleToggleRunning = () => {
         setIsRunning((prev) => !prev);
     };
@@ -104,7 +181,12 @@ export function PhoticCirclesOverlay({ isOpen, onClose }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    cursor: isRunning ? (isDragging ? 'ns-resize' : 'pointer') : 'default',
                 }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
             >
                 {/* Circles Container */}
                 <div
@@ -156,13 +238,42 @@ export function PhoticCirclesOverlay({ isOpen, onClose }) {
                     />
                 </div>
 
-                {/* Control Panel */}
-                <PhoticControlPanel
-                    isRunning={isRunning}
-                    onToggleRunning={handleToggleRunning}
-                    onClose={handleClose}
-                />
+                {/* Tap to stop instruction (when running) */}
+                {isRunning && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                            position: 'absolute',
+                            bottom: '40px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-wide)',
+                            textTransform: 'uppercase',
+                            color: 'rgba(255,255,255,0.4)',
+                            pointerEvents: 'none',
+                        }}
+                    >
+                        Tap to exit • Drag to adjust spacing
+                    </motion.div>
+                )}
+
+                {/* Control Panel - Only show when NOT running */}
+                {!isRunning && (
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <PhoticControlPanel
+                            isRunning={isRunning}
+                            onToggleRunning={handleToggleRunning}
+                            onClose={handleClose}
+                        />
+                    </div>
+                )}
             </motion.div>
         </AnimatePresence>
     );
 }
+
