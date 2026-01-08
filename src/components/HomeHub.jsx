@@ -58,14 +58,12 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
   useLayoutEffect(() => {
     const update = (tag = "update") => {
-      const el =
-        document.querySelector("[data-hub-spine]") ||
-        document.querySelector("[data-app-frame]");
+      const el = document.querySelector("[data-app-frame]");
 
       console.groupCollapsed(`[CurriculumModal] ${tag}`);
 
       if (!el) {
-        console.warn("No frame element found. Tried [data-hub-spine], then [data-app-frame].");
+        console.warn("No frame element found. Tried [data-app-frame].");
         console.groupEnd();
         return;
       }
@@ -305,7 +303,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div data-hub-spine className="w-full px-4 flex flex-col items-center gap-1 pb-4">
+      <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
 {curriculumActive && (

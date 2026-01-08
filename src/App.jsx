@@ -93,7 +93,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
         </div>
       )}
 
-      <div data-app-frame className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
+      <div className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} onOpenPhotic={onOpenPhotic} />}
 
         {section === "wisdom" && (
@@ -344,6 +344,7 @@ function App() {
 
         {/* Inner App Container */}
         <div
+          data-app-frame
           className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
           onPointerDown={handleDoubleTap}
           style={displayMode === 'sanctuary' ? {
