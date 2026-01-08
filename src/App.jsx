@@ -426,7 +426,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.16.2</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.16.3</div>
                   </div>
                 </div>
               )}
@@ -500,7 +500,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.16.2
+                        v3.16.3
                       </div>
                     </div>
                   )}

@@ -16,6 +16,36 @@
 
 ---
 
+## 2026-01-08 18:15 - Gemini/Antigravity - COMPLETED
+
+**Task**: Fix Wisdom Treatise Boundaries & Photic Stability (v3.16.2 - v3.16.3)
+
+**Files Modified**:
+
+- `src/components/WisdomSection.jsx` (Fixed modal boundaries and responsive padding)
+- `src/components/PhoticCirclesOverlay.jsx` (Removed menu flash, fixed visibility, high-z-index)
+- `src/App.jsx` (Version bumps)
+
+**Changes**:
+
+**Wisdom Section Fixes (v3.16.3)**:
+
+- **Boundary Control**: Updated `ChapterModal` to respect the `Hearth` (430px) and `Sanctuary` (820px) UI boundaries. It no longer overflows the app frame on desktop browsers.
+- **Responsive Reading**: Adjusted internal padding and font-sizes for Hearth mode to ensure comfortable reading on narrower screens.
+- **Text Clipping**: Fixed an issue where the treatise content would be cut off on mobile viewports.
+
+**Photic Circles Refinement (v3.16.2)**:
+
+- **Startup Logic**: Removed the startup delay and flickering control panel when entering from the practice card.
+- **Robustness**: Added default fallbacks for all photic settings to prevent invisible circles if local storage is cleared or corrupted.
+- **Layering**: Set overlay z-index to 2000 to ensure full-screen immersion over all UI elements.
+
+**Version**: v3.16.3
+
+**Status**: COMPLETED
+
+---
+
 ## 2026-01-08 18:05 - Gemini/Antigravity - COMPLETED
 
 **Task**: Refine Photic Circles Experience & Circuit UI (v3.16.x)

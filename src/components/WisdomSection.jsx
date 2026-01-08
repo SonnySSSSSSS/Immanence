@@ -34,6 +34,7 @@ function ChapterModal({
   allChapters,
   onNavigate,
 }) {
+  const { mode: displayMode } = useDisplayModeStore();
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isReadingMode, setIsReadingMode] = useState(false);
   const contentRef = useRef(null);
@@ -161,8 +162,11 @@ function ChapterModal({
       style={{ animation: "fadeIn 300ms ease-out" }}
     >
       <div
-        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)] relative"
-        style={{ animation: "scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)" }}
+        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)] relative"
+        style={{ 
+          animation: "scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+          maxWidth: displayMode === 'sanctuary' ? '820px' : '430px'
+        }}
       >
         {/* Vertical Progress Rail - right edge */}
         <div
@@ -194,8 +198,12 @@ function ChapterModal({
 
         {/* Header - fades in reading mode */}
         <div
-          className="border-b border-[var(--accent-15)] px-8 py-5 flex items-center justify-between gap-4 flex-shrink-0 transition-opacity duration-500"
-          style={{ opacity: isReadingMode ? 0.3 : 1 }}
+          className="border-b border-[var(--accent-15)] py-5 flex items-center justify-between gap-4 flex-shrink-0 transition-opacity duration-500"
+          style={{ 
+            opacity: isReadingMode ? 0.3 : 1,
+            paddingLeft: displayMode === 'hearth' ? '20px' : '32px',
+            paddingRight: displayMode === 'hearth' ? '20px' : '32px',
+          }}
         >
           <div
             className="text-[11px] uppercase tracking-[0.2em]"
@@ -226,7 +234,13 @@ function ChapterModal({
         </div>
 
         {/* Title section - increased breathing space */}
-        <div className="px-12 pt-[100px] pb-[80px] text-center">
+        <div 
+          className="pt-[100px] pb-[80px] text-center"
+          style={{
+            paddingLeft: displayMode === 'hearth' ? '24px' : '48px',
+            paddingRight: displayMode === 'hearth' ? '24px' : '48px',
+          }}
+        >
           <h2
             className="text-2xl font-semibold mb-2"
             style={{
@@ -265,14 +279,16 @@ function ChapterModal({
         {/* Content - narrower column for better readability */}
         <div
           ref={contentRef}
-          className="flex-1 overflow-y-auto px-12 py-8 prose-content"
+          className="flex-1 overflow-y-auto py-8 prose-content"
           style={{
             fontFamily: "var(--font-body)",
-            fontSize: "17px",
+            fontSize: displayMode === 'hearth' ? '15px' : '17px',
             lineHeight: "1.7",
             color: "rgba(253,251,245,0.92)",
             maxWidth: "65ch", // ~70-80 chars max line length
             margin: "0 auto",
+            paddingLeft: displayMode === 'hearth' ? '24px' : '48px',
+            paddingRight: displayMode === 'hearth' ? '24px' : '48px',
           }}
         >
           {sanitizedExcerpt && (
@@ -312,13 +328,15 @@ function ChapterModal({
 
         {/* Footer with navigation - state-aware (shows more prominently near bottom or on interaction) */}
         <div
-          className="border-t border-[var(--accent-15)] px-8 py-4 flex items-center justify-between flex-shrink-0 transition-all duration-500"
+          className="border-t border-[var(--accent-15)] py-4 flex items-center justify-between flex-shrink-0 transition-all duration-500"
           style={{
             opacity: isReadingMode && !isNearBottom ? 0.2 : 1,
             transform:
               isReadingMode && !isNearBottom
                 ? "translateY(4px)"
                 : "translateY(0)",
+            paddingLeft: displayMode === 'hearth' ? '20px' : '32px',
+            paddingRight: displayMode === 'hearth' ? '20px' : '32px',
           }}
         >
           <button
