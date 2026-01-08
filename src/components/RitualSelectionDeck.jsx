@@ -1,11 +1,11 @@
-// src/components/RitualSelectionDeck.jsx
-// Grid layout for selecting rituals - shows all rituals at once
-
 import React from 'react';
-import { getAllRituals, RITUAL_CATEGORIES } from '../data/rituals/index.js';
+import { getAllRituals } from '../data/rituals/index.js';
+import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
     const rituals = getAllRituals();
+    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const isLight = colorScheme === 'light';
 
     const formatDuration = (duration) => {
         if (!duration) return '';
@@ -21,6 +21,12 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
         window.dispatchEvent(new CustomEvent('ritual:leave'));
     };
 
+    const textColors = {
+        primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.9)',
+        secondary: isLight ? '#5A4D3C' : 'rgba(253,251,245,0.7)',
+        muted: isLight ? '#7A6D58' : 'rgba(253,251,245,0.4)',
+    };
+
     return (
         <div className="w-full">
             {/* Header - "Invocation" verbiage */}
@@ -32,7 +38,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                     fontWeight: 600,
                     letterSpacing: 'var(--tracking-mythic)',
                     textTransform: 'uppercase',
-                    color: 'rgba(253,251,245,0.4)',
+                    color: textColors.muted,
                 }}
             >
                 Invoke a Ritual
@@ -40,7 +46,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
 
             {/* Grid container */}
             <div
-                className="grid gap-3 px-2 pb-4"
+                className="grid gap-3 px-2 pb-4 custom-scrollbar"
                 style={{
                     gridTemplateColumns: 'repeat(2, 1fr)',
                     maxHeight: '400px',
@@ -53,7 +59,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                         style={{
                             fontFamily: 'var(--font-body)',
                             fontSize: '11px',
-                            color: 'rgba(253,251,245,0.5)',
+                            color: textColors.muted,
                         }}
                     >
                         No rituals available yet
@@ -71,22 +77,26 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                 className="rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
                                 style={{
                                     background: isSelected
-                                        ? 'linear-gradient(180deg, rgba(255,147,0,0.15) 0%, rgba(20,20,30,0.8) 100%)'
-                                        : 'linear-gradient(180deg, rgba(22,22,37,0.4) 0%, rgba(15,15,26,0.6) 100%)',
+                                        ? (isLight 
+                                            ? 'linear-gradient(180deg, rgba(160,120,60,0.15) 0%, rgba(255,255,255,0.8) 100%)'
+                                            : 'linear-gradient(180deg, rgba(255,147,0,0.15) 0%, rgba(20,20,30,0.8) 100%)')
+                                        : (isLight 
+                                            ? 'linear-gradient(180deg, rgba(160,120,60,0.05) 0%, rgba(255,255,255,0.3) 100%)'
+                                            : 'linear-gradient(180deg, rgba(22,22,37,0.4) 0%, rgba(15,15,26,0.6) 100%)'),
                                     border: isSelected
-                                        ? '1px solid rgba(255,147,0,0.4)'
-                                        : '1px solid rgba(255,255,255,0.03)',
+                                        ? (isLight ? '1px solid rgba(160,120,60,0.4)' : '1px solid rgba(255,147,0,0.4)')
+                                        : (isLight ? '1px solid rgba(160,120,60,0.1)' : '1px solid rgba(255,255,255,0.03)'),
                                     boxShadow: isSelected
-                                        ? '0 0 30px rgba(255,100,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)'
-                                        : '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.02)',
+                                        ? (isLight ? '0 10px 30px rgba(160,120,60,0.15)' : '0 0 30px rgba(255,100,0,0.15)')
+                                        : '0 4px 20px rgba(0,0,0,0.1)',
                                 }}
                             >
                                 {/* Major Icon */}
                                 <div
                                     className="text-3xl mb-3 transition-all duration-500"
                                     style={{
-                                        color: isSelected ? '#ffb366' : 'rgba(255,255,255,0.7)',
-                                        filter: isSelected ? 'drop-shadow(0 0 8px rgba(255,160,50,0.5))' : 'none',
+                                        color: isSelected ? (isLight ? '#A0783C' : '#ffb366') : textColors.secondary,
+                                        filter: isSelected ? `drop-shadow(0 0 8px ${isLight ? 'rgba(160,120,60,0.3)' : 'rgba(255,160,50,0.5)'})` : 'none',
                                         transform: isSelected ? 'scale(1.1)' : 'scale(1)',
                                     }}
                                 >
@@ -102,7 +112,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                         letterSpacing: 'var(--tracking-wide)',
                                         textTransform: 'uppercase',
                                         fontWeight: 600,
-                                        color: isSelected ? '#fff' : 'rgba(253,251,245,0.85)',
+                                        color: isSelected ? (isLight ? '#3D3425' : '#fff') : textColors.primary,
                                         lineHeight: 1.4,
                                     }}
                                 >
@@ -115,7 +125,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                         fontFamily: 'var(--font-display)',
                                         fontSize: '9px',
                                         letterSpacing: '0.05em',
-                                        color: 'rgba(253,251,245,0.4)',
+                                        color: textColors.muted,
                                     }}
                                 >
                                     {formatDuration(ritual.duration)}

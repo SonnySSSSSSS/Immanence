@@ -32,11 +32,249 @@ import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } f
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { PostSessionJournal } from "./PostSessionJournal.jsx";
 import { useJournalStore } from "../state/journalStore.js";
+import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
+import { PhoticControlPanel } from "./PhoticControlPanel.jsx";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
-const PRACTICES = ["Breath & Stillness", "Ritual", "Circuit", "Cognitive Vipassana", "Somatic Vipassana", "Sound", "Visualization", "Cymatics", "Photic"];
+const PRACTICE_REGISTRY = {
+  breath: {
+    id: "breath",
+    label: "Breath & Stillness",
+    icon: "✦",
+    Config: BreathConfig,
+    supportsDuration: true,
+  },
+  ritual: {
+    id: "ritual",
+    label: "Ritual Library",
+    icon: "◈",
+    supportsDuration: false,
+    Config: RitualSelectionDeck,
+  },
+  circuit: {
+    id: "circuit",
+    label: "Circuit",
+    icon: "↺",
+    Config: CircuitConfig,
+    supportsDuration: true,
+  },
+  cognitive_vipassana: {
+    id: "cognitive_vipassana",
+    label: "Cognitive Vipassana",
+    icon: "👁",
+    Config: SensoryConfig,
+    supportsDuration: true,
+  },
+  somatic_vipassana: {
+    id: "somatic_vipassana",
+    label: "Somatic Vipassana",
+    icon: "⌬",
+    Config: SensoryConfig,
+    supportsDuration: true,
+  },
+  sound: {
+    id: "sound",
+    label: "Sound",
+    icon: "⌇",
+    Config: SoundConfig,
+    supportsDuration: true,
+  },
+  visualization: {
+    id: "visualization",
+    label: "Visualization",
+    icon: "✧",
+    Config: VisualizationConfig,
+    supportsDuration: true,
+  },
+  cymatics: {
+    id: "cymatics",
+    label: "Cymatics",
+    icon: "◍",
+    Config: CymaticsConfig,
+    supportsDuration: true,
+  },
+  photic: {
+    id: "photic",
+    label: "Photic Circles",
+    icon: "☼",
+    supportsDuration: false,
+    Config: PhoticControlPanel,
+  }
+};
+
+const PRACTICE_IDS = Object.keys(PRACTICE_REGISTRY);
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
+
+function PracticeSelector({ selectedId, onSelect, tokens }) {
+  return (
+    <div className="w-full max-w-2xl mb-12">
+      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center">
+        {PRACTICE_IDS.map((id) => {
+          const p = PRACTICE_REGISTRY[id];
+          const isActive = selectedId === id;
+          return (
+            <button
+              key={id}
+              onClick={() => onSelect(id)}
+              className="w-full px-4 py-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 group relative overflow-hidden"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '9px',
+                letterSpacing: 'var(--tracking-mythic)',
+                textTransform: 'uppercase',
+                border: isActive ? `1px solid ${tokens.accent}` : `1px solid ${tokens.border}`,
+                background: isActive ? `${tokens.accent}15` : 'rgba(255,255,255,0.01)',
+                color: isActive ? tokens.accent : tokens.textMuted,
+                boxShadow: isActive ? `0 0 20px ${tokens.accent}20` : 'none',
+              }}
+            >
+              <div className={`text-2xl mb-1 transition-transform duration-500 ${isActive ? 'scale-110 rotate-[360deg]' : 'group-hover:scale-110'}`} style={{ color: isActive ? tokens.accent : tokens.textMuted }}>
+                {p.icon}
+              </div>
+              <span className="text-center leading-tight font-bold">{p.label}</span>
+              {isActive && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-color)]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {
+  const cardRef = useRef(null);
+  const p = PRACTICE_REGISTRY[practiceId];
+  const isCollapsed = !practiceId;
+
+  // Intentional Reveal Logic: Scroll into view when expanded
+  useEffect(() => {
+    if (practiceId && !hasExpandedOnce && cardRef.current) {
+      const timer = setTimeout(() => {
+        setHasExpandedOnce(true);
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 400); // Wait for CSS transition
+      return () => clearTimeout(timer);
+    }
+  }, [practiceId, hasExpandedOnce]);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`rounded-[32px] relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
+      style={{
+        maxWidth: 'min(620px, 94vw)',
+        maxHeight: isCollapsed ? '88px' : '1000px', // Animating max-height for V1 reveal
+        ...tokens.cardStyle,
+        border: `1px solid ${isCollapsed ? tokens.border : tokens.borderSelect}`,
+        boxShadow: tokens.isLight 
+          ? '0 12px 48px rgba(60,50,35,0.12)' 
+          : '0 24px 72px rgba(0,0,0,0.6)',
+      }}
+    >
+      <div className="absolute inset-0 pointer-events-none" style={tokens.innerGlow} />
+      
+      {isCollapsed ? (
+        <div className="h-[88px] flex items-center justify-center">
+          <span style={{ 
+            fontFamily: 'var(--font-display)', 
+            fontSize: '11px', 
+            letterSpacing: 'var(--tracking-mythic)', 
+            textTransform: 'uppercase',
+            color: tokens.textMuted,
+            opacity: 0.5
+          }}>
+            Select a practice to begin config...
+          </span>
+        </div>
+      ) : (
+        <div 
+          key={practiceId} 
+          className="relative px-8 py-10 animate-in fade-in duration-300"
+        >
+          {/* Practice Title & Icon */}
+          <div className="flex flex-col items-center mb-10 text-center">
+            <div 
+              className="text-5xl mb-4 drop-shadow-lg"
+              style={{ 
+                color: tokens.accent,
+                filter: 'drop-shadow(0 0 20px var(--accent-30))'
+              }}
+            >
+              {p.icon}
+            </div>
+            <h2 style={{ 
+              fontFamily: 'var(--font-display)', 
+              fontSize: '20px', 
+              fontWeight: 600,
+              letterSpacing: 'var(--tracking-mythic)', 
+              textTransform: 'uppercase',
+              color: tokens.text,
+              textShadow: tokens.isLight ? 'none' : '0 0 15px var(--accent-30)'
+            }}>
+              {p.label}
+            </h2>
+            {p.id === 'ritual' && (
+              <p className="mt-2 text-[10px] uppercase tracking-[0.2em] opacity-40 font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                Select an invocation to begin
+              </p>
+            )}
+          </div>
+
+          {/* Dynamic Config Panel */}
+          <div className="min-h-[100px] mb-10">
+             {p.Config ? (
+               <p.Config 
+                 {...setters}
+                 isLight={tokens.isLight}
+                 selectedRitualId={setters.selectedRitualId}
+               />
+             ) : (
+               <div className="flex items-center justify-center py-12 text-xs uppercase tracking-widest opacity-30 font-display">
+                 No additional configuration required
+               </div>
+             )}
+          </div>
+
+          {/* Shared Duration Slider */}
+          {p.supportsDuration && (
+            <div className="mb-12">
+              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-center mb-6 opacity-50" style={{ color: tokens.text }}>
+                Sacred Duration (minutes)
+              </div>
+              <SacredTimeSlider 
+                value={duration} 
+                onChange={onDurationChange} 
+                options={DURATIONS} 
+              />
+            </div>
+          )}
+
+          {/* Start Button */}
+          {!(practiceId === 'ritual') && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={onStart}
+                className="group px-16 py-5 rounded-full font-black uppercase tracking-[0.4em] transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
+                style={{
+                   background: tokens.accent,
+                   color: '#050508',
+                   boxShadow: `0 10px 40px ${tokens.accent}40`,
+                   fontSize: '12px'
+                }}
+              >
+                <span className="relative z-10">{practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice'}</span>
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   const isLight = colorScheme === 'light';
@@ -173,11 +411,26 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const instrumentation = useSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+  
+  // Theme Tokens for unified styling across components
+  const uiTokens = {
+    isLight,
+    bg: isLight ? 'var(--light-bg-surface)' : 'rgba(15,15,26,1)',
+    border: isLight ? 'var(--light-border)' : 'var(--accent-20)',
+    borderSelect: isLight ? 'var(--light-border)' : 'var(--accent-40)',
+    text: isLight ? 'var(--light-text)' : 'var(--text-primary)',
+    textMuted: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
+    accent: 'var(--accent-color)',
+    cardStyle: isLight ? getCardMaterial(true) : plateauMaterial,
+    innerGlow: isLight ? getInnerGlowStyle(true) : innerGlowStyle,
+  };
+
   const savedPrefs = loadPreferences();
 
-  // FIX: Guard practice initialization with fallback to first practice
-  const [practice, setPractice] = useState(savedPrefs.practice || PRACTICES[0]);
-  const [practiceModalOpen, setPracticeModalOpen] = useState(false);
+  // STABILIZE STATE: Core Selection State
+  const [practiceId, setPracticeId] = useState(null);
+  const [hasExpandedOnce, setHasExpandedOnce] = useState(false);
+  const [duration, setDuration] = useState(savedPrefs.duration || 10);
 
   // CURRICULUM INTEGRATION
   const {
@@ -186,106 +439,125 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     activePracticeSession,
     clearActivePracticeSession,
   } = useCurriculumStore();
-
-  // Load curriculum day settings when active session changes
+  
+  // Handle curriculum auto-start and initialization
   useEffect(() => {
-    if (!activePracticeSession) return;
-
-    // Get the active leg (specific practice within the day)
-    const activeLeg = getActivePracticeLeg();
-
-    if (activeLeg) {
-      // Load practice config from the active leg
-      setPractice(activeLeg.practiceType);
-
-      if (activeLeg.practiceConfig?.duration) {
-        setDuration(activeLeg.practiceConfig.duration);
-        setTimeLeft(activeLeg.practiceConfig.duration * 60);
+    if (activePracticeSession) {
+      const activeLeg = getActivePracticeLeg();
+      if (activeLeg) {
+        const pid = Object.keys(PRACTICE_REGISTRY).find(k => PRACTICE_REGISTRY[k].label === activeLeg.practiceType);
+        if (pid) {
+          setPracticeId(pid);
+          setHasExpandedOnce(true); // Bypass animation for auto-starts
+        }
       }
-
-      // If there's a breathPattern specified, set it as preset
-      if (activeLeg.practiceConfig?.breathPattern) {
-        setPreset(activeLeg.practiceConfig.breathPattern);
-      }
-
-      // Auto-start the practice immediately (skip configuration screen entirely)
-      // Set isRunning first to hide the config screen, then execute start
-      setIsRunning(true);
-      setTimeout(() => {
-        executeStart();
-      }, 100);
-    } else {
-      console.warn('[useEffect] No active leg found for session:', activePracticeSession);
     }
-  }, [activePracticeSession]);
+  }, []);
 
+  // STABILIZE STATE: Keyed Parameters Object
+  const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
+  
+  // Backward compatibility during refactor
+  const selectedPractice = PRACTICE_REGISTRY[practiceId] || PRACTICE_REGISTRY.breath;
+  const practice = selectedPractice.label;
+
+  const updateParams = (pid, updates) => {
+    setPracticeParams(prev => ({
+      ...prev,
+      [pid]: { ...prev[pid], ...updates }
+    }));
+  };
+
+  // Shared UI states (non-practice specific)
   const [chevronAngle, setChevronAngle] = useState(0);
   const [haloPulse, setHaloPulse] = useState(0);
-  const [duration, setDuration] = useState(savedPrefs.duration);
-  const [preset, setPreset] = useState(savedPrefs.preset);
-  const [pattern, setPattern] = useState(savedPrefs.pattern);
-
-  const [sensoryType, setSensoryType] = useState(savedPrefs.sensoryType || SENSORY_TYPES[0].id);
-  const [soundType, setSoundType] = useState(savedPrefs.soundType || SOUND_TYPES[0]);
-  const [vipassanaTheme, setVipassanaTheme] = useState(savedPrefs.vipassanaTheme);
-  const [vipassanaElement, setVipassanaElement] = useState(savedPrefs.vipassanaElement);
-
-  const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
-  const [showVipassanaVariantModal, setShowVipassanaVariantModal] = useState(false);
-
-  const [binauralPreset, setBinauralPreset] = useState(BINAURAL_PRESETS[2]);
-  const [isochronicPreset, setIsochronicPreset] = useState(ISOCHRONIC_PRESETS[1]);
-  const [mantraPreset, setMantraPreset] = useState(null);
-  const [naturePreset, setNaturePreset] = useState(null);
-  const [carrierFrequency, setCarrierFrequency] = useState(200);
-  const [soundVolume, setSoundVolume] = useState(0.5);
-
   const [isRunning, setIsRunning] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(10 * 60);
-
-  const [tier2Expanded, setTier2Expanded] = useState(true);
-  const [tier3Expanded, setTier3Expanded] = useState(true);
-
+  const [timeLeft, setTimeLeft] = useState(duration * 60);
   const [isStarting, setIsStarting] = useState(false);
-
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
-
   const [lastSessionId, setLastSessionId] = useState(null);
   const { startMicroNote, pendingMicroNote } = useJournalStore();
 
-  const [tier2Hovered, setTier2Hovered] = useState(false);
-  const [tier3Hovered, setTier3Hovered] = useState(false);
-
+  // Practice session internals
   const [activeCircuitId, setActiveCircuitId] = useState(null);
   const [circuitConfig, setCircuitConfig] = useState(null);
   const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
   const [circuitSavedPractice, setCircuitSavedPractice] = useState(null);
-
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
-
   const [breathCount, setBreathCount] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState(null);
-
-  const [geometry, setGeometry] = useState(savedPrefs.geometry);
-  const [fadeInDuration, setFadeInDuration] = useState(2.5);
-  const [displayDuration, setDisplayDuration] = useState(10);
-  const [fadeOutDuration, setFadeOutDuration] = useState(2.5);
-  const [voidDuration, setVoidDuration] = useState(10);
-  const [audioEnabled, setAudioEnabled] = useState(true);
   const [visualizationCycles, setVisualizationCycles] = useState(0);
-
-  const [frequencySet, setFrequencySet] = useState('solfeggio');
-  const [selectedFrequency, setSelectedFrequency] = useState(SOLFEGGIO_SET[4]);
-  const [driftEnabled, setDriftEnabled] = useState(false);
-
   const [activeRitual, setActiveRitual] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
+  // Sound/Visual ephemeral state
+  const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
+  const [showVipassanaVariantModal, setShowVipassanaVariantModal] = useState(false);
+
+  // Ring FX ephemeral state
   const [currentFxIndex, setCurrentFxIndex] = useState(0);
   const currentFxPreset = showFxGallery ? ringFXPresets[currentFxIndex] : null;
+
+  // REFACTOR BRIDGE: Map practiceParams to legacy variable names for stable behavior
+  const { preset, pattern } = practiceParams.breath;
+  const { 
+    soundType, 
+    volume: soundVolume, 
+    binauralPresetId, 
+    isochronicPresetId, 
+    carrierFrequency 
+  } = practiceParams.sound;
+  const { 
+    geometry, 
+    fadeInDuration, 
+    displayDuration, 
+    fadeOutDuration, 
+    voidDuration, 
+    audioEnabled 
+  } = practiceParams.visualization;
+  const { 
+    frequencySet, 
+    selectedFrequencyIndex, 
+    driftEnabled,
+    audioEnabled: cymaticsAudioEnabled 
+  } = practiceParams.cymatics;
+
+  // Vipassana params depend on whether we are in somatic or cognitive mode
+  const isCognitive = practiceId === 'cognitive_vipassana';
+  const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
+  const { sensoryType, vipassanaTheme, vipassanaElement } = practiceParams[vTarget];
+
+  // Derived Values
+  const selectedFrequency = SOLFEGGIO_SET[selectedFrequencyIndex] || SOLFEGGIO_SET[4];
+  const binauralPreset = BINAURAL_PRESETS.find(p => p.name === binauralPresetId) || BINAURAL_PRESETS[0];
+  const isochronicPreset = ISOCHRONIC_PRESETS.find(p => p.name === isochronicPresetId) || ISOCHRONIC_PRESETS[0];
+
+  // HELPER SETTERS: Bridging old calls to new updateParams logic
+  const setPreset = (val) => updateParams('breath', { preset: val });
+  const setPattern = (val) => updateParams('breath', { pattern: val });
+  const setSoundType = (val) => updateParams('sound', { soundType: val });
+  const setSoundVolume = (val) => updateParams('sound', { volume: val });
+  const setBinauralPreset = (val) => updateParams('sound', { binauralPresetId: val?.name || val });
+  const setIsochronicPreset = (val) => updateParams('sound', { isochronicPresetId: val?.name || val });
+  const setCarrierFrequency = (val) => updateParams('sound', { carrierFrequency: val });
+  const setSensoryType = (val) => updateParams(vTarget, { sensoryType: val });
+  const setVipassanaTheme = (val) => updateParams(vTarget, { vipassanaTheme: val });
+  const setVipassanaElement = (val) => updateParams(vTarget, { vipassanaElement: val });
+  const setGeometry = (val) => updateParams('visualization', { geometry: val });
+  const setFadeInDuration = (val) => updateParams('visualization', { fadeInDuration: val });
+  const setDisplayDuration = (val) => updateParams('visualization', { displayDuration: val });
+  const setFadeOutDuration = (val) => updateParams('visualization', { fadeOutDuration: val });
+  const setVoidDuration = (val) => updateParams('visualization', { voidDuration: val });
+  const setAudioEnabled = (val) => updateParams('visualization', { audioEnabled: val });
+  const setFrequencySet = (val) => updateParams('cymatics', { frequencySet: val });
+  const setSelectedFrequency = (val) => {
+    const idx = SOLFEGGIO_SET.findIndex(f => f.hz === val.hz);
+    updateParams('cymatics', { selectedFrequencyIndex: idx !== -1 ? idx : 4 });
+  };
+  const setDriftEnabled = (val) => updateParams('cymatics', { driftEnabled: val });
 
   const handlePrevFx = () => {
     setCurrentFxIndex(prev => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
@@ -667,29 +939,46 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   };
 
-  const executeStart = () => {
-    // FIX: Guard against null practice
-    if (!practice) {
-      console.error("Cannot start practice: practice is null or undefined");
-      return;
-    }
+  // Load curriculum day settings when active session changes
+  useEffect(() => {
+    if (!activePracticeSession) return;
 
+    const activeLeg = getActivePracticeLeg();
+
+    if (activeLeg) {
+      // Map legacy labels to IDs if necessary
+      const pid = Object.keys(PRACTICE_REGISTRY).find(k => PRACTICE_REGISTRY[k].label === activeLeg.practiceType) || "breath";
+      
+      setPracticeId(pid);
+
+      if (activeLeg.practiceConfig?.duration) {
+        setDuration(activeLeg.practiceConfig.duration);
+        setTimeLeft(activeLeg.practiceConfig.duration * 60);
+      }
+
+      // If there's a breathPattern specified, update the params
+      if (activeLeg.practiceConfig?.breathPattern) {
+         updateParams('breath', { preset: activeLeg.practiceConfig.breathPattern });
+      }
+
+      setIsRunning(true);
+      setTimeout(() => {
+        executeStart();
+      }, 100);
+    }
+  }, [activePracticeSession]);
+
+  const executeStart = () => {
+    if (!practiceId) return;
 
     savePreferences({
-      practice,
+      practiceId,
       duration,
-      preset,
-      pattern,
-      sensoryType,
-      vipassanaTheme,
-      vipassanaElement,
-      soundType,
-      geometry,
+      practiceParams
     });
 
-    if (practice === "Circuit") {
+    if (practiceId === "circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {
-        console.error('[executeStart] Circuit practice but no config');
         return;
       }
       setCircuitSavedPractice(practice);
@@ -701,12 +990,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
-    if (practice === "Cognitive Vipassana") {
+    if (practiceId === "cognitive_vipassana") {
       setShowVipassanaVariantModal(true);
-      // NOTE: After modal selection, the modal's onSelect will close itself
-      // We need to start the session AFTER the variant is selected
-      // So we don't set isRunning here - the modal callback should do it
-      return; // IMPORTANT: Return here to prevent auto-starting
+      return; 
     }
 
     setIsRunning(true);
@@ -717,23 +1003,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setLastSignedErrorMs(null);
     setBreathCount(0);
 
-    const p = practice.toLowerCase();
+    const p = practiceId;
     let domain = 'breathwork';
-    if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
-    else if (p === 'sensory') domain = sensoryType;
+    if (p === 'visualization' || p === 'cymatics') domain = 'visualization';
+    else if (p.includes('vipassana')) domain = isCognitive ? 'focus' : 'body';
     else if (p === 'ritual') domain = 'ritual';
     else if (p === 'sound') domain = 'sound';
 
     instrumentation.startSession(
       domain,
       activeRitual?.category || null,
-      p === 'somatic vipassana' ? sensoryType : null
+      p === 'somatic_vipassana' ? sensoryType : null
     );
   };
 
   const handleStart = () => {
     // Special handling for Photic practice
-    if (practice === "Photic") {
+    if (practiceId === "photic") {
       onOpenPhotic?.();
       return;
     }
@@ -1347,284 +1633,48 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }
 
   // RENDER PRIORITY 3: Practice Configuration/Selection View
-  // If there's an active curriculum session, show a "Ready to Start" screen instead of selection modal
-  if (activePracticeSession) {
-    const activeLeg = getActivePracticeLeg();
+  // Assemble the unified setters/params object for the dynamic config panels
+  const configProps = {
+    preset, pattern, soundType, soundVolume, binauralPreset, isochronicPreset, carrierFrequency,
+    sensoryType, vipassanaTheme, vipassanaElement, geometry, fadeInDuration, displayDuration,
+    fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
+    setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset, 
+    setCarrierFrequency, setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry, 
+    setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
+    setFrequencySet, setSelectedFrequency, setDriftEnabled,
+    onToggleRunning: handleStart, 
+    onSelectRitual: handleSelectRitual, 
+    selectedRitualId: activeRitual?.id,
+    isEmbedded: true
+  };
 
-    // Get display values with fallbacks
-    const displayPractice = activeLeg?.practiceType || practice || 'Breath & Stillness';
-    const displayDuration = activeLeg?.practiceConfig?.duration || duration || 5;
-
-    return (
-      <section className="w-full h-full flex flex-col items-center justify-center pb-24">
-        <div
-          className="rounded-[32px] relative overflow-hidden w-full"
-          style={{
-            maxWidth: 'min(460px, 94vw)',
-            ...(isLight ? getCardMaterial(true) : plateauMaterial),
-            border: isLight ? '1px solid var(--light-border, rgba(60,50,35,0.15))' : '1px solid var(--accent-20)',
-            boxShadow: isLight
-              ? '0 4px 24px rgba(60,50,35,0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
-              : '0 12px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
-          }}
-        >
-          <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
-
-          <div className="relative px-8 py-10 text-center">
-            <div
-              style={{
-                fontSize: '48px',
-                marginBottom: '16px',
-                filter: 'drop-shadow(0 0 20px var(--accent-40))',
-              }}
-            >
-              ✦
-            </div>
-
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '18px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                color: 'var(--text-primary)',
-                marginBottom: '8px',
-                textShadow: isLight ? 'none' : '0 0 10px var(--accent-30)',
-              }}
-            >
-              {displayPractice}
-            </div>
-
-            <div
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '12px',
-                color: 'var(--text-muted)',
-                marginBottom: '24px',
-              }}
-            >
-              {displayDuration} minutes
-            </div>
-
-            <button
-              onClick={handleStart}
-              disabled={isStarting || !practice}
-              className="px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-50"
-              style={{
-                background: 'var(--accent-color)',
-                color: '#fff',
-                boxShadow: '0 8px 20px var(--accent-30)',
-                fontFamily: 'var(--font-display)',
-              }}
-            >
-              {!practice ? 'Loading...' : isStarting ? 'Starting...' : 'Start Practice'}
-            </button>
-
-            <button
-              onClick={() => clearActivePracticeSession()}
-              className="mt-4 px-6 py-2 rounded-full text-[9px] uppercase tracking-wider transition-all hover:opacity-70"
-              style={{
-                fontFamily: 'var(--font-display)',
-                color: 'var(--text-muted)',
-                border: '1px solid var(--accent-20)',
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Default: Free practice configuration with dedicated config panels
   return (
-    <section className="w-full h-full flex flex-col items-center justify-center pb-24">
-      <div
-        className="rounded-[32px] relative overflow-hidden w-full"
-        style={{
-          maxWidth: 'min(580px, 94vw)',
-          ...(isLight ? getCardMaterial(true) : plateauMaterial),
-          border: isLight ? '2px solid var(--light-border)' : '2px solid var(--accent-20)',
-        }}
-      >
-        <div className="absolute inset-0 pointer-events-none" style={isLight ? getInnerGlowStyle(true) : innerGlowStyle} />
+    <section className="w-full h-full flex flex-col items-center justify-start pt-12 pb-24 overflow-y-auto custom-scrollbar">
+      {/* Top Layer: Practice Selector */}
+      <PracticeSelector 
+        selectedId={practiceId}
+        onSelect={setPracticeId}
+        tokens={uiTokens}
+      />
 
-        <div className="relative px-8 py-8">
-          {/* Practice Type Switcher - Horizontal pills */}
-          <div className="mb-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 justify-items-center">
-              {PRACTICES.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPractice(p)}
-                  className="w-full mini:w-auto px-3 py-1.5 rounded-full transition-all duration-200 min-w-0"
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '9px',
-                    letterSpacing: 'var(--tracking-mythic)',
-                    textTransform: 'uppercase',
-                    border: practice === p
-                      ? (isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-40)')
-                      : (isLight ? '1px solid rgba(160,120,60,0.2)' : '1px solid var(--accent-10)'),
-                    background: practice === p
-                      ? (isLight ? 'rgba(180,140,90,0.15)' : 'rgba(255,255,255,0.08)')
-                      : 'transparent',
-                    color: practice === p
-                      ? 'var(--accent-color)'
-                      : (isLight ? 'var(--light-muted)' : 'var(--text-muted)'),
-                    boxShadow: practice === p
-                      ? (isLight ? '0 0 8px rgba(180,140,90,0.2)' : '0 0 12px var(--accent-15)')
-                      : 'none',
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Bottom Layer: Dynamic Options Card */}
+      <PracticeOptionsCard 
+        practiceId={practiceId}
+        duration={duration}
+        onDurationChange={setDuration}
+        onStart={handleStart}
+        tokens={uiTokens}
+        params={practiceParams}
+        setters={configProps}
+        hasExpandedOnce={hasExpandedOnce}
+        setHasExpandedOnce={setHasExpandedOnce}
+      />
 
-          {/* Dedicated Configuration Panels */}
-          <div className="mb-6">
-            {practice === "Breath & Stillness" && (
-              <BreathConfig
-                pattern={pattern}
-                setPattern={setPattern}
-                preset={preset}
-                setPreset={setPreset}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Sound" && (
-              <SoundConfig
-                soundType={soundType}
-                setSoundType={setSoundType}
-                binauralPreset={binauralPreset}
-                setBinauralPreset={setBinauralPreset}
-                isochronicPreset={isochronicPreset}
-                setIsochronicPreset={setIsochronicPreset}
-                mantraPreset={mantraPreset}
-                setMantraPreset={setMantraPreset}
-                naturePreset={naturePreset}
-                setNaturePreset={setNaturePreset}
-                carrierFrequency={carrierFrequency}
-                setCarrierFrequency={setCarrierFrequency}
-                volume={soundVolume}
-                setVolume={setSoundVolume}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Cymatics" && (
-              <CymaticsConfig
-                frequencySet={frequencySet}
-                setFrequencySet={setFrequencySet}
-                selectedFrequency={selectedFrequency}
-                setSelectedFrequency={setSelectedFrequency}
-                fadeInDuration={fadeInDuration}
-                setFadeInDuration={setFadeInDuration}
-                displayDuration={displayDuration}
-                setDisplayDuration={setDisplayDuration}
-                fadeOutDuration={fadeOutDuration}
-                setFadeOutDuration={setFadeOutDuration}
-                voidDuration={voidDuration}
-                setVoidDuration={setVoidDuration}
-                driftEnabled={driftEnabled}
-                setDriftEnabled={setDriftEnabled}
-                audioEnabled={audioEnabled}
-                setAudioEnabled={setAudioEnabled}
-                isLight={isLight}
-              />
-            )}
-
-            {(practice === "Somatic Vipassana" || practice === "Cognitive Vipassana") && (
-              <SensoryConfig
-                sensoryType={sensoryType}
-                setSensoryType={setSensoryType}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Visualization" && (
-              <VisualizationConfig
-                geometry={geometry}
-                setGeometry={setGeometry}
-                fadeInDuration={fadeInDuration}
-                setFadeInDuration={setFadeInDuration}
-                displayDuration={displayDuration}
-                setDisplayDuration={setDisplayDuration}
-                fadeOutDuration={fadeOutDuration}
-                setFadeOutDuration={setFadeOutDuration}
-                voidDuration={voidDuration}
-                setVoidDuration={setVoidDuration}
-                duration={duration}
-                setDuration={setDuration}
-                audioEnabled={audioEnabled}
-                setAudioEnabled={setAudioEnabled}
-                isLight={isLight}
-              />
-            )}
-
-            {practice === "Circuit" && (
-              <CircuitConfig
-                isLight={isLight}
-              />
-            )}
-          </div>
-
-          {/* Duration Selection */}
-          <div style={{ marginBottom: '32px' }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '9px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                textTransform: 'uppercase',
-                color: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
-                marginBottom: '12px',
-                textAlign: 'center',
-              }}
-            >
-              Duration (minutes)
-            </div>
-            <SacredTimeSlider
-              value={duration}
-              onChange={setDuration}
-              options={DURATIONS}
-            />
-          </div>
-
-          {/* Start Button */}
-          <button
-            onClick={handleStart}
-            disabled={isStarting || !practice}
-            className="w-full px-8 py-4 rounded-full transition-all duration-200 hover:scale-[1.02]"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '12px',
-              fontWeight: 600,
-              letterSpacing: 'var(--tracking-mythic)',
-              textTransform: 'uppercase',
-              background: isStarting || !practice
-                ? (isLight ? 'rgba(60,50,35,0.2)' : 'rgba(255,255,255,0.1)')
-                : 'var(--accent-color)',
-              color: isStarting || !practice
-                ? (isLight ? 'rgba(60,50,35,0.4)' : 'rgba(255,255,255,0.3)')
-                : '#fff',
-              border: '1px solid transparent',
-              boxShadow: !isStarting && practice
-                ? '0 8px 20px var(--accent-30)'
-                : 'none',
-              cursor: isStarting || !practice ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {!practice ? 'Select Practice' : isStarting ? 'Preparing...' : 'Begin Practice'}
-          </button>
-        </div>
-      </div>
-
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }
+      `}</style>
     </section>
   );
 }
