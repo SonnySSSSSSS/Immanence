@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { Avatar } from "./components/avatar";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
@@ -37,6 +38,29 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
   const isBodyScan = isPracticing && currentPracticeId === 'somatic_vipassana';
   const isVipassana = isInsightMeditation || isBodyScan;
   const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary' && !isVipassana;
+  const [frameRect, setFrameRect] = useState(null);
+
+  useLayoutEffect(() => {
+    if (!isPracticing || !showAvatar) {
+      setFrameRect(null);
+      return;
+    }
+
+    const updateFrameRect = () => {
+      const el = document.querySelector("[data-app-frame]");
+      if (!el) return;
+      setFrameRect(el.getBoundingClientRect());
+    };
+
+    updateFrameRect();
+    window.addEventListener("resize", updateFrameRect);
+    window.addEventListener("scroll", updateFrameRect, true);
+
+    return () => {
+      window.removeEventListener("resize", updateFrameRect);
+      window.removeEventListener("scroll", updateFrameRect, true);
+    };
+  }, [isPracticing, showAvatar]);
 
   if (isInsightMeditation) {
     return <PracticeSection 
@@ -60,37 +84,65 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
   return (
     <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       {showAvatar && (
-          <div 
-            className="w-full relative z-20 flex flex-col items-center"
-            style={{
-              marginTop: isVipassana ? '0' : '1.5rem',
-              marginBottom: isVipassana ? '0' : '1rem',
-            }}
-          >
-            {/* Avatar with scale/fade during practice */}
+        isPracticing && frameRect
+          ? createPortal(
             <div
               className="transition-all duration-700 ease-in-out"
               style={{
-                position: isVipassana ? 'fixed' : 'relative',
-                top: isVipassana ? '8px' : 'auto',
-                right: isVipassana ? '8px' : 'auto',
+                position: 'fixed',
+                top: frameRect.top + 8,
+                left: frameRect.right - 8,
+                transform: 'translateX(-100%) scale(0.2)',
                 transformOrigin: 'top right',
-                transform: isVipassana ? 'scale(0.1)' : (isPracticing ? 'scale(0.65)' : 'scale(1)'),
-                opacity: isVipassana ? 0.3 : (isPracticing ? 0.5 : 1),
-                zIndex: 100,
+                zIndex: 2147483647,
+                pointerEvents: 'none',
               }}
             >
-            <Avatar
-              mode={section}
-              breathState={breathState}
-              onStageChange={onStageChange}
-              stage={currentStage}
-              path={previewPath}
-              showCore={previewShowCore}
-              attention={previewAttention}
-            />
-          </div>
-        </div>
+              <Avatar
+                mode={section}
+                breathState={breathState}
+                onStageChange={onStageChange}
+                stage={currentStage}
+                path={previewPath}
+                showCore={previewShowCore}
+                attention={previewAttention}
+              />
+            </div>,
+            document.body
+          )
+          : (
+            <div 
+              className="w-full relative z-20 flex flex-col items-center"
+              style={{
+                marginTop: isVipassana ? '0' : '1.5rem',
+                marginBottom: isVipassana ? '0' : '1rem',
+              }}
+            >
+              {/* Avatar with scale/fade during practice */}
+              <div
+                className="transition-all duration-700 ease-in-out"
+                style={{
+                  position: isVipassana ? 'fixed' : 'relative',
+                  top: isVipassana ? '8px' : 'auto',
+                  right: isVipassana ? '8px' : 'auto',
+                  transformOrigin: 'top right',
+                  transform: isVipassana ? 'scale(0.1)' : (isPracticing ? 'scale(0.65)' : 'scale(1)'),
+                  opacity: isVipassana ? 0.3 : (isPracticing ? 0.5 : 1),
+                  zIndex: 100,
+                }}
+              >
+                <Avatar
+                  mode={section}
+                  breathState={breathState}
+                  onStageChange={onStageChange}
+                  stage={currentStage}
+                  path={previewPath}
+                  showCore={previewShowCore}
+                  attention={previewAttention}
+                />
+              </div>
+            </div>
+          )
       )}
 
       <div className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
