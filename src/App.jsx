@@ -29,7 +29,9 @@ import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
+import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx";
 import "./App.css";
+
 function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExperience, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
   // Navigation and Application sections handle their own avatars and stage titles
   // RitualLibrary also handles its own UI (no avatar needed)

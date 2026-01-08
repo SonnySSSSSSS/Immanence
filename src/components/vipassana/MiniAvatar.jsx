@@ -2,8 +2,29 @@
 // Miniaturized avatar for Vipassana scene - steady presence signal
 
 import React from 'react';
+import { OrbCore } from '../avatar/OrbCore';
+import { useDisplayModeStore } from '../../state/displayModeStore';
 
 export function MiniAvatar({ stage = 'flame', opacity = 0.3 }) {
+    const isLight = useDisplayModeStore((state) => state.colorScheme === 'light');
+
+    // Light mode: use reduced orb avatar
+    if (isLight) {
+        return (
+            <div
+                className="fixed top-6 right-6 pointer-events-none z-20"
+                style={{ 
+                    opacity,
+                    width: '96px',
+                    height: '96px',
+                }}
+            >
+                <OrbCore isPracticing={false} reduced={true} />
+            </div>
+        );
+    }
+
+    // Dark mode: use existing simple circle design
     // Stage color mapping
     const stageColors = {
         seedling: '#5CB95F',

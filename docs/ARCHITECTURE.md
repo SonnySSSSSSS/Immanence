@@ -199,3 +199,85 @@ Experimental photic entrainment overlay for light-based meditation. Renders two 
   3. **Critical Flows** – append the new end-to-end path (inputs → actions → outputs → surfaces updated).
   4. **Wiring Index** – add or adjust the surface where the feature appears (inputs/outputs/navigation).
 - Keep bullets/diagrams concise; avoid describing modules that do not exist in the repo.
+
+## Avatar System
+
+### Overview
+
+Dual-mode avatar rendering system with distinct visual languages for light and dark modes. Light mode uses orb-based assets with crossfade animation; dark mode preserves sigil-based rendering.
+
+### Components
+
+- **AvatarContainer** (`src/components/avatar/AvatarContainer.jsx`)
+  - Main orchestrator combining all avatar layers
+  - Renders frame, rings, core, halos, and moon orbit
+  - Handles breathing aura, stage glow, and practice state
+- **StaticSigilCore** (`src/components/avatar/StaticSigilCore.jsx`)
+  - Conditionally renders `OrbCore` for light mode or sigil-based core for dark mode
+  - Manages stage-specific colors and glow effects
+
+### Master Optical System [LOCKED]
+
+The light mode avatar uses a museum-grade optical system built in four phases to ensure architectural stability and realistic depth.
+
+#### Layer Stack (Bottom to Top)
+
+1. **Ambient Glow**: `z-index: 0`, opacity 0.35, blur 16px, blend `screen`. Ambient aura.
+2. **Vessel - Frame**: `z-index: 1`, locking the physical rim.
+3. **Vessel - Instrument**: `z-index: 2`, 120s slow rotation, 25% opacity.
+4. **Seated Core (Circular Clip Wrapper, depth: 3)**:
+   - **Gem Core**: `z-index: 1`, contains parameterized core (Scale 1.12x, `object-fit: cover`).
+   - **Optical Shadow**: `z-index: 2`, internal radial shadow mask.
+   - **Optical Lens**: `z-index: 3`, circular convex glass refraction.
+   - **Optical Highlight**: `z-index: 4`, specular reflections.
+   - **Energy Particles**: `z-index: 5`, opacity 0.22.
+
+#### Parameterized Meaning (90+ Variants)
+
+The internal core is parameterized via CSS filters on the `z-index: 1` core layer only.
+
+- **Stage Presets**: Seedling (neutral), Ember (+8° hue), Flame (+18° hue), Beacon (-6° hue), Stellar (-12° hue).
+- **Safety Clamps**:
+  - Scale: 1.06–1.18
+  - Brightness: 0.82–1.08
+  - Contrast: 0.85–1.15
+  - Saturation: 0.75–1.25
+
+#### Architectural Contract
+
+- Layers above the Seat (Lens, Highlights, Frame) are **immutable**.
+- Filters must **never propagation upward** to optical layers.
+- Core fitting is strictly `object-fit: cover` with a 2px radial feather mask on the seat.
+
+### Proportions (320320 container)
+
+- **Frame outer**: 302px (94.375%)
+- **Instrument ring**: 270px (84.375%)
+- **Orb diameter**: 228px (71.25%)
+- **Gap (orb frame)**: ~12px
+
+### Performance
+
+- Opacity and transform only (no layout-affecting properties)
+- CSS-based animations (React state only for frame swapping)
+- No blur animations
+- Pauses during practice (`isPracticing === true`)
+- Circular clipping wrapper eliminates transparency artifacts
+
+### Style Constraints
+
+- **Aesthetic**: Parchment-compatible, contemplative, refined, instrument-like
+- **Mood**: Calm, ancient, intentional
+- **Surface language**: Ceramic, stone, glass, ink, patina
+- **Lighting**: Soft ambient, no hard rim glow
+- **Color saturation**: Restrained, earthy, mineral-based (muted teal/jade)
+
+### Dark Mode Avatar
+
+Preserves existing sigil-based rendering:
+
+- Animated PNG orb with stage-specific colors
+- Whirlpool conic gradient background
+- Cyan/teal outer halo
+- Separation ring and inner shadow
+- Moon orbit overlay

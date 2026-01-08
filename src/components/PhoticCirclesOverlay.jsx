@@ -186,7 +186,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                     position: 'fixed',
                     inset: 0,
                     zIndex: 2000, // Very high to cover everything
-                    backgroundColor: `rgba(0, 0, 0, ${photic.bgOpacity || 0.95})`,
+                    backgroundColor: '#000000', // Pure black
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -245,30 +245,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                     />
                 </div>
 
-                {/* Tap to stop instruction (when running) */}
-                {isRunning && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        style={{
-                            position: 'absolute',
-                            bottom: '40px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '10px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-wide)',
-                            textTransform: 'uppercase',
-                            color: 'rgba(255,255,255,0.4)',
-                            pointerEvents: 'none',
-                            zIndex: 10,
-                        }}
-                    >
-                        Tap to exit • Drag to adjust spacing
-                    </motion.div>
-                )}
+                {/* No instruction text - clean interface */}
 
                 {/* Control Panel - Only show if NOT auto-starting, or if explicitly stopped */}
                 {/* This eliminates the redundant menu when starting from the practice card */}
