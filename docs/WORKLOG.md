@@ -1526,5 +1526,5 @@ D:\Unity Apps\immanence-os
 
 ## Frame Contract
 
-- Step 2 (anchor mini avatar to app frame): 9e5cc2f
+- Step 2 (restore default avatar behavior; hide only in insight meditation): d91b641
 - Step 1 (authoritative data-app-frame): 56b2ffc
