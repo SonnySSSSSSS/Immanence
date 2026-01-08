@@ -1523,3 +1523,7 @@ D:\Unity Apps\immanence-os
 **Notes**: Part 7 of 7 - state/services cleanup for TASK-2026-01-05-B
 
 ---
+
+## Frame Contract
+
+- Step 1 (authoritative data-app-frame): 56b2ffc
