@@ -2,6 +2,7 @@
 // Export all Vipassana components
 
 export { VipassanaVisual } from './VipassanaVisual';
+export { HomeSnowVipassana } from './HomeSnowVipassana';
 export { VipassanaVariantSelector } from './VipassanaVariantSelector';
 export { ThoughtLabeling } from './ThoughtLabeling';
 export { ThoughtElement } from './ThoughtElement';

@@ -109,11 +109,11 @@ export function usePracticeSession(options = {}) {
     const p = practice.toLowerCase();
     let domain = 'breathwork';
     if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
-    else if (p === 'somatic vipassana') domain = sensoryType;
+    else if (p === 'body scan' || p === 'somatic vipassana') domain = sensoryType;
     else if (p === 'ritual') domain = 'ritual';
     else if (p === 'sound') domain = 'sound';
 
-    instrumentation.startSession(domain, null, p === 'somatic vipassana' ? sensoryType : null);
+    instrumentation.startSession(domain, null, (p === 'body scan' || p === 'somatic vipassana') ? sensoryType : null);
 
     console.log('[usePracticeSession] Session started:', { practice, duration, domain });
   }, [instrumentation, onPracticingChange]);
@@ -153,7 +153,8 @@ export function usePracticeSession(options = {}) {
 
       // Determine subType
       let subType = null;
-      if (practice === "Somatic Vipassana") subType = sensoryType;
+      if (practice === "Body Scan" || practice === "Somatic Vipassana") subType = sensoryType;
+      if (practice === "Insight Meditation" || practice === "Cognitive Vipassana") subType = 'sakshi';
       if (practice === "Sound") subType = soundType;
       if (practice === "Visualization") subType = geometry;
       if (practice === "Cymatics" && selectedFrequency) {
@@ -166,7 +167,8 @@ export function usePracticeSession(options = {}) {
         const p = practice.toLowerCase();
         let domain = 'breathwork';
         if (p.includes('visual') || p.includes('cymatics')) domain = 'visualization';
-        else if (p === 'somatic vipassana') domain = sensoryType;
+        else if (p === 'body scan' || p === 'somatic vipassana') domain = sensoryType;
+        else if (p === 'insight meditation' || p === 'cognitive vipassana') domain = 'focus';
         else if (p === 'ritual') domain = 'ritual';
         else if (p === 'sound') domain = 'sound';
 

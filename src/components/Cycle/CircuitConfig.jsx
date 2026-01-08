@@ -15,19 +15,19 @@ const AVAILABLE_EXERCISES = [
     },
     {
         id: 'cognitive',
-        name: 'Cognitive Vipassana',
+        name: 'Insight Meditation',
         type: 'focus',
         icon: '🔥',
-        practiceType: 'Cognitive Vipassana',
+        practiceType: 'Insight Meditation',
         glow: 'rgba(251, 146, 60, 0.4)', // Orange glow
     },
     {
         id: 'somatic',
-        name: 'Somatic Vipassana',
+        name: 'Body Scan',
         type: 'body',
         icon: '✨',
-        practiceType: 'Somatic Vipassana',
-        sensoryType: 'body',
+        practiceType: 'Body Scan',
+        sensoryType: 'bodyScan',
         glow: 'rgba(196, 181, 253, 0.4)', // Purple glow
     },
     {

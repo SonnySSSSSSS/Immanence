@@ -1,85 +1,124 @@
-// src/components/SakshiVisual.jsx
-// Sakshi (Witness) visualization using void image asset
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useDisplayModeStore } from '../state/displayModeStore';
 
-import React, { useState, useEffect, useRef } from 'react';
+export function SakshiVisual() {
+    const { mode } = useDisplayModeStore();
+    const isHearth = mode === 'hearth';
+    const assetsPrefix = import.meta.env.BASE_URL + 'assets/';
 
-export function SakshiVisual({ elapsedSeconds = 0, bellInterval = 150 }) {
-    const [breathPhase, setBreathPhase] = useState(0);
-    const [showBell, setShowBell] = useState(false);
-    const animationRef = useRef(null);
-    const lastBellTime = useRef(0);
+    const [offset, setOffset] = useState(0);
+    const [thoughts, setThoughts] = useState([]);
+    const lastSpawnTime = useRef(0);
 
-    // Ambient breathing animation
-    useEffect(() => {
-        let startTime = performance.now();
-        const breathDuration = 8000; // 8 second breath cycle
+    const assets = {
+        frame: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_frame.png' : 'homeSnow_sanctuary_stylized_frame.png'),
+        bg: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_bg.png' : 'homeSnow_sanctuary_stylized_bg.png'),
+        mid: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_mid.png' : 'homeSnow_sanctuary_stylized_mid.png'),
+        thoughtPack: assetsPrefix + 'thoughtObjects_homeSnow_stylized_pack.png',
+    };
 
-        const animate = (now) => {
-            const elapsed = now - startTime;
-            const cycle = (elapsed % breathDuration) / breathDuration;
-            const phase = (Math.sin(cycle * Math.PI * 2 - Math.PI / 2) + 1) / 2;
-            setBreathPhase(phase);
-            animationRef.current = requestAnimationFrame(animate);
+    const spawnThought = useCallback(() => {
+        const id = Date.now();
+        const fromLeft = Math.random() > 0.5;
+        const newThought = {
+            id,
+            x: fromLeft ? -10 : 110,
+            y: 35 + Math.random() * 30, // Random vertical position in midground
+            vx: fromLeft ? (0.1 + Math.random() * 0.15) : -(0.1 + Math.random() * 0.15),
+            scale: 0.5 + Math.random() * 0.5,
+            variant: Math.floor(Math.random() * 4),
         };
-
-        animationRef.current = requestAnimationFrame(animate);
-        return () => {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current);
-            }
-        };
+        setThoughts(prev => [...prev, newThought]);
+        lastSpawnTime.current = id;
     }, []);
 
-    // Periodic bell flash
     useEffect(() => {
-        if (elapsedSeconds > 0 && elapsedSeconds - lastBellTime.current >= bellInterval) {
-            setShowBell(true);
-            lastBellTime.current = elapsedSeconds;
+        let startTime = performance.now();
+        let animationFrame;
 
-            const timer = setTimeout(() => setShowBell(false), 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [elapsedSeconds, bellInterval]);
+        const animate = (time) => {
+            const elapsed = (time - startTime) / 1000;
+            
+            // Slow background drift
+            setOffset((elapsed * 12) % 430);
 
-    const imageOpacity = 0.7 + breathPhase * 0.2;
-    const glowIntensity = 20 + breathPhase * 15;
+            // Update thoughts
+            setThoughts(prev => prev.map(t => ({
+                ...t,
+                x: t.x + t.vx,
+                y: t.y + (Math.sin(elapsed * 1.5 + t.id) * 0.08), // Gentle sway
+            })).filter(t => t.x > -20 && t.x < 120));
+
+            // Auto-spawn
+            if (Date.now() - lastSpawnTime.current > 3500 && Math.random() < 0.02) {
+                spawnThought();
+            }
+
+            animationFrame = requestAnimationFrame(animate);
+        };
+
+        animationFrame = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animationFrame);
+    }, [spawnThought]);
 
     return (
-        <div
-            className="relative w-full h-64 flex items-center justify-center overflow-hidden rounded-2xl"
-            style={{
-                background: 'radial-gradient(ellipse at center, rgba(15,15,26,1) 0%, rgba(5,5,8,1) 100%)',
-            }}
-        >
-            {/* Sakshi void image */}
-            <img
-                src={`${import.meta.env.BASE_URL}sakshi-void.png`}
-                alt="Witness"
-                className="w-full h-full object-cover transition-all duration-1000"
+        <div className="relative w-full h-64 overflow-hidden rounded-2xl bg-[#0a0a0f] shadow-2xl border border-white/10">
+            {/* Background Layer (Sky/Dist ) */}
+            <div 
+                className="absolute inset-0 bg-repeat-x bg-cover"
                 style={{
-                    opacity: imageOpacity,
-                    filter: `drop-shadow(0 0 ${glowIntensity}px var(--accent-20))`,
+                    backgroundImage: `url(${assets.bg})`,
+                    transform: `translateX(-${offset}px)`,
+                    width: '300%',
+                    opacity: 0.7
                 }}
             />
 
-            {/* Bell flash overlay */}
-            {showBell && (
-                <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                        background: 'radial-gradient(circle, rgba(253,251,245,0.1) 0%, transparent 50%)',
-                        animation: 'bellFlash 2s ease-out forwards',
-                    }}
-                />
-            )}
+            {/* Midground Layer (Trees/Snow) */}
+            <div 
+                className="absolute inset-0 bg-repeat-x bg-cover opacity-60"
+                style={{
+                    backgroundImage: `url(${assets.mid})`,
+                    transform: `translateX(-${offset * 1.5}px)`,
+                    width: '300%',
+                }}
+            />
 
-            <style>{`
-                @keyframes bellFlash {
-                    0% { opacity: 0; }
-                    10% { opacity: 1; }
-                    100% { opacity: 0; }
-                }
-            `}</style>
+            {/* Drifting Thoughts (The stylized assets) */}
+            <div className="absolute inset-0 pointer-events-none">
+                {thoughts.map(t => (
+                    <div 
+                        key={t.id}
+                        className="absolute w-12 h-12 opacity-80"
+                        style={{ 
+                            left: `${t.x}%`, 
+                            top: `${t.y}%`, 
+                            transform: `scale(${t.scale})`,
+                            backgroundImage: `url(${assets.thoughtPack})`,
+                            backgroundSize: '400% 100%',
+                            backgroundPosition: `${(t.variant * 100) / 3}% center`,
+                            transition: 'opacity 1s ease',
+                            filter: 'blur(0.5px)'
+                        }}
+                    />
+                ))}
+            </div>
+
+            {/* Soft Fog Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+            {/* The Stylized Window Frame - Multi-blended for depth */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center mix-blend-screen opacity-90 shadow-inner"
+                style={{
+                    backgroundImage: `url(${assets.frame})`,
+                }}
+            />
+            
+            {/* Final Atmospheric Bloom */}
+            <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.8)] pointer-events-none" />
         </div>
     );
 }
+
+export default SakshiVisual;

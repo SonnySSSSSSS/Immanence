@@ -30,24 +30,56 @@ import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import "./App.css";
-
-function SectionView({ section, isPracticing, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
+function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
   // Navigation and Application sections handle their own avatars and stage titles
   // RitualLibrary also handles its own UI (no avatar needed)
-  const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary';
+  const isInsightMeditation = isPracticing && currentPracticeId === 'cognitive_vipassana';
+  const isBodyScan = isPracticing && currentPracticeId === 'somatic_vipassana';
+  const isVipassana = isInsightMeditation || isBodyScan;
+  const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary' && !isVipassana;
+
+  if (isInsightMeditation) {
+    return <PracticeSection 
+      onPracticingChange={onPracticingChange} 
+      section={section} 
+      isPracticing={isPracticing} 
+      currentPracticeId={currentPracticeId} 
+      onStageChange={onStageChange} 
+      currentStage={currentStage}
+      previewPath={previewPath}
+      previewShowCore={previewShowCore}
+      previewAttention={previewAttention}
+      showFxGallery={showFxGallery}
+      onNavigate={onNavigate} 
+      onOpenHardwareGuide={onOpenHardwareGuide}
+      onRitualComplete={onRitualComplete} 
+      onOpenPhotic={onOpenPhotic}
+    />;
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       {showAvatar && (
-        <div className="w-full flex flex-col items-center mt-6 mb-4 relative z-20">
-          {/* Avatar with scale/fade during practice */}
-          <div
-            className="transition-all duration-500"
+          <div 
+            className="w-full relative z-20 flex flex-col items-center"
             style={{
-              transform: isPracticing ? 'scale(0.65)' : 'scale(1)',
-              opacity: isPracticing ? 0.5 : 1,
+              marginTop: isVipassana ? '0' : '1.5rem',
+              marginBottom: isVipassana ? '0' : '1rem',
             }}
           >
+            {/* Avatar with scale/fade during practice */}
+            <div
+              className="transition-all duration-700 ease-in-out"
+              style={{
+                position: isVipassana ? 'fixed' : 'relative',
+                top: isVipassana ? '8px' : 'auto',
+                right: isVipassana ? '8px' : 'auto',
+                transformOrigin: 'top right',
+                transform: isVipassana ? 'scale(0.1)' : (isPracticing ? 'scale(0.65)' : 'scale(1)'),
+                opacity: isVipassana ? 0.3 : (isPracticing ? 0.5 : 1),
+                zIndex: 100,
+              }}
+            >
             <Avatar
               mode={section}
               breathState={breathState}
@@ -204,6 +236,15 @@ function App() {
   }, [showWelcome, curriculumOnboardingComplete]);
 
   // Note: CSS variables now set by ThemeProvider based on avatarStage
+
+  // Practice identification
+  const [activePracticeId, setActivePracticeId] = useState(null);
+
+  const handlePracticingChange = (val, pid = null) => {
+    setIsPracticing(val);
+    if (pid) setActivePracticeId(pid);
+    else if (!val) setActivePracticeId(null);
+  };
 
   const handleDismissWelcome = () => {
     setShowWelcome(false);
@@ -507,7 +548,8 @@ function App() {
                   key={activeSection}
                   section={activeSection}
                   isPracticing={isPracticing}
-                  onPracticingChange={setIsPracticing}
+                  currentPracticeId={activePracticeId}
+                  onPracticingChange={handlePracticingChange}
                   breathState={breathState}
                   onBreathStateChange={setBreathState}
                   onStageChange={(hsl, stageName) => {

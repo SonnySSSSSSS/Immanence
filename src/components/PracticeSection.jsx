@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from 'react-dom';
+import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
@@ -61,16 +63,14 @@ const PRACTICE_REGISTRY = {
   },
   cognitive_vipassana: {
     id: "cognitive_vipassana",
-    label: "Cognitive Vipassana",
+    label: "Insight Meditation",
     icon: "👁",
-    Config: SensoryConfig,
     supportsDuration: true,
   },
   somatic_vipassana: {
     id: "somatic_vipassana",
-    label: "Somatic Vipassana",
+    label: "Body Scan",
     icon: "⌬",
-    Config: SensoryConfig,
     supportsDuration: true,
   },
   sound: {
@@ -525,10 +525,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     audioEnabled: cymaticsAudioEnabled 
   } = practiceParams.cymatics;
 
-  // Vipassana params depend on whether we are in somatic or cognitive mode
+  // Vipassana params correspond to specific visualization types
   const isCognitive = practiceId === 'cognitive_vipassana';
   const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
-  const { sensoryType, vipassanaTheme, vipassanaElement } = practiceParams[vTarget];
+  // Insight Meditation (Cognitive) = Sakshi, Body Scan (Somatic) = BodyScan
+  const sensoryType = isCognitive ? 'sakshi' : 'bodyScan';
+  const { vipassanaTheme, vipassanaElement } = practiceParams[vTarget];
+
+  // Derived variant for VipassanaVisual
+  const effectiveVipassanaVariant = isCognitive ? 'sakshi' : 'thought-labeling';
 
   // Derived Values
   const selectedFrequency = SOLFEGGIO_SET[selectedFrequencyIndex] || SOLFEGGIO_SET[4];
@@ -991,12 +996,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     if (practiceId === "cognitive_vipassana") {
-      setShowVipassanaVariantModal(true);
+      // Direct start using the card configuration instead of forcing a modal
+      setIsRunning(true);
+      onPracticingChange && onPracticingChange(true, practiceId);
+      setSessionStartTime(performance.now());
+      setTapErrors([]);
+      setLastErrorMs(null);
+      setLastSignedErrorMs(null);
+      setBreathCount(0);
+
+      instrumentation.startSession(
+        'focus',
+        null,
+        sensoryType
+      );
       return; 
     }
 
     setIsRunning(true);
-    onPracticingChange && onPracticingChange(true);
+    onPracticingChange && onPracticingChange(true, practiceId);
     setSessionStartTime(performance.now());
     setTapErrors([]);
     setLastErrorMs(null);
@@ -1179,86 +1197,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    if (practice === "Cognitive Vipassana") {
-      if (showVipassanaVariantModal) {
-        return (
-          <VipassanaVariantSelector
-            onSelect={(variant) => {
-              setVipassanaVariant(variant);
-              setShowVipassanaVariantModal(false);
-
-              // NOW start the session after variant is selected
-              setIsRunning(true);
-              onPracticingChange && onPracticingChange(true);
-              setSessionStartTime(performance.now());
-              setTapErrors([]);
-              setLastErrorMs(null);
-              setLastSignedErrorMs(null);
-              setBreathCount(0);
-
-              instrumentation.startSession(
-                'focus', // Cognitive Vipassana maps to focus domain
-                null,
-                null
-              );
-            }}
-            onCancel={() => {
-              setShowVipassanaVariantModal(false);
-              handleStop();
-            }}
-          />
-        );
-      }
-
-      return (
-        <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <div className="flex-1 flex items-center justify-center w-full relative">
-            <VipassanaVisual
-              isActive={isRunning}
-              variant={vipassanaVariant}
-              wallpaperId={vipassanaTheme}
-              themeId={vipassanaElement}
-              durationSeconds={duration * 60}
-              stage={theme.stage || 'flame'}
-              onComplete={handleExerciseComplete}
-              onExit={activeCircuitId ? handleCircuitComplete : handleStop}
-              onCancel={handleStop}
-            />
-          </div>
-
-          <div className="flex flex-col items-center z-50 mt-8">
-            <button
-              onClick={handleStop}
-              className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "11px",
-                letterSpacing: "var(--tracking-mythic)",
-                textTransform: "uppercase",
-                fontWeight: 600,
-                background: 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
-                color: "#050508",
-                boxShadow: '0 0 24px var(--accent-30), inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)',
-                borderRadius: "999px",
-              }}
-            >
-              <span>Stop</span>
-            </button>
-            <div
-              className="mt-5"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "12px",
-                fontWeight: 600,
-                letterSpacing: "var(--tracking-mythic)",
-                textTransform: "uppercase",
-                color: "var(--text-primary)",
-              }}
-            >
-              {formatTime(timeLeft)}
-            </div>
-          </div>
-        </section>
+    if (practiceId === "cognitive_vipassana") {
+      return createPortal(
+        <InsightMeditationPortal 
+          onExit={activeCircuitId ? handleCircuitComplete : handleStop}
+        />,
+        document.body
       );
     }
 
@@ -1417,7 +1361,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 </div>
               )}
             </div>
-          ) : practice === "Somatic Vipassana" ? (
+          ) : practiceId === "somatic_vipassana" ? (
             <SensorySession
               sensoryType={sensoryType}
               duration={duration}

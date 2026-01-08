@@ -7,13 +7,13 @@ import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } f
 
 // Quick practice suggestions based on what was just completed
 const PRACTICE_SUGGESTIONS = {
-  "Breath & Stillness": ["Cognitive Vipassana", "Somatic Vipassana", "Visualization"],
-  "Cognitive Vipassana": ["Breath & Stillness", "Somatic Vipassana", "Sound"],
-  "Somatic Vipassana": ["Breath & Stillness", "Cognitive Vipassana", "Sound"],
+  "Breath & Stillness": ["Insight Meditation", "Body Scan", "Visualization"],
+  "Insight Meditation": ["Breath & Stillness", "Body Scan", "Sound"],
+  "Body Scan": ["Breath & Stillness", "Insight Meditation", "Sound"],
   "Visualization": ["Breath & Stillness", "Cymatics", "Sound"],
   "Cymatics": ["Visualization", "Sound", "Breath & Stillness"],
-  "Sound": ["Breath & Stillness", "Visualization", "Somatic Vipassana"],
-  "Ritual": ["Breath & Stillness", "Cognitive Vipassana"],
+  "Sound": ["Breath & Stillness", "Visualization", "Body Scan"],
+  "Ritual": ["Breath & Stillness", "Insight Meditation"],
   "Circuit": ["Breath & Stillness", "Sound"],
 };
 

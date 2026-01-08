@@ -26,10 +26,10 @@ const PER_PRACTICE_DEFAULTS = {
     variant: 'thought-labeling',
     vipassanaTheme: "dawnSky",
     vipassanaElement: "bird",
-    sensoryType: 'focus'
+    sensoryType: 'bodyScan'
   },
   somatic_vipassana: {
-    sensoryType: 'body'
+    sensoryType: 'bodyScan'
   },
   sound: {
     soundType: "Binaural",
@@ -69,8 +69,8 @@ const LEGACY_MAP = {
   "Breath & Stillness": "breath",
   "Ritual": "ritual",
   "Circuit": "circuit",
-  "Cognitive Vipassana": "cognitive_vipassana",
-  "Somatic Vipassana": "somatic_vipassana",
+  "Insight Meditation": "cognitive_vipassana",
+  "Body Scan": "somatic_vipassana",
   "Sound": "sound",
   "Visualization": "visualization",
   "Cymatics": "cymatics",

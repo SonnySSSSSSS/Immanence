@@ -45,7 +45,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -70,7 +70,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -95,7 +95,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -120,7 +120,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -145,7 +145,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -170,7 +170,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -195,7 +195,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -220,7 +220,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -245,7 +245,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -270,7 +270,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -295,7 +295,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -320,7 +320,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -345,7 +345,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',
@@ -370,7 +370,7 @@ export const RITUAL_FOUNDATION_14 = {
                 {
                     legNumber: 2,
                     label: 'Evening Ritual',
-                    practiceType: 'Cognitive Vipassana',
+                    practiceType: 'Insight Meditation',
                     practiceConfig: { variant: 'thought-labeling', duration: 10 },
                     description: 'Observe your thoughts',
                     focusArea: 'awareness',

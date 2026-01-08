@@ -20,10 +20,10 @@ export const FOUNDATION_CIRCUIT = {
         },
         {
             type: 'focus',
-            name: 'Cognitive Vipassana',
+            name: 'Insight Meditation',
             duration: 5,
             instructions: 'Label and observe thoughts as they arise',
-            practiceType: 'Somatic Vipassana',
+            practiceType: 'Insight Meditation',
             sensoryType: 'cognitive',
         },
         {
@@ -31,7 +31,7 @@ export const FOUNDATION_CIRCUIT = {
             name: 'Body Scan',
             duration: 5,
             instructions: 'Systematic awareness from crown to toes',
-            practiceType: 'Somatic Vipassana',
+            practiceType: 'Body Scan',
             sensoryType: 'body',
         },
     ],
