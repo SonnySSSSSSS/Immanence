@@ -20,7 +20,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
 
-        let width = window.innerWidth;
+        let width = canvas.offsetWidth || 430; // Use actual canvas width, not window width
         let height = 304;
         let animationFrame;
 
@@ -51,7 +51,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
 
         function resize() {
             const rect = canvas.getBoundingClientRect();
-            width = rect.width;
+            width = rect.width; // Use the actual bounded width from parent container
             canvas.width = width;
             canvas.height = height;
             initParticles();

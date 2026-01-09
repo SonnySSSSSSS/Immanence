@@ -29,7 +29,7 @@ import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
-import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx";
+// import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 
 function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExperience, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
@@ -428,7 +428,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.16.3</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.16.6</div>
                   </div>
                 </div>
               )}
@@ -502,7 +502,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.16.9
+                        v3.16.6
                       </div>
                     </div>
                   )}
@@ -587,6 +587,7 @@ function App() {
 
           <InstallPrompt />
 
+          {/* Indra's Net - animated web at bottom */}
           <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} />
         </div >
       </div >
