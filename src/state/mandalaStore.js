@@ -21,8 +21,10 @@ const DEFAULT_STATE = {
   sessionsThisWeek: 0,
   weeklyConsistency: 0,   // 0..1 mapped from sessionsThisWeek / 4
 
-  // milestone band — very rough for now, we’ll refine later
-  phase: "foundation",    // "foundation" | "emergence" | "transformation"
+  // 5-stage progression system
+  stage: "seedling",      // "seedling" | "ember" | "flame" | "beacon" | "stellar"
+  stageScore: 0,          // 0..1 weighted score (35% volume, 65% accuracy)
+  stageProgress: 0,       // 0..1 progress within current stage
 
   // short-term / live resonance coming from the current practice
   transient: {
@@ -43,10 +45,50 @@ function safeParse(json) {
 
 
 
-function computePhase(totalSessions) {
-  if (totalSessions < 30) return "foundation"; // roughly first month-ish
-  if (totalSessions < 90) return "emergence";  // ~3 months+
-  return "transformation";                     // ~6–12 months+
+/**
+ * Calculate stage based on weighted score: 35% volume, 65% accuracy
+ * @param {number} totalSessions - Total practice sessions completed
+ * @param {number} avgAccuracy - Average accuracy (0..1)
+ * @returns {object} { stage: string, stageScore: number, stageProgress: number }
+ */
+function calculateStageInfo(totalSessions, avgAccuracy) {
+  // Stage Score: 35% volume (capped at 150 sessions), 65% accuracy
+  const volumeScore = Math.min(totalSessions, 150) / 150 * 0.35;
+  const accuracyScore = avgAccuracy * 0.65;
+  const stageScore = volumeScore + accuracyScore;
+
+  // Stage thresholds
+  const stages = [
+    { name: 'seedling', min: 0.00, max: 0.15 },
+    { name: 'ember', min: 0.15, max: 0.35 },
+    { name: 'flame', min: 0.35, max: 0.55 },
+    { name: 'beacon', min: 0.55, max: 0.80 },
+    { name: 'stellar', min: 0.80, max: 1.00 }
+  ];
+
+  // Find current stage
+  let currentStage = stages[0];
+  for (const stage of stages) {
+    if (stageScore >= stage.min && stageScore < stage.max) {
+      currentStage = stage;
+      break;
+    }
+    if (stageScore >= stage.max) {
+      currentStage = stage; // Handle edge case for stellar (>= 0.80)
+    }
+  }
+
+  // Calculate progress within current stage (0..1)
+  const stageRange = currentStage.max - currentStage.min;
+  const stageProgress = stageRange > 0 
+    ? Math.min(1, Math.max(0, (stageScore - currentStage.min) / stageRange))
+    : 1;
+
+  return {
+    stage: currentStage.name,
+    stageScore,
+    stageProgress
+  };
 }
 
 function cloneDefaultState() {
@@ -158,8 +200,8 @@ export function syncFromProgressStore() {
     weeklyPracticeLog.push(weekSessions.some(s => s.dateKey === dayKey));
   }
 
-  // Phase based on total sessions
-  const phase = computePhase(totalSessions);
+  // Stage based on weighted score (35% volume, 65% accuracy)
+  const { stage, stageScore, stageProgress } = calculateStageInfo(totalSessions, avgAccuracy);
 
   const syncedState = {
     ...state,
@@ -173,7 +215,9 @@ export function syncFromProgressStore() {
     sessionsThisWeek: weekSessions.length,
     weeklyConsistency,
     weeklyPracticeLog,
-    phase
+    stage,
+    stageScore,
+    stageProgress
   };
 
   saveMandalaState(syncedState);
@@ -315,8 +359,8 @@ export function recordPracticeEffect({
     Math.min(1, sessionsThisWeek / 4)
   );
 
-  // phase progression based on lifetime sessions
-  const phase = computePhase(newTotalSessions);
+  // stage progression based on weighted score
+  const { stage, stageScore, stageProgress } = calculateStageInfo(newTotalSessions, newAvgAccuracy);
 
   const nextState = {
     ...state,
@@ -332,7 +376,9 @@ export function recordPracticeEffect({
     sessionsThisWeek,
     weeklyConsistency,
 
-    phase,
+    stage,
+    stageScore,
+    stageProgress,
   };
 
   saveMandalaState(nextState);

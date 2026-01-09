@@ -163,3 +163,27 @@
     transform: rotate(360deg);
   }
 }
+
+/* Axis breathing for light mode avatar core */
+@keyframes axis-breathe {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scaleX(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scaleX(1.1);
+  }
+}
+
+/* General breathing pulse used by avatar layers */
+@keyframes breathingPulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.02);
+  }
+}

@@ -68,6 +68,11 @@ function getIntensityColor(normalizedValue, isPeak, isLight = false) {
 function generateCurve(data, width, height, tension = 0.3, isLight = false) {
     if (data.length === 0) return { path: '', segments: [], peakPoint: null, peakIndex: 0 };
 
+    const clamp01 = (value) => {
+        if (!Number.isFinite(value)) return 0;
+        return Math.min(1, Math.max(0, value));
+    };
+
     const weekMax = Math.max(...data, 30);
     const normalized = data.map(v => v / weekMax);
     const peakValue = Math.max(...normalized);
@@ -118,11 +123,13 @@ function generateCurve(data, width, height, tension = 0.3, isLight = false) {
             ? (velocityDelta < 0 ? 0.6 : -0.3) // Descending = thicker, ascending = thinner
             : 0;
 
-        const strokeWidth = baseWidth + avgNorm * 0.6 + peakBoost + velocityWidth + calligraphyMod;
+        const strokeWidthRaw = baseWidth + avgNorm * 0.6 + peakBoost + velocityWidth + calligraphyMod;
+        const strokeWidth = Number.isFinite(strokeWidthRaw) ? Math.max(strokeWidthRaw, 0.1) : 0.1;
 
         // Directional opacity: slightly dimmer at start, brighter toward "now"
         const baseOpacity = 0.25 + (i / (points.length - 1)) * 0.25; // 0.25 → 0.5 L→R
-        const opacity = isPeakSegment ? 0.9 : (baseOpacity + avgNorm * 0.3);
+        const opacityRaw = isPeakSegment ? 0.9 : (baseOpacity + avgNorm * 0.3);
+        const opacity = clamp01(opacityRaw);
 
         // Get intensity color for this segment
         const colors = getIntensityColor(avgNorm, isPeakSegment, isLight);
@@ -205,15 +212,23 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
     // Firefox detection
     const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
+    const safeLast7DaysRaw = Array.isArray(last7Days) ? last7Days : [];
+    const sanitizedDays = safeLast7DaysRaw.map((value) =>
+        Number.isFinite(value) ? Math.max(value, 0) : 0
+    );
+    const safeLast7Days = sanitizedDays.length >= 7
+        ? sanitizedDays.slice(0, 7)
+        : [...sanitizedDays, ...Array(7 - sanitizedDays.length).fill(0)];
+
     // Use test data if all values are zero (for debugging)
-    const hasData = last7Days.some(v => v > 0);
-    const curveData = hasData ? last7Days : [3, 8, 5, 12, 7, 15, 10]; // Sample data for visibility testing
+    const hasData = safeLast7Days.some(v => v > 0);
+    const curveData = hasData ? safeLast7Days : [3, 8, 5, 12, 7, 15, 10]; // Sample data for visibility testing
 
     const { segments, areaPath, peakPoint, peakIndex, peakValue, echoPath1, echoPath2, mainPath } = generateCurve(curveData, width, height, 0.3, isLight);
 
     // Latest point
-    const weekMax = Math.max(...last7Days, 30);
-    const latestY = height - ((last7Days[6] / weekMax) * height * 0.75);
+    const weekMax = Math.max(...safeLast7Days, 30);
+    const latestY = height - ((safeLast7Days[6] / weekMax) * height * 0.75);
 
     return (
         <svg

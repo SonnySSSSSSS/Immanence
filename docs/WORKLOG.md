@@ -1,5 +1,102 @@
 # Immanence OS — Worklog
 
+## 2026-01-09 11:45 - Gemini - COMPLETED
+
+**Task**: Implement Final Avatar Container+Core Layering Spec
+
+**Files Modified**:
+
+- `src/components/avatar/OrbCore.jsx`: Major refactor of layer order (Frame moved to top Z:10, Core Assembly at Z:5).
+- `src/App.jsx`: Version bump v3.16.7.
+- `docs/AVATAR_CONTAINER_CORE_SPEC.md`: Created formal specification.
+
+**Changes**:
+
+- **Layering**: Implemented strict Bottom-up order: Background -> Shadow -> Core (Masked) -> Glass -> Frame.
+- **Visuals**:
+  - Frame is now the topmost "Container" (opacity/blend modes unaffected, just Z-sorting).
+  - Core is masked by a `div` simulating `avatar_container_mask`.
+  - Glass (Lens+Highlight) sits _inside_ the core assembly but _above_ the core asset.
+- **Instrument Ring**: Moved to Z:6 (between Core and Frame) for depth.
+- **Spec**: Formalized the immutable Container vs. Swappable Core architecture.
+
+**Version**: v3.16.7
+
+**Status**: COMPLETED
+
+---
+
+## 2026-01-09 11:35 - Gemini - COMPLETED
+
+**Task**: Fix Missing Avatar Gem Asset (Light Mode)
+
+**Files Modified**:
+
+- `src/components/avatar/StaticSigilCore.jsx`: Added logic to resolve correct `gemSrc` URL (using `stage_path_attention` format) and pass it to `OrbCore`.
+- `src/App.jsx`: Version bump v3.16.6.
+
+**Changes**:
+
+- **Asset Resolution**: `OrbCore` was previously receiving no `gemSrc`, defaulting to empty glass container. Now it correctly calculates the jewel asset path (e.g., `seedling_soma_ekagrata.png`).
+- **Defaulting**: Defaults to `dhyana_ekagrata` (Symmetric) when in "Core" mode or no path is selected.
+- **Visual Fix**: This ensures the generated Jewel Authority assets actually appear inside the orb vessel.
+
+**Version**: v3.16.6
+
+**Status**: COMPLETED
+
+---
+
+## 2026-01-09 11:15 - Gemini - COMPLETED
+
+**Task**: Boost Avatar Visibility (Correction)
+
+**Files Modified**:
+
+- `src/components/avatar/OrbCore.jsx`: Increased axis intensity, switched to 'overlay' blend, widened mask, aggressively reduced lens opacity.
+- `src/App.css`: Updated `axis-breathe` to oscillate 0.4->0.8 opacity + scale pulse.
+- `src/App.jsx`: Version bump v3.16.5.
+
+**Changes**:
+
+- **Axis Visibility**: Switched from `screen` to `overlay`, increased opacity range (0.4-0.8), widened mask to 80%.
+- **Fog Removal**: Reduced Optical Lens opacity to 0.15 (was 0.4) and Shadow to 0.3 (was 0.4).
+- **Motion**: Added slight `scaleX` breathing to the axis animation for organic feel.
+
+**Version**: v3.16.5
+
+**Status**: COMPLETED
+
+---
+
+## 2026-01-09 11:05 - Gemini - COMPLETED
+
+**Task**: Refine Avatar Orb Polishing (Axis, Motion, Clarity)
+
+**Files Modified**:
+
+- `src/components/avatar/OrbCore.jsx`: Added internal axis, slow breathing motion, reduced lens opacity.
+- `src/App.css`: Added `axis-breathe` and `breathingPulse` keyframes.
+- `src/App.jsx`: Version bump to v3.16.4.
+
+**Changes**:
+
+- **Internal Axis**: Added a vertical spine with gradient and mask (Step 1).
+- **Motion**: Added `axis-breathe` animation (10s cycle) to the axis (Step 2).
+- **Clarity**: Reduced transparency of Optical Lens (0.8 -> 0.4) and Shadow (0.6 -> 0.4) to remove "misty" look (Step 3).
+- **Scalability**: Added configuration logic for axis type/intensity/pulse to `variantProps`.
+
+**Version**: v3.16.4
+
+**Status**: COMPLETED
+
+**Notes**:
+
+- `breathingPulse` was missing from `App.css` but used in `AvatarContainer.jsx`, so I added it to ensure consistency.
+- The axis is parameterized for future variants (e.g., horizontal, radial).
+
+---
+
 ## 2026-01-08 — Light Mode Avatar System Implementation
 
 ### Summary

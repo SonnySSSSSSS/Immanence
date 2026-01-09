@@ -2,7 +2,6 @@
 // Inner sigil core component with stage-aware styling
 
 import React from "react";
-import { OrbCore } from "./OrbCore";
 
 export function StaticSigilCore({ stage = "flame", path = null, showCore = true, attention = 'vigilance', variationIndex = 0, hasVariations = false, isPracticing = false, isLight = false, useNewAvatars = false }) {
     const stageLower = stage.toLowerCase();
@@ -40,12 +39,6 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
         src = `${import.meta.env.BASE_URL}avatars/${stageCapitalized}-${pathCapitalized}.png`;
     }
 
-    // Use new orb-based avatar for light mode
-    if (isLight) {
-        return <OrbCore isPracticing={isPracticing} reduced={false} stage={stageLower} />;
-    }
-
-    // Dark mode: use existing sigil-based rendering
     return (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
             <div
@@ -168,7 +161,7 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                         animation: "pulse 2s ease-in-out infinite",
                     }}
                 >
-                    ✦
+                    Γ£ª
                 </div>
             )}
             {/* Background accent glow - enhanced */}

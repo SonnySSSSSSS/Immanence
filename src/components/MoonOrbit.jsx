@@ -31,13 +31,24 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
     const [isWobbling, setIsWobbling] = useState(false);
     const [sparkles, setSparkles] = useState([]);
 
+    const safeProgress = Number.isFinite(progress) ? progress : 0;
+    const safeAvatarRadius = Number.isFinite(avatarRadius) ? avatarRadius : 138;
+    const safeCenterX = Number.isFinite(centerX) ? centerX : 300;
+    const safeCenterY = Number.isFinite(centerY) ? centerY : 300;
+
+    const clamp01 = (value) => {
+        if (!Number.isFinite(value)) return 0;
+        return Math.min(1, Math.max(0, value));
+    };
+
     // Detect progress changes for animations
     useEffect(() => {
         const prevProgress = prevProgressRef.current;
-        const prevAngle = (prevProgress / 12) * TWO_PI - Math.PI / 2;
-        const newAngle = (progress / 12) * TWO_PI - Math.PI / 2;
+        const safePrevProgress = Number.isFinite(prevProgress) ? prevProgress : safeProgress;
+        const prevAngle = (safePrevProgress / 12) * TWO_PI - Math.PI / 2;
+        const newAngle = (safeProgress / 12) * TWO_PI - Math.PI / 2;
 
-        if (progress > prevProgress) {
+        if (safeProgress > safePrevProgress) {
             // Trigger ghost echo
             setGhostEcho({
                 startAngle: prevAngle,
@@ -51,20 +62,20 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             setTimeout(() => setGhostEcho(null), 500);
         }
 
-        prevProgressRef.current = progress;
+        prevProgressRef.current = safeProgress;
         prevAngleRef.current = newAngle;
-    }, [progress]);
+    }, [safeProgress]);
 
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
 
-    const moonAngle = (progress / 12) * TWO_PI - Math.PI / 2; // Start at 12 o'clock
-    const phase = getMoonPhase(progress);
-    const orbitRadius = avatarRadius * 1.4;
+    const moonAngle = (safeProgress / 12) * TWO_PI - Math.PI / 2; // Start at 12 o'clock
+    const phase = getMoonPhase(safeProgress);
+    const orbitRadius = safeAvatarRadius * 1.4;
     const moonRadius = 8;
 
     // Moon position
-    const moonX = centerX + Math.cos(moonAngle) * orbitRadius;
-    const moonY = centerY + Math.sin(moonAngle) * orbitRadius;
+    const moonX = safeCenterX + Math.cos(moonAngle) * orbitRadius;
+    const moonY = safeCenterY + Math.sin(moonAngle) * orbitRadius;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // LIGHT MODE: Return nothing - no SVG elements
@@ -77,11 +88,12 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
     // RENDER PATH: DARK MODE (Volumetric Cosmic)
     // ═══════════════════════════════════════════════════════════════════════════
     const illumination = getIllumination(phase);
-    const isDormant = progress === 0;
-    const haloRadius = moonRadius * (1.5 + illumination * 0.5);
-    const haloOpacity = isDormant ? 0 : (0.12 + illumination * 0.08);
-    const rimlightWidth = 0.5 + illumination * 2;
-    const rimlightOpacity = 0.3 + illumination * 0.5;
+    const safeIllumination = Number.isFinite(illumination) ? illumination : 0.5;
+    const isDormant = safeProgress === 0;
+    const haloRadius = Math.max(0.1, moonRadius * (1.5 + safeIllumination * 0.5));
+    const haloOpacity = isDormant ? 0 : clamp01(0.12 + safeIllumination * 0.08);
+    const rimlightWidth = Math.max(0.1, 0.5 + safeIllumination * 2);
+    const rimlightOpacity = clamp01(0.3 + safeIllumination * 0.5);
 
     return (
         <g className="moon-orbit-dark">
@@ -101,8 +113,8 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
 
             {/* Orbit Path */}
             <circle
-                cx={centerX}
-                cy={centerY}
+                cx={safeCenterX}
+                cy={safeCenterY}
                 r={orbitRadius}
                 fill="none"
                 stroke="var(--accent-color)"
@@ -114,7 +126,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             {ghostEcho && (
                 <path
                     key={ghostEcho.key}
-                    d={describeArc(centerX, centerY, orbitRadius, ghostEcho.startAngle, ghostEcho.endAngle)}
+                    d={describeArc(safeCenterX, safeCenterY, orbitRadius, ghostEcho.startAngle, ghostEcho.endAngle)}
                     fill="none"
                     stroke="rgba(255, 250, 240, 0.3)"
                     strokeWidth={2}
@@ -160,9 +172,9 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
 
             {/* Standard MoonGlowLayer (fallback/combined) */}
             <MoonGlowLayer
-                progress={progress}
-                centerX={centerX}
-                centerY={centerY}
+                progress={safeProgress}
+                centerX={safeCenterX}
+                centerY={safeCenterY}
                 orbitRadius={orbitRadius}
             />
 
@@ -193,12 +205,14 @@ function getMoonPhase(progress) {
 }
 
 function getIllumination(phase) {
-    return {
+    const illuminationByPhase = {
         new: 0.15,
+        crescent: 0.35,
         firstQuarter: 0.5,
         full: 1.0,
         lastQuarter: 0.5,
-    }[phase];
+    };
+    return illuminationByPhase[phase] ?? 0.5;
 }
 
 function describeArc(cx, cy, r, startAngle, endAngle) {

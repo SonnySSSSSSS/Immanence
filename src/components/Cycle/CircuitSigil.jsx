@@ -21,7 +21,9 @@ const EXERCISE_GLYPHS = {
 };
 
 export function CircuitSigil({ selectedExercises = [], totalExercises = 6 }) {
-    const progress = selectedExercises.length / totalExercises;
+    const safeTotal = Number.isFinite(totalExercises) && totalExercises > 0 ? totalExercises : 1;
+    const rawProgress = selectedExercises.length / safeTotal;
+    const progress = Number.isFinite(rawProgress) ? Math.min(Math.max(rawProgress, 0), 1) : 0;
 
     // Calculate segment angle for each ring slot
     const segmentAngle = 360 / RING_COUNT;
