@@ -89,7 +89,9 @@ class Particle {
 
     // VARY COLOR: Warm range based on base color
     this.color = {
-      l: Math.max(50, Math.min(80, this.baseColor.l + (Math.random() - 0.5) * 20))  // ±10 lightness
+      h: this.baseColor.h || 42,  // Keep hue from base (default to gold if missing)
+      s: this.baseColor.s || 95,  // Keep saturation from base
+      l: Math.max(50, Math.min(80, (this.baseColor.l || 63) + (Math.random() - 0.5) * 20))  // ±10 lightness
     };
 
     // LIGHT MODE REFINEMENTS: Verdigris palette for "residue" feel
@@ -170,6 +172,11 @@ class Particle {
 
   draw(ctx, centerX, centerY, scaleMod, glowMod, isLight = false) {
     if (this.trail.length < 2 || this.life <= 0) return;
+    
+    // Safety guards for invalid values
+    if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) return;
+    if (!Number.isFinite(scaleMod) || scaleMod <= 0) return;
+    if (!Number.isFinite(glowMod)) glowMod = 1;
 
     ctx.save();
     ctx.globalAlpha = this.life;
@@ -213,27 +220,38 @@ class Particle {
     const head = this.trail[0];
     const hx = centerX + head.x * scaleMod;
     const hy = centerY + head.y * scaleMod;
+    
+    // Guard: Skip gradient rendering if coordinates are invalid
+    if (!Number.isFinite(hx) || !Number.isFinite(hy)) {
+      ctx.restore();
+      return;
+    }
+    
+    const haloRadius = Math.max(0.1, this.size * 4 * scaleMod);
+    const coreRadius = Math.max(0.1, this.size * scaleMod);
 
     // Halo - skip in light mode (causes gray circles)
-    if (!isLight) {
-      const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * 4 * scaleMod);
+    if (!isLight && Number.isFinite(haloRadius)) {
+      const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, haloRadius);
       halo.addColorStop(0, `hsla(${safeH}, ${safeS}%, ${safeL}%, ${this.brightness * 0.5 * glowMod * lifeMod})`);
       halo.addColorStop(1, 'transparent');
       ctx.fillStyle = halo;
       ctx.beginPath();
-      ctx.arc(hx, hy, this.size * 4 * scaleMod, 0, Math.PI * 2);
+      ctx.arc(hx, hy, haloRadius, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Core
-    const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, this.size * scaleMod);
-    core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod * lifeMod})`);
-    core.addColorStop(0.4, `hsla(${safeH}, ${safeS}%, 85%, ${this.brightness * 0.9 * glowMod * lifeMod})`);
-    core.addColorStop(1, 'transparent');
-    ctx.fillStyle = core;
-    ctx.beginPath();
-    ctx.arc(hx, hy, this.size * scaleMod, 0, Math.PI * 2);
-    ctx.fill();
+    if (Number.isFinite(coreRadius)) {
+      const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, coreRadius);
+      core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod * lifeMod})`);
+      core.addColorStop(0.4, `hsla(${safeH}, ${safeS}%, 85%, ${this.brightness * 0.9 * glowMod * lifeMod})`);
+      core.addColorStop(1, 'transparent');
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(hx, hy, coreRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
 }
@@ -675,11 +693,23 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
     window.addEventListener("resize", resize);
 
     function drawFrame() {
+      // Safety guard: Skip rendering if dimensions are invalid
+      if (!width || !height || width <= 0 || height <= 0) {
+        animationRef.current = requestAnimationFrame(drawFrame);
+        return;
+      }
+
       const centerX = width / 2;
       const centerY = height / 2;
 
       // Calculate scale to fit Virtual World into Canvas
       const scale = (Math.min(width, height) / 2) / VIRTUAL_RADIUS;
+      
+      // Safety guard: Skip if scale is invalid or too extreme
+      if (!Number.isFinite(scale) || scale <= 0 || scale > 100) {
+        animationRef.current = requestAnimationFrame(drawFrame);
+        return;
+      }
 
       // Virtual dimensions
       const flameRadius = VIRTUAL_SIZE * FLAME_RADIUS_PCT;
