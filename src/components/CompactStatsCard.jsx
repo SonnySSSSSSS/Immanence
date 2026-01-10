@@ -47,7 +47,7 @@ const THEME_CONFIG = {
         lowGem: 'gem_low_alpha.png',
         emptyGem: 'gem_empty_alpha.png',
         progressAsset: 'progress_glow_alpha.png',
-        border: 'var(--accent-20)',
+        border: 'var(--accent-color)',
         wellBorder: 'var(--accent-15)',
         threadColor: 'var(--accent-color)'
     }
@@ -563,9 +563,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                 className="w-full relative"
                 style={{
                     borderRadius: '24px',
+                    border: isLight ? 'none' : `2px solid ${config.border}`,
                     boxShadow: isLight 
-                        ? '0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 0 1px rgba(180, 140, 60, 0.3)'
-                        : '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                        ? '0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2)'
+                        : '0 30px 80px rgba(0, 0, 0, 0.8)'
                 }}
             >
                 {/* MIDDLE: Parchment Background Container */}

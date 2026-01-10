@@ -66,7 +66,7 @@ export function ApplicationTrackingCard() {
             style={{
                 maxWidth: '430px',
                 margin: '0 auto',
-                border: '2px solid transparent',
+                border: isLight ? '2px solid transparent' : '2px solid var(--accent-color)',
                 backgroundImage: isLight
                     ? `linear-gradient(rgba(252, 248, 240, 0.98), rgba(248, 244, 235, 0.96)), 
                        ${getDynamicGoldGradient(gradientAngle, true)}`

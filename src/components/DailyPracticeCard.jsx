@@ -24,7 +24,7 @@ const THEME_CONFIG = {
         textMain: 'rgba(253, 251, 245, 0.95)',
         textSub: 'rgba(253, 251, 245, 0.5)',
         bgAsset: 'ritual_comet_path.png',
-        border: 'var(--accent-20)',
+        border: 'var(--accent-color)',
         shadow: '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
     }
 };
@@ -222,6 +222,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 className="w-full relative"
                 style={{
                     borderRadius: '24px',
+                    border: isLight ? 'none' : `2px solid ${config.border}`,
                     boxShadow: config.shadow,
                 }}
             >

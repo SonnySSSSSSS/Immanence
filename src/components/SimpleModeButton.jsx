@@ -4,11 +4,12 @@
 import { useSettingsStore } from '../state/settingsStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function SimpleModeButton({ title, onClick, icon }) {
+export function SimpleModeButton({ title, onClick, icon, size = 76, accentColor }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
     const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
     const isLight = colorScheme === 'light';
+    const iconSize = size >= 86 ? 30 : 28;
 
     // Get appropriate background image based on mode, theme and icon
     const getBackgroundImage = () => {
@@ -22,27 +23,27 @@ export function SimpleModeButton({ title, onClick, icon }) {
         switch (icon) {
             case 'practice':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
                     </svg>
                 );
             case 'wisdom':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9" />
                     </svg>
                 );
             case 'application':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2" fill="none" opacity="0.9" />
                         <path d="M12 3v18M19.07 7.5l-14.14 9M19.07 16.5l-14.14-9" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
                     </svg>
                 );
             case 'navigation':
                 return (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2" fill="none" opacity="0.9" />
                         <path d="M12 3L14 9H20L15 13L17 19L12 15L7 19L9 13L4 9H10L12 3Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.7" />
                     </svg>
@@ -52,6 +53,20 @@ export function SimpleModeButton({ title, onClick, icon }) {
         }
     };
 
+    // Convert hex to rgba with proper opacity
+    const hexToRgba = (hex, opacity = 0.65) => {
+        if (!hex || hex.startsWith('rgba')) return hex;
+        if (hex.length !== 7) return 'rgba(255, 215, 120, 0.3)';
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    };
+
+    const darkBorder = accentColor ? hexToRgba(accentColor, 0.9) : 'rgba(255, 215, 120, 0.5)';
+    const darkBorderHover = accentColor ? hexToRgba(accentColor, 1.0) : 'rgba(255, 215, 120, 0.8)';
+    const boxShadowDark = accentColor ? `0 0 16px ${hexToRgba(accentColor, 0.5)}, 0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)` : '0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)';
+    const boxShadowDarkHover = accentColor ? `0 0 24px ${hexToRgba(accentColor, 0.7)}, 0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5)` : '0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5)';
     return (
         <button
             type="button"
@@ -63,31 +78,31 @@ export function SimpleModeButton({ title, onClick, icon }) {
             <div
                 className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
                 style={{
-                    width: '76px',
-                    height: '76px',
+                    width: `${size}px`,
+                    height: `${size}px`,
                     borderRadius: '50%',
                     backgroundImage: `url(${getBackgroundImage()})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    border: isLight ? '2px solid rgba(180, 140, 60, 0.7)' : '2px solid rgba(255, 215, 120, 0.2)',
+                    border: isLight ? '2px solid rgba(180, 140, 60, 0.7)' : `2.5px solid ${darkBorder}`,
                     boxShadow: isLight
                         ? '0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9)'
-                        : '0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)',
+                        : boxShadowDark,
                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
-                    e.currentTarget.style.borderColor = isLight ? 'rgba(200, 160, 80, 0.9)' : 'rgba(255, 215, 120, 0.4)';
+                    e.currentTarget.style.borderColor = isLight ? 'rgba(200, 160, 80, 0.9)' : darkBorderHover;
                     e.currentTarget.style.boxShadow = isLight
                         ? '0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2)'
-                        : '0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5)';
+                        : boxShadowDarkHover;
                 }}
                 onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                    e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 60, 0.7)' : 'rgba(255, 215, 120, 0.2)';
+                    e.currentTarget.style.borderColor = isLight ? 'rgba(180, 140, 60, 0.7)' : darkBorder;
                     e.currentTarget.style.boxShadow = isLight
                         ? '0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9)'
-                        : '0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)';
+                        : boxShadowDark;
                 }}
             >
                 {/* Dark overlay for text legibility (dark mode only) */}
