@@ -8,9 +8,10 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import "../Avatar.css";
-import { LABELS, STAGE_GLOW_COLORS, getMandalaState } from "./constants";
+import { LABELS, STAGE_GLOW_COLORS } from "./constants";
 import { AvatarContainer } from "./AvatarContainer";
 import { useSettingsStore } from "../../state/settingsStore";
+import { deriveAvatarState } from "../../state/avatarState";
 
 export function Avatar({
     mode,
@@ -28,14 +29,19 @@ export function Avatar({
     // Get avatar naming preference from settings
     const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
 
-    const [mandalaSnapshot, setMandalaSnapshot] = useState(null);
-    const [stageIndex, setStageIndex] = useState(2);
+    // Derive canonical avatar state
+    const [avatarState, setAvatarState] = useState(() => 
+        deriveAvatarState({ mode, breathPattern })
+    );
     const [variationIndex, setVariationIndex] = useState(0);
     const [maxVariations, setMaxVariations] = useState(1);
 
     const STAGE_NAMES = ["seedling", "ember", "flame", "beacon", "stellar"];
-    const internalStage = STAGE_NAMES[stageIndex];
-    const currentStage = controlledStage ? controlledStage.toLowerCase() : internalStage;
+    
+    // Use controlled stage if provided, otherwise use derived stageIndex
+    const currentStage = controlledStage 
+        ? controlledStage.toLowerCase() 
+        : avatarState.stage;
 
     useEffect(() => {
         if (!path || showCore || !attention || attention === 'none') {
@@ -90,18 +96,17 @@ export function Avatar({
 
     useEffect(() => {
         function refresh() {
-            const state = getMandalaState();
-            setMandalaSnapshot(state || null);
+            const newState = deriveAvatarState({ mode, breathPattern });
+            setAvatarState(newState);
         }
         refresh();
         const id = setInterval(refresh, 2000);
         return () => clearInterval(id);
-    }, []);
+    }, [mode, breathPattern]);
 
-    const mandalaData = mandalaSnapshot || {};
-    const avgAccuracy = mandalaData.avgAccuracy || 0;
-    const weeklyConsistency = mandalaData.weeklyConsistency || 0;
-    const weeklyPracticeLog = mandalaData.weeklyPracticeLog || [false, false, false, false, false, false, false];
+    // Extract metrics from avatarState
+    const weeklyConsistency = avatarState.metrics.weeklyConsistency;
+    const weeklyPracticeLog = avatarState.metrics.weeklyPracticeLog;
 
     const safePattern = breathPattern || {};
     const patternForBreath = {
@@ -122,7 +127,13 @@ export function Avatar({
             const stageName = nextStage.charAt(0).toUpperCase() + nextStage.slice(1);
             onStageChange(stageColors, stageName);
         } else {
-            setStageIndex((prev) => (prev + 1) % STAGE_NAMES.length);
+            // Cycle through stages manually (for preview/dev mode)
+            const currentIndex = avatarState.stageIndex;
+            const nextIndex = (currentIndex + 1) % STAGE_NAMES.length;
+            const nextStage = STAGE_NAMES[nextIndex];
+            // Force a re-derivation with the next stage by updating mode or breathPattern
+            // Note: This is a temporary workaround; in production, stage cycling should update the underlying data
+            setAvatarState(prev => ({ ...prev, stage: nextStage, stageIndex: nextIndex }));
         }
     };
 

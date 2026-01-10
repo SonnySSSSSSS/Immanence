@@ -16,10 +16,12 @@ import { useDisplayModeStore } from "../state/displayModeStore";
  */
 export function SideNavigation({ onNavigate, className = "" }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const mode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
+    const isSanctuary = mode === 'sanctuary';
 
-    // Arc configuration
-    const radius = 160; // Distance from center to button positions
+    // Arc configuration - expand radius in sanctuary mode
+    const radius = isSanctuary ? 240 : 160; // Wider arc for sanctuary mode (1366px)
     const centerX = 0; // Relative to container center
     const centerY = 0;
     const buttonSize = 90; // Diameter of each button

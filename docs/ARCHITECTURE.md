@@ -60,7 +60,123 @@
 - **practiceStore helpers** (`src/state/practiceStore.js`)
   - Owns: persisted practice preferences and historical sessions via localStorage utilities (`loadPreferences/savePreferences/addSession`).
   - Used by `PracticeSection` (loading/saving defaults) and `RitualPortal` (breath pattern seed).
-- **Other supporting stores**: `lunarStore` (stage progression used by HomeHub), `pathStore` (attention instrumentation fed by progressStore + wisdomStore), `videoStore` (video playback state), `sigilStore`, `mandalaStore`, `applicationStore/attentionStore/historyStore` (used inside Application/Tracking surfaces). These are read-only for this document unless wiring above references them.
+- **mandalaStore** (`src/state/mandalaStore.js`)
+  - Owns: coherence metrics (`avgAccuracy`, `weeklyConsistency`), transient signals (`focus`, `clarity`, `distortion`), practice metadata, developmental stage.
+  - Source: Aggregates data from `progressStore`, `cycleStore`, and session logs.
+  - Used by: `deriveAvatarState()` to compute canonical avatar state (see Avatar State Derivation below).
+- **Other supporting stores**: `lunarStore` (stage progression used by HomeHub), `pathStore` (attention instrumentation fed by progressStore + wisdomStore), `videoStore` (video playback state), `sigilStore`, `applicationStore/attentionStore/historyStore` (used inside Application/Tracking surfaces). These are read-only for this document unless wiring above references them.
+
+## Avatar State Derivation (AvatarState Contract)
+
+**Location**: `src/state/avatarState.js`
+
+### Purpose
+
+Canonical single source of truth for avatar rendering state. Eliminates redundant derivation across components by:
+- Computing `coherence` deterministically from metrics + transient signals
+- Mapping coherence to `stageIndex` (0–4) and stage name
+- Sourcing `phase` from persisted developmental stage
+- Aggregating all avatar-relevant data into one object
+
+### Key Functions
+
+#### `deriveAvatarState({ mode, breathPattern, snapshot })`
+
+Derives canonical avatar state from mandala snapshot.
+
+**Parameters**:
+- `mode` (string) - Display context ('hub', 'practice', etc.)
+- `breathPattern` (object, optional) - Current breath session (if any)
+- `snapshot` (object, optional) - Pre-loaded mandala snapshot (otherwise fetches from store)
+
+**Returns**:
+```javascript
+{
+  mode: string,
+  phase: string,                        // Persisted developmental stage
+  metrics: {
+    avgAccuracy: number,                // 0–1 (from snapshot)
+    weeklyConsistency: number,          // 0–1 (from snapshot)
+    totalSessions: number,
+    weeklyPracticeLog: boolean[7]
+  },
+  transient: {
+    focus: number,                      // 0–1 (live signal)
+    clarity: number,                    // 0–1 (live signal)
+    distortion: number                  // 0–1 (penalty)
+  },
+  coherence: number,                    // 0–1 (deterministic)
+  stageIndex: number,                   // 0–4 (SEEDLING → STELLAR)
+  stage: string,                        // Stage name
+  labels: {                             // Human-readable percentages
+    accuracyPct: number,
+    consistencyPct: number
+  }
+}
+```
+
+### Coherence Formula (Deterministic Heuristic)
+
+```javascript
+base = 0.55 * avgAccuracy + 0.45 * weeklyConsistency
+signal = 0.5 * (focus + clarity)
+penalty = distortion
+coherenceRaw = 0.55 * base + 0.45 * signal - 0.25 * penalty
+coherence = clamp01(coherenceRaw)
+```
+
+**Interpretation**:
+- 55% weight on historical accuracy + weekly consistency (behavioral baseline)
+- 45% weight on transient focus + clarity (session-level resonance)
+- 25% penalty for distortion (coherence disruption)
+- All values clamped to [0, 1]
+
+### Stage Mapping
+
+Coherence ranges map to stage indices:
+
+| Range | Index | Stage | Meaning |
+|-------|-------|-------|---------|
+| [0.00–0.15) | 0 | SEEDLING | Nascent practice |
+| [0.15–0.35) | 1 | EMBER | Emerging consistency |
+| [0.35–0.55) | 2 | FLAME | Moderate coherence |
+| [0.55–0.80) | 3 | BEACON | Strong alignment |
+| [0.80–1.00] | 4 | STELLAR | Exemplary coherence |
+
+### Phase vs. Coherence (Important Distinction)
+
+- **Phase** (developmental stage): Persisted in mandala snapshot, does NOT change during sessions
+- **Coherence/StageIndex** (session alignment): Computed dynamically from live metrics
+
+Components should use:
+- `avatarState.phase` for identity/aesthetics (colors, form)
+- `avatarState.coherence` / `avatarState.stageIndex` for transient visual feedback (brightness, animation)
+
+### Usage in Avatar Components
+
+**Before (problematic)**:
+```javascript
+// src/components/avatar/index.jsx
+const stageIndex = getMandalaState()?.stageIndex;  // Local computation
+const coherence = computeCoherence(...);            // Redundant derivation
+```
+
+**After (canonical)**:
+```javascript
+// src/components/avatar/index.jsx
+import { deriveAvatarState } from '../../state/avatarState.js';
+
+const avatarState = deriveAvatarState({ mode: 'hub' });
+const { coherence, stageIndex, phase } = avatarState;
+// All downstream components receive same canonical state
+```
+
+### Consumer Components
+
+- **Avatar.jsx** - Root avatar component, calls `deriveAvatarState()` once
+- **AvatarContainer.jsx** - Pure render component (receives `stageIndex`, `coherence`, `phase` as props)
+- **AvatarLuminousCanvas.jsx** - Canvas-based rendering (receives props, no local state derivation)
+- **BreathingAura.jsx** - Breathing animation layer (uses `breathPattern` only)
 
 ## Static Data vs. Dynamic State
 

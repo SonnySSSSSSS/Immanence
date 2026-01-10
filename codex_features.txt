@@ -1,0 +1,15 @@
+undo	stable	false
+shell_tool	stable	true
+web_search_request	stable	false
+web_search_cached	experimental	false
+unified_exec	beta	false
+shell_snapshot	beta	false
+apply_patch_freeform	experimental	false
+exec_policy	experimental	true
+experimental_windows_sandbox	experimental	false
+elevated_windows_sandbox	experimental	false
+remote_compaction	experimental	true
+remote_models	experimental	false
+powershell_utf8	experimental	false
+enable_request_compression	experimental	false
+tui2	experimental	false
