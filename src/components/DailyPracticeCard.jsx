@@ -23,8 +23,8 @@ const THEME_CONFIG = {
         accent: 'var(--accent-color)',
         textMain: 'rgba(253, 251, 245, 0.95)',
         textSub: 'rgba(253, 251, 245, 0.5)',
-        bgAsset: 'ritual_comet_path.png',
-        border: 'var(--accent-color)',
+        bgAsset: 'card_bg_comet_{stage}.png',  // Placeholder, will be replaced below
+        border: 'var(--accent-20)',
         shadow: '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
     }
 };
@@ -40,6 +40,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const [gradientAngle, setGradientAngle] = useState(135);
 
     const theme = useTheme();
+    const currentStage = theme?.stage || 'Flame';
+    const stageLower = currentStage.toLowerCase();
     const primaryHex = theme?.accent?.primary || '#4ade80';
 
     const {
@@ -66,8 +68,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         } : { r: 126, g: 217, b: 87 };
     }, [primaryHex]);
 
-    // Calculate hue rotation for cosmic assets
-    const stageHueRotate = useMemo(() => {
+    // Better color transformation from cyan base to stage accent
+    const stageColorFilter = useMemo(() => {
         const { r, g, b } = baseAccent;
         const max = Math.max(r, g, b) / 255;
         const min = Math.min(r, g, b) / 255;
@@ -80,7 +82,23 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             else h = ((rn - gn) / d + 4) / 6;
         }
         const targetHue = Math.round(h * 360);
-        return targetHue - 180;
+
+        // Map target hue to filter string with sepia for warmer tones
+        if (targetHue >= 10 && targetHue <= 60) {
+            // Orange/Yellow range (Ember/Flame) - use sepia for warmth
+            return `sepia(0.8) saturate(2) hue-rotate(${targetHue - 30}deg) brightness(1.1)`;
+        } else if (targetHue >= 90 && targetHue <= 150) {
+            // Green range (Seedling) - direct hue shift from cyan
+            return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
+        } else if (targetHue >= 180 && targetHue <= 210) {
+            // Cyan range (Beacon) - minimal adjustment
+            return `saturate(1.4) brightness(1.05) contrast(1.1)`;
+        } else if (targetHue >= 260 && targetHue <= 300) {
+            // Purple/Violet range (Stellar) - hue shift from cyan
+            return `hue-rotate(${targetHue - 180}deg) saturate(1.5) brightness(1.1)`;
+        }
+        // Default fallback
+        return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
     }, [baseAccent]);
 
     useEffect(() => {
@@ -101,7 +119,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
 
     if (dayNumber > 14 || progress.completed >= progress.total) {
-        const bgAsset = isLight ? 'ancient_relic_focus.png' : 'celestial_black_hole.png';
+        const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
         return (
             <div
                 className="w-full relative p-8 text-center rounded-[24px] overflow-hidden"
@@ -120,6 +138,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         backgroundPosition: 'center',
                         opacity: isLight ? 0.21 : 0.36,
                         mixBlendMode: isLight ? 'multiply' : 'screen',
+                        filter: 'none',
                     }}
                 />
 
@@ -222,8 +241,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 className="w-full relative"
                 style={{
                     borderRadius: '24px',
-                    border: isLight ? 'none' : `2px solid ${config.border}`,
-                    boxShadow: config.shadow,
+                    border: isLight
+                        ? `2px solid ${primaryHex}40`
+                        : `2px solid ${primaryHex}60`,
+                    boxShadow: isLight
+                        ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
+                        : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`
                 }}
             >
                 {/* MIDDLE: Container */}
@@ -236,13 +259,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     }}
                 >
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
-                    <div 
+                    <div
                         className="absolute inset-0 pointer-events-none"
                             style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${config.bgAsset})`,
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${isLight ? config.bgAsset : `card_bg_comet_${stageLower}.png`})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
-                                filter: isLight ? 'saturate(1.1)' : 'brightness(0.9)',
+                                filter: isLight ? 'saturate(1.1)' : 'none',
                                 transition: 'all 0.7s ease-in-out',
                             }}
                     />

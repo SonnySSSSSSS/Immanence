@@ -3,29 +3,29 @@
 // Creates consistent smoked glass / plasma frost aesthetic
 
 /**
- * Unified card material - smoked glass with subtle texture
+ * Unified card material - glassmorphism with backdrop blur
  * Apply this style to all cards for visual consistency
  */
 export const plateauMaterial = {
-  // Base obsidian gradient
-  background: 'linear-gradient(145deg, rgba(18, 10, 20, 0.88) 0%, rgba(12, 6, 14, 0.94) 100%)',
+  // Darker semi-transparent base for better legibility
+  background: 'rgba(10, 10, 18, 0.7)',
+  
+  // Glassmorphism effect - strong blur for depth
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
 
-  // Gradient border effect
-  border: '1px solid transparent',
-  backgroundImage: `
-    linear-gradient(145deg, rgba(18, 10, 20, 0.88), rgba(12, 6, 14, 0.94)),
-    linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.12) 50%, var(--accent-30) 100%)
-  `,
-  backgroundOrigin: 'border-box',
-  backgroundClip: 'padding-box, border-box',
+  // Hard 1px border (crisp, not soft) - no glow
+  border: '1px solid rgba(255, 255, 255, 0.15)',
 
-  // Depth shadows with subtle sheen
+  // Tighter corners for modern precision
+  borderRadius: '12px',
+
+  // Pure depth shadows - no accent glow, just structure
   boxShadow: `
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    0 2px 8px var(--accent-15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
-    inset 0 -4px 16px rgba(0, 0, 0, 0.4)
+    0 8px 32px rgba(0, 0, 0, 0.8),
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.04)
   `,
 };
 
@@ -34,12 +34,16 @@ export const plateauMaterial = {
  */
 export const plateauMaterialElevated = {
   ...plateauMaterial,
+  background: 'rgba(12, 12, 20, 0.75)',
+  backdropFilter: 'blur(28px)',
+  WebkitBackdropFilter: 'blur(28px)',
+  border: '1px solid rgba(255, 255, 255, 0.18)',
+  borderRadius: '12px',
   boxShadow: `
-    0 12px 40px rgba(0, 0, 0, 0.7),
-    0 0 40px var(--accent-20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
-    inset 0 -4px 16px rgba(0, 0, 0, 0.5)
+    0 12px 40px rgba(0, 0, 0, 0.85),
+    0 4px 16px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.06)
   `,
 };
 
@@ -94,21 +98,15 @@ export const innerGlowStyle = {
  * Lighter, cleaner background for high-contrast number display
  */
 export const plateauMaterialClear = {
-  background: 'rgba(18, 10, 3, 0.35)',
-  backdropFilter: 'blur(22px)',
-  WebkitBackdropFilter: 'blur(22px)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  backgroundImage: `
-    linear-gradient(rgba(18, 10, 3, 0.35), rgba(18, 10, 3, 0.35)),
-    linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.08) 50%, var(--accent-30) 100%)
-  `,
-  backgroundOrigin: 'border-box',
-  backgroundClip: 'padding-box, border-box',
+  background: 'rgba(10, 10, 18, 0.4)',
+  backdropFilter: 'blur(32px)',
+  WebkitBackdropFilter: 'blur(32px)',
+  border: '1px solid rgba(255, 255, 255, 0.14)',
+  borderRadius: '12px',
   boxShadow: `
-    0 0 30px rgba(255, 255, 255, 0.03),
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25)
+    0 8px 32px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.05)
   `,
 };
 

@@ -16,10 +16,10 @@
   /* Explicit gold for active pills */
 
   /* ─── Background Palette (LIFTED BLACKS) ─── */
-  --bg-void: #07070c;
-  --bg-deep: #12121e;
-  --bg-surface: #1a1a2e;
-  --bg-elevated: #24243a;
+  --bg-void: #000000;
+  --bg-deep: #0a0a12;
+  --bg-surface: #0f0f1a;
+  --bg-elevated: #1a1a26;
 
   /* ─── Text Colors (SOFTENED HIGHLIGHTS) ─── */
   --text-primary: rgba(253, 251, 245, 0.88);

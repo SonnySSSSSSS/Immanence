@@ -25,10 +25,11 @@ export function SacredTimeSlider({ value, onChange, options }) {
     const [pulseActive, setPulseActive] = useState(false);
     const audioContextRef = useRef(null);
 
-    const currentIndex = options.indexOf(value);
+    const currentIndex = Math.max(0, options.indexOf(value));
+    const validIndex = currentIndex >= 0 ? currentIndex : 0;
 
-    // Calculate thumb position as percentage (0-100)
-    const thumbPercent = options.length > 1 ? (currentIndex / (options.length - 1)) * 100 : 0;
+    // Calculate thumb position as percentage (0-100), clamped to valid range
+    const thumbPercent = options.length > 1 ? (validIndex / (options.length - 1)) * 100 : 0;
 
     // Play subtle click sound
     const playClick = () => {
@@ -240,15 +241,17 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     return (
                         <div
                             key={opt}
-                            className="absolute font-semibold tracking-widest"
+                            className="absolute font-semibold"
                             style={{
-                                fontFamily: 'var(--font-display)',
+                                fontFamily: 'Inter, Outfit, sans-serif',
                                 left: `${percent}%`,
                                 transform: 'translateX(-50%)',
-                                fontSize: isKey ? '10px' : '8px',
-                                color: isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.35)',
-                                fontWeight: isSelected ? '600' : '400',
-                                textShadow: isSelected ? '0 0 8px var(--accent-20)' : 'none'
+                                fontSize: isKey ? '11px' : '9px',
+                                color: isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.4)',
+                                fontWeight: isSelected ? '700' : '500',
+                                textShadow: isSelected ? '0 0 12px var(--accent-40)' : 'none',
+                                letterSpacing: '0.01em',
+                                opacity: isSelected ? 1 : 0.7
                             }}
                         >
                             {opt}

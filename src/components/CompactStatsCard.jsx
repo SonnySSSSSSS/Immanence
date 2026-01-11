@@ -47,7 +47,7 @@ const THEME_CONFIG = {
         lowGem: 'gem_low_alpha.png',
         emptyGem: 'gem_empty_alpha.png',
         progressAsset: 'progress_glow_alpha.png',
-        border: 'var(--accent-color)',
+        border: 'var(--accent-20)',
         wellBorder: 'var(--accent-15)',
         threadColor: 'var(--accent-color)'
     }
@@ -455,8 +455,10 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     const domainStats = allStats[domain] || { count: 0, totalMinutes: 0 };
     const streak = streakInfo?.currentStreak || 0;
 
-    // Get stage accent color from theme
+    // Get stage from theme
     const theme = useTheme();
+    const currentStage = theme?.stage || 'Flame';
+    const stageLower = currentStage.toLowerCase();
     const primaryHex = theme?.accent?.primary || '#4ade80';
     
     // Parse hex to RGB
@@ -471,8 +473,9 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     
     const baseAccent = hexToRgb(primaryHex);
     
-    // Calculate hue rotation from cyan/teal baseline (~180deg) to stage accent
-    const stageHueRotate = (() => {
+    // Better color transformation from cyan base to stage accent
+    // Uses sepia + hue-rotate for cleaner color shifts
+    const stageColorFilter = (() => {
         const { r, g, b } = baseAccent;
         const max = Math.max(r, g, b) / 255;
         const min = Math.min(r, g, b) / 255;
@@ -485,7 +488,23 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
             else h = ((rn - gn) / d + 4) / 6;
         }
         const targetHue = Math.round(h * 360);
-        return targetHue - 180; // Subtly shift from the cyan/purple baseline of the milky way
+
+        // Map target hue to filter string with sepia for warmer tones
+        if (targetHue >= 10 && targetHue <= 60) {
+            // Orange/Yellow range (Ember/Flame) - use sepia for warmth
+            return `sepia(0.8) saturate(2) hue-rotate(${targetHue - 30}deg) brightness(1.1)`;
+        } else if (targetHue >= 90 && targetHue <= 150) {
+            // Green range (Seedling) - direct hue shift from cyan
+            return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
+        } else if (targetHue >= 180 && targetHue <= 210) {
+            // Cyan range (Beacon) - minimal adjustment
+            return `saturate(1.4) brightness(1.05) contrast(1.1)`;
+        } else if (targetHue >= 260 && targetHue <= 300) {
+            // Purple/Violet range (Stellar) - hue shift from cyan
+            return `hue-rotate(${targetHue - 180}deg) saturate(1.5) brightness(1.1)`;
+        }
+        // Default fallback
+        return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
     })();
     
     // Create shade variations of the stage accent (adjust lightness)
@@ -563,10 +582,12 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                 className="w-full relative"
                 style={{
                     borderRadius: '24px',
-                    border: isLight ? 'none' : `2px solid ${config.border}`,
-                    boxShadow: isLight 
-                        ? '0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2)'
-                        : '0 30px 80px rgba(0, 0, 0, 0.8)'
+                    border: isLight
+                        ? `2px solid ${primaryHex}40`
+                        : `2px solid ${primaryHex}60`,
+                    boxShadow: isLight
+                        ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
+                        : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`
                 }}
             >
                 {/* MIDDLE: Parchment Background Container */}
@@ -631,18 +652,17 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                         }}
                     />
                     
-                    {/* Cosmic Feather - Single Dominant Object (Mirrors light mode feather) */}
-                    <div 
+                    {/* Cosmic Background - Colorful nebula texture */}
+                    <div
                         className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none"
-                        style={{ opacity: 0.6, mixBlendMode: 'screen' }}
+                        style={{ opacity: 0.5, mixBlendMode: 'screen' }}
                     >
-                        <div 
+                        <div
                             className="absolute inset-0 transition-all duration-1000"
                             style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/ritual_aligned_singularity.png)`,
-                                backgroundSize: 'cover', 
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/card_bg_blackhole_${stageLower}.png)`,
+                                backgroundSize: 'cover',
                                 backgroundPosition: 'center',
-                                filter: `hue-rotate(${stageHueRotate}deg) contrast(1.1) saturate(1.2)`,
                                 WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)',
                                 maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)'
                             }}

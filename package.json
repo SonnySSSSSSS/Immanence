@@ -7,6 +7,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "dev": "vite",
+    "dev:clean": "powershell -ExecutionPolicy Bypass -File ./dev-reset.ps1 && npm run dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

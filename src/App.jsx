@@ -13,7 +13,6 @@ import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.js
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
 import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
-import { CurriculumOnboarding } from "./components/CurriculumOnboarding.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
 import { useCurriculumStore } from "./state/curriculumStore.js";
 import { AvatarPreview } from "./components/AvatarPreview.jsx";
@@ -24,7 +23,6 @@ import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
 import { InstallPrompt } from "./components/InstallPrompt.jsx";
-import { SigilTracker } from "./components/SigilTracker.jsx";
 import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -66,7 +64,7 @@ function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExp
             className="w-full relative z-20 flex flex-col items-center"
             style={{
               marginTop: '1.5rem',
-              marginBottom: '1rem',
+              marginBottom: '12px',
             }}
           >
             {/* Avatar with scale/fade during practice */}
@@ -129,11 +127,9 @@ function App() {
 
   // Curriculum state
   const { 
-    shouldShowOnboarding, 
     isCurriculumComplete,
     onboardingComplete: curriculumOnboardingComplete,
   } = useCurriculumStore();
-  const [showCurriculumOnboarding, setShowCurriculumOnboarding] = useState(false);
   const [showCurriculumReport, setShowCurriculumReport] = useState(false);
 
 
@@ -170,24 +166,13 @@ function App() {
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const showFxGallery = true; // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
-  const [isSigilTrackerOpen, setIsSigilTrackerOpen] = useState(false);
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
-  const lastTapRef = useRef(0);
 
   // Screen Wake Lock when in Vigilance Mode
   useWakeLock(isMinimized);
 
-  const handleDoubleTap = () => {
-    const now = Date.now();
-    const delay = now - lastTapRef.current;
-    if (delay < 300 && delay > 0) {
-      // Double tap detected
-      setIsSigilTrackerOpen(true);
-    }
-    lastTapRef.current = now;
-  };
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
   const [previewPath, setPreviewPath] = useState('Soma');
@@ -223,15 +208,11 @@ function App() {
 
   // Check curriculum state (after showWelcome is declared)
   useEffect(() => {
-    // Show onboarding if needed (after welcome screen is dismissed)
-    if (!showWelcome && shouldShowOnboarding()) {
-      setShowCurriculumOnboarding(true);
-    }
     // Show completion report if curriculum complete and not dismissed
     if (curriculumOnboardingComplete && isCurriculumComplete()) {
       setShowCurriculumReport(true);
     }
-  }, [showWelcome, curriculumOnboardingComplete]);
+  }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
   // Note: CSS variables now set by ThemeProvider based on avatarStage
 
@@ -262,14 +243,6 @@ function App() {
 
       {/* Show welcome screen on first visit */}
       {showWelcome && <WelcomeScreen onDismiss={handleDismissWelcome} />}
-
-      {/* Curriculum Onboarding (skippable) */}
-      {showCurriculumOnboarding && (
-        <CurriculumOnboarding 
-          onDismiss={() => setShowCurriculumOnboarding(false)}
-          onComplete={() => setShowCurriculumOnboarding(false)}
-        />
-      )}
 
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
@@ -348,7 +321,6 @@ function App() {
         <div
           data-app-frame
           className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
-          onPointerDown={handleDoubleTap}
           style={displayMode === 'sanctuary' ? {
             // Sanctuary: iPad width (820px)
             width: '100%',
@@ -428,7 +400,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.16.25</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.17.35</div>
                   </div>
                 </div>
               )}
@@ -502,7 +474,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.16.25
+                        v3.17.35
                       </div>
                     </div>
                   )}
@@ -574,12 +546,6 @@ function App() {
             </div>
           </div>
 
-          <SigilTracker
-            isOpen={isSigilTrackerOpen}
-            onClose={() => setIsSigilTrackerOpen(false)}
-            stage={previewStage}
-          />
-
           <HardwareGuide
             isOpen={isHardwareGuideOpen}
             onClose={() => setIsHardwareGuideOpen(false)}
@@ -588,7 +554,7 @@ function App() {
           <InstallPrompt />
 
           {/* Indra's Net - animated web at bottom */}
-          <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} />
+          <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} displayMode={displayMode} />
         </div >
       </div >
     </ThemeProvider >

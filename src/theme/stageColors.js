@@ -4,32 +4,32 @@ export const STAGE_THEMES = {
     SEEDLING: {
         name: 'Seedling',
         accent: {
-            primary: '#15803d',      // Earthy forest green (was #22c55e)
-            secondary: '#166534',    // Darker forest green (was #16a34a)
-            muted: '#064e3b',        // Very dark teal/green (was #14532d)
-            glow: 'rgba(21, 128, 61, 0.4)',
-            particleColor: '#86efac',
+            primary: '#00A382',      // Soma Green (vibrant emerald/seafoam)
+            secondary: '#008C6E',    // Deeper soma
+            muted: '#005F4B',        // Dark teal
+            glow: 'rgba(0, 163, 130, 0.4)',
+            particleColor: '#00C9A0',
         },
         text: {
-            accent: '#15803d',
-            accentMuted: 'rgba(21, 128, 61, 0.7)',
+            accent: '#00A382',
+            accentMuted: 'rgba(0, 163, 130, 0.7)',
         },
         ui: {
-            selectedBg: 'rgba(21, 128, 61, 0.15)',
-            selectedBorder: 'rgba(21, 128, 61, 0.4)',
-            hoverBg: 'rgba(21, 128, 61, 0.08)',
-            progressBar: '#15803d',
-            buttonGradient: 'linear-gradient(135deg, #15803d, #166534)',
+            selectedBg: 'rgba(0, 163, 130, 0.15)',
+            selectedBorder: 'rgba(0, 163, 130, 0.4)',
+            hoverBg: 'rgba(0, 163, 130, 0.08)',
+            progressBar: '#00A382',
+            buttonGradient: 'linear-gradient(135deg, #00A382, #008C6E)',
         },
         light: {
-            bgBase: '#F5F8F2',          // Sage cream
-            bgSurface: '#FFFDF9',       // Soft white
-            textPrimary: '#166534',     // Dark forest (was #2D3D2A)
-            textSecondary: '#15803d',   // Forest (was #4A6B41)
-            accent: '#15803d',          // Forest green (was #4A6B41)
-            accentMuted: '#4ade80',     // Brighter sage for contrast
-            border: 'rgba(21, 128, 61, 0.25)',
-            shadowTint: 'rgba(22, 101, 52, 0.12)',
+            bgBase: '#F0F8F6',          // Mint cream
+            bgSurface: '#FAFDFB',       // Soft white with hint of green
+            textPrimary: '#004D3D',     // Deep teal
+            textSecondary: '#006B56',   // Medium teal
+            accent: '#00A382',          // Soma green
+            accentMuted: '#4DD4B8',     // Lighter seafoam for contrast
+            border: 'rgba(0, 163, 130, 0.25)',
+            shadowTint: 'rgba(0, 109, 86, 0.12)',
         }
     },
 

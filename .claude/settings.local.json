@@ -7,7 +7,16 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(robocopy:*)",
-      "Bash(powershell -Command \"robocopy ''C:\\Users\\trinh\\.claude-worktrees\\immanence-os\\suspicious-cori'' ''D:\\Unity Apps\\immanence-os'' /E /XD node_modules .git dist .vite .cache .agent /XF *.log /NFL /NDL /NJH /NJS\")"
+      "Bash(powershell -Command \"robocopy ''C:\\Users\\trinh\\.claude-worktrees\\immanence-os\\suspicious-cori'' ''D:\\Unity Apps\\immanence-os'' /E /XD node_modules .git dist .vite .cache .agent /XF *.log /NFL /NDL /NJH /NJS\")",
+      "Skill(superpowers:brainstorming)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(where /r C: immanence_bg_00001_.png)",
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)"
     ]
   }
 }

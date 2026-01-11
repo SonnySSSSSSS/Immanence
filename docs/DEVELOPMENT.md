@@ -31,6 +31,8 @@ ollama pull gemma3:1b
 
 ## Running the Dev Server
 
+> Canonical workspace: always run from `D:\Unity Apps\immanence-os`. Do not run from `.claude-worktrees/...` — those are temporary AI worktrees and can cause mismatched versions and port conflicts.
+
 ```bash
 # Start development server
 npm run dev
@@ -42,6 +44,12 @@ npm run dev
 
 Press **Ctrl+Shift+D** to open the developer panel for:
 - Avatar preview with stage/path selection
+
+### Server Hygiene
+
+Use the helper scripts when ports or versions get stuck:
+
+```powershell
 - Lunar progress controls
 - Path ceremony triggers
 - Attention tracking data
@@ -49,6 +57,8 @@ Press **Ctrl+Shift+D** to open the developer panel for:
 - Data management (export/import/reset)
 
 ---
+
+Expected port: `http://localhost:5173/`. If Vite starts on `5174`, another process is holding `5173`. Run the reset scripts and try again from the main folder.
 
 ## Project Scripts
 

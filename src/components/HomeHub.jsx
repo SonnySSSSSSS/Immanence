@@ -130,7 +130,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const streakInfo = getStreakInfo();
   const breathStats = getDomainStats('breathwork');
   const weeklyPattern = getWeeklyPattern();
-  const accentColor = STAGE_COLORS[currentStage?.toLowerCase()]?.glow || '#15803d';
 
   // Derive stats from real data
   const totalSessions = breathStats.totalSessions;
@@ -453,10 +452,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           document.body
         )}
         <div
-          className="w-full mt-2 transition-all duration-700"
+          className="w-full mt-2 transition-all duration-700 flex flex-col items-center"
           style={{
-            maxWidth: isSanctuary ? 'min(780px, 96vw)' : 'min(430px, 90vw)',
+            maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
             margin: '0 auto',
+            padding: '0 16px',
           }}
         >
           <div
@@ -469,38 +469,38 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             Explore Modes
           </div>
 
-          {/* Horizontal Row - Simple circular buttons */}
-          <div className={`flex items-center ${isSanctuary ? 'w-full justify-between gap-2.5 px-10 max-w-[700px] mx-auto' : 'justify-center gap-1.5 px-3'}`}>
+          {/* Horizontal Row - Simple circular buttons - MATCHES CARD WIDTH + CENTERED */}
+          <div
+            className="flex flex-row justify-center items-center w-full"
+            style={{
+              maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              gap: isSanctuary ? '24px' : '16px',
+            }}
+          >
             <SimpleModeButton
               title="Practice"
               onClick={() => onSelectSection("practice")}
               icon="practice"
-              size={isSanctuary ? 90 : 76}
-              accentColor={accentColor}
             />
             <SimpleModeButton
               title="Wisdom"
               onClick={() => onSelectSection("wisdom")}
               gradient="linear-gradient(135deg, #B4E6D4 0%, #7FD4B8 100%)"
               icon="wisdom"
-              size={isSanctuary ? 90 : 76}
-              accentColor={accentColor}
             />
             <SimpleModeButton
               title="Application"
               onClick={() => onSelectSection("application")}
               gradient="linear-gradient(135deg, #FFD97D 0%, #FFB85C 100%)"
               icon="application"
-              size={isSanctuary ? 90 : 76}
-              accentColor={accentColor}
             />
             <SimpleModeButton
               title="Navigation"
               onClick={() => onSelectSection("navigation")}
               gradient="linear-gradient(135deg, #E5C4FF 0%, #B88FD9 100%)"
               icon="navigation"
-              size={isSanctuary ? 90 : 76}
-              accentColor={accentColor}
             />
           </div>
         </div>

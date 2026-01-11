@@ -7,18 +7,20 @@ import { useCycleStore } from '../state/cycleStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { CycleChoiceModal } from './Cycle/CycleChoiceModal.jsx';
 import { ThoughtDetachmentOnboarding } from './ThoughtDetachmentOnboarding.jsx';
+import { CurriculumOnboarding } from './CurriculumOnboarding.jsx';
 import { useState } from 'react';
 
 export function PathSelectionGrid() {
     const paths = getAllPaths();
     const { selectedPathId, setSelectedPath, activePath } = useNavigationStore();
     const { currentCycle } = useCycleStore();
-    const { onboardingComplete } = useCurriculumStore();
+    const { onboardingComplete, shouldShowOnboarding } = useCurriculumStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
     const [showCycleChoice, setShowCycleChoice] = useState(false);
     const [showThoughtDetachmentOnboarding, setShowThoughtDetachmentOnboarding] = useState(false);
+    const [showFoundationOnboarding, setShowFoundationOnboarding] = useState(false);
 
     // Define special program entries
     const programs = [
@@ -30,7 +32,14 @@ export function PathSelectionGrid() {
             duration: "14 days",
             isProgram: true,
             isActive: !!currentCycle,
-            onClick: () => !currentCycle && setShowCycleChoice(true)
+            onClick: () => {
+                // Show onboarding if not completed, otherwise show cycle choice
+                if (!onboardingComplete || shouldShowOnboarding()) {
+                    setShowFoundationOnboarding(true);
+                } else if (!currentCycle) {
+                    setShowCycleChoice(true);
+                }
+            }
         },
         {
             id: "program-thought-detachment",
@@ -218,6 +227,18 @@ export function PathSelectionGrid() {
                 onClose={() => setShowCycleChoice(false)}
                 cycleType="foundation"
             />
+
+            {/* Foundation Cycle Onboarding - Shows program explanation and time selection */}
+            {showFoundationOnboarding && (
+                <CurriculumOnboarding
+                    onDismiss={() => setShowFoundationOnboarding(false)}
+                    onComplete={() => {
+                        setShowFoundationOnboarding(false);
+                        // After onboarding, show cycle choice to start the program
+                        setShowCycleChoice(true);
+                    }}
+                />
+            )}
 
             <ThoughtDetachmentOnboarding
                 isOpen={showThoughtDetachmentOnboarding}

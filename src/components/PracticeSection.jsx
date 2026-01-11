@@ -25,10 +25,7 @@ import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js
 import { logPractice } from '../services/cycleManager.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { logCircuitCompletion } from '../services/circuitManager.js';
-import { PracticeSelectionModal } from "./PracticeSelectionModal.jsx";
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
-import { PeripheralHalo } from "./ui/PeripheralHalo.jsx";
-import { BreathPatternPreview } from "./BreathPatternPreview.jsx";
 import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
@@ -36,6 +33,8 @@ import { PostSessionJournal } from "./PostSessionJournal.jsx";
 import { useJournalStore } from "../state/journalStore.js";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "./PhoticControlPanel.jsx";
+import { BreathPhaseIndicator } from "./BreathPhaseIndicator.jsx";
+import { BreathPathChart } from "./BreathPathChart.jsx";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -44,7 +43,6 @@ const PRACTICE_REGISTRY = {
     id: "breath",
     label: "Breath & Stillness",
     icon: "✦",
-    Config: BreathConfig,
     supportsDuration: true,
     requiresFullscreen: false,
   },
@@ -114,11 +112,48 @@ const PRACTICE_REGISTRY = {
 
 const PRACTICE_IDS = Object.keys(PRACTICE_REGISTRY);
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
+const labelToPracticeId = (label) => {
+  if (!label) return 'breath';
+  const match = PRACTICE_IDS.find((id) => PRACTICE_REGISTRY[id].label === label);
+  return match || 'breath';
+};
 
 function PracticeSelector({ selectedId, onSelect, tokens }) {
+  const displayMode = useDisplayModeStore(s => s.mode);
+  const isSanctuary = displayMode === 'sanctuary';
+  const isLight = tokens?.isLight;
+  const inactiveOpacity = 0.7;
+  const inactiveLabelColor = isLight ? 'rgba(84, 70, 55, 0.7)' : 'rgba(200, 200, 200, 0.6)';
+  const inactiveIconColor = isLight ? 'rgba(96, 80, 64, 0.72)' : 'rgba(220, 220, 220, 0.65)';
+  
+  // Glassmorphism background for inactive buttons
+  const inactiveBackground = `rgba(${isLight ? '255, 255, 255' : '20, 20, 30'}, 0.06)`;
+  const hoverBackground = `rgba(${isLight ? '255, 255, 255' : '30, 30, 45'}, 0.12)`;
+  
+  // Clean borders
+  const inactiveBorder = isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255, 255, 255, 0.08)';
+  const activeBorder = tokens.accent;
+  
+  // Subtle shadows
+  const inactiveGlow = isLight
+    ? '0 2px 8px rgba(60, 50, 35, 0.08)'
+    : '0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+  const hoverGlow = isLight
+    ? '0 4px 12px rgba(60, 50, 35, 0.12)'
+    : '0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)';
+  
   return (
-    <div className="w-full max-w-2xl mb-12">
-      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center">
+    <div className="w-full" style={{ marginBottom: isSanctuary ? '28px' : '16px' }}>
+      <div 
+        className="grid gap-4 justify-items-stretch"
+        style={{
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
+          margin: '0 auto',
+          paddingLeft: '12px',
+          paddingRight: '12px',
+        }}
+      >
         {PRACTICE_IDS.map((id) => {
           const p = PRACTICE_REGISTRY[id];
           const isActive = selectedId === id;
@@ -126,25 +161,60 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
             <button
               key={id}
               onClick={() => onSelect(id)}
-              className="w-full px-4 py-4 rounded-2xl transition-all duration-300 flex flex-col items-center gap-2 group relative overflow-hidden"
+              className="group relative overflow-hidden transition-all duration-300 flex flex-col items-center justify-center gap-2"
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '9px',
-                letterSpacing: 'var(--tracking-mythic)',
+                fontFamily: 'Inter, Outfit, sans-serif',
+                fontSize: isSanctuary ? '11px' : '10px',
+                letterSpacing: '0.02em',
                 textTransform: 'uppercase',
-                border: isActive ? `1px solid ${tokens.accent}` : `1px solid ${tokens.border}`,
-                background: isActive ? `${tokens.accent}15` : 'rgba(255,255,255,0.01)',
-                color: isActive ? tokens.accent : tokens.textMuted,
-                boxShadow: isActive ? `0 0 20px ${tokens.accent}20` : 'none',
+                fontWeight: 700,
+                padding: isSanctuary ? '20px 12px' : '16px 10px',
+                minHeight: isSanctuary ? '110px' : '96px',
+                borderRadius: '12px',
+                border: isActive ? `2px solid ${tokens.accent}` : `1px solid ${inactiveBorder}`,
+                background: isActive 
+                  ? `rgba(${isLight ? '252, 211, 77' : '255, 255, 255'}, ${isLight ? '0.15' : '0.08'})`
+                  : inactiveBackground,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                color: isActive ? tokens.accent : inactiveLabelColor,
+                opacity: isActive ? 1 : inactiveOpacity,
+                boxShadow: isActive 
+                  ? `0 0 32px ${tokens.accent}50, 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)` 
+                  : inactiveGlow,
+                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.boxShadow = hoverGlow;
+                  e.currentTarget.style.background = hoverBackground;
+                  e.currentTarget.style.opacity = '0.85';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.boxShadow = inactiveGlow;
+                  e.currentTarget.style.background = inactiveBackground;
+                  e.currentTarget.style.opacity = `${inactiveOpacity}`;
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }
               }}
             >
-              <div className={`text-2xl mb-1 transition-transform duration-500 ${isActive ? 'scale-110 rotate-[360deg]' : 'group-hover:scale-110'}`} style={{ color: isActive ? tokens.accent : tokens.textMuted }}>
+              <div 
+                className="transition-transform duration-500" 
+                style={{ 
+                  fontSize: isSanctuary ? '28px' : '24px',
+                  color: isActive ? tokens.accent : inactiveIconColor,
+                  transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                  textShadow: isActive ? `0 0 16px ${tokens.accent}99` : 'none',
+                }}
+              >
                 {p.icon}
               </div>
-              <span className="text-center leading-tight font-bold">{p.label}</span>
-              {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent-color)]" />
-              )}
+              <span className="text-center leading-snug font-bold" style={{ fontSize: isSanctuary ? '10px' : '9px', letterSpacing: '0.02em' }}>
+                {p.label}
+              </span>
             </button>
           );
         })}
@@ -157,6 +227,9 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   const cardRef = useRef(null);
   const p = PRACTICE_REGISTRY[practiceId];
   const isCollapsed = !practiceId;
+  const displayMode = useDisplayModeStore(s => s.mode);
+  const isSanctuary = displayMode === 'sanctuary';
+  const maxHeightValue = isSanctuary ? '75vh' : '65vh';
 
   // Intentional Reveal Logic: Scroll into view when expanded
   useEffect(() => {
@@ -172,10 +245,12 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   return (
     <div
       ref={cardRef}
-      className={`rounded-[32px] relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
+      className={`relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
       style={{
         maxWidth: 'min(620px, 94vw)',
-        maxHeight: isCollapsed ? '88px' : '1000px', // Animating max-height for V1 reveal
+        maxHeight: isCollapsed ? '88px' : maxHeightValue,
+        overflow: isCollapsed ? 'hidden' : 'auto',
+        borderRadius: '12px',
         ...tokens.cardStyle,
         border: `1px solid ${isCollapsed ? tokens.border : tokens.borderSelect}`,
         boxShadow: tokens.isLight 
@@ -201,10 +276,10 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
       ) : (
         <div 
           key={practiceId} 
-          className="relative px-8 py-10 animate-in fade-in duration-300"
+          className="relative px-8 animate-in fade-in duration-300"
         >
           {/* Practice Title & Icon */}
-          <div className="flex flex-col items-center mb-10 text-center">
+          <div className="flex flex-col items-center text-center" style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px', paddingTop: practiceId === 'breath' ? '8px' : '16px' }}>
             <div 
               className="text-5xl mb-4 drop-shadow-lg"
               style={{ 
@@ -215,33 +290,51 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
               {p.icon}
             </div>
             <h2 style={{ 
-              fontFamily: 'var(--font-display)', 
-              fontSize: '20px', 
-              fontWeight: 600,
-              letterSpacing: 'var(--tracking-mythic)', 
+              fontFamily: 'Inter, Outfit, sans-serif', 
+              fontSize: '18px', 
+              fontWeight: 700,
+              letterSpacing: '-0.01em', 
               textTransform: 'uppercase',
               color: tokens.text,
-              textShadow: tokens.isLight ? 'none' : '0 0 15px var(--accent-30)'
+              textShadow: tokens.isLight ? 'none' : `0 0 20px ${tokens.accent}50`
             }}>
               {p.label}
             </h2>
             {p.id === 'ritual' && (
-              <p className="mt-2 text-[10px] uppercase tracking-[0.2em] opacity-40 font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+              <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
                 Select an invocation to begin
               </p>
             )}
           </div>
 
           {/* Dynamic Config Panel */}
-          <div className="min-h-[100px] mb-10">
-             {p.Config ? (
+          <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
+             {practiceId === 'breath' ? (
+               <>
+                 <BreathPhaseIndicator
+                   inhaleCount={setters.pattern?.inhale || 4}
+                   hold1Count={setters.pattern?.hold1 || 4}
+                   exhaleCount={setters.pattern?.exhale || 4}
+                   hold2Count={setters.pattern?.hold2 || 4}
+                   tokens={tokens}
+                   setPattern={setters.setPattern}
+                 />
+                 <BreathPathChart
+                   inhale={setters.pattern?.inhale || 4}
+                   hold1={setters.pattern?.hold1 || 4}
+                   exhale={setters.pattern?.exhale || 4}
+                   hold2={setters.pattern?.hold2 || 4}
+                   tokens={tokens}
+                 />
+               </>
+             ) : p.Config ? (
                <p.Config 
                  {...setters}
                  isLight={tokens.isLight}
                  selectedRitualId={setters.selectedRitualId}
                />
              ) : (
-               <div className="flex items-center justify-center py-12 text-xs uppercase tracking-widest opacity-30 font-display">
+               <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
                  No additional configuration required
                </div>
              )}
@@ -249,8 +342,8 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
           {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
           {p.supportsDuration && practiceId !== 'circuit' && (
-            <div className="mb-12">
-              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-center mb-6 opacity-50" style={{ color: tokens.text }}>
+            <div style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}>
+              <div className="font-bold uppercase text-center opacity-50" style={{ color: tokens.text, marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.3em', fontSize: '10px' }}>
                 Sacred Duration (minutes)
               </div>
               <SacredTimeSlider 
@@ -263,19 +356,27 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
           {/* Start Button */}
           {!(practiceId === 'ritual') && (
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
               <button
                 onClick={onStart}
-                className="group px-16 py-5 rounded-full font-black uppercase tracking-[0.4em] transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
+                className="group px-24 py-5 transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
                 style={{
-                   background: tokens.accent,
-                   color: '#050508',
-                   boxShadow: `0 10px 40px ${tokens.accent}40`,
-                   fontSize: '12px'
+                   background: `linear-gradient(180deg, ${tokens.accent} 0%, ${tokens.accent}DD 100%)`,
+                   color: '#FFFFFF',
+                   fontFamily: 'Inter, Outfit, sans-serif',
+                   boxShadow: `0 0 48px ${tokens.accent}90, 0 0 28px ${tokens.accent}70, 0 8px 24px rgba(0,0,0,0.6)`,
+                   fontSize: '12px',
+                   fontWeight: 700,
+                   letterSpacing: '0.02em',
+                   textTransform: 'uppercase',
+                   border: 'none',
+                   borderRadius: '10px',
+                   paddingLeft: '32px',
+                   paddingRight: '32px',
                 }}
               >
                 <span className="relative z-10">{practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice'}</span>
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
               </button>
             </div>
           )}
@@ -425,8 +526,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const uiTokens = {
     isLight,
     bg: isLight ? 'var(--light-bg-surface)' : 'rgba(15,15,26,1)',
-    border: isLight ? 'var(--light-border)' : 'var(--accent-20)',
-    borderSelect: isLight ? 'var(--light-border)' : 'var(--accent-40)',
+    border: isLight ? 'var(--light-border)' : 'rgba(255, 255, 255, 0.08)',
+    borderSelect: isLight ? 'var(--light-border)' : 'rgba(252, 211, 77, 0.4)',
     text: isLight ? 'var(--light-text)' : 'var(--text-primary)',
     textMuted: isLight ? 'var(--light-muted)' : 'var(--text-muted)',
     accent: 'var(--accent-color)',
@@ -434,11 +535,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     innerGlow: isLight ? getInnerGlowStyle(true) : innerGlowStyle,
   };
 
-  const savedPrefs = loadPreferences();
+  // Load preferences once on mount
+  const savedPrefs = React.useRef(loadPreferences()).current;
+  const initialPracticeId = savedPrefs.practiceId || 'breath';
+  console.log('[PracticeSection v3.17.28] savedPrefs.practiceId:', savedPrefs.practiceId, 'initialPracticeId:', initialPracticeId);
 
   // STABILIZE STATE: Core Selection State
-  const [practiceId, setPracticeId] = useState(null);
-  const [hasExpandedOnce, setHasExpandedOnce] = useState(false);
+  const [practiceId, setPracticeId] = useState(initialPracticeId);
+  const [hasExpandedOnce, setHasExpandedOnce] = useState(!!initialPracticeId);
   const [duration, setDuration] = useState(savedPrefs.duration || 10);
 
   // CURRICULUM INTEGRATION
@@ -469,6 +573,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Backward compatibility during refactor
   const selectedPractice = PRACTICE_REGISTRY[practiceId] || PRACTICE_REGISTRY.breath;
   const practice = selectedPractice.label;
+
+  const handleSelectPractice = useCallback((id) => {
+    console.log('[PracticeSection v3.17.28] handleSelectPractice called with id:', id);
+    setPracticeId(id);
+    // Save immediately with current state
+    savePreferences({
+      practiceId: id,
+      duration,
+      practiceParams,
+    });
+  }, [duration, practiceParams]);
 
   const updateParams = (pid, updates) => {
     setPracticeParams(prev => ({
@@ -551,7 +666,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // HELPER SETTERS: Bridging old calls to new updateParams logic
   const setPreset = (val) => updateParams('breath', { preset: val });
-  const setPattern = (val) => updateParams('breath', { pattern: val });
+  const setPattern = (val) => {
+    if (typeof val === 'function') {
+      // Handle updater function
+      setPracticeParams(prev => ({
+        ...prev,
+        breath: { ...prev.breath, pattern: val(prev.breath.pattern) }
+      }));
+    } else {
+      // Handle direct value
+      updateParams('breath', { pattern: val });
+    }
+  };
   const setSoundType = (val) => updateParams('sound', { soundType: val });
   const setSoundVolume = (val) => updateParams('sound', { volume: val });
   const setBinauralPreset = (val) => updateParams('sound', { binauralPresetId: val?.name || val });
@@ -609,6 +735,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return () => cancelAnimationFrame(animationId);
   }, []);
 
+  // Auto-save preferences when they change (but not during active practice)
+  useEffect(() => {
+    if (!isRunning) {
+      savePreferences({
+        practiceId,
+        duration,
+        practiceParams
+      });
+    }
+  }, [practiceId, duration, practiceParams, isRunning]);
+
   useEffect(() => {
     if (preset && BREATH_PRESETS[preset]) {
       setPattern(BREATH_PRESETS[preset]);
@@ -630,7 +767,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const { exercise, duration: exDuration } = exerciseItem;
 
     if (exercise.practiceType === 'Breath & Stillness') {
-      setPractice('Breath & Stillness');
+      setPracticeId('breath');
       if (exercise.preset) {
         const presetKey = Object.keys(BREATH_PRESETS).find(
           k => k.toLowerCase() === exercise.preset.toLowerCase()
@@ -641,14 +778,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }
       }
     } else if (exercise.practiceType === 'Cognitive Vipassana') {
-      setPractice('Cognitive Vipassana');
+      setPracticeId('cognitive_vipassana');
     } else if (exercise.practiceType === 'Somatic Vipassana') {
-      setPractice('Somatic Vipassana');
+      setPracticeId('somatic_vipassana');
       if (exercise.sensoryType) {
         setSensoryType(exercise.sensoryType);
       }
     } else {
-      setPractice(exercise.practiceType || 'Breath & Stillness');
+      setPracticeId(labelToPracticeId(exercise.practiceType));
     }
 
     setDuration(exDuration);
@@ -723,7 +860,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     setActiveCircuitId(null);
     setCircuitExerciseIndex(0);
-    setPractice('Circuit');
+    setPracticeId('circuit');
   };
 
   const handlePatternChange = (key, value) => {
@@ -1084,7 +1221,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Navigate back to home after ritual completion
     // (ritual doesn't show summary, so we reset to practice selection which shows home)
     setTimeout(() => {
-      setPractice(PRACTICES[0]); // Reset to practice selection menu
+      setPracticeId('breath'); // Reset to practice selection menu
     }, 300);
   };
 
@@ -1339,8 +1476,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 >
                   <button
                     onClick={handlePrevFx}
-                    className={`${isLight ? 'text-[#5A4D3C]/60 hover:text-[#3D3425]' : 'text-white/60 hover:text-white'} transition-colors px-2 py-1`}
-                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px' }}
+                    className="transition-colors px-2 py-1"
+                    style={{ 
+                      fontFamily: 'var(--font-display)', 
+                      fontWeight: 600, 
+                      fontSize: '16px',
+                      color: isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = isLight ? '#3D3425' : 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'}
                   >
                     ◀
                   </button>
@@ -1364,8 +1508,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   </div>
                   <button
                     onClick={handleNextFx}
-                    className={`${isLight ? 'text-[#5A4D3C]/60 hover:text-[#3D3425]' : 'text-white/60 hover:text-white'} transition-colors px-2 py-1`}
-                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px' }}
+                    className="transition-colors px-2 py-1"
+                    style={{ 
+                      fontFamily: 'var(--font-display)', 
+                      fontWeight: 600, 
+                      fontSize: '16px',
+                      color: isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = isLight ? '#3D3425' : 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'}
                   >
                     ▶
                   </button>
@@ -1433,11 +1584,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             {lastSignedErrorMs !== null && practice === "Breath & Stillness" && (
               <div
                 key={lastSignedErrorMs}
-                className="text-[11px] font-medium tracking-[0.15em] uppercase animate-fade-in-up"
+                className="font-medium uppercase animate-fade-in-up"
                 style={{
                   fontFamily: "var(--font-display)",
                   fontWeight: 600,
-                  letterSpacing: "var(--tracking-wide)",
+                  letterSpacing: "0.15em",
                   color: feedbackColor,
                   textShadow: feedbackShadow
                 }}
@@ -1573,12 +1724,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             // Journal is already open
           } else {
             // Return to home or practice selection
-            setPractice(PRACTICES[0]);
+            setPracticeId('breath');
           }
         }}
         onStartNext={(practiceType) => {
           setShowSummary(false);
-          setPractice(practiceType);
+          setPracticeId(labelToPracticeId(practiceType));
           // Auto-start the next practice
           setTimeout(() => handleStart(), 500);
         }}
@@ -1604,11 +1755,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   return (
-    <section className="w-full h-full flex flex-col items-center justify-start pt-12 pb-24 overflow-y-auto custom-scrollbar">
+    <section 
+      className="w-full h-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar"
+      style={{ paddingTop: '8px', paddingBottom: '16px' }}
+    >
       {/* Top Layer: Practice Selector */}
       <PracticeSelector 
         selectedId={practiceId}
-        onSelect={setPracticeId}
+        onSelect={handleSelectPractice}
         tokens={uiTokens}
       />
 

@@ -4,7 +4,6 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { PathSelectionGrid } from './PathSelectionGrid.jsx';
 import { PathOverviewPanel } from './PathOverviewPanel.jsx';
 import { ActivePathState } from './ActivePathState.jsx';
-import { FoundationCard } from './FoundationCard.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { CodexChamber } from './Codex/CodexChamber.jsx';
 import { Avatar } from './avatar';
@@ -17,7 +16,9 @@ import { getPathById } from '../data/navigationData.js';
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide }) {
   const { selectedPathId, activePath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
+  const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
+  const isSanctuary = displayMode === 'sanctuary';
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
   const [navModalOpen, setNavModalOpen] = useState(false);
@@ -33,25 +34,47 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8 pb-12">
+    <div
+      className="w-full max-w-6xl mx-auto"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: isSanctuary ? '32px' : '20px',
+        paddingBottom: isSanctuary ? '48px' : '32px',
+      }}
+    >
       {/* Avatar - consistent across sections */}
-      <div className="flex flex-col items-center pt-8">
+      <div
+        className="flex flex-col items-center"
+        style={{ paddingTop: isSanctuary ? '32px' : '16px' }}
+      >
         <div style={{ transform: 'scale(0.65)' }}>
           <Avatar mode="navigation" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
         </div>
       </div>
 
       {/* Cycle & Consistency System */}
-      <div className="space-y-4 pt-4">
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          paddingTop: isSanctuary ? '16px' : '8px',
+        }}
+      >
         <ConsistencyFoundation />
       </div>
 
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
       {!activePath && (
-        <div className="space-y-6 pt-8">
-          {/* Foundation Card */}
-          <FoundationCard />
-
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: isSanctuary ? '24px' : '18px',
+            paddingTop: isSanctuary ? '24px' : '12px',
+          }}
+        >
           {/* Ornamental Divider */}
           <div className="flex items-center justify-center py-2">
             <div className="flex items-center gap-4" style={{ color: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)' }}>

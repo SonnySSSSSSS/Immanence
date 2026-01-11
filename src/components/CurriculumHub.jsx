@@ -214,12 +214,7 @@ export function CurriculumHub({ onSelectDay, onClose, isInModal = false }) {
     console.log('[CurriculumHub] Rendering, isLight:', isLight, 'currentDay:', currentDay, 'isInModal:', isInModal);
 
     return (
-        <div 
-            className="px-6 py-6 space-y-6 rounded-xl"
-            style={{
-                border: isLight ? 'none' : '2px solid var(--accent-color)'
-            }}
-        >
+        <div className="px-6 py-6 space-y-6">
             {/* Subtitle */}
             <p
                 className="text-sm"

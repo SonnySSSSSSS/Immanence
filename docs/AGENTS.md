@@ -4,6 +4,13 @@ This file defines how all AI agents must operate in this repository.
 
 This file overrides any agent defaults.
 
+## Workspace Rule (Mandatory)
+
+- All agents must operate in the canonical workspace: `D:\Unity Apps\immanence-os`.
+- Do not run, edit, or back up from `.claude-worktrees/...` folders.
+- If changes are made in a worktree during an AI session, copy them back to the main folder before running or committing.
+- All dev server runs (`npm run dev`) and backups are performed from the main folder.
+
 ---
 
 ## Authority Chain
