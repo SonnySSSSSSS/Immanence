@@ -143,9 +143,9 @@ export function SacredTimeSlider({ value, onChange, options }) {
                         top: '50%',
                         transform: 'translateY(-50%)',
                         width: `${thumbPercent}%`,
-                        background: 'linear-gradient(90deg, var(--accent-color), white)',
-                        boxShadow: '0 0 8px var(--accent-30)',
-                        opacity: 0.7
+                        background: 'linear-gradient(90deg, #C9A961, #D4AF37)',
+                        boxShadow: '0 0 12px rgba(201, 169, 97, 0.6)',
+                        opacity: 0.9
                     }}
                 />
 
@@ -179,9 +179,9 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 >
                                     <path
                                         d={GLYPHS[isKey]}
-                                        fill={isActive ? 'var(--accent-40)' : 'rgba(255,255,255,0.1)'}
-                                        stroke={isActive ? 'var(--accent-color)' : 'rgba(255,255,255,0.2)'}
-                                        strokeWidth="4"
+                                        fill={isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}
+                                        stroke={isActive ? '#FFFFFF' : 'rgba(255,255,255,0.2)'}
+                                        strokeWidth="2"
                                     />
                                 </svg>
                             ) : (
@@ -190,7 +190,8 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                     style={{
                                         width: '4px',
                                         height: '4px',
-                                        background: isActive ? 'var(--accent-color)' : 'rgba(255,255,255,0.15)'
+                                        background: isActive ? '#D4AF37' : 'rgba(255,255,255,0.15)',
+                                        boxShadow: isActive ? '0 0 6px rgba(212, 175, 55, 0.8)' : 'none'
                                     }}
                                 />
                             )}
@@ -210,14 +211,26 @@ export function SacredTimeSlider({ value, onChange, options }) {
                         zIndex: 10
                     }}
                 >
+                    {/* Inner emerald core */}
+                    <div
+                        className="absolute inset-0 rounded-full transition-all duration-100"
+                        style={{
+                            background: '#00C896',
+                            boxShadow: pulseActive
+                                ? '0 0 20px rgba(0, 200, 150, 0.8)'
+                                : '0 0 12px rgba(0, 200, 150, 0.6)',
+                            transform: 'scale(0.7)'
+                        }}
+                    />
+                    {/* Outer golden ring */}
                     <div
                         className="w-full h-full rounded-full transition-all duration-100"
                         style={{
-                            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, var(--accent-color) 50%, transparent 70%)',
+                            border: '2px solid #D4AF37',
                             boxShadow: pulseActive
-                                ? '0 0 28px var(--accent-color), 0 0 48px var(--accent-50), 0 0 64px var(--accent-30)'
-                                : '0 0 16px var(--accent-50), 0 0 32px var(--accent-30)',
-                            border: '2px solid var(--accent-color)'
+                                ? '0 0 28px rgba(212, 175, 55, 0.7), 0 0 48px rgba(212, 175, 55, 0.4)'
+                                : '0 0 16px rgba(212, 175, 55, 0.5), 0 0 32px rgba(212, 175, 55, 0.3)',
+                            background: 'transparent'
                         }}
                     />
                 </div>
@@ -241,20 +254,45 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     return (
                         <div
                             key={opt}
-                            className="absolute font-semibold"
+                            className="relative"
                             style={{
-                                fontFamily: 'Inter, Outfit, sans-serif',
+                                position: 'absolute',
                                 left: `${percent}%`,
-                                transform: 'translateX(-50%)',
-                                fontSize: isKey ? '11px' : '9px',
-                                color: isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.4)',
-                                fontWeight: isSelected ? '700' : '500',
-                                textShadow: isSelected ? '0 0 12px var(--accent-40)' : 'none',
-                                letterSpacing: '0.01em',
-                                opacity: isSelected ? 1 : 0.7
+                                transform: 'translateX(-50%)'
                             }}
                         >
-                            {opt}
+                            {/* Golden ring around active number */}
+                            {isSelected && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        width: '28px',
+                                        height: '28px',
+                                        border: '2px solid #D4AF37',
+                                        borderRadius: '50%',
+                                        boxShadow: '0 0 16px rgba(213, 168, 75, 0.6)',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        zIndex: 0
+                                    }}
+                                />
+                            )}
+                            <div
+                                className="relative font-semibold"
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: isKey ? '11px' : '9px',
+                                    color: isSelected ? '#D4AF37' : 'rgba(255,255,255,0.3)',
+                                    fontWeight: isSelected ? '700' : '500',
+                                    textShadow: isSelected ? '0 0 8px rgba(212, 175, 55, 0.5)' : 'none',
+                                    letterSpacing: '0.05em',
+                                    opacity: 1,
+                                    zIndex: 1
+                                }}
+                            >
+                                {opt}
+                            </div>
                         </div>
                     );
                 })}

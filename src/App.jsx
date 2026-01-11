@@ -284,9 +284,7 @@ function App() {
         style={{
           background: isLight
             ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
-            : (displayMode === 'sanctuary'
-              ? 'linear-gradient(135deg, #0a0a12 0%, #050508 100%)'
-              : '#000'),
+            : '#000',
         }}
       >
         {/* Side mask - left side (dynamic based on display mode) */}
@@ -296,7 +294,7 @@ function App() {
             width: displayMode === 'sanctuary'
               ? 'calc((100vw - min(100vw, 820px)) / 2)'
               : 'calc((100vw - min(100vw, 430px)) / 2)',
-            background: '#000',
+            background: 'transparent',
           }}
         />
 
@@ -307,7 +305,7 @@ function App() {
             width: displayMode === 'sanctuary'
               ? 'calc((100vw - min(100vw, 820px)) / 2)'
               : 'calc((100vw - min(100vw, 430px)) / 2)',
-            background: '#000',
+            background: 'transparent',
           }}
         />
 
@@ -400,7 +398,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.17.35</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.18.0</div>
                   </div>
                 </div>
               )}
@@ -474,7 +472,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.17.35
+                        v3.18.0
                       </div>
                     </div>
                   )}

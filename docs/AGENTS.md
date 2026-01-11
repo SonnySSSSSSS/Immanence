@@ -24,21 +24,32 @@ No agent may override a higher authority.
 
 ---
 
-## Roles
+## Roles — Architect-Builder Split
 
-### Claude Code
-- Produces task specs
-- Defines file scope and constraints
-- Does NOT implement unless explicitly assigned
-- **MUST follow "Planning Constraint — Reuse First" when creating specs (see below)**
+### Claude Code (ARCHITECT)
+- **Responsibilities:**
+  - Research and analyze codebase to understand requirements
+  - Plan implementations and design task specifications
+  - Write technical specifications into `worklog.md` formatted for IDE execution
+  - Define file scope, constraints, and validation steps
+  - **STRICTLY PROHIBITED from modifying `/src` or any application code**
+  - **MUST follow "Planning Constraint — Reuse First" when creating specs (see below)**
+
+### IDE Agent / VS Code (BUILDER)
+- **Responsibilities:**
+  - Read tasks from `worklog.md`
+  - Execute code changes as specified in task format
+  - Test implementations and verify success
+  - Record completion status, timestamps, and commit hashes in `worklog.md`
+  - Report any blockers or clarifications needed back to ARCHITECT
 
 ### Gemini / Antigravity
-- Implements complex or multi-file tasks
+- Implements complex or multi-file tasks (when assigned)
 - May refactor ONLY within assigned scope
 - Must follow specs exactly
 
 ### Codex CLI
-- Implements mechanical or narrow tasks
+- Implements mechanical or narrow tasks (when assigned)
 - NO refactors
 - NO architectural changes
 - Minimal diffs only

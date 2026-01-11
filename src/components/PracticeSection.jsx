@@ -42,6 +42,8 @@ const PRACTICE_REGISTRY = {
   breath: {
     id: "breath",
     label: "Breath & Stillness",
+    labelLine1: "BREATH",
+    labelLine2: "PRACTICES",
     icon: "✦",
     supportsDuration: true,
     requiresFullscreen: false,
@@ -49,6 +51,8 @@ const PRACTICE_REGISTRY = {
   ritual: {
     id: "ritual",
     label: "Ritual Library",
+    labelLine1: "RITUAL",
+    labelLine2: "LIBRARY",
     icon: "◈",
     supportsDuration: false,
     Config: RitualSelectionDeck,
@@ -57,6 +61,8 @@ const PRACTICE_REGISTRY = {
   circuit: {
     id: "circuit",
     label: "Circuit",
+    labelLine1: "CIRCUIT",
+    labelLine2: "",
     icon: "↺",
     Config: CircuitConfig,
     supportsDuration: true,
@@ -65,6 +71,8 @@ const PRACTICE_REGISTRY = {
   cognitive_vipassana: {
     id: "cognitive_vipassana",
     label: "Insight Meditation",
+    labelLine1: "INSIGHT",
+    labelLine2: "MEDITATION",
     icon: "👁",
     supportsDuration: true,
     requiresFullscreen: true,
@@ -72,6 +80,8 @@ const PRACTICE_REGISTRY = {
   somatic_vipassana: {
     id: "somatic_vipassana",
     label: "Body Scan",
+    labelLine1: "BODY SCAN",
+    labelLine2: "",
     icon: "⌬",
     supportsDuration: true,
     requiresFullscreen: false,
@@ -79,6 +89,8 @@ const PRACTICE_REGISTRY = {
   sound: {
     id: "sound",
     label: "Sound",
+    labelLine1: "SOUND",
+    labelLine2: "",
     icon: "⌇",
     Config: SoundConfig,
     supportsDuration: true,
@@ -87,6 +99,8 @@ const PRACTICE_REGISTRY = {
   visualization: {
     id: "visualization",
     label: "Visualization",
+    labelLine1: "VISUALIZATION",
+    labelLine2: "",
     icon: "✧",
     Config: VisualizationConfig,
     supportsDuration: true,
@@ -95,6 +109,8 @@ const PRACTICE_REGISTRY = {
   cymatics: {
     id: "cymatics",
     label: "Cymatics",
+    labelLine1: "CYMATICS",
+    labelLine2: "",
     icon: "◍",
     Config: CymaticsConfig,
     supportsDuration: true,
@@ -103,6 +119,8 @@ const PRACTICE_REGISTRY = {
   photic: {
     id: "photic",
     label: "Photic Circles",
+    labelLine1: "PHOTIC",
+    labelLine2: "CIRCLES",
     icon: "☼",
     supportsDuration: false,
     Config: PhoticControlPanel,
@@ -122,7 +140,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
   const displayMode = useDisplayModeStore(s => s.mode);
   const isSanctuary = displayMode === 'sanctuary';
   const isLight = tokens?.isLight;
-  const inactiveOpacity = 0.7;
+  const inactiveOpacity = 0.85;
   const inactiveLabelColor = isLight ? 'rgba(84, 70, 55, 0.7)' : 'rgba(200, 200, 200, 0.6)';
   const inactiveIconColor = isLight ? 'rgba(96, 80, 64, 0.72)' : 'rgba(220, 220, 220, 0.65)';
   
@@ -147,8 +165,8 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
       <div 
         className="grid gap-4 justify-items-stretch"
         style={{
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          maxWidth: isSanctuary ? '520px' : '440px',
           margin: '0 auto',
           paddingLeft: '12px',
           paddingRight: '12px',
@@ -163,58 +181,49 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
               onClick={() => onSelect(id)}
               className="group relative overflow-hidden transition-all duration-300 flex flex-col items-center justify-center gap-2"
               style={{
-                fontFamily: 'Inter, Outfit, sans-serif',
-                fontSize: isSanctuary ? '11px' : '10px',
-                letterSpacing: '0.02em',
+                fontFamily: 'var(--font-display)',
+                fontSize: isSanctuary ? '10px' : '9px',
+                letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                fontWeight: 700,
-                padding: isSanctuary ? '20px 12px' : '16px 10px',
-                minHeight: isSanctuary ? '110px' : '96px',
+                fontWeight: 600,
+                padding: isSanctuary ? '24px 16px' : '20px 12px',
+                minHeight: isSanctuary ? '120px' : '105px',
                 borderRadius: '12px',
-                border: isActive ? `2px solid ${tokens.accent}` : `1px solid ${inactiveBorder}`,
-                background: isActive 
-                  ? `rgba(${isLight ? '252, 211, 77' : '255, 255, 255'}, ${isLight ? '0.15' : '0.08'})`
-                  : inactiveBackground,
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                color: isActive ? tokens.accent : inactiveLabelColor,
-                opacity: isActive ? 1 : inactiveOpacity,
-                boxShadow: isActive 
-                  ? `0 0 32px ${tokens.accent}50, 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)` 
-                  : inactiveGlow,
+                border: isActive ? '1.5px solid #C9A961' : '1px solid rgba(255, 255, 255, 0.12)',
+                background: 'rgba(10, 15, 15, 0.25)',
+                backdropFilter: 'blur(40px) saturate(150%)',
+                WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+                color: isActive ? '#D4AF37' : 'rgba(255, 255, 255, 0.6)',
+                opacity: isActive ? 1 : 0.7,
+                boxShadow: isActive ? '0 0 24px rgba(201, 169, 97, 0.5), 0 0 48px rgba(201, 169, 97, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15)' : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
                 transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.boxShadow = hoverGlow;
-                  e.currentTarget.style.background = hoverBackground;
-                  e.currentTarget.style.opacity = '0.85';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.opacity = '0.9';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.boxShadow = inactiveGlow;
-                  e.currentTarget.style.background = inactiveBackground;
                   e.currentTarget.style.opacity = `${inactiveOpacity}`;
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }
               }}
             >
               <div 
                 className="transition-transform duration-500" 
                 style={{ 
-                  fontSize: isSanctuary ? '28px' : '24px',
-                  color: isActive ? tokens.accent : inactiveIconColor,
-                  transform: isActive ? 'scale(1.15)' : 'scale(1)',
-                  textShadow: isActive ? `0 0 16px ${tokens.accent}99` : 'none',
+                  fontSize: isSanctuary ? '32px' : '28px',
+                  color: isActive ? '#D4AF37' : 'rgba(255, 255, 255, 0.4)',
+                  textShadow: isActive ? '0 0 20px rgba(212, 175, 55, 0.6)' : 'none',
+                  marginBottom: '6px'
                 }}
               >
                 {p.icon}
               </div>
-              <span className="text-center leading-snug font-bold" style={{ fontSize: isSanctuary ? '10px' : '9px', letterSpacing: '0.02em' }}>
-                {p.label}
-              </span>
+              <div className="text-center leading-tight" style={{ lineHeight: '1.4' }}>
+                <div>{p.labelLine1}</div>
+                {p.labelLine2 && <div>{p.labelLine2}</div>}
+              </div>
             </button>
           );
         })}
@@ -245,20 +254,17 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   return (
     <div
       ref={cardRef}
-      className={`relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
+      className={`machined-panel relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
       style={{
         maxWidth: 'min(620px, 94vw)',
         maxHeight: isCollapsed ? '88px' : maxHeightValue,
         overflow: isCollapsed ? 'hidden' : 'auto',
         borderRadius: '12px',
-        ...tokens.cardStyle,
-        border: `1px solid ${isCollapsed ? tokens.border : tokens.borderSelect}`,
-        boxShadow: tokens.isLight 
-          ? '0 12px 48px rgba(60,50,35,0.12)' 
-          : '0 24px 72px rgba(0,0,0,0.6)',
+        boxShadow: 'none',
+        zIndex: 1,
       }}
     >
-      <div className="absolute inset-0 pointer-events-none" style={tokens.innerGlow} />
+      <div className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none" style={{ background: 'rgba(255,255,255,0.15)' }} />
       
       {isCollapsed ? (
         <div className="h-[88px] flex items-center justify-center">
@@ -279,27 +285,40 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
           className="relative px-8 animate-in fade-in duration-300"
         >
           {/* Practice Title & Icon */}
-          <div className="flex flex-col items-center text-center" style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px', paddingTop: practiceId === 'breath' ? '8px' : '16px' }}>
+          <div className="flex flex-col items-center text-center" style={{ marginBottom: practiceId === 'breath' ? '8px' : '40px', paddingTop: practiceId === 'breath' ? '8px' : '16px' }}>
             <div 
               className="text-5xl mb-4 drop-shadow-lg"
               style={{ 
-                color: tokens.accent,
-                filter: 'drop-shadow(0 0 20px var(--accent-30))'
+                color: '#F5E6D3',
+                filter: 'drop-shadow(0 0 20px rgba(212, 175, 55, 0.5))'
               }}
             >
               {p.icon}
             </div>
             <h2 style={{ 
-              fontFamily: 'Inter, Outfit, sans-serif', 
+              fontFamily: 'var(--font-display)', 
               fontSize: '18px', 
-              fontWeight: 700,
-              letterSpacing: '-0.01em', 
+              fontWeight: 600,
+              letterSpacing: '0.15em', 
               textTransform: 'uppercase',
-              color: tokens.text,
-              textShadow: tokens.isLight ? 'none' : `0 0 20px ${tokens.accent}50`
+              color: '#F5E6D3',
+              textShadow: 'none',
+              marginBottom: practiceId === 'breath' ? '12px' : '0'
             }}>
               {p.label}
             </h2>
+            {practiceId === 'breath' && (
+              <div style={{ 
+                fontFamily: 'var(--font-display)', 
+                fontSize: '11px', 
+                fontWeight: 400,
+                letterSpacing: '0.08em',
+                color: 'rgba(245, 230, 211, 0.65)',
+                marginBottom: '20px'
+              }}>
+                Inhale 4 · Hold 4 · Exhale 4 · Hold 4
+              </div>
+            )}
             {p.id === 'ritual' && (
               <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
                 Select an invocation to begin
@@ -343,7 +362,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
           {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
           {p.supportsDuration && practiceId !== 'circuit' && (
             <div style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}>
-              <div className="font-bold uppercase text-center opacity-50" style={{ color: tokens.text, marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.3em', fontSize: '10px' }}>
+              <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
                 Sacred Duration (minutes)
               </div>
               <SacredTimeSlider 
@@ -359,24 +378,31 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             <div className="flex justify-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
               <button
                 onClick={onStart}
-                className="group px-24 py-5 transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
+                className="group transition-all duration-200 relative overflow-hidden"
                 style={{
-                   background: `linear-gradient(180deg, ${tokens.accent} 0%, ${tokens.accent}DD 100%)`,
-                   color: '#FFFFFF',
-                   fontFamily: 'Inter, Outfit, sans-serif',
-                   boxShadow: `0 0 48px ${tokens.accent}90, 0 0 28px ${tokens.accent}70, 0 8px 24px rgba(0,0,0,0.6)`,
-                   fontSize: '12px',
+                   fontFamily: 'var(--font-display)',
+                   fontSize: '11px',
                    fontWeight: 700,
-                   letterSpacing: '0.02em',
+                   letterSpacing: '0.12em',
                    textTransform: 'uppercase',
-                   border: 'none',
-                   borderRadius: '10px',
-                   paddingLeft: '32px',
-                   paddingRight: '32px',
+                   padding: '14px 48px',
+                   borderRadius: '32px',
+                   background: 'rgba(0, 0, 0, 0.4)',
+                   backdropFilter: 'blur(20px)',
+                   border: '1.5px solid #C9A961',
+                   color: '#D4AF37',
+                   boxShadow: '0 0 20px rgba(201, 169, 97, 0.4), 0 0 40px rgba(201, 169, 97, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(201, 169, 97, 0.6), 0 0 60px rgba(201, 169, 97, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(201, 169, 97, 0.4), 0 0 40px rgba(201, 169, 97, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
                 <span className="relative z-10">{practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice'}</span>
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
               </button>
             </div>
           )}

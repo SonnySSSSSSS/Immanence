@@ -11,8 +11,8 @@ export const plateauMaterial = {
   background: 'rgba(10, 10, 18, 0.7)',
   
   // Glassmorphism effect - strong blur for depth
-  backdropFilter: 'blur(24px)',
-  WebkitBackdropFilter: 'blur(24px)',
+  backdropFilter: 'blur(32px)',
+  WebkitBackdropFilter: 'blur(32px)',
 
   // Hard 1px border (crisp, not soft) - no glow
   border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -35,8 +35,8 @@ export const plateauMaterial = {
 export const plateauMaterialElevated = {
   ...plateauMaterial,
   background: 'rgba(12, 12, 20, 0.75)',
-  backdropFilter: 'blur(28px)',
-  WebkitBackdropFilter: 'blur(28px)',
+  backdropFilter: 'blur(36px)',
+  WebkitBackdropFilter: 'blur(36px)',
   border: '1px solid rgba(255, 255, 255, 0.18)',
   borderRadius: '12px',
   boxShadow: `
@@ -120,8 +120,8 @@ export const plateauMaterialClear = {
  */
 export const plateauMaterialLight = {
   background: 'rgba(255, 255, 255, 0.85)',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
   border: '1px solid var(--light-border, rgba(60, 50, 35, 0.15))',
   boxShadow: `
     0 4px 16px rgba(60, 50, 35, 0.08),

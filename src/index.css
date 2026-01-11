@@ -5,3 +5,4 @@
 body {
   @apply bg-gradient-to-b from-bgStart to-bgEnd text-white;
 }
+

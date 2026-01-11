@@ -8,7 +8,13 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ─── Gold Accent Palette ─── */
+  /* ─── Warm Gold Accent Palette (Reference Alignment) ─── */
+  --accent-gold: #D4AF37;
+  --accent-gold-light: #F5E6D3;
+  --accent-gold-border: #C9A961;
+  --accent-emerald: #00C896; /* For active state highlights */
+
+  /* ─── Gold Accent Palette (Legacy) ─── */
   --gold-bright: #fcd34d;
   --gold-mid: #f59e0b;
   --gold-deep: #b45309;
@@ -34,10 +40,9 @@
   --border-glow: rgba(253, 224, 71, 0.4);
 
   /* ─── Typography ─── */
-  --font-display: 'Cinzel', serif;
-  --font-body: 'Crimson Pro', serif;
-  --font-ui: 'Crimson Pro', serif;
-  /* Shifted from Outfit to Serif for mythic feel */
+  --font-display: 'Cinzel', 'Playfair Display', 'Georgia', serif;
+  --font-body: 'Crimson Pro', 'Georgia', serif;
+  --font-ui: 'Inter', 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* ─── Tracking (Letter Spacing) ─── */
@@ -70,8 +75,33 @@
   /* ─── Wisdom Section: Accent ─── */
   --accent-10: rgba(198, 90, 255, 0.35);
 
-  /* ─── Color Scheme Flag ─── */
+  /* --- Color Scheme Flag --- */
   --color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MACHINED PANEL — Global Nuclear Fix for SOMA Spec
+   ───────────────────────────────────────────────────────────────────────── */
+.machined-panel {
+  background: rgba(2, 5, 5, 0.15) !important;
+  backdrop-filter: blur(40px) saturate(200%) brightness(80%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(80%) !important;
+  border: 1px solid rgba(213, 168, 75, 0.5) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.soma-button {
+  background: #00A382 !important;
+  color: #FFFFFF !important;
+  border-radius: 4px !important;
+  border: none !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3) !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.05em !important;
+  font-weight: 900 !important;
+  font-family: 'Montserrat', 'Inter', 'Outfit', sans-serif !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

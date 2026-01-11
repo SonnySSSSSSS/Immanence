@@ -4,32 +4,32 @@ export const STAGE_THEMES = {
     SEEDLING: {
         name: 'Seedling',
         accent: {
-            primary: '#00A382',      // Soma Green (vibrant emerald/seafoam)
-            secondary: '#008C6E',    // Deeper soma
-            muted: '#005F4B',        // Dark teal
-            glow: 'rgba(0, 163, 130, 0.4)',
-            particleColor: '#00C9A0',
+            primary: '#D4AF37',      // Warm Gold
+            secondary: '#C9A961',    // Secondary gold
+            muted: '#A0885C',        // Muted gold
+            glow: 'rgba(212, 175, 55, 0.4)',
+            particleColor: '#F5E6D3',
         },
         text: {
-            accent: '#00A382',
-            accentMuted: 'rgba(0, 163, 130, 0.7)',
+            accent: '#D4AF37',
+            accentMuted: 'rgba(212, 175, 55, 0.7)',
         },
         ui: {
-            selectedBg: 'rgba(0, 163, 130, 0.15)',
-            selectedBorder: 'rgba(0, 163, 130, 0.4)',
-            hoverBg: 'rgba(0, 163, 130, 0.08)',
-            progressBar: '#00A382',
-            buttonGradient: 'linear-gradient(135deg, #00A382, #008C6E)',
+            selectedBg: 'rgba(212, 175, 55, 0.15)',
+            selectedBorder: 'rgba(212, 175, 55, 0.4)',
+            hoverBg: 'rgba(212, 175, 55, 0.08)',
+            progressBar: '#D4AF37',
+            buttonGradient: 'linear-gradient(135deg, #D4AF37, #C9A961)',
         },
         light: {
-            bgBase: '#F0F8F6',          // Mint cream
-            bgSurface: '#FAFDFB',       // Soft white with hint of green
-            textPrimary: '#004D3D',     // Deep teal
-            textSecondary: '#006B56',   // Medium teal
-            accent: '#00A382',          // Soma green
-            accentMuted: '#4DD4B8',     // Lighter seafoam for contrast
-            border: 'rgba(0, 163, 130, 0.25)',
-            shadowTint: 'rgba(0, 109, 86, 0.12)',
+            bgBase: '#F8F6F0',          // Warm cream
+            bgSurface: '#FDFCF8',       // Soft white with warm tint
+            textPrimary: '#4D3D20',     // Deep brown
+            textSecondary: '#6B5628',   // Medium brown
+            accent: '#D4AF37',          // Warm gold
+            accentMuted: '#E8D4A0',     // Lighter gold for contrast
+            border: 'rgba(212, 175, 55, 0.25)',
+            shadowTint: 'rgba(107, 86, 40, 0.12)',
         }
     },
 

@@ -14,15 +14,18 @@ export function BreathPathChart({ inhale = 4, hold1 = 4, exhale = 4, hold2 = 4, 
     const totalCounts = safeIn + safeH1 + safeEx + safeH2 || 1;
 
     const baseY = 55;
-    const peakY = 18;
+    const amp = 18; // amplitude for sine
     const endX = 100;
 
-    const x1 = (safeIn / totalCounts) * endX;
-    const x2 = x1 + (safeH1 / totalCounts) * endX;
-    const x3 = x2 + (safeEx / totalCounts) * endX;
-    const x4 = endX;
-
-    const d = `M 0 ${baseY} L ${x1.toFixed(2)} ${peakY} L ${x2.toFixed(2)} ${peakY} L ${x3.toFixed(2)} ${baseY} L ${x4} ${baseY}`;
+    // Generate a sharp sine curve across the full width
+    const points = [];
+    const steps = 100;
+    for (let i = 0; i <= steps; i++) {
+      const x = (i / steps) * endX;
+      const y = baseY - amp * Math.sin((2 * Math.PI * x) / endX);
+      points.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`);
+    }
+    const d = points.join(' ');
     
     // Calculate cumulative timings for each segment
     const segmentTimings = [
@@ -78,27 +81,22 @@ export function BreathPathChart({ inhale = 4, hold1 = 4, exhale = 4, hold2 = 4, 
   return (
     <div className="w-full flex justify-center" style={{ marginBottom: '20px' }}>
       <svg viewBox="0 0 100 70" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', maxWidth: '520px' }}>
-        <defs>
-          <linearGradient id="breathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={tokens.accent || 'var(--accent-color)'} stopOpacity="0.35" />
-            <stop offset="100%" stopColor={tokens.accent || 'var(--accent-color)'} stopOpacity="0.1" />
-          </linearGradient>
-        </defs>
+        <defs></defs>
         <path
           ref={pathRef}
           d={pathD}
           fill="none"
-          stroke="url(#breathGradient)"
-          strokeWidth="2"
+          stroke="rgba(245, 230, 211, 0.4)"
+          strokeWidth="0.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.35))' }}
+          style={{ filter: 'none' }}
         />
         <circle
           ref={dotRef}
           r="2.4"
-          fill={tokens.accent || 'var(--accent-color)'}
-          style={{ filter: `drop-shadow(0 0 8px ${(tokens.accent || 'var(--accent-color)')}80)` }}
+          fill="#00C896"
+          style={{ filter: 'drop-shadow(0 0 4px rgba(0, 200, 150, 0.8))' }}
         />
       </svg>
     </div>
