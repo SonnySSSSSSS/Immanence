@@ -231,7 +231,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
           const p = PRACTICE_REGISTRY[id];
           const isActive = selectedId === id;
           const IconComponent = PracticeIcons[id] || PracticeIcons.breath;
-          const iconColor = isActive ? '#D4AF37' : 'rgba(212, 175, 55, 0.6)';
+          const iconColor = isActive ? 'var(--accent-color)' : 'var(--accent-60)';
           
           return (
             <button
@@ -250,29 +250,29 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                 borderRadius: '16px',
                 // Glassmorphic background with neon edge glow
                 background: isActive 
-                  ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.18) 0%, rgba(212, 175, 55, 0.12) 50%, rgba(15, 20, 25, 0.25) 100%)'
+                  ? 'linear-gradient(135deg, var(--accent-20) 0%, var(--accent-15) 50%, rgba(15, 20, 25, 0.25) 100%)'
                   : 'linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)',
                 backdropFilter: isActive ? 'blur(24px) saturate(180%)' : 'blur(16px) saturate(120%)',
                 WebkitBackdropFilter: isActive ? 'blur(24px) saturate(180%)' : 'blur(16px) saturate(120%)',
                 border: isActive 
-                  ? '1px solid rgba(212, 175, 55, 0.8)' 
+                  ? '1px solid var(--accent-80)' 
                   : '1px solid rgba(255, 255, 255, 0.12)',
                 // Neon edge glow with multiple shadow layers for depth
                 boxShadow: isActive 
-                  ? `0 0 2px rgba(212, 175, 55, 1),
-                     0 0 8px rgba(212, 175, 55, 0.8),
-                     0 0 16px rgba(212, 175, 55, 0.6),
-                     0 0 32px rgba(212, 175, 55, 0.4),
+                  ? `0 0 2px var(--accent-color),
+                     0 0 8px var(--accent-80),
+                     0 0 16px var(--accent-60),
+                     0 0 32px var(--accent-40),
                      0 8px 32px rgba(0, 0, 0, 0.5),
-                     inset 0 0 20px rgba(212, 175, 55, 0.15),
+                     inset 0 0 20px var(--accent-15),
                      inset 0 1px 0 rgba(255, 255, 255, 0.3),
                      inset 0 -1px 0 rgba(0, 0, 0, 0.5)` 
                   : `0 0 1px rgba(255, 255, 255, 0.3),
                      0 8px 24px rgba(0, 0, 0, 0.3),
                      0 2px 8px rgba(0, 0, 0, 0.2),
                      inset 0 1px 0 rgba(255, 255, 255, 0.08)`,
-                color: isActive ? '#E9C35A' : 'rgba(212, 175, 55, 0.6)',
-                textShadow: isActive ? '0 0 20px rgba(233, 195, 90, 1), 0 0 12px rgba(233, 195, 90, 0.8), 0 2px 4px rgba(0, 0, 0, 0.8)' : '0 1px 2px rgba(0, 0, 0, 0.5)',
+                color: isActive ? 'var(--accent-color)' : 'var(--accent-60)',
+                textShadow: isActive ? '0 0 20px var(--accent-80), 0 0 12px var(--accent-60), 0 2px 4px rgba(0, 0, 0, 0.8)' : '0 1px 2px rgba(0, 0, 0, 0.5)',
                 opacity: isActive ? 1 : 0.75,
                 transition: 'all 400ms cubic-bezier(0.4, 0, 0.2, 1)',
                 transform: isActive ? 'translateY(-4px) scale(1.02)' : 'translateY(0)',
@@ -282,15 +282,15 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                   e.currentTarget.style.opacity = '1';
                   e.currentTarget.style.transform = 'translateY(-3px) scale(1.01)';
                   e.currentTarget.style.backdropFilter = 'blur(20px) saturate(150%)';
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%)';
-                  e.currentTarget.style.border = '1px solid rgba(212, 175, 55, 0.5)';
-                  e.currentTarget.style.boxShadow = `0 0 2px rgba(212, 175, 55, 0.8),
-                                                      0 0 8px rgba(212, 175, 55, 0.6),
-                                                      0 0 16px rgba(212, 175, 55, 0.4),
+                  e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent-15) 0%, rgba(255, 255, 255, 0.04) 100%)';
+                  e.currentTarget.style.border = '1px solid var(--accent-50)';
+                  e.currentTarget.style.boxShadow = `0 0 2px var(--accent-80),
+                                                      0 0 8px var(--accent-60),
+                                                      0 0 16px var(--accent-40),
                                                       0 8px 28px rgba(0, 0, 0, 0.4),
-                                                      inset 0 0 15px rgba(212, 175, 55, 0.1),
+                                                      inset 0 0 15px var(--accent-10),
                                                       inset 0 1px 0 rgba(255, 255, 255, 0.15)`;
-                  e.currentTarget.style.textShadow = '0 0 12px rgba(233, 195, 90, 0.8), 0 0 8px rgba(233, 195, 90, 0.6)';
+                  e.currentTarget.style.textShadow = '0 0 12px var(--accent-60), 0 0 8px var(--accent-40)';
                 }
               }}
               onMouseLeave={(e) => {
@@ -311,7 +311,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                 style={{ 
                   marginBottom: '8px',
                   filter: isActive 
-                    ? 'drop-shadow(0 0 4px rgba(212, 175, 55, 1)) drop-shadow(0 0 8px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 12px rgba(212, 175, 55, 0.6))' 
+                    ? 'drop-shadow(0 0 4px var(--accent-color)) drop-shadow(0 0 8px var(--accent-80)) drop-shadow(0 0 12px var(--accent-60))' 
                     : 'none',
                 }}
               >
@@ -372,13 +372,13 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
           borderRadius: '20px',
           padding: '24px',
           minHeight: isCollapsed ? '88px' : 'auto',
-          border: '1px solid rgba(212, 175, 55, 0.35)',
+          border: '1px solid var(--accent-30)',
           boxShadow: `
             0 12px 48px rgba(0, 0, 0, 0.6),
-            0 4px 16px rgba(212, 175, 55, 0.12),
+            0 4px 16px var(--accent-15),
             inset 0 1px 0 rgba(255, 255, 255, 0.15),
             inset 0 -1px 0 rgba(0, 0, 0, 0.8),
-            inset 0 0 60px rgba(212, 175, 55, 0.06)
+            inset 0 0 60px var(--accent-10)
           `,
         }}
       >
@@ -390,7 +390,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             left: '8px',
             right: '8px',
             bottom: '8px',
-            border: '1px solid rgba(212, 175, 55, 0.25)',
+            border: '1px solid var(--accent-25)',
             borderRadius: '10px',
           }}
         />
@@ -398,22 +398,22 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
         {/* Corner flourishes - top left */}
         <div className="absolute pointer-events-none" style={{ top: '0', left: '0', width: '40px', height: '40px' }}>
           <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1" fill="none"/>
+            <path d="M0 20 Q0 0 20 0" stroke="var(--accent-60)" strokeWidth="2" fill="none"/>
+            <path d="M5 15 Q5 5 15 5" stroke="var(--accent-40)" strokeWidth="1" fill="none"/>
           </svg>
         </div>
         {/* Corner flourishes - top right */}
         <div className="absolute pointer-events-none" style={{ top: '0', right: '0', width: '40px', height: '40px', transform: 'scaleX(-1)' }}>
           <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1" fill="none"/>
+            <path d="M0 20 Q0 0 20 0" stroke="var(--accent-60)" strokeWidth="2" fill="none"/>
+            <path d="M5 15 Q5 5 15 5" stroke="var(--accent-40)" strokeWidth="1" fill="none"/>
           </svg>
         </div>
         {/* Corner flourishes - bottom left */}
         <div className="absolute pointer-events-none" style={{ bottom: '0', left: '0', width: '40px', height: '40px', transform: 'scaleY(-1)' }}>
           <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0 20 Q0 0 20 0" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" fill="none"/>
-            <path d="M5 15 Q5 5 15 5" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1" fill="none"/>
+            <path d="M0 20 Q0 0 20 0" stroke="var(--accent-60)" strokeWidth="2" fill="none"/>
+            <path d="M5 15 Q5 5 15 5" stroke="var(--accent-40)" strokeWidth="1" fill="none"/>
           </svg>
         </div>
         {/* Corner flourishes - bottom right */}
@@ -2096,12 +2096,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             padding: '12px 16px',
             minHeight: '48px',
             borderRadius: '12px',
-            border: practiceId === 'circuit' ? '1.5px solid rgba(201, 169, 97, 0.7)' : '1px solid rgba(255, 255, 255, 0.08)',
+            border: practiceId === 'circuit' ? '1.5px solid var(--accent-70)' : '1px solid rgba(255, 255, 255, 0.08)',
             background: 'rgba(15, 20, 25, 0.12)',
             backdropFilter: 'blur(32px) saturate(140%)',
             WebkitBackdropFilter: 'blur(32px) saturate(140%)',
-            color: practiceId === 'circuit' ? '#D4AF37' : 'rgba(255, 255, 255, 0.6)',
-            textShadow: practiceId === 'circuit' ? '0 0 12px rgba(212, 175, 55, 0.6), 0 0 24px rgba(212, 175, 55, 0.3)' : 'none',
+            color: practiceId === 'circuit' ? 'var(--accent-color)' : 'rgba(255, 255, 255, 0.6)',
+            textShadow: practiceId === 'circuit' ? '0 0 12px var(--accent-40), 0 0 24px var(--accent-20)' : 'none',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
@@ -2117,7 +2117,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             }
           }}
         >
-          <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.12em', color: '#D4AF37' }}>CIRCUIT TRAINING</span>
+          <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent-color)' }}>CIRCUIT TRAINING</span>
         </button>
       </div>
 
