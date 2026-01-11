@@ -47,43 +47,1149 @@ Each task must follow this structure:
 
 ---
 
-## 2026-01-11 20:49 - Antigravity (Architect) - PENDING
+## 2026-01-11 23:55 - Antigravity (Architect) - IN_PROGRESS
 
-**Task**: PRACTICE SECTION UI COMPLETE REBUILD — From Scratch to Reference Design
+**Task**: PRACTICE UI OVERHAUL — Reference Design Implementation
 
-**Status**: PENDING (URGENT - REPLACES ALL PREVIOUS UI PLANS)
+**Status**: IN_PROGRESS (Asset Generation Completed)
 
-**CRITICAL NOTE**: All previous UI transformation plans are OBSOLETE. This is a COMPLETE REBUILD from scratch to match the reference design exactly. The builder should treat this as starting fresh on the PracticeSection UI.
+**Reference**: Stitch Design `screens/9f3a3abfc6ff4002a594786213df6883`
 
 ---
 
-## 📊 REFERENCE IMAGE ANALYSIS
+## 📊 GAP ANALYSIS: Current vs. Reference
 
-### Image 1 (Current State) — Problems Identified:
+| Element                   | Current State                      | Reference Target                                       | Severity     |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------ | ------------ |
+| **Header**                | "CIRCUIT TRAINING" button          | "ANCIENT-MODERN MEDITATION SETUP" title                | Medium       |
+| **Practice Cards**        | Dark olive/brown, flat             | Slate-blue metallic, beveled, inner glow               | **Critical** |
+| **Card Icons**            | Simple gold filled                 | Gold line-art with fine detail                         | High         |
+| **Options Panel Frame**   | Plain dark border                  | Ornate gold Art Deco frame with corner flourishes      | **Critical** |
+| **Breath Visualization**  | Trapezoidal line graph             | Flowing 3D ribbon wave (multiple parallel sine lines)  | **Critical** |
+| **Phase Inputs**          | Simple number boxes                | Decorative double-border boxes, Roman numerals (I, II) | Medium       |
+| **Duration Slider**       | Dark track, emerald thumb, numbers | Gold track, moon thumb, star & dot decorations         | High         |
+| **Begin Practice Button** | Olive gradient, inside panel       | Solid metallic gold, separated, prominent              | High         |
 
-1. **Grid Layout Wrong**: 2-column layout with unequal card sizes (first card larger)
-2. **Cards Inconsistent**: Heavy green-tinted glassmorphism clashing with background
-3. **Options Panel Cluttered**:
-   - 4 circular phase counters with "INHALE", "HOLD 1", "EXHALE", "HOLD 2" labels
-   - Complex multi-segment breath path chart
-   - Yellow/gold timeline with scattered dot markers
-4. **Visual Hierarchy Confused**: Too many competing elements
-5. **Missing Light FX**: No subtle glows, no ambient lighting effects
+---
 
-### Image 2 (Target State) — Excellence Points:
+## 🎨 REQUIRED ASSETS
 
-1. **Perfect 4×2 Grid**: 8 equal-sized cards in 2 rows of 4
-2. **Subtle Glassmorphism**: Cards respect the cosmic background, don't overwhelm it
-3. **Minimal Options Panel**:
-   - Small gold 4-pointed star icon at top
-   - "BREATH & STILLNESS" title in elegant small caps
-   - Simple subtitle: "Inhale 4 · Hold 4 · Exhale 4 · Hold 4" (no counters)
-   - Clean SVG wave/mountain visualization with teal glow
-   - Horizontal duration picker with selected value (10) prominently large
-   - Full-width "BEGIN PRACTICE" pill button
-4. **Proportional Icons**: Icons sized relative to card dimensions (~28-32px in ~120px card)
-5. **Golden Text Glow**: Selected card label has golden luminous text-shadow
-6. **Lighting FX**: Subtle ambient glows on active elements, specular highlights
+### Asset 1: Slate-Blue Metallic Card Background
+
+- **Type**: PNG (with transparency) or 9-slice
+- **Dimensions**: ~120x100px base (scalable)
+- **Style**: Metallic slate-blue/gray gradient, beveled edges, subtle inner shadow
+- **Source**: ComfyUI generation with prompt:
+  ```
+  Slate blue metallic UI card, beveled edges, subtle inner glow, dark mode interface element,
+  clean geometric, no text, centered, isolated on transparent background, UI asset
+  ```
+
+### Asset 2: Ornate Gold Frame for Options Panel
+
+- **Type**: PNG (with transparency) or SVG
+- **Dimensions**: ~400x500px (will be scaled)
+- **Style**: Art Deco gold frame with decorative corner flourishes, fine gold lines, subtle glow
+- **Source**: ComfyUI generation with prompt:
+  ```
+  Ornate Art Deco gold decorative frame, intricate corner flourishes, thin gold lines,
+  dark transparent center, luxury UI element, baroque details, isolated on transparent background
+  ```
+
+### Asset 3: Practice Icons (8 Required)
+
+- **Type**: SVG (hand-traced or AI-assisted)
+- **Style**: Thin gold stroke (1-2px), line-art only, no fills
+- **Icons Needed**:
+  1. Breath Practices (wind/spiral)
+  2. Ritual Library (book/pyramid)
+  3. Insight Meditation (lotus/figure)
+  4. Body Scan (human outline)
+  5. Sound (speaker/wave)
+  6. Visualization (eye/sun)
+  7. Cymatics (mandala/circles)
+  8. Photic Circles (concentric rings)
+- **Source**: Manual SVG creation or Figma export
+
+### Asset 4: Moon Icon for Slider Thumb
+
+- **Type**: SVG
+- **Dimensions**: 24x24px
+- **Style**: Crescent moon with subtle glow
+- **Source**: Manual SVG creation
+
+### Asset 5: Decorative Stars
+
+- **Type**: SVG
+- **Dimensions**: 8x8px and 12x12px variants
+- **Style**: 4-point or 6-point stars, gold fill
+- **Source**: Manual SVG creation
+
+---
+
+## 🔧 IMPLEMENTATION PHASES
+
+### Phase 1: Practice Card Overhaul
+
+**Priority**: Critical
+**Effort**: Medium
+
+**Tasks**:
+1.1. [x] Generate slate-blue card background asset via ComfyUI
+1.2. [x] Replace current card background styling with asset-based approach
+1.3. [x] Apply inner shadow and bevel effect via CSS
+1.4. [x] Update hover/selected states to match reference (brighter glow on selection)
+1.5. [x] Adjust card spacing to match reference grid
+
+**Files to Modify**:
+
+- `src/components/PracticeSection.jsx` — PracticeSelector card styling
+- `public/assets/ui/` — New card background assets
+
+**Acceptance Criteria**:
+
+- [ ] Cards have slate-blue metallic appearance
+- [ ] Selected card has gold border glow
+- [ ] Hover state shows subtle brightness increase
+- [ ] Cards align in 2x4 grid with consistent spacing
+
+---
+
+### Phase 2: Icon Refresh
+
+**Priority**: High
+**Effort**: Medium
+
+**Tasks**:
+2.1. [x] Create or source 8 line-art SVG icons matching reference style
+2.2. [x] Replace current icon set in PRACTICE_REGISTRY or inline
+2.3. [x] Ensure icons are gold stroke on transparent background
+2.4. [x] Verify icons render correctly at multiple sizes
+
+**Files to Modify**:
+
+- `src/components/PracticeSection.jsx` — Icon rendering
+- `src/assets/icons/practice/` — New icon SVGs (create directory if needed)
+
+**Acceptance Criteria**:
+
+- [ ] All 8 icons match reference line-art style
+- [ ] Icons are SVG with configurable stroke color
+- [ ] Icons scale cleanly from 24px to 48px
+
+---
+
+### Phase 3: Ornate Frame for Options Panel
+
+**Priority**: Critical
+**Effort**: High
+
+**Tasks**:
+3.1. [x] Generate ornate gold frame asset via ComfyUI
+3.2. [x] Implement frame as positioned background image or border-image
+3.3. [x] Ensure frame scales correctly across Hearth and Sanctuary modes
+3.4. [x] Add subtle gold glow to frame edges
+
+**Files to Modify**:
+
+- `src/components/PracticeSection.jsx` — PracticeOptionsCard container
+- `public/assets/ui/` — Frame asset
+
+**Acceptance Criteria**:
+
+- [ ] Options panel has ornate gold frame
+- [ ] Frame corners have decorative flourishes
+- [ ] Frame does not clip or distort on resize
+- [ ] Inner content has appropriate padding from frame
+
+---
+
+### Phase 4: Breath Ribbon Visualization
+
+**Priority**: Critical
+**Effort**: High
+
+**Tasks**:
+4.1. Replace `BreathCycleGraph.jsx` with new `BreathRibbon.jsx` component
+4.2. Implement flowing sine wave with 3-5 parallel lines
+4.3. Add subtle animation (gentle wave motion)
+4.4. Use gold gradient stroke with glow effect
+4.5. Ensure wave responds to breath pattern values
+
+**Files to Modify**:
+
+- `src/components/BreathCycleGraph.jsx` — Replace entirely or refactor
+- `src/components/BreathRibbon.jsx` — New component (create)
+
+**Implementation Notes**:
+
+```jsx
+// Concept: Multiple offset sine waves
+const numLines = 5;
+const paths = [];
+for (let i = 0; i < numLines; i++) {
+  const yOffset = i * 4; // Vertical spacing between lines
+  const phase = i * 0.1; // Slight phase offset for ribbon effect
+  // Generate sine path with offset
+}
+```
+
+**Acceptance Criteria**:
+
+- [ ] Visualization shows flowing ribbon (3-5 parallel sine waves)
+- [ ] Lines have gold gradient stroke
+- [ ] Subtle glow effect on lines
+- [ ] Wave animates smoothly (optional: responds to breath phase)
+
+---
+
+### Phase 5: Phase Input Styling
+
+**Priority**: Medium
+**Effort**: Low
+
+**Tasks**:
+5.1. Add decorative double-border to input boxes
+5.2. Change "HOLD 1" / "HOLD 2" to "HOLD I" / "HOLD II" (Roman numerals)
+5.3. Center-align labels and values
+5.4. Apply gold border with subtle corner accents
+
+**Files to Modify**:
+
+- `src/components/PracticeSection.jsx` — Breath phase input rendering
+
+**Acceptance Criteria**:
+
+- [ ] Inputs have decorative double-line gold borders
+- [ ] Labels use Roman numerals (I, II)
+- [ ] Values are large, centered, and easily readable
+
+---
+
+### Phase 6: Duration Slider Redesign
+
+**Priority**: High
+**Effort**: Medium
+
+**Tasks**:
+6.1. [x] Create moon icon SVG for slider thumb
+6.2. [x] Create star decoration SVGs
+6.3. Replace current slider track with gold gradient + dot pattern
+6.4. Position stars at track endpoints
+6.5. Style thumb as moon icon with glow
+
+**Files to Modify**:
+
+- `src/components/SacredTimeSlider.jsx` — Complete restyle
+- `src/assets/icons/` — Moon and star SVGs
+
+**Acceptance Criteria**:
+
+- [ ] Slider thumb is a crescent moon icon
+- [ ] Track has gold gradient with dot pattern
+- [ ] Decorative stars at track ends
+- [ ] Selected value displays prominently (large number)
+
+---
+
+### Phase 7: Begin Practice Button
+
+**Priority**: High
+**Effort**: Low
+
+**Tasks**:
+7.1. [x] Move button outside/below the options panel
+7.2. [x] Apply solid metallic gold gradient (not theme-dependent)
+7.3. [x] Increase button prominence (larger, more padding)
+7.4. [x] Add subtle metallic texture or highlight
+
+**Files to Modify**:
+
+- `src/components/PracticeSection.jsx` — Button positioning and styling
+
+**Button Styling**:
+
+```css
+background: linear-gradient(180deg, #d4af37 0%, #b8962e 50%, #9a7b24 100%);
+color: #1a1a1a;
+font-weight: 700;
+letter-spacing: 0.15em;
+padding: 16px 48px;
+border-radius: 4px; /* Less rounded than current */
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3),
+  inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+```
+
+**Acceptance Criteria**:
+
+- [ ] Button is solid metallic gold
+- [ ] Button is separated from options panel
+- [ ] Button spans full width of container
+- [ ] Text is dark and highly readable
+
+---
+
+### Phase 8: Header Text (Optional)
+
+**Priority**: Low
+**Effort**: Low
+
+**Tasks**:
+8.1. Add "ANCIENT-MODERN MEDITATION SETUP" heading above card grid
+8.2. Style with appropriate typography and spacing
+
+**Files to Modify**:
+
+- `src/components/PracticeSection.jsx` — Add header element
+
+**Acceptance Criteria**:
+
+- [ ] Header text visible above card grid
+- [ ] Typography matches reference (gold, serif or display font)
+
+---
+
+## 📁 FILES TO MODIFY (Summary)
+
+| File                                  | Changes                           |
+| ------------------------------------- | --------------------------------- |
+| `src/components/PracticeSection.jsx`  | Cards, inputs, button, layout     |
+| `src/components/BreathCycleGraph.jsx` | Replace with ribbon visualization |
+| `src/components/SacredTimeSlider.jsx` | Complete restyle                  |
+| `src/components/BreathRibbon.jsx`     | New component (create)            |
+| `public/assets/ui/`                   | Card backgrounds, frame asset     |
+| `src/assets/icons/practice/`          | 8 new line-art icons              |
+| `src/assets/icons/`                   | Moon, star SVGs                   |
+
+---
+
+## ⚠️ FILES NOT TO MODIFY
+
+- `src/context/ThemeContext.jsx` — Theme logic should remain unchanged
+- `src/theme/stageColors.js` — Stage colors should remain unchanged
+- `src/App.jsx` — No changes until final version bump
+
+---
+
+## ✅ ACCEPTANCE CRITERIA (Final)
+
+- [ ] Practice cards match reference: slate-blue metallic with beveled edges
+- [ ] All 8 icons are gold line-art style
+- [ ] Options panel has ornate gold Art Deco frame
+- [ ] Breath visualization is flowing ribbon (multiple sine waves)
+- [ ] Phase inputs have decorative borders and Roman numerals
+- [ ] Duration slider has moon thumb, star decorations, dot track
+- [ ] Begin Practice button is solid metallic gold, separated from panel
+- [ ] All elements align and scale correctly in Hearth and Sanctuary modes
+- [ ] `npm run build` completes with no errors
+- [ ] Version bump: v3.24.0
+
+---
+
+## 🔄 EXECUTION ORDER
+
+1. **Asset Generation** (Phase 1.1, 2.1, 3.1, 6.1-6.2) — Generate all required assets first
+2. **Card Overhaul** (Phase 1) — Establish new visual foundation
+3. **Icon Refresh** (Phase 2) — Update all practice icons
+4. **Frame Implementation** (Phase 3) — Apply ornate frame to options panel
+5. **Slider Redesign** (Phase 6) — Restyle duration slider
+6. **Ribbon Visualization** (Phase 4) — Replace breath graph
+7. **Input Styling** (Phase 5) — Apply decorative borders
+8. **Button Styling** (Phase 7) — Finalize begin button
+9. **Polish** (Phase 8 + testing) — Header, alignment, final verification
+
+---
+
+## 💬 COMMIT MESSAGE (Upon Completion)
+
+```
+feat(practice): Complete UI overhaul to match reference design
+
+CARDS:
+- Slate-blue metallic background with bevel effect
+- Gold line-art icons for all 8 practice types
+- Selection glow and hover states
+
+OPTIONS PANEL:
+- Ornate Art Deco gold frame with corner flourishes
+- Flowing ribbon breath visualization (multi-sine wave)
+- Decorative double-border phase inputs with Roman numerals
+
+SLIDER:
+- Moon icon thumb with glow
+- Gold track with dot pattern
+- Star decorations at endpoints
+
+BUTTON:
+- Solid metallic gold gradient
+- Separated from panel, full-width
+- High contrast text
+
+Version: v3.24.0
+
+🤖 Generated with Antigravity
+```
+
+---
+
+## 2026-01-11 22:30 - Antigravity (Architect) - COMPLETED
+
+**Task**: PRACTICE SECTION UI — Phase 3: Final Alignment & Precision Controls
+
+**Status**: COMPLETED
+
+---
+
+## 📊 CURRENT STATE ANALYSIS (Latest User Feedback)
+
+### Refinements Needed:
+
+1. **Circuit Training Button**:
+   - ✅ Remove the lightning bolt icon.
+   - ✅ Make it shorter (reduce vertical padding).
+2. **Breath Graph Animation**:
+   - ✅ Dot MUST follow the trapezoidal shape accurately.
+   - ✅ Timing MUST be synchronized: the dot takes the exact seconds assigned for each phase (Inhale, Hold 1, Exhale, Hold 2).
+3. **Breath Controls**:
+   - ✅ REMOVE the plus (+) and minus (–) buttons.
+   - ✅ IMPLEMENT direct number inputs (1-60 range).
+4. **Begin Practice Button**:
+   - ✅ Fill the button with the current accent color (`var(--accent-primary)`).
+5. **Layout Unity**:
+   - ✅ All sections (Circuit, Grid, Options Panel) must have identical width and alignment.
+
+---
+
+## 🔧 PHASE 1: UNIFORM WIDTH & COMPONENT REFINEMENT
+
+### Task 1.1: Define Unified Layout Container
+
+**File**: `src/components/PracticeSection.jsx`
+
+```javascript
+const UI_MAX_WIDTH = "560px";
+```
+
+Apply this `maxWidth: UI_MAX_WIDTH` to the `Circuit Training` button container, the grid, and the options panel.
+
+### Task 1.2: Refine Circuit Training Button
+
+**File**: `src/components/PracticeSection.jsx`
+
+- Remove icon.
+- Reduce padding to `10px 24px`.
+
+---
+
+## 🔧 PHASE 2: PRECISION BREATH CONTROLS
+
+### Task 2.1: Implement Direct Inputs
+
+**File**: `src/components/PracticeSection.jsx` (within `PracticeOptionsCard`)
+
+- Replace the steppers with `<input type="number" min="1" max="60" />`.
+- Hide spin-buttons using CSS.
+- Center text, font size `18px`.
+
+---
+
+## 🔧 PHASE 3: SYNCHRONIZED TRAPEZOIDAL GRAPH
+
+### Task 3.1: Precision Animated Dot
+
+**File**: `src/components/BreathCycleGraph.jsx`
+
+The dot must spend exactly `inhale` seconds on the rise, `hold1` on the plateau, etc.
+
+**Animation Logic**:
+
+```javascript
+const totalTime = inhale + hold1 + exhale + hold2;
+const t1 = inhale / totalTime;
+const t2 = (inhale + hold1) / totalTime;
+const t3 = (inhale + hold1 + exhale) / totalTime;
+const keyTimes = `0; ${t1}; ${t2}; ${t3}; 1`;
+```
+
+**Implementation**:
+
+```javascript
+<circle r="5" fill="var(--accent-primary)">
+  <animateMotion
+    dur={`${totalTime}s`}
+    repeatCount="indefinite"
+    path={path}
+    keyTimes={keyTimes}
+    calcMode="linear"
+  />
+</circle>
+```
+
+---
+
+## 🔧 PHASE 4: ACCENT-FILLED BEGIN BUTTON
+
+### Task 4.1: Fill Begin Practice Button
+
+**File**: `src/components/PracticeSection.jsx`
+
+- `background`: `var(--accent-primary)`.
+- Use contrasting dark color for the label text.
+
+---
+
+## 🔧 PHASE 5: PARTICLE FIELD ELEVATION
+
+### Task 5.1: Raise Particle Field
+
+**File**: `src/components/Background.jsx` or similar.
+
+- Increase the height of the particle source zone by 30%.
+
+---
+
+## ✅ ACCEPTANCE CRITERIA
+
+### Circuit Button:
+
+- [ ] NO icon.
+- [ ] Compact height.
+- [ ] Aligned perfectly with sections below.
+
+### Breath Controls:
+
+- [ ] NO +/– buttons.
+- [ ] Direct number inputs (1-60).
+- [ ] Changes reflect instantly in graph.
+
+### Breath Graph:
+
+- [ ] Trapezoidal shape matches durations.
+- [ ] Dot follows the line exactly.
+- [ ] Dot takes specified seconds for each segment.
+
+### General:
+
+- [ ] Begin Practice button is filled with accent color.
+- [ ] All components share identical `560px` max-width.
+- [ ] Particles extend 30% higher than before.
+- [ ] Version bump: v3.22.0
+
+---
+
+## 📁 FILES TO MODIFY
+
+- `src/components/PracticeSection.jsx`
+- `src/components/BreathCycleGraph.jsx`
+- `src/components/Background.jsx` (or `IndrasNet.jsx`)
+- `src/App.jsx` — Version bump to v3.22.0
+
+---
+
+## 💬 COMMIT MESSAGE
+
+```
+feat(practice): Final precision UI alignment
+
+- Uniform width (560px) for all components
+- Direct numeric inputs (1-60) for breath phases
+- Synchronized trapezoidal graph animation using keyTimes
+- Refined Circuit Training button (no icon, compact)
+- Accent-filled Begin Practice button
+- Extended particle field height by 30%
+
+Version: v3.22.0
+
+🤖 Generated with Antigravity
+```
+
+---
+
+## 🔄 PREVIOUS TASKS — OBSOLETE
+
+## 2026-01-11 21:41 - Antigravity (Architect) - OBSOLETE
+
+**Task**: PRACTICE SECTION UI — Phase 3: Final Alignment
+
+**Status**: OBSOLETE (REPLACED BY 22:00 TASK)
+
+---
+
+## 📊 CURRENT STATE ANALYSIS (Screenshot 2026-01-11 21:41)
+
+### What's Working:
+
+- ✅ Circuit Training button is now full-width at top
+- ✅ 2×4 grid of 8 practice cards implemented
+- ✅ Basic golden styling on selected card
+- ✅ Options panel has translucent background
+- ✅ Begin Practice button exists
+
+### 🔴 CRITICAL ISSUES REMAINING:
+
+#### Issue 1: PARTICLES TOO LOW
+
+- **Current**: Particles confined to bottom ~15% of screen
+- **Target**: Particles should extend **30% higher** than current
+- **Problem**: The cosmic particle field ends abruptly, creating a hard visual cutoff
+
+#### Issue 2: BREATH GRAPH NOT CONNECTED TO INPUTS
+
+- **Current**: Graph shows a static sine-wave pattern with fixed shape
+- **Missing**: NO input controls for Inhale/Hold1/Exhale/Hold2 durations
+- **Target**:
+  1. Four number inputs (or steppers) for the 4 breath phases
+  2. Graph shape dynamically updates based on those values
+  3. Subtitle "Inhale 4 · Hold 4 · Exhale 4 · Hold 4" should reflect actual input values
+
+#### Issue 3: INCONSISTENT COMPONENT WIDTHS
+
+- **Current**: Circuit button, grid, and options panel have DIFFERENT widths
+- **Target**: All three components should have the EXACT SAME width
+- **Visual**: Creates a misaligned, unprofessional appearance
+
+#### Issue 4: GRAPH IS SINE WAVE, NOT TRAPEZOIDAL
+
+- **Current**: Smooth continuous sine wave (~~~)
+- **Target**: 4-phase trapezoidal pattern:
+  - Rise (Inhale) → Flat plateau (Hold 1) → Fall (Exhale) → Flat plateau (Hold 2)
+- **Reference**: Mountain peaks with flat tops and bottoms
+
+---
+
+## 🔧 PHASE 1: UNIFORM WIDTH SYSTEM
+
+### Task 1.1: Define Single Width Constant
+
+**File**: `src/components/PracticeSection.jsx`
+
+**Implementation**:
+
+```javascript
+// At the top of the component or in PracticeSelector
+const PRACTICE_UI_WIDTH = {
+  sanctuary: "560px", // Wide mode
+  hearth: "100%", // Mobile fills container
+  maxWidth: "560px", // Cap for all modes
+  padding: "16px", // Horizontal padding
+};
+```
+
+### Task 1.2: Apply Width to Circuit Button
+
+```javascript
+<div
+  style={{
+    width: "100%",
+    maxWidth: PRACTICE_UI_WIDTH.maxWidth,
+    margin: "0 auto",
+    paddingLeft: PRACTICE_UI_WIDTH.padding,
+    paddingRight: PRACTICE_UI_WIDTH.padding,
+  }}
+>
+  {/* Circuit button */}
+</div>
+```
+
+### Task 1.3: Apply Width to Practice Grid
+
+```javascript
+<div
+  style={{
+    width: "100%",
+    maxWidth: PRACTICE_UI_WIDTH.maxWidth,
+    margin: "0 auto",
+    paddingLeft: PRACTICE_UI_WIDTH.padding,
+    paddingRight: PRACTICE_UI_WIDTH.padding,
+  }}
+>
+  {/* 2×4 grid */}
+</div>
+```
+
+### Task 1.4: Apply Width to Options Panel
+
+```javascript
+<div
+  style={{
+    width: "100%",
+    maxWidth: PRACTICE_UI_WIDTH.maxWidth,
+    margin: "0 auto",
+  }}
+>
+  {/* PracticeOptionsCard */}
+</div>
+```
+
+**Verification**: Screenshot both Sanctuary and Hearth modes. All three sections should be perfectly aligned with same width.
+
+---
+
+## 🔧 PHASE 2: BREATH PHASE INPUT CONTROLS
+
+### Task 2.1: Add Breath Phase State
+
+**File**: `src/components/PracticeSection.jsx` — In `PracticeOptionsCard` or parent
+
+```javascript
+const [breathPattern, setBreathPattern] = useState({
+  inhale: 4,
+  hold1: 4,
+  exhale: 4,
+  hold2: 4,
+});
+```
+
+### Task 2.2: Create Phase Input UI
+
+**Create inline number steppers or input fields for each phase**:
+
+```javascript
+<div
+  className="flex justify-center gap-6"
+  style={{ marginTop: "16px", marginBottom: "16px" }}
+>
+  {/* Inhale */}
+  <div className="flex flex-col items-center">
+    <label
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        color: "rgba(255,255,255,0.5)",
+        marginBottom: "4px",
+      }}
+    >
+      INHALE
+    </label>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({ ...p, inhale: Math.max(1, p.inhale - 1) }))
+        }
+      >
+        −
+      </button>
+      <span
+        style={{
+          fontSize: "16px",
+          fontWeight: 600,
+          color: "#F5E6D3",
+          minWidth: "24px",
+          textAlign: "center",
+        }}
+      >
+        {breathPattern.inhale}
+      </span>
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({
+            ...p,
+            inhale: Math.min(12, p.inhale + 1),
+          }))
+        }
+      >
+        +
+      </button>
+    </div>
+  </div>
+
+  {/* Hold 1 */}
+  <div className="flex flex-col items-center">
+    <label
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        color: "rgba(255,255,255,0.5)",
+        marginBottom: "4px",
+      }}
+    >
+      HOLD
+    </label>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({ ...p, hold1: Math.max(0, p.hold1 - 1) }))
+        }
+      >
+        −
+      </button>
+      <span
+        style={{
+          fontSize: "16px",
+          fontWeight: 600,
+          color: "#F5E6D3",
+          minWidth: "24px",
+          textAlign: "center",
+        }}
+      >
+        {breathPattern.hold1}
+      </span>
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({ ...p, hold1: Math.min(12, p.hold1 + 1) }))
+        }
+      >
+        +
+      </button>
+    </div>
+  </div>
+
+  {/* Exhale */}
+  <div className="flex flex-col items-center">
+    <label
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        color: "rgba(255,255,255,0.5)",
+        marginBottom: "4px",
+      }}
+    >
+      EXHALE
+    </label>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({ ...p, exhale: Math.max(1, p.exhale - 1) }))
+        }
+      >
+        −
+      </button>
+      <span
+        style={{
+          fontSize: "16px",
+          fontWeight: 600,
+          color: "#F5E6D3",
+          minWidth: "24px",
+          textAlign: "center",
+        }}
+      >
+        {breathPattern.exhale}
+      </span>
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({
+            ...p,
+            exhale: Math.min(12, p.exhale + 1),
+          }))
+        }
+      >
+        +
+      </button>
+    </div>
+  </div>
+
+  {/* Hold 2 */}
+  <div className="flex flex-col items-center">
+    <label
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        color: "rgba(255,255,255,0.5)",
+        marginBottom: "4px",
+      }}
+    >
+      HOLD
+    </label>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({ ...p, hold2: Math.max(0, p.hold2 - 1) }))
+        }
+      >
+        −
+      </button>
+      <span
+        style={{
+          fontSize: "16px",
+          fontWeight: 600,
+          color: "#F5E6D3",
+          minWidth: "24px",
+          textAlign: "center",
+        }}
+      >
+        {breathPattern.hold2}
+      </span>
+      <button
+        onClick={() =>
+          setBreathPattern((p) => ({ ...p, hold2: Math.min(12, p.hold2 + 1) }))
+        }
+      >
+        +
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+### Task 2.3: Update Subtitle to Reflect Inputs
+
+```javascript
+<div style={{ fontSize: "12px", color: "rgba(245, 230, 211, 0.55)" }}>
+  Inhale {breathPattern.inhale} · Hold {breathPattern.hold1} · Exhale{" "}
+  {breathPattern.exhale} · Hold {breathPattern.hold2}
+</div>
+```
+
+---
+
+## 🔧 PHASE 3: TRAPEZOIDAL BREATH GRAPH
+
+### Task 3.1: Update BreathCycleGraph to Use Input Values
+
+**File**: `src/components/BreathCycleGraph.jsx` (or wherever the graph is)
+
+**The graph path MUST be calculated from the breathPattern values**:
+
+```javascript
+function BreathCycleGraph({
+  inhale,
+  hold1,
+  exhale,
+  hold2,
+  width = 300,
+  height = 80,
+}) {
+  const totalTime = inhale + hold1 + exhale + hold2;
+  const cycleWidth = width;
+
+  // Calculate segment widths proportionally
+  const inhaleW = (inhale / totalTime) * cycleWidth;
+  const hold1W = (hold1 / totalTime) * cycleWidth;
+  const exhaleW = (exhale / totalTime) * cycleWidth;
+  const hold2W = (hold2 / totalTime) * cycleWidth;
+
+  const top = 10;
+  const bottom = height - 10;
+
+  // Build trapezoidal path
+  let x = 0;
+  const path = [
+    `M 0 ${bottom}`, // Start at bottom-left
+    `L ${inhaleW} ${top}`, // Rise (inhale)
+    `L ${inhaleW + hold1W} ${top}`, // Flat at top (hold 1)
+    `L ${inhaleW + hold1W + exhaleW} ${bottom}`, // Fall (exhale)
+    `L ${cycleWidth} ${bottom}`, // Flat at bottom (hold 2)
+  ].join(" ");
+
+  return (
+    <svg width={width} height={height} style={{ overflow: "visible" }}>
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+          <feMerge>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <path
+        d={path}
+        fill="none"
+        stroke="var(--accent-primary)"
+        strokeWidth="2"
+        filter="url(#glow)"
+        opacity="0.85"
+      />
+    </svg>
+  );
+}
+```
+
+### Task 3.2: Pass breathPattern to Graph
+
+```javascript
+<BreathCycleGraph
+  inhale={breathPattern.inhale}
+  hold1={breathPattern.hold1}
+  exhale={breathPattern.exhale}
+  hold2={breathPattern.hold2}
+/>
+```
+
+**Verification**: Change Inhale from 4 to 8 — the rising slope should become WIDER. Change Hold 1 from 4 to 0 — the flat plateau at top should DISAPPEAR.
+
+---
+
+## 🔧 PHASE 4: PARTICLE FIELD HEIGHT
+
+### Task 4.1: Increase Particle Field Height
+
+**File**: Likely `src/components/Background.jsx` or `src/components/IndrasNet.jsx`
+
+**Problem**: Particles are confined to bottom ~15% of screen.
+**Target**: Particles should extend to ~45% of screen height (30% higher than current).
+
+**Search for**:
+
+- Canvas height constraints
+- Particle Y-position bounds
+- Container with limited height
+
+**Implementation**:
+
+```javascript
+// BEFORE (example)
+const particleFieldHeight = windowHeight * 0.15;
+
+// AFTER
+const particleFieldHeight = windowHeight * 0.45; // 30% higher = 0.15 + 0.30 = 0.45
+```
+
+**Or if using CSS**:
+
+```css
+/* BEFORE */
+.particle-field {
+  height: 15vh;
+  bottom: 0;
+}
+
+/* AFTER */
+.particle-field {
+  height: 45vh;
+  bottom: 0;
+}
+```
+
+**Verification**: Particles should now extend almost halfway up the screen, creating a more immersive cosmic field.
+
+---
+
+## ✅ ACCEPTANCE CRITERIA
+
+### Width Consistency:
+
+- [ ] Circuit button, practice grid, and options panel have IDENTICAL widths
+- [ ] All components perfectly left/right aligned
+- [ ] No visual offset between sections
+
+### Breath Phase Controls:
+
+- [ ] 4 input controls visible: Inhale, Hold 1, Exhale, Hold 2
+- [ ] Values can be adjusted (range: 0-12 for holds, 1-12 for inhale/exhale)
+- [ ] Subtitle updates dynamically: "Inhale X · Hold X · Exhale X · Hold X"
+
+### Breath Graph:
+
+- [ ] Graph shape is TRAPEZOIDAL (rise → flat → fall → flat)
+- [ ] Graph shape updates when input values change
+- [ ] Inhale duration affects width of rising slope
+- [ ] Hold durations affect width of plateaus
+- [ ] NOT a smooth sine wave
+
+### Particle Field:
+
+- [ ] Particles extend ~30% higher than before
+- [ ] Particles reach approximately 45% of screen height
+- [ ] No stretching/distortion
+
+### General:
+
+- [ ] `npm run build` completes with no errors
+- [ ] Version bump: v3.21.0
+
+---
+
+## 📁 FILES TO MODIFY
+
+- `src/components/PracticeSection.jsx` — Width constants, breath phase inputs, state management
+- `src/components/BreathCycleGraph.jsx` — Trapezoidal path calculation from props
+- `src/components/Background.jsx` or `IndrasNet.jsx` — Particle field height
+- `src/App.jsx` — Version bump to v3.21.0
+
+---
+
+## 💬 COMMIT MESSAGE
+
+```
+feat(practice): Phase 3 - Final alignment
+
+WIDTH:
+- Unify width of Circuit button, practice grid, and options panel
+- Apply consistent maxWidth and padding across all sections
+
+BREATH CONTROLS:
+- Add 4 phase input controls (Inhale, Hold 1, Exhale, Hold 2)
+- Connect inputs to breath graph shape
+- Update subtitle dynamically from input values
+
+GRAPH:
+- Replace sine wave with trapezoidal 4-phase pattern
+- Shape segments proportional to phase durations
+
+PARTICLES:
+- Increase particle field height by 30%
+
+Version: v3.21.0
+
+🤖 Generated with Antigravity
+```
+
+---
+
+## 🔄 PREVIOUS TASKS — OBSOLETE
+
+The following section contains previous task attempts that are now OBSOLETE.
+Execute ONLY the task above dated 2026-01-11 21:41.
+
+---
+
+## 📊 CURRENT vs. REFERENCE GAP ANALYSIS (Updated 2026-01-11 21:12)
+
+### Current State — Remaining Problems:
+
+#### 🔴 CRITICAL: Particle System (Bottom of Screen)
+
+- **Problem**: Particles stretch/distort when switching between Hearth and Sanctuary modes
+- **Root Cause**: Particles are likely using percentage-based or viewport-relative sizing
+- **Target**: Particles must be **uniform circles** regardless of viewport width
+- **Visual Impact**: Currently looks awkward and breaks the cosmic ambiance
+
+#### 🔴 CRITICAL: Breath Graph Visualization (Wrong Design)
+
+- **Current**: A simple sine wave (`~~~`) that doesn't represent the 4-phase breath
+- **Target**: A **4-phase trapezoidal/mountain graph** showing:
+  1. **Inhale** (rising slope)
+  2. **Hold 1** (plateau at top)
+  3. **Exhale** (falling slope)
+  4. **Hold 2** (plateau at bottom)
+- **Animation**: An **animated dot** traces the shape at the speed determined by the phase durations
+- **Reference shows**: 2.5-3 mountain peaks with a teal/green glowing stroke
+
+#### 🔴 CRITICAL: Grid Layout Structure
+
+- **Current**: 3 rows of cards with inconsistent spacing, Circuit mixed in
+- **Target**:
+  1. **One wide "CIRCUIT" button** spanning the full width at top
+  2. **Clean 2×4 grid** of 8 equal-sized practice cards below
+- **Order**: Circuit (full-width) → Row 1 (4 cards) → Row 2 (4 cards)
+
+#### 🟡 MEDIUM: Card Transparency
+
+- **Current**: Cards have heavy opacity, not enough cosmic background showing through
+- **Target**: Cards should be more translucent (`rgba(15, 20, 25, 0.15)` instead of current darker values)
+- **Reference shows**: Clear cosmic nebula visible behind the frosted glass cards
+
+#### 🟡 MEDIUM: Options Panel Background
+
+- **Current**: Options panel (Breath & Stillness area) is too opaque
+- **Target**: Panel background should also be more translucent to show cosmic background
+
+#### 🟢 MINOR: Duration Picker Styling
+
+- **Current**: Slider with number input and scattered markers
+- **Target**: Horizontal number array with selected value (10) prominently larger
+
+---
+
+### Reference Design Excellence Points:
+
+1. **Layout**: Full-width Circuit button → 2×4 equal card grid
+2. **Breath Visualization**: Trapezoidal 4-phase waveform (not sine wave)
+3. **Particle Field**: Uniform circular particles, no stretching
+4. **Transparency**: Cosmic nebula clearly visible through all glassmorphic elements
+5. **Typography**: "BREATH & STILLNESS" with subtitle "Inhale 4 · Hold 4 · Exhale 4 · Hold 4"
+6. **Button**: Full-width "BEGIN PRACTICE" pill button with golden border
 
 ---
 
@@ -133,32 +1239,140 @@ The `--accent-*` CSS variables are set by `ThemeContext.jsx` based on the curren
 
 ---
 
-## 🔲 PHASE 1: PRACTICE GRID CARDS REBUILD
+## 🔲 PHASE 1: GRID LAYOUT RESTRUCTURE
 
-### Task 1.1: Create Equal-Size Grid Layout
+### Task 1.1: Extract Circuit as Full-Width Button
 
 **File**: `src/components/PracticeSection.jsx` — `PracticeSelector` function
 
-**Current State**:
+**Change**: Remove `circuit` from PRACTICE_IDS and render it separately above the grid.
+
+**Implementation**:
 
 ```javascript
-gridTemplateColumns: 'repeat(2, 1fr)',
-maxWidth: isSanctuary ? '520px' : '440px',
+// Before the grid, add Circuit button
+<div
+  className="w-full mb-4"
+  style={{
+    maxWidth: isSanctuary ? "580px" : "480px",
+    margin: "0 auto 16px auto",
+  }}
+>
+  <button
+    onClick={() => onSelect("circuit")}
+    className="w-full transition-all duration-300"
+    style={{
+      fontFamily: "var(--font-display)",
+      fontSize: "10px",
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+      fontWeight: 600,
+      padding: "16px 24px",
+      borderRadius: "12px",
+      border:
+        selectedId === "circuit"
+          ? "1.5px solid rgba(201, 169, 97, 0.7)"
+          : "1px solid rgba(255, 255, 255, 0.08)",
+      background: "rgba(15, 20, 25, 0.15)",
+      backdropFilter: "blur(32px)",
+      color: selectedId === "circuit" ? "#D4AF37" : "rgba(255, 255, 255, 0.6)",
+      textShadow:
+        selectedId === "circuit" ? "0 0 12px rgba(212, 175, 55, 0.6)" : "none",
+      boxShadow:
+        selectedId === "circuit"
+          ? "0 0 16px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+          : "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+    }}
+  >
+    <span style={{ fontSize: "16px", marginRight: "8px" }}>↺</span>
+    CIRCUIT
+  </button>
+</div>
 ```
 
-**Target State**:
+**Grid below**: Filter out `circuit` from PRACTICE_IDS for the 2×4 grid.
 
 ```javascript
-gridTemplateColumns: 'repeat(4, 1fr)',
-maxWidth: isSanctuary ? '580px' : '480px',
-gap: '16px',
+const GRID_PRACTICE_IDS = PRACTICE_IDS.filter((id) => id !== "circuit");
+// Use GRID_PRACTICE_IDS in the grid map
 ```
+
+---
+
+### Task 1.2: Create Clean 2×4 Grid (8 Practices)
+
+**File**: `src/components/PracticeSection.jsx` — `PracticeSelector` grid
 
 **Changes**:
 
-1. Grid columns: `repeat(2, 1fr)` → `repeat(4, 1fr)` (4 cards per row)
-2. Reduce card min-height for denser grid
-3. Add `aspect-ratio: 1 / 1.1` for consistent proportions
+```javascript
+// Grid container
+<div
+  className="grid gap-3 justify-items-stretch"
+  style={{
+    gridTemplateColumns: "repeat(4, 1fr)",
+    maxWidth: isSanctuary ? "580px" : "480px",
+    margin: "0 auto",
+    paddingLeft: "12px",
+    paddingRight: "12px",
+  }}
+>
+  {GRID_PRACTICE_IDS.map((id) => {
+    /* card render */
+  })}
+</div>
+```
+
+**Practices in Grid** (8 total, 2 rows of 4):
+
+1. Breath Practices
+2. Ritual Library
+3. Insight Meditation
+4. Body Scan
+5. Sound
+6. Visualization
+7. Cymatics
+8. Photic Circles
+
+---
+
+### Task 1.3: Increase Card Transparency
+
+**File**: `src/components/PracticeSection.jsx` — card button styles
+
+**Current**:
+
+```javascript
+background: 'rgba(10, 15, 15, 0.25)',
+```
+
+**Target**:
+
+```javascript
+background: 'rgba(15, 20, 25, 0.12)', // More translucent
+backdropFilter: 'blur(24px) saturate(120%)', // Lighter blur
+```
+
+**Verify**: Cosmic nebula background should be clearly visible through cards.
+
+---
+
+### Task 1.4: Options Panel Transparency
+
+**File**: `src/components/PracticeSection.jsx` — `PracticeOptionsCard` container
+
+**Current**: `.machined-panel` or inline styles with heavy opacity
+
+**Target**:
+
+```javascript
+style={{
+  background: 'rgba(10, 15, 20, 0.18)', // Very translucent
+  backdropFilter: 'blur(24px)',
+  border: '1px solid rgba(201, 169, 97, 0.25)',
+  borderRadius: '16px',
+}}
+```
 
 ---
 
@@ -314,36 +1528,139 @@ WebkitBackdropFilter: 'blur(32px) saturate(140%)',
 
 ---
 
-### Task 2.2: Replace BreathPhaseIndicator + BreathPathChart
+### Task 2.2: Create BreathCycleGraph Component (4-Phase Visualization)
 
-**Current State**:
+**CRITICAL**: The current sine wave is WRONG. We need a **4-phase trapezoidal graph** with an **animated dot tracer**.
 
-- `BreathPhaseIndicator` = 4 circular counters with labels
-- `BreathPathChart` = Multi-segment chart with phase labels
+**Create New File**: `src/components/BreathCycleGraph.jsx`
 
-**Target State**:
+**Visual Design**:
 
-- Remove `BreathPhaseIndicator` entirely
-- Replace `BreathPathChart` with new `BreathWaveVisualization` component
-
-**Create New File**: `src/components/BreathWaveVisualization.jsx`
-
-```javascript
-// Simple SVG wave with accent-colored stroke and glow
-// 3 peaks representing breath cycles
-// Stroke color: var(--accent-primary)
-// Glow: filter with var(--accent-glow)
-// Subtle gradient from center outward
+```
+                    ╱‾‾‾‾‾╲                ╱‾‾‾‾‾╲
+   Inhale→        ╱        ╲ Exhale→    ╱        ╲
+                ╱            ╲        ╱            ╲
+  ─────────────╱  Hold 1      ╲──────╱  Hold 2      ╲─────
+           Start            Hold 2               End
 ```
 
-**SVG Specifications**:
+**The 4 Phases** (each segment of the path):
 
-- Width: 100% of container
-- Height: 80-100px
-- Stroke: 2px, `var(--accent-primary)`
-- Filter: `drop-shadow(0 0 6px var(--accent-glow))`
-- Path: Smooth bezier curves forming 2.5-3 wave peaks
-- Opacity: 0.8 for subtle integration
+1. **Inhale** = Rising diagonal line (duration: `inhale` seconds)
+2. **Hold 1** = Horizontal plateau at top (duration: `hold1` seconds)
+3. **Exhale** = Falling diagonal line (duration: `exhale` seconds)
+4. **Hold 2** = Horizontal plateau at bottom (duration: `hold2` seconds)
+
+**Component Props**:
+
+```javascript
+interface BreathCycleGraphProps {
+  inhale: number; // seconds for inhale phase (e.g., 4)
+  hold1: number; // seconds for hold after inhale (e.g., 4)
+  exhale: number; // seconds for exhale phase (e.g., 4)
+  hold2: number; // seconds for hold after exhale (e.g., 4)
+  cycles: number; // how many full cycles to show (default: 2.5)
+  showDot: boolean; // whether to show animated tracing dot
+  isAnimating: boolean; // whether dot is currently animating
+}
+```
+
+**SVG Path Calculation**:
+
+```javascript
+function generateBreathPath(
+  inhale,
+  hold1,
+  exhale,
+  hold2,
+  cycles,
+  width,
+  height
+) {
+  const totalCycleTime = inhale + hold1 + exhale + hold2;
+  const cycleWidth = width / cycles;
+
+  // Calculate segment widths proportionally
+  const inhaleW = (inhale / totalCycleTime) * cycleWidth;
+  const hold1W = (hold1 / totalCycleTime) * cycleWidth;
+  const exhaleW = (exhale / totalCycleTime) * cycleWidth;
+  const hold2W = (hold2 / totalCycleTime) * cycleWidth;
+
+  const pathSegments = [];
+  let x = 0;
+  const top = 10; // padding from top
+  const bottom = height - 10; // padding from bottom
+
+  for (let i = 0; i < cycles; i++) {
+    // Start at bottom (hold2 position)
+    if (i === 0) pathSegments.push(`M ${x} ${bottom}`);
+
+    // Inhale: rise from bottom to top
+    pathSegments.push(`L ${x + inhaleW} ${top}`);
+    x += inhaleW;
+
+    // Hold 1: horizontal at top
+    pathSegments.push(`L ${x + hold1W} ${top}`);
+    x += hold1W;
+
+    // Exhale: fall from top to bottom
+    pathSegments.push(`L ${x + exhaleW} ${bottom}`);
+    x += exhaleW;
+
+    // Hold 2: horizontal at bottom
+    pathSegments.push(`L ${x + hold2W} ${bottom}`);
+    x += hold2W;
+  }
+
+  return pathSegments.join(" ");
+}
+```
+
+**Animated Dot Tracer**:
+
+```javascript
+// Use SVG <animateMotion> to trace the path
+<circle r="6" fill="var(--accent-primary)">
+  <animateMotion
+    dur={`${totalCycleTime * cycles}s`}
+    repeatCount="indefinite"
+    path={breathPath}
+  />
+</circle>
+```
+
+**Styling**:
+
+```javascript
+// Path stroke
+stroke: 'var(--accent-primary)', // Changes with avatar stage
+strokeWidth: 2,
+fill: 'none',
+filter: 'drop-shadow(0 0 6px var(--accent-glow))',
+opacity: 0.85,
+
+// Dot
+fill: 'var(--accent-primary)',
+filter: 'drop-shadow(0 0 8px var(--accent-glow))',
+```
+
+**Usage in PracticeOptionsCard**:
+
+```javascript
+{
+  practiceId === "breath" && (
+    <BreathCycleGraph
+      inhale={pattern?.inhale || 4}
+      hold1={pattern?.hold1 || 4}
+      exhale={pattern?.exhale || 4}
+      hold2={pattern?.hold2 || 4}
+      cycles={2.5}
+      showDot={true}
+      isAnimating={false} // Only animate during practice
+    />
+  );
+}
+```
 
 ---
 
@@ -429,26 +1746,88 @@ color: '#D4AF37',
 
 ---
 
-## 📦 PHASE 3: OPTIONS PANEL CONTAINER
+## 🌟 PHASE 3: PARTICLE SYSTEM FIX
 
-### Task 3.1: Panel Border & Background
+### Task 3.1: Fix Particle Stretching on Viewport Change
+
+**Problem**: Particles at the bottom of the screen stretch/distort when switching between Hearth (narrow) and Sanctuary (wide) display modes.
+
+**Root Cause Analysis**:
+The particles are likely using one of these problematic approaches:
+
+1. Percentage-based width/height (`width: 0.5%`)
+2. Viewport units (`width: 0.5vw`)
+3. Container-relative sizing that doesn't maintain aspect ratio
+
+**Solution**: Use **fixed pixel sizes** or **aspect-ratio-locked sizing** for particles.
+
+**File to Investigate**: Look for particle rendering in:
+
+- `src/components/Background.jsx`
+- `src/components/IndrasNet.jsx`
+- `src/components/avatar/AvatarLuminousCanvas.jsx`
+- Any Canvas-based particle system
+
+**Implementation**:
+
+```javascript
+// WRONG: Viewport-relative sizing
+const particleSize = viewportWidth * 0.003; // Stretches with viewport!
+
+// CORRECT: Fixed pixel sizing
+const particleSize = 4; // px - always a perfect circle
+
+// OR: Use min() to cap the size
+const particleSize = Math.min(6, viewportWidth * 0.003);
+```
+
+**CSS Approach** (if particles are DOM elements):
+
+```css
+.cosmic-particle {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  aspect-ratio: 1 / 1; /* Force circle even if one dimension is percentage */
+}
+```
+
+**Canvas Approach** (if particles are canvas-drawn):
+
+```javascript
+// When drawing particles, use fixed radius
+ctx.beginPath();
+ctx.arc(x, y, 3, 0, Math.PI * 2); // Fixed 3px radius
+ctx.fill();
+```
+
+**Verification**:
+
+1. Open app in Sanctuary mode (wide)
+2. Switch to Hearth mode (narrow)
+3. Particles must remain **perfect circles** of the same apparent size
+4. No stretching, squashing, or ellipses
+
+---
+
+### Task 3.2: Panel Container Transparency
 
 **Current State**: `.machined-panel` class with heavy styling
 
-**Target State**: Single refined border with subtle inner glow
+**Target State**: Single refined border with subtle inner glow, more translucent
 
 **Changes**:
 
 ```javascript
 // Panel container
 style={{
-  background: 'rgba(10, 15, 20, 0.25)',
+  background: 'rgba(10, 15, 20, 0.18)', // More translucent
   backdropFilter: 'blur(24px)',
-  border: '1px solid rgba(201, 169, 97, 0.35)',
+  border: '1px solid rgba(201, 169, 97, 0.30)',
   borderRadius: '16px',
   boxShadow: `
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1)
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08)
   `,
 }}
 ```
@@ -462,35 +1841,56 @@ style={{
 **Files to DELETE or DEPRECATE**:
 
 - `src/components/BreathPhaseIndicator.jsx` — No longer needed (subtitle replaces it)
-- Keep `src/components/BreathPathChart.jsx` but mark as deprecated
+- `src/components/BreathPathChart.jsx` — Replace with BreathCycleGraph
 
 ### Task 4.2: Create New Components
 
 **Files to CREATE**:
 
-- `src/components/BreathWaveVisualization.jsx` — Clean SVG wave
+- `src/components/BreathCycleGraph.jsx` — 4-phase trapezoidal graph with animated dot tracer
 - Optionally `src/components/DurationPicker.jsx` — Horizontal number picker
 
 ---
 
 ## ✅ ACCEPTANCE CRITERIA
 
-### Visual Checklist:
+### Layout Checklist:
 
-- [ ] Practice grid shows 4 cards per row (4×2 layout for 8 practices)
-- [ ] All cards are equal size with consistent aspect ratio
-- [ ] Icons are proportional to card size (~24% of height)
+- [ ] Circuit button is full-width above the practice grid
+- [ ] Practice grid shows 4 cards per row (2×4 layout for 8 practices)
+- [ ] All 8 practice cards are equal size
+- [ ] Grid excludes Circuit (Circuit is separate button above)
+
+### Card Styling Checklist:
+
+- [ ] Cards are translucent (cosmic background visible through)
 - [ ] Selected card has golden text glow (luminous text-shadow)
 - [ ] Selected card has golden border with outer glow
 - [ ] Inactive cards have subtle white border, no glow
-- [ ] Options panel has small ✦ star icon at top
-- [ ] Title uses elegant small caps typography
-- [ ] Subtitle shows "Inhale X · Hold X · Exhale X · Hold X" (no counter circles)
-- [ ] Breath visualization is a clean wave SVG with accent-colored glow
-- [ ] Duration picker shows selected value larger/prominent
+- [ ] Icons proportional to card size
+
+### Breath Options Panel Checklist:
+
+- [ ] Small ✦ star icon at top (not large icon)
+- [ ] Title: "BREATH & STILLNESS" in small caps
+- [ ] Subtitle: "Inhale X · Hold X · Exhale X · Hold X" (no circular counters)
+- [ ] **4-Phase Graph** (NOT sine wave): Trapezoidal with inhale/hold/exhale/hold phases
+- [ ] Animated dot traces the breath path shape
+- [ ] Graph uses `var(--accent-primary)` for color theming
+- [ ] Duration picker shows selected value prominently larger
+- [ ] Options panel is translucent (cosmic background visible)
+
+### Particle System Checklist:
+
+- [ ] Particles remain **uniform circles** in both Hearth and Sanctuary modes
+- [ ] No stretching/distortion when viewport width changes
+- [ ] Particles use fixed pixel sizing
+
+### General Checklist:
+
 - [ ] Begin Practice button is full-width pill with golden border
 - [ ] Cosmic background visible through all glassmorphic elements
-- [ ] Version bump: v3.19.0
+- [ ] Version bump: v3.20.0
 
 ### Technical Checklist:
 
@@ -505,22 +1905,26 @@ style={{
 
 ### Primary Changes:
 
-- `src/components/PracticeSection.jsx` — Complete rebuild of PracticeSelector and PracticeOptionsCard
+- `src/components/PracticeSection.jsx` — Circuit button extraction, 2×4 grid, card transparency
 - `src/components/SacredTimeSlider.jsx` — Restyle for horizontal picker look
 
 ### New Files:
 
-- `src/components/BreathWaveVisualization.jsx` — New SVG wave component
+- `src/components/BreathCycleGraph.jsx` — 4-phase trapezoidal graph with dot tracer
+
+### Particle Fix:
+
+- `src/components/Background.jsx` or `src/components/IndrasNet.jsx` — Fix particle sizing
 
 ### Deprecate/Remove:
 
 - `src/components/BreathPhaseIndicator.jsx` — Remove usage
-- `src/components/BreathPathChart.jsx` — Replace with BreathWaveVisualization
+- `src/components/BreathPathChart.jsx` — Replace with BreathCycleGraph
 
 ### Style Updates:
 
 - `src/App.css` — Add `--brand-gold`, `--brand-gold-glow`, `--brand-gold-border` CSS vars if not present
-- `src/App.jsx` — Version bump to v3.19.0
+- `src/App.jsx` — Version bump to v3.20.0
 
 ---
 
@@ -550,14 +1954,22 @@ style={{
 2. `npm run dev` — Start dev server
 3. Open http://localhost:5175/Immanence/
 4. Navigate to Practice section
-5. **Visual Verification**:
-   - Screenshot at 1080px width
-   - Compare against reference Image 2
-   - Check: 4×2 grid, golden glows, proportional icons, wave visualization
-6. **Theme Verification**:
+5. **Layout Verification**:
+   - Circuit button should span full width above the grid
+   - 2×4 grid of 8 equal-sized practice cards below
+   - Cards should be translucent (cosmic background visible)
+6. **Breath Graph Verification**:
+   - Select "Breath Practices"
+   - Graph should show trapezoidal 4-phase pattern (NOT sine wave)
+   - Pattern: flat → rise → flat → fall → repeat (2.5 cycles)
+   - Animated dot should trace the path at correct speed
+7. **Particle Verification**:
+   - Toggle between Hearth and Sanctuary modes
+   - Particles at bottom must remain circular (no stretching)
+8. **Theme Verification**:
    - Open DevPanel (Ctrl+Shift+D)
    - Switch avatar stage (Seedling → Ember → Flame → Beacon → Stellar)
-   - Verify: Wave SVG stroke color changes, accent colors transition smoothly
+   - Verify: Breath graph stroke color changes with stage
    - Verify: Gold elements (borders, button text) remain constant
 
 ---
@@ -565,19 +1977,27 @@ style={{
 ## 💬 COMMIT MESSAGE
 
 ```
-feat(practice): Complete UI rebuild matching reference design
+feat(practice): Phase 2 UI refinement - Critical gap closure
 
-- Implement 4×2 equal-size card grid for practice selector
-- Add golden text glow on selected cards with lighting FX
-- Make icons proportional to card dimensions
-- Replace breath phase counters with inline subtitle
-- Create BreathWaveVisualization SVG with accent-colored glow
-- Restyle duration picker with prominent selected value
-- Refine Begin Practice button with golden border and glow
-- Ensure accent colors are theme-aware (change with avatar stage)
-- Maintain constant brand-gold for borders and buttons
+LAYOUT:
+- Extract Circuit as full-width button above grid
+- Create clean 2×4 grid for 8 practice cards
+- Increase card and panel transparency
 
-Version: v3.19.0
+BREATH VISUALIZATION:
+- Create BreathCycleGraph with 4-phase trapezoidal pattern
+- Add animated dot tracer following breath path
+- Use theme-aware accent colors for stroke
+
+PARTICLES:
+- Fix particle stretching on viewport change
+- Use fixed pixel sizing for uniform circles
+
+STYLING:
+- Golden text glow on selected cards
+- Refined glassmorphism for cosmic background visibility
+
+Version: v3.20.0
 
 🤖 Generated with Antigravity
 ```

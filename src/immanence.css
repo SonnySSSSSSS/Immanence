@@ -8,6 +8,12 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* ─── Brand Gold (Constant across all stages) ─── */
+  --brand-gold: #D4AF37;
+  --brand-gold-glow: rgba(212, 175, 55, 0.5);
+  --brand-gold-border: rgba(201, 169, 97, 0.6);
+  --parchment-cream: #F5E6D3;
+
   /* ─── Warm Gold Accent Palette (Reference Alignment) ─── */
   --accent-gold: #D4AF37;
   --accent-gold-light: #F5E6D3;

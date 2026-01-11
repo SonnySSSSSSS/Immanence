@@ -236,7 +236,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
                 </div>
             </div>
 
-            {/* Labels row - show ALL durations */}
+            {/* Labels row - show ALL durations with prominent selected value */}
             <div
                 className="absolute flex justify-between"
                 style={{
@@ -250,6 +250,12 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     const percent = options.length > 1 ? (i / (options.length - 1)) * 100 : 0;
                     const isSelected = opt === value;
                     const isKey = KEY_DURATIONS[opt];
+                    
+                    // Calculate distance from selected for scaling effect
+                    const selectedIndex = options.indexOf(value);
+                    const distance = Math.abs(i - selectedIndex);
+                    const isAdjacent = distance === 1;
+                    const isFar = distance > 1;
 
                     return (
                         <div
@@ -266,11 +272,11 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 <div
                                     style={{
                                         position: 'absolute',
-                                        width: '28px',
-                                        height: '28px',
+                                        width: '40px',
+                                        height: '40px',
                                         border: '2px solid #D4AF37',
                                         borderRadius: '50%',
-                                        boxShadow: '0 0 16px rgba(213, 168, 75, 0.6)',
+                                        boxShadow: '0 0 20px rgba(213, 168, 75, 0.5)',
                                         top: '50%',
                                         left: '50%',
                                         transform: 'translate(-50%, -50%)',
@@ -282,13 +288,14 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 className="relative font-semibold"
                                 style={{
                                     fontFamily: 'var(--font-display)',
-                                    fontSize: isKey ? '11px' : '9px',
-                                    color: isSelected ? '#D4AF37' : 'rgba(255,255,255,0.3)',
-                                    fontWeight: isSelected ? '700' : '500',
-                                    textShadow: isSelected ? '0 0 8px rgba(212, 175, 55, 0.5)' : 'none',
+                                    fontSize: isSelected ? '32px' : (isAdjacent ? '14px' : '12px'),
+                                    fontWeight: isSelected ? 700 : 500,
+                                    color: isSelected ? '#F5E6D3' : 'rgba(255,255,255,0.3)',
+                                    textShadow: isSelected ? '0 0 12px rgba(212, 175, 55, 0.6)' : 'none',
                                     letterSpacing: '0.05em',
-                                    opacity: 1,
-                                    zIndex: 1
+                                    opacity: isFar ? 0.3 : (isAdjacent ? 0.5 : 1),
+                                    zIndex: 1,
+                                    transition: 'all 300ms ease'
                                 }}
                             >
                                 {opt}

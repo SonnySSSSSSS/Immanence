@@ -19,7 +19,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const widthRef = useRef(430);
-    const heightRef = useRef(304);
+    const heightRef = useRef(600);
     const modeRef = useRef(displayMode);
     const lastModeRef = useRef(displayMode);
 
@@ -69,7 +69,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
         function resize() {
             const rect = canvas.getBoundingClientRect();
             widthRef.current = rect.width; // Use the actual bounded width from parent container
-            heightRef.current = 304;
+            heightRef.current = 600;
             canvas.width = widthRef.current;
             canvas.height = heightRef.current;
             initParticles(); // Reinitialize particles with new dimensions
@@ -125,7 +125,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
         <div
             className="absolute bottom-0 left-0 w-full z-0 pointer-events-none"
             style={{
-                height: "304px",
+                height: "600px",
                 maskImage: "linear-gradient(to bottom, transparent 0%, black 30%, black 100%)",
                 WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 30%, black 100%)",
             }}
