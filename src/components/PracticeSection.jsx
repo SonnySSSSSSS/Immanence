@@ -305,6 +305,97 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                 }
               }}
             >
+              {/* Ornamental frame overlay (reference-style card border) */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  inset: '6px',
+                  zIndex: 1,
+                  opacity: isActive ? 0.9 : 0.55,
+                  filter: isActive ? 'drop-shadow(0 0 10px var(--accent-40))' : 'none',
+                }}
+              >
+                <svg viewBox="0 0 100 100" width="100%" height="100%" fill="none">
+                  <rect
+                    x="2.5"
+                    y="2.5"
+                    width="95"
+                    height="95"
+                    rx="14"
+                    stroke={isActive ? 'var(--accent-60)' : 'rgba(255, 255, 255, 0.16)'}
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+
+                  {/* Corner flourishes */}
+                  <path
+                    d="M10 22 Q10 10 22 10"
+                    stroke={isActive ? 'var(--accent-70)' : 'rgba(255, 255, 255, 0.22)'}
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <path
+                    d="M14 22 Q14 14 22 14"
+                    stroke={isActive ? 'var(--accent-40)' : 'rgba(255, 255, 255, 0.12)'}
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+
+                  <g transform="translate(100 0) scale(-1 1)">
+                    <path
+                      d="M10 22 Q10 10 22 10"
+                      stroke={isActive ? 'var(--accent-70)' : 'rgba(255, 255, 255, 0.22)'}
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M14 22 Q14 14 22 14"
+                      stroke={isActive ? 'var(--accent-40)' : 'rgba(255, 255, 255, 0.12)'}
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </g>
+
+                  <g transform="translate(0 100) scale(1 -1)">
+                    <path
+                      d="M10 22 Q10 10 22 10"
+                      stroke={isActive ? 'var(--accent-70)' : 'rgba(255, 255, 255, 0.22)'}
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M14 22 Q14 14 22 14"
+                      stroke={isActive ? 'var(--accent-40)' : 'rgba(255, 255, 255, 0.12)'}
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </g>
+
+                  <g transform="translate(100 100) scale(-1 -1)">
+                    <path
+                      d="M10 22 Q10 10 22 10"
+                      stroke={isActive ? 'var(--accent-70)' : 'rgba(255, 255, 255, 0.22)'}
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M14 22 Q14 14 22 14"
+                      stroke={isActive ? 'var(--accent-40)' : 'rgba(255, 255, 255, 0.12)'}
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </g>
+                </svg>
+              </div>
+
               {/* Inline SVG Icon */}
               <div 
                 className="transition-transform duration-500" 
