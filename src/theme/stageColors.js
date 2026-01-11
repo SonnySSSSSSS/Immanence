@@ -4,32 +4,32 @@ export const STAGE_THEMES = {
     SEEDLING: {
         name: 'Seedling',
         accent: {
-            primary: '#D4AF37',      // Warm Gold
-            secondary: '#C9A961',    // Secondary gold
-            muted: '#A0885C',        // Muted gold
-            glow: 'rgba(212, 175, 55, 0.4)',
-            particleColor: '#F5E6D3',
+            primary: '#4ade80',      // Vibrant Green
+            secondary: '#22c55e',    // Secondary green
+            muted: '#16a34a',        // Muted green
+            glow: 'rgba(74, 222, 128, 0.4)',
+            particleColor: '#86efac',
         },
         text: {
-            accent: '#D4AF37',
-            accentMuted: 'rgba(212, 175, 55, 0.7)',
+            accent: '#4ade80',
+            accentMuted: 'rgba(74, 222, 128, 0.7)',
         },
         ui: {
-            selectedBg: 'rgba(212, 175, 55, 0.15)',
-            selectedBorder: 'rgba(212, 175, 55, 0.4)',
-            hoverBg: 'rgba(212, 175, 55, 0.08)',
-            progressBar: '#D4AF37',
-            buttonGradient: 'linear-gradient(135deg, #D4AF37, #C9A961)',
+            selectedBg: 'rgba(74, 222, 128, 0.15)',
+            selectedBorder: 'rgba(74, 222, 128, 0.4)',
+            hoverBg: 'rgba(74, 222, 128, 0.08)',
+            progressBar: '#4ade80',
+            buttonGradient: 'linear-gradient(135deg, #4ade80, #22c55e)',
         },
         light: {
-            bgBase: '#F8F6F0',          // Warm cream
-            bgSurface: '#FDFCF8',       // Soft white with warm tint
-            textPrimary: '#4D3D20',     // Deep brown
-            textSecondary: '#6B5628',   // Medium brown
-            accent: '#D4AF37',          // Warm gold
-            accentMuted: '#E8D4A0',     // Lighter gold for contrast
-            border: 'rgba(212, 175, 55, 0.25)',
-            shadowTint: 'rgba(107, 86, 40, 0.12)',
+            bgBase: '#F0F9F4',          // Light mint
+            bgSurface: '#F8FCF9',       // Soft white with green tint
+            textPrimary: '#14532d',     // Deep forest green
+            textSecondary: '#166534',   // Medium forest green
+            accent: '#4ade80',          // Vibrant green
+            accentMuted: '#86efac',     // Lighter green for contrast
+            border: 'rgba(74, 222, 128, 0.25)',
+            shadowTint: 'rgba(34, 197, 94, 0.12)',
         }
     },
 

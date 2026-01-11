@@ -472,19 +472,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
               {p.label}
             </h2>
             
-            {/* Inline subtitle for breath */}
-            {practiceId === 'breath' && (
-              <div style={{ 
-                fontFamily: 'var(--font-body)', 
-                fontSize: '12px', 
-                fontWeight: 400,
-                letterSpacing: '0.04em',
-                color: 'rgba(245, 230, 211, 0.55)',
-                marginBottom: '16px'
-              }}>
-                Inhale {setters.pattern?.inhale || 4} · Hold {setters.pattern?.hold1 || 4} · Exhale {setters.pattern?.exhale || 4} · Hold {setters.pattern?.hold2 || 4}
-              </div>
-            )}
+            {/* Inline subtitle for breath intentionally removed (redundant with inputs below) */}
             {p.id === 'ritual' && (
               <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
                 Select an invocation to begin
@@ -508,7 +496,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
                    }}
                  >
-                   <BreathWaveform />
+                   <BreathWaveform pattern={setters.pattern} />
                  </div>
 
                  {/* Breath Phase Input Controls */}
@@ -552,7 +540,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
                            borderRadius: '6px',
                            padding: '6px 0',
                            width: '44px',
-                           color: '#F5E6D3',
+                           color: 'var(--accent-color)',
                            textAlign: 'center',
                            fontSize: '18px',
                            fontWeight: 700,
@@ -650,7 +638,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             <div className="flex justify-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
               <button
                 onClick={onStart}
-                className="group transition-all duration-200 relative overflow-hidden"
+                className="group transition-all duration-200 relative overflow-hidden begin-button"
                 style={{
                    width: '100%',
                    maxWidth: '400px',
@@ -660,34 +648,40 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
                    letterSpacing: '0.15em',
                    textTransform: 'uppercase',
                    padding: '16px 48px',
-                   borderRadius: '4px',
-                   // Solid metallic gold gradient
-                   background: 'linear-gradient(180deg, #D4AF37 0%, #B8962E 50%, #9A7B24 100%)',
-                   color: '#1A1A1A',
+                   borderRadius: '50px',
+                   background: `linear-gradient(135deg, var(--accent-color), var(--accent-secondary))`,
+                   color: '#000',
+                   textShadow: `0 0 8px var(--accent-40)`,
                    boxShadow: `
-                     0 4px 12px rgba(0, 0, 0, 0.4),
-                     inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                     inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                     0 0 30px var(--accent-60),
+                     inset 0 0 20px rgba(255, 255, 255, 0.3)
                    `,
-                   transition: 'all 200ms ease',
+                   transition: 'all 0.4s ease',
+                   position: 'relative',
                 }}
                 onMouseEnter={(e) => { 
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = `
-                    0 6px 16px rgba(0, 0, 0, 0.5),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-                    inset 0 -1px 0 rgba(0, 0, 0, 0.3)
-                  `;
+                  e.currentTarget.style.transform = 'scale(1.08)';
+                  e.currentTarget.style.boxShadow = `0 0 60px var(--accent-glow)`;
                 }}
                 onMouseLeave={(e) => { 
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.transform = 'scale(1)';
                   e.currentTarget.style.boxShadow = `
-                    0 4px 12px rgba(0, 0, 0, 0.4),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                    inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                    0 0 30px var(--accent-60),
+                    inset 0 0 20px rgba(255, 255, 255, 0.3)
                   `;
                 }}
               >
+                {/* Radial glow backdrop */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-2px',
+                    background: `radial-gradient(circle at center, var(--accent-50) 0%, transparent 70%)`,
+                    opacity: 0.6,
+                    filter: 'blur(10px)',
+                    zIndex: -1,
+                  }}
+                />
                 <span className="relative z-10">{practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice'}</span>
               </button>
             </div>
@@ -2123,7 +2117,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             }
           }}
         >
-          <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.12em' }}>CIRCUIT TRAINING</span>
+          <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.12em', color: '#D4AF37' }}>CIRCUIT TRAINING</span>
         </button>
       </div>
 

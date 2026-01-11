@@ -1,46 +1,144 @@
-export default function BreathWaveform() {
+function clampNumber(value, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
+function buildBreathPath({ inhale, hold1, exhale, hold2 }, cycles = 2) {
+  const safeInhale = clampNumber(inhale, 0.0001, 9999);
+  const safeHold1 = clampNumber(hold1, 0, 9999);
+  const safeExhale = clampNumber(exhale, 0.0001, 9999);
+  const safeHold2 = clampNumber(hold2, 0, 9999);
+
+  const startX = 10;
+  const endX = 420;
+  const baseY = 46;
+  const topY = 18;
+
+  const totalWidth = endX - startX;
+  const cycleCount = Math.max(1, Math.floor(clampNumber(cycles, 1, 8)));
+  const cycleWidth = totalWidth / cycleCount;
+
+  const total = safeInhale + safeHold1 + safeExhale + safeHold2;
+  const wInhale = (safeInhale / total) * cycleWidth;
+  const wHold1 = (safeHold1 / total) * cycleWidth;
+  const wExhale = (safeExhale / total) * cycleWidth;
+  const wHold2 = (safeHold2 / total) * cycleWidth;
+
+  let d = `M${startX} ${baseY}`;
+  for (let i = 0; i < cycleCount; i++) {
+    const x0 = startX + i * cycleWidth;
+    const x1 = x0 + wInhale;
+    const x2 = x1 + wHold1;
+    const x3 = x2 + wExhale;
+    const x4 = x3 + wHold2;
+
+    d += ` L${x1} ${topY}`;
+    if (wHold1 > 0.25) d += ` L${x2} ${topY}`;
+    d += ` L${x3} ${baseY}`;
+    if (wHold2 > 0.25) d += ` L${x4} ${baseY}`;
+  }
+  return d;
+}
+
+import { useId, useMemo } from 'react';
+
+function getTotalSeconds({ inhale, hold1, exhale, hold2 }) {
+  const safeInhale = clampNumber(inhale, 0, 9999);
+  const safeHold1 = clampNumber(hold1, 0, 9999);
+  const safeExhale = clampNumber(exhale, 0, 9999);
+  const safeHold2 = clampNumber(hold2, 0, 9999);
+  const total = safeInhale + safeHold1 + safeExhale + safeHold2;
+  return Math.max(0.5, total);
+}
+
+export default function BreathWaveform({ pattern, cycles = 1, showTracer = true }) {
+  const uid = useId().replace(/:/g, '');
+  const defaultPattern = { inhale: 4, hold1: 4, exhale: 4, hold2: 4 };
+  const effectivePattern = pattern || defaultPattern;
+
+  const d = useMemo(
+    () => buildBreathPath(effectivePattern, cycles),
+    [effectivePattern?.inhale, effectivePattern?.hold1, effectivePattern?.exhale, effectivePattern?.hold2, cycles]
+  );
+
+  const totalSeconds = useMemo(
+    () => getTotalSeconds(effectivePattern),
+    [effectivePattern?.inhale, effectivePattern?.hold1, effectivePattern?.exhale, effectivePattern?.hold2]
+  );
+
+  const glowFilterId = `breath-glow-${uid}`;
+  const tracerGlowId = `breath-tracer-${uid}`;
+  const motionPathId = `breath-motion-path-${uid}`;
+  const tracerKey = `${effectivePattern?.inhale}-${effectivePattern?.hold1}-${effectivePattern?.exhale}-${effectivePattern?.hold2}-${cycles}`;
+
   return (
     <svg viewBox="-20 -20 470 104" style={{ width: "100%", height: "64px", display: "block" }}>
       <defs>
-        <filter id="g" x="-50%" y="-80%" width="200%" height="260%">
+        <filter id={glowFilterId} x="-50%" y="-80%" width="200%" height="260%">
           <feGaussianBlur stdDeviation="3.5" result="b" />
           <feMerge>
             <feMergeNode in="b" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
+
+        <filter id={tracerGlowId} x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="3" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        <path id={motionPathId} d={d} fill="none" />
       </defs>
 
       <path
-        d="M10 46 L40 18 L92 18 L120 46 L160 46 L190 18 L242 18 L270 46 L310 46 L340 18 L392 18 L420 46"
+        d={d}
         fill="none"
-        stroke="#E9C35A"
+        stroke="var(--accent-color)"
         strokeOpacity="0.18"
         strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
-        filter="url(#g)"
+        filter={`url(#${glowFilterId})`}
       />
 
       <path
-        d="M10 46 L40 18 L92 18 L120 46 L160 46 L190 18 L242 18 L270 46 L310 46 L340 18 L392 18 L420 46"
+        d={d}
         fill="none"
-        stroke="#E9C35A"
+        stroke="var(--accent-color)"
         strokeOpacity="0.45"
         strokeWidth="5.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        filter="url(#g)"
+        filter={`url(#${glowFilterId})`}
       />
 
       <path
-        d="M10 46 L40 18 L92 18 L120 46 L160 46 L190 18 L242 18 L270 46 L310 46 L340 18 L392 18 L420 46"
+        d={d}
         fill="none"
-        stroke="#E9C35A"
+        stroke="var(--accent-color)"
         strokeWidth="2.25"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
+      {showTracer && (
+        <g key={tracerKey} filter={`url(#${tracerGlowId})`}>
+          <circle r="5" fill="var(--accent-color)" fillOpacity="0.9">
+            <animateMotion dur={`${totalSeconds}s`} repeatCount="indefinite" rotate="auto" calcMode="linear">
+              <mpath href={`#${motionPathId}`} xlinkHref={`#${motionPathId}`} />
+            </animateMotion>
+          </circle>
+          <circle r="10" fill="var(--accent-color)" fillOpacity="0.18">
+            <animateMotion dur={`${totalSeconds}s`} repeatCount="indefinite" rotate="auto" calcMode="linear">
+              <mpath href={`#${motionPathId}`} xlinkHref={`#${motionPathId}`} />
+            </animateMotion>
+          </circle>
+        </g>
+      )}
     </svg>
   );
 }

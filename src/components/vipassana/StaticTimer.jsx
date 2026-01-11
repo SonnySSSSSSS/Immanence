@@ -60,12 +60,13 @@ export function StaticTimer({ elapsedSeconds = 0, opacity = 0.75 }) {
 
                 {/* Time display */}
                 <div
-                    className="text-2xl tracking-[0.15em]"
+                    className="text-2xl tracking-[0.15em] timer-number"
                     style={{
                         fontFamily: "var(--font-display)",
                         fontWeight: 700,
-                        color: 'rgba(255, 255, 255, 0.85)',
-                        textShadow: '0 2px 12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1)',
+                        color: '#00ff9d',
+                        textShadow: '0 0 10px #00ff9d, 0 0 20px #00ff9d, 0 0 40px rgba(0, 255, 157, 0.6)',
+                        animation: 'number-glow 16s infinite ease-in-out'
                     }}
                 >
                     {timeString}
@@ -88,6 +89,15 @@ style.textContent = `
         50% {
             opacity: 0.4;
             transform: scale(1.02);
+        }
+    }
+    
+    @keyframes number-glow {
+        0%, 100% { 
+            text-shadow: 0 0 10px #00ff9d; 
+        }
+        25%, 75% { 
+            text-shadow: 0 0 30px #00ff9d, 0 0 50px rgba(0, 255, 157, 0.8); 
         }
     }
 `;

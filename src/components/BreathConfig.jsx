@@ -92,7 +92,7 @@ export function BreathConfig({
                                 fontWeight: 600,
                                 background: isLight ? 'rgba(60,50,35,0.05)' : "rgba(0,0,0,0.4)",
                                 border: isLight ? '1px solid var(--light-border)' : "1px solid var(--accent-10)",
-                                color: "var(--text-primary)",
+                                color: "var(--accent-color)",
                             }}
                         />
                     </div>

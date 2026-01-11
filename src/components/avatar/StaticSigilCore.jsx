@@ -106,12 +106,12 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     zIndex: 8,
                 }}
             />
-            {/* Avatar container - scaled to 48% for black ring separation */}
+            {/* Avatar container - scaled to 52.8% (48% + 10%) for black ring separation */}
             <div
                 className={`relative pointer-events-none select-none ${isLight ? 'light-orb-rotate' : 'dark-orb-rotate'}`}
                 style={{
-                    width: "48%",  // Scaled to create thin black ring separation
-                    height: "48%",
+                    width: "52.8%",  // Scaled to create thin black ring separation (48% * 1.1)
+                    height: "52.8%",
                     borderRadius: "9999px",
                     overflow: "hidden",
                     animationPlayState: isPracticing ? 'paused' : 'running',

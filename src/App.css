@@ -58,10 +58,28 @@
 :root {
   --brand-gold: #fcd34d;
   /* Fixed brand color */
-  --accent-h: 42;
-  --accent-s: 95%;
-  --accent-l: 58%;
-  --accent-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  /* Default to Seedling stage colors (#4ade80) to prevent white flash on load */
+  --accent-h: 142;
+  --accent-s: 71%;
+  --accent-l: 65%;
+  --accent-color: hsl(142 71% 65%);
+  --accent-r: 74;
+  --accent-g: 222;
+  --accent-b: 128;
+  --accent-10: rgba(74, 222, 128, 0.1);
+  --accent-15: rgba(74, 222, 128, 0.15);
+  --accent-20: rgba(74, 222, 128, 0.2);
+  --accent-25: rgba(74, 222, 128, 0.25);
+  --accent-30: rgba(74, 222, 128, 0.3);
+  --accent-40: rgba(74, 222, 128, 0.4);
+  --accent-50: rgba(74, 222, 128, 0.5);
+  --accent-60: rgba(74, 222, 128, 0.6);
+  --accent-70: rgba(74, 222, 128, 0.7);
+  --accent-80: rgba(74, 222, 128, 0.8);
+  --accent-primary: #4ade80;
+  --accent-secondary: #22c55e;
+  --accent-muted: #16a34a;
+  --accent-glow: rgba(74, 222, 128, 0.4);
 }
 
 /* Brand Gold Utilities (Static) */

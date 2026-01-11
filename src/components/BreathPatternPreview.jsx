@@ -2,6 +2,38 @@
 // Animated breath pattern preview with tracer dot
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 
+// CSS for neon breathing animations
+const BREATHING_ANIMATIONS = `
+  @keyframes breathing-pulse {
+    0%, 100% { 
+      filter: drop-shadow(0 0 15px #00ff9d); 
+      opacity: 0.9; 
+    }
+    25% { 
+      filter: drop-shadow(0 0 35px #00ff9d); 
+      opacity: 1; 
+    }
+    50% { 
+      filter: drop-shadow(0 0 20px #00ff9d); 
+      opacity: 0.85; 
+    }
+    75% { 
+      filter: drop-shadow(0 0 40px #00ff9d); 
+      opacity: 1; 
+    }
+  }
+`;
+
+// Inject animation styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = BREATHING_ANIMATIONS;
+  if (!document.head.querySelector('style[data-breathing-animations]')) {
+    styleSheet.setAttribute('data-breathing-animations', 'true');
+    document.head.appendChild(styleSheet);
+  }
+}
+
 export function BreathPatternPreview({ pattern }) {
     const [dotPosition, setDotPosition] = useState({ x: 5, y: 35 });
     const animationRef = useRef(null);
@@ -92,11 +124,12 @@ export function BreathPatternPreview({ pattern }) {
 
     return (
         <div
-            className="relative w-full h-32 mt-2 rounded-xl overflow-hidden"
+            className="relative w-full h-32 mt-2 rounded-xl overflow-hidden waveform-container"
             style={{
-                background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.15) 100%)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,0,0.2)'
+                background: 'var(--accent-05)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid var(--accent-25)',
+                boxShadow: 'inset 0 0 30px var(--accent-12), 0 0 40px var(--accent-25)'
             }}
         >
             <svg
@@ -119,12 +152,14 @@ export function BreathPatternPreview({ pattern }) {
                     </filter>
                 </defs>
 
-                {/* The path shape */}
+                {/* The path shape - clean lines like reference */}
                 <path
                     d={pathD}
-                    fill="url(#patternGradientPreview)"
-                    stroke="var(--accent-primary)"
-                    strokeWidth="0.5"
+                    fill="none"
+                    stroke="var(--accent-color)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
                 />
 
@@ -148,13 +183,13 @@ export function BreathPatternPreview({ pattern }) {
 
             {/* Phase labels */}
             <div className="absolute bottom-2 right-3 flex gap-2">
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>IN</span>
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)" }}>•</span>
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>HOLD</span>
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)" }}>•</span>
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>OUT</span>
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)" }}>•</span>
-                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.4)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>HOLD</span>
+                <span style={{ fontSize: "7px", color: "var(--accent-color)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>IN</span>
+                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.3)" }}>•</span>
+                <span style={{ fontSize: "7px", color: "var(--accent-color)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>HOLD</span>
+                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.3)" }}>•</span>
+                <span style={{ fontSize: "7px", color: "var(--accent-color)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>OUT</span>
+                <span style={{ fontSize: "7px", color: "rgba(253,251,245,0.3)" }}>•</span>
+                <span style={{ fontSize: "7px", color: "var(--accent-color)", textTransform: 'uppercase', letterSpacing: '0.1em' }}>HOLD</span>
             </div>
         </div>
     );

@@ -130,8 +130,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     style={{
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        background: 'rgba(0,0,0,0.4)',
-                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.6)',
+                        background: 'rgba(255,255,255,0.1)',
                         border: '1px solid rgba(255,255,255,0.05)'
                     }}
                 />
@@ -211,32 +210,32 @@ export function SacredTimeSlider({ value, onChange, options }) {
                         zIndex: 10
                     }}
                 >
-                    {/* Inner emerald core */}
+                    {/* Inner neon core */}
                     <div
                         className="absolute inset-0 rounded-full transition-all duration-100"
                         style={{
-                            background: '#00C896',
+                            background: `radial-gradient(circle, var(--accent-color) 40%, transparent 70%)`,
                             boxShadow: pulseActive
-                                ? '0 0 20px rgba(0, 200, 150, 0.8)'
-                                : '0 0 12px rgba(0, 200, 150, 0.6)',
-                            transform: 'scale(0.7)'
+                                ? `0 0 30px var(--accent-glow)`
+                                : `0 0 20px var(--accent-40)`,
+                            transform: 'scale(1)'
                         }}
                     />
-                    {/* Outer golden ring */}
+                    {/* Outer neon ring */}
                     <div
                         className="w-full h-full rounded-full transition-all duration-100"
                         style={{
-                            border: '2px solid #D4AF37',
+                            border: `2px solid var(--accent-color)`,
                             boxShadow: pulseActive
-                                ? '0 0 28px rgba(212, 175, 55, 0.7), 0 0 48px rgba(212, 175, 55, 0.4)'
-                                : '0 0 16px rgba(212, 175, 55, 0.5), 0 0 32px rgba(212, 175, 55, 0.3)',
+                                ? `0 0 40px var(--accent-color), 0 0 60px var(--accent-50)`
+                                : `0 0 30px var(--accent-80)`,
                             background: 'transparent'
                         }}
                     />
                 </div>
             </div>
 
-            {/* Labels row - show ALL durations with prominent selected value */}
+            {/* Number values below slider - selected number glows */}
             <div
                 className="absolute flex justify-between"
                 style={{
@@ -249,13 +248,6 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     const i = options.indexOf(opt);
                     const percent = options.length > 1 ? (i / (options.length - 1)) * 100 : 0;
                     const isSelected = opt === value;
-                    const isKey = KEY_DURATIONS[opt];
-                    
-                    // Calculate distance from selected for scaling effect
-                    const selectedIndex = options.indexOf(value);
-                    const distance = Math.abs(i - selectedIndex);
-                    const isAdjacent = distance === 1;
-                    const isFar = distance > 1;
 
                     return (
                         <div
@@ -267,34 +259,15 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 transform: 'translateX(-50%)'
                             }}
                         >
-                            {/* Golden ring around active number */}
-                            {isSelected && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        width: '40px',
-                                        height: '40px',
-                                        border: '2px solid #D4AF37',
-                                        borderRadius: '50%',
-                                        boxShadow: '0 0 20px rgba(213, 168, 75, 0.5)',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        zIndex: 0
-                                    }}
-                                />
-                            )}
                             <div
                                 className="relative font-semibold"
                                 style={{
                                     fontFamily: 'var(--font-display)',
-                                    fontSize: isSelected ? '32px' : (isAdjacent ? '14px' : '12px'),
-                                    fontWeight: isSelected ? 700 : 500,
-                                    color: isSelected ? '#F5E6D3' : 'rgba(255,255,255,0.3)',
-                                    textShadow: isSelected ? '0 0 12px rgba(212, 175, 55, 0.6)' : 'none',
+                                    fontSize: '14px',
+                                    fontWeight: isSelected ? 700 : 400,
+                                    color: isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.3)',
+                                    textShadow: isSelected ? '0 0 12px var(--accent-color), 0 0 24px var(--accent-color)' : 'none',
                                     letterSpacing: '0.05em',
-                                    opacity: isFar ? 0.3 : (isAdjacent ? 0.5 : 1),
-                                    zIndex: 1,
                                     transition: 'all 300ms ease'
                                 }}
                             >
