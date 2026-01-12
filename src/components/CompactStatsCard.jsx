@@ -4,7 +4,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useProgressStore } from '../state/progressStore.js';
-import { useTrackingStore } from '../state/trackingStore.js';
 import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 import { useTheme } from '../context/ThemeContext.jsx';
@@ -539,24 +538,16 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
     };
 
     const currentDomain = domainConfig[domain] || domainConfig.wisdom;
-    const getTrajectory = useTrackingStore(s => s.getTrajectory);
-    const sessionsCount = useTrackingStore(s => s.sessions.length);
-    const logsCount = useTrackingStore(s => Object.keys(s.dailyLogs).length);
+    const getTrajectory = useProgressStore(s => s.getTrajectory);
+    const sessionsCount = useProgressStore(s => s.sessions.length);
     
-    const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount, logsCount]);
+    const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount]);
     
-    // New: Get Timing Offsets for the 5-level chart
-    const getWeeklyTimingOffsets = useTrackingStore(s => s.getWeeklyTimingOffsets);
-    const trackingDomain = domain === 'breathwork' ? 'breath' : 
-                          domain === 'wisdom' ? 'cognitive_vipassana' : 
-                          'visualization';
-    const weekOffsets = useMemo(() => getWeeklyTimingOffsets(trackingDomain), [getWeeklyTimingOffsets, trackingDomain, sessionsCount]);
+    // Get Timing Offsets for the 5-level chart
+    const getWeeklyTimingOffsets = useProgressStore(s => s.getWeeklyTimingOffsets);
+    const weekOffsets = useMemo(() => getWeeklyTimingOffsets(domain), [getWeeklyTimingOffsets, domain, sessionsCount]);
 
-    // Calculate actual regiment progress based on past 7 weeks or path completion
-    const activePath = useTrackingStore(s => s.activePath);
-    const regimentProgress = activePath 
-        ? (activePath.completedWeeks.length / activePath.totalWeeks)
-        : (weekOffsets.filter(d => d.practiced).length / 7);
+    const regimentProgress = weekOffsets.filter(d => d.practiced).length / 7;
 
     useEffect(() => {
         if (cardRef.current) {

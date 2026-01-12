@@ -127,6 +127,8 @@ export const useProgressStore = create(
              * @param {Object} [params.metadata] - domain-specific data
              * @param {Object} [params.instrumentation] - attention path instrumentation data
              */
+            // Internal: do not call directly from feature code.
+            // Use src/services/sessionRecorder.js recordPracticeSession() as the single write entry point.
             recordSession: ({ domain, duration, metadata = {}, instrumentation = null }) => {
                 const state = get();
                 const now = new Date();
@@ -539,6 +541,222 @@ export const useProgressStore = create(
                 // const filtered = useStore(s => s.sessions.filter(...))
                 // This creates a new array every time ANY part of the state changes.
                 return state.sessions.filter(s => s.journal);
+            },
+
+            /**
+             * Get compact stats per domain
+             */
+            getAllStats: () => {
+                const state = get();
+                const domainTotals = {};
+
+                state.sessions.forEach(s => {
+                    const key = s.domain || 'unknown';
+                    if (!domainTotals[key]) {
+                        domainTotals[key] = { count: 0, totalMinutes: 0 };
+                    }
+                    domainTotals[key].count += 1;
+                    domainTotals[key].totalMinutes += s.duration || 0;
+                });
+
+                return domainTotals;
+            },
+
+            /**
+             * Get timing offsets for the past 7 days (Mon-Sun)
+             * Uses average time-of-day as the baseline when no schedule exists
+             */
+            getWeeklyTimingOffsets: (domain = 'breathwork') => {
+                const state = get();
+                const now = new Date();
+                const weekStart = getWeekStart(now);
+                weekStart.setHours(0, 0, 0, 0);
+
+                const weekSessions = state.sessions.filter(s => s.domain === domain).filter(s => {
+                    const sDate = new Date(s.date);
+                    return sDate >= weekStart && sDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+                });
+
+                if (weekSessions.length === 0) {
+                    return Array.from({ length: 7 }, (_, i) => {
+                        const d = new Date(weekStart);
+                        d.setDate(weekStart.getDate() + i);
+                        return { dateKey: getDateKey(d), offsetMinutes: null, practiced: false };
+                    });
+                }
+
+                const toMinutes = (dateStr) => {
+                    const d = new Date(dateStr);
+                    return d.getHours() * 60 + d.getMinutes();
+                };
+
+                const allMinutes = weekSessions.map(s => toMinutes(s.date));
+                const baseline = allMinutes.reduce((a, b) => a + b, 0) / allMinutes.length;
+
+                const weekOffsets = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(weekStart);
+                    d.setDate(weekStart.getDate() + i);
+                    const dateKey = getDateKey(d);
+
+                    const daySessions = weekSessions.filter(s => s.dateKey === dateKey);
+                    if (daySessions.length === 0) {
+                        weekOffsets.push({ dateKey, offsetMinutes: null, practiced: false });
+                        continue;
+                    }
+
+                    const dayAvg = daySessions
+                        .map(s => toMinutes(s.date))
+                        .reduce((a, b) => a + b, 0) / daySessions.length;
+
+                    weekOffsets.push({
+                        dateKey,
+                        offsetMinutes: Math.round(baseline - dayAvg),
+                        practiced: true
+                    });
+                }
+
+                return weekOffsets;
+            },
+
+            /**
+             * Get trajectory data for the past N weeks
+             */
+            getTrajectory: (weekCount = 8) => {
+                const state = get();
+                const weeks = [];
+
+                for (let offset = weekCount - 1; offset >= 0; offset--) {
+                    const now = new Date();
+                    now.setDate(now.getDate() - (offset * 7));
+
+                    const startOfWeek = getWeekStart(now);
+                    startOfWeek.setHours(0, 0, 0, 0);
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+                    const weekSessions = state.sessions.filter(s => {
+                        const sDate = new Date(s.date);
+                        return sDate >= startOfWeek && sDate < endOfWeek;
+                    });
+
+                    const dayKeys = new Set(weekSessions.map(s => s.dateKey));
+                    const totalMinutes = weekSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+
+                    const breathPrecisionValues = weekSessions
+                        .map(s => s.metadata?.accuracy)
+                        .filter(a => typeof a === 'number');
+                    const avgBreathPrecision = breathPrecisionValues.length > 0
+                        ? breathPrecisionValues.reduce((sum, v) => sum + v, 0) / breathPrecisionValues.length
+                        : null;
+
+                    const completed = weekSessions.filter(s => s.exit_type === 'completed').length;
+                    const completionRate = weekSessions.length > 0 ? completed / weekSessions.length : 0;
+
+                    const practiceTypes = [...new Set(weekSessions.map(s => s.domain))];
+
+                    weeks.push({
+                        weekKey: getWeekKey(startOfWeek),
+                        startDate: getDateKey(startOfWeek),
+                        daysActive: dayKeys.size,
+                        totalMinutes,
+                        sessionCount: weekSessions.length,
+                        avgPrecision: { breath: avgBreathPrecision },
+                        karmaCount: 0,
+                        dharmaCount: 0,
+                        completionRate,
+                        practiceTypes,
+                    });
+                }
+
+                const getTrend = (data, key) => {
+                    if (data.length < 2) return 0;
+                    const yValues = data.map(w => w[key] || 0);
+                    const n = yValues.length;
+                    const xMean = (n - 1) / 2;
+                    const yMean = yValues.reduce((a, b) => a + b, 0) / n;
+
+                    let numerator = 0;
+                    let denominator = 0;
+
+                    for (let i = 0; i < n; i++) {
+                        numerator += (i - xMean) * (yValues[i] - yMean);
+                        denominator += Math.pow(i - xMean, 2);
+                    }
+
+                    return denominator === 0 ? 0 : numerator / denominator;
+                };
+
+                const avgDaysActive = weeks.reduce((sum, w) => sum + w.daysActive, 0) / (weeks.length || 1);
+                const lullThreshold = Math.max(avgDaysActive * 0.5, 2);
+
+                const lulls = [];
+                let lullStart = null;
+                weeks.forEach((week, idx) => {
+                    if (week.daysActive < lullThreshold) {
+                        if (lullStart === null) lullStart = idx;
+                    } else {
+                        if (lullStart !== null && idx - lullStart >= 2) {
+                            lulls.push({
+                                startWeek: weeks[lullStart].weekKey,
+                                endWeek: weeks[idx - 1].weekKey,
+                                duration: idx - lullStart,
+                            });
+                        }
+                        lullStart = null;
+                    }
+                });
+
+                const peakWeek = weeks.reduce((max, w) => w.daysActive > max.daysActive ? w : max, weeks[0]);
+                const mostMinutes = weeks.reduce((max, w) => w.totalMinutes > max.totalMinutes ? w : max, weeks[0]);
+
+                const firstWeekPrecision = weeks.find(w => w.avgPrecision.breath !== null)?.avgPrecision.breath;
+                const lastWeekPrecision = [...weeks].reverse().find(w => w.avgPrecision.breath !== null)?.avgPrecision.breath;
+                const precisionDelta = (firstWeekPrecision && lastWeekPrecision)
+                    ? ((lastWeekPrecision - firstWeekPrecision) / firstWeekPrecision) * 100
+                    : null;
+
+                const practiceChanges = [];
+                for (let i = 1; i < weeks.length; i++) {
+                    const newTypes = weeks[i].practiceTypes.filter(t => !weeks[i - 1].practiceTypes.includes(t));
+                    if (newTypes.length > 0) {
+                        practiceChanges.push({
+                            weekKey: weeks[i].weekKey,
+                            added: newTypes,
+                        });
+                    }
+                }
+
+                const consistencyTrend = getTrend(weeks, 'daysActive');
+                const volumeTrend = getTrend(weeks, 'totalMinutes');
+                const direction = consistencyTrend > 0.1 ? 'ascending' :
+                    consistencyTrend < -0.1 ? 'declining' : 'steady';
+
+                return {
+                    weeks,
+                    period: {
+                        weekCount,
+                        startDate: weeks[0]?.startDate,
+                        endDate: weeks[weeks.length - 1]?.startDate,
+                    },
+                    trends: {
+                        consistency: consistencyTrend,
+                        volume: volumeTrend,
+                        precision: getTrend(weeks.map(w => ({ avgPrecision: w.avgPrecision.breath || 0 })), 'avgPrecision'),
+                        direction,
+                        directionLabel: direction === 'ascending' ? 'Ascending' :
+                            direction === 'declining' ? 'Declining' : 'Steady',
+                    },
+                    insights: {
+                        peakWeek: peakWeek?.weekKey,
+                        peakDays: peakWeek?.daysActive,
+                        mostProductiveWeek: mostMinutes?.weekKey,
+                        mostMinutes: mostMinutes?.totalMinutes,
+                        precisionDelta,
+                        practiceChanges,
+                    },
+                    lulls,
+                };
             }
         }),
         {
@@ -652,6 +870,19 @@ function countConsecutiveDays(state) {
     }
 
     return count;
+}
+
+function getWeekKey(date = new Date()) {
+    const mondayOfWeek = getWeekStart(date);
+    const year = mondayOfWeek.getFullYear();
+
+    const d = new Date(Date.UTC(mondayOfWeek.getFullYear(), mondayOfWeek.getMonth(), mondayOfWeek.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+
+    return `${year}-W${weekNo.toString().padStart(2, '0')}`;
 }
 
 // ========================================

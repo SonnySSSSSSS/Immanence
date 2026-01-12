@@ -1,4 +1,5 @@
 // src/state/trackingStore.js
+// Dev-only store. Not authoritative. Used for DevPanel mock injection.
 // ═══════════════════════════════════════════════════════════════════════════
 // AUTHORITATIVE TRACKING CENTER
 // All practice data flows INTO this store. Other stores READ from it.

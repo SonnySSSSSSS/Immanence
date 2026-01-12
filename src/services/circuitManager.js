@@ -3,7 +3,7 @@
 // Handles multi-path training sessions
 
 import { useCurriculumStore } from '../state/curriculumStore';
-import { logPractice } from './cycleManager';
+import { recordPracticeSession } from './sessionRecorder';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PUBLIC API
@@ -84,12 +84,17 @@ export function logCircuitCompletion(circuitId, exercisesCompleted) {
     const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     // Log to practice history
-    logPractice({
-        type: 'circuit',
-        duration: totalDuration,
-        timeOfDay,
-        exercises: exercisesCompleted.map((ex) => ex.type),
-        contributions,
+    recordPracticeSession({
+        persistSession: false,
+        cycleEnabled: true,
+        cycleMinDuration: 0,
+        cyclePracticeData: {
+            type: 'circuit',
+            duration: totalDuration,
+            timeOfDay,
+            exercises: exercisesCompleted.map((ex) => ex.type),
+            contributions,
+        },
     });
 
     return {

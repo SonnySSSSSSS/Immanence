@@ -2,10 +2,8 @@
 // Manages practice session lifecycle, start/stop logic, and progress recording
 
 import { useState, useCallback, useRef } from 'react';
-import { useProgressStore } from '../state/progressStore.js';
-import { syncFromProgressStore } from '../state/mandalaStore.js';
 import { loadPreferences, savePreferences } from '../state/practiceStore.js';
-import { logPractice } from '../services/cycleManager.js';
+import { recordPracticeSession } from '../services/sessionRecorder.js';
 import { useSessionInstrumentation } from './useSessionInstrumentation.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 
@@ -172,7 +170,7 @@ export function usePracticeSession(options = {}) {
         else if (p === 'ritual') domain = 'ritual';
         else if (p === 'sound') domain = 'sound';
 
-        useProgressStore.getState().recordSession({
+        recordPracticeSession({
           domain,
           duration: duration,
           metadata: {
@@ -183,20 +181,10 @@ export function usePracticeSession(options = {}) {
             legacyImport: false
           },
           instrumentation: instrumentationData,
+          exitType,
+          cycleEnabled: true,
+          cycleMinDuration: 10,
         });
-
-        if (duration >= 10) {
-          const now = new Date();
-          const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-          logPractice({
-            type: domain === 'breathwork' ? 'breath' : domain === 'visualization' ? 'focus' : 'body',
-            duration: duration,
-            timeOfDay: timeOfDay,
-          });
-        }
-
-        syncFromProgressStore();
       } catch (e) {
         console.error("[usePracticeSession] Failed to save session:", e);
       }

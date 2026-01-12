@@ -17,12 +17,10 @@ import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
-import { useProgressStore } from "../state/progressStore.js";
-import { syncFromProgressStore } from "../state/mandalaStore.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
-import { logPractice } from '../services/cycleManager.js';
+import { recordPracticeSession } from '../services/sessionRecorder.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { logCircuitCompletion } from '../services/circuitManager.js';
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
@@ -37,7 +35,6 @@ import { BreathPhaseIndicator } from "./BreathPhaseIndicator.jsx";
 import { BreathPathChart } from "./BreathPathChart.jsx";
 import { BreathWaveVisualization } from "./BreathWaveVisualization.jsx";
 import BreathWaveform from "./BreathWaveform.jsx";
-import { BreathSessionDisplay } from "./BreathSessionDisplay.jsx";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -1272,7 +1269,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     let recordedSession = null;
     try {
-      recordedSession = useProgressStore.getState().recordSession({
+      recordedSession = recordPracticeSession({
         domain: 'circuit-training',
         duration: totalDuration,
         metadata: {
@@ -1280,6 +1277,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           exerciseCount: circuitConfig.exercises.length,
           legacyImport: false
         },
+        exitType: 'completed',
       });
     } catch (e) {
       console.error("Failed to save circuit session:", e);
@@ -1382,7 +1380,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
-      recordedSession = useProgressStore.getState().recordSession({
+      recordedSession = recordPracticeSession({
         domain,
         duration: duration,
         metadata: {
@@ -1393,20 +1391,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           legacyImport: false
         },
         instrumentation: instrumentationData,
+        exitType,
+        cycleEnabled: true,
+        cycleMinDuration: 10,
       });
-
-      if (duration >= 10) {
-        const now = new Date();
-        const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-        logPractice({
-          type: domain === 'breathwork' ? 'breath' : domain === 'visualization' ? 'focus' : 'body',
-          duration: duration,
-          timeOfDay: timeOfDay,
-        });
-      }
-
-      syncFromProgressStore();
     } catch (e) {
       console.error("Failed to save session:", e);
     }
@@ -1905,14 +1893,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 startTime={sessionStartTime}
                 pathId={showCore ? null : avatarPath}
                 fxPreset={currentFxPreset}
-              />
-              
-              {/* Enhanced Breath Session Display with Glassmorphic UI */}
-              <BreathSessionDisplay 
-                pattern={pattern}
-                duration={duration}
-                timeLeft={timeLeft}
-                breathCount={breathCount}
               />
               
               {showFxGallery && (

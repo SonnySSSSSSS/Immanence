@@ -63,17 +63,21 @@ function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExp
           <div 
             className="w-full relative z-20 flex flex-col items-center"
             style={{
-              marginTop: '1.5rem',
-              marginBottom: '12px',
+              marginTop: section === 'practice' ? '0.25rem' : '1.5rem',
+              // Reclaim vertical space by overlapping the next section when shrunk
+              marginBottom: section === 'practice' ? '-180px' : '12px',
+              pointerEvents: 'none', // Avatar shouldn't block clicks
             }}
           >
             {/* Avatar with scale/fade during practice */}
             <div
               className="transition-all duration-700 ease-in-out"
               style={{
-                transform: 'scale(1)',
+                transform: section === 'practice' ? 'scale(0.5)' : 'scale(0.75)',
+                transformOrigin: 'top center',
                 opacity: 1,
                 zIndex: 100,
+                willChange: 'transform',
               }}
             >
             <Avatar

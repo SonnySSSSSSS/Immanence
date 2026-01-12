@@ -1,5 +1,5 @@
 import { useJournalStore } from '../state/journalStore';
-import { logPractice } from './cycleManager';
+import { recordPracticeSession } from './sessionRecorder';
 
 /**
  * specialized logger for the Ritual feature
@@ -11,19 +11,24 @@ export function logRitualResult(ritualData) {
     const durationMs = endTime - new Date(startTime).getTime();
     const durationMin = Math.max(1, Math.round(durationMs / 60000));
 
-    // 1. Log to progressStore via general logPractice
+    // 1. Log to practice history via centralized recorder
     // This ensures consistency, streaks, and charts are updated
-    logPractice({
-        type: 'wisdom', // Ritual maps to wisdom domain
-        duration: durationMin,
-        metadata: {
-            ritualId: id,
-            isRitual: true,
-            selectedMemory,
-            photoUrl: photoUrl ? true : false, // Store flag, actual photo in journal
-            stepsCompleted: 6
+    recordPracticeSession({
+        persistSession: false,
+        cycleEnabled: true,
+        cycleMinDuration: 0,
+        cyclePracticeData: {
+            type: 'wisdom', // Ritual maps to wisdom domain
+            duration: durationMin,
+            metadata: {
+                ritualId: id,
+                isRitual: true,
+                selectedMemory,
+                photoUrl: photoUrl ? true : false, // Store flag, actual photo in journal
+                stepsCompleted: 6
+            },
+            contributions: { wisdom: durationMin }
         },
-        contributions: { wisdom: durationMin }
     });
 
     // 2. Trigger Journaling with pre-populated content

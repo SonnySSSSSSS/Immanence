@@ -14,12 +14,10 @@ import { BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "../SoundConfi
 import { BreathConfig, BREATH_PRESETS } from "../BreathConfig.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "../SensoryConfig.jsx";
 import { SOLFEGGIO_SET } from "../../utils/frequencyLibrary.js";
-import { useProgressStore } from "../../state/progressStore.js";
-import { syncFromProgressStore } from "../../state/mandalaStore.js";
 import { loadPreferences, savePreferences } from "../../state/practiceStore.js";
 import { ringFXPresets, getCategories } from "../../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../../hooks/useSessionInstrumentation.js";
-import { logPractice } from '../../services/cycleManager.js';
+import { recordPracticeSession } from '../../services/sessionRecorder.js';
 import { useCurriculumStore } from '../../state/curriculumStore.js';
 import { logCircuitCompletion } from '../../services/circuitManager.js';
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../../styles/cardMaterial.js";
@@ -352,7 +350,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     let recordedSession = null;
     try {
-      recordedSession = useProgressStore.getState().recordSession({
+      recordedSession = recordPracticeSession({
         domain: 'circuit-training',
         duration: totalDuration,
         metadata: {
@@ -360,6 +358,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           exerciseCount: circuitConfig.exercises.length,
           legacyImport: false
         },
+        exitType: 'completed',
       });
     } catch (e) {
       console.error("Failed to save circuit session:", e);
@@ -462,7 +461,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
-      recordedSession = useProgressStore.getState().recordSession({
+      recordedSession = recordPracticeSession({
         domain,
         duration: duration,
         metadata: {
@@ -473,20 +472,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           legacyImport: false
         },
         instrumentation: instrumentationData,
+        exitType,
+        cycleEnabled: true,
+        cycleMinDuration: 10,
       });
-
-      if (duration >= 10) {
-        const now = new Date();
-        const timeOfDay = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-        logPractice({
-          type: domain === 'breathwork' ? 'breath' : domain === 'visualization' ? 'focus' : 'body',
-          duration: duration,
-          timeOfDay: timeOfDay,
-        });
-      }
-
-      syncFromProgressStore();
     } catch (e) {
       console.error("Failed to save session:", e);
     }

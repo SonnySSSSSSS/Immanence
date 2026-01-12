@@ -4,8 +4,8 @@
 
 import { useCircuitManager } from '../state/circuitManager';
 import { useCircuitJournalStore } from '../state/circuitJournalStore';
-import { useProgressStore } from '../state/progressStore';
 import { useLunarStore } from '../state/lunarStore';
+import { recordPracticeSession } from './sessionRecorder';
 
 /**
  * Convert circuit UI selection to Zustand store session
@@ -85,10 +85,9 @@ export function completeCircuitSession() {
         }
 
         // Log to progressStore for streak/tracking
-        const progressStore = useProgressStore.getState();
         const lunarStore = useLunarStore.getState();
 
-        const session = progressStore.recordSession({
+        const session = recordPracticeSession({
             domain: 'circuit-training',
             duration: Math.round(completedLog.totalActualDuration),
             metadata: {
@@ -103,7 +102,8 @@ export function completeCircuitSession() {
                 duration_ms: completedLog.endTime - completedLog.startTime,
                 exit_type: 'completed',
                 practice_family: 'circuit'
-            }
+            },
+            exitType: 'completed',
         });
 
         // Get current lunar phase for journal metadata

@@ -652,7 +652,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                     className="text-[10px] uppercase font-black tracking-[0.2em]"
                     style={{ color: isLight ? 'rgba(0,0,0,0.5)' : 'rgba(253,251,245,0.5)' }}
                 >
-                    Practice Archive
+                    Tracking Archive
                 </div>
             </button>
 
@@ -665,4 +665,3 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
         </div>
     );
 }
-

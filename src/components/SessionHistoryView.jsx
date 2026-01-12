@@ -6,13 +6,19 @@ import React, { useState, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { useProgressStore } from '../state/progressStore.js';
 import { useCircuitJournalStore } from '../state/circuitJournalStore.js';
+import { useWisdomStore } from '../state/wisdomStore.js';
+import { useVideoStore } from '../state/videoStore.js';
+import { useNavigationStore } from '../state/navigationStore.js';
+import { useApplicationStore } from '../state/applicationStore.js';
+import { useModeTrainingStore } from '../state/modeTrainingStore.js';
+import { useChainStore } from '../state/chainStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { CircuitEntryCard } from './CircuitEntryCard.jsx';
 import { CircuitInsightsView } from './CircuitInsightsView.jsx';
 import { SessionEntryEditModal } from './SessionEntryEditModal.jsx';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal.jsx';
 import { ExportArchiveButton } from './ExportArchiveButton.jsx';
-import { useCircuitEntriesMemo } from '../hooks/useEntryMemoization';
+import { getDateKey } from '../utils/dateUtils';
 
 export function SessionHistoryView({ onClose }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -21,11 +27,68 @@ export function SessionHistoryView({ onClose }) {
     // Get the store methods as references (not calling them to avoid new array on every render)
     const getAllCircuitEntries = useCircuitJournalStore(s => s.getAllEntries);
     const getSessionsWithJournal = useProgressStore(s => s.getSessionsWithJournal);
+    const allSessions = useProgressStore(s => s.sessions);
+    const getAllStats = useProgressStore(s => s.getAllStats);
     const { deleteSession } = useProgressStore();
+
+    const readingSessions = useWisdomStore(s => s.readingSessions);
+    const quizAttempts = useWisdomStore(s => s.quizAttempts);
+    const getReadingStats = useWisdomStore(s => s.getReadingStats);
+    const getQuizStats = useWisdomStore(s => s.getQuizStats);
+
+    const videoById = useVideoStore(s => s.byId);
+    const getWatchStats = useVideoStore(s => s.getWatchStats);
+
+    const navigationActivePath = useNavigationStore(s => s.activePath);
+    const navigationLastActivity = useNavigationStore(s => s.lastActivityDate);
+    const navigationAssessment = useNavigationStore(s => s.pathAssessment);
+    const navigationUnlocked = useNavigationStore(s => s.unlockedSections);
+    const navigationFoundation = useNavigationStore(s => s.hasWatchedFoundation);
+
+    const applicationLogs = useApplicationStore(s => s.awarenessLogs);
+    const getApplicationStats = useApplicationStore(s => s.getStats);
+
+    const modeStats = useModeTrainingStore(s => s.modeStats);
+    const modeSessions = useModeTrainingStore(s => s.sessions);
+
+    const completedChains = useChainStore(s => s.completedChains);
+    const getPatternStats = useChainStore(s => s.getPatternStats);
 
     // Memoize the entries to prevent infinite re-renders
     const circuitEntries = useMemo(() => getAllCircuitEntries?.() || [], [getAllCircuitEntries]);
     const sessionEntries = useMemo(() => getSessionsWithJournal?.() || [], [getSessionsWithJournal]);
+    const allStats = useMemo(() => getAllStats?.() || {}, [getAllStats, allSessions]);
+    const readingStats = useMemo(() => getReadingStats?.() || ({
+        totalSessions: 0,
+        totalMinutes: 0,
+        sectionsVisited: 0,
+        bySection: {},
+        lastRead: null
+    }), [getReadingStats, readingSessions]);
+    const quizStats = useMemo(() => getQuizStats?.() || ({
+        totalAttempts: 0,
+        passed: 0,
+        avgScore: 0,
+        passRate: 0
+    }), [getQuizStats, quizAttempts]);
+    const watchStats = useMemo(() => getWatchStats?.() || ({
+        totalWatched: 0,
+        completed: 0,
+        inProgress: 0
+    }), [getWatchStats, videoById]);
+    const appStats7 = useMemo(() => getApplicationStats?.(7) || ({
+        total: 0,
+        byCategory: {},
+        respondedDifferently: 0,
+        respondedDifferentlyPercent: 0
+    }), [getApplicationStats, applicationLogs]);
+    const appStats30 = useMemo(() => getApplicationStats?.(30) || ({
+        total: 0,
+        byCategory: {},
+        respondedDifferently: 0,
+        respondedDifferentlyPercent: 0
+    }), [getApplicationStats, applicationLogs]);
+    const patternStats = useMemo(() => getPatternStats?.() || null, [getPatternStats, completedChains]);
 
     const [activeTab, setActiveTab] = useState('all');
     const [filterDate, setFilterDate] = useState(null);
@@ -34,11 +97,92 @@ export function SessionHistoryView({ onClose }) {
     const [editingSessionId, setEditingSessionId] = useState(null);
     const [deletingSessionId, setDeletingSessionId] = useState(null);
 
-    // Use memoized filtering instead of manual useMemo
-    const allEntries = useCircuitEntriesMemo(
-        [...circuitEntries, ...sessionEntries],
-        { dateKey: filterDate, activeTab }
-    );
+    const combinedEntries = useMemo(() => {
+        const entries = [];
+
+        sessionEntries.forEach(entry => {
+            const timestamp = entry.date || entry.timestamp;
+            const dateKey = entry.dateKey || (timestamp ? getDateKey(new Date(timestamp)) : null);
+            entries.push({
+                id: `session-${entry.id}`,
+                type: 'practice',
+                dateKey,
+                timestamp,
+                data: entry
+            });
+        });
+
+        circuitEntries.forEach(entry => {
+            const timestamp = entry.timestamp || entry.completionTime;
+            const dateKey = entry.dateKey || (timestamp ? getDateKey(new Date(timestamp)) : null);
+            entries.push({
+                id: `circuit-${entry.id}`,
+                type: 'circuit',
+                dateKey,
+                timestamp,
+                data: entry
+            });
+        });
+
+        readingSessions.forEach(entry => {
+            if (!entry?.date) return;
+            entries.push({
+                id: `wisdom-reading-${entry.id}`,
+                type: 'wisdom-reading',
+                dateKey: getDateKey(new Date(entry.date)),
+                timestamp: entry.date,
+                data: entry
+            });
+        });
+
+        quizAttempts.forEach(entry => {
+            if (!entry?.date) return;
+            entries.push({
+                id: `wisdom-quiz-${entry.id}`,
+                type: 'wisdom-quiz',
+                dateKey: getDateKey(new Date(entry.date)),
+                timestamp: entry.date,
+                data: entry
+            });
+        });
+
+        applicationLogs.forEach(entry => {
+            if (!entry?.timestamp) return;
+            entries.push({
+                id: `application-${entry.id}`,
+                type: 'application-log',
+                dateKey: getDateKey(new Date(entry.timestamp)),
+                timestamp: entry.timestamp,
+                data: entry
+            });
+        });
+
+        return entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }, [sessionEntries, circuitEntries, readingSessions, quizAttempts, applicationLogs]);
+
+    const tabTypeMap = {
+        all: ['practice', 'circuit', 'wisdom-reading', 'wisdom-quiz', 'application-log'],
+        practice: ['practice'],
+        circuits: ['circuit'],
+        wisdom: ['wisdom-reading', 'wisdom-quiz'],
+        application: ['application-log']
+    };
+
+    const filteredEntries = useMemo(() => {
+        const allowedTypes = tabTypeMap[activeTab];
+        if (activeTab !== 'all' && !allowedTypes) return [];
+
+        let entries = combinedEntries;
+        if (allowedTypes) {
+            entries = entries.filter(entry => allowedTypes.includes(entry.type));
+        }
+
+        if (filterDate) {
+            entries = entries.filter(entry => entry.dateKey === filterDate);
+        }
+
+        return entries;
+    }, [combinedEntries, activeTab, filterDate]);
 
     const bgColor = isLight ? 'rgba(245, 240, 230, 0.98)' : 'rgba(10, 15, 25, 0.98)';
     const textColor = isLight ? 'rgba(35, 20, 10, 0.95)' : 'rgba(253, 251, 245, 0.95)';
@@ -51,12 +195,429 @@ export function SessionHistoryView({ onClose }) {
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return 'Unknown';
+        const d = new Date(timestamp);
+        return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    };
+
+    const formatMinutes = (minutes) => `${Math.round(minutes || 0)}m`;
+
+    const practiceSummary = useMemo(() => {
+        const totalSessions = allSessions.length;
+        const totalMinutes = allSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+        const accuracyValues = allSessions
+            .filter(s => s.domain === 'breathwork')
+            .map(s => s.metadata?.accuracy)
+            .filter(a => typeof a === 'number');
+        const avgAccuracy = accuracyValues.length > 0
+            ? accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length
+            : null;
+        const domainRows = Object.entries(allStats)
+            .map(([domain, stats]) => ({
+                domain,
+                count: stats.count || 0,
+                totalMinutes: stats.totalMinutes || 0
+            }))
+            .sort((a, b) => b.totalMinutes - a.totalMinutes);
+
+        return {
+            totalSessions,
+            totalMinutes,
+            avgAccuracy,
+            domainRows
+        };
+    }, [allSessions, allStats]);
+
+    const circuitSummary = useMemo(() => {
+        const totalCircuits = circuitEntries.length;
+        const totalMinutes = circuitEntries.reduce((sum, entry) => sum + (entry.totalDuration || 0), 0);
+        const avgMinutes = totalCircuits > 0 ? totalMinutes / totalCircuits : 0;
+
+        return {
+            totalCircuits,
+            totalMinutes,
+            avgMinutes
+        };
+    }, [circuitEntries]);
+
+    const wisdomSummary = useMemo(() => {
+        const completionRate = watchStats.totalWatched > 0
+            ? Math.round((watchStats.completed / watchStats.totalWatched) * 100)
+            : 0;
+
+        return {
+            readingStats,
+            quizStats,
+            watchStats,
+            completionRate
+        };
+    }, [readingStats, quizStats, watchStats]);
+
+    const applicationSummary = useMemo(() => {
+        return {
+            totalLogs: applicationLogs.length,
+            recent7: appStats7,
+            recent30: appStats30,
+            modeStats,
+            modeSessionsCount: modeSessions.length,
+            chainCount: completedChains.length,
+            patternStats
+        };
+    }, [applicationLogs, appStats7, appStats30, modeStats, modeSessions, completedChains, patternStats]);
+
+    const navigationSummary = useMemo(() => ({
+        activePath: navigationActivePath,
+        lastActivity: navigationLastActivity,
+        unlockedCount: navigationUnlocked?.length || 0,
+        hasFoundation: navigationFoundation,
+        pathAssessment: navigationAssessment
+    }), [navigationActivePath, navigationLastActivity, navigationUnlocked, navigationFoundation, navigationAssessment]);
+
+    const tabCounts = {
+        all: combinedEntries.length,
+        practice: sessionEntries.length,
+        circuits: circuitEntries.length,
+        wisdom: readingSessions.length + quizAttempts.length,
+        navigation: navigationActivePath?.completedWeeks?.length || 0,
+        application: applicationLogs.length,
+        insights: ''
+    };
+
+    const tabs = [
+        { key: 'all', label: 'All' },
+        { key: 'practice', label: 'Practice' },
+        { key: 'circuits', label: 'Circuits' },
+        { key: 'wisdom', label: 'Wisdom' },
+        { key: 'navigation', label: 'Navigation' },
+        { key: 'application', label: 'Application' },
+        { key: 'insights', label: 'Insights' }
+    ];
+
+    const emptyStateCopy = {
+        all: {
+            title: 'No tracking records found',
+            hint: 'Complete a session, circuit, or awareness log to see it here.'
+        },
+        practice: {
+            title: 'No practice records found',
+            hint: 'Complete a session to see it in your archive.'
+        },
+        circuits: {
+            title: 'No circuit records found',
+            hint: 'Complete a circuit to see it in your archive.'
+        },
+        wisdom: {
+            title: 'No wisdom records found',
+            hint: 'Read a section or take a quiz to see it in your archive.'
+        },
+        navigation: {
+            title: 'No navigation records found',
+            hint: 'Begin a path to start tracking navigation history.'
+        },
+        application: {
+            title: 'No application records found',
+            hint: 'Log an awareness moment to see it in your archive.'
+        }
+    };
+
+    const isFeedTab = ['all', 'practice', 'circuits', 'wisdom', 'application'].includes(activeTab);
+    const isFilterDisabled = !isFeedTab;
+
     const handleDeleteSession = () => {
         if (deletingSessionId) {
             deleteSession(deletingSessionId);
             setDeletingSessionId(null);
         }
     };
+
+    const summaryCardStyle = {
+        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)',
+        border: `1px solid ${borderColor}`,
+        borderRadius: '12px',
+        padding: '12px',
+        marginBottom: '12px'
+    };
+
+    const summaryRowStyle = {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '12px',
+        fontSize: '12px',
+        opacity: 0.8
+    };
+
+    const renderEmptyState = (title, hint) => (
+        <div style={{ textAlign: 'center', padding: '60px 20px', opacity: 0.4 }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>dY"T</div>
+            <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>{title}</p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>{hint}</p>
+        </div>
+    );
+
+    const renderPracticeEntry = (entry) => {
+        const session = entry.data;
+        return (
+            <div key={entry.id} style={{ 
+                background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)', 
+                border: `1px solid ${borderColor}`, 
+                borderRadius: '12px', 
+                padding: '16px',
+                transition: 'transform 0.2s ease'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-start' }}>
+                    <div>
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                            {session.domain} Session
+                        </h3>
+                        <div style={{ fontSize: '12px', opacity: 0.6 }}>
+                            {formatDate(entry.dateKey)}
+                            {session.journal?.editedAt && <span> (edited)</span>}
+                        </div>
+                    </div>
+                    <div style={{
+                        padding: '6px 12px',
+                        backgroundColor: `${accentColor}15`,
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        color: accentColor
+                    }}>
+                        {Math.round(session.duration || 0)}m
+                    </div>
+                </div>
+                
+                {session.journal && (
+                    <div style={{ marginBottom: '12px' }}>
+                        <div style={{ 
+                            display: 'inline-block',
+                            padding: '4px 10px',
+                            fontSize: '11px',
+                            borderRadius: '4px',
+                            backgroundColor: session.journal.attentionQuality === 'absorbed' ? 'rgba(16, 185, 129, 0.2)' :
+                                            session.journal.attentionQuality === 'stable' ? 'rgba(59, 130, 246, 0.2)' :
+                                            session.journal.attentionQuality === 'settling' ? 'rgba(249, 115, 22, 0.2)' :
+                                            'rgba(239, 68, 68, 0.2)',
+                            color: session.journal.attentionQuality === 'absorbed' ? '#10b981' :
+                                   session.journal.attentionQuality === 'stable' ? '#3b82f6' :
+                                   session.journal.attentionQuality === 'settling' ? '#f97316' :
+                                   '#ef4444',
+                            marginBottom: '8px',
+                            fontWeight: 'bold',
+                            textTransform: 'capitalize',
+                            border: '1px solid currentColor'
+                        }}>
+                            {session.journal.attentionQuality}
+                        </div>
+                        {session.journal.technicalNote && (
+                            <p style={{ 
+                                margin: 0, 
+                                fontSize: '13px', 
+                                opacity: 0.8, 
+                                lineHeight: '1.5',
+                                padding: '10px',
+                                backgroundColor: 'rgba(0,0,0,0.05)',
+                                borderRadius: '6px'
+                            }}>
+                                {session.journal.technicalNote}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: `1px solid ${borderColor}` }}>
+                    {(() => {
+                        const entryTime = new Date(entry.timestamp);
+                        const now = new Date();
+                        const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
+                        const isEditable = hoursDiff < 24;
+
+                        return isEditable ? (
+                            <button
+                                onClick={() => setEditingSessionId(session.id)}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px',
+                                    backgroundColor: `${accentColor}10`,
+                                    border: `1px solid ${accentColor}`,
+                                    borderRadius: '6px',
+                                    color: accentColor,
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                Edit
+                            </button>
+                        ) : (
+                            <button
+                                disabled
+                                style={{
+                                    flex: 1,
+                                    padding: '8px',
+                                    backgroundColor: borderColor,
+                                    border: `1px solid ${borderColor}`,
+                                    borderRadius: '6px',
+                                    color: textColor,
+                                    cursor: 'not-allowed',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
+                                    opacity: 0.4
+                                }}
+                            >
+                                Edit (expired)
+                            </button>
+                        );
+                    })()}
+                    <button
+                        onClick={() => setDeletingSessionId(session.id)}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            borderRadius: '6px',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const renderActivityCard = ({ id, title, subtitle, meta, detail }) => (
+        <div key={id} style={{
+            background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${borderColor}`,
+            borderRadius: '12px',
+            padding: '16px'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: detail ? '10px' : 0, alignItems: 'flex-start' }}>
+                <div>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 'bold' }}>{title}</h3>
+                    <div style={{ fontSize: '12px', opacity: 0.6 }}>{subtitle}</div>
+                </div>
+                {meta && (
+                    <div style={{
+                        padding: '6px 12px',
+                        backgroundColor: `${accentColor}15`,
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: accentColor
+                    }}>
+                        {meta}
+                    </div>
+                )}
+            </div>
+            {detail && (
+                <div style={{
+                    fontSize: '13px',
+                    opacity: 0.85,
+                    lineHeight: '1.5',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.2)'
+                }}>
+                    {detail}
+                </div>
+            )}
+        </div>
+    );
+
+    const renderFeedEntry = (entry) => {
+        if (entry.type === 'circuit') {
+            return <CircuitEntryCard key={entry.id} entry={entry.data} />;
+        }
+
+        if (entry.type === 'practice') {
+            return renderPracticeEntry(entry);
+        }
+
+        if (entry.type === 'wisdom-reading') {
+            const minutes = Math.round((entry.data.timeSpent || 0) / 60);
+            const detail = `Section: ${entry.data.sectionId || 'Unknown'} - Scroll depth: ${Math.round((entry.data.scrollDepth || 0) * 100)}%`;
+            return renderActivityCard({
+                id: entry.id,
+                title: 'Wisdom Reading',
+                subtitle: formatTimestamp(entry.timestamp),
+                meta: `${minutes}m`,
+                detail
+            });
+        }
+
+        if (entry.type === 'wisdom-quiz') {
+            const score = typeof entry.data.score === 'number'
+                ? `${Math.round(entry.data.score * 100)}%`
+                : '-';
+            const detail = `Quiz: ${entry.data.quizId || 'Unknown'} - ${entry.data.passed ? 'Passed' : 'Not passed'}`;
+            return renderActivityCard({
+                id: entry.id,
+                title: 'Wisdom Quiz',
+                subtitle: formatTimestamp(entry.timestamp),
+                meta: score,
+                detail
+            });
+        }
+
+        if (entry.type === 'application-log') {
+            const detail = entry.data.note
+                ? entry.data.note
+                : entry.data.respondedDifferently === true
+                    ? 'Responded differently.'
+                    : entry.data.respondedDifferently === false
+                        ? 'Logged without a response change.'
+                        : 'No reflection added.';
+            return renderActivityCard({
+                id: entry.id,
+                title: 'Awareness Log',
+                subtitle: formatTimestamp(entry.timestamp),
+                meta: entry.data.category || 'Uncategorized',
+                detail
+            });
+        }
+
+        return null;
+    };
+
+    const footerText = useMemo(() => {
+        switch (activeTab) {
+            case 'all':
+                return `${practiceSummary.totalSessions} sessions | ${circuitSummary.totalCircuits} circuits | ${tabCounts.wisdom} wisdom | ${applicationSummary.totalLogs} logs`;
+            case 'practice':
+                return `${practiceSummary.totalSessions} sessions | ${formatMinutes(practiceSummary.totalMinutes)} total`;
+            case 'circuits':
+                return `${circuitSummary.totalCircuits} circuits | ${formatMinutes(circuitSummary.totalMinutes)} total`;
+            case 'wisdom':
+                return `${readingStats.totalSessions} readings | ${quizStats.totalAttempts} quizzes | ${watchStats.completed} videos`;
+            case 'navigation':
+                return `${navigationSummary.activePath?.completedWeeks?.length || 0} weeks completed | ${navigationSummary.unlockedCount} unlocked`;
+            case 'application':
+                return `${applicationSummary.totalLogs} logs | ${applicationSummary.modeSessionsCount} mode sessions | ${applicationSummary.chainCount} chains`;
+            case 'insights':
+                return `${circuitEntries.length} circuits | ${sessionEntries.length} sessions`;
+            default:
+                return `${circuitEntries.length} circuits | ${sessionEntries.length} sessions`;
+        }
+    }, [
+        activeTab,
+        practiceSummary,
+        circuitSummary,
+        readingStats,
+        quizStats,
+        watchStats,
+        applicationSummary,
+        navigationSummary,
+        circuitEntries.length,
+        sessionEntries.length,
+        tabCounts.wisdom
+    ]);
 
     return ReactDOM.createPortal(
         <div
@@ -99,8 +660,8 @@ export function SessionHistoryView({ onClose }) {
                     }}
                 >
                     <div>
-                        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>Practice Archive</h1>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.5 }}>Insights and history of your sessions</p>
+                        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>Tracking Archive</h1>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.5 }}>Insights and history of your tracking</p>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <ExportArchiveButton />
@@ -117,7 +678,7 @@ export function SessionHistoryView({ onClose }) {
                                 fontWeight: 'bold'
                             }}
                         >
-                            ✕
+                            ?
                         </button>
                     </div>
                 </div>
@@ -126,27 +687,25 @@ export function SessionHistoryView({ onClose }) {
                 <div
                     style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))',
                         gap: '0',
                         padding: '8px',
                         borderBottom: `1px solid ${borderColor}`,
                         backgroundColor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)'
                     }}
                 >
-                    {['all', 'circuits', 'sessions', 'insights'].map(tab => {
-                        const count = tab === 'all' ? allEntries.length : 
-                                      tab === 'circuits' ? circuitEntries.length : 
-                                      tab === 'sessions' ? sessionEntries.length : '';
+                    {tabs.map(tab => {
+                        const count = tabCounts[tab.key];
                         return (
                             <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
                                 style={{
                                     padding: '10px 4px',
-                                    backgroundColor: activeTab === tab ? accentColor : 'transparent',
+                                    backgroundColor: activeTab === tab.key ? accentColor : 'transparent',
                                     border: 'none',
                                     borderRadius: '6px',
-                                    color: activeTab === tab ? (isLight ? '#000' : '#fff') : textColor,
+                                    color: activeTab === tab.key ? (isLight ? '#000' : '#fff') : textColor,
                                     cursor: 'pointer',
                                     fontSize: '12px',
                                     fontWeight: 'bold',
@@ -154,7 +713,7 @@ export function SessionHistoryView({ onClose }) {
                                     transition: 'all 0.2s ease'
                                 }}
                             >
-                                {tab} {count !== '' ? `(${count})` : ''}
+                                {tab.label} {typeof count === 'number' ? `(${count})` : ''}
                             </button>
                         );
                     })}
@@ -168,6 +727,8 @@ export function SessionHistoryView({ onClose }) {
                             type="date"
                             value={filterDate || ''}
                             onChange={(e) => setFilterDate(e.target.value || null)}
+                            disabled={isFilterDisabled}
+                            title={isFilterDisabled ? 'Filter applies to event feeds.' : ''}
                             style={{
                                 flex: 1,
                                 padding: '8px',
@@ -176,10 +737,12 @@ export function SessionHistoryView({ onClose }) {
                                 backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
                                 color: textColor,
                                 fontSize: '12px',
-                                fontFamily: 'inherit'
+                                fontFamily: 'inherit',
+                                cursor: isFilterDisabled ? 'not-allowed' : 'pointer',
+                                opacity: isFilterDisabled ? 0.5 : 1
                             }}
                         />
-                        {filterDate && (
+                        {filterDate && !isFilterDisabled && (
                             <button 
                                 onClick={() => setFilterDate(null)}
                                 style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -194,154 +757,136 @@ export function SessionHistoryView({ onClose }) {
                 <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
                     {activeTab === 'insights' ? (
                         <CircuitInsightsView />
-                    ) : allEntries.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '60px 20px', opacity: 0.4 }}>
-                            <div style={{ fontSize: '48px', marginBottom: '16px' }}>ðŸ“™</div>
-                            <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>
-                                No {activeTab === 'all' ? 'practice records' : activeTab} found
-                            </p>
-                            <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>
-                                Complete a session or circuit to see it in your archive.
-                            </p>
-                        </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {allEntries.map((entry) => (
-                                entry.type === 'circuit' ? (
-                                    <CircuitEntryCard key={entry.id} entry={entry.data} />
-                                ) : (
-                                    <div key={entry.id} style={{ 
-                                        background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)', 
-                                        border: `1px solid ${borderColor}`, 
-                                        borderRadius: '12px', 
-                                        padding: '16px',
-                                        transition: 'transform 0.2s ease'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-start' }}>
-                                            <div>
-                                                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 'bold', textTransform: 'capitalize' }}>
-                                                    {entry.data.domain} Session
-                                                </h3>
-                                                <div style={{ fontSize: '12px', opacity: 0.6 }}>
-                                                    {formatDate(entry.dateKey)}
-                                                    {entry.data.journal?.editedAt && <span> (edited)</span>}
+                        <div>
+                            {activeTab === 'all' && (
+                                <div style={summaryCardStyle}>
+                                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
+                                        Totals
+                                    </div>
+                                    <div style={summaryRowStyle}>
+                                        <div><strong>{practiceSummary.totalSessions}</strong> sessions</div>
+                                        <div><strong>{circuitSummary.totalCircuits}</strong> circuits</div>
+                                        <div><strong>{readingStats.totalSessions}</strong> readings</div>
+                                        <div><strong>{quizStats.totalAttempts}</strong> quizzes</div>
+                                        <div><strong>{applicationSummary.totalLogs}</strong> logs</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'practice' && (
+                                <div style={summaryCardStyle}>
+                                    <div style={summaryRowStyle}>
+                                        <div><strong>{practiceSummary.totalSessions}</strong> sessions</div>
+                                        <div><strong>{formatMinutes(practiceSummary.totalMinutes)}</strong> total time</div>
+                                        <div>Avg breath accuracy: {practiceSummary.avgAccuracy === null ? '-' : `${Math.round(practiceSummary.avgAccuracy * 100)}%`}</div>
+                                    </div>
+                                    {practiceSummary.domainRows.length > 0 && (
+                                        <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                            {practiceSummary.domainRows.map(row => (
+                                                <div key={row.domain}>
+                                                    {row.domain}: {row.count} - {formatMinutes(row.totalMinutes)}
                                                 </div>
-                                            </div>
-                                            <div style={{
-                                                padding: '6px 12px',
-                                                backgroundColor: `${accentColor}15`,
-                                                borderRadius: '6px',
-                                                fontSize: '14px',
-                                                fontWeight: 'bold',
-                                                color: accentColor
-                                            }}>
-                                                {Math.round(entry.data.duration)}m
-                                            </div>
+                                            ))}
                                         </div>
-                                        
-                                        {entry.data.journal && (
-                                            <div style={{ marginBottom: '12px' }}>
-                                                <div style={{ 
-                                                    display: 'inline-block',
-                                                    padding: '4px 10px',
-                                                    fontSize: '11px',
-                                                    borderRadius: '4px',
-                                                    backgroundColor: entry.data.journal.attentionQuality === 'absorbed' ? 'rgba(16, 185, 129, 0.2)' :
-                                                                    entry.data.journal.attentionQuality === 'stable' ? 'rgba(59, 130, 246, 0.2)' :
-                                                                    entry.data.journal.attentionQuality === 'settling' ? 'rgba(249, 115, 22, 0.2)' :
-                                                                    'rgba(239, 68, 68, 0.2)',
-                                                    color: entry.data.journal.attentionQuality === 'absorbed' ? '#10b981' :
-                                                           entry.data.journal.attentionQuality === 'stable' ? '#3b82f6' :
-                                                           entry.data.journal.attentionQuality === 'settling' ? '#f97316' :
-                                                           '#ef4444',
-                                                    marginBottom: '8px',
-                                                    fontWeight: 'bold',
-                                                    textTransform: 'capitalize',
-                                                    border: '1px solid currentColor'
-                                                }}>
-                                                    {entry.data.journal.attentionQuality}
-                                                </div>
-                                                {entry.data.journal.technicalNote && (
-                                                    <p style={{ 
-                                                        margin: 0, 
-                                                        fontSize: '13px', 
-                                                        opacity: 0.8, 
-                                                        lineHeight: '1.5',
-                                                        padding: '10px',
-                                                        backgroundColor: 'rgba(0,0,0,0.05)',
-                                                        borderRadius: '6px'
-                                                    }}>
-                                                        {entry.data.journal.technicalNote}
-                                                    </p>
-                                                )}
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'circuits' && (
+                                <div style={summaryCardStyle}>
+                                    <div style={summaryRowStyle}>
+                                        <div><strong>{circuitSummary.totalCircuits}</strong> circuits</div>
+                                        <div><strong>{formatMinutes(circuitSummary.totalMinutes)}</strong> total time</div>
+                                        <div>Avg: {formatMinutes(circuitSummary.avgMinutes)}</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'wisdom' && (
+                                <div style={summaryCardStyle}>
+                                    <div style={summaryRowStyle}>
+                                        <div><strong>{readingStats.totalSessions}</strong> reading sessions</div>
+                                        <div><strong>{readingStats.totalMinutes}m</strong> reading time</div>
+                                        <div><strong>{readingStats.sectionsVisited}</strong> sections visited</div>
+                                    </div>
+                                    <div style={{ marginTop: '8px', ...summaryRowStyle }}>
+                                        <div><strong>{quizStats.totalAttempts}</strong> quiz attempts</div>
+                                        <div>Pass rate: {Math.round((quizStats.passRate || 0) * 100)}%</div>
+                                        <div><strong>{watchStats.completed}</strong> videos completed</div>
+                                        <div>Completion rate: {wisdomSummary.completionRate}%</div>
+                                    </div>
+                                    <div style={{ marginTop: '6px', fontSize: '11px', opacity: 0.6 }}>
+                                        Video watch time is not tracked.
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'navigation' && (
+                                <div style={summaryCardStyle}>
+                                    {navigationSummary.activePath ? (
+                                        <div style={summaryRowStyle}>
+                                            <div><strong>Active path:</strong> {navigationSummary.activePath.pathId}</div>
+                                            <div><strong>Paths completed:</strong> 0</div>
+                                            <div><strong>Weeks completed:</strong> {navigationSummary.activePath.completedWeeks?.length || 0}</div>
+                                            <div><strong>Current week:</strong> {navigationSummary.activePath.currentWeek || 1}</div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ fontSize: '12px', opacity: 0.7 }}>No active path selected.</div>
+                                    )}
+                                    <div style={{ marginTop: '8px', ...summaryRowStyle }}>
+                                        <div><strong>Unlocked sections:</strong> {navigationSummary.unlockedCount}</div>
+                                        <div><strong>Foundation watched:</strong> {navigationSummary.hasFoundation ? 'Yes' : 'No'}</div>
+                                        <div><strong>Path assessment:</strong> {navigationSummary.pathAssessment || '-'}</div>
+                                    </div>
+                                    <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.6 }}>
+                                        Schedule adherence stats not available yet.
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'application' && (
+                                <div style={summaryCardStyle}>
+                                    <div style={summaryRowStyle}>
+                                        <div><strong>{applicationSummary.totalLogs}</strong> logs</div>
+                                        <div><strong>{applicationSummary.recent7.total}</strong> logs (7d)</div>
+                                        <div><strong>{applicationSummary.recent30.total}</strong> logs (30d)</div>
+                                        <div>Responded differently: {applicationSummary.recent30.respondedDifferentlyPercent}%</div>
+                                    </div>
+                                    <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                        {Object.entries(modeStats || {}).map(([mode, stats]) => (
+                                            <div key={mode}>
+                                                {mode}: {stats?.count || 0}
                                             </div>
+                                        ))}
+                                        <div>Mode sessions: {applicationSummary.modeSessionsCount}</div>
+                                        <div>Chains completed: {applicationSummary.chainCount}</div>
+                                        {applicationSummary.patternStats && (
+                                            <div>Chain completion: {Math.round((applicationSummary.patternStats.completionRatio || 0) * 100)}%</div>
                                         )}
+                                    </div>
+                                </div>
+                            )}
 
-                                        <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: `1px solid ${borderColor}` }}>
-                                            {(() => {
-                                                const entryTime = new Date(entry.timestamp);
-                                                const now = new Date();
-                                                const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
-                                                const isEditable = hoursDiff < 24;
-
-                                                return isEditable ? (
-                                                    <button
-                                                        onClick={() => setEditingSessionId(entry.id)}
-                                                        style={{
-                                                            flex: 1,
-                                                            padding: '8px',
-                                                            backgroundColor: `${accentColor}10`,
-                                                            border: `1px solid ${accentColor}`,
-                                                            borderRadius: '6px',
-                                                            color: accentColor,
-                                                            cursor: 'pointer',
-                                                            fontSize: '12px',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        disabled
-                                                        style={{
-                                                            flex: 1,
-                                                            padding: '8px',
-                                                            backgroundColor: borderColor,
-                                                            border: `1px solid ${borderColor}`,
-                                                            borderRadius: '6px',
-                                                            color: textColor,
-                                                            cursor: 'not-allowed',
-                                                            fontSize: '12px',
-                                                            fontWeight: 'bold',
-                                                            opacity: 0.4
-                                                        }}
-                                                    >
-                                                        Edit (expired)
-                                                    </button>
-                                                );
-                                            })()}
-                                            <button
-                                                onClick={() => setDeletingSessionId(entry.id)}
-                                                style={{
-                                                    flex: 1,
-                                                    padding: '8px',
-                                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                                    border: '1px solid rgba(239, 68, 68, 0.4)',
-                                                    borderRadius: '6px',
-                                                    color: '#ef4444',
-                                                    cursor: 'pointer',
-                                                    fontSize: '12px',
-                                                    fontWeight: 'bold',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
+                            {isFeedTab ? (
+                                filteredEntries.length === 0 ? (
+                                    renderEmptyState(
+                                        emptyStateCopy[activeTab]?.title || 'No records found',
+                                        emptyStateCopy[activeTab]?.hint || 'Complete a session to see it in your archive.'
+                                    )
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        {filteredEntries.map(renderFeedEntry)}
                                     </div>
                                 )
-                            ))}
+                            ) : (
+                                !navigationSummary.activePath && !navigationSummary.unlockedCount && !navigationSummary.lastActivity && !navigationSummary.pathAssessment && !navigationSummary.hasFoundation
+                                    ? renderEmptyState(
+                                        emptyStateCopy[activeTab]?.title || 'No records found',
+                                        emptyStateCopy[activeTab]?.hint || 'Complete a session to see it in your archive.'
+                                    )
+                                    : null
+                            )}
                         </div>
                     )}
                 </div>
@@ -349,10 +894,10 @@ export function SessionHistoryView({ onClose }) {
                 {/* Footer */}
                 <div style={{ padding: '12px 20px', borderTop: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)' }}>
                     <div style={{ fontSize: '11px', opacity: 0.5 }}>
-                        <strong>{circuitEntries.length}</strong> circuits • <strong>{sessionEntries.length}</strong> sessions
+                        {footerText}
                     </div>
                     <div style={{ fontSize: '11px', opacity: 0.5 }}>
-                        Immanence OS Practice Journal v1.4
+                        Immanence OS Tracking Archive v1.4
                     </div>
                 </div>
             </div>

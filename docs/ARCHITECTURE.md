@@ -21,8 +21,30 @@
 - **progressStore** (`src/state/progressStore.js`)
   - Owns: `sessions`, `honorLogs`, `streak`, `vacation`, `practiceHistory`, `benchmarks`, `consistencyMetrics`, `goals`, display preference.
   - Actions: `recordSession`, `logHonorPractice`, display preference setters. Selectors: `getStreakInfo`, `getDomainStats`, `getWeeklyPattern`, `getHonorStatus`, `getSessionsWithJournal`, `getPrimaryDomain`.
-  - Writers: `PracticeSection` (main session logger, including circuit completions), `cycleManager.logPractice` (called by PracticeSection for 10+ min sessions), DevPanel mock loaders.
+  - Writers: `PracticeSection` (via `recordPracticeSession`), `circuitIntegration` (via `recordPracticeSession`), DevPanel mock loaders.
   - Readers: `HomeHub` (streak/domain stats/weekly pattern), `TrackingHub`, `DishonorBadge`, `CompactStatsCard`, `TrajectoryCard`, `DevPanel`, `SessionHistoryView`.
+- **Centralized Session Recording: recordPracticeSession**
+  - Purpose: single authoritative entry point for session completion writes.
+  - Why: eliminates duplicate write paths and keeps instrumentation, mandala sync, and cycle gating consistent.
+  - Location: `src/services/sessionRecorder.js`
+  - Function: `recordPracticeSession(payload, options)`
+  - What it does (order):
+    - Normalize instrumentation (`exit_type`).
+    - Persist session to `progressStore` (unless `persistSession=false`).
+    - Optionally log cycle/practiceHistory (`cycleEnabled` + `cycleMinDuration`, or `cyclePracticeData`).
+    - Trigger downstream syncs (mandala) exactly once.
+  - Options:
+    - `persistSession`
+    - `cycleEnabled`
+    - `cycleMinDuration`
+    - `cyclePracticeData`
+  - Examples:
+    - Normal practice completion: `recordPracticeSession({ domain, duration, metadata, instrumentation, exitType }, { cycleEnabled: true, cycleMinDuration: 10 })`
+    - Circuit/ritual completion (cycle only): `recordPracticeSession({ /* payload describing the event */ }, { persistSession: false, cycleEnabled: true, cycleMinDuration: 0, cyclePracticeData: { type, duration, ... } })`
+- **Stored vs Derived Tracking Data**
+  - Stored (authoritative): `progressStore` session history, `curriculumStore` progress, `journalStore` entries, and domain stores (`wisdomStore`, `videoStore`, etc.) for their respective domains.
+  - Derived (computed): trajectory, weekly timing offsets, mandala aggregates, lunar stage metrics, attention weekly features.
+  - Rule: derived values must be computed from the spine (`progressStore`) or domain stores; do not introduce new persisted rollup stores unless justified.
 - **trackingStore** (`src/state/trackingStore.js`)
   - Owns: authoritative `sessions`, `dailyLogs`, `streak`, `vacation`, `schedule`, `honorLogs`, `activePath`, treatise/video progress caches, rollup caches.
   - Actions: `recordSession`, `recordHonorPractice`, `logDaily`, `incrementKarma/Dharma`, `startVacation/endVacation`, `beginPath/completeWeek/abandonPath`, `setSchedule`, `recordTreatiseSession`, `recordVideoProgress`; selectors `getToday/getWeek/getMonth/getLifetime/getTrajectory/getWeeklyTimingOffsets`.
@@ -82,10 +104,10 @@
 
 1. **Enter Navigation**: `HomeHub` `onSelectSection` → `App` sets `activeSection` to `navigation` → `NavigationSection` renders with avatar + `ConsistencyFoundation`.
 2. **Program cards**: `PathSelectionGrid` prepends program entries (Foundation Cycle and Thought Detachment Ritual) to static paths. Program cards fire handlers only; they do not change `selectedPathId`.
-   - Foundation Cycle → `CycleChoiceModal` → `useCycleStore.startCycle`. Subsequent practice sessions (logged from `PracticeSection` via `progressStore.recordSession` + `cycleManager.logPractice`) mark practice days when duration ≥ 10 minutes. `ConsistencyFoundation` reflects `currentCycle`/checkpoints; `HomeHub` still pulls streaks/time from `progressStore`.
+   - Foundation Cycle → `CycleChoiceModal` → `useCycleStore.startCycle`. Subsequent practice sessions (logged from `PracticeSection` via `recordPracticeSession`) mark practice days when duration ≥ 10 minutes. `ConsistencyFoundation` reflects `currentCycle`/checkpoints; `HomeHub` still pulls streaks/time from `progressStore`.
    - Thought Detachment → `ThoughtDetachmentOnboarding` collects two daily times + 5–8 thoughts (`curriculumStore.completeOnboarding`). Optional 3-step ritual session runs via `RitualSession`; on completion it logs leg data to `curriculumStore.logLegCompletion` (day/leg metadata) but does **not** create a `progressStore` session.
 3. **Starting practice from curriculum**: `curriculumStore.setActivePracticeSession` is triggered by curriculum UI (e.g., `CurriculumHub`/`DailyPracticeCard`). `PracticeSection` detects the active leg, auto-loads its config, and immediately starts the session.
-4. **Completion write path**: `PracticeSection.handleStop` logs the session to `progressStore.recordSession` (domain based on practice type) and, when launched from curriculum, calls `curriculumStore.logLegCompletion` and derives next-leg guidance. `cycleManager.logPractice` updates `cycleStore` when duration ≥ 10 minutes.
+4. **Completion write path**: `PracticeSection.handleStop` logs the session via `recordPracticeSession` (domain based on practice type) and, when launched from curriculum, calls `curriculumStore.logLegCompletion` and derives next-leg guidance. Cycle gating happens inside the recorder when duration ≥ 10 minutes.
 5. **Stats surfaces**: `HomeHub` (`getStreakInfo`, `getDomainStats`, `getWeeklyPattern`), `CompactStatsCard`, and `TrajectoryCard` react to `progressStore` updates; curriculum progress widgets read `curriculumStore` leg/day completions; `ConsistencyFoundation`/`Cycle` components read `cycleStore`.
 
 ### Navigation → Ritual Library → selection → session → completion
@@ -120,7 +142,7 @@
   - Role: orchestration layer for the practice lifecycle and session state; coordinates UI components while retaining ownership of state, effects, and side effects.
   - Primary components: practice pickers (`PracticeSelector`, `SacredTimeSlider`, `PracticeOptionsCard`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`.
   - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state.
-  - Outputs: `progressStore.recordSession`, `cycleManager.logPractice`, `syncFromProgressStore`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar.
+  - Outputs: `recordPracticeSession`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar.
   - Navigation next: none directly; ritual deck "Return to Hub" triggers `handleStop`, home navigation handled by global header button.
   - **Photic entry**: "Photic" button opens `PhoticCirclesOverlay` (component state `isOpen`).
 

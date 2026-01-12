@@ -2,22 +2,22 @@
 // Compact trajectory indicator for Hub - tap to see full report
 
 import React, { useMemo } from 'react';
-import { useTrackingStore } from '../state/trackingStore';
+import { useProgressStore } from '../state/progressStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { useTheme } from '../context/ThemeContext';
 
 export function TrajectoryCard({ onTap }) {
     // Get raw sessions data as dependency
-    const sessions = useTrackingStore(s => s.sessions);
-    const dailyLogs = useTrackingStore(s => s.dailyLogs);
+    const getTrajectory = useProgressStore(s => s.getTrajectory);
+    const sessionsCount = useProgressStore(s => s.sessions.length);
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
     const theme = useTheme();
     const stage = theme?.stage || 'flame';
 
     // Memoize trajectory computation - only recalculate when sessions/dailyLogs change
     const trajectory = useMemo(() => {
-        return useTrackingStore.getState().getTrajectory(8);
-    }, [sessions.length, Object.keys(dailyLogs).length]);
+        return getTrajectory(8);
+    }, [getTrajectory, sessionsCount]);
 
     // Sparkline data (last 8 weeks)
     const consistencyData = trajectory.weeks.map(w => w.daysActive);

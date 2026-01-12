@@ -18,6 +18,8 @@ import { useProgressStore } from '../state/progressStore';
  * @param {Array} practiceData.exercises - for circuits
  * @param {Object} practiceData.contributions - for multi-path
  */
+// Internal: do not call directly from feature code.
+// Use src/services/sessionRecorder.js recordPracticeSession() as the single write entry point.
 export function logPractice(practiceData) {
     const now = Date.now();
     const date = new Date(now);
