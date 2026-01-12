@@ -14,6 +14,7 @@
   - `HomeHub` calls `onSelectSection` to set `activeSection`.
   - `ApplicationSection` empty state button calls `onNavigate('navigation')` to send users back to path selection.
   - Practice summary flows stay inside `PracticeSection`; returning to HomeHub uses the `Home` button in the header.
+- **Tracking Archive deep links**: `SessionHistoryView` accepts `initialTab` and `initialReportDomain`; use `src/components/tracking/archiveLinkConstants.js` for stable tab/domain keys.
 - **Stage/path preview state**: `App` holds `previewStage`, `previewPath`, `previewAttention`, and `previewShowCore`, updating them via `onStageChange` callbacks from avatars and propagating to `ThemeProvider` + `StageTitle`.
 
 ## Stores (ownership, key actions, wiring)
@@ -45,6 +46,13 @@
   - Stored (authoritative): `progressStore` session history, `curriculumStore` progress, `journalStore` entries, and domain stores (`wisdomStore`, `videoStore`, etc.) for their respective domains.
   - Derived (computed): trajectory, weekly timing offsets, mandala aggregates, lunar stage metrics, attention weekly features.
   - Rule: derived values must be computed from the spine (`progressStore`) or domain stores; do not introduce new persisted rollup stores unless justified.
+- **Tracking UX Layers (Signal → Archive → Reports)**
+  - Signal: Home/Tracking cards show short-window indicators and quick entry points (no long-term interpretation).
+  - Archive: `SessionHistoryView` is the truth source for raw history and totals across domains.
+  - Reports: interpretation layers over the archive (summaries/trends), computed on demand from the spine.
+- **Definitions (Labeling Required)**
+  - Practice Sessions: count of `progressStore.sessions` (spine-only).
+  - All Activity Minutes: practice session minutes + honor/circuit contributions; must be labeled explicitly.
 - **trackingStore** (`src/state/trackingStore.js`)
   - Owns: authoritative `sessions`, `dailyLogs`, `streak`, `vacation`, `schedule`, `honorLogs`, `activePath`, treatise/video progress caches, rollup caches.
   - Actions: `recordSession`, `recordHonorPractice`, `logDaily`, `incrementKarma/Dharma`, `startVacation/endVacation`, `beginPath/completeWeek/abandonPath`, `setSchedule`, `recordTreatiseSession`, `recordVideoProgress`; selectors `getToday/getWeek/getMonth/getLifetime/getTrajectory/getWeeklyTimingOffsets`.

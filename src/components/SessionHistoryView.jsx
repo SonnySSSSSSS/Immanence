@@ -2,7 +2,8 @@
 // Phase 2/3/4 Updated: Archive modal with Insights, Export, and Full CRUD
 // Maintains React Portal to escape stacking context
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ARCHIVE_TABS, REPORT_DOMAINS } from './tracking/archiveLinkConstants.js';
 import ReactDOM from 'react-dom';
 import { useProgressStore } from '../state/progressStore.js';
 import { useCircuitJournalStore } from '../state/circuitJournalStore.js';
@@ -20,15 +21,15 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal.jsx';
 import { ExportArchiveButton } from './ExportArchiveButton.jsx';
 import { getDateKey } from '../utils/dateUtils';
 
-export function SessionHistoryView({ onClose }) {
+export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     
     // Get the store methods as references (not calling them to avoid new array on every render)
     const getAllCircuitEntries = useCircuitJournalStore(s => s.getAllEntries);
-    const getSessionsWithJournal = useProgressStore(s => s.getSessionsWithJournal);
-    const allSessions = useProgressStore(s => s.sessions);
+    const getSessions = useProgressStore(s => s.getSessions);
     const getAllStats = useProgressStore(s => s.getAllStats);
+    const getTrajectory = useProgressStore(s => s.getTrajectory);
     const { deleteSession } = useProgressStore();
 
     const readingSessions = useWisdomStore(s => s.readingSessions);
@@ -37,6 +38,7 @@ export function SessionHistoryView({ onClose }) {
     const getQuizStats = useWisdomStore(s => s.getQuizStats);
 
     const videoById = useVideoStore(s => s.byId);
+    const lastWatchedId = useVideoStore(s => s.lastWatchedId);
     const getWatchStats = useVideoStore(s => s.getWatchStats);
 
     const navigationActivePath = useNavigationStore(s => s.activePath);
@@ -44,6 +46,10 @@ export function SessionHistoryView({ onClose }) {
     const navigationAssessment = useNavigationStore(s => s.pathAssessment);
     const navigationUnlocked = useNavigationStore(s => s.unlockedSections);
     const navigationFoundation = useNavigationStore(s => s.hasWatchedFoundation);
+    const scheduleAdherenceLog = useNavigationStore(s => s.scheduleAdherenceLog);
+    const scheduleSlotsState = useNavigationStore(s => s.scheduleSlots);
+    const getScheduleAdherenceSummary = useNavigationStore(s => s.getScheduleAdherenceSummary);
+    const getScheduleSlots = useNavigationStore(s => s.getScheduleSlots);
 
     const applicationLogs = useApplicationStore(s => s.awarenessLogs);
     const getApplicationStats = useApplicationStore(s => s.getStats);
@@ -56,7 +62,7 @@ export function SessionHistoryView({ onClose }) {
 
     // Memoize the entries to prevent infinite re-renders
     const circuitEntries = useMemo(() => getAllCircuitEntries?.() || [], [getAllCircuitEntries]);
-    const sessionEntries = useMemo(() => getSessionsWithJournal?.() || [], [getSessionsWithJournal]);
+    const allSessions = useMemo(() => getSessions?.() || [], [getSessions]);
     const allStats = useMemo(() => getAllStats?.() || {}, [getAllStats, allSessions]);
     const readingStats = useMemo(() => getReadingStats?.() || ({
         totalSessions: 0,
@@ -88,19 +94,40 @@ export function SessionHistoryView({ onClose }) {
         respondedDifferently: 0,
         respondedDifferentlyPercent: 0
     }), [getApplicationStats, applicationLogs]);
+    const appStats90 = useMemo(() => getApplicationStats?.(90) || ({
+        total: 0,
+        byCategory: {},
+        respondedDifferently: 0,
+        respondedDifferentlyPercent: 0
+    }), [getApplicationStats, applicationLogs]);
     const patternStats = useMemo(() => getPatternStats?.() || null, [getPatternStats, completedChains]);
+    const trajectory8 = useMemo(() => getTrajectory?.(8) || { weeks: [], trends: {}, insights: {} }, [getTrajectory, allSessions]);
 
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeTab, setActiveTab] = useState(initialTab || ARCHIVE_TABS.ALL);
     const [filterDate, setFilterDate] = useState(null);
+    const [reportDomain, setReportDomain] = useState(initialReportDomain || REPORT_DOMAINS.PRACTICE);
+    const [reportOutput, setReportOutput] = useState(null);
     
     // Edit/Delete state for single sessions
     const [editingSessionId, setEditingSessionId] = useState(null);
     const [deletingSessionId, setDeletingSessionId] = useState(null);
 
+    useEffect(() => {
+        if (initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
+
+    useEffect(() => {
+        if (initialReportDomain) {
+            setReportDomain(initialReportDomain);
+        }
+    }, [initialReportDomain]);
+
     const combinedEntries = useMemo(() => {
         const entries = [];
 
-        sessionEntries.forEach(entry => {
+        allSessions.forEach(entry => {
             const timestamp = entry.date || entry.timestamp;
             const dateKey = entry.dateKey || (timestamp ? getDateKey(new Date(timestamp)) : null);
             entries.push({
@@ -158,7 +185,7 @@ export function SessionHistoryView({ onClose }) {
         });
 
         return entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    }, [sessionEntries, circuitEntries, readingSessions, quizAttempts, applicationLogs]);
+    }, [allSessions, circuitEntries, readingSessions, quizAttempts, applicationLogs]);
 
     const tabTypeMap = {
         all: ['practice', 'circuit', 'wisdom-reading', 'wisdom-quiz', 'application-log'],
@@ -202,6 +229,87 @@ export function SessionHistoryView({ onClose }) {
     };
 
     const formatMinutes = (minutes) => `${Math.round(minutes || 0)}m`;
+    const formatAdherenceMinutes = (value) => (value === null || value === undefined ? '-' : `${value}m`);
+
+    const getWindowCutoff = (days) => {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - (days - 1));
+        cutoff.setHours(0, 0, 0, 0);
+        return cutoff;
+    };
+
+    const getPracticeWindowStats = (days) => {
+        const cutoff = getWindowCutoff(days);
+        const sessions = allSessions.filter(s => new Date(s.date) >= cutoff);
+        const minutesTotal = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+        const accuracyValues = sessions
+            .filter(s => s.domain === 'breathwork')
+            .map(s => s.metadata?.accuracy)
+            .filter(a => typeof a === 'number');
+        const avgAccuracy = accuracyValues.length > 0
+            ? accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length
+            : null;
+        return {
+            sessionsCount: sessions.length,
+            minutesTotal,
+            avgAccuracy
+        };
+    };
+
+    const getWisdomWindowStats = (days) => {
+        const cutoff = getWindowCutoff(days);
+        const reading = readingSessions.filter(s => new Date(s.date) >= cutoff);
+        const quizzes = quizAttempts.filter(q => new Date(q.date) >= cutoff);
+        const videoEntries = Object.entries(videoById || {});
+        const videosInWindow = videoEntries.filter(([, data]) => {
+            if (!data?.lastWatchedAt) return false;
+            return new Date(data.lastWatchedAt) >= cutoff;
+        });
+        const videosCompleted = videosInWindow.filter(([, data]) => data.completed).length;
+        return {
+            readingCount: reading.length,
+            readingMinutes: Math.round(reading.reduce((sum, s) => sum + (s.timeSpent || 0), 0) / 60),
+            quizCount: quizzes.length,
+            quizPassRate: quizzes.length > 0
+                ? Math.round((quizzes.filter(q => q.passed).length / quizzes.length) * 100)
+                : 0,
+            videosStarted: videosInWindow.length,
+            videosCompleted,
+            videoCompletionRate: videosInWindow.length > 0
+                ? Math.round((videosCompleted / videosInWindow.length) * 100)
+                : 0
+        };
+    };
+
+    const buildReportText = (domain, days) => {
+        if (domain === 'practice') {
+            const stats = getPracticeWindowStats(days);
+            const accuracyText = stats.avgAccuracy === null ? '' : ` Average breath accuracy was ${Math.round(stats.avgAccuracy * 100)}%.`;
+            return `In the last ${days} days, you completed ${stats.sessionsCount} practice sessions totaling ${Math.round(stats.minutesTotal)} minutes.${accuracyText}`.trim();
+        }
+
+        if (domain === 'navigation') {
+            const summary = getScheduleAdherenceSummary?.(days, navigationActivePath?.pathId);
+            if (!summary || summary.avgAbsDeltaMinutes === null) {
+                return `No schedule adherence records in the last ${days} days.`;
+            }
+            return `In the last ${days} days, your schedule adherence rate was ${summary.adherenceRate}%, with an average absolute offset of ${summary.avgAbsDeltaMinutes} minutes.`;
+        }
+
+        if (domain === 'wisdom') {
+            const stats = getWisdomWindowStats(days);
+            const quizText = stats.quizCount > 0 ? ` Quiz pass rate was ${stats.quizPassRate}%.` : '';
+            return `In the last ${days} days, you logged ${stats.readingCount} reading sessions (${stats.readingMinutes} minutes) and started ${stats.videosStarted} videos (${stats.videosCompleted} completed).${quizText}`.trim();
+        }
+
+        if (domain === 'application') {
+            const stats = days >= 90 ? appStats90 : appStats30;
+            const rate = stats.respondedDifferentlyPercent || 0;
+            return `In the last ${days} days, you logged ${stats.total} awareness events. Responded-differently rate was ${rate}%.`;
+        }
+
+        return '';
+    };
 
     const practiceSummary = useMemo(() => {
         const totalSessions = allSessions.length;
@@ -245,26 +353,29 @@ export function SessionHistoryView({ onClose }) {
         const completionRate = watchStats.totalWatched > 0
             ? Math.round((watchStats.completed / watchStats.totalWatched) * 100)
             : 0;
+        const lastWatchedAt = lastWatchedId ? videoById?.[lastWatchedId]?.lastWatchedAt : null;
 
         return {
             readingStats,
             quizStats,
             watchStats,
-            completionRate
+            completionRate,
+            lastWatchedAt
         };
-    }, [readingStats, quizStats, watchStats]);
+    }, [readingStats, quizStats, watchStats, lastWatchedId, videoById]);
 
     const applicationSummary = useMemo(() => {
         return {
             totalLogs: applicationLogs.length,
             recent7: appStats7,
             recent30: appStats30,
+            recent90: appStats90,
             modeStats,
             modeSessionsCount: modeSessions.length,
             chainCount: completedChains.length,
             patternStats
         };
-    }, [applicationLogs, appStats7, appStats30, modeStats, modeSessions, completedChains, patternStats]);
+    }, [applicationLogs, appStats7, appStats30, appStats90, modeStats, modeSessions, completedChains, patternStats]);
 
     const navigationSummary = useMemo(() => ({
         activePath: navigationActivePath,
@@ -274,24 +385,44 @@ export function SessionHistoryView({ onClose }) {
         pathAssessment: navigationAssessment
     }), [navigationActivePath, navigationLastActivity, navigationUnlocked, navigationFoundation, navigationAssessment]);
 
+    const scheduleSlots = useMemo(() => {
+        if (scheduleSlotsState && scheduleSlotsState.length > 0) return scheduleSlotsState;
+        return getScheduleSlots?.() || [];
+    }, [scheduleSlotsState, getScheduleSlots]);
+
+    const adherenceSummary7 = useMemo(
+        () => getScheduleAdherenceSummary?.(7, navigationActivePath?.pathId) || null,
+        [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
+    );
+    const adherenceSummary30 = useMemo(
+        () => getScheduleAdherenceSummary?.(30, navigationActivePath?.pathId) || null,
+        [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
+    );
+    const adherenceSummary90 = useMemo(
+        () => getScheduleAdherenceSummary?.(90, navigationActivePath?.pathId) || null,
+        [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
+    );
+
     const tabCounts = {
         all: combinedEntries.length,
-        practice: sessionEntries.length,
+        practice: allSessions.length,
         circuits: circuitEntries.length,
         wisdom: readingSessions.length + quizAttempts.length,
         navigation: navigationActivePath?.completedWeeks?.length || 0,
         application: applicationLogs.length,
+        reports: '',
         insights: ''
     };
 
     const tabs = [
-        { key: 'all', label: 'All' },
-        { key: 'practice', label: 'Practice' },
-        { key: 'circuits', label: 'Circuits' },
-        { key: 'wisdom', label: 'Wisdom' },
-        { key: 'navigation', label: 'Navigation' },
-        { key: 'application', label: 'Application' },
-        { key: 'insights', label: 'Insights' }
+        { key: ARCHIVE_TABS.ALL, label: 'All' },
+        { key: ARCHIVE_TABS.PRACTICE, label: 'Practice' },
+        { key: ARCHIVE_TABS.CIRCUITS, label: 'Circuits' },
+        { key: ARCHIVE_TABS.WISDOM, label: 'Wisdom' },
+        { key: ARCHIVE_TABS.NAVIGATION, label: 'Navigation' },
+        { key: ARCHIVE_TABS.APPLICATION, label: 'Application' },
+        { key: ARCHIVE_TABS.REPORTS, label: 'Reports' },
+        { key: ARCHIVE_TABS.INSIGHTS, label: 'Insights' }
     ];
 
     const emptyStateCopy = {
@@ -321,7 +452,13 @@ export function SessionHistoryView({ onClose }) {
         }
     };
 
-    const isFeedTab = ['all', 'practice', 'circuits', 'wisdom', 'application'].includes(activeTab);
+    const isFeedTab = [
+        ARCHIVE_TABS.ALL,
+        ARCHIVE_TABS.PRACTICE,
+        ARCHIVE_TABS.CIRCUITS,
+        ARCHIVE_TABS.WISDOM,
+        ARCHIVE_TABS.APPLICATION
+    ].includes(activeTab);
     const isFilterDisabled = !isFeedTab;
 
     const handleDeleteSession = () => {
@@ -357,6 +494,7 @@ export function SessionHistoryView({ onClose }) {
 
     const renderPracticeEntry = (entry) => {
         const session = entry.data;
+        const hasJournal = !!session.journal;
         return (
             <div key={entry.id} style={{ 
                 background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)', 
@@ -367,9 +505,24 @@ export function SessionHistoryView({ onClose }) {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-start' }}>
                     <div>
-                        <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 'bold', textTransform: 'capitalize' }}>
-                            {session.domain} Session
-                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                                {session.domain} Session
+                            </h3>
+                            {hasJournal && (
+                                <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    padding: '2px 6px',
+                                    borderRadius: '999px',
+                                    border: `1px solid ${borderColor}`,
+                                    opacity: 0.7
+                                }}>
+                                    Journaled
+                                </span>
+                            )}
+                        </div>
                         <div style={{ fontSize: '12px', opacity: 0.6 }}>
                             {formatDate(entry.dateKey)}
                             {session.journal?.editedAt && <span> (edited)</span>}
@@ -425,68 +578,70 @@ export function SessionHistoryView({ onClose }) {
                     </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: `1px solid ${borderColor}` }}>
-                    {(() => {
-                        const entryTime = new Date(entry.timestamp);
-                        const now = new Date();
-                        const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
-                        const isEditable = hoursDiff < 24;
+                {hasJournal && (
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: `1px solid ${borderColor}` }}>
+                        {(() => {
+                            const entryTime = new Date(entry.timestamp);
+                            const now = new Date();
+                            const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
+                            const isEditable = hoursDiff < 24;
 
-                        return isEditable ? (
-                            <button
-                                onClick={() => setEditingSessionId(session.id)}
-                                style={{
-                                    flex: 1,
-                                    padding: '8px',
-                                    backgroundColor: `${accentColor}10`,
-                                    border: `1px solid ${accentColor}`,
-                                    borderRadius: '6px',
-                                    color: accentColor,
-                                    cursor: 'pointer',
-                                    fontSize: '12px',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                Edit
-                            </button>
-                        ) : (
-                            <button
-                                disabled
-                                style={{
-                                    flex: 1,
-                                    padding: '8px',
-                                    backgroundColor: borderColor,
-                                    border: `1px solid ${borderColor}`,
-                                    borderRadius: '6px',
-                                    color: textColor,
-                                    cursor: 'not-allowed',
-                                    fontSize: '12px',
-                                    fontWeight: 'bold',
-                                    opacity: 0.4
-                                }}
-                            >
-                                Edit (expired)
-                            </button>
-                        );
-                    })()}
-                    <button
-                        onClick={() => setDeletingSessionId(session.id)}
-                        style={{
-                            flex: 1,
-                            padding: '8px',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.4)',
-                            borderRadius: '6px',
-                            color: '#ef4444',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        Delete
-                    </button>
-                </div>
+                            return isEditable ? (
+                                <button
+                                    onClick={() => setEditingSessionId(session.id)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '8px',
+                                        backgroundColor: `${accentColor}10`,
+                                        border: `1px solid ${accentColor}`,
+                                        borderRadius: '6px',
+                                        color: accentColor,
+                                        cursor: 'pointer',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    Edit
+                                </button>
+                            ) : (
+                                <button
+                                    disabled
+                                    style={{
+                                        flex: 1,
+                                        padding: '8px',
+                                        backgroundColor: borderColor,
+                                        border: `1px solid ${borderColor}`,
+                                        borderRadius: '6px',
+                                        color: textColor,
+                                        cursor: 'not-allowed',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold',
+                                        opacity: 0.4
+                                    }}
+                                >
+                                    Edit (expired)
+                                </button>
+                            );
+                        })()}
+                        <button
+                            onClick={() => setDeletingSessionId(session.id)}
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.4)',
+                                borderRadius: '6px',
+                                color: '#ef4444',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Delete
+                        </button>
+                    </div>
+                )}
             </div>
         );
     };
@@ -586,6 +741,157 @@ export function SessionHistoryView({ onClose }) {
         return null;
     };
 
+    const reportDomains = [
+        { key: REPORT_DOMAINS.PRACTICE, label: 'Practice' },
+        { key: REPORT_DOMAINS.NAVIGATION, label: 'Navigation' },
+        { key: REPORT_DOMAINS.WISDOM, label: 'Wisdom' },
+        { key: REPORT_DOMAINS.APPLICATION, label: 'Application' }
+    ];
+
+    const handleGenerateReport = (days) => {
+        const text = buildReportText(reportDomain, days);
+        setReportOutput({ domain: reportDomain, days, text });
+    };
+
+    const renderReports = () => {
+        const practiceTotals = trajectory8.weeks.reduce((sum, w) => sum + (w.totalMinutes || 0), 0);
+        const practiceDays = trajectory8.weeks.reduce((sum, w) => sum + (w.daysActive || 0), 0);
+        const wisdom30 = getWisdomWindowStats(30);
+        const wisdom90 = getWisdomWindowStats(90);
+
+        return (
+            <div>
+                <div style={{ ...summaryRowStyle, marginBottom: '10px' }}>
+                    {reportDomains.map(domain => (
+                        <button
+                            key={domain.key}
+                            onClick={() => setReportDomain(domain.key)}
+                            style={{
+                                padding: '6px 10px',
+                                borderRadius: '999px',
+                                border: `1px solid ${borderColor}`,
+                                backgroundColor: reportDomain === domain.key ? `${accentColor}20` : 'transparent',
+                                color: reportDomain === domain.key ? accentColor : textColor,
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {domain.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div style={summaryCardStyle}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
+                        Practice Report (8 weeks)
+                    </div>
+                    {trajectory8.weeks.length === 0 ? (
+                        <div style={{ fontSize: '12px', opacity: 0.7 }}>No practice data available yet.</div>
+                    ) : (
+                        <div style={summaryRowStyle}>
+                            <div><strong>{trajectory8.weeks.length}</strong> weeks tracked</div>
+                            <div><strong>{practiceDays}</strong> active days</div>
+                            <div><strong>{Math.round(practiceTotals)}</strong> minutes total</div>
+                            <div>Trend: {trajectory8.trends?.directionLabel || 'stable'}</div>
+                        </div>
+                    )}
+                </div>
+
+                <div style={summaryCardStyle}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
+                        Navigation Precision Report (7/30/90)
+                    </div>
+                    <div style={summaryRowStyle}>
+                        <div><strong>7d:</strong> {adherenceSummary7 ? `${adherenceSummary7.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary7?.avgAbsDeltaMinutes)}</div>
+                        <div><strong>30d:</strong> {adherenceSummary30 ? `${adherenceSummary30.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary30?.avgAbsDeltaMinutes)}</div>
+                        <div><strong>90d:</strong> {adherenceSummary90 ? `${adherenceSummary90.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary90?.avgAbsDeltaMinutes)}</div>
+                    </div>
+                </div>
+
+                <div style={summaryCardStyle}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
+                        Wisdom Report (30/90)
+                    </div>
+                    <div style={{ ...summaryRowStyle, marginBottom: '6px' }}>
+                        <div><strong>30d:</strong> {wisdom30.readingCount} readings | {wisdom30.readingMinutes}m | {wisdom30.videosStarted} videos ({wisdom30.videosCompleted} completed)</div>
+                    </div>
+                    <div style={summaryRowStyle}>
+                        <div><strong>90d:</strong> {wisdom90.readingCount} readings | {wisdom90.readingMinutes}m | {wisdom90.videosStarted} videos ({wisdom90.videosCompleted} completed)</div>
+                    </div>
+                </div>
+
+                <div style={summaryCardStyle}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
+                        Application Report (30/90)
+                    </div>
+                    <div style={{ ...summaryRowStyle, marginBottom: '6px' }}>
+                        <div><strong>30d:</strong> {appStats30.total} logs | Responded differently: {appStats30.respondedDifferentlyPercent}%</div>
+                    </div>
+                    <div style={summaryRowStyle}>
+                        <div><strong>90d:</strong> {appStats90.total} logs | Responded differently: {appStats90.respondedDifferentlyPercent}%</div>
+                    </div>
+                </div>
+
+                <div style={summaryCardStyle}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '8px' }}>
+                        Generate Report Paragraph
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <button
+                            onClick={() => handleGenerateReport(30)}
+                            style={{
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                border: `1px solid ${borderColor}`,
+                                backgroundColor: `${accentColor}10`,
+                                color: accentColor,
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Generate 30-day text report
+                        </button>
+                        <button
+                            onClick={() => handleGenerateReport(90)}
+                            style={{
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                border: `1px solid ${borderColor}`,
+                                backgroundColor: `${accentColor}10`,
+                                color: accentColor,
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Generate 90-day text report
+                        </button>
+                    </div>
+                    {reportOutput && reportOutput.domain === reportDomain && (
+                        <textarea
+                            readOnly
+                            value={reportOutput.text}
+                            style={{
+                                width: '100%',
+                                minHeight: '80px',
+                                padding: '10px',
+                                borderRadius: '6px',
+                                border: `1px solid ${borderColor}`,
+                                backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
+                                color: textColor,
+                                fontSize: '12px',
+                                fontFamily: 'inherit',
+                                resize: 'vertical'
+                            }}
+                        />
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     const footerText = useMemo(() => {
         switch (activeTab) {
             case 'all':
@@ -601,9 +907,9 @@ export function SessionHistoryView({ onClose }) {
             case 'application':
                 return `${applicationSummary.totalLogs} logs | ${applicationSummary.modeSessionsCount} mode sessions | ${applicationSummary.chainCount} chains`;
             case 'insights':
-                return `${circuitEntries.length} circuits | ${sessionEntries.length} sessions`;
+                return `${circuitEntries.length} circuits | ${allSessions.length} sessions`;
             default:
-                return `${circuitEntries.length} circuits | ${sessionEntries.length} sessions`;
+                return `${circuitEntries.length} circuits | ${allSessions.length} sessions`;
         }
     }, [
         activeTab,
@@ -615,7 +921,7 @@ export function SessionHistoryView({ onClose }) {
         applicationSummary,
         navigationSummary,
         circuitEntries.length,
-        sessionEntries.length,
+        allSessions.length,
         tabCounts.wisdom
     ]);
 
@@ -678,7 +984,7 @@ export function SessionHistoryView({ onClose }) {
                                 fontWeight: 'bold'
                             }}
                         >
-                            ?
+                            ×
                         </button>
                     </div>
                 </div>
@@ -813,12 +1119,15 @@ export function SessionHistoryView({ onClose }) {
                                     <div style={{ marginTop: '8px', ...summaryRowStyle }}>
                                         <div><strong>{quizStats.totalAttempts}</strong> quiz attempts</div>
                                         <div>Pass rate: {Math.round((quizStats.passRate || 0) * 100)}%</div>
+                                        <div><strong>{watchStats.totalWatched}</strong> videos started</div>
                                         <div><strong>{watchStats.completed}</strong> videos completed</div>
                                         <div>Completion rate: {wisdomSummary.completionRate}%</div>
                                     </div>
-                                    <div style={{ marginTop: '6px', fontSize: '11px', opacity: 0.6 }}>
-                                        Video watch time is not tracked.
-                                    </div>
+                                    {wisdomSummary.lastWatchedAt && (
+                                        <div style={{ marginTop: '6px', fontSize: '11px', opacity: 0.6 }}>
+                                            Last watched: {formatTimestamp(wisdomSummary.lastWatchedAt)}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -839,8 +1148,33 @@ export function SessionHistoryView({ onClose }) {
                                         <div><strong>Foundation watched:</strong> {navigationSummary.hasFoundation ? 'Yes' : 'No'}</div>
                                         <div><strong>Path assessment:</strong> {navigationSummary.pathAssessment || '-'}</div>
                                     </div>
-                                    <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.6 }}>
-                                        Schedule adherence stats not available yet.
+                                    <div style={{ marginTop: '12px', fontSize: '11px', opacity: 0.8 }}>
+                                        <div style={{ fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
+                                            Schedule adherence
+                                        </div>
+                                        {scheduleSlots.length === 0 ? (
+                                            <div style={{ opacity: 0.6 }}>
+                                                No schedule slots defined.
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <div style={{ ...summaryRowStyle, marginBottom: '8px' }}>
+                                                    <div><strong>7d:</strong> {adherenceSummary7 ? `${adherenceSummary7.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary7?.avgAbsDeltaMinutes)}</div>
+                                                    <div><strong>30d:</strong> {adherenceSummary30 ? `${adherenceSummary30.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary30?.avgAbsDeltaMinutes)}</div>
+                                                    <div><strong>90d:</strong> {adherenceSummary90 ? `${adherenceSummary90.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary90?.avgAbsDeltaMinutes)}</div>
+                                                </div>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', opacity: 0.7 }}>
+                                                    {scheduleSlots.map(slot => {
+                                                        const slotSummary = adherenceSummary7?.bySlot?.[slot.slotId] || null;
+                                                        return (
+                                                            <div key={slot.slotId}>
+                                                                Slot {slot.slotId} ({slot.time}): {slotSummary ? `${slotSummary.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(slotSummary?.avgAbsDeltaMinutes)}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -868,7 +1202,9 @@ export function SessionHistoryView({ onClose }) {
                                 </div>
                             )}
 
-                            {isFeedTab ? (
+                            {activeTab === 'reports' ? (
+                                renderReports()
+                            ) : isFeedTab ? (
                                 filteredEntries.length === 0 ? (
                                     renderEmptyState(
                                         emptyStateCopy[activeTab]?.title || 'No records found',
@@ -879,14 +1215,14 @@ export function SessionHistoryView({ onClose }) {
                                         {filteredEntries.map(renderFeedEntry)}
                                     </div>
                                 )
-                            ) : (
+                            ) : activeTab === 'navigation' ? (
                                 !navigationSummary.activePath && !navigationSummary.unlockedCount && !navigationSummary.lastActivity && !navigationSummary.pathAssessment && !navigationSummary.hasFoundation
                                     ? renderEmptyState(
                                         emptyStateCopy[activeTab]?.title || 'No records found',
                                         emptyStateCopy[activeTab]?.hint || 'Complete a session to see it in your archive.'
                                     )
                                     : null
-                            )}
+                            ) : null}
                         </div>
                     )}
                 </div>

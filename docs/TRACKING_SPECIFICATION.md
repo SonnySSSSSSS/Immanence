@@ -201,26 +201,30 @@ If a metric does not serve one of these, it is excluded.
   - paths completed
   - average time per path
 
-**Path Schedule Adherence (Time Precision)**
+**Schedule Adherence (Time Precision) - Implemented**
 
-- **Goal**: Track how early/late the user practices relative to path-defined scheduled practice times (up to 3 per day).
 - **Stored (raw events)**
-  - scheduledSlotId (or time slot index 1–3)
-  - scheduledTime (local time-of-day)
-  - actualStartTime (timestamp)
-  - deltaMinutes (actualStart - scheduled, negative=early, positive=late)
-  - day (YYYY-MM-DD)
-  - pathId
-  - completion flag (optional: practicedWithinWindow)
-- **Derived**
-  - adherenceRate (within window) over 7/30/90 days
-  - averageDeltaMinutes (signed) and absoluteDeltaMinutes
-  - distribution by slot (morning/midday/evening)
-  - streaks of on-time adherence (optional derived)
-- **Rules**
-  - This is NAVIGATION-domain tracking (scheduled intent), not practice-domain tracking.
-  - It must not change practice session counts.
-  - It should be derived by matching path schedule slots to actual practice session start times.
+  - navigationStore.scheduleSlots: up to 3 slots { slotId, time (HH:mm) }
+  - navigationStore.scheduleAdherenceLog: Array<{
+    id,
+    day (YYYY-MM-DD local),
+    pathId,
+    slotId (1..3),
+    scheduledTime (HH:mm),
+    actualStartTime (ms),
+    deltaMinutes (signed),
+    withinWindow (abs(deltaMinutes) <= window)
+  }>
+- **Derived (selectors)**
+  - getScheduleAdherenceSummary(7|30|90, optional pathId):
+    adherenceRate, avgDeltaMinutes, avgAbsDeltaMinutes, bySlot breakdown
+- **Hook point**
+  - Logged on practice start in PracticeSection executeStart() immediately after preference save.
+- **Schedule source of truth**
+  - Primary: navigationStore.scheduleSlots
+  - Fallback: curriculumStore.practiceTimeSlots (only when scheduleSlots unset)
+- **Non-interference rule**
+  - This tracking must not affect practice session counts/durations in progressStore.
 
 ---
 

@@ -31,6 +31,7 @@ import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
+import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -123,6 +124,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   // Honor log modal state (moved from TrackingHub)
   const [showHonorModal, setShowHonorModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-[580px]';
@@ -189,6 +191,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const handleCloseLauncher = () => {
     setLauncherContext(null);
     onSelectSection(null);
+  };
+
+  const openArchive = (initialTab = ARCHIVE_TABS.ALL, initialReportDomain = null) => {
+    setArchiveOptions({ initialTab, initialReportDomain });
+    setShowHistory(true);
   };
 
   const activeLauncher = launcherContext
@@ -319,17 +326,26 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {/* TRACKING HUB - Swipeable Stats Cards */}
         <div className="w-full">
           <HubCardSwiper cards={[
-            <CompactStatsCard key="breathwork" domain="breathwork" streakInfo={streakInfo} onOpenArchive={() => setShowHistory(true)} />,
-            <TrajectoryCard key="trajectory" onTap={() => console.log('TODO: Open TrajectoryReport')} />,
-            <ApplicationTrackingCard key="application" />
+            <CompactStatsCard
+              key="breathwork"
+              domain="breathwork"
+              streakInfo={streakInfo}
+              onOpenArchive={() => openArchive(ARCHIVE_TABS.ALL)}
+              onOpenReports={(domain) => openArchive(ARCHIVE_TABS.REPORTS, domain)}
+            />,
+            <TrajectoryCard
+              key="trajectory"
+              onTap={() => openArchive(ARCHIVE_TABS.REPORTS, REPORT_DOMAINS.PRACTICE)}
+            />,
+            <ApplicationTrackingCard
+              key="application"
+              onOpenArchive={() => openArchive(ARCHIVE_TABS.APPLICATION)}
+            />
           ]} />
         </div>
 
 
         {/* MODES SELECTION - Container with consistent width */}
-
-        {/* Session History Overlay */}
-        {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
         
         {/* Curriculum Hub/Report Modal - Portaled to document.body */}
         {showCurriculumHub && createPortal(
@@ -508,7 +524,13 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
       </div>
       {/* Session History Overlay - Placed at root for visibility */}
-      {showHistory && <SessionHistoryView onClose={() => setShowHistory(false)} />}
+      {showHistory && (
+        <SessionHistoryView
+          onClose={() => setShowHistory(false)}
+          initialTab={archiveOptions.initialTab}
+          initialReportDomain={archiveOptions.initialReportDomain}
+        />
+      )}
     </div>
   );
 }

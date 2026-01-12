@@ -374,11 +374,12 @@ export const useProgressStore = create(
                 const circuitHistory = (state.practiceHistory || []).filter(h => h.type === 'circuit');
                 const circuitMinutes = circuitHistory.reduce((sum, h) => sum + (h.contributions?.[historyType] || 0), 0);
 
-                const totalSessions = domainSessions.length;
+                const practiceSessionsCount = domainSessions.length;
+                const practiceSessionMinutes = domainSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
                 const totalHonor = domainHonor.length;
-                const totalMinutes = domainSessions.reduce((sum, s) => sum + (s.duration || 0), 0)
-                    + domainHonor.reduce((sum, h) => sum + (h.duration || 0), 0)
-                    + circuitMinutes;
+                const honorMinutes = domainHonor.reduce((sum, h) => sum + (h.duration || 0), 0);
+                const activityMinutes = practiceSessionMinutes + honorMinutes + circuitMinutes;
+                const activityCount = practiceSessionsCount + totalHonor + circuitHistory.length;
 
                 const lastSession = domainSessions[domainSessions.length - 1];
                 const lastHonor = domainHonor[domainHonor.length - 1];
@@ -459,9 +460,13 @@ export const useProgressStore = create(
                 }
 
                 return {
-                    totalSessions,
+                    totalSessions: practiceSessionsCount,
                     totalHonor,
-                    totalMinutes,
+                    totalMinutes: activityMinutes,
+                    practiceSessionsCount,
+                    practiceSessionMinutes,
+                    activityCount,
+                    activityMinutes,
                     lastPracticed,
                     last7Days,        // NEW: [Mon, Tue, Wed, Thu, Fri, Sat, Sun] minutes
                     ...domainSpecific
@@ -541,6 +546,39 @@ export const useProgressStore = create(
                 // const filtered = useStore(s => s.sessions.filter(...))
                 // This creates a new array every time ANY part of the state changes.
                 return state.sessions.filter(s => s.journal);
+            },
+
+            /**
+             * Get all sessions (chronological)
+             */
+            getSessions: () => {
+                return get().sessions;
+            },
+
+            /**
+             * Get totals from practice sessions only (spine)
+             */
+            getPracticeSessionTotals: () => {
+                const sessions = get().sessions;
+                const minutesTotal = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+                const sessionsCount = sessions.length;
+                const isDev =
+                    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
+                    (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production');
+                if (isDev) {
+                    const expectedCount = Array.isArray(get().sessions) ? get().sessions.length : 0;
+                    if (sessionsCount !== expectedCount) {
+                        console.warn('[progressStore.getPracticeSessionTotals] Session count mismatch', {
+                            sessionsCount,
+                            expectedCount,
+                            note: 'Check session migration or sessionRecorder writes.'
+                        });
+                    }
+                }
+                return {
+                    sessionsCount,
+                    minutesTotal
+                };
             },
 
             /**

@@ -9,8 +9,9 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
+import { ARCHIVE_TABS } from './tracking/archiveLinkConstants.js';
 
-export function ApplicationTrackingCard() {
+export function ApplicationTrackingCard({ onOpenArchive }) {
     const { getStats, intention } = useApplicationStore();
     const { activePath } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -33,26 +34,29 @@ export function ApplicationTrackingCard() {
     const path = activePath ? getPathById(activePath.pathId) : null;
     const applicationItems = path?.applicationItems || [];
 
+    const normalizeCategoryKey = (label) =>
+        (label || '').toLowerCase().trim().replace(/\s+/g, '-');
+
     // Map stats to directions (N/E/S/W)
     const directionStats = {
         north: {
             label: applicationItems[0] || 'Awareness',
-            count: weekStats.byCategory?.[applicationItems[0]?.toLowerCase().replace(/\s+/g, '-')] || 0,
+            count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[0])] || 0,
             color: '#FF6B35'
         },
         east: {
             label: applicationItems[3] || 'Awareness',
-            count: weekStats.byCategory?.[applicationItems[3]?.toLowerCase().replace(/\s+/g, '-')] || 0,
+            count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[3])] || 0,
             color: '#9B5DE5'
         },
         south: {
             label: applicationItems[2] || 'Awareness',
-            count: weekStats.byCategory?.[applicationItems[2]?.toLowerCase().replace(/\s+/g, '-')] || 0,
+            count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[2])] || 0,
             color: '#4ECDC4'
         },
         west: {
             label: applicationItems[1] || 'Awareness',
-            count: weekStats.byCategory?.[applicationItems[1]?.toLowerCase().replace(/\s+/g, 'minus')] || 0,
+            count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[1])] || 0,
             color: '#F7DC6F'
         }
     };
@@ -116,7 +120,7 @@ export function ApplicationTrackingCard() {
                                 className="text-[8px] font-black uppercase tracking-[0.1em] opacity-40"
                                 style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }}
                             >
-                                Week: {totalGestures}
+                                Last 7 days: {totalGestures}
                             </div>
                         </div>
                     </div>
@@ -199,13 +203,17 @@ export function ApplicationTrackingCard() {
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-center px-2 opacity-20">
-                <span
-                    className="text-[7px] font-black uppercase tracking-[0.6em]"
+            <div className="flex items-center justify-center px-2">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenArchive?.(ARCHIVE_TABS.APPLICATION);
+                    }}
+                    className="text-[8px] font-black uppercase tracking-[0.5em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
                     style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }}
                 >
-                    FIELD
-                </span>
+                    ? VIEW ARCHIVE ?
+                </button>
             </div>
         </div>
     );

@@ -402,7 +402,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.23.13</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.23.17</div>
                   </div>
                 </div>
               )}
@@ -476,7 +476,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.23.13
+                        v3.23.17
                       </div>
                     </div>
                   )}
@@ -555,8 +555,8 @@ function App() {
 
           <InstallPrompt />
 
-          {/* Indra's Net - animated web at bottom */}
-          <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} displayMode={displayMode} />
+          {/* Indra's Net - animated web at bottom (hidden during practice sessions) */}
+          <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} displayMode={displayMode} currentPracticeId={activePracticeId} />
         </div >
       </div >
     </ThemeProvider >

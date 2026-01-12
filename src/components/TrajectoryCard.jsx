@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { useProgressStore } from '../state/progressStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { useTheme } from '../context/ThemeContext';
+import { REPORT_DOMAINS } from './tracking/archiveLinkConstants.js';
 
 export function TrajectoryCard({ onTap }) {
     // Get raw sessions data as dependency
@@ -85,7 +86,7 @@ export function TrajectoryCard({ onTap }) {
 
     return (
         <div
-            onClick={onTap}
+            onClick={() => onTap?.(REPORT_DOMAINS.PRACTICE)}
             className="w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-all duration-700 cursor-pointer hover:shadow-2xl active:scale-[0.99]"
             style={{
                 maxWidth: '430px',
@@ -141,6 +142,15 @@ export function TrajectoryCard({ onTap }) {
                             Trajectory
                         </div>
                         <div
+                            className="text-[10px] uppercase tracking-wider font-semibold"
+                            style={{
+                                color: isLight ? 'rgba(80, 60, 40, 0.5)' : 'rgba(253, 251, 245, 0.35)',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                        >
+                            Practice (Breath-weighted)
+                        </div>
+                        <div
                             className="text-sm font-semibold"
                             style={{
                                 color: arrowColor,
@@ -187,7 +197,7 @@ export function TrajectoryCard({ onTap }) {
                             color: isLight ? 'rgba(70, 55, 35, 0.65)' : 'rgba(253, 251, 245, 0.4)',
                         }}
                     >
-                        Precision
+                        Breath Accuracy
                     </div>
                     <Sparkline
                         data={precisionData}
@@ -220,6 +230,19 @@ export function TrajectoryCard({ onTap }) {
                 }}
             >
                 {getHeadline()}
+            </div>
+
+            <div className="mt-3 flex items-center justify-end">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onTap?.(REPORT_DOMAINS.PRACTICE);
+                    }}
+                    className="text-[9px] font-black uppercase tracking-[0.35em] opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
+                    style={{ color: isLight ? 'rgba(70, 55, 35, 0.75)' : 'rgba(253, 251, 245, 0.6)' }}
+                >
+                    ? OPEN REPORTS ?
+                </button>
             </div>
         </div>
     );

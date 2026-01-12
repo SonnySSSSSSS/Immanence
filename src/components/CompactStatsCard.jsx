@@ -8,6 +8,7 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 import { useTheme } from '../context/ThemeContext.jsx';
 import { PrecisionMeterDevPanel } from './dev/PrecisionMeterDevPanel.jsx';
+import { ARCHIVE_TABS, REPORT_DOMAINS } from './tracking/archiveLinkConstants.js';
 
 /**
  * THEME CONFIGURATION
@@ -272,7 +273,7 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
                         : '0 1px 2px rgba(0,0,0,0.5)'
                 }}
             >
-                Timing Precision • 5-Level Scale
+                Timing Precision - Last 7 days
             </div>
 
             {/* Chart Container */}
@@ -427,7 +428,7 @@ function MetricRing({ label, value, isLight }) {
 /**
  * Main CompactStatsCard Component
  */
-export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive }) {
+export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive, onOpenReports }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
@@ -449,10 +450,9 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    const getAllStats = useProgressStore(s => s.getAllStats);
-    const allStats = getAllStats?.() || {};
-    const domainStats = allStats[domain] || { count: 0, totalMinutes: 0 };
-    const streak = streakInfo?.currentStreak || 0;
+    const getPracticeSessionTotals = useProgressStore(s => s.getPracticeSessionTotals);
+    const practiceTotals = getPracticeSessionTotals?.() || { sessionsCount: 0, minutesTotal: 0 };
+    const streak = streakInfo?.current ?? streakInfo?.currentStreak ?? 0;
 
     // Get stage from theme
     const theme = useTheme();
@@ -714,7 +714,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                     <div className="flex-1 flex flex-col justify-center items-end pr-4">
                         {/* Streak */}
                         <div className="mb-3 text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>Streak</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>Current Streak</span>
                             <div className="flex items-center justify-end gap-2">
                                 <div className="flex flex-col items-center">
                                     {isLight ? (
@@ -736,7 +736,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
 
                         {/* Sessions */}
                         <div className="text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>Sessions</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>All-time Sessions</span>
                             <div className="flex items-center justify-end gap-2">
                                 <div className="flex flex-col items-center">
                                     {isLight ? (
@@ -751,7 +751,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                                     <span className="text-[7px] font-bold uppercase tracking-[0.15em] opacity-40" style={{ color: config.textSub }}>Total</span>
                                 </div>
                                 <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
-                                    {domainStats.count || 0}
+                                    {practiceTotals.sessionsCount || 0}
                                 </span>
                             </div>
                         </div>
@@ -759,7 +759,22 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                 </div>
 
                 {/* Tertiary Section: Practice Precision - Timing Offset Scale */}
-                <div className="relative z-10">
+                <div
+                    className="relative z-10 cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenReports?.(REPORT_DOMAINS.NAVIGATION);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onOpenReports?.(REPORT_DOMAINS.NAVIGATION);
+                        }
+                    }}
+                >
                     <PrecisionTimeline 
                         weekOffsets={weekOffsets} 
                         isLight={isLight} 
@@ -770,17 +785,26 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive 
                 </div>
 
                 {/* Bottom Section - Archive Link */}
-                <div className={`mt-3 flex items-center justify-center px-2`}>
+                <div className="mt-3 flex items-center justify-center gap-6 px-2">
                     <button
                         onClick={(e) => {
-                            console.log('BOTTOM Archive clicked');
                             e.stopPropagation();
-                            onOpenArchive?.();
+                            onOpenArchive?.(ARCHIVE_TABS.ALL);
                         }}
                         className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
                         style={{ color: config.textMain }}
                     >
-                        ⟨ VIEW ARCHIVE ⟩
+                        ? VIEW ARCHIVE ?
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenReports?.(REPORT_DOMAINS.PRACTICE);
+                        }}
+                        className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                        style={{ color: config.textMain }}
+                    >
+                        ? REPORTS ?
                     </button>
                 </div>
             </div>

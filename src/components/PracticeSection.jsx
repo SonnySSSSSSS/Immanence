@@ -23,6 +23,7 @@ import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js
 import { recordPracticeSession } from '../services/sessionRecorder.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { logCircuitCompletion } from '../services/circuitManager.js';
+import { useNavigationStore } from '../state/navigationStore.js';
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
@@ -1555,6 +1556,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       duration,
       practiceParams
     });
+
+    const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
+    if (logScheduleAdherenceStart) {
+      logScheduleAdherenceStart({ actualStartTime: Date.now() });
+    }
 
     if (practiceId === "circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {

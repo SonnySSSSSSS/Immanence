@@ -12,6 +12,7 @@ import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from 
 import { SessionHistoryView } from './SessionHistoryView.jsx';
 import { AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
+import { ARCHIVE_TABS } from './tracking/archiveLinkConstants.js';
 
 // Domain configuration - using icon names for Icon component
 const DOMAINS = [
@@ -216,7 +217,7 @@ function StatsCard({ domain, stats, isLight }) {
                             lineHeight: '1.2',
                         }}
                     >
-                        Peak: {Math.max(...(stats.last7Days || [0]))} min
+                        Peak (7d): {Math.max(...(stats.last7Days || [0]))} min
                     </div>
                 </div>
             </div>
@@ -246,7 +247,7 @@ function StatsCard({ domain, stats, isLight }) {
                             letterSpacing: '0.2em',
                         }}
                     >
-                        SESSIONS
+                        PRACTICE SESSIONS
                     </div>
                 </div>
 
@@ -274,7 +275,7 @@ function StatsCard({ domain, stats, isLight }) {
                             textShadow: isLight ? 'none' : '0 0 10px rgba(255, 235, 200, 0.4)',
                         }}
                     >
-                        MINUTES
+                        ALL ACTIVITY MIN
                     </div>
                 </div>
 
@@ -301,7 +302,7 @@ function StatsCard({ domain, stats, isLight }) {
                             letterSpacing: '0.2em',
                         }}
                     >
-                        HONOR
+                        HONOR LOGS
                     </div>
                 </div>
             </div>
@@ -310,7 +311,7 @@ function StatsCard({ domain, stats, isLight }) {
             <div className="relative px-5 -mt-6 z-10">
                 {/* Semantic label */}
                 <div
-                    className="text-[10px] font-bold mb-4 text-center -mt-5 relative font-mono opacity-60"
+                    className="text-[10px] font-bold mb-2 text-center -mt-5 relative font-mono opacity-60"
                     style={{
                         color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.6)',
                         letterSpacing: '0.15em',
@@ -318,6 +319,16 @@ function StatsCard({ domain, stats, isLight }) {
                     }}
                 >
                     ⟨ PERFORMANCE.VECTOR ⟩
+                </div>
+                <div
+                    className="text-[9px] font-bold mb-2 text-center relative font-mono opacity-40"
+                    style={{
+                        color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+                        letterSpacing: '0.2em',
+                        zIndex: 11,
+                    }}
+                >
+                    LAST 7 DAYS
                 </div>
 
                 {/* Curve container - elevated height */}
@@ -570,26 +581,6 @@ function DomainInsights({ domain, stats }) {
 
     // Wisdom: Show reading progress or encouragement
     if (domain === 'wisdom') {
-        const sectionsCount = stats.sectionsViewed?.length || 0;
-        const bookmarks = stats.bookmarks?.length || 0;
-
-        if (sectionsCount > 0 || bookmarks > 0) {
-            return (
-                <div className="flex gap-3">
-                    {sectionsCount > 0 && (
-                        <span className="text-[9px] text-[rgba(253,251,245,0.5)]">
-                            📖 {sectionsCount} sections explored
-                        </span>
-                    )}
-                    {bookmarks > 0 && (
-                        <span className="text-[9px] text-[rgba(253,251,245,0.5)]">
-                            🔖 {bookmarks} bookmarks
-                        </span>
-                    )}
-                </div>
-            );
-        }
-
         return (
             <div className="text-[9px] text-[rgba(253,251,245,0.35)] italic">
                 Treatise study and contemplative reading
@@ -614,6 +605,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const [showHistory, setShowHistory] = useState(false);
+    const [historyTab, setHistoryTab] = useState(ARCHIVE_TABS.ALL);
 
     // Get primary domain stats
     const primaryDomain = getPrimaryDomain();
@@ -641,7 +633,11 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
 
             {/* History Button */}
             <button
-                onClick={() => setShowHistory(true)}
+                onClick={() => {
+                    const tab = primaryDomainObj.id === 'wisdom' ? ARCHIVE_TABS.WISDOM : ARCHIVE_TABS.PRACTICE;
+                    setHistoryTab(tab);
+                    setShowHistory(true);
+                }}
                 className="mt-6 w-full py-3 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
                 style={{
                     backgroundColor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)',
@@ -659,7 +655,10 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
             {/* Overlay View */}
             <AnimatePresence>
                 {showHistory && (
-                    <SessionHistoryView onClose={() => setShowHistory(false)} />
+                    <SessionHistoryView
+                        onClose={() => setShowHistory(false)}
+                        initialTab={historyTab}
+                    />
                 )}
             </AnimatePresence>
         </div>

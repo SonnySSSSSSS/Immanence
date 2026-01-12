@@ -53,11 +53,14 @@ const STAGE_PARTICLE_COLORS = {
     stellar: { primary: 'rgba(192, 132, 252, ', glow: 'rgba(168, 85, 247, ' },   // Purple
 };
 
-export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false, displayMode = 'hearth' }) {
+export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false, displayMode = 'hearth', currentPracticeId = null }) {
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const widthRef = useRef(430);
     const heightRef = useRef(600);
+
+    // Hide particles during any practice session
+    const hideParticles = isPracticing;
     const initializedRef = useRef(false);
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -200,6 +203,11 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
             cancelAnimationFrame(animationFrame);
         };
     }, [stage, isPracticing, isLight, displayMode, PARTICLE_VERSION]);
+
+    // Don't render particles during body scan practice
+    if (hideParticles) {
+        return null;
+    }
 
     return (
         <div
