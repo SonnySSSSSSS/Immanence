@@ -272,6 +272,20 @@ export const useWisdomStore = create(
             },
 
             /**
+             * Get raw reading sessions (for reports)
+             */
+            getReadingSessions: () => {
+                return get().readingSessions;
+            },
+
+            /**
+             * Get raw quiz attempts (for reports)
+             */
+            getQuizAttempts: () => {
+                return get().quizAttempts;
+            },
+
+            /**
              * Check if section is unlocked by quiz
              */
             isSectionUnlocked: (sectionId) => {

@@ -20,6 +20,7 @@ import { SessionEntryEditModal } from './SessionEntryEditModal.jsx';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal.jsx';
 import { ExportArchiveButton } from './ExportArchiveButton.jsx';
 import { getDateKey } from '../utils/dateUtils';
+import { ReportsPanel } from './tracking/reports/index.js';
 
 export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -1203,7 +1204,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                             )}
 
                             {activeTab === 'reports' ? (
-                                renderReports()
+                                <ReportsPanel initialReportDomain={initialReportDomain} />
                             ) : isFeedTab ? (
                                 filteredEntries.length === 0 ? (
                                     renderEmptyState(

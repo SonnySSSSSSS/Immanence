@@ -492,7 +492,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
               marginLeft: 'auto',
               marginRight: 'auto',
-              gap: isSanctuary ? '24px' : '16px',
+              gap: isSanctuary ? '24px' : '10px',
             }}
           >
             <SimpleModeButton
@@ -775,6 +775,16 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
           }}
         />
       )}
+
+      {/* Radial gradient overlay - darker center to lighter edges */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.1) 100%)',
+          opacity: 0.5,
+          borderRadius: '50%',
+        }}
+      />
 
       {/* Dark gradient overlay for text legibility (dark mode only) */}
       {!isLight && (

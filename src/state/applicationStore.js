@@ -85,6 +85,13 @@ export const useApplicationStore = create(
                 };
             },
 
+            /**
+             * Get raw awareness logs (for reports)
+             */
+            getAwarenessLogs: () => {
+                return get().awarenessLogs;
+            },
+
             // Intention statement
             intention: null,
             setIntention: (text) => set({ intention: text }),

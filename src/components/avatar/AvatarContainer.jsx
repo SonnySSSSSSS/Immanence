@@ -40,7 +40,7 @@ export function AvatarContainer({
     const shadowY = -Math.sin(moonAngle) * shadowDist;
 
     return (
-        <div className="relative flex items-center justify-center overflow-visible" style={{ width: 'min(70vw, 400px)', height: 'min(70vw, 400px)' }}>
+        <div className="relative flex items-center justify-center overflow-visible" style={{ width: 'min(70vw, 300px)', height: 'min(70vw, 300px)' }}>
             {!isLight && (
                 <>
                     <div

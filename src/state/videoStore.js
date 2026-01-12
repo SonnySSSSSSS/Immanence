@@ -194,6 +194,13 @@ export const useVideoStore = create(
             },
 
             /**
+             * Get raw video entries (for reports)
+             */
+            getVideoEntries: () => {
+                return Object.entries(get().byId);
+            },
+
+            /**
              * Check if a video is completed
              */
             isCompleted: (videoId) => {

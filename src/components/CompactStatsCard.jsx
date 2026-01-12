@@ -643,15 +643,15 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
                         }}
                     />
                     
-                    {/* Cosmic Background - Colorful nebula texture */}
+                    {/* Cosmic Background - Stage-based nebula texture */}
                     <div
                         className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none"
-                        style={{ opacity: 0.5, mixBlendMode: 'screen' }}
+                        style={{ opacity: 0.6, mixBlendMode: 'screen' }}
                     >
                         <div
                             className="absolute inset-0 transition-all duration-1000"
                             style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/card_bg_blackhole_${stageLower}.png)`,
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/card_bg_${stageLower}_nebula.png)`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
                                 WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)',
@@ -665,32 +665,20 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
             {/* Content Container - Shortened bottom to pull parchment edge up */}
             <div className={`relative px-9 ${isLight ? 'pt-5 pb-2' : 'py-3'} z-10`} style={{ background: 'transparent' }}>
 
-                {/* Header Row: Date only (domain label moved to vertical) */}
-                <div className="flex justify-end items-center mb-2 relative z-10">
-                    <div
-                        className="text-[10px] font-black tabular-nums tracking-wide opacity-50"
-                        style={{
-                            color: config.textSub,
-                            textShadow: isLight ? '0 1px 1px rgba(0, 0, 0, 0.06)' : 'none'
-                        }}
-                    >
-                        {today}
-                    </div>
-                </div>
-
 
 
                 {/* Secondary Section: Two-Column Stats Layout */}
-                <div className="relative mb-4 flex gap-0 h-[140px]">
+                <div className="relative mb-1 flex gap-0 h-[140px]">
                     {/* Vertical Domain Label - Left Edge, Aligned to VERY TOP */}
                     <div 
-                        className="absolute left-[-8px] top-[-8px] flex items-start justify-center z-20"
+                        className="absolute left-[-8px] top-[7px] flex items-start justify-center z-20"
                         style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                     >
                         <span
                             className="text-[11px] font-black uppercase tracking-[0.35em]"
                             style={{
                                 color: config.textMain,
+                                fontFamily: 'Inter, sans-serif',
                                 textShadow: isLight 
                                     ? '0 1px 3px rgba(255,255,255,0.8), 0 0 6px rgba(255,255,255,0.6)' 
                                     : 'none',
@@ -710,33 +698,11 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
                     </div>
 
 
-                    {/* Right Column: Data - VERTICALLY STACKED, RIGHT ALIGNED */}
-                    <div className="flex-1 flex flex-col justify-center items-end pr-4">
-                        {/* Streak */}
-                        <div className="mb-3 text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>Current Streak</span>
-                            <div className="flex items-center justify-end gap-2">
-                                <div className="flex flex-col items-center">
-                                    {isLight ? (
-                                        <img
-                                            src={`${import.meta.env.BASE_URL}assets/impasto_fire.png`}
-                                            className="w-5 h-5 object-contain"
-                                            alt="Fire"
-                                        />
-                                    ) : (
-                                        <span className="text-xl">🔥</span>
-                                    )}
-                                    <span className="text-[7px] font-bold uppercase tracking-[0.15em] opacity-40" style={{ color: config.textSub }}>Days</span>
-                                </div>
-                                <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
-                                    {streak}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Sessions */}
+                    {/* Right Column: Data - HORIZONTAL LAYOUT */}
+                    <div className="flex-1 flex items-center justify-end gap-6 pr-4">
+                        {/* Sessions - LEFT */}
                         <div className="text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 block" style={{ color: config.textSub }}>All-time Sessions</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: 'Inter, sans-serif' }}>All-time Sessions</span>
                             <div className="flex items-center justify-end gap-2">
                                 <div className="flex flex-col items-center">
                                     {isLight ? (
@@ -746,12 +712,44 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
                                             alt="Meditator"
                                         />
                                     ) : (
-                                        <span className="text-xl">🧘</span>
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: config.accent, filter: 'drop-shadow(0 0 4px currentColor)' }}>
+                                            <path d="M12 3C10 3 9 5 9 7c0 1.5 1 3 3 3s3-1.5 3-3c0-2-1-4-3-4z" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <path d="M12 10v4" strokeLinecap="round"/>
+                                            <path d="M8 14c-1.5 0-2.5 1-2.5 2.5S7 19 8 19" strokeLinecap="round"/>
+                                            <path d="M16 14c1.5 0 2.5 1 2.5 2.5S17 19 16 19" strokeLinecap="round"/>
+                                            <path d="M8 19c0 1.5 1.5 2 4 2s4-.5 4-2" strokeLinecap="round"/>
+                                            <ellipse cx="12" cy="19.5" rx="5" ry="1.5" opacity="0.3"/>
+                                        </svg>
                                     )}
-                                    <span className="text-[7px] font-bold uppercase tracking-[0.15em] opacity-40" style={{ color: config.textSub }}>Total</span>
+                                    <span className="text-[7px] font-bold uppercase tracking-[0.15em]" style={{ color: 'rgba(255, 255, 255, 0.5)', fontFamily: 'Inter, sans-serif' }}>Total</span>
                                 </div>
-                                <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: config.textMain }}>
+                                <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: isLight ? config.textMain : `rgba(${baseAccent.r}, ${baseAccent.g}, ${baseAccent.b}, 0.7)` }}>
                                     {practiceTotals.sessionsCount || 0}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Streak - RIGHT */}
+                        <div className="text-right">
+                            <span className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: 'Inter, sans-serif' }}>Current Streak</span>
+                            <div className="flex items-center justify-end gap-2">
+                                <div className="flex flex-col items-center">
+                                    {isLight ? (
+                                        <img
+                                            src={`${import.meta.env.BASE_URL}assets/impasto_fire.png`}
+                                            className="w-5 h-5 object-contain"
+                                            alt="Fire"
+                                        />
+                                    ) : (
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: config.accent, filter: 'drop-shadow(0 0 4px currentColor)' }}>
+                                            <path d="M12 3c-1 2-1 4 0 6 1-2 2-3 3-2 1 1 0 3-1 4 2 0 3 2 3 4 0 3-2.5 6-6 6s-6-3-6-6c0-2 1-4 3-4-1-1-2-3-1-4 1-1 2 0 3 2 1-2 1-4 0-6z" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+                                            <path d="M12 15c-1 0-2 1-2 2.5S11 21 12 21s2-1.5 2-3.5-1-2.5-2-2.5z" fill="currentColor" opacity="0.2"/>
+                                        </svg>
+                                    )}
+                                    <span className="text-[7px] font-bold uppercase tracking-[0.15em]" style={{ color: 'rgba(255, 255, 255, 0.5)', fontFamily: 'Inter, sans-serif' }}>Days</span>
+                                </div>
+                                <span className="text-[32px] font-black leading-none tabular-nums" style={{ color: isLight ? config.textMain : `rgba(${baseAccent.r}, ${baseAccent.g}, ${baseAccent.b}, 0.7)` }}>
+                                    {streak}
                                 </span>
                             </div>
                         </div>

@@ -266,6 +266,13 @@ export const useNavigationStore = create(
                         3: buildSlotSummary(3)
                     }
                 };
+            },
+
+            /**
+             * Get raw schedule adherence log (for reports)
+             */
+            getScheduleAdherenceLog: () => {
+                return get().scheduleAdherenceLog;
             }
         }),
         {
