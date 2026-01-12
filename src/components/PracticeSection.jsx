@@ -37,6 +37,7 @@ import { BreathPhaseIndicator } from "./BreathPhaseIndicator.jsx";
 import { BreathPathChart } from "./BreathPathChart.jsx";
 import { BreathWaveVisualization } from "./BreathWaveVisualization.jsx";
 import BreathWaveform from "./BreathWaveform.jsx";
+import { BreathSessionDisplay } from "./BreathSessionDisplay.jsx";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -1855,7 +1856,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
           ) : practice === "Breath & Stillness" ? (
-            <div className="flex flex-col items-center justify-center" style={{ overflow: 'visible' }}>
+            <div className="flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
               <BreathingRing
                 breathPattern={breathingPatternForRing}
                 onTap={handleAccuracyTap}
@@ -1864,6 +1865,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 pathId={showCore ? null : avatarPath}
                 fxPreset={currentFxPreset}
               />
+              
+              {/* Enhanced Breath Session Display with Glassmorphic UI */}
+              <BreathSessionDisplay 
+                pattern={pattern}
+                duration={duration}
+                timeLeft={timeLeft}
+                breathCount={breathCount}
+              />
+              
               {showFxGallery && (
                 <div
                   className="flex items-center gap-3 mt-4 px-4 py-2 rounded-full"

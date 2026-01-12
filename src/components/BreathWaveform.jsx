@@ -94,28 +94,46 @@ export default function BreathWaveform({ pattern, cycles = 1, showTracer = true 
         <path id={motionPathId} d={d} fill="none" />
       </defs>
 
+      {/* Outer bloom glow layer */}
       <path
         d={d}
         fill="none"
         stroke="var(--accent-color)"
-        strokeOpacity="0.18"
+        strokeOpacity="0.12"
+        strokeWidth="16"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter={`url(#${glowFilterId})`}
+        className="waveform-bloom"
+      />
+
+      {/* Mid glow layer */}
+      <path
+        d={d}
+        fill="none"
+        stroke="var(--accent-color)"
+        strokeOpacity="0.28"
         strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter={`url(#${glowFilterId})`}
+        className="waveform-glow-mid"
       />
 
+      {/* Inner glow layer */}
       <path
         d={d}
         fill="none"
         stroke="var(--accent-color)"
-        strokeOpacity="0.45"
-        strokeWidth="5.5"
+        strokeOpacity="0.55"
+        strokeWidth="6"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter={`url(#${glowFilterId})`}
+        className="waveform-glow-inner"
       />
 
+      {/* Core line */}
       <path
         d={d}
         fill="none"
@@ -123,6 +141,7 @@ export default function BreathWaveform({ pattern, cycles = 1, showTracer = true 
         strokeWidth="2.25"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="waveform-line"
       />
 
       {showTracer && (
@@ -139,6 +158,96 @@ export default function BreathWaveform({ pattern, cycles = 1, showTracer = true 
           </circle>
         </g>
       )}
+
+      <style>{`
+        .waveform-bloom {
+          animation: sacred-breath-bloom 16s infinite ease-in-out;
+        }
+        
+        .waveform-glow-mid {
+          animation: sacred-breath-glow-mid 16s infinite ease-in-out;
+        }
+        
+        .waveform-glow-inner {
+          animation: sacred-breath-glow-inner 16s infinite ease-in-out;
+        }
+        
+        .waveform-line {
+          animation: sacred-breath-line 16s infinite ease-in-out;
+        }
+
+        @keyframes sacred-breath-bloom {
+          0%, 100% { 
+            stroke-opacity: 0.08;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
+          }
+          25% { 
+            stroke-opacity: 0.15;
+            filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.5));
+          }
+          50% { 
+            stroke-opacity: 0.1;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.35));
+          }
+          75% { 
+            stroke-opacity: 0.18;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.55));
+          }
+        }
+
+        @keyframes sacred-breath-glow-mid {
+          0%, 100% { 
+            stroke-opacity: 0.22;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+          }
+          25% { 
+            stroke-opacity: 0.32;
+            filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+          }
+          50% { 
+            stroke-opacity: 0.25;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.45));
+          }
+          75% { 
+            stroke-opacity: 0.35;
+            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.65));
+          }
+        }
+
+        @keyframes sacred-breath-glow-inner {
+          0%, 100% { 
+            stroke-opacity: 0.48;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.5));
+          }
+          25% { 
+            stroke-opacity: 0.62;
+            filter: drop-shadow(0 0 35px rgba(255, 215, 0, 0.7));
+          }
+          50% { 
+            stroke-opacity: 0.52;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.55));
+          }
+          75% { 
+            stroke-opacity: 0.65;
+            filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.75));
+          }
+        }
+
+        @keyframes sacred-breath-line {
+          0%, 100% { 
+            filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4));
+          }
+          25% { 
+            filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.6));
+          }
+          50% { 
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.45));
+          }
+          75% { 
+            filter: drop-shadow(0 0 22px rgba(255, 215, 0, 0.65));
+          }
+        }
+      `}</style>
     </svg>
   );
 }
