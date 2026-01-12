@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Avatar } from "./components/avatar";
 import { StageTitle } from "./components/StageTitle.jsx";
-import { PracticeSection } from "./components/PracticeSection.jsx";
+import { PracticeSection } from "./components/PracticeSection";
 import { HomeHub } from "./components/HomeHub.jsx";
 
 // Lazy load heavy sections for better initial performance
@@ -398,7 +398,7 @@ function App() {
                           : 'rgba(255, 255, 255, 0.1)'
                       }}
                     />
-                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.23.10</div>
+                    <div className={`text-[9px] text-center ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>v3.23.12</div>
                   </div>
                 </div>
               )}
@@ -472,7 +472,7 @@ function App() {
                         className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        v3.23.10
+                        v3.23.12
                       </div>
                     </div>
                   )}

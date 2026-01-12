@@ -116,12 +116,31 @@
   - Inputs: `navigationStore` (`selectedPathId`, `activePath`), `cycleStore.currentCycle`, `curriculumStore.onboardingComplete`, `displayModeStore.colorScheme`.
   - Outputs: `setSelectedPath`, `beginPath/completeWeek` via subcomponents, modal toggles; program cards open `CycleChoiceModal` or `ThoughtDetachmentOnboarding`.
   - Navigation next: optional scroll to path grid on recommendation; no direct section switch (except Application prompt in `ApplicationSection`).
-- **PracticeSection** (`src/components/PracticeSection.jsx`)
-  - Primary components: practice pickers (`PracticeSelectionModal`, `SacredTimeSlider`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`.
+- **PracticeSection** (`src/components/PracticeSection/PracticeSection.jsx`)
+  - Role: orchestration layer for the practice lifecycle and session state; coordinates UI components while retaining ownership of state, effects, and side effects.
+  - Primary components: practice pickers (`PracticeSelector`, `SacredTimeSlider`, `PracticeOptionsCard`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`.
   - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state.
   - Outputs: `progressStore.recordSession`, `cycleManager.logPractice`, `syncFromProgressStore`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar.
   - Navigation next: none directly; ritual deck "Return to Hub" triggers `handleStop`, home navigation handled by global header button.
   - **Photic entry**: "Photic" button opens `PhoticCirclesOverlay` (component state `isOpen`).
+
+### PracticeSection Module Structure
+
+- `PracticeSection/PracticeSection.jsx` — session orchestration, lifecycle, effects, render priority control
+- `PracticeSection/PracticeSelector.jsx` — practice selection grid (pure UI)
+- `PracticeSection/PracticeIcons.jsx` — SVG icon set for practices
+- `PracticeSection/PracticeConfigView.jsx` — config/selection render branch
+- `PracticeSection/PracticeOptionsCard.jsx` — per-practice configuration panel
+- `PracticeSection/ScrollingWheel.jsx` — standalone scroll selector widget
+- `PracticeSection/SessionSummaryModal.jsx` — end-of-session summary modal
+- `PracticeSection/constants.js` — shared registry, IDs, durations, UI width, label mapping
+
+### PracticeSection Render Priorities
+
+1. Active session view (inline, intentionally coupled)
+   - Warning: This block is intentionally not decomposed due to tight coupling between timers, effects, refs, and handlers. Refactoring requires a session view-model plan.
+2. Session summary modal (external component)
+3. Config/selection view (external component)
 - **WisdomSection** (`src/components/WisdomSection.jsx`)
   - Primary components: tabbed Recommendations/Treatise/Bookmarks/Videos/Self-Knowledge, `WisdomSelectionModal`, `VideoLibrary`, `SelfKnowledgeView`.
   - Inputs: static treatise/wisdom/video data, `wisdomStore` bookmarks/reading sessions, `localStorage` scroll positions.

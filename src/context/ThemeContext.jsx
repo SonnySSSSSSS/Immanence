@@ -120,6 +120,15 @@ export function ThemeProvider({ children, currentStage = 'Flame' }) {
         root.style.setProperty('--text-accent', stageTheme.text.accent);
         root.style.setProperty('--text-accent-muted', stageTheme.text.accentMuted);
 
+        // Practice card label color: gold by default, indigo when in Flame stage
+        const practiceLabelColor = stageKey === 'FLAME' ? '#4f46e5' : '#ffd700';
+        const practiceLabelGlow = stageKey === 'FLAME'
+            ? 'rgba(79, 70, 229, 0.9)'
+            : 'rgba(255, 215, 0, 1)';
+
+        root.style.setProperty('--practice-card-text', practiceLabelColor);
+        root.style.setProperty('--practice-card-glow', practiceLabelGlow);
+
         // Light mode specific stage variables (for adaptive manuscript look)
         if (stageTheme.light) {
             root.style.setProperty('--light-bg-base', stageTheme.light.bgBase);

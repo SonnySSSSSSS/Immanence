@@ -1,0 +1,43 @@
+[33md2f97be[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: checkout: moving from main to main
+[33md2f97be[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: checkout: moving from gh-pages to main
+[33m26f27a3[m[33m ([m[1;31morigin/gh-pages[m[33m, [m[1;32mgh-pages[m[33m)[m HEAD@{2}: checkout: moving from main to gh-pages
+[33md2f97be[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: commit: Auto-backup Sat 12/13/2025 12:07:21.85
+[33m5cb33bb[m HEAD@{4}: commit: Auto-backup Sat 12/13/2025 12:02:32.71
+[33m94aadda[m HEAD@{5}: checkout: moving from gh-pages to main
+[33m26f27a3[m[33m ([m[1;31morigin/gh-pages[m[33m, [m[1;32mgh-pages[m[33m)[m HEAD@{6}: reset: moving to HEAD
+[33m26f27a3[m[33m ([m[1;31morigin/gh-pages[m[33m, [m[1;32mgh-pages[m[33m)[m HEAD@{7}: reset: moving to origin/gh-pages
+[33m26f27a3[m[33m ([m[1;31morigin/gh-pages[m[33m, [m[1;32mgh-pages[m[33m)[m HEAD@{8}: checkout: moving from main to gh-pages
+[33m94aadda[m HEAD@{9}: reset: moving to HEAD
+[33m94aadda[m HEAD@{10}: commit: Auto-backup after promotion (Fri_12/05/2025_11-38-54.56)
+[33m854b6f1[m HEAD@{11}: commit: Auto-backup after promotion (Thu_12/04/2025_22-39-50.60)
+[33m6c556b3[m HEAD@{12}: commit: Auto-backup after promotion (Thu_12/04/2025_21-23-50.32)
+[33md1d446c[m HEAD@{13}: commit: Auto-backup after promotion (Thu_12/04/2025_18-39-26.96)
+[33m0f7d927[m HEAD@{14}: commit: Auto-backup after promotion (Thu_12/04/2025_17-48-26.76)
+[33m2cec6c0[m HEAD@{15}: commit: Auto-backup after promotion (Thu_12/04/2025_14-08-03.65)
+[33m40f281e[m HEAD@{16}: commit: Auto-backup after promotion (Thu_12/04/2025_11-36-29.04)
+[33ma83811e[m HEAD@{17}: commit: Auto-backup after promotion (Thu_12/04/2025_11-11-55.00)
+[33mf14559b[m HEAD@{18}: commit: Auto-backup after promotion (Thu_12/04/2025_10-12-53.74)
+[33m42529dc[m HEAD@{19}: commit: Auto-backup after promotion (Wed_12/03/2025_23-19-25.79)
+[33mbe607ea[m HEAD@{20}: commit: Auto-backup after promotion (Wed_12/03/2025_23-09-48.25)
+[33me7f76bb[m HEAD@{21}: commit: Auto-backup after promotion (Wed_12/03/2025_22-42-35.36)
+[33m677a56f[m HEAD@{22}: commit: Auto-backup after promotion (Wed_12/03/2025_22-05-18.30)
+[33m141847a[m HEAD@{23}: commit: Auto-backup after promotion (Wed_12/03/2025_21-52-04.52)
+[33mdec848e[m HEAD@{24}: commit: Auto-backup after promotion (Wed_12/03/2025_18-29-13.56)
+[33m306636d[m HEAD@{25}: commit: Auto-backup after promotion (Wed_12/03/2025_12-32-16.70)
+[33mc1e74f6[m HEAD@{26}: commit: Auto-backup after promotion (Wed_12/03/2025_12-28-58.66)
+[33m66c5672[m HEAD@{27}: commit: Auto-backup after promotion (Wed_12/03/2025_11-25-30.35)
+[33mb868467[m HEAD@{28}: commit: Auto-backup after promotion (Tue_12/02/2025_22-41-15.21)
+[33me5c792a[m HEAD@{29}: commit: Auto-backup after promotion (Tue_12/02/2025_22-27-32.87)
+[33mec4bd9d[m HEAD@{30}: commit: Auto-backup after promotion (Tue_12/02/2025_21-40-45.14)
+[33mdce585b[m HEAD@{31}: commit: Auto-backup after promotion (Tue_12/02/2025_21-34-59.89)
+[33m4b95561[m HEAD@{32}: commit: Auto-backup after promotion (Tue_12/02/2025_21-15-19.63)
+[33m8cc5d50[m HEAD@{33}: commit: Auto-backup after promotion (Tue_12/02/2025_18-02-31.65)
+[33m67cd480[m HEAD@{34}: commit: Auto-backup after promotion (Tue_12/02/2025_17-47-19.23)
+[33m7b83db3[m HEAD@{35}: commit: Auto-backup after promotion (Tue_12/02/2025_17-30-24.54)
+[33maa191e0[m HEAD@{36}: commit: Auto-backup after promotion (Tue_12/02/2025_17-13-33.12)
+[33mbe99ef3[m[33m ([m[1;31morigin/backup-2025-12-02[m[33m, [m[1;32mbackup-2025-12-02[m[33m)[m HEAD@{37}: commit: Stable snapshot 2025-12-02 after recovery
+[33mfa3e477[m HEAD@{38}: commit: feat: breathing ring with click interaction, halo effect, color-coded feedback
+[33m9b8d299[m HEAD@{39}: commit: feat(avatar): integrate flame sigil image with dual-layer glow
+[33m34edc32[m HEAD@{40}: commit: Clean slate: remove all dead prototype avatar files, keep only Avatar.jsx
+[33m34338ed[m HEAD@{41}: Branch: renamed refs/heads/master to refs/heads/main
+[33m34338ed[m HEAD@{43}: commit (initial): initial commit
