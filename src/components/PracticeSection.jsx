@@ -725,12 +725,12 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             </div>
           )}
 
-          {/* Start Button */}
+          {/* Start Button - Sacred Portal with Ember Theme */}
           {!(practiceId === 'ritual') && (
             <div className="flex justify-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
               <button
                 onClick={onStart}
-                className="group transition-all duration-200 relative overflow-hidden begin-button"
+                className="group transition-all duration-300 relative overflow-hidden begin-button"
                 style={{
                    width: '100%',
                    maxWidth: '400px',
@@ -739,43 +739,75 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
                    fontWeight: 700,
                    letterSpacing: '0.15em',
                    textTransform: 'uppercase',
-                   padding: '16px 48px',
-                   borderRadius: '50px',
-                   background: `linear-gradient(135deg, var(--accent-color), var(--accent-secondary))`,
+                   padding: '18px 52px',
+                   borderRadius: '60px',
+                   background: `linear-gradient(135deg, #ff4500, #ff8c00)`,
                    color: '#000',
-                   textShadow: `0 0 8px var(--accent-40)`,
+                   textShadow: `0 0 10px rgba(255, 140, 0, 0.6)`,
                    boxShadow: `
-                     0 0 30px var(--accent-60),
-                     inset 0 0 20px rgba(255, 255, 255, 0.3)
+                     0 0 60px rgba(255, 69, 0, 0.8),
+                     inset 0 0 30px rgba(255, 255, 255, 0.25),
+                     0 8px 20px rgba(255, 69, 0, 0.5)
                    `,
-                   transition: 'all 0.4s ease',
+                   transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                    position: 'relative',
                 }}
                 onMouseEnter={(e) => { 
-                  e.currentTarget.style.transform = 'scale(1.08)';
-                  e.currentTarget.style.boxShadow = `0 0 60px var(--accent-glow)`;
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = `
+                    0 0 100px rgba(255, 69, 0, 1),
+                    inset 0 0 35px rgba(255, 255, 255, 0.35),
+                    0 12px 30px rgba(255, 69, 0, 0.7)
+                  `;
                 }}
                 onMouseLeave={(e) => { 
                   e.currentTarget.style.transform = 'scale(1)';
                   e.currentTarget.style.boxShadow = `
-                    0 0 30px var(--accent-60),
-                    inset 0 0 20px rgba(255, 255, 255, 0.3)
+                    0 0 60px rgba(255, 69, 0, 0.8),
+                    inset 0 0 30px rgba(255, 255, 255, 0.25),
+                    0 8px 20px rgba(255, 69, 0, 0.5)
                   `;
                 }}
               >
-                {/* Radial glow backdrop */}
+                {/* Radial glow backdrop with fiery pulse */}
                 <div
+                  className="portal-glow"
                   style={{
                     position: 'absolute',
-                    inset: '-2px',
-                    background: `radial-gradient(circle at center, var(--accent-50) 0%, transparent 70%)`,
-                    opacity: 0.6,
-                    filter: 'blur(10px)',
+                    inset: '-4px',
+                    background: `radial-gradient(circle at center, rgba(255, 69, 0, 0.6) 0%, transparent 70%)`,
+                    opacity: 0.7,
+                    filter: 'blur(15px)',
                     zIndex: -1,
+                    animation: 'portal-pulse 3s infinite ease-in-out',
+                  }}
+                />
+                {/* Ripple effect on hover */}
+                <div
+                  className="portal-ripple"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '60px',
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
+                    opacity: 0,
+                    transform: 'scale(0.5)',
+                    transition: 'all 0.6s ease-out',
+                    pointerEvents: 'none',
                   }}
                 />
                 <span className="relative z-10">{practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice'}</span>
               </button>
+              <style>{`
+                @keyframes portal-pulse {
+                  0%, 100% { opacity: 0.7; transform: scale(1); }
+                  50% { opacity: 1; transform: scale(1.05); }
+                }
+                .begin-button:hover .portal-ripple {
+                  opacity: 1 !important;
+                  transform: scale(1.1) !important;
+                }
+              `}</style>
             </div>
           )}
         </div>

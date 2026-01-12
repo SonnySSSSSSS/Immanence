@@ -178,73 +178,73 @@ export default function BreathWaveform({ pattern, cycles = 1, showTracer = true 
 
         @keyframes sacred-breath-bloom {
           0%, 100% { 
-            stroke-opacity: 0.08;
-            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
+            stroke-opacity: 0.12;
+            filter: drop-shadow(0 0 15px rgba(255, 69, 0, 0.5));
           }
           25% { 
-            stroke-opacity: 0.15;
-            filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.5));
+            stroke-opacity: 0.22;
+            filter: drop-shadow(0 0 45px rgba(255, 69, 0, 0.85));
           }
           50% { 
-            stroke-opacity: 0.1;
-            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.35));
+            stroke-opacity: 0.14;
+            filter: drop-shadow(0 0 20px rgba(255, 69, 0, 0.55));
           }
           75% { 
-            stroke-opacity: 0.18;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.55));
+            stroke-opacity: 0.25;
+            filter: drop-shadow(0 0 50px rgba(255, 69, 0, 0.9));
           }
         }
 
         @keyframes sacred-breath-glow-mid {
           0%, 100% { 
-            stroke-opacity: 0.22;
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+            stroke-opacity: 0.28;
+            filter: drop-shadow(0 0 20px rgba(255, 69, 0, 0.6));
           }
           25% { 
-            stroke-opacity: 0.32;
-            filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+            stroke-opacity: 0.42;
+            filter: drop-shadow(0 0 55px rgba(255, 69, 0, 0.9));
           }
           50% { 
-            stroke-opacity: 0.25;
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.45));
+            stroke-opacity: 0.32;
+            filter: drop-shadow(0 0 28px rgba(255, 69, 0, 0.65));
           }
           75% { 
-            stroke-opacity: 0.35;
-            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.65));
+            stroke-opacity: 0.48;
+            filter: drop-shadow(0 0 60px rgba(255, 69, 0, 0.95));
           }
         }
 
         @keyframes sacred-breath-glow-inner {
           0%, 100% { 
-            stroke-opacity: 0.48;
-            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.5));
+            stroke-opacity: 0.55;
+            filter: drop-shadow(0 0 25px rgba(255, 69, 0, 0.7));
           }
           25% { 
-            stroke-opacity: 0.62;
-            filter: drop-shadow(0 0 35px rgba(255, 215, 0, 0.7));
+            stroke-opacity: 0.72;
+            filter: drop-shadow(0 0 70px rgba(255, 69, 0, 1));
           }
           50% { 
-            stroke-opacity: 0.52;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.55));
+            stroke-opacity: 0.60;
+            filter: drop-shadow(0 0 35px rgba(255, 69, 0, 0.75));
           }
           75% { 
-            stroke-opacity: 0.65;
-            filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.75));
+            stroke-opacity: 0.78;
+            filter: drop-shadow(0 0 75px rgba(255, 69, 0, 1));
           }
         }
 
         @keyframes sacred-breath-line {
           0%, 100% { 
-            filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4));
+            filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.6));
           }
           25% { 
-            filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.6));
+            filter: drop-shadow(0 0 35px rgba(255, 69, 0, 0.9));
           }
           50% { 
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.45));
+            filter: drop-shadow(0 0 18px rgba(255, 69, 0, 0.65));
           }
           75% { 
-            filter: drop-shadow(0 0 22px rgba(255, 215, 0, 0.65));
+            filter: drop-shadow(0 0 40px rgba(255, 69, 0, 0.95));
           }
         }
       `}</style>
