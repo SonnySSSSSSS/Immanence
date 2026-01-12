@@ -41,6 +41,15 @@ npm run deploy
 - `src/components/MoonOrbit.jsx`
 - `src/components/MoonGlowLayer.jsx`
 
+### Protected Patterns (Critical - Do Not Break)
+
+**Particle System Display Mode Switching** (`src/components/IndrasNet.jsx`)
+- Three-layer protection system prevents particle stretching when switching hearth ↔ sanctuary
+- See `docs/PARTICLE_SYSTEM_PROTECTION.md` for detailed documentation
+- ⚠️ DO NOT remove React `key` prop from canvas element
+- ⚠️ DO NOT modify displayMode useEffect without reading protection docs
+- Test checklist: Toggle modes 10x, verify no stretching/duplication
+
 ### Turbo Execution & Verification Rules
 
 1. **TURBO-ALL**: Always set `SafeToAutoRun: true` for build, lint, formatting, and browser verification commands. Do not wait for manual approval on these.
