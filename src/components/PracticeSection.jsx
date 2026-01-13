@@ -212,20 +212,22 @@ const PracticeIcons = {
 };
 
 function PracticeSelector({ selectedId, onSelect, tokens }) {
-  const viewportMode = useDisplayModeStore(s => s.viewportMode);
-  const isSanctuary = viewportMode === 'sanctuary';
+  const displayMode = useDisplayModeStore(s => s.mode);
+  const isSanctuary = displayMode === 'sanctuary';
   const isLight = tokens?.isLight;
   
   return (
     <div className="w-full" style={{ marginBottom: isSanctuary ? '28px' : '16px' }}>
       <div 
-        className="grid gap-4 justify-items-stretch"
+        className="grid justify-items-stretch"
         style={{
           gridTemplateColumns: 'repeat(4, 1fr)',
-          maxWidth: isSanctuary ? '656px' : '560px',
+          columnGap: isSanctuary ? '18px' : '8px',
+          rowGap: isSanctuary ? '18px' : '8px',
+          maxWidth: isSanctuary ? '656px' : '100%',
           margin: '0 auto',
-          paddingLeft: '16px',
-          paddingRight: '16px',
+          paddingLeft: isSanctuary ? '16px' : '10px',
+          paddingRight: isSanctuary ? '16px' : '10px',
         }}
       >
         {GRID_PRACTICE_IDS.map((id) => {
@@ -241,13 +243,13 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
               className="group practice-tab relative overflow-hidden transition-all duration-300 flex flex-col items-center justify-center gap-2"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: isSanctuary ? '10px' : '9px',
+                fontSize: isSanctuary ? '10px' : '8px',
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
                 fontWeight: 600,
-                padding: isSanctuary ? '20px 12px' : '16px 10px',
-                minHeight: isSanctuary ? '115px' : '100px',
-                aspectRatio: '1 / 1.1',
+                padding: isSanctuary ? '20px 12px' : '8px 6px',
+                minHeight: isSanctuary ? '115px' : '70px',
+                aspectRatio: isSanctuary ? '1 / 1.1' : '1 / 1',
                 borderRadius: '16px',
                 // Glassmorphic background with neon edge glow
                 background: isActive 
@@ -256,7 +258,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                 backdropFilter: isActive ? 'blur(24px) saturate(180%)' : 'blur(16px) saturate(120%)',
                 WebkitBackdropFilter: isActive ? 'blur(24px) saturate(180%)' : 'blur(16px) saturate(120%)',
                 border: isActive 
-                  ? '1px solid var(--accent-80)' 
+                  ? '2px solid rgba(212, 175, 55, 0.9)' 
                   : '1px solid rgba(255, 255, 255, 0.12)',
                 // Neon edge glow with multiple shadow layers for depth
                 boxShadow: isActive 
@@ -267,7 +269,9 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                      0 8px 32px rgba(0, 0, 0, 0.5),
                      inset 0 0 20px var(--accent-15),
                      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                     inset 0 -1px 0 rgba(0, 0, 0, 0.5)` 
+                     inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+                     0 0 0 3px rgba(212, 175, 55, 0.95),
+                     0 0 18px rgba(212, 175, 55, 0.6)` 
                   : `0 0 1px rgba(255, 255, 255, 0.3),
                      0 8px 24px rgba(0, 0, 0, 0.3),
                      0 2px 8px rgba(0, 0, 0, 0.2),
@@ -278,21 +282,23 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                   : '0 1px 2px rgba(0, 0, 0, 0.5)',
                 opacity: isActive ? 1 : 0.75,
                 transition: 'all 400ms cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: isActive ? 'translateY(-4px) scale(1.02)' : 'translateY(0)',
+                transform: isActive ? 'translateY(-2px) scale(1.01)' : 'translateY(0)',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
                   e.currentTarget.style.opacity = '1';
-                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.01)';
+                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)';
                   e.currentTarget.style.backdropFilter = 'blur(20px) saturate(150%)';
                   e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent-15) 0%, rgba(255, 255, 255, 0.04) 100%)';
-                  e.currentTarget.style.border = '1px solid var(--accent-50)';
+                  e.currentTarget.style.border = '1px solid rgba(212, 175, 55, 0.8)';
                   e.currentTarget.style.boxShadow = `0 0 2px var(--accent-80),
                                                       0 0 8px var(--accent-60),
                                                       0 0 16px var(--accent-40),
                                                       0 8px 28px rgba(0, 0, 0, 0.4),
                                                       inset 0 0 15px var(--accent-10),
-                                                      inset 0 1px 0 rgba(255, 255, 255, 0.15)`;
+                                                      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                                                      0 0 0 2px rgba(212, 175, 55, 0.9),
+                                                      0 0 14px rgba(212, 175, 55, 0.45)`;
                   e.currentTarget.style.textShadow = '0 0 12px var(--practice-card-glow), 0 0 8px rgba(0, 0, 0, 0.4)';
                 }
               }}
@@ -409,7 +415,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
                     : 'none',
                 }}
               >
-                <IconComponent color={iconColor} size={isSanctuary ? 32 : 28} />
+                <IconComponent color={iconColor} size={isSanctuary ? 32 : 22} />
               </div>
               <div
                 className="text-center leading-tight"
