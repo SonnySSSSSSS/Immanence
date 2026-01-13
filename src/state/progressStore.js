@@ -8,6 +8,7 @@ import { getDateKey, getWeekStart } from '../utils/dateUtils';
 import { usePathStore } from './pathStore';
 import { useLunarStore } from './lunarStore';
 import { triggerWeeklyAggregation } from './attentionStore';
+import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking';
 
 // Helper: get days between two date keys
 function daysBetween(dateKey1, dateKey2) {
@@ -69,6 +70,33 @@ export const useProgressStore = create(
 
             // === Export Version ===
             exportVersion: 1,
+
+            // === Long-Term Tracking (Precomputed Aggregates) ===
+            annualRollups: [],
+            /* Structure:
+            [{
+              year: 2024,
+              totalSessions: 120,
+              totalMinutes: 3600,
+              practiceDay: 95,
+              longestStreak: 28,
+              domainBreakdown: { breathwork: 60, visualization: 40, wisdom: 20 },
+              monthlyBreakdown: [{ month: 1, sessions: 10, minutes: 300 }, ...],
+              avgSessionDuration: 30,
+              consistencyRate: 0.26 // days practiced / 365
+            }]
+            */
+
+            lifetimeMilestones: {
+                totalSessions: 0,
+                totalMinutes: 0,
+                practiceDays: 0,
+                longestStreak: 0,
+                memberSince: null, // first session date
+                yearsActive: 0,
+                favoriteDomain: null,
+                totalRituals: 0
+            },
 
             // === Cycle & Consistency System ===
             // Benchmark tracking (self-reported metrics)
@@ -795,6 +823,23 @@ export const useProgressStore = create(
                     },
                     lulls,
                 };
+            },
+
+            /**
+             * Recompute all annual rollups and lifetime milestones
+             * Called after session recording or on first load (migration)
+             */
+            updateLifetimeTracking: () => {
+                const state = get();
+                const sessions = state.sessions || [];
+                
+                // Recompute annual rollups
+                const annualRollups = updateAnnualRollups(sessions);
+                
+                // Recompute lifetime milestones
+                const lifetimeMilestones = updateLifetimeMilestones(annualRollups, sessions);
+                
+                set({ annualRollups, lifetimeMilestones });
             }
         }),
         {

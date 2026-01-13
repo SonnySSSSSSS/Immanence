@@ -559,6 +559,8 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   // Light mode check
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+  const viewportMode = useDisplayModeStore(s => s.viewportMode);
+  const isHearth = viewportMode === 'hearth';
   const isLightRef = useRef(isLight);
 
   // Interaction State
@@ -858,7 +860,9 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
   return (
     <canvas
       ref={canvasRef}
-      className="absolute w-[300%] h-[300%] -left-[100%] -top-[100%] pointer-events-none"
+      className={isHearth
+        ? 'absolute inset-0 w-full h-full pointer-events-none'
+        : 'absolute w-[300%] h-[300%] -left-[100%] -top-[100%] pointer-events-none'}
       style={{ zIndex: 1 }}
     />
   );

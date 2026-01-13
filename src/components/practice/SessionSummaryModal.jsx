@@ -408,41 +408,6 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
             </div>
           )}
 
-          {/* What's Next Section */}
-          {!summary.nextLeg && !allLegsComplete && onStartNext && (
-            <div style={{ marginBottom: '16px' }}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-muted)',
-                  marginBottom: '10px',
-                }}
-              >
-                What's Next?
-              </div>
-              <div className="flex flex-wrap justify-center gap-2">
-                {suggestions.map((practice) => (
-                  <button
-                    key={practice}
-                    onClick={() => onStartNext(practice)}
-                    className="px-4 py-2 rounded-full text-[10px] font-semibold transition-all hover:scale-105"
-                    style={{
-                      background: isLight ? 'rgba(60,50,35,0.08)' : 'rgba(255,255,255,0.08)',
-                      color: isLight ? 'var(--light-text-primary)' : 'var(--text-primary)',
-                      border: isLight ? '1px solid rgba(60,50,35,0.15)' : '1px solid var(--accent-20)',
-                    }}
-                  >
-                    {practice}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Done Button */}
           <button
             onClick={onContinue}
@@ -453,7 +418,7 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
               boxShadow: summary.nextLeg || !onStartNext ? '0 8px 20px var(--accent-30)' : 'none',
             }}
           >
-            {allLegsComplete ? 'See You Tomorrow ✦' : (summary.nextLeg ? 'Continue' : (onStartNext ? 'Done for Now' : 'Continue'))}
+            {allLegsComplete ? 'See You Tomorrow ✦' : (summary.nextLeg ? 'Continue' : 'Completed')}
           </button>
         </div>
       </div>

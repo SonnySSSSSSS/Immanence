@@ -232,7 +232,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         <div
             className="w-full relative transition-all duration-700 ease-in-out"
             style={{
-                maxWidth: isSanctuary ? '100%' : '430px',
+                maxWidth: isSanctuary ? '656px' : '430px',
                 margin: '0 auto',
             }}
         >

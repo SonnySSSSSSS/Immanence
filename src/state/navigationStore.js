@@ -89,6 +89,20 @@ export const useNavigationStore = create(
             scheduleSlots: [], // [{ slotId: 1, time: "HH:mm" }, ...]
             scheduleAdherenceLog: [],
 
+            // Long-term tracking (annual adherence stats)
+            annualAdherenceStats: [],
+            /* Structure:
+            [{
+              year: 2024,
+              totalScheduledSessions: 156,
+              adherentSessions: 120,
+              adherenceRate: 0.77,
+              avgDeviationMinutes: 12,
+              bestMonth: 5,
+              worstMonth: 2
+            }]
+            */
+
             // ========================================
             // SECTION UNLOCKING (for quiz-gated content)
             // ========================================

@@ -59,6 +59,9 @@ export function recordPracticeSession(payload = {}, options = {}) {
             instrumentation: instrumentationData,
         });
 
+        // Update lifetime tracking after session recording
+        useProgressStore.getState().updateLifetimeTracking();
+
         if (syncMandala) {
             syncFromProgressStore();
         }

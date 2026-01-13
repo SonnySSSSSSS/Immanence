@@ -6,3 +6,41 @@ body {
   @apply bg-gradient-to-b from-bgStart to-bgEnd text-white;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Hearth-only: avoid intermittent right-edge scrollbar flashes */
+html.hearth-viewport {
+  scrollbar-gutter: stable;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html.hearth-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+html.hearth-viewport body {
+  scrollbar-gutter: stable;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html.hearth-viewport body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+html.hearth-viewport,
+html.hearth-viewport body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  min-height: 100%;
+}
+

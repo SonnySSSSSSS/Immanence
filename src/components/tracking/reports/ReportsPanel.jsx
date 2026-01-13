@@ -15,6 +15,8 @@ import { WisdomReadingReport } from './WisdomReadingReport.jsx';
 import { WisdomVideoReport } from './WisdomVideoReport.jsx';
 import { ApplicationAwarenessReport } from './ApplicationAwarenessReport.jsx';
 import { PortfolioSummaryReport } from './PortfolioSummaryReport.jsx';
+import { RitualInsightsReport } from './RitualInsightsReport.jsx';
+import { LifetimeInsightsReport } from './LifetimeInsightsReport.jsx';
 import {
     bucketByTime,
     buildRange,
@@ -35,7 +37,9 @@ const DOMAIN_OPTIONS = [
     { key: 'navigation', label: 'Navigation' },
     { key: 'wisdom', label: 'Wisdom' },
     { key: 'application', label: 'Application' },
-    { key: 'portfolio', label: 'Portfolio' }
+    { key: 'ritual', label: 'Rituals' },
+    { key: 'portfolio', label: 'Portfolio' },
+    { key: 'lifetime', label: 'Lifetime' }
 ];
 
 const filterByRange = (events, start, end, getTimestamp) => {
@@ -58,6 +62,8 @@ const buildDeltaLine = (label, currentValue, previousValue, unit = '') => {
 export function ReportsPanel({ initialReportDomain = 'practice' }) {
     const sessions = useProgressStore(s => s.sessions);
     const streakLongest = useProgressStore(s => s.streak?.longest || 0);
+    const annualRollups = useProgressStore(s => s.annualRollups || []);
+    const lifetimeMilestones = useProgressStore(s => s.lifetimeMilestones || {});
     const readingSessions = useWisdomStore(s => s.readingSessions || []);
     const quizAttempts = useWisdomStore(s => s.quizAttempts || []);
     const videoById = useVideoStore(s => s.byId || {});
@@ -132,6 +138,16 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
     const adherenceInRange = useMemo(
         () => filterByRange(adherenceLog, range.start, range.end, e => `${e.day}T00:00:00`),
         [adherenceLog, range]
+    );
+
+    // Filter ritual sessions from sessions (domain filter)
+    const ritualSessions = useMemo(
+        () => sessions.filter(s => s.domain === 'ritual'),
+        [sessions]
+    );
+    const ritualInRange = useMemo(
+        () => filterByRange(ritualSessions, range.start, range.end, s => s.date || s.timestamp),
+        [ritualSessions, range]
     );
 
     const unifiedEventsInRange = useMemo(() => ([
@@ -453,6 +469,29 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
             )
         },
         {
+            key: 'ritual-insights',
+            domain: 'ritual',
+            node: (
+                <RitualInsightsReport
+                    sessions={ritualInRange}
+                    rangeStart={range.start}
+                    rangeEnd={range.end}
+                    deltaLine={compareOn ? buildDeltaLine('Rituals', ritualInRange.length, 0) : null}
+                />
+            )
+        },
+        {
+            key: 'lifetime-insights',
+            domain: 'lifetime',
+            node: (
+                <LifetimeInsightsReport
+                    lifetimeMilestones={lifetimeMilestones}
+                    annualRollups={annualRollups}
+                    sessions={sessions}
+                />
+            )
+        },
+        {
             key: 'portfolio-summary',
             domain: 'portfolio',
             node: (
@@ -474,8 +513,12 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
         wisdomCompare,
         applicationData,
         applicationCompare,
+        ritualInRange,
+        range,
         portfolioData,
         portfolioCompare,
+        lifetimeMilestones,
+        annualRollups,
         compareOn,
         rangeKey,
         bucketKind,

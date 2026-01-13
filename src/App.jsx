@@ -129,6 +129,17 @@ function App() {
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const isLight = colorScheme === 'light';
 
+  const outerBackground = isLight
+    ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
+    : '#000';
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!root) return;
+    root.classList.toggle('hearth-viewport', displayMode === 'hearth');
+    return () => root.classList.remove('hearth-viewport');
+  }, [displayMode]);
+
   // Curriculum state
   const { 
     isCurriculumComplete,
@@ -286,9 +297,7 @@ function App() {
       <div
         className="min-h-screen w-full flex justify-center overflow-visible transition-colors duration-500 relative"
         style={{
-          background: isLight
-            ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
-            : '#000',
+          background: outerBackground,
         }}
       >
         {/* Side mask - left side (dynamic based on display mode) */}
@@ -298,7 +307,7 @@ function App() {
             width: displayMode === 'sanctuary'
               ? 'calc((100vw - min(100vw, 820px)) / 2)'
               : 'calc((100vw - min(100vw, 430px)) / 2)',
-            background: 'transparent',
+            background: outerBackground,
           }}
         />
 
@@ -309,7 +318,7 @@ function App() {
             width: displayMode === 'sanctuary'
               ? 'calc((100vw - min(100vw, 820px)) / 2)'
               : 'calc((100vw - min(100vw, 430px)) / 2)',
-            background: 'transparent',
+            background: outerBackground,
           }}
         />
 
@@ -328,16 +337,22 @@ function App() {
             width: '100%',
             maxWidth: '820px',
             boxShadow: 'none',
+            overflowX: 'hidden',
+            overflowY: 'visible',
           } : {
             // Hearth: Phone width (430px)
             width: '100%',
             maxWidth: '430px',
             boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
+            height: '100dvh',
+            overflow: 'hidden',
           }}
         >
           <Background stage={previewStage} />
 
-          <div className="relative z-10 w-full flex-1 flex flex-col overflow-visible">
+          <div className={displayMode === 'hearth'
+            ? 'relative z-10 w-full h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide'
+            : 'relative z-10 w-full flex-1 flex flex-col overflow-visible'}>
             {/* Fixed Dark Header Bar */}
             <header
               className="sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500"
@@ -381,7 +396,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      v3.23.28
+                        v3.23.45
                     </div>
                   </div>
 

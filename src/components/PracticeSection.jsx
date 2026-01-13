@@ -210,8 +210,8 @@ const PracticeIcons = {
 };
 
 function PracticeSelector({ selectedId, onSelect, tokens }) {
-  const displayMode = useDisplayModeStore(s => s.mode);
-  const isSanctuary = displayMode === 'sanctuary';
+  const viewportMode = useDisplayModeStore(s => s.viewportMode);
+  const isSanctuary = viewportMode === 'sanctuary';
   const isLight = tokens?.isLight;
   
   return (
@@ -220,10 +220,10 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
         className="grid gap-4 justify-items-stretch"
         style={{
           gridTemplateColumns: 'repeat(4, 1fr)',
-          maxWidth: PRACTICE_UI_WIDTH.maxWidth,
+          maxWidth: isSanctuary ? '656px' : '560px',
           margin: '0 auto',
-          paddingLeft: PRACTICE_UI_WIDTH.padding,
-          paddingRight: PRACTICE_UI_WIDTH.padding,
+          paddingLeft: '16px',
+          paddingRight: '16px',
         }}
       >
         {GRID_PRACTICE_IDS.map((id) => {
@@ -432,8 +432,8 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   const cardRef = useRef(null);
   const p = PRACTICE_REGISTRY[practiceId];
   const isCollapsed = !practiceId;
-  const displayMode = useDisplayModeStore(s => s.mode);
-  const isSanctuary = displayMode === 'sanctuary';
+  const viewportMode = useDisplayModeStore(s => s.viewportMode);
+  const isSanctuary = viewportMode === 'sanctuary';
   const maxHeightValue = isSanctuary ? '75vh' : '65vh';
 
   // Intentional Reveal Logic: Scroll into view when expanded
@@ -452,10 +452,10 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
       ref={cardRef}
       className={`relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
       style={{
-        maxWidth: PRACTICE_UI_WIDTH.maxWidth,
+        maxWidth: isSanctuary ? '656px' : '560px',
         margin: '0 auto',
-        paddingLeft: PRACTICE_UI_WIDTH.padding,
-        paddingRight: PRACTICE_UI_WIDTH.padding,
+        paddingLeft: '16px',
+        paddingRight: '16px',
         maxHeight: isCollapsed ? '88px' : maxHeightValue,
         overflow: isCollapsed ? 'hidden' : 'auto',
         zIndex: 1,
@@ -1483,7 +1483,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (shouldJournal) {
       setSessionSummary({
         practice,
-        duration,
+        duration: Math.round((actualDurationSeconds / 60) * 10) / 10,
         tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
         breathCount,
         exitType,
@@ -2189,6 +2189,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     isEmbedded: true
   };
 
+  const viewportMode = useDisplayModeStore(s => s.viewportMode);
+  const isSanctuary = viewportMode === 'sanctuary';
+
   return (
     <section 
       className="practice-section-container w-full h-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar"
@@ -2211,7 +2214,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }}
       />
       {/* Circuit Button - Full Width */}
-      <div style={{ width: '100%', maxWidth: PRACTICE_UI_WIDTH.maxWidth, margin: '0 auto', paddingLeft: PRACTICE_UI_WIDTH.padding, paddingRight: PRACTICE_UI_WIDTH.padding, marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+      <div style={{ width: '100%', maxWidth: isSanctuary ? '656px' : '560px', margin: '0 auto', paddingLeft: '16px', paddingRight: '16px', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
         <button
           onClick={() => handleSelectPractice('circuit')}
           className="group relative overflow-hidden transition-all duration-300 w-full flex flex-col items-center justify-center gap-3"

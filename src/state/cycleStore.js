@@ -98,6 +98,20 @@ export const useCycleStore = create(
             // Total completed cycles (for avatar progression)
             totalCyclesCompleted: 0,
 
+            // Long-term tracking (annual cycle stats)
+            annualCycleStats: [],
+            /* Structure:
+            [{
+              year: 2024,
+              cyclesStarted: 3,
+              cyclesCompleted: 2,
+              cyclesFailed: 1,
+              consecutiveModeCount: 1,
+              flexibleModeCount: 2,
+              avgConsistencyRate: 0.78
+            }]
+            */
+
             // ════════════════════════════════════════════════════════════════
             // ACTIONS
             // ════════════════════════════════════════════════════════════════
