@@ -36,6 +36,8 @@ import { BreathPhaseIndicator } from "./BreathPhaseIndicator.jsx";
 import { BreathPathChart } from "./BreathPathChart.jsx";
 import { BreathWaveVisualization } from "./BreathWaveVisualization.jsx";
 import BreathWaveform from "./BreathWaveform.jsx";
+import { TrajectoryCard } from "./TrajectoryCard.jsx";
+import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -428,13 +430,19 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
   );
 }
 
-function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {
+function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory }) {
   const cardRef = useRef(null);
   const p = PRACTICE_REGISTRY[practiceId];
   const isCollapsed = !practiceId;
   const viewportMode = useDisplayModeStore(s => s.viewportMode);
   const isSanctuary = viewportMode === 'sanctuary';
   const maxHeightValue = isSanctuary ? '75vh' : '65vh';
+
+  const [showTrajectory, setShowTrajectory] = useState(false);
+
+  useEffect(() => {
+    setShowTrajectory(false);
+  }, [practiceId]);
 
   // Intentional Reveal Logic: Scroll into view when expanded
   useEffect(() => {
@@ -734,7 +742,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
           {/* Start Button - Sacred Portal with Ember Theme */}
           {!(practiceId === 'ritual') && (
-            <div className="flex justify-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
+            <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
               <button
                 onClick={onStart}
                 className="group transition-all duration-300 relative overflow-hidden begin-button"
@@ -815,6 +823,35 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
                   transform: scale(1.1) !important;
                 }
               `}</style>
+
+              {practiceId === 'breath' && (
+                <div className="w-full" style={{ maxWidth: '430px', marginTop: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowTrajectory(v => !v)}
+                    className="w-full text-[9px] font-black uppercase tracking-[0.35em] transition-opacity"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      color: 'rgba(253, 251, 245, 0.85)',
+                      opacity: showTrajectory ? 0.95 : 0.55,
+                      padding: '10px 12px',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      background: 'rgba(10, 12, 18, 0.35)',
+                      backdropFilter: 'blur(18px)',
+                      WebkitBackdropFilter: 'blur(18px)',
+                    }}
+                  >
+                    {showTrajectory ? 'Hide Trajectory' : 'Show Trajectory'}
+                  </button>
+
+                  {showTrajectory && (
+                    <div style={{ marginTop: '12px' }}>
+                      <TrajectoryCard onTap={() => onOpenTrajectory?.()} />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1007,6 +1044,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
+
+  const openTrajectoryReport = useCallback(() => {
+    const detail = { tab: ARCHIVE_TABS.REPORTS, reportDomain: REPORT_DOMAINS.PRACTICE };
+    try {
+      window.__immanence_pending_archive = detail;
+    } catch {
+      // ignore
+    }
+    onNavigate?.(null);
+    // HomeHub mounts after navigation; dispatch shortly after for best reliability.
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('immanence-open-archive', { detail }));
+    }, 50);
+  }, [onNavigate]);
   
   // Backward compatibility during refactor
   const selectedPractice = PRACTICE_REGISTRY[practiceId] || PRACTICE_REGISTRY.breath;
@@ -2270,6 +2321,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setters={configProps}
         hasExpandedOnce={hasExpandedOnce}
         setHasExpandedOnce={setHasExpandedOnce}
+        onOpenTrajectory={openTrajectoryReport}
       />
 
       <style>{`

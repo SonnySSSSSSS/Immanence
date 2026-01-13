@@ -11,8 +11,6 @@ import { StageTitle } from "./StageTitle.jsx";
 import { STAGE_COLORS } from "../constants/stageColors.js";
 import { HubCardSwiper } from "./HubCardSwiper.jsx";
 import { CompactStatsCard } from "./CompactStatsCard.jsx";
-import { ApplicationTrackingCard } from "./ApplicationTrackingCard.jsx";
-import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
@@ -198,6 +196,28 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     setShowHistory(true);
   };
 
+  // Allow other sections to request opening the Hub archive modal.
+  useEffect(() => {
+    const pending = window.__immanence_pending_archive;
+    if (pending?.tab) {
+      openArchive(pending.tab, pending.reportDomain ?? null);
+      try {
+        delete window.__immanence_pending_archive;
+      } catch {
+        // ignore
+      }
+    }
+
+    const handler = (e) => {
+      const detail = e?.detail || {};
+      if (!detail?.tab) return;
+      openArchive(detail.tab, detail.reportDomain ?? null);
+    };
+
+    window.addEventListener('immanence-open-archive', handler);
+    return () => window.removeEventListener('immanence-open-archive', handler);
+  }, []);
+
   const activeLauncher = launcherContext
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
@@ -333,14 +353,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               onOpenArchive={() => openArchive(ARCHIVE_TABS.ALL)}
               onOpenReports={(domain) => openArchive(ARCHIVE_TABS.REPORTS, domain)}
             />,
-            <TrajectoryCard
-              key="trajectory"
-              onTap={() => openArchive(ARCHIVE_TABS.REPORTS, REPORT_DOMAINS.PRACTICE)}
-            />,
-            <ApplicationTrackingCard
-              key="application"
-              onOpenArchive={() => openArchive(ARCHIVE_TABS.APPLICATION)}
-            />
           ]} />
         </div>
 

@@ -6,11 +6,25 @@ import { StageTitle } from './StageTitle.jsx';
 import { SigilSealingArea } from './SigilSealingArea.jsx';
 import { FourModesHome } from './FourModesHome.jsx';
 import { ModeDetail } from './ModeDetail.jsx';
+import { ApplicationTrackingCard } from './ApplicationTrackingCard.jsx';
 
 export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, onNavigate }) {
   const { activePath } = useNavigationStore();
   const [selectedModeId, setSelectedModeId] = useState(null);
   const [showFourModes, setShowFourModes] = useState(false);
+
+  const handleOpenArchive = (tab) => {
+    const detail = { tab, reportDomain: null };
+    try {
+      window.__immanence_pending_archive = detail;
+    } catch {
+      // ignore
+    }
+    onNavigate?.(null);
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('immanence-open-archive', { detail }));
+    }, 50);
+  };
 
   // No active path - show empty state
   if (!activePath) {
@@ -119,6 +133,13 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
       {/* Permanent Sigil Sealing Area */}
       {!showFourModes && !selectedModeId && (
         <SigilSealingArea />
+      )}
+
+      {/* Awareness Tracking (moved from Home Hub) */}
+      {!showFourModes && !selectedModeId && (
+        <div className="w-full flex justify-center">
+          <ApplicationTrackingCard onOpenArchive={handleOpenArchive} />
+        </div>
       )}
 
       {/* Content based on active view */}
