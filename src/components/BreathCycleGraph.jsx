@@ -2,7 +2,8 @@
 // 4-phase trapezoidal breath visualization with animated dot tracer
 // Shows: Inhale (rising) → Hold 1 (plateau) → Exhale (falling) → Hold 2 (plateau)
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { calculateRhythmFrequency, rhythmOscillation } from '../utils/rhythmUtils.js';
 
 export function BreathCycleGraph({
   inhale = 4,
@@ -16,12 +17,52 @@ export function BreathCycleGraph({
   // Calculate the total cycle time in seconds
   const totalCycleTime = inhale + hold1 + exhale + hold2;
   
+  // Rhythm pulsing for dot glow
+  const animationTimeRef = useRef(0);
+  const rhythmFreqRef = useRef(calculateRhythmFrequency(totalCycleTime));
+  const [dotGlowIntensity, setDotGlowIntensity] = useState(1.0);
+  
+  // Update rhythm frequency when cycle time changes
+  useEffect(() => {
+    rhythmFreqRef.current = calculateRhythmFrequency(totalCycleTime);
+  }, [totalCycleTime]);
+  
+  // Animate rhythm pulsing for the dot
+  useEffect(() => {
+    let frameId = null;
+    
+    if (showDot && isAnimating) {
+      const startTime = performance.now();
+      
+      const animate = (now) => {
+        const elapsed = (now - startTime) / 1000;
+        animationTimeRef.current = elapsed;
+        
+        // Calculate rhythm oscillation for dot glow: 1 ± 0.15 (±15%)
+        const rhythmOsc = rhythmOscillation(elapsed, rhythmFreqRef.current, 1.0);
+        const glowIntensity = 1.0 + rhythmOsc * 0.15; // Subtle ±15% pulsing
+        setDotGlowIntensity(glowIntensity);
+        
+        frameId = requestAnimationFrame(animate);
+      };
+      
+      frameId = requestAnimationFrame(animate);
+    } else {
+      // Reset to default when not animating
+      setDotGlowIntensity(1.0);
+    }
+    
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [showDot, isAnimating]);
+  
   // Generate the SVG path for the 4-phase breath graph
   const breathPath = useMemo(() => {
     const totalWidth = 300;
-    const height = 80;
-    const top = 10;
-    const bottom = height - 10;
+    const height = 120;
+    const top = 15;
+    const bottom = height - 15;
 
     // Calculate segment widths proportionally for a single cycle
     // Note: totalCycleTime is the reference for the whole 300px width
@@ -65,11 +106,11 @@ export function BreathCycleGraph({
       }}
     >
       <svg
-        viewBox="0 0 300 80"
+        viewBox="0 0 300 120"
         preserveAspectRatio="none"
         style={{
           width: '100%',
-          height: '80px',
+          height: '120px',
           overflow: 'visible',
         }}
       >
@@ -101,13 +142,14 @@ export function BreathCycleGraph({
           opacity="0.85"
         />
 
-        {/* Animated dot tracer */}
+        {/* Animated dot tracer with rhythm pulsing */}
         {showDot && (
           <circle
-            r="5"
+            r={5 * dotGlowIntensity}
             fill="var(--accent-primary)"
             filter="url(#breath-glow)"
-            opacity={isAnimating ? 0.9 : 0.6}
+            opacity={isAnimating ? 0.9 * dotGlowIntensity : 0.6}
+            style={{ transition: 'none' }} // Disable transition for smooth rhythm
           >
             <animateMotion
               dur={animationDuration}

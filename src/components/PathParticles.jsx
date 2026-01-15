@@ -4,6 +4,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { getPathFX, getDefaultFX } from '../data/pathFX.js';
 import { clampPreset, MAX_PARTICLE_COUNT, MAX_TRAIL_LENGTH } from '../data/ringFXPresets.js';
+import { calculateRhythmFrequency, rhythmOscillation } from '../utils/rhythmUtils.js';
 
 export function PathParticles({
     pathId,
@@ -24,6 +25,10 @@ export function PathParticles({
     const prevPresetIdRef = useRef(null);
     const cycleDirectionRef = useRef(1);
     const prevPhaseRef = useRef('rest');
+    
+    // Rhythm pulsing support
+    const animationTimeRef = useRef(0);
+    const rhythmFreqRef = useRef(0.5);
 
     const rawFx = fxPreset ? clampPreset(fxPreset) : (getPathFX(pathId) || getDefaultFX());
     const fx = {
@@ -2090,12 +2095,25 @@ export function PathParticles({
         const animate = (timestamp) => {
             const dt = Math.min(0.05, (timestamp - lastTimeRef.current) / 1000);
             lastTimeRef.current = timestamp;
+            
+            // Track animation time for rhythm calculations
+            animationTimeRef.current += dt;
 
             ctx.clearRect(0, 0, size, size);
 
             const centerX = size / 2;
             const centerY = size / 2;
             const color = accentColor;
+            
+            // Calculate rhythm modulation if preset has pulse amplitude
+            let rhythmModulation = 1.0;
+            if (fx.pulseAmplitude && fx.pulseAmplitude > 0) {
+                // Use preset's frequency if specified, otherwise calculate from a default cycle
+                const freq = fx.pulseFrequency || calculateRhythmFrequency(14); // Default 14s cycle
+                const rhythmOsc = rhythmOscillation(animationTimeRef.current, freq, 1.0);
+                // Apply as modulation: 1 ± (amplitude * oscillation)
+                rhythmModulation = 1 + (rhythmOsc * fx.pulseAmplitude * 0.5); // Scale down for subtlety
+            }
 
             particlesRef.current = particlesRef.current.map(particle => {
                 const updated = applyMotion(particle, dt, centerX, centerY, ringScale);
@@ -2108,7 +2126,7 @@ export function PathParticles({
 
                     const colorVar = updated.colorVar || { brightnessOffset: 0, hueOffset: 0 };
                     updated.trail.forEach((pos, i) => {
-                        const trailOpacity = (i / updated.trail.length) * 0.2 * intensity;
+                        const trailOpacity = (i / updated.trail.length) * 0.2 * intensity * rhythmModulation;
                         ctx.fillStyle = getModifiedColor(parseColor(accentColor), trailOpacity, colorVar.brightnessOffset, colorVar.hueOffset);
                         ctx.beginPath();
                         ctx.arc(pos.x, pos.y, updated.size * 0.2, 0, Math.PI * 2);

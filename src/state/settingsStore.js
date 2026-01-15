@@ -23,6 +23,9 @@ export const useSettingsStore = create(
             reduceMotion: false,
             highContrast: false,
 
+            // Breath sound settings
+            breathSoundEnabled: true, // Enable/disable breath audio feedback
+
             // Developer settings
             devPanelOpen: false,
             showFxGallery: false,
@@ -79,6 +82,8 @@ export const useSettingsStore = create(
             setDevPanelOpen: (isOpen) => set({ devPanelOpen: isOpen }),
 
             setShowFxGallery: (show) => set({ showFxGallery: show }),
+
+            setBreathSoundEnabled: (enabled) => set({ breathSoundEnabled: enabled }),
 
             // Photic settings actions
             setPhoticSetting: (key, value) => set((state) => {

@@ -38,6 +38,7 @@ import { BreathWaveVisualization } from "./BreathWaveVisualization.jsx";
 import BreathWaveform from "./BreathWaveform.jsx";
 import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
+import { useBreathBenchmarkStore } from "../state/breathBenchmarkStore.js";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -1002,6 +1003,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const instrumentation = useSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+
+  // Breath benchmark for progressive patterns
+  const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
+  const getPatternForCycle = useBreathBenchmarkStore(s => s.getPatternForCycle);
+  const calculateTotalCycles = useBreathBenchmarkStore(s => s.calculateTotalCycles);
   
   // Theme Tokens for unified styling across components
   const uiTokens = {
@@ -1578,7 +1584,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Load curriculum day settings when active session changes
   useEffect(() => {
-    if (!activePracticeSession) return;
+    if (!activePracticeSession) {
+      return;
+    }
 
     const activeLeg = getActivePracticeLeg();
 
@@ -1606,7 +1614,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [activePracticeSession]);
 
   const executeStart = () => {
-    if (!practiceId) return;
+    if (!practiceId) {
+      return;
+    }
 
     savePreferences({
       practiceId,
@@ -1732,32 +1742,37 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   useEffect(() => {
-    if (!isRunning) return;
-    if (practice === "Ritual") return;
-
     let interval = null;
-    if (timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      if (activeCircuitId && circuitConfig) {
-        advanceCircuitExercise();
-      } else {
-        handleStop();
+
+    if (isRunning && practice !== "Ritual") {
+      if (timeLeft > 0) {
+        interval = setInterval(() => {
+          setTimeLeft((prev) => prev - 1);
+        }, 1000);
+      } else if (timeLeft === 0) {
+        if (activeCircuitId && circuitConfig) {
+          advanceCircuitExercise();
+        } else {
+          handleStop();
+        }
       }
     }
+
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isRunning, timeLeft, practice, activeCircuitId]);
 
   useEffect(() => {
-    if (!onBreathStateChange) return;
+    if (!onBreathStateChange) {
+      return;
+    }
+    
     if (!isRunning || practice !== "Breath & Stillness") {
       onBreathStateChange(null);
       return;
     }
+    
     const total = pattern.inhale + pattern.hold1 + pattern.exhale + pattern.hold2;
     if (!total) {
       onBreathStateChange(null);
@@ -1816,12 +1831,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     L ${width} ${height}
 `;
 
-  const breathingPatternForRing = {
-    inhale: pattern.inhale,
-    holdTop: pattern.hold1,
-    exhale: pattern.exhale,
-    holdBottom: pattern.hold2,
-  };
+  // Calculate progressive pattern based on benchmark if available
+  // Progression: 75% → 85% → 100% by breath count thirds
+  const breathingPatternForRing = useMemo(() => {
+    if (hasBenchmark && isRunning && practice === "Breath & Stillness") {
+      const totalCycles = calculateTotalCycles(duration, pattern);
+      const progressivePattern = getPatternForCycle(breathCount + 1, totalCycles);
+      if (progressivePattern) {
+        return {
+          inhale: progressivePattern.inhale,
+          holdTop: progressivePattern.hold1,
+          exhale: progressivePattern.exhale,
+          holdBottom: progressivePattern.hold2,
+        };
+      }
+    }
+    // Fallback to static pattern
+    return {
+      inhale: pattern.inhale,
+      holdTop: pattern.hold1,
+      exhale: pattern.exhale,
+      holdBottom: pattern.hold2,
+    };
+  }, [hasBenchmark, isRunning, practice, duration, pattern, breathCount, calculateTotalCycles, getPatternForCycle]);
 
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;

@@ -1,7 +1,10 @@
 // src/components/BreathConfig.jsx
 // Configuration panel for Breath & Stillness practice
-// Pattern presets and inhale/hold/exhale sliders
-import React from 'react';
+// Pattern presets, benchmark button, sound toggle, and inhale/hold/exhale sliders
+import React, { useState } from 'react';
+import { BreathBenchmark } from './BreathBenchmark.jsx';
+import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
+import { useSettingsStore } from '../state/settingsStore.js';
 
 // Breathing pattern presets
 export const BREATH_PRESETS = {
@@ -21,6 +24,13 @@ export function BreathConfig({
     setPreset,
     isLight = false,
 }) {
+    const [showBenchmark, setShowBenchmark] = useState(false);
+    const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
+    const needsRebenchmark = useBreathBenchmarkStore(s => s.needsRebenchmark());
+    const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
+    const breathSoundEnabled = useSettingsStore(s => s.breathSoundEnabled);
+    const setBreathSoundEnabled = useSettingsStore(s => s.setBreathSoundEnabled);
+
     const handlePatternChange = (key, value) => {
         setPattern((prev) => ({
             ...prev,
@@ -29,8 +39,64 @@ export function BreathConfig({
         setPreset(null);
     };
 
+    const handleBenchmarkClose = (results) => {
+        setShowBenchmark(false);
+        if (results) {
+            // Set pattern to 75% of benchmark (starting pattern)
+            const startingPattern = getStartingPattern();
+            if (startingPattern) {
+                setPattern(startingPattern);
+                setPreset(null);
+            }
+        }
+    };
+
     return (
         <div className="breath-config">
+            {/* Benchmark Modal */}
+            <BreathBenchmark isOpen={showBenchmark} onClose={handleBenchmarkClose} />
+
+            {/* Benchmark & Sound Buttons */}
+            <div className="flex gap-2 mb-4 justify-center">
+                <button
+                    onClick={() => setShowBenchmark(true)}
+                    className="rounded-full px-3 py-1.5"
+                    style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        letterSpacing: "var(--tracking-mythic)",
+                        textTransform: "uppercase",
+                        background: "transparent",
+                        border: `1px solid ${hasBenchmark ? "var(--accent-color)" : "var(--accent-10)"}`,
+                        color: hasBenchmark ? "var(--accent-color)" : "var(--text-muted)",
+                        boxShadow: needsRebenchmark ? '0 0 12px var(--accent-15)' : "none",
+                        animation: needsRebenchmark ? 'benchmarkRadiate 2s ease-in-out infinite' : 'none',
+                        transition: 'background 400ms ease, border-color 400ms ease, color 400ms ease',
+                    }}
+                >
+                    {hasBenchmark ? '🔄 Re-benchmark' : '📏 Benchmark'}
+                </button>
+                <button
+                    onClick={() => setBreathSoundEnabled(!breathSoundEnabled)}
+                    className="rounded-full px-3 py-1.5"
+                    style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        letterSpacing: "var(--tracking-mythic)",
+                        textTransform: "uppercase",
+                        background: "transparent",
+                        border: `1px solid ${breathSoundEnabled ? "var(--accent-color)" : "var(--accent-10)"}`,
+                        color: breathSoundEnabled ? "var(--accent-color)" : "var(--text-muted)",
+                        boxShadow: breathSoundEnabled ? '0 0 8px var(--accent-15)' : "none",
+                        transition: 'background 400ms ease, border-color 400ms ease, color 400ms ease, box-shadow 400ms ease',
+                    }}
+                >
+                    {breathSoundEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
+                </button>
+            </div>
+
             {/* Pattern Presets - centered, no label */}
             <div className="flex flex-wrap gap-2 mb-4 justify-center">
                 {PRESET_NAMES.map((name) => (
@@ -98,6 +164,18 @@ export function BreathConfig({
                     </div>
                 ))}
             </div>
+
+            {/* CSS Animation for benchmark radiate */}
+            <style>{`
+                @keyframes benchmarkRadiate {
+                    0%, 100% {
+                        box-shadow: 0 0 8px var(--accent-15);
+                    }
+                    50% {
+                        box-shadow: 0 0 20px var(--accent-30), 0 0 30px var(--accent-15);
+                    }
+                }
+            `}</style>
         </div>
     );
 }

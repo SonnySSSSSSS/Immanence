@@ -11,6 +11,8 @@ import { EnsoStroke } from "./EnsoStroke";
 import { useTheme } from "../context/ThemeContext";
 import { PathParticles } from "./PathParticles.jsx";
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { calculateRhythmFrequency, rhythmOscillation, applyRhythmModulation } from '../utils/rhythmUtils.js';
+import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 
 export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5 }) {
   const {
@@ -30,6 +32,10 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const audioContextRef = useRef(null);
   const [mandalaProgress, setMandalaProgress] = useState(0);
   const lastCycleRef = useRef(0);
+  
+  // Rhythm pulsing state
+  const rhythmFreqRef = useRef(calculateRhythmFrequency(total));
+  const animationTimeRef = useRef(0); // Accumulated animation time for rhythm
 
   // Enso feedback state
   const [ensoFeedback, setEnsoFeedback] = useState({
@@ -58,6 +64,17 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     }
   }, [progress, tInhale, tHoldTop, tExhale]);
 
+  // Breath sound engine - continuous audio feedback synced to breath phases
+  const soundPhase = currentPhase === 'hold-top' ? 'holdTop' :
+                     currentPhase === 'hold-bottom' ? 'holdBottom' :
+                     currentPhase;
+  useBreathSoundEngine({
+    phase: soundPhase,
+    pattern: breathPattern,
+    isRunning: !!startTime,
+    _progress: progress,
+  });
+
   // Calculate current scale based on progress through cycle
   let scale = minScale;
   if (progress < tInhale) {
@@ -74,6 +91,16 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     // HOLD BOTTOM: stay at min
     scale = minScale;
   }
+
+  // Add rhythm micro-pulse (±5% amplitude, gated by phase)
+  const rhythmOsc = rhythmOscillation(animationTimeRef.current, rhythmFreqRef.current, 1.0);
+  const currentPhaseString = progress < tInhale ? 'inhale' : 
+                              progress < tHoldTop ? 'hold' : 
+                              progress < tExhale ? 'exhale' : 'rest';
+  scale = applyRhythmModulation(scale, rhythmOsc, currentPhaseString, { 
+    maxAmplitude: 0.05,  // Conservative ±5% on scale
+    holdGateFactor: 0.35 
+  });
 
   // Trigger echo visual effect
   const triggerEcho = () => {
@@ -152,6 +179,10 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       const elapsed = now - referenceTime;
       const t = (elapsed % cycleMs) / cycleMs;
       setProgress(t);
+      
+      // Track animation time for rhythm calculations
+      animationTimeRef.current = elapsed / 1000; // Convert to seconds
+      
       frameId = requestAnimationFrame(loop);
     };
 
@@ -160,6 +191,11 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       if (frameId) cancelAnimationFrame(frameId);
     };
   }, [total, startTime]); // Re-sync when startTime changes
+
+  // Update rhythm frequency when cycle duration changes
+  useEffect(() => {
+    rhythmFreqRef.current = calculateRhythmFrequency(total);
+  }, [total]);
 
   // Remove echo after animation completes
   useEffect(() => {
@@ -224,9 +260,59 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       setTimeout(() => setEnsoFeedback(prev => ({ ...prev, active: false })), 1400);
     }
 
-
     onTap(errorMs);
   };
+
+  // Helper: Calculate glow blur value with rhythm modulation
+  const getGlowBlurWithRhythm = (baseBlur) => {
+    const rhythmOsc = rhythmOscillation(animationTimeRef.current, rhythmFreqRef.current, 1.0);
+    const currentPhaseString = progress < tInhale ? 'inhale' : 
+                                progress < tHoldTop ? 'hold' : 
+                                progress < tExhale ? 'exhale' : 'rest';
+    return applyRhythmModulation(baseBlur, rhythmOsc, currentPhaseString, {
+      maxAmplitude: 0.08,  // ±8% modulation on blur
+      holdGateFactor: 0.35
+    });
+  };
+
+  // Helper: Compute all glow blur layers with rhythm for current phase
+  const computeGlowLayers = () => {
+    let b1 = 8, b2 = 16, b3 = 24, b4 = 32;
+    
+    if (progress < tInhale) {
+      const inhaleRatio = progress / tInhale;
+      b1 = 8 + 1.6 * inhaleRatio;
+      b2 = 16 + 3.2 * inhaleRatio;
+      b3 = 24 + 4.8 * inhaleRatio;
+      b4 = 32 + 6.4 * inhaleRatio;
+    } else if (progress < tHoldTop) {
+      b1 = 9.6;
+      b2 = 19.2;
+      b3 = 28.8;
+      b4 = 38.4;
+    } else if (progress < tExhale) {
+      const exhaleRatio = (progress - tHoldTop) / (tExhale - tHoldTop);
+      b1 = 9.6 - 1.6 * exhaleRatio;
+      b2 = 19.2 - 3.2 * exhaleRatio;
+      b3 = 28.8 - 4.8 * exhaleRatio;
+      b4 = 38.4 - 6.4 * exhaleRatio;
+    } else {
+      b1 = 8;
+      b2 = 16;
+      b3 = 24;
+      b4 = 32;
+    }
+    
+    // Apply rhythm modulation to each layer
+    b1 = getGlowBlurWithRhythm(b1);
+    b2 = getGlowBlurWithRhythm(b2);
+    b3 = getGlowBlurWithRhythm(b3);
+    b4 = getGlowBlurWithRhythm(b4);
+    
+    return { b1, b2, b3, b4 };
+  };
+
+  const glowLayers = computeGlowLayers();
 
   // Read theme for dynamic colors
   const theme = useTheme();
@@ -308,28 +394,13 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           overflow: "visible",
           // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
           // Light mode: subtle dark shadow for definition
-          // Dark mode: full colored glow effect
+          // Dark mode: full colored glow effect with rhythm modulation
           filter: isLight
             ? 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.1))'
-            : progress < tInhale
-              ? `drop-shadow(0 0 ${8 + 1.6 * (progress / tInhale)}px var(--accent-primary)) 
-               drop-shadow(0 0 ${16 + 3.2 * (progress / tInhale)}px var(--accent-secondary)) 
-               drop-shadow(0 0 ${24 + 4.8 * (progress / tInhale)}px var(--accent-muted)) 
-               drop-shadow(0 0 ${32 + 6.4 * (progress / tInhale)}px var(--accent-glow))`
-              : progress < tHoldTop
-                ? `drop-shadow(0 0 9.6px var(--accent-primary)) 
-               drop-shadow(0 0 19.2px var(--accent-secondary)) 
-               drop-shadow(0 0 28.8px var(--accent-muted)) 
-               drop-shadow(0 0 38.4px var(--accent-glow))`
-                : progress < tExhale
-                  ? `drop-shadow(0 0 ${9.6 - 1.6 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-primary)) 
-               drop-shadow(0 0 ${19.2 - 3.2 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-secondary)) 
-               drop-shadow(0 0 ${28.8 - 4.8 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-muted)) 
-               drop-shadow(0 0 ${38.4 - 6.4 * ((progress - tHoldTop) / (tExhale - tHoldTop))}px var(--accent-glow))`
-                  : `drop-shadow(0 0 8px var(--accent-primary)) 
-               drop-shadow(0 0 16px var(--accent-secondary)) 
-               drop-shadow(0 0 24px var(--accent-muted)) 
-               drop-shadow(0 0 32px var(--accent-glow))`
+            : `drop-shadow(0 0 ${glowLayers.b1.toFixed(1)}px var(--accent-primary)) 
+               drop-shadow(0 0 ${glowLayers.b2.toFixed(1)}px var(--accent-secondary)) 
+               drop-shadow(0 0 ${glowLayers.b3.toFixed(1)}px var(--accent-muted)) 
+               drop-shadow(0 0 ${glowLayers.b4.toFixed(1)}px var(--accent-glow))`
         }}
       >
         <circle
