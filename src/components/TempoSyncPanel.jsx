@@ -90,9 +90,11 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   // Auto-initialize when enabled
   useEffect(() => {
     if (enabled && !isInitialized) {
-      handleInitialize();
+      initializeAudioContext();
+      startDetection();
+      setIsInitialized(true);
     }
-  }, [enabled]);
+  }, [enabled, isInitialized, initializeAudioContext, startDetection]);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -106,12 +108,17 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     getAudioElementRef.current = getAudioElement;
   }, [getAudioElement]);
 
+  // Sync duration from store
+  const prevSongDurationRef = useRef(songDurationSec);
   useEffect(() => {
-    if (Number.isFinite(songDurationSec)) {
-      setDuration(songDurationSec);
-    } else if (!hasSong) {
-      setDuration(0);
-      setCurrentTime(0);
+    if (songDurationSec !== prevSongDurationRef.current) {
+      prevSongDurationRef.current = songDurationSec;
+      if (Number.isFinite(songDurationSec)) {
+        setDuration(songDurationSec);
+      } else if (!hasSong) {
+        setDuration(0);
+        setCurrentTime(0);
+      }
     }
   }, [songDurationSec, hasSong]);
 
@@ -273,19 +280,20 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     setTapTimes([]);
   };
 
+  // Monitor confidence and show warning
+  const prevConfidenceRef = useRef(confidence);
+  const prevIsPlayingRef = useRef(isPlaying);
   useEffect(() => {
     const threshold = 0.35;
-    if (!isPlaying) {
-      setShowNoStable(false);
-      if (noStableTimerRef.current) {
-        clearTimeout(noStableTimerRef.current);
-        noStableTimerRef.current = null;
-      }
-      return;
-    }
+    const confChanged = confidence !== prevConfidenceRef.current;
+    const playChanged = isPlaying !== prevIsPlayingRef.current;
+    prevConfidenceRef.current = confidence;
+    prevIsPlayingRef.current = isPlaying;
 
-    if (confidence >= threshold) {
-      setShowNoStable(false);
+    if (!isPlaying || confidence >= threshold) {
+      if (showNoStable && (confChanged || playChanged)) {
+        setShowNoStable(false);
+      }
       if (noStableTimerRef.current) {
         clearTimeout(noStableTimerRef.current);
         noStableTimerRef.current = null;
