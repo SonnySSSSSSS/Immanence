@@ -396,7 +396,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.23.63
+                        v3.23.81
                     </div>
                   </div>
 
@@ -441,7 +441,6 @@ function App() {
                 </div>
               ) : (
                 <SectionView
-                  key={activeSection}
                   section={activeSection}
                   isPracticing={isPracticing}
                   currentPracticeId={activePracticeId}

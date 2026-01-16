@@ -701,17 +701,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
 
-    savePreferences({
-      practice,
-      duration,
-      preset,
-      pattern,
-      sensoryType,
-      vipassanaTheme,
-      vipassanaElement,
-      soundType,
-      geometry,
-    });
+    // savePreferences({
+    //   practice,
+    //   duration,
+    //   preset,
+    //   pattern,
+    //   sensoryType,
+    //   vipassanaTheme,
+    //   vipassanaElement,
+    //   soundType,
+    //   geometry,
+    // });
 
     if (practice === "Circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {

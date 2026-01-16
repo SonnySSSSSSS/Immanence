@@ -96,11 +96,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     console.log('[PracticeSection v3.17.28] handleSelectPractice called with id:', id);
     setPracticeId(id);
     // Save immediately with current state
-    savePreferences({
-      practiceId: id,
-      duration,
-      practiceParams,
-    });
+    // savePreferences({
+    //   practiceId: id,
+    //   duration,
+    //   practiceParams,
+    // });
   }, [duration, practiceParams]);
 
   const updateParams = (pid, updates) => {
@@ -256,11 +256,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Auto-save preferences when they change (but not during active practice)
   useEffect(() => {
     if (!isRunning) {
-      savePreferences({
-        practiceId,
-        duration,
-        practiceParams
-      });
+      // savePreferences({
+      //   practiceId,
+      //   duration,
+      //   practiceParams
+      // });
     }
   }, [practiceId, duration, practiceParams, isRunning]);
 
@@ -631,11 +631,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const executeStart = () => {
     if (!practiceId) return;
 
-    savePreferences({
-      practiceId,
-      duration,
-      practiceParams
-    });
+    // savePreferences({
+    //   practiceId,
+    //   duration,
+    //   practiceParams
+    // });
 
     if (practiceId === "circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {

@@ -633,17 +633,17 @@ if (shouldJournal) {
   // The actual start logic (called after ceremony)
   const executeStart = () => {
     // Save current preferences for next session
-    savePreferences({
-      practice,
-      duration,
-      preset,
-      pattern,
-      sensoryType,
-      vipassanaTheme,
-      vipassanaElement,
-      soundType,
-      geometry,
-    });
+    // savePreferences({
+    //   practice,
+    //   duration,
+    //   preset,
+    //   pattern,
+    //   sensoryType,
+    //   vipassanaTheme,
+    //   vipassanaElement,
+    //   soundType,
+    //   geometry,
+    // });
 
     // For Circuit practice, set up the first exercise and run it using existing practice UI
     if (practice === "Circuit") {

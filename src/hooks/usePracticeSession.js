@@ -77,17 +77,17 @@ export function usePracticeSession(options = {}) {
     } = practiceConfig;
 
     // Save preferences
-    savePreferences({
-      practice,
-      duration,
-      preset,
-      pattern,
-      sensoryType,
-      vipassanaTheme,
-      vipassanaElement,
-      soundType,
-      geometry,
-    });
+    // savePreferences({
+    //   practice,
+    //   duration,
+    //   preset,
+    //   pattern,
+    //   sensoryType,
+    //   vipassanaTheme,
+    //   vipassanaElement,
+    //   soundType,
+    //   geometry,
+    // });
 
     // Track curriculum source
     wasFromCurriculumRef.current = fromCurriculum;

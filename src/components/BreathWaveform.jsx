@@ -12,8 +12,11 @@ function buildBreathPath({ inhale, hold1, exhale, hold2 }, cycles = 2) {
 
   const startX = 10;
   const endX = 420;
-  const baseY = 46;
-  const topY = 18;
+  // Use much more vertical space - viewBox is -20 to 84
+  const topY = -5;      // Peak (inhale full)
+  const baseY = 69;     // Trough (exhale full)
+  const midY = (baseY + topY) / 2;  // 32 - center line
+  const amplitude = (baseY - topY) / 2;  // 37 - full amplitude
 
   const totalWidth = endX - startX;
   const cycleCount = Math.max(1, Math.floor(clampNumber(cycles, 1, 8)));
@@ -25,19 +28,54 @@ function buildBreathPath({ inhale, hold1, exhale, hold2 }, cycles = 2) {
   const wExhale = (safeExhale / total) * cycleWidth;
   const wHold2 = (safeHold2 / total) * cycleWidth;
 
-  let d = `M${startX} ${baseY}`;
-  for (let i = 0; i < cycleCount; i++) {
-    const x0 = startX + i * cycleWidth;
-    const x1 = x0 + wInhale;
-    const x2 = x1 + wHold1;
-    const x3 = x2 + wExhale;
-    const x4 = x3 + wHold2;
+  // Generate continuous sine wave - like reference image
+  // One full breath cycle = one full sine wave period
+  const totalSegments = 64; // High resolution for smooth curve
+  let d = '';
 
-    d += ` L${x1} ${topY}`;
-    if (wHold1 > 0.25) d += ` L${x2} ${topY}`;
-    d += ` L${x3} ${baseY}`;
-    if (wHold2 > 0.25) d += ` L${x4} ${baseY}`;
+  for (let i = 0; i < cycleCount; i++) {
+    const cycleStart = startX + i * cycleWidth;
+
+    for (let s = 0; s <= totalSegments; s++) {
+      const t = s / totalSegments; // 0 to 1 across the cycle
+      const x = cycleStart + t * cycleWidth;
+
+      // Map breath phases to sine wave position
+      // Inhale: 0 to wInhale → sine from 0 to π/2 (mid to peak)
+      // Hold1: wInhale to wInhale+wHold1 → stay at π/2 (peak)
+      // Exhale: ... to ... → sine from π/2 to 3π/2 (peak to trough)
+      // Hold2: ... to end → stay at 3π/2 (trough)
+
+      const xInCycle = t * cycleWidth;
+      let phase;
+
+      if (xInCycle <= wInhale) {
+        // Inhale: rising from mid to peak
+        const inhaleT = xInCycle / wInhale;
+        phase = inhaleT * (Math.PI / 2); // 0 to π/2
+      } else if (xInCycle <= wInhale + wHold1) {
+        // Hold at top: stay at peak
+        phase = Math.PI / 2;
+      } else if (xInCycle <= wInhale + wHold1 + wExhale) {
+        // Exhale: falling from peak through mid to trough
+        const exhaleT = (xInCycle - wInhale - wHold1) / wExhale;
+        phase = (Math.PI / 2) + exhaleT * Math.PI; // π/2 to 3π/2
+      } else {
+        // Hold at bottom: stay at trough
+        phase = (3 * Math.PI) / 2;
+      }
+
+      // Sine wave: sin(0)=0 (mid), sin(π/2)=1 (peak), sin(3π/2)=-1 (trough)
+      const y = midY - amplitude * Math.sin(phase);
+
+      if (s === 0 && i === 0) {
+        d = `M${x.toFixed(2)} ${y.toFixed(2)}`;
+      } else {
+        d += ` L${x.toFixed(2)} ${y.toFixed(2)}`;
+      }
+    }
   }
+
   return d;
 }
 

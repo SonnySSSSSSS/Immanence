@@ -13,6 +13,7 @@ import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
+import { BreathBenchmark } from "./BreathBenchmark.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
@@ -39,6 +40,9 @@ import BreathWaveform from "./BreathWaveform.jsx";
 import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 import { useBreathBenchmarkStore } from "../state/breathBenchmarkStore.js";
+import { useTempoSyncStore } from "../state/tempoSyncStore.js";
+import { TempoSyncPanel } from "./TempoSyncPanel.jsx";
+import { quantizePatternToMusicStrict } from "../utils/quantizePatternToMusic.js";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -437,15 +441,17 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
   );
 }
 
-function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory }) {
+function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark }) {
   const cardRef = useRef(null);
   const p = PRACTICE_REGISTRY[practiceId];
+  const practice = p?.label;
   const isCollapsed = !practiceId;
   const viewportMode = useDisplayModeStore(s => s.viewportMode);
   const isSanctuary = viewportMode === 'sanctuary';
   const maxHeightValue = isSanctuary ? '75vh' : '65vh';
 
   const [showTrajectory, setShowTrajectory] = useState(false);
+  const [showTempoSync, setShowTempoSync] = useState(false);
 
   useEffect(() => {
     setShowTrajectory(false);
@@ -666,6 +672,42 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
                      </div>
                    ))}
                  </div>
+
+                 {/* Benchmark Button */}
+                 <div className="flex justify-center" style={{ marginBottom: '16px' }}>
+                   <button
+                     onClick={onRunBenchmark}
+                     className="benchmark-button"
+                     style={{
+                       fontFamily: 'var(--font-display)',
+                       fontSize: '9px',
+                       fontWeight: 600,
+                       letterSpacing: '0.12em',
+                       textTransform: 'uppercase',
+                       padding: '8px 16px',
+                       borderRadius: '8px',
+                       background: 'rgba(212, 175, 55, 0.08)',
+                       border: '1px solid rgba(212, 175, 55, 0.3)',
+                       color: 'rgba(212, 175, 55, 0.9)',
+                       cursor: 'pointer',
+                       transition: 'all 200ms',
+                       boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
+                     }}
+                     onMouseEnter={(e) => {
+                       e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
+                       e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                       e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
+                     }}
+                     onMouseLeave={(e) => {
+                       e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
+                       e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                       e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
+                     }}
+                   >
+                     📊 Measure Capacity
+                   </button>
+                 </div>
+
                  <style>{`
                    .breath-input::-webkit-inner-spin-button,
                    .breath-input::-webkit-outer-spin-button {
@@ -747,13 +789,78 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             </div>
           )}
 
+          {/* Collapsible Tempo Sync Section (Breath Practice Only) */}
+          {practiceId === 'breath' && (
+            <div style={{ marginBottom: '24px' }}>
+              <button
+                onClick={() => setShowTempoSync(!showTempoSync)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  backgroundColor: showTempoSync ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(74, 222, 128, 0.2)',
+                  borderRadius: '10px',
+                  color: 'var(--text-secondary)',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'var(--font-display)',
+                  textTransform: 'uppercase',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = showTempoSync ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255, 255, 255, 0.03)';
+                  e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.2)';
+                }}
+              >
+                <span>🎵 Tempo Sync</span>
+                <span style={{ transform: showTempoSync ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>▼</span>
+              </button>
+              
+              <div
+                style={{
+                  marginTop: '8px',
+                  display: showTempoSync ? 'block' : 'none',
+                }}
+              >
+                <TempoSyncPanel isPracticing={isRunning} />
+              </div>
+              
+              <style>{`
+                @keyframes slideDown {
+                  from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
+            </div>
+          )}
+
           {/* Start Button - Sacred Portal with Ember Theme */}
           {!(practiceId === 'ritual') && (
             <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
-              <button
-                onClick={onStart}
-                className="group transition-all duration-300 relative overflow-hidden begin-button"
-                style={{
+          <button
+            onClick={() => {
+              if (window.__tempoSyncStartAudio) {
+                window.__tempoSyncStartAudio();
+              }
+              onStart();
+            }}
+            className="group transition-all duration-300 relative overflow-hidden begin-button"
+            style={{
                    width: '100%',
                    maxWidth: '400px',
                    fontFamily: 'var(--font-display)',
@@ -1000,14 +1107,35 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
 }
 
 export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic }) {
+  useEffect(() => {
+    console.log("[PracticeSection] mounted");
+    return () => console.log("[PracticeSection] unmounted");
+  }, []);
+
   const instrumentation = useSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+  const viewportMode = useDisplayModeStore(s => s.viewportMode);
+  const isSanctuary = viewportMode === 'sanctuary';
 
   // Breath benchmark for progressive patterns
-  const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
+  const benchmark = useBreathBenchmarkStore(s => s.benchmark);
+  const hasBenchmark = Boolean(
+    benchmark &&
+    Number.isFinite(benchmark.inhale) && benchmark.inhale > 0 &&
+    Number.isFinite(benchmark.hold1) && benchmark.hold1 > 0 &&
+    Number.isFinite(benchmark.exhale) && benchmark.exhale > 0 &&
+    Number.isFinite(benchmark.hold2) && benchmark.hold2 > 0
+  );
   const getPatternForCycle = useBreathBenchmarkStore(s => s.getPatternForCycle);
   const calculateTotalCycles = useBreathBenchmarkStore(s => s.calculateTotalCycles);
+  const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
+  
+  // Tempo sync state for music-synced breathing
+  const tempoSyncEnabled = useTempoSyncStore(s => s.enabled);
+  const tempoSyncBpm = useTempoSyncStore(s => s.bpm);
+  const tempoPhaseDuration = useTempoSyncStore(s => s.getPhaseDuration());
+  const tempoBeatsPerPhase = useTempoSyncStore(s => s.beatsPerPhase);
   
   // Theme Tokens for unified styling across components
   const uiTokens = {
@@ -1026,11 +1154,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const savedPrefs = React.useRef(loadPreferences()).current;
   const initialPracticeId = savedPrefs.practiceId || 'breath';
   console.log('[PracticeSection v3.17.28] savedPrefs.practiceId:', savedPrefs.practiceId, 'initialPracticeId:', initialPracticeId);
+  const lastSavedPrefsRef = useRef({
+    practiceId: savedPrefs.practiceId,
+    duration: savedPrefs.duration,
+    practiceParams: savedPrefs.practiceParams,
+  });
 
   // STABILIZE STATE: Core Selection State
   const [practiceId, setPracticeId] = useState(initialPracticeId);
   const [hasExpandedOnce, setHasExpandedOnce] = useState(!!initialPracticeId);
   const [duration, setDuration] = useState(savedPrefs.duration || 10);
+  const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
 
   // CURRICULUM INTEGRATION
   const {
@@ -1079,11 +1213,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     console.log('[PracticeSection v3.17.28] handleSelectPractice called with id:', id);
     setPracticeId(id);
     // Save immediately with current state
-    savePreferences({
+    // savePreferences({
+    //   practiceId: id,
+    //   duration,
+    //   practiceParams,
+    // });
+    lastSavedPrefsRef.current = {
       practiceId: id,
       duration,
       practiceParams,
-    });
+    };
   }, [duration, practiceParams]);
 
   const updateParams = (pid, updates) => {
@@ -1117,6 +1256,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [visualizationCycles, setVisualizationCycles] = useState(0);
   const [activeRitual, setActiveRitual] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [countdownValue, setCountdownValue] = useState(null);
 
   // Sound/Visual ephemeral state
   const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
@@ -1179,6 +1319,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       updateParams('breath', { pattern: val });
     }
   };
+  const handleBenchmarkClose = (results) => {
+    setShowBreathBenchmark(false);
+    if (results) {
+      const startingPattern = getStartingPattern();
+      if (startingPattern) {
+        setPattern(startingPattern);
+        setPreset(null);
+      }
+    }
+  };
+  const handleRunBenchmark = () => setShowBreathBenchmark(true);
   const setSoundType = (val) => updateParams('sound', { soundType: val });
   const setSoundVolume = (val) => updateParams('sound', { volume: val });
   const setBinauralPreset = (val) => updateParams('sound', { binauralPresetId: val?.name || val });
@@ -1239,11 +1390,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Auto-save preferences when they change (but not during active practice)
   useEffect(() => {
     if (!isRunning) {
-      savePreferences({
-        practiceId,
-        duration,
-        practiceParams
-      });
+      const prev = lastSavedPrefsRef.current;
+      const hasChanged = prev.practiceId !== practiceId ||
+        prev.duration !== duration ||
+        prev.practiceParams !== practiceParams;
+      if (hasChanged) {
+        // savePreferences({
+        //   practiceId,
+        //   duration,
+        //   practiceParams
+        // });
+        lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
+      }
     }
   }, [practiceId, duration, practiceParams, isRunning]);
 
@@ -1618,11 +1776,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
-    savePreferences({
-      practiceId,
-      duration,
-      practiceParams
-    });
+    // savePreferences({
+    //   practiceId,
+    //   duration,
+    //   practiceParams
+    // });
+    lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
 
     const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
     if (logScheduleAdherenceStart) {
@@ -1670,6 +1829,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setLastSignedErrorMs(null);
     setBreathCount(0);
 
+    // Start audio playback if tempo sync is enabled and breath practice
+    if (practiceId === "breath" && tempoSyncEnabled) {
+      // Trigger audio playback through tempo sync store event
+      console.log('[PracticeSection] Dispatching tempo-sync-start-audio event');
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('tempo-sync-start-audio'));
+      }, 100);
+    }
+
     const p = practiceId;
     let domain = 'breathwork';
     if (p === 'visualization' || p === 'cymatics') domain = 'visualization';
@@ -1693,10 +1861,35 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     setIsStarting(true);
 
-    setTimeout(() => {
-      setIsStarting(false);
-      executeStart();
-    }, 1400);
+    // Check if we need to start audio with countdown
+    const needsAudioCountdown = practiceId === "breath" && tempoSyncEnabled;
+    
+    if (needsAudioCountdown) {
+      // 3-second countdown before starting breath practice with audio
+      setCountdownValue(3);
+      
+      const countdownInterval = setInterval(() => {
+        setCountdownValue((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      setTimeout(() => {
+        setIsStarting(false);
+        setCountdownValue(null);
+        executeStart();
+      }, 3000); // 3 seconds for countdown
+    } else {
+      // Normal start animation (1.4 seconds)
+      setTimeout(() => {
+        setIsStarting(false);
+        executeStart();
+      }, 1400);
+    }
   };
 
   const handleSelectRitual = (ritual) => {
@@ -1834,32 +2027,62 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Calculate progressive pattern based on benchmark if available
   // Progression: 75% → 85% → 100% by breath count thirds
   const breathingPatternForRing = useMemo(() => {
-    if (hasBenchmark && isRunning && practice === "Breath & Stillness") {
-      const totalCycles = calculateTotalCycles(duration, pattern);
-      const progressivePattern = getPatternForCycle(breathCount + 1, totalCycles);
-      if (progressivePattern) {
-        return {
-          inhale: progressivePattern.inhale,
-          holdTop: progressivePattern.hold1,
-          exhale: progressivePattern.exhale,
-          holdBottom: progressivePattern.hold2,
-        };
+    const isBreathPractice = practice === "Breath & Stillness";
+    const resolveBasePattern = () => {
+      if (hasBenchmark && isRunning && isBreathPractice) {
+        const totalCycles = calculateTotalCycles(duration, pattern);
+        const progressivePattern = getPatternForCycle(breathCount + 1, totalCycles);
+        if (progressivePattern) {
+          return {
+            inhale: progressivePattern.inhale,
+            hold1: progressivePattern.hold1,
+            exhale: progressivePattern.exhale,
+            hold2: progressivePattern.hold2,
+          };
+        }
       }
-    }
-    // Fallback to static pattern
-    return {
-      inhale: pattern.inhale,
-      holdTop: pattern.hold1,
-      exhale: pattern.exhale,
-      holdBottom: pattern.hold2,
+      return {
+        inhale: pattern.inhale,
+        hold1: pattern.hold1,
+        exhale: pattern.exhale,
+        hold2: pattern.hold2,
+      };
     };
-  }, [hasBenchmark, isRunning, practice, duration, pattern, breathCount, calculateTotalCycles, getPatternForCycle]);
+
+    if (tempoSyncEnabled && isBreathPractice && hasBenchmark && Number.isFinite(tempoSyncBpm) && tempoSyncBpm > 0) {
+      const quantized = quantizePatternToMusicStrict(resolveBasePattern(), tempoSyncBpm);
+      return {
+        inhale: quantized.inhale,
+        holdTop: quantized.hold1,
+        exhale: quantized.exhale,
+        holdBottom: quantized.hold2,
+      };
+    }
+
+    // Tempo sync takes priority - BPM-based equal phase durations with multiplier
+    if (tempoSyncEnabled && isBreathPractice && hasBenchmark) {
+      return {
+        inhale: tempoPhaseDuration,
+        holdTop: tempoPhaseDuration,
+        exhale: tempoPhaseDuration,
+        holdBottom: tempoPhaseDuration,
+      };
+    }
+
+    const basePattern = resolveBasePattern();
+    return {
+      inhale: basePattern.inhale,
+      holdTop: basePattern.hold1,
+      exhale: basePattern.exhale,
+      holdBottom: basePattern.hold2,
+    };
+  }, [tempoSyncEnabled, tempoSyncBpm, tempoPhaseDuration, tempoBeatsPerPhase, hasBenchmark, isRunning, practice, duration, pattern, breathCount, calculateTotalCycles, getPatternForCycle]);
 
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
 
   // RENDER PRIORITY 1: Active Practice Session
-  if (isRunning) {
+  const sessionView = isRunning ? (() => {
     if (practice === "Ritual") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
@@ -2104,6 +2327,24 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
 
         <div className="flex flex-col items-center z-50">
+          {/* Breathing Pattern Display (above stop button) */}
+          {practice === "Breath & Stillness" && (
+            <div
+              className="mb-4"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "13px",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--accent-color)",
+                textShadow: "0 0 8px var(--accent-30)",
+              }}
+            >
+              {Math.round(breathingPatternForRing.inhale)}-{Math.round(breathingPatternForRing.holdTop)}-{Math.round(breathingPatternForRing.exhale)}-{Math.round(breathingPatternForRing.holdBottom)}
+            </div>
+          )}
+
           <div className="h-6 mb-3 flex items-center justify-center">
             {lastSignedErrorMs !== null && practice === "Breath & Stillness" && (
               <div
@@ -2231,10 +2472,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         `}</style>
       </section>
     );
-  }
+  })() : null;
 
   // RENDER PRIORITY 2: Session Summary Modal
-  if (showSummary && sessionSummary) {
+  const showSummaryModal = showSummary && sessionSummary;
+  const summaryView = showSummaryModal ? (() => {
     const { practiceTimeSlots } = useCurriculumStore.getState();
     return (
       <SessionSummaryModal
@@ -2260,7 +2502,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         onFocusRating={handleFocusRating}
       />
     );
-  }
+  })() : null;
 
   // RENDER PRIORITY 3: Practice Configuration/Selection View
   // Assemble the unified setters/params object for the dynamic config panels
@@ -2278,14 +2520,59 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     isEmbedded: true
   };
 
-  const viewportMode = useDisplayModeStore(s => s.viewportMode);
-  const isSanctuary = viewportMode === 'sanctuary';
-
   return (
-    <section 
-      className="practice-section-container w-full h-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar"
-      style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative' }}
-    >
+    <>
+      <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
+      {sessionView}
+      {summaryView}
+      
+      {/* Countdown Overlay */}
+      {countdownValue !== null && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '120px',
+              fontWeight: 700,
+              color: 'var(--accent-color)',
+              textShadow: '0 0 40px var(--accent-color), 0 0 80px var(--accent-color)',
+              animation: 'countdown-pulse 1s ease-in-out',
+            }}
+          >
+            {countdownValue}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '14px',
+              fontWeight: 600,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: 'rgba(255, 255, 255, 0.6)',
+              marginTop: '32px',
+            }}
+          >
+            Get Ready...
+          </div>
+        </div>
+      )}
+
+      <section 
+        className="practice-section-container w-full h-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar"
+        style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning ? 'none' : 'flex' }}
+      >
       {/* Radial glow backdrop emanating from center (avatar area) */}
       <div 
         className="practice-radial-glow"
@@ -2360,14 +2647,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         hasExpandedOnce={hasExpandedOnce}
         setHasExpandedOnce={setHasExpandedOnce}
         onOpenTrajectory={openTrajectoryReport}
+        isRunning={isRunning}
+        tempoSyncEnabled={tempoSyncEnabled}
+        tempoPhaseDuration={tempoPhaseDuration}
+        tempoBeatsPerPhase={tempoBeatsPerPhase}
+        onRunBenchmark={handleRunBenchmark}
       />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }
+        @keyframes countdown-pulse {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
       `}</style>
-    </section>
+      </section>
+    </>
   );
 }
 

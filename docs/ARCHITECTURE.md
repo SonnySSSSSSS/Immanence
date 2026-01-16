@@ -148,29 +148,35 @@
   - Navigation next: optional scroll to path grid on recommendation; no direct section switch (except Application prompt in `ApplicationSection`).
 - **PracticeSection** (`src/components/PracticeSection/PracticeSection.jsx`)
   - Role: orchestration layer for the practice lifecycle and session state; coordinates UI components while retaining ownership of state, effects, and side effects.
-  - Primary components: practice pickers (`PracticeSelector`, `SacredTimeSlider`, `PracticeOptionsCard`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`.
-  - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state.
-  - Outputs: `recordPracticeSession`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar.
+  - Primary components: practice pickers (`PracticeSelector`, `SacredTimeSlider`, `PracticeOptionsCard`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`, `TempoSyncPanel` (Breath & Stillness only).
+  - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state; `tempoSyncStore` selectors (`enabled`, `getPhaseDuration()`, `beatsPerPhase`) passed to `PracticeOptionsCard`.
+  - Outputs: `recordPracticeSession`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar; `tempoSyncStore` updates via `useTempoDetection` hook (BPM detection, lock/unlock, multiplier changes).
   - Navigation next: none directly; ritual deck "Return to Hub" triggers `handleStop`, home navigation handled by global header button.
   - **Photic entry**: "Photic" button opens `PhoticCirclesOverlay` (component state `isOpen`).
+  - **Tempo Sync integration:** "🎵 Tempo Sync" collapsible section in `PracticeOptionsCard` for Breath & Stillness practice; renders `TempoSyncPanel` with file upload (FileUploadDrawer), BPM display, lock button, multiplier selector, and collapsed playback/beats/manual entry accordions. Breathing ring respects `tempoPhaseDuration` when `tempoSyncEnabled` is true.
 
 ### PracticeSection Module Structure
 
-- `PracticeSection/PracticeSection.jsx` — session orchestration, lifecycle, effects, render priority control
+- `PracticeSection/PracticeSection.jsx` — session orchestration, lifecycle, effects, render priority control; tempo sync store selector integration
 - `PracticeSection/PracticeSelector.jsx` — practice selection grid (pure UI)
 - `PracticeSection/PracticeIcons.jsx` — SVG icon set for practices
 - `PracticeSection/PracticeConfigView.jsx` — config/selection render branch
-- `PracticeSection/PracticeOptionsCard.jsx` — per-practice configuration panel
+- `PracticeSection/PracticeOptionsCard.jsx` — per-practice configuration panel; includes collapsible Tempo Sync section for Breath & Stillness
 - `PracticeSection/ScrollingWheel.jsx` — standalone scroll selector widget
 - `PracticeSection/SessionSummaryModal.jsx` — end-of-session summary modal
 - `PracticeSection/constants.js` — shared registry, IDs, durations, UI width, label mapping
+- `TempoSyncPanel.jsx` — music-synced breathing UI (collapsible main card + accordions for playback, beats, manual entry)
+- `FileUploadDrawer.jsx` — lightweight drawer for MP3 file selection (drag-and-drop + browser)
 
 ### PracticeSection Render Priorities
 
 1. Active session view (inline, intentionally coupled)
+   - Includes audio element for music playback when tempo sync active
    - Warning: This block is intentionally not decomposed due to tight coupling between timers, effects, refs, and handlers. Refactoring requires a session view-model plan.
-2. Session summary modal (external component)
-3. Config/selection view (external component)
+2. Tempo Sync collapsible section (in config card, visible for Breath & Stillness only)
+3. Session summary modal (external component)
+4. Config/selection view (external component)
+
 - **WisdomSection** (`src/components/WisdomSection.jsx`)
   - Primary components: tabbed Recommendations/Treatise/Bookmarks/Videos/Self-Knowledge, `WisdomSelectionModal`, `VideoLibrary`, `SelfKnowledgeView`.
   - Inputs: static treatise/wisdom/video data, `wisdomStore` bookmarks/reading sessions, `localStorage` scroll positions.
@@ -179,6 +185,133 @@
 - **Modals**
   - Global: `WelcomeScreen`, `CurriculumOnboarding`, `CurriculumCompletionReport`, `DevPanel` (tweaks display mode/stage previews), `AvatarPreview`, `SigilTracker`, `HardwareGuide`, `InstallPrompt`.
   - Practice-specific: `PracticeSelectionModal`, `VipassanaVariantSelector`, `SessionSummaryModal`, `PostSessionJournal`, `NavigationSelectionModal`, `ThoughtDetachmentOnboarding`, `CycleChoiceModal`, `PhoticCirclesOverlay`.
+
+## Tempo Sync System (Music-Synced Breathing)
+
+### Overview
+
+Real-time BPM detection and music-synced breathing for "Breath & Stillness" practice. Users can load an MP3 file, detect or manually set the BPM, lock the detected tempo, and apply a breath pace multiplier (x1–x4) to slow down the breathing rate for fast songs. The system includes Web Audio API beat detection with stability checks, a lightweight file upload drawer, and a collapsible UI panel integrated into the practice card.
+
+### Architecture
+
+- **Zustand Store: tempoSyncStore** (`src/state/tempoSyncStore.js`)
+  - State: `enabled` (boolean), `bpm` (30–300), `beatsPerPhase` (2/4/8/16), `confidence` (0–1), `isListening` (boolean), `manualOverride` (boolean), `isLocked` (boolean), `breathMultiplier` (1–4)
+  - Actions: `setEnabled`, `setBpm`, `setBeatsPerPhase`, `setListening`, `setConfidence`, `setManualOverride`, `setLocked`, `setBreathMultiplier`
+  - Computed: `getPhaseDuration()` = `(60 / bpm) * beatsPerPhase * breathMultiplier` capped at 60s; `getCycleDuration()` = `phaseDuration * 4`
+  - Persistence: via Zustand `persist` middleware to localStorage key `tempo-sync-store` (stores `enabled`, `bpm`, `beatsPerPhase`, `manualOverride`, `isLocked`, `breathMultiplier`)
+  - Reset: `reset()` unlocks BPM and resets multiplier to x1 on new file load
+
+- **Web Audio API Hook: useTempoDetection** (`src/hooks/useTempoDetection.js`)
+  - Purpose: Real-time beat detection and BPM calculation from audio file
+  - Key constants:
+    - `LOWPASS_FREQUENCY`: 1000 Hz (captures kick drum + bass)
+    - `MIN_BEAT_GAP_MS`: 200 ms; `MAX_BEAT_GAP_MS`: 2000 ms (30–300 BPM range)
+    - `PEAK_THRESHOLD_MULTIPLIER`: 1.1 (frequency bin peak detection threshold)
+    - `MIN_AMPLITUDE`: 10 (minimum signal strength)
+    - `STABLE_CONFIDENCE_THRESHOLD`: 0.8 (80% FFT consistency required)
+    - `STABLE_BPM_TOLERANCE`: ±3 BPM (beat interval variance tolerance)
+    - `STABLE_BEATS_REQUIRED`: 8 consecutive beats required before updating BPM
+  - Methods:
+    - `initializeAudioContext()` – creates Web Audio API context with lowpass filter
+    - `loadAudioFile(file)` – decodes MP3 and connects to analysis chain; resets stability tracking
+    - `detectBeat()` – analyzes frequency bins, detects peaks, calculates BPM from beat intervals
+    - `startDetection()` – begins RAF-based beat detection loop
+    - `playAudio/pauseAudio/stopAudio` – audio element control
+  - Stability System: Requires 8 consecutive beats within ±3 BPM of rolling average AND >80% confidence before updating stored BPM; prevents false positives during instrumental intros
+  - Lock Check: `isLockedRef` prevents BPM updates when user locks; rolling average continues for consistency feedback
+
+- **UI Components**
+  - **FileUploadDrawer** (`src/components/FileUploadDrawer.jsx`)
+    - Lightweight slide-up drawer triggered by "📁 LOAD AUDIO FILE" button
+    - Features: drag-and-drop zone, file browser, animations (fadeIn overlay, slideUp drawer)
+    - Closes via click on overlay, ESC key, or file selection
+    - Passes selected file to parent via `onFileSelect` callback
+  
+  - **TempoSyncPanel** (`src/components/TempoSyncPanel.jsx`)
+    - Redesigned with three-tier collapsible structure:
+      - **Main Card (always visible):** 
+        - Prominent BPM display (28px, green accent)
+        - Subordinate confidence bar (3px height, muted color, shows percentage + status)
+        - Lock button (icon-only, green when locked, disabled during practice)
+        - Breath pace display (current multiplier + duration)
+        - 2×2 multiplier grid (x1, x2, x3, x4 buttons)
+      - **"⚙ PLAYBACK & BEATS" accordion:**
+        - Play/Pause/Stop buttons
+        - Beats per phase selector (2/4/8/16)
+        - Hidden by default, expands on demand
+      - **"✎ MANUAL BPM" accordion:**
+        - Direct numeric input (30–300)
+        - Hidden by default
+    - **File upload trigger:** "📁 LOAD AUDIO FILE" button opens FileUploadDrawer
+    - **Duration warning:** Shows "⚠ Max duration reached" when phase duration ≥ 60s
+    - Disabled state (50% opacity): All controls except display disabled during active practice
+
+### Integration into PracticeSection
+
+- **Location:** Collapsible section integrated into `PracticeOptionsCard` (Breath & Stillness practice only)
+  - Positioned after Sacred Duration slider
+  - Before "Begin Practice" button
+  - Controlled by `showTempoSync` state in `PracticeOptionsCard`
+  
+- **Toggle Button:**
+  - Label: "🎵 Tempo Sync"
+  - Styling: Accent green when expanded, muted when collapsed
+  - Toggle animates accordion content (slideDown 0.3s)
+
+- **Variables passed through component chain:**
+  - `tempoSyncEnabled` (from store selector)
+  - `tempoPhaseDuration` (computed, includes multiplier + cap)
+  - `tempoBeatsPerPhase` (current beats selection)
+  - `isRunning` (practice session active, disables controls)
+
+### Breathing Pattern Integration
+
+- **Priority in breathingPatternForRing memo** (PracticeSection.jsx, ~line 1846):
+  1. If `tempoSyncEnabled && practice === "Breath & Stillness"` → use `tempoPhaseDuration` for all 4 phases
+  2. Else if benchmark available → use progressive pattern
+  3. Else → use static pattern
+- **Audio Lifecycle:**
+  - Audio element persists during practice (cleanup on unmount only)
+  - Music continues playing from where user left off if paused before practice start
+  - Breathing ring animates to detected BPM with applied multiplier
+
+### Data Flow
+
+```
+User loads MP3
+  ↓
+loadAudioFile() → decode audio, connect to Web Audio API chain
+  ↓
+startDetection() → RAF loop analyzes frequency bins
+  ↓
+detectBeat() → peaks trigger beat interval calculation
+  ↓
+Stability check: 8 consecutive beats within ±3 BPM + >80% confidence?
+  ↓ YES
+setBpm() (unless isLocked) → store updates
+  ↓
+breathingPatternForRing memo recomputes
+  ↓
+BreathingRing component uses tempoPhaseDuration (BPM-based)
+  ↓
+Breathing ring animates to music tempo (with x1–x4 multiplier applied)
+```
+
+### UX Principles
+
+- **State Visibility:** BPM, lock status, confidence, multiplier always visible (mental model: "what is happening now")
+- **Operational Concealment:** File mechanics, playback controls, beats selector hidden in collapsed accordions (operational details, not perceptual state)
+- **Lock Unmistakability:** Green accent, icon change (🔓/🔒), large touch target; readable at a glance even peripherally
+- **Confidence Subordination:** Confidence bar visually smaller and more muted than BPM; displayed as status line rather than prominent stat
+- **Space Efficiency:** ~60% vertical footprint reduction vs. flat layout; collapsible accordions preserve discoverability while reducing cognitive load
+- **Inline Integration:** Stays in practice card flow (Option A); avoids floating panels that might intrude on meditative context
+
+### Known Limitations & Future Work
+
+- BPM detection may be slower on weak-bass files (instrumental intros without kick drums)
+- Stability requirement (8 beats) takes ~4 seconds at 120 BPM; users see "🔍 DETECTING..." status during this phase
+- Phase duration cap (60s) prevents x4 multiplier from extending beyond 60 seconds per phase; warning shown when approaching cap
+- Single-file per session (no queuing); loading new file auto-unlocks and resets multiplier to x1
 
 ## Photic Circles System
 
