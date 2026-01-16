@@ -42,7 +42,9 @@ import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 import { useBreathBenchmarkStore } from "../state/breathBenchmarkStore.js";
 import { useTempoSyncStore } from "../state/tempoSyncStore.js";
+import { useTempoSyncSessionStore } from "../state/tempoSyncSessionStore.js";
 import { TempoSyncPanel } from "./TempoSyncPanel.jsx";
+import { TempoSyncSessionPanel } from "./TempoSyncSessionPanel.jsx";
 import { quantizePatternToMusicStrict } from "../utils/quantizePatternToMusic.js";
 
 const DEV_FX_GALLERY_ENABLED = true;
@@ -1112,7 +1114,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showCore, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic }) {
   useEffect(() => {
     console.log("[PracticeSection] mounted");
     return () => console.log("[PracticeSection] unmounted");
@@ -1144,7 +1146,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const tempoSyncBpm = useTempoSyncStore(s => s.bpm);
   const tempoPhaseDuration = useTempoSyncStore(s => s.getPhaseDuration());
   const tempoBeatsPerPhase = useTempoSyncStore(s => s.beatsPerPhase);
-  
+
+  // Tempo sync session state (3-phase cap schedule)
+  const tempoSessionActive = useTempoSyncSessionStore(s => s.isActive);
+  const tempoSessionCap = useTempoSyncSessionStore(s => s.segmentCap);
+  const tempoSessionEffective = useTempoSyncSessionStore(s => s.effectivePhaseDurations);
+  const songDurationSec = useTempoAudioStore(s => s.songDurationSec);
+
   // Theme Tokens for unified styling across components
   const uiTokens = {
     isLight,
@@ -1377,12 +1385,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!isRunning && hasSong && isSongPlaying) {
       useTempoAudioStore.getState().stop("practice-end");
     }
-  }, [isRunning, hasSong, isSongPlaying]);
+    // End tempo sync session when practice stops
+    if (!isRunning && tempoSessionActive) {
+      useTempoSyncSessionStore.getState().endSession();
+    }
+  }, [isRunning, hasSong, isSongPlaying, tempoSessionActive]);
 
   useEffect(() => {
     return () => {
       const st = useTempoAudioStore.getState();
       if (st.hasSong && st.isPlaying) st.stop("practice-unmount");
+      // End tempo sync session on unmount
+      useTempoSyncSessionStore.getState().endSession();
     };
   }, []);
 
@@ -1859,6 +1873,30 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         // Fallback: call store directly
         useTempoAudioStore.getState().start("begin-practice-fallback");
       }
+
+      // Start tempo sync session with 3-phase cap schedule if song is loaded
+      const audioStore = useTempoAudioStore.getState();
+      const benchmarkStore = useBreathBenchmarkStore.getState();
+      if (audioStore.hasSong && audioStore.songDurationSec > 0 && benchmarkStore.benchmark) {
+        // Use benchmark max values (user's measured capacity), NOT tempo phase duration
+        const bm = benchmarkStore.benchmark;
+        const maxDurations = {
+          inhale: bm.inhale,
+          exhale: bm.exhale,
+          holdIn: bm.hold1,
+          holdOut: bm.hold2,
+        };
+        useTempoSyncSessionStore.getState().startSession(
+          audioStore.songDurationSec,
+          maxDurations,
+          tempoSyncBpm
+        );
+        console.log('[PracticeSection] Started tempo sync session', {
+          songDuration: audioStore.songDurationSec,
+          bpm: tempoSyncBpm,
+          maxDurations
+        });
+      }
     }
 
     const p = practiceId;
@@ -1984,6 +2022,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
   }, [isRunning, timeLeft, practice, activeCircuitId]);
 
+  // Update tempo sync session elapsed time (calculates segment transitions)
+  useEffect(() => {
+    if (!tempoSessionActive || !isRunning || !songDurationSec) return;
+    // Calculate elapsed from remaining timeLeft
+    const totalElapsedSec = songDurationSec - timeLeft;
+    useTempoSyncSessionStore.getState().updateElapsed(totalElapsedSec, tempoSyncBpm);
+  }, [tempoSessionActive, isRunning, timeLeft, songDurationSec, tempoSyncBpm]);
+
   useEffect(() => {
     if (!onBreathStateChange) {
       return;
@@ -2088,7 +2134,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     // Tempo sync takes priority - BPM-based equal phase durations with multiplier
+    // If tempo session is active (song playing), apply the segment cap
     if (tempoSyncEnabled && isBreathPractice && hasBenchmark) {
+      if (tempoSessionActive && tempoSessionEffective) {
+        // Use effective durations from tempo session (scaled by segment cap)
+        return {
+          inhale: tempoSessionEffective.inhale,
+          holdTop: tempoSessionEffective.holdIn,
+          exhale: tempoSessionEffective.exhale,
+          holdBottom: tempoSessionEffective.holdOut,
+        };
+      }
+      // No song active - use full tempo phase duration
       return {
         inhale: tempoPhaseDuration,
         holdTop: tempoPhaseDuration,
@@ -2104,7 +2161,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       exhale: basePattern.exhale,
       holdBottom: basePattern.hold2,
     };
-  }, [tempoSyncEnabled, tempoSyncBpm, tempoPhaseDuration, tempoBeatsPerPhase, hasBenchmark, isRunning, practice, duration, pattern, breathCount, calculateTotalCycles, getPatternForCycle]);
+  }, [tempoSyncEnabled, tempoSyncBpm, tempoPhaseDuration, tempoBeatsPerPhase, hasBenchmark, isRunning, practice, duration, pattern, breathCount, calculateTotalCycles, getPatternForCycle, tempoSessionActive, tempoSessionEffective]);
 
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
@@ -2237,10 +2294,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 onTap={handleAccuracyTap}
                 onCycleComplete={() => setBreathCount(prev => prev + 1)}
                 startTime={sessionStartTime}
-                pathId={showCore ? null : avatarPath}
+                pathId={avatarPath}
                 fxPreset={currentFxPreset}
               />
-              
+
+              {/* Tempo Sync Session Panel - 3-phase cap schedule display */}
+              {tempoSessionActive && (
+                <div style={{ width: '100%', maxWidth: '320px', marginTop: '8px' }}>
+                  <TempoSyncSessionPanel />
+                </div>
+              )}
+
               {showFxGallery && (
                 <div
                   className="flex items-center gap-3 mt-4 px-4 py-2 rounded-full"

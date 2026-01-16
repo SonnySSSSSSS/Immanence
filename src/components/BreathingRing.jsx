@@ -457,25 +457,64 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          fontSize: "0.875rem",
-          letterSpacing: "0.25em",
-          textTransform: "uppercase",
-          color: 'var(--accent-primary)',
-          fontFamily: "var(--font-display)",
-          fontWeight: "700",
-          letterSpacing: "var(--tracking-mythic)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
           zIndex: 10,
           pointerEvents: "none",
-          textShadow: '0 0 10px var(--accent-glow)'
         }}
       >
-        {progress < tInhale
-          ? "Inhale"
-          : progress < tHoldTop
-            ? "Hold"
-            : progress < tExhale
-              ? "Exhale"
-              : "Hold"}
+        <div
+          style={{
+            fontSize: "0.875rem",
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            color: 'var(--accent-primary)',
+            fontFamily: "var(--font-display)",
+            fontWeight: "700",
+            letterSpacing: "var(--tracking-mythic)",
+            textShadow: '0 0 10px var(--accent-glow)'
+          }}
+        >
+          {progress < tInhale
+            ? "Inhale"
+            : progress < tHoldTop
+              ? "Hold"
+              : progress < tExhale
+                ? "Exhale"
+                : "Hold"}
+        </div>
+        {/* Phase countdown timer */}
+        <div
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: "700",
+            fontFamily: "var(--font-mono, monospace)",
+            color: 'var(--accent-primary)',
+            marginTop: "4px",
+            textShadow: '0 0 8px var(--accent-glow)',
+            opacity: 0.9,
+          }}
+        >
+          {(() => {
+            // Calculate remaining seconds in current phase
+            let phaseRemaining;
+            if (progress < tInhale) {
+              // Inhale phase: remaining = (tInhale - progress) * total
+              phaseRemaining = (tInhale - progress) * total;
+            } else if (progress < tHoldTop) {
+              // Hold top phase: remaining = (tHoldTop - progress) * total
+              phaseRemaining = (tHoldTop - progress) * total;
+            } else if (progress < tExhale) {
+              // Exhale phase: remaining = (tExhale - progress) * total
+              phaseRemaining = (tExhale - progress) * total;
+            } else {
+              // Hold bottom phase: remaining = (1 - progress) * total
+              phaseRemaining = (1 - progress) * total;
+            }
+            return Math.ceil(phaseRemaining);
+          })()}
+        </div>
       </div>
 
       <style>{`

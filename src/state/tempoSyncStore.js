@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useTempoSyncSessionStore } from './tempoSyncSessionStore.js';
 
 export const useTempoSyncStore = create(
   persist(
@@ -23,7 +24,11 @@ export const useTempoSyncStore = create(
       setListening: (listening) => set({ isListening: listening }),
       setPlaybackState: (playbackState) => set({ playbackState }),
       setConfidence: (confidence) => set({ confidence: Math.max(0, Math.min(1, confidence)) }),
-      markBeat: (now) => set({ lastBeatAt: now }),
+      markBeat: (now) => {
+        set({ lastBeatAt: now });
+        // Also increment beat count in tempo sync session (if active)
+        useTempoSyncSessionStore.getState().incrementBeatCount();
+      },
       setManualOverride: (override) => set({ manualOverride: override }),
       setLocked: (isLocked) => set({ isLocked }),
       setBreathMultiplier: (multiplier) => set({ breathMultiplier: Math.max(1, Math.min(4, multiplier)) }),

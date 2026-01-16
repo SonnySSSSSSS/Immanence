@@ -435,6 +435,11 @@ export const useTempoDetection = () => {
         const elapsed = now - (beatDebugRef.current.lastBeat || now);
         beatDebugRef.current.lastBeat = now;
 
+        // Increment beat counter on every detected beat (for tempo sync session)
+        if (markBeat) {
+          markBeat(now);
+        }
+
         if (now - beatDebugRef.current.lastLog > 250) {
           beatDebugRef.current.lastLog = now;
           console.log('[Beat]', {
@@ -550,9 +555,7 @@ export const useTempoDetection = () => {
             }
 
             setConfidence(confidenceScore);
-            if (markBeat) {
-              markBeat(now);
-            }
+            // Note: markBeat is now called earlier (line ~439) on every detected beat
 
             return {
               bpm: calculatedBpm,
