@@ -33,6 +33,7 @@ import { PostSessionJournal } from "./PostSessionJournal.jsx";
 import { useJournalStore } from "../state/journalStore.js";
 import { RitualSelectionDeck } from "./RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "./PhoticControlPanel.jsx";
+import { useTempoAudioStore } from "../state/tempoAudioStore.js";
 import { BreathPhaseIndicator } from "./BreathPhaseIndicator.jsx";
 import { BreathPathChart } from "./BreathPathChart.jsx";
 import { BreathWaveVisualization } from "./BreathWaveVisualization.jsx";
@@ -854,10 +855,15 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
           <button
             onClick={() => {
+              const st = useTempoAudioStore.getState();
+              const songSec =
+                st.hasSong && st.songDurationSec
+                  ? Math.max(5, Math.floor(st.songDurationSec - 2))
+                  : null;
               if (window.__tempoSyncStartAudio) {
                 window.__tempoSyncStartAudio();
               }
-              onStart();
+              onStart(songSec);
             }}
             className="group transition-all duration-300 relative overflow-hidden begin-button"
             style={{
@@ -1130,6 +1136,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const getPatternForCycle = useBreathBenchmarkStore(s => s.getPatternForCycle);
   const calculateTotalCycles = useBreathBenchmarkStore(s => s.calculateTotalCycles);
   const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
+  const hasSong = useTempoAudioStore((s) => s.hasSong);
+  const isSongPlaying = useTempoAudioStore((s) => s.isPlaying);
   
   // Tempo sync state for music-synced breathing
   const tempoSyncEnabled = useTempoSyncStore(s => s.enabled);
@@ -1364,6 +1372,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setTimeLeft(duration * 60);
     }
   }, [duration, isRunning]);
+
+  useEffect(() => {
+    if (!isRunning && hasSong && isSongPlaying) {
+      useTempoAudioStore.getState().stop("practice-end");
+    }
+  }, [isRunning, hasSong, isSongPlaying]);
+
+  useEffect(() => {
+    return () => {
+      const st = useTempoAudioStore.getState();
+      if (st.hasSong && st.isPlaying) st.stop("practice-unmount");
+    };
+  }, []);
 
   useEffect(() => {
     let animationId;
@@ -1831,11 +1852,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     // Start audio playback if tempo sync is enabled and breath practice
     if (practiceId === "breath" && tempoSyncEnabled) {
-      // Trigger audio playback through tempo sync store event
-      console.log('[PracticeSection] Dispatching tempo-sync-start-audio event');
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('tempo-sync-start-audio'));
-      }, 100);
+      console.log('[PracticeSection] Starting tempo sync audio via window.__tempoSyncStartAudio');
+      if (window.__tempoSyncStartAudio) {
+        window.__tempoSyncStartAudio();
+      } else {
+        // Fallback: call store directly
+        useTempoAudioStore.getState().start("begin-practice-fallback");
+      }
     }
 
     const p = practiceId;
@@ -1852,11 +1875,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     );
   };
 
-  const handleStart = () => {
+  const handleStart = (durationOverrideSec = null) => {
     // Special handling for Photic practice
     if (practiceId === "photic") {
       onOpenPhotic?.();
       return;
+    }
+
+    if (Number.isFinite(durationOverrideSec) && durationOverrideSec > 0) {
+      setDuration(durationOverrideSec / 60);
+      setTimeLeft(durationOverrideSec);
     }
 
     setIsStarting(true);

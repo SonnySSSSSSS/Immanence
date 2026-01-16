@@ -11,7 +11,6 @@ import { EnsoStroke } from "./EnsoStroke";
 import { useTheme } from "../context/ThemeContext";
 import { PathParticles } from "./PathParticles.jsx";
 import { useDisplayModeStore } from '../state/displayModeStore.js';
-import { calculateRhythmFrequency, rhythmOscillation, applyRhythmModulation } from '../utils/rhythmUtils.js';
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 
 export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5 }) {
@@ -33,9 +32,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const [mandalaProgress, setMandalaProgress] = useState(0);
   const lastCycleRef = useRef(0);
   
-  // Rhythm pulsing state
-  const rhythmFreqRef = useRef(calculateRhythmFrequency(total));
-  const animationTimeRef = useRef(0); // Accumulated animation time for rhythm
 
   // Enso feedback state
   const [ensoFeedback, setEnsoFeedback] = useState({
@@ -92,15 +88,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     scale = minScale;
   }
 
-  // Add rhythm micro-pulse (±5% amplitude, gated by phase)
-  const rhythmOsc = rhythmOscillation(animationTimeRef.current, rhythmFreqRef.current, 1.0);
-  const currentPhaseString = progress < tInhale ? 'inhale' : 
-                              progress < tHoldTop ? 'hold' : 
-                              progress < tExhale ? 'exhale' : 'rest';
-  scale = applyRhythmModulation(scale, rhythmOsc, currentPhaseString, { 
-    maxAmplitude: 0.05,  // Conservative ±5% on scale
-    holdGateFactor: 0.35 
-  });
 
   // Trigger echo visual effect
   const triggerEcho = () => {
@@ -180,9 +167,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       const t = (elapsed % cycleMs) / cycleMs;
       setProgress(t);
       
-      // Track animation time for rhythm calculations
-      animationTimeRef.current = elapsed / 1000; // Convert to seconds
-      
       frameId = requestAnimationFrame(loop);
     };
 
@@ -191,11 +175,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       if (frameId) cancelAnimationFrame(frameId);
     };
   }, [total, startTime]); // Re-sync when startTime changes
-
-  // Update rhythm frequency when cycle duration changes
-  useEffect(() => {
-    rhythmFreqRef.current = calculateRhythmFrequency(total);
-  }, [total]);
 
   // Remove echo after animation completes
   useEffect(() => {
@@ -263,18 +242,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     onTap(errorMs);
   };
 
-  // Helper: Calculate glow blur value with rhythm modulation
-  const getGlowBlurWithRhythm = (baseBlur) => {
-    const rhythmOsc = rhythmOscillation(animationTimeRef.current, rhythmFreqRef.current, 1.0);
-    const currentPhaseString = progress < tInhale ? 'inhale' : 
-                                progress < tHoldTop ? 'hold' : 
-                                progress < tExhale ? 'exhale' : 'rest';
-    return applyRhythmModulation(baseBlur, rhythmOsc, currentPhaseString, {
-      maxAmplitude: 0.08,  // ±8% modulation on blur
-      holdGateFactor: 0.35
-    });
-  };
-
   // Helper: Compute all glow blur layers with rhythm for current phase
   const computeGlowLayers = () => {
     let b1 = 8, b2 = 16, b3 = 24, b4 = 32;
@@ -302,12 +269,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       b3 = 24;
       b4 = 32;
     }
-    
-    // Apply rhythm modulation to each layer
-    b1 = getGlowBlurWithRhythm(b1);
-    b2 = getGlowBlurWithRhythm(b2);
-    b3 = getGlowBlurWithRhythm(b3);
-    b4 = getGlowBlurWithRhythm(b4);
     
     return { b1, b2, b3, b4 };
   };

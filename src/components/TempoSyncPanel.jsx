@@ -43,6 +43,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const resetDetection = useTempoSyncStore(s => s.resetDetection);
   const hasSong = useTempoAudioStore(s => s.hasSong);
   const songName = useTempoAudioStore(s => s.songName);
+  const songDurationSec = useTempoAudioStore(s => s.songDurationSec);
   const benchmark = useBreathBenchmarkStore(s => s.benchmark);
   const hasBenchmark = Boolean(
     benchmark &&
@@ -58,7 +59,6 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     initializeAudioContext,
     startDetection,
     playAudio,
-    resumeAudio,
     pauseAudio,
     stopAudio,
     getAudioElement,
@@ -107,6 +107,15 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   }, [getAudioElement]);
 
   useEffect(() => {
+    if (Number.isFinite(songDurationSec)) {
+      setDuration(songDurationSec);
+    } else if (!hasSong) {
+      setDuration(0);
+      setCurrentTime(0);
+    }
+  }, [songDurationSec, hasSong]);
+
+  useEffect(() => {
     window.__tempoSyncStartAudio = () => {
       useTempoAudioStore.getState().start("begin-practice-click");
     };
@@ -152,11 +161,11 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     }
 
     try {
-      useTempoAudioStore.getState().loadSongFile(file);
       setFileName(file.name);
       setLoopA(0);
       setLoopB(null);
       setIsLooping(false);
+      useTempoAudioStore.getState().loadSongFile(file);
       
       // Set up time tracking
       const audio = getAudioElement();
@@ -823,106 +832,113 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
               opacity: hasSong ? 1 : 0.5,
             }}
           >
-            CLEAR SONG
+            Clear Song
           </button>
 
           {/* Audio File Info & Controls */}
-          {duration > 0 && (
-            <div style={{ padding: '12px', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {/* File Name */}
-              <div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>📄 File</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-primary)', wordBreak: 'break-all', fontWeight: 500, letterSpacing: '0.03em' }}>
-                  {songName || fileName}
-                </div>
+          <div style={{ padding: '12px', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* File Name */}
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>?? File</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-primary)', wordBreak: 'break-all', fontWeight: 500, letterSpacing: '0.03em' }}>
+                {songName || 'No song loaded'}
               </div>
-
-              {/* Progress Scrubber */}
-              <div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>⏱ Progress</span>
-                  <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+              {Number.isFinite(songDurationSec) && (
+                <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '4px', letterSpacing: '0.05em' }}>
+                  Duration: {formatTime(songDurationSec)}
                 </div>
-                <div
-                  onClick={handleSeek}
-                  style={{
-                    height: '6px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '3px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    position: 'relative',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
-                      backgroundColor: 'var(--accent-primary)',
-                      transition: isPlaying ? 'none' : 'width 0.2s ease',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* A/B Loop Controls */}
-              <div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>🔁 A/B Loop</span>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '9px' }}>
-                    <input
-                      type="checkbox"
-                      checked={isLooping}
-                      onChange={(e) => setIsLooping(e.target.checked)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    Active
-                  </label>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  <button
-                    onClick={handleSetLoopA}
-                    style={{
-                      padding: '6px',
-                      backgroundColor: loopA !== 0 ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                      border: loopA !== 0 ? '1px solid rgba(74, 222, 128, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '4px',
-                      color: 'var(--text-primary)',
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      letterSpacing: '0.05em',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    A: {formatTime(loopA)}
-                  </button>
-                  <button
-                    onClick={handleSetLoopB}
-                    style={{
-                      padding: '6px',
-                      backgroundColor: loopB !== null ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                      border: loopB !== null ? '1px solid rgba(74, 222, 128, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '4px',
-                      color: 'var(--text-primary)',
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      letterSpacing: '0.05em',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    B: {loopB !== null ? formatTime(loopB) : '—'}
-                  </button>
-                </div>
-                {loopB !== null && (
-                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'center', letterSpacing: '0.03em' }}>
-                    Loop range: {formatTime(loopB - loopA)}
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          )}
+
+            {hasSong && (
+              <>
+                {/* Progress Scrubber */}
+                <div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>? Progress</span>
+                    <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+                  </div>
+                  <div
+                    onClick={handleSeek}
+                    style={{
+                      height: '6px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '3px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      position: 'relative',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+                        backgroundColor: 'var(--accent-primary)',
+                        transition: isPlaying ? 'none' : 'width 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* A/B Loop Controls */}
+                <div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>?? A/B Loop</span>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '9px' }}>
+                      <input
+                        type="checkbox"
+                        checked={isLooping}
+                        onChange={(e) => setIsLooping(e.target.checked)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      Active
+                    </label>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                    <button
+                      onClick={handleSetLoopA}
+                      style={{
+                        padding: '6px',
+                        backgroundColor: loopA !== 0 ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: loopA !== 0 ? '1px solid rgba(74, 222, 128, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '4px',
+                        color: 'var(--text-primary)',
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        letterSpacing: '0.05em',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      A: {formatTime(loopA)}
+                    </button>
+                    <button
+                      onClick={handleSetLoopB}
+                      style={{
+                        padding: '6px',
+                        backgroundColor: loopB !== null ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: loopB !== null ? '1px solid rgba(74, 222, 128, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '4px',
+                        color: 'var(--text-primary)',
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        letterSpacing: '0.05em',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      B: {loopB !== null ? formatTime(loopB) : '-'}
+                    </button>
+                  </div>
+                  {loopB !== null && (
+                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'center', letterSpacing: '0.03em' }}>
+                      Loop range: {formatTime(loopB - loopA)}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 

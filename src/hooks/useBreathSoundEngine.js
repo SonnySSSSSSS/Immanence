@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSettingsStore } from '../state/settingsStore';
+import { useTempoAudioStore } from '../state/tempoAudioStore.js';
 
 /**
  * useBreathSoundEngine - Web Audio API breath sound generator
@@ -224,6 +225,12 @@ export function useBreathSoundEngine({ phase, pattern, isRunning, _progress }) {
         // Only trigger on phase change
         if (phase === currentPhaseRef.current) return;
         currentPhaseRef.current = phase;
+
+        const { hasSong, isPlaying } = useTempoAudioStore.getState();
+        if (hasSong && isPlaying) {
+            stopAllSounds();
+            return;
+        }
 
         // Resume context if suspended
         if (audioContextRef.current?.state === 'suspended') {
