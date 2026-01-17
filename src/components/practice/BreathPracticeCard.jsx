@@ -6,6 +6,8 @@ import BreathWaveform from "../BreathWaveform.jsx";
 function BreathPracticeCard({
   practiceId,
   label,
+  breathSubmode,
+  onBreathSubmodeChange,
   pattern,
   onPatternChange,
   onRunBenchmark,
@@ -49,6 +51,38 @@ function BreathPracticeCard({
         }}>
           {label}
         </h2>
+
+        {practiceId === 'breath' && (
+          <div className="flex items-center gap-2" style={{ marginTop: '10px' }}>
+            {[
+              { id: 'breath', label: 'Breath' },
+              { id: 'stillness', label: 'Stillness' }
+            ].map((item) => {
+              const isActive = breathSubmode === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onBreathSubmodeChange?.(item.id)}
+                  className="px-3 py-1 rounded-full transition-all"
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                    background: isActive ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                    border: isActive ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
+                    boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none'
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Dynamic Config Panel */}
@@ -124,39 +158,41 @@ function BreathPracticeCard({
           </div>
 
           {/* Benchmark Button */}
-          <div className="flex justify-center" style={{ marginBottom: '16px' }}>
-            <button
-              onClick={onRunBenchmark}
-              className="benchmark-button"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '9px',
-                fontWeight: 600,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                background: 'rgba(212, 175, 55, 0.08)',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
-                color: 'rgba(212, 175, 55, 0.9)',
-                cursor: 'pointer',
-                transition: 'all 200ms',
-                boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
-                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
-                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
-              }}
-            >
-              ?? Measure Capacity
-            </button>
-          </div>
+          {breathSubmode === 'breath' && (
+            <div className="flex justify-center" style={{ marginBottom: '16px' }}>
+              <button
+                onClick={onRunBenchmark}
+                className="benchmark-button"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  color: 'rgba(212, 175, 55, 0.9)',
+                  cursor: 'pointer',
+                  transition: 'all 200ms',
+                  boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
+                }}
+              >
+                ?? Measure Capacity
+              </button>
+            </div>
+          )}
 
           <style>{`
             .breath-input::-webkit-inner-spin-button,
@@ -229,9 +265,10 @@ function BreathPracticeCard({
       )}
 
       {/* Collapsible Tempo Sync Section (Breath Practice Only) */}
-      <div style={{ marginBottom: '24px' }}>
-        <button
-          onClick={onToggleTempoSync}
+      {breathSubmode === 'breath' && (
+        <div style={{ marginBottom: '24px' }}>
+          <button
+            onClick={onToggleTempoSync}
           style={{
             width: '100%',
             padding: '12px 16px',
@@ -272,19 +309,20 @@ function BreathPracticeCard({
           {tempoSyncSlot}
         </div>
         
-        <style>{`
-          @keyframes slideDown {
-            from {
-              opacity: 0;
-              transform: translateY(-10px);
+          <style>{`
+            @keyframes slideDown {
+              from {
+                opacity: 0;
+                transform: translateY(-10px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
             }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}</style>
-      </div>
+          `}</style>
+        </div>
+      )}
 
       {/* Start Button - Sacred Portal with Ember Theme */}
       {!(practiceId === 'ritual') && (

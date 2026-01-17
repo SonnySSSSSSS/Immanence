@@ -445,7 +445,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
   );
 }
 
-function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark }) {
+function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark, onDisableBenchmark }) {
   const cardRef = useRef(null);
   const p = PRACTICE_REGISTRY[practiceId];
   const practice = p?.label;
@@ -455,6 +455,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
+  const [breathSubmode, setBreathSubmode] = useState("breath");
   const label = p?.label;
   const pattern = setters?.pattern;
   const onPatternChange = setters?.setPattern;
@@ -474,6 +475,21 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   useEffect(() => {
     setShowTrajectory(false);
   }, [practiceId]);
+
+  useEffect(() => {
+    if (practiceId !== 'breath' && breathSubmode !== 'breath') {
+      setBreathSubmode('breath');
+    }
+  }, [practiceId, breathSubmode]);
+
+  useEffect(() => {
+    if (practiceId !== 'breath' || breathSubmode !== 'stillness') return;
+    setShowTempoSync(false);
+    useTempoSyncStore.getState().setEnabled(false);
+    useTempoSyncSessionStore.getState().endSession();
+    useTempoAudioStore.getState().stop("stillness-submode");
+    onDisableBenchmark?.();
+  }, [practiceId, breathSubmode, onDisableBenchmark]);
 
   // Intentional Reveal Logic: Scroll into view when expanded
   useEffect(() => {
@@ -597,6 +613,8 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
           <BreathPracticeCard
             practiceId={practiceId}
             label={label}
+            breathSubmode={breathSubmode}
+            onBreathSubmodeChange={setBreathSubmode}
             pattern={pattern}
             onPatternChange={onPatternChange}
             onRunBenchmark={onRunBenchmark}
@@ -2159,6 +2177,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         tempoPhaseDuration={tempoPhaseDuration}
         tempoBeatsPerPhase={tempoBeatsPerPhase}
         onRunBenchmark={handleRunBenchmark}
+        onDisableBenchmark={() => setShowBreathBenchmark(false)}
       />
 
       <style>{`
