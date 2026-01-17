@@ -279,7 +279,7 @@ function ChapterModal({
         {/* Content - narrower column for better readability */}
         <div
           ref={contentRef}
-          className="flex-1 overflow-y-auto py-8 prose-content"
+          className="py-8 prose-content"
           style={{
             fontFamily: "var(--font-body)",
             fontSize: displayMode === 'hearth' ? '15px' : '17px',
@@ -1341,7 +1341,7 @@ export function WisdomSection() {
             {filteredChapters.length !== 1 ? "s" : ""} for "{searchQuery}"
           </div>
 
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          <div className="space-y-2">
             {filteredChapters.map((ch) => (
               <button
                 key={ch.id}
@@ -1414,7 +1414,7 @@ export function WisdomSection() {
         </div>
 
         {/* Parts Accordion */}
-        <div className="border border-[var(--accent-15)] rounded-2xl overflow-hidden max-h-[450px] overflow-y-auto">
+        <div className="border border-[var(--accent-15)] rounded-2xl">
           {treatiseParts.map((part) => {
             const chapters = getChaptersForPart(part.id, treatiseChapters);
             return (
@@ -1673,7 +1673,7 @@ export function WisdomSection() {
 
       <div className="w-full max-w-5xl mx-auto">
         <div
-          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-8 pb-9 space-y-5 relative overflow-hidden"
+          className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-8 pb-9 space-y-5 relative"
           style={{
             background: "rgba(20, 10, 15, 0.78)",
             borderRadius: "var(--radius-panel)",

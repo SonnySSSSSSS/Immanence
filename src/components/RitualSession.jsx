@@ -122,7 +122,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                     maxHeight: 'min(720px, calc(100dvh - 48px))'
                 }}
             >
-                <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar p-5 sm:p-8">
+                <div className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar p-5 sm:p-8">
                     {children}
                 </div>
             </div>
@@ -149,7 +149,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                         maxHeight: 'min(720px, calc(100dvh - 48px))'
                     }}
                 >
-                    <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar p-5 sm:p-8 text-center items-center justify-center">
+                    <div className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar p-5 sm:p-8 text-center items-center justify-center">
                         <div className="flex items-center justify-center text-5xl sm:text-7xl mb-2" style={{ color: 'var(--accent-color)' }}>
                             {ritual.iconName ? <Icon name={ritual.iconName} size={window.innerWidth < 480 ? 56 : 72} /> : ritual.icon}
                         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSettingsStore } from '../state/settingsStore';
 import { useTempoAudioStore } from '../state/tempoAudioStore.js';
+import { useTempoSyncStore } from '../state/tempoSyncStore.js';
 
 /**
  * useBreathSoundEngine - Web Audio API breath sound generator
@@ -226,8 +227,11 @@ export function useBreathSoundEngine({ phase, pattern, isRunning, _progress }) {
         if (phase === currentPhaseRef.current) return;
         currentPhaseRef.current = phase;
 
-        const { hasSong, isPlaying } = useTempoAudioStore.getState();
-        if (hasSong && isPlaying) {
+        // Don't play breath sounds when tempo sync is enabled with a song loaded
+        // The song provides the rhythm instead of synthesized breath sounds
+        const { hasSong } = useTempoAudioStore.getState();
+        const { enabled: tempoSyncEnabled } = useTempoSyncStore.getState();
+        if (tempoSyncEnabled && hasSong) {
             stopAllSounds();
             return;
         }

@@ -94,7 +94,7 @@ export function WelcomeScreen({ onDismiss }) {
                             style={{ animation: 'fadeIn 400ms ease-out' }}
                         >
                             {/* Layer 2 - The Philosophy */}
-                            <div className="space-y-5 max-h-[70vh] overflow-y-auto px-4 custom-scrollbar">
+                            <div className="space-y-5 max-h-[70vh] overflow-y-auto px-4 no-scrollbar">
                                 <p className="text-[15px] leading-relaxed" style={{ color: 'rgba(253,251,245,0.8)' }}>
                                     Do you know the saying <span style={{ color: 'var(--accent-color)' }}>"Beware your thoughts → actions → character → destiny"</span>?
                                 </p>

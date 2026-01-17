@@ -174,7 +174,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
         if (onboardingComplete) {
             const ritual = getRitualData();
             return (
-                <div className="w-full h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 text-center animate-in fade-in zoom-in duration-500 overflow-y-auto">
+                <div className="w-full h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 text-center animate-in fade-in zoom-in duration-500 overflow-y-auto no-scrollbar">
                     <div className="w-full max-w-lg flex flex-col gap-4 sm:gap-5 py-8 sm:py-12">
                         {/* Icon */}
                         <div className="flex items-center justify-center text-4xl sm:text-5xl mb-1" style={{ color: 'var(--accent-color)' }}>
@@ -265,7 +265,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
                                 <PillButton onClick={handleAddThought} disabled={!currentInput.trim() || thoughts.length >= 8}>Add</PillButton>
                             </div>
                             
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 no-scrollbar">
                                 {thoughts.map((t, i) => (
                                     <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
                                         <span className="text-sm italic">"{t.text}"</span>
@@ -291,7 +291,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
                             <p className="text-[clamp(11px,3.2vw,13px)] opacity-70 text-center">Mark 1-2 thoughts as "priority" to appear more frequently.</p>
                         </div>
 
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 no-scrollbar">
                             {thoughts.map((t, i) => (
                                 <button
                                     key={i}
@@ -411,7 +411,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
                                 </div>
                             )}
 
-                            <div className="flex-1 flex flex-col relative overflow-y-auto custom-scrollbar pt-14 min-h-0 rounded-[2.5rem]">
+                            <div className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar pt-14 min-h-0 rounded-[2.5rem]">
                                 {renderContent()}
                             </div>
                         </div>

@@ -254,7 +254,7 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
             </p>
 
             {/* Time Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto no-scrollbar\">
                 {TIME_OPTIONS.map(option => {
                     const isSelected = selectedTimes.includes(option.value);
                     return (

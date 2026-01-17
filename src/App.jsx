@@ -58,7 +58,7 @@ function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExp
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
+    <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       {showAvatar && (
           <div 
             className="w-full relative z-20 flex flex-col items-center"
@@ -93,7 +93,7 @@ function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExp
         </div>
       )}
 
-      <div className="w-full flex-1 relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
+      <div className="w-full relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} onOpenPhotic={onOpenPhotic} />}
 
         {section === "wisdom" && (
@@ -344,15 +344,13 @@ function App() {
             width: '100%',
             maxWidth: '430px',
             boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
-            height: '100dvh',
-            overflow: 'hidden',
+            overflowX: 'hidden',
+            overflowY: 'visible',
           }}
         >
           <Background stage={previewStage} />
 
-          <div className={displayMode === 'hearth'
-            ? 'relative z-10 w-full h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide'
-            : 'relative z-10 w-full flex-1 flex flex-col overflow-visible'}>
+          <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible'>
             {/* Fixed Dark Header Bar */}
             <header
               className="sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500"
@@ -396,7 +394,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.23.86
+                        v3.23.93
                     </div>
                   </div>
 

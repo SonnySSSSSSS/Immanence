@@ -469,7 +469,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                     </div>
 
                     {/* Body - THE ONLY SCROLL CONTAINER */}
-                    <div className="flex-1 min-h-0 overflow-y-auto">
+                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar\">
                       <CurriculumHub onClose={() => setShowCurriculumHub(false)} isInModal />
                     </div>
                   </div>

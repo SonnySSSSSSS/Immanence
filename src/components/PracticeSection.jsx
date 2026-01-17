@@ -20,10 +20,8 @@ import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
-import { useSessionInstrumentation } from "../hooks/useSessionInstrumentation.js";
-import { recordPracticeSession } from '../services/sessionRecorder.js';
+import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
 import { useCurriculumStore } from '../state/curriculumStore.js';
-import { logCircuitCompletion } from '../services/circuitManager.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
@@ -37,15 +35,18 @@ import { useTempoAudioStore } from "../state/tempoAudioStore.js";
 import { BreathPhaseIndicator } from "./BreathPhaseIndicator.jsx";
 import { BreathPathChart } from "./BreathPathChart.jsx";
 import { BreathWaveVisualization } from "./BreathWaveVisualization.jsx";
-import BreathWaveform from "./BreathWaveform.jsx";
-import { TrajectoryCard } from "./TrajectoryCard.jsx";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 import { useBreathBenchmarkStore } from "../state/breathBenchmarkStore.js";
 import { useTempoSyncStore } from "../state/tempoSyncStore.js";
 import { useTempoSyncSessionStore } from "../state/tempoSyncSessionStore.js";
 import { TempoSyncPanel } from "./TempoSyncPanel.jsx";
 import { TempoSyncSessionPanel } from "./TempoSyncSessionPanel.jsx";
-import { quantizePatternToMusicStrict } from "../utils/quantizePatternToMusic.js";
+import { useBreathSessionState } from "./practice/useBreathSessionState.js";
+import PracticeSectionShell from "./practice/PracticeSectionShell.jsx";
+import PracticeHeader from "./practice/PracticeHeader.jsx";
+import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
+import { SessionControls } from "./practice/SessionControls.jsx";
+import PracticeMenu from "./practice/PracticeMenu.jsx";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -451,10 +452,24 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   const isCollapsed = !practiceId;
   const viewportMode = useDisplayModeStore(s => s.viewportMode);
   const isSanctuary = viewportMode === 'sanctuary';
-  const maxHeightValue = isSanctuary ? '75vh' : '65vh';
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
+  const label = p?.label;
+  const pattern = setters?.pattern;
+  const onPatternChange = setters?.setPattern;
+  const durationOptions = DURATIONS;
+  const supportsDuration = p?.supportsDuration;
+  const onToggleTrajectory = () => setShowTrajectory(v => !v);
+  const menuTitleContainerMarginBottom = practiceId === 'breath' ? '16px' : '24px';
+  const menuTitleTextMarginBottom = practiceId === 'breath' ? '8px' : '0';
+  const menuConfigPanelMarginBottom = practiceId === 'breath' ? '16px' : '32px';
+  const menuShowRitualSubtitle = p?.id === 'ritual';
+  const menuShowDuration = p?.supportsDuration && practiceId !== 'circuit';
+  const menuDurationMarginBottom = practiceId === 'breath' ? '24px' : '40px';
+  const menuDurationTitleMarginBottom = practiceId === 'breath' ? '16px' : '24px';
+  const menuShowStartButton = practiceId !== 'ritual';
+  const menuStartButtonLabel = practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice';
 
   useEffect(() => {
     setShowTrajectory(false);
@@ -471,17 +486,31 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     }
   }, [practiceId, hasExpandedOnce]);
 
+  const handleBeginPractice = () => {
+    const tempoEnabled = useTempoSyncStore.getState().enabled;
+    const st = useTempoAudioStore.getState();
+
+    // Only use song duration if tempo sync is enabled AND a song is loaded
+    const songSec =
+      tempoEnabled && st.hasSong && st.songDurationSec
+        ? Math.max(5, Math.floor(st.songDurationSec - 2))
+        : null;
+
+    // Audio will be started by executeStart via window.__tempoSyncStartAudio
+    onStart(songSec);
+  };
+  const tempoSyncSlot = <TempoSyncPanel isPracticing={isRunning} />;
+
   return (
     <div
       ref={cardRef}
-      className={`relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
+      className={`relative w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5] overflow-hidden' : 'opacity-100 overflow-visible'}`}
       style={{
         maxWidth: isSanctuary ? '656px' : '560px',
         margin: '0 auto',
         paddingLeft: '16px',
         paddingRight: '16px',
-        maxHeight: isCollapsed ? '88px' : maxHeightValue,
-        overflow: isCollapsed ? 'hidden' : 'auto',
+        maxHeight: isCollapsed ? '88px' : 'none',
         zIndex: 1,
       }}
     >
@@ -564,422 +593,51 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
           </span>
         </div>
       ) : (
-        <div 
-          key={practiceId} 
-          className="relative px-8 animate-in fade-in duration-300"
-        >
-          {/* Practice Title & Icon */}
-          <div className="flex flex-col items-center text-center" style={{ marginTop: '20px', marginBottom: practiceId === 'breath' ? '16px' : '24px' }}>
-            {/* Small decorative star */}
-            <div
-              style={{
-                fontSize: '18px',
-                color: '#D4AF37',
-                textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
-                marginBottom: '16px'
-              }}
-            >
-              ✦
-            </div>
-            
-            {/* Title with proper typography */}
-            <h2 style={{ 
-              fontFamily: 'var(--font-display)', 
-              fontSize: '16px', 
-              fontWeight: 600,
-              letterSpacing: '0.12em', 
-              textTransform: 'uppercase',
-              color: '#F5E6D3',
-              marginBottom: practiceId === 'breath' ? '8px' : '0'
-            }}>
-              {p.label}
-            </h2>
-            
-            {/* Inline subtitle for breath intentionally removed (redundant with inputs below) */}
-            {p.id === 'ritual' && (
-              <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
-                Select an invocation to begin
-              </p>
-            )}
-          </div>
-
-          {/* Dynamic Config Panel */}
-          <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
-             {practiceId === 'breath' ? (
-               <>
-                 <div 
-                   className="breath-wave-glow"
-                   style={{
-                     background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
-                     backdropFilter: 'blur(32px) saturate(160%)',
-                     WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-                     borderRadius: '16px',
-                     padding: '20px',
-                     border: '1px solid rgba(212, 175, 55, 0.25)',
-                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-                   }}
-                 >
-                   <BreathWaveform pattern={setters.pattern} />
-                 </div>
-
-                 {/* Breath Phase Input Controls */}
-                 <div
-                   className="flex justify-center gap-8"
-                   style={{ marginTop: '24px', marginBottom: '16px' }}
-                 >
-                   {[
-                     { label: 'INHALE', key: 'inhale', min: 1 },
-                     { label: 'HOLD 1', key: 'hold1', min: 0 },
-                     { label: 'EXHALE', key: 'exhale', min: 1 },
-                     { label: 'HOLD 2', key: 'hold2', min: 0 }
-                   ].map((phase) => (
-                     <div key={phase.key} className="flex flex-col items-center">
-                       <label
-                         style={{
-                           fontSize: '9px',
-                           letterSpacing: '0.12em',
-                           color: 'rgba(255,255,255,0.4)',
-                           marginBottom: '8px',
-                           fontFamily: 'var(--font-display)',
-                           fontWeight: 600,
-                           textTransform: 'uppercase'
-                         }}
-                       >
-                         {phase.label}
-                       </label>
-                       <input
-                         type="number"
-                         min={phase.min}
-                         max="60"
-                         value={setters.pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
-                         onChange={(e) => {
-                           const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
-                           setters.setPattern?.((prev) => ({ ...prev, [phase.key]: val }));
-                         }}
-                         className="breath-input"
-                         style={{
-                           background: 'rgba(255,255,255,0.03)',
-                           border: '1px solid rgba(255,255,255,0.1)',
-                           borderRadius: '6px',
-                           padding: '6px 0',
-                           width: '44px',
-                           color: 'var(--accent-color)',
-                           textAlign: 'center',
-                           fontSize: '18px',
-                           fontWeight: 700,
-                           fontFamily: 'var(--font-display)',
-                           outline: 'none',
-                           transition: 'all 200ms'
-                         }}
-                       />
-                     </div>
-                   ))}
-                 </div>
-
-                 {/* Benchmark Button */}
-                 <div className="flex justify-center" style={{ marginBottom: '16px' }}>
-                   <button
-                     onClick={onRunBenchmark}
-                     className="benchmark-button"
-                     style={{
-                       fontFamily: 'var(--font-display)',
-                       fontSize: '9px',
-                       fontWeight: 600,
-                       letterSpacing: '0.12em',
-                       textTransform: 'uppercase',
-                       padding: '8px 16px',
-                       borderRadius: '8px',
-                       background: 'rgba(212, 175, 55, 0.08)',
-                       border: '1px solid rgba(212, 175, 55, 0.3)',
-                       color: 'rgba(212, 175, 55, 0.9)',
-                       cursor: 'pointer',
-                       transition: 'all 200ms',
-                       boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
-                     }}
-                     onMouseEnter={(e) => {
-                       e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
-                       e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                       e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
-                     }}
-                     onMouseLeave={(e) => {
-                       e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
-                       e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                       e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
-                     }}
-                   >
-                     📊 Measure Capacity
-                   </button>
-                 </div>
-
-                 <style>{`
-                   .breath-input::-webkit-inner-spin-button,
-                   .breath-input::-webkit-outer-spin-button {
-                     -webkit-appearance: none;
-                     margin: 0;
-                   }
-                   .breath-input { -moz-appearance: textfield; }
-                   .breath-input:focus {
-                     border-color: rgba(212, 175, 55, 0.5);
-                     background: rgba(212, 175, 55, 0.05);
-                     box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
-                   }
-                   .breath-wave-glow {
-                     position: relative;
-                   }
-                   .breath-wave-glow::before {
-                     content: "";
-                     position: absolute;
-                     inset: -12px;
-                     background: radial-gradient(
-                       ellipse at center,
-                       rgba(233,195,90,0.25),
-                       rgba(233,195,90,0.12) 40%,
-                       rgba(233,195,90,0.04) 60%,
-                       transparent 70%
-                     );
-                     filter: blur(18px);
-                     pointer-events: none;
-                     z-index: 0;
-                     animation: breath-pulse-glow 8s infinite ease-in-out;
-                   }
-                   .breath-wave-glow > * {
-                     position: relative;
-                     z-index: 1;
-                   }
-                   @keyframes breath-pulse-glow {
-                     0%, 100% { opacity: 0.7; }
-                     50%      { opacity: 1; }
-                   }
-                   .practice-tab::before {
-                     content: '';
-                     position: absolute;
-                     inset: 0;
-                     border-radius: 16px;
-                     background: radial-gradient(circle at 50% 50%, rgba(233,195,90,0.3) 0%, transparent 70%);
-                     opacity: 0;
-                     transition: opacity 0.4s;
-                     pointer-events: none;
-                   }
-                   .practice-tab:hover::before {
-                     opacity: 0.6;
-                   }
-                 `}</style>
-               </>
-             ) : p.Config ? (
-               <p.Config 
-                 {...setters}
-                 isLight={tokens.isLight}
-                 selectedRitualId={setters.selectedRitualId}
-               />
-             ) : (
-               <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
-                 No additional configuration required
-               </div>
-             )}
-          </div>
-
-          {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
-          {p.supportsDuration && practiceId !== 'circuit' && (
-            <div style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}>
-              <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-                Sacred Duration (minutes)
-              </div>
-              <SacredTimeSlider 
-                value={duration} 
-                onChange={onDurationChange} 
-                options={DURATIONS} 
-              />
-            </div>
-          )}
-
-          {/* Collapsible Tempo Sync Section (Breath Practice Only) */}
-          {practiceId === 'breath' && (
-            <div style={{ marginBottom: '24px' }}>
-              <button
-                onClick={() => setShowTempoSync(!showTempoSync)}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  backgroundColor: showTempoSync ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(74, 222, 128, 0.2)',
-                  borderRadius: '10px',
-                  color: 'var(--text-secondary)',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.3s ease',
-                  fontFamily: 'var(--font-display)',
-                  textTransform: 'uppercase',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = showTempoSync ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255, 255, 255, 0.03)';
-                  e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.2)';
-                }}
-              >
-                <span>🎵 Tempo Sync</span>
-                <span style={{ transform: showTempoSync ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>▼</span>
-              </button>
-              
-              <div
-                style={{
-                  marginTop: '8px',
-                  display: showTempoSync ? 'block' : 'none',
-                }}
-              >
-                <TempoSyncPanel isPracticing={isRunning} />
-              </div>
-              
-              <style>{`
-                @keyframes slideDown {
-                  from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                  }
-                  to {
-                    opacity: 1;
-                    transform: translateY(0);
-                  }
-                }
-              `}</style>
-            </div>
-          )}
-
-          {/* Start Button - Sacred Portal with Ember Theme */}
-          {!(practiceId === 'ritual') && (
-            <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
-          <button
-            onClick={() => {
-              const st = useTempoAudioStore.getState();
-              const songSec =
-                st.hasSong && st.songDurationSec
-                  ? Math.max(5, Math.floor(st.songDurationSec - 2))
-                  : null;
-              if (window.__tempoSyncStartAudio) {
-                window.__tempoSyncStartAudio();
-              }
-              onStart(songSec);
-            }}
-            className="group transition-all duration-300 relative overflow-hidden begin-button"
-            style={{
-                   width: '100%',
-                   maxWidth: '400px',
-                   fontFamily: 'var(--font-display)',
-                   fontSize: '12px',
-                   fontWeight: 700,
-                   letterSpacing: '0.15em',
-                   textTransform: 'uppercase',
-                   padding: '18px 52px',
-                   borderRadius: '60px',
-                   background: 'var(--ui-button-gradient, linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)))',
-                   color: '#0a0a0a',
-                   textShadow: '0 0 10px var(--accent-color)',
-                   boxShadow: `
-                     0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
-                     inset 0 0 30px rgba(255, 255, 255, 0.25),
-                     0 8px 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55)
-                   `,
-                   transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                   position: 'relative',
-                }}
-                onMouseEnter={(e) => { 
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.boxShadow = `
-                    0 0 100px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 1),
-                    inset 0 0 35px rgba(255, 255, 255, 0.35),
-                    0 12px 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.75)
-                  `;
-                }}
-                onMouseLeave={(e) => { 
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = `
-                    0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
-                    inset 0 0 30px rgba(255, 255, 255, 0.25),
-                    0 8px 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55)
-                  `;
-                }}
-              >
-                {/* Radial glow backdrop with fiery pulse */}
-                <div
-                  className="portal-glow"
-                  style={{
-                    position: 'absolute',
-                    inset: '-4px',
-                    background: 'radial-gradient(circle at center, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.6) 0%, transparent 70%)',
-                    opacity: 0.7,
-                    filter: 'blur(15px)',
-                    zIndex: -1,
-                    animation: 'portal-pulse 3s infinite ease-in-out',
-                  }}
-                />
-                {/* Ripple effect on hover */}
-                <div
-                  className="portal-ripple"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    borderRadius: '60px',
-                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
-                    opacity: 0,
-                    transform: 'scale(0.5)',
-                    transition: 'all 0.6s ease-out',
-                    pointerEvents: 'none',
-                  }}
-                />
-                <span className="relative z-10">{practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice'}</span>
-              </button>
-              <style>{`
-                @keyframes portal-pulse {
-                  0%, 100% { opacity: 0.7; transform: scale(1); }
-                  50% { opacity: 1; transform: scale(1.05); }
-                }
-                .begin-button:hover .portal-ripple {
-                  opacity: 1 !important;
-                  transform: scale(1.1) !important;
-                }
-              `}</style>
-
-              {practiceId === 'breath' && (
-                <div className="w-full" style={{ maxWidth: '430px', marginTop: '14px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowTrajectory(v => !v)}
-                    className="w-full text-[9px] font-black uppercase tracking-[0.35em] transition-opacity"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      color: 'rgba(253, 251, 245, 0.85)',
-                      opacity: showTrajectory ? 0.95 : 0.55,
-                      padding: '10px 12px',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      background: 'rgba(10, 12, 18, 0.35)',
-                      backdropFilter: 'blur(18px)',
-                      WebkitBackdropFilter: 'blur(18px)',
-                    }}
-                  >
-                    {showTrajectory ? 'Hide Trajectory' : 'Show Trajectory'}
-                  </button>
-
-                  {showTrajectory && (
-                    <div style={{ marginTop: '12px' }}>
-                      <TrajectoryCard onTap={() => onOpenTrajectory?.()} />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+        practiceId === 'breath' ? (
+          <BreathPracticeCard
+            practiceId={practiceId}
+            label={label}
+            pattern={pattern}
+            onPatternChange={onPatternChange}
+            onRunBenchmark={onRunBenchmark}
+            duration={duration}
+            onDurationChange={onDurationChange}
+            durationOptions={durationOptions}
+            supportsDuration={supportsDuration}
+            showTempoSync={showTempoSync}
+            onToggleTempoSync={() => setShowTempoSync(!showTempoSync)}
+            tempoSyncSlot={tempoSyncSlot}
+            onStart={handleBeginPractice}
+            showTrajectory={showTrajectory}
+            onToggleTrajectory={onToggleTrajectory}
+            onOpenTrajectory={onOpenTrajectory}
+          />
+        ) : (
+          <PracticeMenu
+            containerKey={practiceId}
+            label={label}
+            showRitualSubtitle={menuShowRitualSubtitle}
+            ritualSubtitleText="Select an invocation to begin"
+            titleContainerMarginBottom={menuTitleContainerMarginBottom}
+            titleTextMarginBottom={menuTitleTextMarginBottom}
+            configPanelMarginBottom={menuConfigPanelMarginBottom}
+            ConfigComponent={p.Config}
+            setters={setters}
+            isLight={tokens.isLight}
+            selectedRitualId={setters.selectedRitualId}
+            showDuration={menuShowDuration}
+            duration={duration}
+            onDurationChange={onDurationChange}
+            durationOptions={durationOptions}
+            durationMarginBottom={menuDurationMarginBottom}
+            durationTitleMarginBottom={menuDurationTitleMarginBottom}
+            showStartButton={menuShowStartButton}
+            onStart={handleBeginPractice}
+            startButtonLabel={menuStartButtonLabel}
+          />
+        ))}
         </div>
-      )}
       </div>
-    </div>
   );
 }
 
@@ -1115,12 +773,13 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
 }
 
 export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic }) {
-  useEffect(() => {
-    console.log("[PracticeSection] mounted");
-    return () => console.log("[PracticeSection] unmounted");
-  }, []);
-
-  const instrumentation = useSessionInstrumentation();
+  const {
+    startSession,
+    endSession,
+    recordAliveSignal,
+    recordSession,
+    logCircuitCompletionEvent,
+  } = usePracticeSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const viewportMode = useDisplayModeStore(s => s.viewportMode);
@@ -1520,13 +1179,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setIsRunning(false);
     onPracticingChange && onPracticingChange(false);
 
-    logCircuitCompletion('custom', circuitConfig.exercises);
+    logCircuitCompletionEvent('custom', circuitConfig.exercises);
 
     const totalDuration = circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0);
 
     let recordedSession = null;
     try {
-      recordedSession = recordPracticeSession({
+      recordedSession = recordSession({
         domain: 'circuit-training',
         duration: totalDuration,
         metadata: {
@@ -1584,6 +1243,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
     const wasFromCurriculum = savedActivePracticeSession;
 
+    // Stop tempo sync audio if playing
+    if (window.__tempoSyncStopAudio) {
+      window.__tempoSyncStopAudio();
+    }
+
     // Now clear the session
     clearActivePracticeSession();
     setIsRunning(false);
@@ -1591,7 +1255,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     onBreathStateChange && onBreathStateChange(null);
 
     const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
-    const instrumentationData = instrumentation.endSession(exitType);
+    const instrumentationData = endSession(exitType);
 
     const id =
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -1637,7 +1301,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
-      recordedSession = recordPracticeSession({
+      recordedSession = recordSession({
         domain,
         duration: duration,
         metadata: {
@@ -1847,7 +1511,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setLastSignedErrorMs(null);
       setBreathCount(0);
 
-      instrumentation.startSession(
+      startSession(
         'focus',
         null,
         sensoryType
@@ -1870,8 +1534,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (window.__tempoSyncStartAudio) {
         window.__tempoSyncStartAudio();
       } else {
-        // Fallback: call store directly
-        useTempoAudioStore.getState().start("begin-practice-fallback");
+        console.warn('[PracticeSection] __tempoSyncStartAudio not available - TempoSyncPanel may not be mounted');
       }
 
       // Start tempo sync session with 3-phase cap schedule if song is loaded
@@ -1906,7 +1569,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     else if (p === 'ritual') domain = 'ritual';
     else if (p === 'sound') domain = 'sound';
 
-    instrumentation.startSession(
+    startSession(
       domain,
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
@@ -1988,7 +1651,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleAccuracyTap = (errorMs) => {
     if (!isRunning) return;
 
-    instrumentation.recordAliveSignal();
+    recordAliveSignal();
 
     setLastErrorMs(Math.abs(errorMs));
     setLastSignedErrorMs(errorMs);
@@ -2030,141 +1693,33 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     useTempoSyncSessionStore.getState().updateElapsed(totalElapsedSec, tempoSyncBpm);
   }, [tempoSessionActive, isRunning, timeLeft, songDurationSec, tempoSyncBpm]);
 
-  useEffect(() => {
-    if (!onBreathStateChange) {
-      return;
-    }
-    
-    if (!isRunning || practice !== "Breath & Stillness") {
-      onBreathStateChange(null);
-      return;
-    }
-    
-    const total = pattern.inhale + pattern.hold1 + pattern.exhale + pattern.hold2;
-    if (!total) {
-      onBreathStateChange(null);
-      return;
-    }
-
-    const now = performance.now() / 1000;
-    const cyclePos = (now % total);
-
-    let phase = "inhale";
-    let phaseProgress = 0;
-
-    if (cyclePos < pattern.inhale) {
-      phase = "inhale";
-      phaseProgress = cyclePos / pattern.inhale;
-    } else if (cyclePos < pattern.inhale + pattern.hold1) {
-      phase = "holdTop";
-      phaseProgress =
-        (cyclePos - pattern.inhale) / Math.max(pattern.hold1, 0.0001);
-    } else if (
-      cyclePos <
-      pattern.inhale + pattern.hold1 + pattern.exhale
-    ) {
-      phase = "exhale";
-      phaseProgress =
-        (cyclePos - (pattern.inhale + pattern.hold1)) /
-        Math.max(pattern.exhale, 0.0001);
-    } else {
-      phase = "holdBottom";
-      phaseProgress =
-        (cyclePos -
-          (pattern.inhale + pattern.hold1 + pattern.exhale)) /
-        Math.max(pattern.hold2 || 1, 1);
-    }
-
-    onBreathStateChange({
-      phase,
-      phaseProgress,
-    });
-  }, [isRunning, practice, pattern, onBreathStateChange]);
-
-  const totalDuration =
-    pattern.inhale + pattern.hold1 + pattern.exhale + pattern.hold2 || 1;
-  const width = 100;
-  const height = 40;
-
-  const iW = (pattern.inhale / totalDuration) * width;
-  const h1W = (pattern.hold1 / totalDuration) * width;
-  const eW = (pattern.exhale / totalDuration) * width;
-
-  const pathD = `
-    M 0 ${height}
-    L ${iW} 0
-    L ${iW + h1W} 0
-    L ${iW + h1W + eW} ${height}
-    L ${width} ${height}
-`;
-
-  // Calculate progressive pattern based on benchmark if available
-  // Progression: 75% → 85% → 100% by breath count thirds
-  const breathingPatternForRing = useMemo(() => {
-    const isBreathPractice = practice === "Breath & Stillness";
-    const resolveBasePattern = () => {
-      if (hasBenchmark && isRunning && isBreathPractice) {
-        const totalCycles = calculateTotalCycles(duration, pattern);
-        const progressivePattern = getPatternForCycle(breathCount + 1, totalCycles);
-        if (progressivePattern) {
-          return {
-            inhale: progressivePattern.inhale,
-            hold1: progressivePattern.hold1,
-            exhale: progressivePattern.exhale,
-            hold2: progressivePattern.hold2,
-          };
-        }
-      }
-      return {
-        inhale: pattern.inhale,
-        hold1: pattern.hold1,
-        exhale: pattern.exhale,
-        hold2: pattern.hold2,
-      };
-    };
-
-    if (tempoSyncEnabled && isBreathPractice && hasBenchmark && Number.isFinite(tempoSyncBpm) && tempoSyncBpm > 0) {
-      const quantized = quantizePatternToMusicStrict(resolveBasePattern(), tempoSyncBpm);
-      return {
-        inhale: quantized.inhale,
-        holdTop: quantized.hold1,
-        exhale: quantized.exhale,
-        holdBottom: quantized.hold2,
-      };
-    }
-
-    // Tempo sync takes priority - BPM-based equal phase durations with multiplier
-    // If tempo session is active (song playing), apply the segment cap
-    if (tempoSyncEnabled && isBreathPractice && hasBenchmark) {
-      if (tempoSessionActive && tempoSessionEffective) {
-        // Use effective durations from tempo session (scaled by segment cap)
-        return {
-          inhale: tempoSessionEffective.inhale,
-          holdTop: tempoSessionEffective.holdIn,
-          exhale: tempoSessionEffective.exhale,
-          holdBottom: tempoSessionEffective.holdOut,
-        };
-      }
-      // No song active - use full tempo phase duration
-      return {
-        inhale: tempoPhaseDuration,
-        holdTop: tempoPhaseDuration,
-        exhale: tempoPhaseDuration,
-        holdBottom: tempoPhaseDuration,
-      };
-    }
-
-    const basePattern = resolveBasePattern();
-    return {
-      inhale: basePattern.inhale,
-      holdTop: basePattern.hold1,
-      exhale: basePattern.exhale,
-      holdBottom: basePattern.hold2,
-    };
-  }, [tempoSyncEnabled, tempoSyncBpm, tempoPhaseDuration, tempoBeatsPerPhase, hasBenchmark, isRunning, practice, duration, pattern, breathCount, calculateTotalCycles, getPatternForCycle, tempoSessionActive, tempoSessionEffective]);
+  const {
+    isBreathPractice,
+    breathingPatternForRing,
+    breathingPatternText,
+    showBreathCount,
+  } = useBreathSessionState({
+    isRunning,
+    practice,
+    pattern,
+    duration,
+    breathCount,
+    hasBenchmark,
+    calculateTotalCycles,
+    getPatternForCycle,
+    tempoSyncEnabled,
+    tempoSyncBpm,
+    tempoPhaseDuration,
+    tempoBeatsPerPhase,
+    tempoSessionActive,
+    tempoSessionEffective,
+    onBreathStateChange,
+  });
 
   const theme = useTheme();
   const { primary, secondary, muted, glow } = theme.accent;
+  const showFeedback = lastSignedErrorMs !== null && isBreathPractice;
+  const timeLeftText = formatTime(timeLeft);
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
@@ -2418,113 +1973,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           )}
         </div>
 
-        <div className="flex flex-col items-center z-50">
-          {/* Breathing Pattern Display (above stop button) */}
-          {practice === "Breath & Stillness" && (
-            <div
-              className="mb-4"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "13px",
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--accent-color)",
-                textShadow: "0 0 8px var(--accent-30)",
-              }}
-            >
-              {Math.round(breathingPatternForRing.inhale)}-{Math.round(breathingPatternForRing.holdTop)}-{Math.round(breathingPatternForRing.exhale)}-{Math.round(breathingPatternForRing.holdBottom)}
-            </div>
-          )}
-
-          <div className="h-6 mb-3 flex items-center justify-center">
-            {lastSignedErrorMs !== null && practice === "Breath & Stillness" && (
-              <div
-                key={lastSignedErrorMs}
-                className="font-medium uppercase animate-fade-in-up"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 600,
-                  letterSpacing: "0.15em",
-                  color: feedbackColor,
-                  textShadow: feedbackShadow
-                }}
-              >
-                {feedbackText}
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={handleStop}
-            className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "11px",
-              letterSpacing: "var(--tracking-mythic)",
-              textTransform: "uppercase",
-              fontWeight: 600,
-              background: buttonBg,
-              color: "#050508",
-              boxShadow: radialGlow
-                ? `${radialGlow}, ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`
-                : `0 0 24px var(--accent-30), ${buttonShadow}, inset 3px 4px 8px rgba(0,0,0,0.25), inset -2px -3px 6px rgba(255,255,255,0.15)`,
-              borderRadius: "999px",
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <span style={{ position: 'relative', zIndex: 2 }}>Stop</span>
-            <div
-              className="absolute inset-0 rounded-full pointer-events-none"
-              style={{
-                background: 'radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.12) 0%, transparent 60%)',
-                mixBlendMode: 'soft-light',
-                zIndex: 1,
-              }}
-            />
-            <div
-              className="absolute inset-0 rounded-full pointer-events-none"
-              style={{
-                background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                opacity: 0.06,
-                mixBlendMode: 'overlay',
-                zIndex: 1,
-              }}
-            />
-          </button>
-
-          <div
-            className="mt-5"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: "var(--tracking-mythic)",
-              textTransform: "uppercase",
-              color: "var(--text-primary)",
-            }}
-          >
-            {formatTime(timeLeft)}
-          </div>
-
-          {breathCount > 0 && practice === "Breath & Stillness" && (
-            <div
-              className="mt-2"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: "9px",
-                fontWeight: 600,
-                letterSpacing: "var(--tracking-wide)",
-                textTransform: "uppercase",
-                color: 'var(--accent-50)',
-              }}
-            >
-              Breath {breathCount}
-            </div>
-          )}
-        </div>
+        <SessionControls
+          isBreathPractice={isBreathPractice}
+          breathingPatternText={breathingPatternText}
+          showFeedback={showFeedback}
+          lastSignedErrorMs={lastSignedErrorMs}
+          feedbackColor={feedbackColor}
+          feedbackShadow={feedbackShadow}
+          feedbackText={feedbackText}
+          onStop={handleStop}
+          buttonBg={buttonBg}
+          radialGlow={radialGlow}
+          buttonShadow={buttonShadow}
+          timeLeftText={timeLeftText}
+          showBreathCount={showBreathCount}
+          breathCount={breathCount}
+        />
 
         <style>{`
           @keyframes fade-in-up {
@@ -2661,71 +2125,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
       )}
 
-      <section 
-        className="practice-section-container w-full h-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar"
+      <PracticeSectionShell
+        className="practice-section-container w-full flex flex-col items-center justify-start"
         style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning ? 'none' : 'flex' }}
       >
-      {/* Radial glow backdrop emanating from center (avatar area) */}
-      <div 
-        className="practice-radial-glow"
-        style={{
-          position: 'fixed',
-          top: '0',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '100%',
-          height: '60vh',
-          background: 'radial-gradient(ellipse at 50% 30%, rgba(233, 195, 90, 0.15) 0%, rgba(233, 195, 90, 0.08) 35%, transparent 60%)',
-          pointerEvents: 'none',
-          zIndex: 0,
-          opacity: 0.6,
-        }}
-      />
-      {/* Circuit Button - Full Width */}
-      <div style={{ width: '100%', maxWidth: isSanctuary ? '656px' : '560px', margin: '0 auto', paddingLeft: '16px', paddingRight: '16px', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-        <button
-          onClick={() => handleSelectPractice('circuit')}
-          className="group relative overflow-hidden transition-all duration-300 w-full flex flex-col items-center justify-center gap-3"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '12px',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-            padding: '12px 16px',
-            minHeight: '48px',
-            borderRadius: '12px',
-            border: practiceId === 'circuit' ? '1.5px solid var(--accent-70)' : '1px solid rgba(255, 255, 255, 0.08)',
-            background: 'rgba(15, 20, 25, 0.12)',
-            backdropFilter: 'blur(32px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(140%)',
-            color: practiceId === 'circuit' ? 'var(--accent-color)' : 'rgba(255, 255, 255, 0.6)',
-            textShadow: practiceId === 'circuit' ? '0 0 12px var(--accent-40), 0 0 24px var(--accent-20)' : 'none',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            if (practiceId !== 'circuit') {
-              e.currentTarget.style.background = 'rgba(20, 30, 40, 0.15)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (practiceId !== 'circuit') {
-              e.currentTarget.style.background = 'rgba(15, 20, 25, 0.12)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-            }
-          }}
-        >
-          <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent-color)' }}>CIRCUIT TRAINING</span>
-        </button>
-      </div>
-
-      {/* Top Layer: Practice Selector */}
-      <PracticeSelector 
-        selectedId={practiceId}
-        onSelect={handleSelectPractice}
-        tokens={uiTokens}
-      />
+        <PracticeHeader
+          isSanctuary={isSanctuary}
+          practiceId={practiceId}
+          onSelectPractice={handleSelectPractice}
+          selector={(
+            <PracticeSelector
+              selectedId={practiceId}
+              onSelect={handleSelectPractice}
+              tokens={uiTokens}
+            />
+          )}
+        />
 
       {/* Bottom Layer: Dynamic Options Card */}
       <PracticeOptionsCard 
@@ -2756,7 +2171,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           100% { transform: scale(1); opacity: 1; }
         }
       `}</style>
-      </section>
+      </PracticeSectionShell>
     </>
   );
 }

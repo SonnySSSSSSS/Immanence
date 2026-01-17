@@ -43,7 +43,7 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
 
     return (
         <div
-            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl relative"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl relative no-scrollbar"
             style={{
                 background: isLight
                     ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)'

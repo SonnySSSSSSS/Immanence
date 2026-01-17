@@ -8,39 +8,47 @@ body {
 
 html,
 body {
+  height: auto;
+  min-height: 100%;
   overflow-x: hidden;
-}
-
-/* Hearth-only: avoid intermittent right-edge scrollbar flashes */
-html.hearth-viewport {
-  scrollbar-gutter: stable;
-  -ms-overflow-style: none;
+  overflow-y: auto;
+  /* Hide scrollbars globally - allow page scroll without visible scrollbar */
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-html.hearth-viewport::-webkit-scrollbar {
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
 
-html.hearth-viewport body {
-  scrollbar-gutter: stable;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-html.hearth-viewport body::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-html.hearth-viewport,
-html.hearth-viewport body {
-  height: 100%;
-  overflow: hidden;
-}
 
 #root {
   min-height: 100%;
+}
+
+/* Hide scrollbars on app frame and all descendants */
+[data-app-frame],
+[data-app-frame] * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-app-frame]::-webkit-scrollbar,
+[data-app-frame] *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Utility class to hide scrollbars while maintaining scrollability (for modals/overlays only) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 

@@ -235,7 +235,7 @@ export function CurriculumCompletionReport({ onDismiss, onRestart }) {
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto py-8 px-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto py-8 px-4 no-scrollbar\"
             style={{
                 background: isLight ? 'rgba(245, 240, 235, 0.98)' : 'rgba(5, 5, 8, 0.98)',
             }}

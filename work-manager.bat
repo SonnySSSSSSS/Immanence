@@ -2,63 +2,65 @@
 setlocal enabledelayedexpansion
 
 :: ============================================================================
-:: IMMANENCE - COMPREHENSIVE SAFETY SYSTEM
+:: IMMANENCE OS - WORK MANAGER (SAFE)
 :: ============================================================================
-:: This script handles everything. You just pick what you want to do.
-:: It checks everything, warns you, and prevents fuckups automatically.
+:: Goals:
+:: - Always show correct branch/version (refresh every menu)
+:: - Save Work WITHOUT switching branches (push HEAD -> backup-latest)
+:: - Backups/restores that do not "half succeed" silently (logs + robocopy checks)
+:: - Restore workflow that doesn't rely on copy scripts alone (git reset options included)
 :: ============================================================================
 
+:: ---- CONFIG (edit these only) ----------------------------------------------
 set "PROJECT_DIR=D:\Unity Apps\immanence-os"
 set "QUICK_BACKUP=D:\Unity Apps\immanence-os-backup-quick"
 set "SNAPSHOT_DIR=D:\Unity Apps\immanence-os-snapshots"
-set "TEMP_DEPLOY=%TEMP%\immanence-deploy-temp"
-set EXCLUDE_LIST=node_modules .git dist .cache .vite .agent
+set "DEPLOY_REPO=https://github.com/sonnysssssss/Immanence.git"
+set "DEPLOY_URL=https://sonnysssssss.github.io/Immanence/"
 
-cd /d "%PROJECT_DIR%"
+:: Exclusions for file backups (robocopy)
+set "EXCLUDE_LIST=node_modules .git dist .cache .vite .agent"
 
-:: Get current branch
-for /f "tokens=*" %%b in ('git branch --show-current') do set "CURRENT_BRANCH=%%b"
-
-:: Get current version from App.jsx - strip HTML tags
-set "CURRENT_VERSION=unknown"
-for /f "tokens=*" %%v in ('findstr /c:"v3." src\App.jsx ^| findstr /v "className"') do (
-    set "line=%%v"
-    set "line=!line:*v3.=3.!"
-    for /f "tokens=1 delims=<" %%n in ("!line!") do (
-        set "CURRENT_VERSION=%%n"
-        goto :version_found
-    )
+:: ---- ENTER REPO ------------------------------------------------------------
+cd /d "%PROJECT_DIR%" || (
+  echo [FATAL] Could not cd to PROJECT_DIR:
+  echo   %PROJECT_DIR%
+  pause
+  exit /b 1
 )
-:version_found
 
+call :ASSERT_REPO || exit /b 1
+
+:: ============================================================================
+:: MENU
+:: ============================================================================
 :MENU
+call :REFRESH_STATUS
 cls
 echo.
 echo ============================================
-echo IMMANENCE - WORK MANAGEMENT SYSTEM
+echo IMMANENCE - WORK MANAGEMENT SYSTEM (SAFE)
 echo ============================================
 echo.
 echo CURRENT STATUS:
-echo   Branch: %CURRENT_BRANCH%
+echo   Branch:  %CURRENT_BRANCH%
 echo   Version: v%CURRENT_VERSION%
-echo   Location: %PROJECT_DIR%
+echo   Repo:    %PROJECT_DIR%
 echo.
 echo ============================================
 echo.
-echo WHAT DO YOU WANT TO DO?
-echo.
 echo DAILY WORK:
-echo   1. Save my work now (commit + push to backup-latest)
-echo   2. Deploy to web (GitHub Pages)
+echo   1. Save my work now  (commit + push HEAD -> backup-latest)
+echo   2. Deploy to web     (GitHub Pages)
 echo.
 echo BACKUPS:
-echo   3. Create snapshot (timestamped backup)
-echo   4. Quick local backup
+echo   3. Create snapshot   (timestamped backup)
+echo   4. Quick mirror backup
 echo.
 echo RECOVERY:
-echo   5. Restore from backup-latest branch
-echo   6. Restore from snapshot
-echo   7. Restore from GitHub
+echo   5. Restore from backup-latest (git reset --hard origin/backup-latest)
+echo   6. Restore from snapshot      (robocopy /MIR with log)
+echo   7. Restore from GitHub main   (git reset --hard origin/main)
 echo.
 echo   9. Exit
 echo.
@@ -78,146 +80,171 @@ timeout /t 2 >nul
 goto MENU
 
 :: ============================================================================
-:SAVE_WORK
+:: SUBROUTINES (SAFETY)
 :: ============================================================================
+:ASSERT_REPO
+if not exist "%PROJECT_DIR%\.git" (
+  echo [FATAL] PROJECT_DIR is not a git repo:
+  echo   %PROJECT_DIR%
+  pause
+  exit /b 1
+)
+exit /b 0
+
+:REFRESH_STATUS
+:: Current branch
+for /f "tokens=*" %%b in ('git branch --show-current 2^>nul') do set "CURRENT_BRANCH=%%b"
+if "%CURRENT_BRANCH%"=="" set "CURRENT_BRANCH=unknown"
+
+:: Current version from src\App.jsx (best effort)
+set "CURRENT_VERSION=unknown"
+for /f "tokens=*" %%v in ('findstr /c:"v3." src\App.jsx ^| findstr /v "className" 2^>nul') do (
+  set "line=%%v"
+  set "line=!line:*v3.=3.!"
+  for /f "tokens=1 delims=<" %%n in ("!line!") do (
+    set "CURRENT_VERSION=%%n"
+    goto :version_found
+  )
+)
+:version_found
+exit /b 0
+
+:BUILD_EXCLUDES
+set "EXCLUDE_PARAMS="
+for %%d in (%EXCLUDE_LIST%) do set "EXCLUDE_PARAMS=!EXCLUDE_PARAMS! /XD ""%%d"""
+exit /b 0
+
+:ROBOCHECK
+:: Usage: call :ROBOCHECK %errorlevel%
+set "RC=%~1"
+:: Robocopy codes: 0-7 are OK/success-with-info, 8+ are failures.
+if %RC% GEQ 8 (
+  echo [ROBOCOPY] FAILED with code %RC%
+  exit /b 1
+)
+echo [ROBOCOPY] OK (code %RC%)
+exit /b 0
+
+:KILL_VITE_5173
+:: Best-effort: kill anything holding port 5173 (LISTENING)
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":5173" ^| findstr "LISTENING"') do (
+  taskkill /F /PID %%p >nul 2>&1
+)
+exit /b 0
+
+:: ============================================================================
+:: 1) SAVE WORK (NO BRANCH SWITCH)
+:: ============================================================================
+:SAVE_WORK
+call :REFRESH_STATUS
 cls
 echo.
 echo ========================================
-echo SAVING YOUR WORK
+echo SAVE WORK (SAFE)
 echo ========================================
 echo.
 echo This will:
-echo   1. Commit all changes
-echo   2. Push to backup-latest branch
-echo   3. Keep you safe
+echo   1) git add -A
+echo   2) git commit (if needed)
+echo   3) push current HEAD to origin/backup-latest (WITHOUT switching branches)
+echo.
+echo You are on: %CURRENT_BRANCH% (v%CURRENT_VERSION%)
 echo.
 
-:: Check if on backup-latest, if not switch to it
-if not "%CURRENT_BRANCH%"=="backup-latest" (
-    echo You're on %CURRENT_BRANCH%. Switching to backup-latest...
-    git checkout backup-latest
-    if errorlevel 1 (
-        echo.
-        echo Creating backup-latest branch...
-        git checkout -b backup-latest
-    )
-)
-
-:: Commit everything
+:: Stage everything
 git add -A
 if errorlevel 1 (
-    echo [FAILED] Could not stage files
-    pause
-    goto MENU
+  echo [FAILED] Could not stage files
+  pause
+  goto MENU
 )
 
-:: Create commit message with timestamp
+:: Commit (if needed)
 set "COMMIT_MSG=Work save: %date% %time% - v%CURRENT_VERSION%"
-git commit -m "%COMMIT_MSG%"
+git commit -m "%COMMIT_MSG%" 2>nul
 if errorlevel 1 (
-    echo [INFO] No changes to commit - everything already saved
+  echo [INFO] No changes to commit (already clean)
 ) else (
-    echo [OK] Changes committed
+  echo [OK] Changes committed
 )
 
-:: Push to backup-latest
-echo Pushing to backup-latest...
-git push origin backup-latest
+:: Push HEAD -> backup-latest without checkout
+echo.
+echo [PUSH] Updating origin/backup-latest from current HEAD...
+git push origin HEAD:backup-latest
 if errorlevel 1 (
-    echo.
-    echo [FAILED] Could not push to GitHub
-    echo Your work is committed locally but not backed up to GitHub yet.
-    echo Try again when you have internet.
-    pause
-    goto MENU
+  echo.
+  echo [FAILED] Could not push to GitHub.
+  echo Your work is saved locally; remote backup did not update.
+  echo Check internet / auth and re-run Save Work.
+  pause
+  goto MENU
 )
 
 echo.
 echo ========================================
 echo WORK SAVED SUCCESSFULLY
 echo ========================================
-echo   Branch: backup-latest
-echo   Version: v%CURRENT_VERSION%
-echo   Remote: Backed up to GitHub
-echo.
-echo Your work is safe. You can close your computer.
+echo   Current branch: %CURRENT_BRANCH%
+echo   Remote backup:  origin/backup-latest updated from HEAD
+echo   Version:        v%CURRENT_VERSION%
 echo.
 pause
 goto MENU
 
 :: ============================================================================
-:DEPLOY_WEB
+:: 2) DEPLOY WEB (SAFE, TEMP CLONE)
 :: ============================================================================
+:DEPLOY_WEB
+call :REFRESH_STATUS
 cls
 echo.
 echo ========================================
 echo DEPLOY TO WEB (GitHub Pages)
 echo ========================================
 echo.
-echo SAFETY CHECKS:
-echo.
 
-:: Check 1: Is work saved?
+:: Warn if dirty
 git diff-index --quiet HEAD --
-set GIT_RESULT=%errorlevel%
-
-if %GIT_RESULT% NEQ 0 (
-    echo [WARNING] You have unsaved changes
-    echo.
-    echo You should save your work first using option 1.
-    echo.
-    echo Type Y to continue anyway, or N to go back and save first.
-    echo.
-    set /p "CONTINUE_DEPLOY=Continue without saving? [Y/N]: "
-)
-
-if %GIT_RESULT% NEQ 0 (
-    if /i "!CONTINUE_DEPLOY!"=="Y" goto DEPLOY_CONTINUE
-    if /i "!CONTINUE_DEPLOY!"=="YES" goto DEPLOY_CONTINUE
-    echo.
-    echo ----------------------------------------
-    echo CANCELLED - You typed: "!CONTINUE_DEPLOY!"
-    echo ----------------------------------------
-    echo Going back to menu. Use option 1 to save your work first.
-    echo.
+if errorlevel 1 (
+  echo [WARNING] You have uncommitted changes.
+  echo Recommend: run option 1 (Save Work) first.
+  echo.
+  set /p "CONTINUE_DEPLOY=Continue anyway? [Y/N]: "
+  if /i not "!CONTINUE_DEPLOY!"=="Y" (
+    echo Cancelled.
     pause
     goto MENU
+  )
 )
-:DEPLOY_CONTINUE
 
-:: Check 2: Confirm deployment
-echo [OK] Ready to deploy
 echo.
 echo This will:
-echo   1. Build your app (npm run build)
-echo   2. Deploy to https://sonnysssssss.github.io/Immanence/
-echo   3. Make your work publicly visible
-echo.
-echo Type Y and press Enter to deploy, or N to cancel.
+echo   1) npm run build
+echo   2) push dist -> gh-pages (via temp clone)
+echo   3) NOT touch your working tree
 echo.
 set /p "CONFIRM_DEPLOY=Deploy now? [Y/N]: "
+if /i not "!CONFIRM_DEPLOY!"=="Y" (
+  echo Cancelled.
+  pause
+  goto MENU
+)
 
-if /i "!CONFIRM_DEPLOY!"=="Y" goto DO_DEPLOY_START
-if /i "!CONFIRM_DEPLOY!"=="YES" goto DO_DEPLOY_START
-
-echo.
-echo ----------------------------------------
-echo CANCELLED - You typed: "!CONFIRM_DEPLOY!"
-echo ----------------------------------------
-echo To deploy, type the letter Y and press Enter.
-echo.
-pause
-goto MENU
-
-:DO_DEPLOY_START
 call :DO_DEPLOY
-set DEPLOY_RESULT=!errorlevel!
+set "DEPLOY_RESULT=%errorlevel%"
 echo.
-if !DEPLOY_RESULT! NEQ 0 (
+if "%DEPLOY_RESULT%"=="0" (
+    echo ========================================
+    echo DEPLOY SUCCESS
+    echo ========================================
+    echo Live at: %DEPLOY_URL%
     echo.
+) else (
     echo ========================================
-    echo DEPLOY FAILED - See errors above
+    echo DEPLOY FAILED
     echo ========================================
+    echo Check the output above for the first error.
     echo.
 )
 pause
@@ -226,299 +253,243 @@ goto MENU
 :DO_DEPLOY
 echo.
 echo ========================================
-echo SAFE DEPLOY - Your files will NOT be touched
+echo DEPLOY (SAFE)
 echo ========================================
 echo.
 
-:: SAFETY: Record current branch and commit so we can verify nothing changed
-for /f "tokens=*" %%b in ('git branch --show-current') do set "ORIGINAL_BRANCH=%%b"
-for /f "tokens=*" %%h in ('git rev-parse HEAD') do set "ORIGINAL_COMMIT=%%h"
-echo [SAFETY] Current branch: %ORIGINAL_BRANCH%
-echo [SAFETY] Current commit: %ORIGINAL_COMMIT%
+for /f "tokens=*" %%b in ('git branch --show-current 2^>nul') do set "ORIGINAL_BRANCH=%%b"
+for /f "tokens=*" %%h in ('git rev-parse HEAD 2^>nul') do set "ORIGINAL_COMMIT=%%h"
+echo [SAFETY] Branch: %ORIGINAL_BRANCH%
+echo [SAFETY] Commit: %ORIGINAL_COMMIT%
 echo.
 
-:: Step 1: Build the app (this doesn't change git state)
-echo [DEPLOY] Step 1/4: Building app...
-echo.
-
-:: Clear old dist folder to prevent stale cache
-if exist "dist" (
-    echo [DEPLOY] Clearing old dist folder...
-    rmdir /s /q "dist"
-)
-
+echo [DEPLOY] Building...
+if exist "dist" rmdir /s /q "dist"
 call npm run build 2>&1
 if errorlevel 1 (
-    echo.
-    echo ========================================
-    echo [DEPLOY] FAILED - Build failed
-    echo ========================================
-    echo.
-    echo Your files are SAFE. Nothing was changed.
-    echo Fix the build errors above and try again.
-    echo.
-    exit /b 1
+  echo [DEPLOY] FAILED - build failed
+  exit /b 1
 )
-
 if not exist "dist" (
-    echo [DEPLOY] FAILED - No dist folder created
-    echo Your files are SAFE. Nothing was changed.
-    exit /b 1
+  echo [DEPLOY] FAILED - dist folder missing
+  exit /b 1
 )
-echo [DEPLOY] Build complete.
-echo.
 
-:: Step 2: Create a completely separate temp directory for gh-pages work
-echo [DEPLOY] Step 2/4: Preparing deployment in temp folder...
 set "DEPLOY_TEMP=%TEMP%\immanence-gh-pages-deploy"
 if exist "%DEPLOY_TEMP%" rmdir /s /q "%DEPLOY_TEMP%"
 mkdir "%DEPLOY_TEMP%"
 
-:: Clone ONLY the gh-pages branch to temp (shallow clone for speed)
-echo [DEPLOY] Cloning gh-pages branch to temp folder...
-git clone --depth 1 --branch gh-pages "https://github.com/sonnysssssss/Immanence.git" "%DEPLOY_TEMP%" 2>&1
+echo [DEPLOY] Cloning gh-pages to temp...
+git clone --depth 1 --branch gh-pages "%DEPLOY_REPO%" "%DEPLOY_TEMP%" 2>&1
 if errorlevel 1 (
-    echo.
-    echo [DEPLOY] FAILED - Could not clone gh-pages
-    echo Your files are SAFE. Nothing was changed.
-    echo.
-    echo This might mean:
-    echo   - No internet connection
-    echo   - gh-pages branch doesn't exist yet
-    echo.
-    rmdir /s /q "%DEPLOY_TEMP%" 2>nul
-    exit /b 1
+  echo [DEPLOY] FAILED - could not clone gh-pages
+  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  exit /b 1
 )
-echo.
 
-:: Step 3: Replace content in temp folder with new build
-echo [DEPLOY] Step 3/4: Copying new build to temp folder...
-:: Delete everything except .git in temp folder
+echo [DEPLOY] Replacing temp content...
 pushd "%DEPLOY_TEMP%"
 for /d %%d in (*) do if not "%%d"==".git" rmdir /s /q "%%d" 2>nul
 for %%f in (*) do if not "%%f"==".git" del /q "%%f" 2>nul
 popd
 
-:: Copy dist contents to temp folder
 xcopy /E /I /Y "%PROJECT_DIR%\dist\*" "%DEPLOY_TEMP%\" >nul
 if errorlevel 1 (
-    echo [DEPLOY] FAILED - Could not copy build files
-    echo Your files are SAFE. Nothing was changed.
-    rmdir /s /q "%DEPLOY_TEMP%" 2>nul
-    exit /b 1
+  echo [DEPLOY] FAILED - copy dist to temp failed
+  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  exit /b 1
 )
-echo.
 
-:: Step 4: Commit and push from temp folder
-echo [DEPLOY] Step 4/4: Pushing to GitHub...
+echo [DEPLOY] Committing + pushing from temp...
 pushd "%DEPLOY_TEMP%"
 git add -A
 git commit -m "Deploy v%CURRENT_VERSION%: %date% %time%" 2>&1
 git push origin gh-pages 2>&1
-set PUSH_RESULT=!errorlevel!
+set "PUSH_RESULT=!errorlevel!"
 popd
 
-if !PUSH_RESULT! NEQ 0 (
-    echo.
-    echo ========================================
-    echo [DEPLOY] FAILED - Could not push to GitHub
-    echo ========================================
-    echo Your files are SAFE. Nothing was changed.
-    echo.
-    echo This usually means:
-    echo   - No internet connection
-    echo   - GitHub authentication issue
-    echo.
-    rmdir /s /q "%DEPLOY_TEMP%" 2>nul
-    exit /b 1
+if %PUSH_RESULT% NEQ 0 (
+  echo [DEPLOY] FAILED - push gh-pages failed
+  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  exit /b 1
 )
 
-:: Cleanup temp folder
 rmdir /s /q "%DEPLOY_TEMP%" 2>nul
 
-:: SAFETY VERIFICATION: Confirm we're still on the same branch and commit
-for /f "tokens=*" %%b in ('git branch --show-current') do set "FINAL_BRANCH=%%b"
-for /f "tokens=*" %%h in ('git rev-parse HEAD') do set "FINAL_COMMIT=%%h"
-
-if not "!FINAL_BRANCH!"=="!ORIGINAL_BRANCH!" (
-    echo.
-    echo ========================================
-    echo [SAFETY WARNING] Branch changed unexpectedly!
-    echo ========================================
-    echo Was: !ORIGINAL_BRANCH!
-    echo Now: !FINAL_BRANCH!
-    echo.
-    echo Restoring to original branch...
-    git checkout "!ORIGINAL_BRANCH!" 2>&1
-)
-
-if not "!FINAL_COMMIT!"=="!ORIGINAL_COMMIT!" (
-    echo.
-    echo [SAFETY WARNING] Commit changed unexpectedly - this should not happen.
-    echo Was: !ORIGINAL_COMMIT!
-    echo Now: !FINAL_COMMIT!
-)
-
 echo.
 echo ========================================
-echo [DEPLOY] SUCCESS!
+echo DEPLOY SUCCESS
 echo ========================================
-echo.
-echo Live at: https://sonnysssssss.github.io/Immanence/
-echo.
-echo [SAFETY] Verified: Still on branch !FINAL_BRANCH!
-echo [SAFETY] Verified: Your files are untouched.
+echo Live at: %DEPLOY_URL%
 echo.
 exit /b 0
 
 :: ============================================================================
-:SNAPSHOT
+:: 3) SNAPSHOT (TIMESTAMPED)
 :: ============================================================================
+:SNAPSHOT
+call :REFRESH_STATUS
 cls
 echo.
-echo [SNAPSHOT] Creating timestamped backup...
+echo ========================================
+echo SNAPSHOT (TIMESTAMPED, IMMUTABLE)
+echo ========================================
+echo.
 
 if not exist "%SNAPSHOT_DIR%" mkdir "%SNAPSHOT_DIR%"
 
-:: Create timestamp
-for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set datetime=%%I
+for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "datetime=%%I"
 set "TIMESTAMP=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%"
 set "SNAPSHOT_TARGET=%SNAPSHOT_DIR%\%TIMESTAMP%"
+mkdir "%SNAPSHOT_TARGET%" >nul 2>&1
 
-echo Target: %SNAPSHOT_TARGET%
+call :BUILD_EXCLUDES
+set "LOGFILE=%SNAPSHOT_TARGET%\_robocopy_snapshot.log"
 
-:: Build exclude params
-set "EXCLUDE_PARAMS="
-for %%d in (%EXCLUDE_LIST%) do set "EXCLUDE_PARAMS=!EXCLUDE_PARAMS! /XD "%%d""
+echo [SNAPSHOT] From: %PROJECT_DIR%
+echo [SNAPSHOT] To:   %SNAPSHOT_TARGET%
+echo [SNAPSHOT] Log:  %LOGFILE%
+echo.
 
-robocopy "%PROJECT_DIR%" "%SNAPSHOT_TARGET%" /E %EXCLUDE_PARAMS% /NFL /NDL /NJH /NJS /NC /NS /NP
-
-if errorlevel 8 (
-    echo [SNAPSHOT] FAILED
-    pause
-    goto MENU
+robocopy "%PROJECT_DIR%" "%SNAPSHOT_TARGET%" /E %EXCLUDE_PARAMS% /R:2 /W:1 /FFT /Z /NP /LOG:"%LOGFILE%"
+set "RC=%errorlevel%"
+call :ROBOCHECK %RC% || (
+  echo.
+  echo [SNAPSHOT] FAILED - see log:
+  echo   %LOGFILE%
+  pause
+  goto MENU
 )
 
-echo [SNAPSHOT] OK - Immutable backup created
 echo.
+echo [SNAPSHOT] OK - created: %TIMESTAMP%
 pause
 goto MENU
 
 :: ============================================================================
-:QUICK
+:: 4) QUICK MIRROR BACKUP
 :: ============================================================================
+:QUICK
+call :REFRESH_STATUS
 cls
 echo.
-echo [QUICK] Creating mirror backup...
+echo ========================================
+echo QUICK MIRROR BACKUP
+echo ========================================
+echo.
 
 if not exist "%QUICK_BACKUP%" mkdir "%QUICK_BACKUP%"
 
-set "EXCLUDE_PARAMS="
-for %%d in (%EXCLUDE_LIST%) do set "EXCLUDE_PARAMS=!EXCLUDE_PARAMS! /XD "%%d""
+call :BUILD_EXCLUDES
+set "LOGFILE=%QUICK_BACKUP%\_robocopy_quick.log"
 
-robocopy "%PROJECT_DIR%" "%QUICK_BACKUP%" /MIR %EXCLUDE_PARAMS% /NFL /NDL /NJH /NJS /NC /NS /NP
+echo [QUICK] From: %PROJECT_DIR%
+echo [QUICK] To:   %QUICK_BACKUP%
+echo [QUICK] Log:  %LOGFILE%
+echo.
 
-if errorlevel 8 (
-    echo [QUICK] FAILED
-    pause
-    goto MENU
+robocopy "%PROJECT_DIR%" "%QUICK_BACKUP%" /MIR %EXCLUDE_PARAMS% /R:2 /W:1 /FFT /Z /NP /LOG:"%LOGFILE%"
+set "RC=%errorlevel%"
+call :ROBOCHECK %RC% || (
+  echo.
+  echo [QUICK] FAILED - see log:
+  echo   %LOGFILE%
+  pause
+  goto MENU
 )
 
 echo Latest backup: %date%_%time% > "%PROJECT_DIR%\latest-backup.txt"
-echo [QUICK] OK - Mirror backup updated
 echo.
+echo [QUICK] OK - mirror updated
 pause
 goto MENU
 
 :: ============================================================================
-:RESTORE_BACKUP_LATEST
+:: 5) RESTORE FROM backup-latest (GIT HARD RESET)
 :: ============================================================================
+:RESTORE_BACKUP_LATEST
+call :REFRESH_STATUS
 cls
 echo.
 echo ========================================
-echo RESTORE FROM BACKUP-LATEST BRANCH
+echo RESTORE FROM backup-latest (GIT)
 echo ========================================
 echo.
-echo This will restore your work from the backup-latest branch.
-echo This is usually your most recent work.
+echo This will:
+echo   - git fetch origin backup-latest
+echo   - git reset --hard origin/backup-latest
+echo   - git clean -fd
 echo.
-echo WARNING: Any unsaved changes will be LOST.
+echo WARNING: All local changes will be LOST.
 echo.
 set /p confirm="Type YES to restore from backup-latest: "
 if /i not "%confirm%"=="YES" (
-    echo Cancelled.
-    pause
-    goto MENU
+  echo Cancelled.
+  pause
+  goto MENU
 )
 
 echo.
-echo [RESTORE] Fetching backup-latest...
+echo [RESTORE] Fetching origin/backup-latest...
 git fetch origin backup-latest
 if errorlevel 1 (
-    echo [RESTORE] FAILED - Could not fetch from GitHub
-    pause
-    goto MENU
+  echo [RESTORE] FAILED - fetch failed
+  pause
+  goto MENU
 )
 
-echo [RESTORE] Switching to backup-latest...
-git checkout backup-latest
+echo [RESTORE] Resetting working tree to origin/backup-latest...
+git reset --hard origin/backup-latest
 if errorlevel 1 (
-    git checkout -b backup-latest origin/backup-latest
-    if errorlevel 1 (
-        echo [RESTORE] FAILED - Could not checkout backup-latest
-        pause
-        goto MENU
-    )
+  echo [RESTORE] FAILED - reset failed
+  pause
+  goto MENU
 )
 
-echo [RESTORE] Pulling latest changes...
-git pull origin backup-latest
-if errorlevel 1 (
-    echo [RESTORE] WARNING - Could not pull latest changes
-)
+git clean -fd
 
 echo.
-echo [RESTORE] OK - Restored from backup-latest
-echo.
-echo Now run npm run dev to see your work.
+echo [RESTORE] OK - now run:
+echo   npm install
+echo   npm run dev
 echo.
 pause
 goto MENU
 
 :: ============================================================================
-:RESTORE_SNAPSHOT
+:: 6) RESTORE FROM SNAPSHOT (ROBOCOPY /MIR)
 :: ============================================================================
+:RESTORE_SNAPSHOT
+call :REFRESH_STATUS
 cls
 echo.
 echo ========================================
-echo RESTORE FROM SNAPSHOT
+echo RESTORE FROM SNAPSHOT (FILES)
 echo ========================================
 echo.
 
 if not exist "%SNAPSHOT_DIR%" (
-    echo No snapshots found.
-    pause
-    goto MENU
+  echo No snapshots folder:
+  echo   %SNAPSHOT_DIR%
+  pause
+  goto MENU
 )
 
-echo Available snapshots:
-echo.
 set count=0
-for /f "tokens=*" %%d in ('dir /b /ad "%SNAPSHOT_DIR%"') do (
-    set /a count+=1
-    set "snapshot_!count!=%%d"
-    echo !count!. %%d
+for /f "tokens=*" %%d in ('dir /b /ad "%SNAPSHOT_DIR%" 2^>nul') do (
+  set /a count+=1
+  set "snapshot_!count!=%%d"
+  echo !count!. %%d
 )
 
 if %count%==0 (
-    echo No snapshots found.
-    pause
-    goto MENU
+  echo No snapshots found.
+  pause
+  goto MENU
 )
 
 echo.
 set /p snapshot_choice="Select snapshot (0 to cancel): "
-
 if "%snapshot_choice%"=="0" goto MENU
 if %snapshot_choice% LSS 1 goto MENU
 if %snapshot_choice% GTR %count% goto MENU
@@ -528,79 +499,100 @@ set "SNAPSHOT_SOURCE=%SNAPSHOT_DIR%\%selected_snapshot%"
 
 echo.
 echo Selected: %selected_snapshot%
+echo WARNING: This overwrites current files (except .git).
 echo.
-echo WARNING: This will overwrite your current files.
-echo.
-set /p confirm="Type YES to restore: "
+set /p confirm="Type YES to restore snapshot: "
 if /i not "%confirm%"=="YES" (
-    echo Cancelled.
-    pause
-    goto MENU
+  echo Cancelled.
+  pause
+  goto MENU
 )
 
 echo.
-echo [RESTORE] Restoring from snapshot...
+echo [RESTORE] Stopping dev server (best effort)...
+call :KILL_VITE_5173
 
-robocopy "%SNAPSHOT_SOURCE%" "%PROJECT_DIR%" /MIR /XD ".git" /NFL /NDL /NJH /NJS /NC /NS /NP
+set "LOGFILE=%SNAPSHOT_SOURCE%\_robocopy_restore_to_project.log"
+echo [RESTORE] From: %SNAPSHOT_SOURCE%
+echo [RESTORE] To:   %PROJECT_DIR%
+echo [RESTORE] Log:  %LOGFILE%
+echo.
 
-if errorlevel 8 (
-    echo [RESTORE] FAILED
-    pause
-    goto MENU
+robocopy "%SNAPSHOT_SOURCE%" "%PROJECT_DIR%" /MIR /XD ".git" /R:2 /W:1 /FFT /Z /NP /LOG:"%LOGFILE%"
+set "RC=%errorlevel%"
+call :ROBOCHECK %RC% || (
+  echo.
+  echo [RESTORE] FAILED - see log:
+  echo   %LOGFILE%
+  pause
+  goto MENU
 )
 
+echo.
 echo [RESTORE] OK - Restored from %selected_snapshot%
+echo Next:
+echo   npm install
+echo   npm run dev
 echo.
 pause
 goto MENU
 
 :: ============================================================================
-:RESTORE_GITHUB
+:: 7) RESTORE FROM GITHUB main (GIT HARD RESET)
 :: ============================================================================
+:RESTORE_GITHUB
+call :REFRESH_STATUS
 cls
 echo.
 echo ========================================
-echo RESTORE FROM GITHUB
+echo RESTORE FROM GITHUB main (GIT)
 echo ========================================
 echo.
-echo This will reset everything to match GitHub's main branch.
+echo This will:
+echo   - git fetch origin main
+echo   - git reset --hard origin/main
+echo   - git clean -fd
 echo.
 echo WARNING: All local changes will be LOST.
 echo.
-set /p confirm="Type YES to restore from GitHub: "
+set /p confirm="Type YES to restore from GitHub main: "
 if /i not "%confirm%"=="YES" (
-    echo Cancelled.
-    pause
-    goto MENU
+  echo Cancelled.
+  pause
+  goto MENU
 )
 
 echo.
-echo [RESTORE] Fetching from GitHub...
+echo [RESTORE] Fetching origin/main...
 git fetch origin main
 if errorlevel 1 (
-    echo [RESTORE] FAILED - Could not fetch
-    pause
-    goto MENU
+  echo [RESTORE] FAILED - fetch failed
+  pause
+  goto MENU
 )
 
-echo [RESTORE] Resetting to origin/main...
+echo [RESTORE] Resetting working tree to origin/main...
 git reset --hard origin/main
 if errorlevel 1 (
-    echo [RESTORE] FAILED
-    pause
-    goto MENU
+  echo [RESTORE] FAILED - reset failed
+  pause
+  goto MENU
 )
 
 git clean -fd
 
-echo [RESTORE] OK - Restored from GitHub
+echo.
+echo [RESTORE] OK - now run:
+echo   npm install
+echo   npm run dev
 echo.
 pause
 goto MENU
 
 :: ============================================================================
-:END
+:: END
 :: ============================================================================
+:END
 echo.
 echo Goodbye!
 exit /b 0

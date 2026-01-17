@@ -300,7 +300,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             )}
 
                             {/* Scrollable Container */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-7 relative z-10">
+                            <div className="p-6 sm:p-7 relative z-10">
                                 {/* Decorative corner embellishments */}
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 

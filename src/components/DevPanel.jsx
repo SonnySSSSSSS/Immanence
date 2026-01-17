@@ -227,7 +227,7 @@ export function DevPanel({
                             No sessions recorded yet
                         </div>
                     ) : (
-                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                        <div className="space-y-2 max-h-80 overflow-y-auto no-scrollbar">
                             {recentSessions.map((session) => (
                                 <SessionCard key={session.id} session={session} isLight={isLight} />
                             ))}
@@ -930,7 +930,7 @@ export function DevPanel({
             />
 
             {/* Panel */}
-            <div className="relative ml-auto w-[400px] h-full border-l overflow-y-auto" style={{
+            <div className="relative ml-auto w-[400px] h-full border-l overflow-y-auto no-scrollbar" style={{
                 background: isLight ? '#F5F0E6' : '#0a0a12',
                 borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.1)'
             }}>

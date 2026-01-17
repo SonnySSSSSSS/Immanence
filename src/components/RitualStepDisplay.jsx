@@ -27,7 +27,7 @@ const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = fa
         : null;
 
     return (
-        <div ref={containerRef} className="w-full h-full flex flex-col gap-4 p-4 relative overflow-y-auto">
+        <div ref={containerRef} className="w-full h-full flex flex-col gap-4 p-4 relative overflow-y-auto no-scrollbar">
             {/* Image/Content Section - Top */}
             <div className="flex items-center justify-center relative min-h-[20vh] sm:min-h-[30vh]">
                 <AnimatePresence mode="wait">
@@ -73,7 +73,7 @@ const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = fa
             </div>
 
             {/* Instructions Section - Bottom */}
-            <div className={`w-full max-w-lg mx-auto flex flex-col gap-4 ${isLight ? 'bg-white/40' : 'bg-black/60'} backdrop-blur-md p-5 sm:p-6 rounded-2xl border ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} shadow-xl overflow-y-auto`}>
+            <div className={`w-full max-w-lg mx-auto flex flex-col gap-4 ${isLight ? 'bg-white/40' : 'bg-black/60'} backdrop-blur-md p-5 sm:p-6 rounded-2xl border ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} shadow-xl overflow-y-auto no-scrollbar`}>
                 {/* Header */}
                 <div className={`flex justify-between items-baseline border-b ${isLight ? 'border-[#5A4D3C]/10' : 'border-white/10'} pb-3`}>
                     <h3 className="text-2xl font-light text-[var(--accent-primary)] font-h1">

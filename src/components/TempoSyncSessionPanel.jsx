@@ -13,8 +13,8 @@ export function TempoSyncSessionPanel() {
   const isActive = useTempoSyncSessionStore(s => s.isActive);
   const segmentIndex = useTempoSyncSessionStore(s => s.segmentIndex);
   const segmentCap = useTempoSyncSessionStore(s => s.segmentCap);
-  const segmentBeatCount = useTempoSyncSessionStore(s => s.segmentBeatCount);
-  const segmentBeatTotal = useTempoSyncSessionStore(s => s.segmentBeatTotal);
+  const cycleBeatCount = useTempoSyncSessionStore(s => s.cycleBeatCount);
+  const cycleBeatsPerCycle = useTempoSyncSessionStore(s => s.cycleBeatsPerCycle);
   const effectivePhaseDurations = useTempoSyncSessionStore(s => s.effectivePhaseDurations);
   const maxPhaseDurations = useTempoSyncSessionStore(s => s.maxPhaseDurations);
 
@@ -86,10 +86,10 @@ export function TempoSyncSessionPanel() {
               fontSize: '11px',
             }}
           >
-            {segmentBeatCount}
+            {cycleBeatCount}
           </span>
           <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <span style={{ color: 'var(--text-muted)' }}>{segmentBeatTotal}</span>
+          <span style={{ color: 'var(--text-muted)' }}>{cycleBeatsPerCycle}</span>
         </div>
       </div>
 

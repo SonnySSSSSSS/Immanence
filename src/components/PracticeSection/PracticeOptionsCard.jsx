@@ -1,16 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
-import { useDisplayModeStore } from "../../state/displayModeStore.js";
 import { PRACTICE_REGISTRY, DURATIONS, PRACTICE_UI_WIDTH } from "./constants.js";
 
 export function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {
   const cardRef = useRef(null);
   const p = PRACTICE_REGISTRY[practiceId];
   const isCollapsed = !practiceId;
-  const displayMode = useDisplayModeStore(s => s.mode);
-  const isSanctuary = displayMode === 'sanctuary';
-  const maxHeightValue = isSanctuary ? '75vh' : '65vh';
 
   // Intentional Reveal Logic: Scroll into view when expanded
   useEffect(() => {
@@ -26,14 +22,13 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
   return (
     <div
       ref={cardRef}
-      className={`relative overflow-hidden w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'}`}
+      className={`relative w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5] overflow-hidden' : 'opacity-100 overflow-visible'}`}
       style={{
         maxWidth: PRACTICE_UI_WIDTH.maxWidth,
         margin: '0 auto',
         paddingLeft: PRACTICE_UI_WIDTH.padding,
         paddingRight: PRACTICE_UI_WIDTH.padding,
-        maxHeight: isCollapsed ? '88px' : maxHeightValue,
-        overflow: isCollapsed ? 'hidden' : 'auto',
+        maxHeight: isCollapsed ? '88px' : 'none',
         zIndex: 1,
       }}
     >

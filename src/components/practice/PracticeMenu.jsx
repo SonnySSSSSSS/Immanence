@@ -1,0 +1,185 @@
+import React from "react";
+import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
+
+function PracticeMenu({
+  containerKey,
+  label,
+  showRitualSubtitle,
+  ritualSubtitleText,
+  titleContainerMarginBottom,
+  titleTextMarginBottom,
+  configPanelMarginBottom,
+  ConfigComponent,
+  setters,
+  isLight,
+  selectedRitualId,
+  showDuration,
+  duration,
+  onDurationChange,
+  durationOptions,
+  durationMarginBottom,
+  durationTitleMarginBottom,
+  showStartButton,
+  onStart,
+  startButtonLabel,
+}) {
+  return (
+    <div 
+      key={containerKey} 
+      className="relative px-8 animate-in fade-in duration-300"
+    >
+    {/* Practice Title & Icon */}
+    <div className="flex flex-col items-center text-center" style={{ marginTop: '20px', marginBottom: titleContainerMarginBottom }}>
+      {/* Small decorative star */}
+      <div
+        style={{
+          fontSize: '18px',
+          color: '#D4AF37',
+          textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
+          marginBottom: '16px'
+        }}
+      >
+        ?
+      </div>
+      
+      {/* Title with proper typography */}
+      <h2 style={{ 
+        fontFamily: 'var(--font-display)', 
+        fontSize: '16px', 
+        fontWeight: 600,
+        letterSpacing: '0.12em', 
+        textTransform: 'uppercase',
+        color: '#F5E6D3',
+        marginBottom: titleTextMarginBottom
+      }}>
+        {label}
+      </h2>
+      
+      {/* Inline subtitle for breath intentionally removed (redundant with inputs below) */}
+      {showRitualSubtitle && (
+        <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
+          {ritualSubtitleText}
+        </p>
+      )}
+    </div>
+
+    {/* Dynamic Config Panel */}
+    <div className="min-h-[100px]" style={{ marginBottom: configPanelMarginBottom }}>
+      {ConfigComponent ? (
+        <ConfigComponent 
+          {...setters}
+          isLight={isLight}
+          selectedRitualId={selectedRitualId}
+        />
+      ) : (
+        <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
+          No additional configuration required
+        </div>
+      )}
+    </div>
+
+    {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
+    {showDuration && (
+      <div style={{ marginBottom: durationMarginBottom }}>
+        <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: durationTitleMarginBottom, letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
+          Sacred Duration (minutes)
+        </div>
+        <SacredTimeSlider 
+          value={duration} 
+          onChange={onDurationChange} 
+          options={durationOptions} 
+        />
+      </div>
+    )}
+
+    {/* Start Button - Sacred Portal with Ember Theme */}
+    {showStartButton && (
+      <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
+    <button
+      onClick={onStart}
+      className="group transition-all duration-300 relative overflow-hidden begin-button"
+      style={{
+             width: '100%',
+             maxWidth: '400px',
+             fontFamily: 'var(--font-display)',
+             fontSize: '12px',
+             fontWeight: 700,
+             letterSpacing: '0.15em',
+             textTransform: 'uppercase',
+             padding: '18px 52px',
+             borderRadius: '60px',
+             background: 'var(--ui-button-gradient, linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)))',
+             color: '#0a0a0a',
+             textShadow: '0 0 10px var(--accent-color)',
+             boxShadow: `
+               0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
+               inset 0 0 30px rgba(255, 255, 255, 0.25),
+               0 8px 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55)
+             `,
+             transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+             position: 'relative',
+          }}
+          onMouseEnter={(e) => { 
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.boxShadow = `
+              0 0 100px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 1),
+              inset 0 0 35px rgba(255, 255, 255, 0.35),
+              0 12px 30px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.75)
+            `;
+          }}
+          onMouseLeave={(e) => { 
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = `
+              0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
+              inset 0 0 30px rgba(255, 255, 255, 0.25),
+              0 8px 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55)
+            `;
+          }}
+        >
+          {/* Radial glow backdrop with fiery pulse */}
+          <div
+            className="portal-glow"
+            style={{
+              position: 'absolute',
+              inset: '-4px',
+              background: 'radial-gradient(circle at center, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.6) 0%, transparent 70%)',
+              opacity: 0.7,
+              filter: 'blur(15px)',
+              zIndex: -1,
+              animation: 'portal-pulse 3s infinite ease-in-out',
+            }}
+          />
+          {/* Ripple effect on hover */}
+          <div
+            className="portal-ripple"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '60px',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
+              opacity: 0,
+              transform: 'scale(0.5)',
+              transition: 'all 0.6s ease-out',
+              pointerEvents: 'none',
+            }}
+          />
+          <span className="relative z-10">{startButtonLabel}</span>
+        </button>
+        <style>{`
+          @keyframes portal-pulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+          }
+          .begin-button:hover .portal-ripple {
+            opacity: 1 !important;
+            transform: scale(1.1) !important;
+          }
+        `}</style>
+
+          </div>
+        )}
+      </div>
+    );
+}
+
+export default PracticeMenu;

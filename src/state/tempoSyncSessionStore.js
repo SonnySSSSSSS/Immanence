@@ -24,6 +24,8 @@ export const useTempoSyncSessionStore = create((set, get) => ({
   // Beat counting
   segmentBeatCount: 0,       // X - beats detected in current segment
   segmentBeatTotal: 0,       // Y - expected beats for segment
+  cycleBeatCount: 0,         // Current beat in the current breath cycle
+  cycleBeatsPerCycle: 0,     // Total beats in one full breath cycle
 
   // Phase durations
   maxPhaseDurations: {       // User's configured max values
@@ -48,6 +50,10 @@ export const useTempoSyncSessionStore = create((set, get) => ({
     const segmentBeatTotal = Math.max(1, Math.round(segmentDurationSec * (bpm / 60)));
     const cap = SEGMENT_CAPS[0];
 
+    // Calculate beats per full breath cycle (all 4 phases)
+    const cycleDuration = (maxDurations.inhale + maxDurations.exhale + maxDurations.holdIn + maxDurations.holdOut) * cap;
+    const cycleBeatsPerCycle = Math.max(1, Math.round(cycleDuration * (bpm / 60)));
+
     set({
       isActive: true,
       songDurationSec,
@@ -57,6 +63,8 @@ export const useTempoSyncSessionStore = create((set, get) => ({
       segmentDurationSec,
       segmentBeatCount: 0,
       segmentBeatTotal,
+      cycleBeatCount: 0,
+      cycleBeatsPerCycle,
       maxPhaseDurations: { ...maxDurations },
       effectivePhaseDurations: {
         inhale: maxDurations.inhale * cap,
@@ -76,6 +84,8 @@ export const useTempoSyncSessionStore = create((set, get) => ({
       segmentDurationSec: 0,
       segmentBeatCount: 0,
       segmentBeatTotal: 0,
+      cycleBeatCount: 0,
+      cycleBeatsPerCycle: 0,
       songDurationSec: null,
     });
   },
@@ -93,6 +103,10 @@ export const useTempoSyncSessionStore = create((set, get) => ({
     if (newSegmentIndex !== segmentIndex) {
       const cap = SEGMENT_CAPS[newSegmentIndex];
       const segmentBeatTotal = Math.max(1, Math.round(segmentDurationSec * (bpm / 60)));
+      
+      // Recalculate cycle beats per cycle with new cap
+      const cycleDuration = (maxPhaseDurations.inhale + maxPhaseDurations.exhale + maxPhaseDurations.holdIn + maxPhaseDurations.holdOut) * cap;
+      const cycleBeatsPerCycle = Math.max(1, Math.round(cycleDuration * (bpm / 60)));
 
       set({
         segmentIndex: newSegmentIndex,
@@ -100,6 +114,7 @@ export const useTempoSyncSessionStore = create((set, get) => ({
         segmentElapsedSec,
         segmentBeatCount: 0, // Reset beat count for new segment
         segmentBeatTotal,
+        cycleBeatsPerCycle,
         effectivePhaseDurations: {
           inhale: maxPhaseDurations.inhale * cap,
           exhale: maxPhaseDurations.exhale * cap,
@@ -114,9 +129,12 @@ export const useTempoSyncSessionStore = create((set, get) => ({
 
   // Called on each detected beat
   incrementBeatCount: () => {
-    const { isActive } = get();
+    const { isActive, cycleBeatsPerCycle } = get();
     if (!isActive) return;
-    set(state => ({ segmentBeatCount: state.segmentBeatCount + 1 }));
+    set(state => ({
+      segmentBeatCount: state.segmentBeatCount + 1,
+      cycleBeatCount: (state.cycleBeatCount + 1) % Math.max(1, cycleBeatsPerCycle), // Wrap around at cycle end
+    }));
   },
 
   // Update max durations (when user changes settings)

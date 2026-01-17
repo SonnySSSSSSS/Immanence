@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTempoSyncStore } from '../state/tempoSyncStore.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { useTempoDetection } from '../hooks/useTempoDetection.js';
@@ -12,7 +12,6 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const [expandedManual, setExpandedManual] = useState(false);
   const [showNoStable, setShowNoStable] = useState(false);
   const [tapTimes, setTapTimes] = useState([]);
-  const [fileName, setFileName] = useState('No file selected');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [loopA, setLoopA] = useState(0);
@@ -20,7 +19,6 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const [isLooping, setIsLooping] = useState(false);
   const noStableTimerRef = useRef(null);
   const tapClearTimerRef = useRef(null);
-  const timeUpdateIntervalRef = useRef(null);
   const enabledRef = useRef(false);
   const isInitializedRef = useRef(false);
   const getAudioElementRef = useRef(null);
@@ -57,12 +55,14 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   // Audio detection hook
   const {
     initializeAudioContext,
+    loadAudioFile,
     startDetection,
     playAudio,
     pauseAudio,
     stopAudio,
     getAudioElement,
     setLoopState,
+    resetDetection: resetDetectionHook,
   } = useTempoDetection();
 
   useEffect(() => {
@@ -122,14 +122,23 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     }
   }, [songDurationSec, hasSong]);
 
+  // Expose audio start/stop functions globally for practice section to call
   useEffect(() => {
     window.__tempoSyncStartAudio = () => {
-      useTempoAudioStore.getState().start("begin-practice-click");
+      console.log('[TempoSyncPanel] __tempoSyncStartAudio called');
+      // Use the hook's playAudio which plays the audio element with BPM detection
+      playAudio();
+    };
+    window.__tempoSyncStopAudio = () => {
+      console.log('[TempoSyncPanel] __tempoSyncStopAudio called');
+      // Stop the audio when practice ends
+      stopAudio();
     };
     return () => {
       delete window.__tempoSyncStartAudio;
+      delete window.__tempoSyncStopAudio;
     };
-  }, []);
+  }, [playAudio, stopAudio]);
 
   // Listen for practice start event to begin audio playback
   // useEffect(() => {
@@ -159,7 +168,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   //   };
   // }, []);
 
-  // File load handler
+  // File load handler - uses useTempoDetection hook for BPM analysis
   const handleFileLoad = async (file) => {
     if (!file) return;
 
@@ -168,24 +177,43 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
     }
 
     try {
-      setFileName(file.name);
       setLoopA(0);
       setLoopB(null);
       setIsLooping(false);
+
+      // Load via useTempoDetection hook (handles BPM analysis + audio element creation)
+      const audio = await loadAudioFile(file);
+
+      // Also sync to tempoAudioStore for global playback state
       useTempoAudioStore.getState().loadSongFile(file);
-      
-      // Set up time tracking
-      const audio = getAudioElement();
+
+      // Set up time tracking on the hook's audio element
       if (audio) {
-        audio.addEventListener('loadedmetadata', () => {
-          setDuration(audio.duration);
+        // Duration is set when metadata loads
+        const handleMetadata = () => {
+          if (Number.isFinite(audio.duration)) {
+            setDuration(audio.duration);
+            // Also update the store's duration
+            useTempoAudioStore.setState({ songDurationSec: audio.duration });
+          }
           setCurrentTime(0);
-        });
-        
-        audio.addEventListener('timeupdate', () => {
+        };
+
+        const handleTimeUpdate = () => {
           setCurrentTime(audio.currentTime);
-        });
+        };
+
+        // Check if metadata is already loaded
+        if (audio.readyState >= 1 && Number.isFinite(audio.duration)) {
+          handleMetadata();
+        } else {
+          audio.addEventListener('loadedmetadata', handleMetadata, { once: true });
+        }
+
+        audio.addEventListener('timeupdate', handleTimeUpdate);
       }
+
+      console.log('[TempoSyncPanel] File loaded via hook:', file.name);
     } catch (error) {
       console.error('Failed to load audio file:', error);
     }
@@ -193,7 +221,6 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
 
   const handleClearSong = () => {
     useTempoAudioStore.getState().clearSong();
-    setFileName('No file selected');
     setDuration(0);
     setCurrentTime(0);
     setLoopA(0);
@@ -209,6 +236,9 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const phaseDuration = getPhaseDuration();
   const confidencePercent = Math.round(confidence * 100);
   const isPlaying = playbackState === 'playing';
+
+  // Calculate beats per phase for display
+  const beatsPerPhaseDisplay = bpm > 0 ? Math.round(phaseDuration * bpm / 60) : beatsPerPhase;
 
   const formatTime = (seconds) => {
     if (!isFinite(seconds)) return '0:00';
@@ -242,6 +272,10 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   };
 
   const handleResetDetection = () => {
+    // Reset both the hook's detection state and the store's state
+    if (resetDetectionHook) {
+      resetDetectionHook();
+    }
     if (resetDetection) {
       resetDetection();
     }
@@ -475,10 +509,10 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                 }}
               >
                 <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-primary)', letterSpacing: '0.08em' }}>
-                  x{breathMultiplier}
+                  {beatsPerPhaseDisplay} beats
                 </div>
                 <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-                  {phaseDuration.toFixed(1)}s
+                  {phaseDuration.toFixed(1)}s @ x{breathMultiplier}
                 </div>
               </div>
             </div>
@@ -589,9 +623,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                     ▶ PLAY
                   </button>
                   <button
-                    onClick={() => {
-                      // pauseAudio();
-                    }}
+                    onClick={pauseAudio}
                     style={{
                       flex: 1,
                       padding: '8px',
@@ -609,9 +641,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                     ⏸ PAUSE
                   </button>
                   <button
-                    onClick={() => {
-                      // stopAudio();
-                    }}
+                    onClick={stopAudio}
                     style={{
                       flex: 1,
                       padding: '8px',
