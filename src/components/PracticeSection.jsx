@@ -802,6 +802,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Backward compatibility during refactor
   const selectedPractice = getPracticeConfig(practiceId) || PRACTICE_REGISTRY.breath;
   const practice = selectedPractice.label;
+  
+  // When running a practice, get the actual practice's label (accounting for subModes)
+  const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
+  const actualRunningPractice = getPracticeConfig(actualRunningPracticeId) || PRACTICE_REGISTRY.breath;
+  const runningPracticeLabel = actualRunningPractice.label;
 
   const handleSelectPractice = useCallback((id) => {
     console.log('[PracticeSection v3.17.28] handleSelectPractice called with id:', id);
@@ -1439,9 +1444,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Check for vipassana practices (both old IDs and new awareness umbrella)
     if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
-      const practiceConfig = getPracticeConfig(practiceId);
+      const practiceConfig = getPracticeConfig(actualPracticeId);
       setIsRunning(true);
-      onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
+      onPracticingChange && onPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
       setTapErrors([]);
       setLastErrorMs(null);
@@ -1456,9 +1461,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return; 
     }
 
-    const practiceConfig = getPracticeConfig(practiceId);
+    const practiceConfig = getPracticeConfig(actualPracticeId);
     setIsRunning(true);
-    onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
+    onPracticingChange && onPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
     setTapErrors([]);
     setLastErrorMs(null);
@@ -1673,7 +1678,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    if (practiceId === "awareness" || practiceId === "cognitive_vipassana") {
+    // Resolve actual practice ID for showing correct vipassana variant
+    const actualId = getActualPracticeId(practiceId);
+    if (actualId === "cognitive_vipassana" || actualId === "somatic_vipassana") {
       return createPortal(
         <InsightMeditationPortal 
           onExit={activeCircuitId ? handleCircuitComplete : handleStop}
@@ -1690,7 +1697,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     let feedbackText = "";
     let feedbackShadow = "none";
 
-    if (lastSignedErrorMs !== null && practice === "Breath & Stillness") {
+    if (lastSignedErrorMs !== null && runningPracticeLabel === "Breath & Stillness") {
       const absError = Math.round(Math.abs(lastSignedErrorMs));
 
       if (absError > 1000) {
@@ -1761,7 +1768,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         )}
 
         <div className="flex-1 flex items-center justify-center w-full">
-          {practice === "Visualization" ? (
+          {runningPracticeLabel === "Visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
               fadeInDuration={fadeInDuration}
@@ -1771,7 +1778,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
-          ) : practice === "Cymatics" ? (
+          ) : runningPracticeLabel === "Cymatics" ? (
             <CymaticsVisualization
               frequency={selectedFrequency.hz}
               n={selectedFrequency.n}
@@ -1784,7 +1791,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
-          ) : practice === "Breath & Stillness" ? (
+          ) : runningPracticeLabel === "Breath & Stillness" ? (
             <div className="flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
               <BreathingRing
                 breathPattern={breathingPatternForRing}
