@@ -539,6 +539,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             titleContainerMarginBottom={menuTitleContainerMarginBottom}
             titleTextMarginBottom={menuTitleTextMarginBottom}
             configPanelMarginBottom={menuConfigPanelMarginBottom}
+            practice={p}
             ConfigComponent={p.Config}
             setters={setters}
             isLight={tokens.isLight}
