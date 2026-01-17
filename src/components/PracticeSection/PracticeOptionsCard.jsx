@@ -9,6 +9,11 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
   const p = PRACTICE_REGISTRY[resolvedId];
   const isCollapsed = !practiceId;
 
+  // Determine active sub-mode for practices with subModes
+  const hasSubModes = p?.subModes && Object.keys(p.subModes).length > 0;
+  const activeMode = hasSubModes ? (setters.activeMode || p.defaultSubMode) : null;
+  const activeSubMode = hasSubModes ? p.subModes[activeMode] : null;
+
   // Intentional Reveal Logic: Scroll into view when expanded
   useEffect(() => {
     if (practiceId && !hasExpandedOnce && cardRef.current) {
@@ -277,6 +282,71 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                    }
                  `}</style>
                </>
+             ) : hasSubModes ? (
+               <div>
+                 {/* Sub-mode Toggle */}
+                 <div style={{ marginBottom: '24px' }}>
+                   <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: '12px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
+                     Select Mode
+                   </div>
+                   <div className="flex gap-3 justify-center flex-wrap">
+                     {Object.entries(p.subModes).map(([modeKey, modeConfig]) => (
+                       <button
+                         key={modeKey}
+                         onClick={() => setters.setActiveMode?.(modeKey)}
+                         style={{
+                           fontFamily: 'var(--font-display)',
+                           fontSize: '10px',
+                           fontWeight: 600,
+                           letterSpacing: '0.12em',
+                           textTransform: 'uppercase',
+                           padding: '10px 16px',
+                           borderRadius: '8px',
+                           border: activeMode === modeKey 
+                             ? '1.5px solid var(--accent-color)' 
+                             : '1px solid rgba(255,255,255,0.2)',
+                           background: activeMode === modeKey 
+                             ? 'rgba(212, 175, 55, 0.15)' 
+                             : 'rgba(255,255,255,0.03)',
+                           color: activeMode === modeKey 
+                             ? 'var(--accent-color)' 
+                             : 'rgba(255,255,255,0.6)',
+                           cursor: 'pointer',
+                           transition: 'all 200ms',
+                           boxShadow: activeMode === modeKey 
+                             ? '0 0 16px rgba(212, 175, 55, 0.3)' 
+                             : 'none',
+                         }}
+                         onMouseEnter={(e) => {
+                           if (activeMode !== modeKey) {
+                             e.target.style.background = 'rgba(255,255,255,0.08)';
+                           }
+                         }}
+                         onMouseLeave={(e) => {
+                           if (activeMode !== modeKey) {
+                             e.target.style.background = 'rgba(255,255,255,0.03)';
+                           }
+                         }}
+                       >
+                         {modeConfig.label}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+
+                 {/* Render the Config for the active sub-mode */}
+                 {activeSubMode?.Config ? (
+                   <activeSubMode.Config 
+                     {...setters}
+                     isLight={tokens.isLight}
+                     selectedRitualId={setters.selectedRitualId}
+                   />
+                 ) : (
+                   <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
+                     No additional configuration for {activeSubMode?.label}
+                   </div>
+                 )}
+               </div>
              ) : p.Config ? (
                <p.Config 
                  {...setters}

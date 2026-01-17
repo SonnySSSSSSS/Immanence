@@ -1038,6 +1038,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
   const setDriftEnabled = (val) => updateParams('cymatics', { driftEnabled: val });
 
+  // Generic setter for consolidated practices with subModes (awareness, resonance, perception)
+  const setActiveMode = (practiceId, modeKey) => updateParams(practiceId, { activeMode: modeKey });
+
   const handlePrevFx = () => {
     setCurrentFxIndex(prev => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
   };
@@ -2074,14 +2077,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // RENDER PRIORITY 3: Practice Configuration/Selection View
   // Assemble the unified setters/params object for the dynamic config panels
+  const activeMode = practiceParams[practiceId]?.activeMode;
   const configProps = {
     preset, pattern, soundType, soundVolume, binauralPreset, isochronicPreset, carrierFrequency,
     sensoryType, vipassanaTheme, vipassanaElement, geometry, fadeInDuration, displayDuration,
     fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
+    activeMode,
     setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset, 
     setCarrierFrequency, setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry, 
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
     setFrequencySet, setSelectedFrequency, setDriftEnabled,
+    setActiveMode: (modeKey) => setActiveMode(practiceId, modeKey),
     onToggleRunning: handleStart, 
     onSelectRitual: handleSelectRitual, 
     selectedRitualId: activeRitual?.id,
