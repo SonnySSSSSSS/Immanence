@@ -802,11 +802,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Backward compatibility during refactor
   const selectedPractice = getPracticeConfig(practiceId) || PRACTICE_REGISTRY.breath;
   const practice = selectedPractice.label;
-  
-  // When running a practice, get the actual practice's label (accounting for subModes)
-  const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
-  const actualRunningPractice = getPracticeConfig(actualRunningPracticeId) || PRACTICE_REGISTRY.breath;
-  const runningPracticeLabel = actualRunningPractice.label;
 
   const handleSelectPractice = useCallback((id) => {
     console.log('[PracticeSection v3.17.28] handleSelectPractice called with id:', id);
@@ -846,6 +841,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [haloPulse, setHaloPulse] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(duration * 60);
+  
+  // When running a practice, get the actual practice's label (accounting for subModes)
+  const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
+  const actualRunningPractice = getPracticeConfig(actualRunningPracticeId) || PRACTICE_REGISTRY.breath;
+  const runningPracticeLabel = actualRunningPractice.label;
+
   const [isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
