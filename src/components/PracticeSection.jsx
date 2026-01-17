@@ -842,10 +842,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(duration * 60);
   
-  // When running a practice, get the actual practice's label (accounting for subModes)
+  // When running a practice, get the actual practice ID (accounting for subModes)
   const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
-  const actualRunningPractice = getPracticeConfig(actualRunningPracticeId) || PRACTICE_REGISTRY.breath;
-  const runningPracticeLabel = actualRunningPractice.label;
 
   const [isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -1698,7 +1696,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     let feedbackText = "";
     let feedbackShadow = "none";
 
-    if (lastSignedErrorMs !== null && runningPracticeLabel === "Breath & Stillness") {
+    if (lastSignedErrorMs !== null && actualRunningPracticeId === "breath") {
       const absError = Math.round(Math.abs(lastSignedErrorMs));
 
       if (absError > 1000) {
@@ -1769,7 +1767,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         )}
 
         <div className="flex-1 flex items-center justify-center w-full">
-          {runningPracticeLabel === "Visualization" ? (
+          {actualRunningPracticeId === "visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
               fadeInDuration={fadeInDuration}
@@ -1779,7 +1777,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
-          ) : runningPracticeLabel === "Cymatics" ? (
+          ) : actualRunningPracticeId === "cymatics" ? (
             <CymaticsVisualization
               frequency={selectedFrequency.hz}
               n={selectedFrequency.n}
@@ -1792,7 +1790,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               audioEnabled={audioEnabled}
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
-          ) : runningPracticeLabel === "Breath & Stillness" ? (
+          ) : actualRunningPracticeId === "breath" ? (
             <div className="flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
               <BreathingRing
                 breathPattern={breathingPatternForRing}
