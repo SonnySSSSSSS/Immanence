@@ -826,6 +826,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }));
   };
 
+  // Get the actual practice ID to run, accounting for subModes in consolidated practices
+  const getActualPracticeId = (baseId) => {
+    const practice = PRACTICE_REGISTRY[baseId];
+    if (!practice?.subModes) return baseId; // No subModes, return as-is
+    
+    const activeMode = practiceParams[baseId]?.activeMode || practice.defaultSubMode;
+    const subMode = practice.subModes[activeMode];
+    return subMode?.id || baseId; // Return the subMode's practice ID
+  };
+
   // Shared UI states (non-practice specific)
   const [chevronAngle, setChevronAngle] = useState(0);
   const [haloPulse, setHaloPulse] = useState(0);
@@ -885,7 +895,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   } = practiceParams.cymatics;
 
   // Vipassana params correspond to specific visualization types
-  const isCognitive = practiceId === 'awareness' || practiceId === 'cognitive_vipassana';
+  const actualPracticeIdForVippa = getActualPracticeId(practiceId);
+  const isCognitive = actualPracticeIdForVippa === 'cognitive_vipassana';
   const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
   // Insight Meditation (Cognitive) = Sakshi, Body Scan (Somatic) = BodyScan
   const sensoryType = isCognitive ? 'sakshi' : 'bodyScan';
@@ -1397,6 +1408,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
+    // Get the actual practice ID to run (handles subModes)
+    const actualPracticeId = getActualPracticeId(practiceId);
+
     // savePreferences({
     //   practiceId,
     //   duration,
@@ -1422,7 +1436,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
-    if (practiceId === "awareness" || practiceId === "cognitive_vipassana") {
+    // Check for vipassana practices (both old IDs and new awareness umbrella)
+    if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(practiceId);
       setIsRunning(true);
@@ -1484,12 +1499,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
     }
 
-    const p = practiceId;
+    const p = actualPracticeId; // Use the actual practice ID to determine domain
     let domain = 'breathwork';
     if (p === 'visualization' || p === 'cymatics') domain = 'visualization';
     else if (p.includes('vipassana')) domain = isCognitive ? 'focus' : 'body';
-    else if (p === 'ritual') domain = 'ritual';
+    else if (p === 'ritual' || practiceId === 'integration') domain = 'ritual';
     else if (p === 'sound') domain = 'sound';
+    else if (p === 'photic') domain = 'photic';
+    else if (practiceId === 'resonance') domain = p === 'cymatics' ? 'visualization' : 'sound'; // resonance maps to sub-domain
 
     startSession(
       domain,
@@ -1499,8 +1516,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleStart = (durationOverrideSec = null) => {
+    // Get the actual practice ID to run (handles subModes)
+    const actualPracticeId = getActualPracticeId(practiceId);
+    
     // Special handling for Photic practice
-    if (practiceId === "photic") {
+    if (practiceId === "photic" || actualPracticeId === "photic") {
       onOpenPhotic?.();
       return;
     }
