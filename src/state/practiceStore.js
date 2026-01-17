@@ -56,7 +56,17 @@ const PER_PRACTICE_DEFAULTS = {
     fadeOutDuration: 2.5,
     voidDuration: 10,
   },
-  photic: {}
+  photic: {},
+  integration: {},
+  awareness: {
+    activeMode: "insight"
+  },
+  resonance: {
+    activeMode: "aural"
+  },
+  perception: {
+    activeMode: "visualization"
+  }
 };
 
 export const DEFAULT_PREFERENCES = {
@@ -64,17 +74,27 @@ export const DEFAULT_PREFERENCES = {
   practiceParams: { ...PER_PRACTICE_DEFAULTS }
 };
 
-// Map legacy labels to new IDs for migration
+// Map legacy labels and old practice IDs to new combined IDs
 const LEGACY_MAP = {
   "Breath & Stillness": "breath",
-  "Ritual": "ritual",
+  "Ritual": "integration",
   "Circuit": "circuit",
-  "Insight Meditation": "cognitive_vipassana",
-  "Body Scan": "somatic_vipassana",
-  "Sound": "sound",
-  "Visualization": "visualization",
-  "Cymatics": "cymatics",
-  "Photic": "photic"
+  "Insight Meditation": "awareness",
+  "Body Scan": "awareness",
+  "Sound": "resonance",
+  "Visualization": "perception",
+  "Cymatics": "resonance",
+  "Photic": "perception",
+  // Direct ID mappings for old practice IDs
+  "ritual": "integration",
+  "insight": "awareness",
+  "bodyscan": "awareness",
+  "cognitive_vipassana": "awareness",
+  "somatic_vipassana": "awareness",
+  "sound": "resonance",
+  "visualization": "perception",
+  "cymatics": "resonance",
+  "photic": "perception"
 };
 
 // Session history functions
@@ -127,10 +147,13 @@ export function loadPreferences() {
       return DEFAULT_PREFERENCES;
     }
     const stored = JSON.parse(raw);
+    // Map old practice IDs to new consolidated ones
+    const normalizedPracticeId = LEGACY_MAP[stored.practiceId] || stored.practiceId;
     // Deep merge to ensure defaults exist for new practices/parameters
     return {
       ...DEFAULT_PREFERENCES,
       ...stored,
+      practiceId: normalizedPracticeId,
       practiceParams: {
         ...DEFAULT_PREFERENCES.practiceParams,
         ...(stored.practiceParams || {})

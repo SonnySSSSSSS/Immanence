@@ -77,6 +77,11 @@ const DOMAIN_TO_FAMILY = {
     visualization: PRACTICE_FAMILIES.SETTLE,
     cymatics: PRACTICE_FAMILIES.SETTLE,
     sound: PRACTICE_FAMILIES.SETTLE,
+    // Combined umbrella practices
+    integration: PRACTICE_FAMILIES.SETTLE,
+    awareness: PRACTICE_FAMILIES.SCAN,
+    resonance: PRACTICE_FAMILIES.SETTLE,
+    perception: PRACTICE_FAMILIES.SETTLE,
 
     // Domains that need resolution (return null → falls through to default)
     // yoga: null,   // Intentionally omitted

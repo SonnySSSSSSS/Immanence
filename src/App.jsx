@@ -36,8 +36,8 @@ function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExp
   // Hide avatar during any active practice session
   const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary' && !isPracticing;
 
-  // Special case: Insight Meditation renders PracticeSection directly (no avatar wrapper)
-  const isInsightMeditation = isPracticing && currentPracticeId === 'cognitive_vipassana';
+  // Special case: Awareness (Insight Meditation) renders PracticeSection directly (no avatar wrapper)
+  const isInsightMeditation = isPracticing && (currentPracticeId === 'awareness' || currentPracticeId === 'cognitive_vipassana');
   if (isInsightMeditation) {
     return <PracticeSection 
       onPracticingChange={onPracticingChange} 
@@ -394,7 +394,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.23.93
+                        v3.23.96
                     </div>
                   </div>
 

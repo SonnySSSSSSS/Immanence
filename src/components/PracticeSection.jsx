@@ -60,15 +60,16 @@ const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
   },
-  ritual: {
-    id: "ritual",
-    label: "Ritual Library",
-    labelLine1: "RITUAL",
-    labelLine2: "LIBRARY",
+  integration: {
+    id: "integration",
+    label: "Integration",
+    labelLine1: "INTEGRATION",
+    labelLine2: "",
     icon: "◈",
     supportsDuration: false,
     Config: RitualSelectionDeck,
     requiresFullscreen: false,
+    alias: "ritual",
   },
   circuit: {
     id: "circuit",
@@ -80,69 +81,75 @@ const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
   },
-  cognitive_vipassana: {
-    id: "cognitive_vipassana",
-    label: "Insight Meditation",
-    labelLine1: "INSIGHT",
-    labelLine2: "MEDITATION",
+  awareness: {
+    id: "awareness",
+    label: "Awareness",
+    labelLine1: "AWARENESS",
+    labelLine2: "",
     icon: "👁",
     supportsDuration: true,
-    requiresFullscreen: true,
-  },
-  somatic_vipassana: {
-    id: "somatic_vipassana",
-    label: "Body Scan",
-    labelLine1: "BODY SCAN",
-    labelLine2: "",
-    icon: "⌬",
-    supportsDuration: true,
     requiresFullscreen: false,
+    subModes: {
+      insight: { id: "cognitive_vipassana", label: "Insight Meditation" },
+      bodyscan: { id: "somatic_vipassana", label: "Body Scan" }
+    },
+    defaultSubMode: "insight",
   },
-  sound: {
-    id: "sound",
-    label: "Sound",
-    labelLine1: "SOUND",
+  resonance: {
+    id: "resonance",
+    label: "Resonance",
+    labelLine1: "RESONANCE",
     labelLine2: "",
     icon: "⌇",
-    Config: SoundConfig,
     supportsDuration: true,
     requiresFullscreen: false,
+    subModes: {
+      aural: { id: "sound", label: "Sound", Config: SoundConfig },
+      cymatics: { id: "cymatics", label: "Cymatics", Config: CymaticsConfig }
+    },
+    defaultSubMode: "aural",
   },
-  visualization: {
-    id: "visualization",
-    label: "Visualization",
-    labelLine1: "VISUALIZATION",
+  perception: {
+    id: "perception",
+    label: "Perception",
+    labelLine1: "PERCEPTION",
     labelLine2: "",
     icon: "✧",
-    Config: VisualizationConfig,
     supportsDuration: true,
     requiresFullscreen: false,
-  },
-  cymatics: {
-    id: "cymatics",
-    label: "Cymatics",
-    labelLine1: "CYMATICS",
-    labelLine2: "",
-    icon: "◍",
-    Config: CymaticsConfig,
-    supportsDuration: true,
-    requiresFullscreen: false,
-  },
-  photic: {
-    id: "photic",
-    label: "Photic Circles",
-    labelLine1: "PHOTIC",
-    labelLine2: "CIRCLES",
-    icon: "☼",
-    supportsDuration: false,
-    Config: PhoticControlPanel,
-    requiresFullscreen: false,
+    subModes: {
+      visualization: { id: "visualization", label: "Visualization", Config: VisualizationConfig },
+      photic: { id: "photic", label: "Photic Circles", Config: PhoticControlPanel }
+    },
+    defaultSubMode: "visualization",
   }
 };
 
 const PRACTICE_IDS = Object.keys(PRACTICE_REGISTRY);
-const GRID_PRACTICE_IDS = PRACTICE_IDS.filter(id => id !== 'circuit'); // 8 practices for grid
+const GRID_PRACTICE_IDS = PRACTICE_IDS.filter(id => id !== 'circuit'); // 5 practices for grid
 const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
+
+// Map old practice IDs to new consolidated umbrella IDs
+const OLD_TO_NEW_PRACTICE_MAP = {
+  'ritual': 'integration',
+  'cognitive_vipassana': 'awareness',
+  'somatic_vipassana': 'awareness',
+  'sound': 'resonance',
+  'cymatics': 'resonance',
+  'visualization': 'perception',
+  'photic': 'perception',
+};
+
+// Resolve practice ID to current registry (map old IDs to new)
+const resolvePracticeId = (id) => {
+  return OLD_TO_NEW_PRACTICE_MAP[id] || id;
+};
+
+// Safe practice config lookup that resolves old IDs
+const getPracticeConfig = (id) => {
+  const resolvedId = resolvePracticeId(id);
+  return PRACTICE_REGISTRY[resolvedId];
+};
 
 // Unified width system for all practice UI components
 const PRACTICE_UI_WIDTH = {
@@ -165,7 +172,7 @@ const PracticeIcons = {
       <circle cx="24" cy="12" r="2" fill={color}/>
     </svg>
   ),
-  ritual: ({ color = 'currentColor', size = 32 }) => (
+  integration: ({ color = 'currentColor', size = 32 }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <path d="M24 8L38 32H10L24 8Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
       <path d="M24 8V32" stroke={color} strokeWidth="1" opacity="0.5"/>
@@ -173,7 +180,17 @@ const PracticeIcons = {
       <rect x="14" y="36" width="20" height="4" rx="1" stroke={color} strokeWidth="1"/>
     </svg>
   ),
-  insight: ({ color = 'currentColor', size = 32 }) => (
+  circuit: ({ color = 'currentColor', size = 32 }) => (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="16" stroke={color} strokeWidth="1.5"/>
+      <path d="M24 8V40M8 24H40" stroke={color} strokeWidth="1" opacity="0.5"/>
+      <circle cx="24" cy="8" r="2" fill={color}/>
+      <circle cx="40" cy="24" r="2" fill={color}/>
+      <circle cx="24" cy="40" r="2" fill={color}/>
+      <circle cx="8" cy="24" r="2" fill={color}/>
+    </svg>
+  ),
+  awareness: ({ color = 'currentColor', size = 32 }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <circle cx="24" cy="14" r="4" stroke={color} strokeWidth="1.5"/>
       <path d="M14 36C14 30 18 26 24 26C30 26 34 30 34 36" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
@@ -181,41 +198,18 @@ const PracticeIcons = {
       <path d="M30 20C36 24 36 30 36 30" stroke={color} strokeWidth="1" opacity="0.5" strokeLinecap="round"/>
     </svg>
   ),
-  bodyScan: ({ color = 'currentColor', size = 32 }) => (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-      <path d="M24 6C26.21 6 28 7.79 28 10C28 12.21 26.21 14 24 14C21.79 14 20 12.21 20 10C20 7.79 21.79 6 24 6Z" stroke={color} strokeWidth="1.5"/>
-      <path d="M24 14V30M24 30L18 42M24 30L30 42M24 18L14 26M24 18L34 26" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="24" cy="24" r="14" stroke={color} strokeWidth="0.5" strokeDasharray="2 4" opacity="0.4"/>
-    </svg>
-  ),
-  sound: ({ color = 'currentColor', size = 32 }) => (
+  resonance: ({ color = 'currentColor', size = 32 }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <path d="M16 18H10V30H16L24 38V10L16 18Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
       <path d="M30 16C33 19 33 29 30 32" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.8"/>
       <path d="M36 12C41 17 41 31 36 36" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
     </svg>
   ),
-  visualization: ({ color = 'currentColor', size = 32 }) => (
+  perception: ({ color = 'currentColor', size = 32 }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <path d="M8 24C8 24 14 12 24 12C34 12 40 24 40 24C40 24 34 36 24 36C14 36 8 24 8 24Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
       <circle cx="24" cy="24" r="5" stroke={color} strokeWidth="1.5"/>
       <circle cx="24" cy="24" r="2" fill={color}/>
-    </svg>
-  ),
-  cymatics: ({ color = 'currentColor', size = 32 }) => (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="18" stroke={color} strokeWidth="1.5" opacity="0.4"/>
-      <circle cx="24" cy="24" r="12" stroke={color} strokeWidth="1.5" opacity="0.7"/>
-      <circle cx="24" cy="24" r="6" stroke={color} strokeWidth="1.5"/>
-      <path d="M24 6V42M6 24H42" stroke={color} strokeWidth="0.5" opacity="0.3"/>
-    </svg>
-  ),
-  photic: ({ color = 'currentColor', size = 32 }) => (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="18" stroke={color} strokeWidth="1.5" strokeDasharray="2 4" opacity="0.3"/>
-      <circle cx="24" cy="24" r="14" stroke={color} strokeWidth="1.5" strokeDasharray="4 2" opacity="0.6"/>
-      <circle cx="24" cy="24" r="10" stroke={color} strokeWidth="1.5"/>
-      <circle cx="24" cy="24" r="4" fill={color}/>
     </svg>
   ),
 };
@@ -447,7 +441,7 @@ function PracticeSelector({ selectedId, onSelect, tokens }) {
 
 function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark, onDisableBenchmark }) {
   const cardRef = useRef(null);
-  const p = PRACTICE_REGISTRY[practiceId];
+  const p = getPracticeConfig(practiceId);
   const practice = p?.label;
   const isCollapsed = !practiceId;
   const viewportMode = useDisplayModeStore(s => s.viewportMode);
@@ -899,7 +893,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [onNavigate]);
   
   // Backward compatibility during refactor
-  const selectedPractice = PRACTICE_REGISTRY[practiceId] || PRACTICE_REGISTRY.breath;
+  const selectedPractice = getPracticeConfig(practiceId) || PRACTICE_REGISTRY.breath;
   const practice = selectedPractice.label;
 
   const handleSelectPractice = useCallback((id) => {
@@ -984,7 +978,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   } = practiceParams.cymatics;
 
   // Vipassana params correspond to specific visualization types
-  const isCognitive = practiceId === 'cognitive_vipassana';
+  const isCognitive = practiceId === 'awareness' || practiceId === 'cognitive_vipassana';
   const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
   // Insight Meditation (Cognitive) = Sakshi, Body Scan (Somatic) = BodyScan
   const sensoryType = isCognitive ? 'sakshi' : 'bodyScan';
@@ -1149,9 +1143,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }
       }
     } else if (exercise.practiceType === 'Cognitive Vipassana') {
-      setPracticeId('cognitive_vipassana');
+      setPracticeId('awareness');
     } else if (exercise.practiceType === 'Somatic Vipassana') {
-      setPracticeId('somatic_vipassana');
+      setPracticeId('awareness');
       if (exercise.sensoryType) {
         setSensoryType(exercise.sensoryType);
       }
@@ -1518,9 +1512,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
-    if (practiceId === "cognitive_vipassana") {
+    if (practiceId === "awareness" || practiceId === "cognitive_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
-      const practiceConfig = PRACTICE_REGISTRY[practiceId];
+      const practiceConfig = getPracticeConfig(practiceId);
       setIsRunning(true);
       onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1537,7 +1531,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return; 
     }
 
-    const practiceConfig = PRACTICE_REGISTRY[practiceId];
+    const practiceConfig = getPracticeConfig(practiceId);
     setIsRunning(true);
     onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -1749,7 +1743,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    if (practiceId === "cognitive_vipassana") {
+    if (practiceId === "awareness" || practiceId === "cognitive_vipassana") {
       return createPortal(
         <InsightMeditationPortal 
           onExit={activeCircuitId ? handleCircuitComplete : handleStop}

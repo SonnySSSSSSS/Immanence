@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL: Working Directory Requirements
+
+**MANDATORY WORKING DIRECTORY**: `D:\Unity Apps\immanence-os`
+
+**NEVER USE GIT WORKTREES**. All development work MUST be done in the main repository directory.
+
+- ❌ DO NOT create worktrees
+- ❌ DO NOT work in `C:\Users\trinh\.claude-worktrees\`
+- ✅ ONLY work in `D:\Unity Apps\immanence-os`
+
+All Claude Code sessions must operate exclusively in the main development folder.
+
 ## Project Overview
 
 **Immanence OS** is a local-first meditation and self-regulation application built with React 19, React Three Fiber, and Zustand. It provides structured practices for breathing, visualization, cognitive processing (Four Modes), and habit tracking—without cloud dependency or data collection.

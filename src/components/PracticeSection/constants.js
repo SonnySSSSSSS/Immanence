@@ -15,15 +15,16 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
   },
-  ritual: {
-    id: "ritual",
-    label: "Ritual Library",
-    labelLine1: "RITUAL",
-    labelLine2: "LIBRARY",
+  integration: {
+    id: "integration",
+    label: "Integration",
+    labelLine1: "INTEGRATION",
+    labelLine2: "",
     icon: "◈",
     supportsDuration: false,
     Config: RitualSelectionDeck,
     requiresFullscreen: false,
+    alias: "ritual",
   },
   circuit: {
     id: "circuit",
@@ -35,63 +36,47 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
   },
-  cognitive_vipassana: {
-    id: "cognitive_vipassana",
-    label: "Insight Meditation",
-    labelLine1: "INSIGHT",
-    labelLine2: "MEDITATION",
+  awareness: {
+    id: "awareness",
+    label: "Awareness",
+    labelLine1: "AWARENESS",
+    labelLine2: "",
     icon: "👁",
     supportsDuration: true,
-    requiresFullscreen: true,
-  },
-  somatic_vipassana: {
-    id: "somatic_vipassana",
-    label: "Body Scan",
-    labelLine1: "BODY SCAN",
-    labelLine2: "",
-    icon: "⌬",
-    supportsDuration: true,
     requiresFullscreen: false,
+    subModes: {
+      insight: { id: "cognitive_vipassana", label: "Insight Meditation" },
+      bodyscan: { id: "somatic_vipassana", label: "Body Scan" }
+    },
+    defaultSubMode: "insight",
   },
-  sound: {
-    id: "sound",
-    label: "Sound",
-    labelLine1: "SOUND",
+  resonance: {
+    id: "resonance",
+    label: "Resonance",
+    labelLine1: "RESONANCE",
     labelLine2: "",
     icon: "⌇",
-    Config: SoundConfig,
     supportsDuration: true,
     requiresFullscreen: false,
+    subModes: {
+      aural: { id: "sound", label: "Sound", Config: SoundConfig },
+      cymatics: { id: "cymatics", label: "Cymatics", Config: CymaticsConfig }
+    },
+    defaultSubMode: "aural",
   },
-  visualization: {
-    id: "visualization",
-    label: "Visualization",
-    labelLine1: "VISUALIZATION",
+  perception: {
+    id: "perception",
+    label: "Perception",
+    labelLine1: "PERCEPTION",
     labelLine2: "",
     icon: "✧",
-    Config: VisualizationConfig,
     supportsDuration: true,
     requiresFullscreen: false,
-  },
-  cymatics: {
-    id: "cymatics",
-    label: "Cymatics",
-    labelLine1: "CYMATICS",
-    labelLine2: "",
-    icon: "◍",
-    Config: CymaticsConfig,
-    supportsDuration: true,
-    requiresFullscreen: false,
-  },
-  photic: {
-    id: "photic",
-    label: "Photic Circles",
-    labelLine1: "PHOTIC",
-    labelLine2: "CIRCLES",
-    icon: "☼",
-    supportsDuration: false,
-    Config: PhoticControlPanel,
-    requiresFullscreen: false,
+    subModes: {
+      visualization: { id: "visualization", label: "Visualization", Config: VisualizationConfig },
+      photic: { id: "photic", label: "Photic Circles", Config: PhoticControlPanel }
+    },
+    defaultSubMode: "visualization",
   }
 };
 
@@ -109,4 +94,20 @@ export const labelToPracticeId = (label) => {
   if (!label) return 'breath';
   const match = PRACTICE_IDS.find((id) => PRACTICE_REGISTRY[id].label === label);
   return match || 'breath';
+};
+
+// Map old practice IDs to new consolidated umbrella IDs
+export const OLD_TO_NEW_PRACTICE_MAP = {
+  'ritual': 'integration',
+  'cognitive_vipassana': 'awareness',
+  'somatic_vipassana': 'awareness',
+  'sound': 'resonance',
+  'cymatics': 'resonance',
+  'visualization': 'perception',
+  'photic': 'perception',
+};
+
+// Resolve practice ID to current registry (map old IDs to new)
+export const resolvePracticeId = (id) => {
+  return OLD_TO_NEW_PRACTICE_MAP[id] || id;
 };

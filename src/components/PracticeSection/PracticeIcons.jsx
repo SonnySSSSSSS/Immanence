@@ -63,4 +63,34 @@ export const PracticeIcons = {
       <circle cx="24" cy="24" r="4" fill={color}/>
     </svg>
   ),
+  integration: ({ color = 'currentColor', size = 32 }) => (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <path d="M24 8L38 32H10L24 8Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M24 8V32" stroke={color} strokeWidth="1" opacity="0.5"/>
+      <path d="M17 20L31 20" stroke={color} strokeWidth="1" opacity="0.5"/>
+      <rect x="14" y="36" width="20" height="4" rx="1" stroke={color} strokeWidth="1"/>
+    </svg>
+  ),
+  awareness: ({ color = 'currentColor', size = 32 }) => (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="14" r="4" stroke={color} strokeWidth="1.5"/>
+      <path d="M14 36C14 30 18 26 24 26C30 26 34 30 34 36" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M18 20C12 24 12 30 12 30" stroke={color} strokeWidth="1" opacity="0.5" strokeLinecap="round"/>
+      <path d="M30 20C36 24 36 30 36 30" stroke={color} strokeWidth="1" opacity="0.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  resonance: ({ color = 'currentColor', size = 32 }) => (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <path d="M16 18H10V30H16L24 38V10L16 18Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M30 16C33 19 33 29 30 32" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.8"/>
+      <path d="M36 12C41 17 41 31 36 36" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
+    </svg>
+  ),
+  perception: ({ color = 'currentColor', size = 32 }) => (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <path d="M8 24C8 24 14 12 24 12C34 12 40 24 40 24C40 24 34 36 24 36C14 36 8 24 8 24Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="24" cy="24" r="5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="24" cy="24" r="2" fill={color}/>
+    </svg>
+  ),
 };

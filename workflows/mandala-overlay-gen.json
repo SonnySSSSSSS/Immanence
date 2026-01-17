@@ -1,0 +1,61 @@
+{
+  "prompt": {
+    "3": {
+      "inputs": {
+        "seed": 42,
+        "steps": 30,
+        "cfg": 7.5,
+        "sampler_name": "dpmpp_2m",
+        "scheduler": "karras",
+        "denoise": 1,
+        "model": ["4", 0],
+        "positive": ["6", 0],
+        "negative": ["7", 0],
+        "latent_image": ["5", 0]
+      },
+      "class_type": "KSampler"
+    },
+    "4": {
+      "inputs": {
+        "ckpt_name": "sd_xl_base_1.0.safetensors"
+      },
+      "class_type": "CheckpointLoaderSimple"
+    },
+    "5": {
+      "inputs": {
+        "width": 3072,
+        "height": 3072,
+        "batch_size": 1
+      },
+      "class_type": "EmptyLatentImage"
+    },
+    "6": {
+      "inputs": {
+        "text": "Centered radial mandala line art, ornate sacred geometry filigree, symmetrical, elegant thin gold ink lines, high contrast linework, transparent background, no fill, no shading, no text, no border frame, clean vector-like strokes, quiet negative space in six label zones arranged like a 5-petal flower with a center circle, ultra high resolution, professional vector illustration style, precise geometric patterns, delicate linework",
+        "clip": ["4", 1]
+      },
+      "class_type": "CLIPTextEncode"
+    },
+    "7": {
+      "inputs": {
+        "text": "colored background, gradients, filled shapes, thick strokes, messy lines, noise texture, text, watermark, logo, asymmetry, cropped edges, blurry, raster artifacts, jpeg artifacts, low quality, pixelated",
+        "clip": ["4", 1]
+      },
+      "class_type": "CLIPTextEncode"
+    },
+    "8": {
+      "inputs": {
+        "samples": ["3", 0],
+        "vae": ["4", 2]
+      },
+      "class_type": "VAEDecode"
+    },
+    "9": {
+      "inputs": {
+        "filename_prefix": "mandala_overlay",
+        "images": ["8", 0]
+      },
+      "class_type": "SaveImage"
+    }
+  }
+}

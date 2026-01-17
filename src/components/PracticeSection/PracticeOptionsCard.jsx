@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
-import { PRACTICE_REGISTRY, DURATIONS, PRACTICE_UI_WIDTH } from "./constants.js";
+import { PRACTICE_REGISTRY, DURATIONS, PRACTICE_UI_WIDTH, resolvePracticeId, OLD_TO_NEW_PRACTICE_MAP } from "./constants.js";
 
 export function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {
   const cardRef = useRef(null);
-  const p = PRACTICE_REGISTRY[practiceId];
+  const resolvedId = resolvePracticeId(practiceId);
+  const p = PRACTICE_REGISTRY[resolvedId];
   const isCollapsed = !practiceId;
 
   // Intentional Reveal Logic: Scroll into view when expanded
