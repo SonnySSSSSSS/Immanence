@@ -11,7 +11,9 @@ export function CycleRingControl({
     setFadeOutDuration,
     voidDuration,
     setVoidDuration,
-    isLight = false
+    isLight = false,
+    size: propSize = 180,
+    showLegend = true,
 }) {
     const PHASES = [
         { key: 'fadeIn', label: 'IN', color: 'var(--accent-color)', min: 1, max: 5 },
@@ -40,7 +42,7 @@ export function CycleRingControl({
     const total = values.fadeIn + values.display + values.fadeOut + values.void;
 
     // SVG dimensions
-    const size = 180;
+    const size = propSize;
     const center = size / 2;
     const outerRadius = 70;
     const innerRadius = 45;
@@ -190,56 +192,60 @@ export function CycleRingControl({
                 </text>
             </svg>
 
-            {/* Legend with +/- buttons */}
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
-                {arcs.map((arc) => {
-                    const phase = PHASES.find(p => p.key === arc.key);
-                    return (
-                        <div key={arc.key} className="flex items-center gap-2">
-                            <div
-                                className="w-3 h-3 rounded-sm"
-                                style={{ background: arc.color, border: '1px solid rgba(255,255,255,0.2)' }}
-                            />
-                            <span className={`text-[10px] ${isLight ? 'text-[var(--text-muted)]' : 'text-[rgba(253,251,245,0.5)]'} uppercase tracking-wider w-8`}>
-                                {arc.label}
-                            </span>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => handleArcClick(arc.key, -1)}
-                                    className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
-                                    style={{
-                                        background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(255,255,255,0.1)',
-                                        color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)',
-                                        border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.15)'
-                                    }}
-                                    disabled={values[arc.key] <= phase.min}
-                                >
-                                    −
-                                </button>
-                                <span className="text-xs text-[var(--accent-color)] w-6 text-center font-bold">
-                                    {arc.value}
-                                </span>
-                                <button
-                                    onClick={() => handleArcClick(arc.key, 1)}
-                                    className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
-                                    style={{
-                                        background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(255,255,255,0.1)',
-                                        color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)',
-                                        border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.15)'
-                                    }}
-                                    disabled={values[arc.key] >= phase.max}
-                                >
-                                    +
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            {showLegend && (
+                <>
+                    {/* Legend with +/- buttons */}
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
+                        {arcs.map((arc) => {
+                            const phase = PHASES.find(p => p.key === arc.key);
+                            return (
+                                <div key={arc.key} className="flex items-center gap-2">
+                                    <div
+                                        className="w-3 h-3 rounded-sm"
+                                        style={{ background: arc.color, border: '1px solid rgba(255,255,255,0.2)' }}
+                                    />
+                                    <span className={`text-[10px] ${isLight ? 'text-[var(--text-muted)]' : 'text-[rgba(253,251,245,0.5)]'} uppercase tracking-wider w-8`}>
+                                        {arc.label}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => handleArcClick(arc.key, -1)}
+                                            className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
+                                            style={{
+                                                background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(255,255,255,0.1)',
+                                                color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)',
+                                                border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.15)'
+                                            }}
+                                            disabled={values[arc.key] <= phase.min}
+                                        >
+                                            −
+                                        </button>
+                                        <span className="text-xs text-[var(--accent-color)] w-6 text-center font-bold">
+                                            {arc.value}
+                                        </span>
+                                        <button
+                                            onClick={() => handleArcClick(arc.key, 1)}
+                                            className="w-5 h-5 rounded-full text-xs flex items-center justify-center"
+                                            style={{
+                                                background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(255,255,255,0.1)',
+                                                color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)',
+                                                border: isLight ? '1px solid var(--light-border)' : '1px solid rgba(255,255,255,0.15)'
+                                            }}
+                                            disabled={values[arc.key] >= phase.max}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
 
-            <div className={`text-[9px] ${isLight ? 'text-[var(--text-muted)]' : 'text-[rgba(253,251,245,0.3)]'} mt-2`}>
-                Click arc to increase • Right-click to decrease
-            </div>
+                    <div className={`text-[9px] ${isLight ? 'text-[var(--text-muted)]' : 'text-[rgba(253,251,245,0.3)]'} mt-2`}>
+                        Click arc to increase • Right-click to decrease
+                    </div>
+                </>
+            )}
         </div>
     );
 }
