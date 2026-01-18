@@ -1,5 +1,9 @@
 # LLM Integration Guide
 
+STATUS: May be outdated if Four Modes has been removed/paused; verify before using.
+Use docs/DOCS_INDEX.md for the current doc map.
+
+
 ## Overview
 
 Immanence OS uses local LLM (Ollama) for AI-powered validation in the Four Modes practice. The LLM validates:
@@ -72,7 +76,7 @@ export default defineConfig({
 ```javascript
 const USE_OLLAMA = true;
 const WORKER_URL = USE_OLLAMA ? '/api/ollama' : 'https://your-worker.workers.dev';
-const DEFAULT_MODEL = USE_OLLAMA ? 'gemma3:1b' : 'gemini-1.5-flash';
+const DEFAULT_MODEL = USE_OLLAMA ? 'gemma3:1b' : 'cloud-model-name';
 ```
 
 ---
@@ -168,10 +172,10 @@ const DEFAULT_MODEL = 'your-model-name';
 
 ## Switching to Cloud API
 
-If you want to use Gemini API instead of local Ollama:
+If you want to use a cloud API instead of local Ollama:
 
 1. Deploy Cloudflare Worker (in `/worker` folder)
-2. Set API key as secret: `wrangler secret put GEMINI_API_KEY`
+2. Set API key as secret: `wrangler secret put API_KEY`
 3. Update `llmService.js`:
 
 ```javascript
@@ -190,3 +194,4 @@ const WORKER_URL = 'https://your-worker.your-subdomain.workers.dev';
 | llama3:8b | 5GB+ | Slow | Best | Complex analysis |
 
 For Four Modes validation, `gemma3:1b` is sufficient and recommended.
+

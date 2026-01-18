@@ -1,8 +1,11 @@
-# AGENTS — Authority & Roles
+# AGENTS - Authority & Roles
+
+STATUS: Active. This doc overrides agent defaults.
+Scope: authority, roles, task rules, planning constraint.
+If conflicts with other docs, this file wins.
+Use `docs/DOCS_INDEX.md` for the doc map.
 
 This file defines how all AI agents must operate in this repository.
-
-This file overrides any agent defaults.
 
 ## Workspace Rule (Mandatory)
 
@@ -15,44 +18,13 @@ This file overrides any agent defaults.
 
 ## Authority Chain
 
-1. HUMAN (repo owner) — final authority
-2. Claude Code — central planner / architect
-3. Gemini / Antigravity — complex implementer (when assigned)
-4. Codex CLI — mechanical implementer (when assigned)
+1. HUMAN (repo owner) - final authority
+2. ChatGPT (planner/adviser) - planning, specs, review, debugging guidance (no repo edits)
+3. VS Code agent (Copilot) - small/medium code edits and docs
+4. Codex CLI / Codex - multi-file refactors and harder bug fixes
+5. Claude Code - last resort for complex or high-stakes changes
 
 No agent may override a higher authority.
-
----
-
-## Roles — Architect-Builder Split
-
-### Claude Code (ARCHITECT)
-- **Responsibilities:**
-  - Research and analyze codebase to understand requirements
-  - Plan implementations and design task specifications
-  - Write technical specifications into `worklog.md` formatted for IDE execution
-  - Define file scope, constraints, and validation steps
-  - **STRICTLY PROHIBITED from modifying `/src` or any application code**
-  - **MUST follow "Planning Constraint — Reuse First" when creating specs (see below)**
-
-### IDE Agent / VS Code (BUILDER)
-- **Responsibilities:**
-  - Read tasks from `worklog.md`
-  - Execute code changes as specified in task format
-  - Test implementations and verify success
-  - Record completion status, timestamps, and commit hashes in `worklog.md`
-  - Report any blockers or clarifications needed back to ARCHITECT
-
-### Gemini / Antigravity
-- Implements complex or multi-file tasks (when assigned)
-- May refactor ONLY within assigned scope
-- Must follow specs exactly
-
-### Codex CLI
-- Implements mechanical or narrow tasks (when assigned)
-- NO refactors
-- NO architectural changes
-- Minimal diffs only
 
 ---
 
@@ -74,13 +46,13 @@ If any of the above are missing, the task is invalid.
 
 - Files listed in an ACTIVE task are LOCKED.
 - Other agents must not modify locked files.
-- No “small fixes” or “while I’m here” edits.
+- No "small fixes" or "while I'm here" edits.
 
 ---
 
-## Planning Constraint — Reuse First
+## Planning Constraint - Reuse First
 
-**Applies to:** All planning agents (Claude Code, Codex CLI, Gemini/Antigravity when creating specs, any LLM writing task specs)
+**Applies to:** All planning agents (ChatGPT, Codex CLI/Codex, Claude Code when creating specs, any LLM writing task specs)
 
 Before proposing any NEW component, hook, store, or utility, you MUST:
 
@@ -93,50 +65,11 @@ Before proposing any NEW component, hook, store, or utility, you MUST:
 
 **If reuse is possible, the plan MUST prefer reuse.**
 
-### Example (Good)
-
-```markdown
-## Component Analysis
-
-**Requirement:** Display ritual session with timer and step progression
-
-**Existing Components:**
-1. `RitualSession.jsx` - Can be reused AS-IS
-   - Already has intro/active/completion flow
-   - Already has timer logic with pause/resume
-   - Already has step progression
-   - **Decision: REUSE**
-
-2. `RitualStepDisplay.jsx` - Can be reused with minor extension
-   - Already displays step instructions and images
-   - Needs addition of thought text display for Step 2
-   - **Decision: REUSE + EXTEND**
-
-**New Components:**
-None required. Reusing existing ritual components.
-```
-
-### Example (Bad)
-
-```markdown
-## Component Analysis
-
-**Requirement:** Display ritual session with timer and step progression
-
-**New Components:**
-- `ThoughtDetachmentRitualSession.jsx` - New session component
-- `ThoughtDetachmentRitualTimer.jsx` - Custom timer
-- `ThoughtDetachmentStepDisplay.jsx` - Step display
-
-❌ REJECTED: Did not analyze existing components for reuse
-```
-
 ---
 
 ## Definition of DONE
 
 A task is DONE only when:
-- Changes are committed
-- Commit hash is recorded in worklog
-- Verification steps were run
-- Status is updated to COMPLETED
+- Changes are committed (if a commit was requested)
+- Verification steps were run (if required)
+- Status is updated in the task record

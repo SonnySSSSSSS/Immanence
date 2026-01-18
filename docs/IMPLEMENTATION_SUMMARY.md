@@ -86,7 +86,7 @@ Tier 3: Feature Specifics (Narrowly scoped)
   └─ docs/4 Modes User Manual.md (User guide)
 
 Tier 4: Task Logs & Changelogs (Historical)
-  ├─ WORKLOG.md (recent work)
+  ├─ Deprecated / Historical (recent work)
   ├─ PROJECT_STATUS.md (current phase)
   ├─ CHANGELOG.md (version history)
   └─ TASK-{DATE}-{ID}.md (specific task logs)
@@ -105,7 +105,7 @@ Tier 5: Scratch / Experimental (Transient)
 
 1. Read `.github/copilot-instructions.md` (5 min)
 2. Skim `docs/AGENTS.md` (5 min)
-3. Check `WORKLOG.md` for recent context (5 min)
+3. Check `Deprecated / Historical` for recent context (5 min)
 4. Reference `docs/DOC_ORGANIZATION_STANDARD.md` when creating docs
 
 **Total onboarding time**: ~15 minutes
@@ -118,7 +118,7 @@ Tier 5: Scratch / Experimental (Transient)
 2. Deep dive into `docs/ARCHITECTURE.md` (understand wiring)
 3. Reference specific Tier 3 docs (AVATAR_SYSTEM.md, CYCLE_SYSTEM.md, etc.)
 4. File a TASK log with Allowlist/Denylist/Constraints
-5. Update WORKLOG.md with progress
+5. Update Deprecated / Historical with progress
 
 ---
 
@@ -157,7 +157,7 @@ Tier 5: Scratch / Experimental (Transient)
    ```
 
 3. **Clean up transient docs**
-   - Delete or repurpose `FOR_GEMINI.md`
+   - Delete or repurpose `FOR_Deprecated / Historical.md`
    - Archive `DOCUMENTATION_AUDIT.md`
    - Review `SESSION_SUMMARY_FIX.md` for historical value
 
@@ -230,3 +230,4 @@ The documentation system is now yours to customize:
 4. **Add project-specific rules**: Insert a "Project-Specific Conventions" section in Tier 1
 
 All materials are designed to be **reusable** and **customizable** for your unique needs.
+

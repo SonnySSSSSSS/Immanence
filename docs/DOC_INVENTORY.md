@@ -51,7 +51,7 @@
 | File | Status | Notes |
 |------|--------|-------|
 | `CHANGELOG.md` | ✅ Ready | Version history + breaking changes |
-| `WORKLOG.md` | ✅ Ready | Recent work summary |
+| `Deprecated / Historical` | ✅ Ready | Recent work summary |
 | `PROJECT_STATUS.md` | ✅ Ready | Current phase, blockers, next steps |
 | `TASK-2026-01-05-A.md` → `E.md` | ✅ Ready | 5 recent task logs — good examples |
 | `TASK-2026-01-07-A.md` | ✅ Ready | Recent task log |
@@ -63,7 +63,7 @@
 | File | Status | Action |
 |------|--------|--------|
 | `docs/DOCUMENTATION_AUDIT.md` | 🔴 Transient | Review & delete if completed |
-| `docs/FOR_GEMINI.md` | 🔴 Transient | Delete (task-specific notes) |
+| `docs/FOR_Deprecated / Historical.md` | 🔴 Transient | Delete (task-specific notes) |
 | `PHASE_2_*.md` (3 files) | 🔴 Transient | Archive to `docs/archive/` — historical handoff docs |
 
 ---
@@ -103,7 +103,7 @@ Currently in root `docs/`:
 **Action**:
 - [ ] Create `docs/archive/TASKS/` folder
 - [ ] Move completed/old task logs
-- [ ] Link from WORKLOG.md to archive for historical reference
+- [ ] Link from Deprecated / Historical to archive for historical reference
 
 ### Historical Phase Docs (3 files)
 
@@ -143,12 +143,12 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 1. **First 5 minutes**: Read `.github/copilot-instructions.md`
 2. **Before major changes**: Skim `docs/ARCHITECTURE.md` + `docs/AGENTS.md`
 3. **For specific feature**: Jump to relevant Tier 3 doc (AVATAR_SYSTEM.md, CYCLE_SYSTEM.md, etc.)
-4. **For task context**: Check WORKLOG.md + PROJECT_STATUS.md
+4. **For task context**: Check Deprecated / Historical + PROJECT_STATUS.md
 5. **When stuck**: Reference `docs/DOC_ORGANIZATION_STANDARD.md` (this folder structure)
 
 ### As a project lead coordinating agents:
 
-1. **Daily standup**: Check `WORKLOG.md`
+1. **Daily standup**: Check `Deprecated / Historical`
 2. **Planning**: Review `PROJECT_STATUS.md` + `CHANGELOG.md`
 3. **Architecture decisions**: Delegate to `docs/AGENTS.md` (planning constraint)
 4. **Docs health**: Monthly prune transient docs + archive old tasks
@@ -163,7 +163,7 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 4. 📋 **TO DO**: Consolidate AVATAR subsystem docs (review all 5+ files, merge, delete redundant)
 5. 📋 **TO DO**: Archive old PHASE_2_*.md docs
 6. 📋 **TO DO**: Set up `docs/archive/` folder structure
-7. 📋 **TO DO**: Clean up `FOR_GEMINI.md` and `DOCUMENTATION_AUDIT.md`
+7. 📋 **TO DO**: Clean up `FOR_Deprecated / Historical.md` and `DOCUMENTATION_AUDIT.md`
 
 ---
 
@@ -182,3 +182,4 @@ git commit -m "refactor: organize docs into archive structure per DOC_ORGANIZATI
 ## Questions?
 
 Refer to `docs/DOC_ORGANIZATION_STANDARD.md` for full rationale and examples.
+

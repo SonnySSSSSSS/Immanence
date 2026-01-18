@@ -250,7 +250,7 @@
 - **npm** - Package management
 - **Git** - Version control
 - **MCP Server** - File system access for AI development
-- **Google Antigravity** - Visual IDE
+- **Google Deprecated / Historical** - Visual IDE
 - **Claude.ai** - AI-assisted development
 
 ### Data & Integration
@@ -333,7 +333,7 @@
 ## TEAM & CONTRIBUTION
 
 **Primary Developer:** Sonny (project owner, philosophy architect)
-**Development Assistants:** Claude (backend/logic), Gemini/Antigravity (frontend/UI)
+**Development Assistants:** Claude (backend/logic), Deprecated / Historical (frontend/UI)
 **Collaborator:** Mychelle (user testing, feedback, curriculum participant)
 
 ---
@@ -350,4 +350,5 @@ Immanence OS is not a wellness app. It's a consciousness development platform gr
 Target: **Wanderers, Misfits, Beautiful Fuck-Ups** seeking authentic spiritual work.
 
 Core thesis: **Existence as participation.** Not transcendence seeking, but honest engagement with life as the practice itself.
+
 

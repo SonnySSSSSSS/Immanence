@@ -25,7 +25,7 @@ These files orient agents to the codebase:
 
 | File | Purpose | Audience |
 |------|---------|----------|
-| `.github/copilot-instructions.md` | AI agent quick-start (30–50 lines). Architecture, patterns, verification steps | Claude/Copilot/Gemini |
+| `.github/copilot-instructions.md` | AI agent quick-start (30–50 lines). Architecture, patterns, verification steps | Claude/Copilot/Deprecated / Historical |
 | `CLAUDE.md` | Project philosophy, rules, command reference | All agents |
 | `docs/AGENTS.md` | Authority chain, task specs, reuse-first planning | All agents |
 | `README.md` | Public overview, feature list, setup instructions | Humans + agents |
@@ -83,12 +83,12 @@ These docs track work and changes:
 | File | Pattern | Purpose | Audience |
 |------|---------|---------|----------|
 | `CHANGELOG.md` | Maintained | Version history + breaking changes | Agents doing releases/versioning |
-| `WORKLOG.md` | Maintained | Recent work summary + blockers | Agents picking up work |
+| `Deprecated / Historical` | Maintained | Recent work summary + blockers | Agents picking up work |
 | `TASK-{DATE}-{ID}.md` | Task-specific | Single task spec + outcome | Assigned agent + reviewer |
 | `PROJECT_STATUS.md` | Maintained | Current phase, blockers, next steps | All agents |
 
 **How agents use Tier 4:**
-- Check `WORKLOG.md` before starting to see recent context
+- Check `Deprecated / Historical` before starting to see recent context
 - Reference `CHANGELOG.md` when versioning
 - File new `TASK-{DATE}-{ID}.md` for complex multi-step work
 - Check `PROJECT_STATUS.md` for current priorities
@@ -103,7 +103,7 @@ These docs are work-in-progress or exploratory:
 |---------|---------|---------|
 | `{topic}_DRAFT.md` | Experimental ideas | Delete when decision made |
 | `{topic}_RESEARCH.md` | Research notes, not canonical | Archive or delete monthly |
-| `FOR_*.md` (e.g., `FOR_GEMINI.md`) | One-off notes for specific agent | Delete after task completion |
+| `FOR_*.md` (e.g., `FOR_Deprecated / Historical.md`) | One-off notes for specific agent | Delete after task completion |
 
 **Guideline**: Delete or archive transient docs monthly. They should not accumulate.
 
@@ -178,7 +178,7 @@ All Tier 1–3 docs should follow this structure:
 
 - ❌ `notes.md` — Too generic
 - ❌ `misc-stuff.md` — Ambiguous
-- ❌ `todo.md` — Use WORKLOG.md instead
+- ❌ `todo.md` — Use Deprecated / Historical instead
 - ❌ `backup_architecture.md` — Use version control for old versions
 - ❌ `TEMP_FIX.md` — Too transient; file as TASK instead
 
@@ -204,7 +204,7 @@ All Tier 1–3 docs should follow this structure:
 
 - Links to Tier 3 feature docs (AVATAR_SYSTEM.md, CYCLE_SYSTEM.md, etc.)
 - Links to `docs/AGENTS.md` (for task templates)
-- Links to `WORKLOG.md` (recent changes)
+- Links to `Deprecated / Historical` (recent changes)
 
 ### From Tier 3 Feature Docs
 
@@ -224,7 +224,7 @@ All Tier 1–3 docs should follow this structure:
 
 | Action | Frequency | Owner |
 |--------|-----------|-------|
-| Update WORKLOG.md | After each major change | Current agent |
+| Update Deprecated / Historical | After each major change | Current agent |
 | Update PROJECT_STATUS.md | Weekly or phase-end | Project lead |
 | Prune transient docs (`*_DRAFT.md`, `FOR_*.md`) | Monthly | Project lead |
 | Review & update CHANGELOG.md | Per release | Project lead |
@@ -251,7 +251,7 @@ All Tier 1–3 docs should follow this structure:
 ### For Project Lead
 
 ✅ **DO:**
-- Maintain WORKLOG.md and PROJECT_STATUS.md
+- Maintain Deprecated / Historical and PROJECT_STATUS.md
 - Review Tier 1–2 docs quarterly
 - Assign doc ownership in complex features
 - Prune transient docs monthly
@@ -287,7 +287,7 @@ When implementing a new feature across multiple files:
    - Add to "Where to make specific changes" section
    - Add code examples if new pattern
 
-4. **Update WORKLOG.md** (as you work)
+4. **Update Deprecated / Historical** (as you work)
    - Note progress and blockers
 
 5. **Update CHANGELOG.md** (on release)
@@ -312,7 +312,7 @@ touch docs/DEVELOPMENT.md
 touch docs/PHILOSOPHY.md
 
 # Create Tier 4 (logs)
-touch WORKLOG.md
+touch Deprecated / Historical
 touch PROJECT_STATUS.md
 touch CHANGELOG.md
 
@@ -330,3 +330,4 @@ If doc organization is unclear, refer to:
 - `.github/copilot-instructions.md` — Quick overview
 - `docs/AGENTS.md` — Authority & file ownership
 - This file — Full standard with examples
+

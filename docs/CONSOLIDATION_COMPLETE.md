@@ -42,7 +42,7 @@ Active docs in /docs/:
 - IMPLEMENTATION_SUMMARY.md
 - MULTI_PROJECT_GUIDE.md
 - NAVIGATION_MAP.md
-- WORKLOG.md
+- Deprecated / Historical
 - PROJECT_STATUS.md
 - CHANGELOG.md
 ```
@@ -81,9 +81,9 @@ docs/archive/
 ### 3. Removed Redundant Files ✅
 
 **Deleted (6 files)**:
-- ❌ FOR_GEMINI.md (task-specific notes)
+- ❌ FOR_Deprecated / Historical.md (task-specific notes)
 - ❌ DOCUMENTATION_AUDIT.md (unclear/transient)
-- ❌ WORKFLOW.md (redundant with WORKLOG.md)
+- ❌ WORKFLOW.md (redundant with Deprecated / Historical)
 - ❌ MULTI_AI_WORKFLOW.md (superseded by MULTI_PROJECT_GUIDE.md)
 - ❌ SESSION_SUMMARY_FIX.md (old task log)
 - ❌ attention-axis-logic.md (subsection of Avatar)
@@ -123,7 +123,7 @@ immanence-os/
 └── [Root files]
     ├── CLAUDE.md (philosophy)
     ├── README.md (public)
-    ├── WORKLOG.md (status)
+    ├── Deprecated / Historical (status)
     ├── PROJECT_STATUS.md (current phase)
     └── CHANGELOG.md (version history)
 ```
@@ -143,8 +143,8 @@ docs/
 ├── AVATAR_CONTAINER_CORE_SPEC.md (OR THIS?)
 ├── AVATAR_CONTRACT.md (OR THIS?)
 ├── ... 37 more files
-├── FOR_GEMINI.md (WHY IS THIS HERE?)
-├── WORKFLOW.md vs WORKLOG.md (WHICH ONE?)
+├── FOR_Deprecated / Historical.md (WHY IS THIS HERE?)
+├── WORKFLOW.md vs Deprecated / Historical (WHICH ONE?)
 └── [No clear organization]
 ```
 
@@ -259,7 +259,7 @@ rm -f docs/*_DRAFT.md docs/FOR_*.md
 
 ### Per-Change Maintenance
 
-- Update WORKLOG.md (current agent)
+- Update Deprecated / Historical (current agent)
 - Update PROJECT_STATUS.md (project lead)
 - Update CHANGELOG.md (on release)
 
@@ -288,7 +288,7 @@ Secondary agent entry point (after copilot-instructions.md) with:
 - LLM integration
 
 ### Root files (Status & History)
-- WORKLOG.md (recent work)
+- Deprecated / Historical (recent work)
 - PROJECT_STATUS.md (current phase)
 - CHANGELOG.md (version history)
 
@@ -298,7 +298,7 @@ Secondary agent entry point (after copilot-instructions.md) with:
 
 ### Deleted (6 files - no longer needed)
 ```
-FOR_GEMINI.md
+FOR_Deprecated / Historical.md
 DOCUMENTATION_AUDIT.md
 WORKFLOW.md
 MULTI_AI_WORKFLOW.md
@@ -346,7 +346,7 @@ DOC_INVENTORY.md
 IMPLEMENTATION_SUMMARY.md
 MULTI_PROJECT_GUIDE.md
 NAVIGATION_MAP.md
-WORKLOG.md
+Deprecated / Historical
 PROJECT_STATUS.md
 CHANGELOG.md
 ```
@@ -369,3 +369,4 @@ CHANGELOG.md
 **Status**: ✅ Complete and ready for use  
 **Date**: 2026-01-10  
 **Next**: Agents can now start with docs/README.md or .github/copilot-instructions.md
+

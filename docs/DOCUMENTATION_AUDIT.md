@@ -13,7 +13,7 @@
 | **ARCHITECTURE.md** | System design, state management, component structure | Developers | âœ… Current |
 | **PROJECT_STATUS.md** | Feature completion status, recent changes, next steps | Team/Stakeholders | âœ… Current |
 | **DEVELOPMENT.md** | Dev setup, dependencies, local environment | Developers | Check |
-| **WORKFLOW.md** | Dual-AI development model, collaboration rules | Claude + Gemini | âœ… NEW |
+| **WORKFLOW.md** | Dual-AI development model, collaboration rules | Claude + Deprecated / Historical | âœ… NEW |
 | **PHILOSOPHY.md** | Immanence OS core philosophy, design principles | Everyone | âœ… Current |
 
 ### System-Specific Documentation
@@ -124,4 +124,5 @@ docs/
 - File names should answer: "What is this?" in 3-5 words
 - Avoid abbreviations unless well-established (LLM, AI, etc.)
 - Each file should have "Last Updated" date and purpose statement
+
 

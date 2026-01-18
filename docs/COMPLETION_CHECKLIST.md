@@ -171,7 +171,7 @@
 ### Short Term (1 week)
 
 - [ ] Archive transient docs
-  - [ ] Delete `FOR_GEMINI.md`
+  - [ ] Delete `FOR_Deprecated / Historical.md`
   - [ ] Delete/archive `DOCUMENTATION_AUDIT.md`
   - [ ] Move PHASE_2_*.md to `docs/archive/PHASES/`
   
@@ -198,7 +198,7 @@
 - [ ] Monthly doc cleanup (prune transient)
 - [ ] Quarterly Tier 1–2 doc review
 - [ ] Quarterly archive old task logs
-- [ ] Per-change WORKLOG.md + CHANGELOG.md updates
+- [ ] Per-change Deprecated / Historical + CHANGELOG.md updates
 
 ---
 
@@ -335,3 +335,4 @@ Review:
 **Agent Productivity**: 15-minute onboarding target
 
 🎉 **Documentation system is live and ready for your agents!**
+

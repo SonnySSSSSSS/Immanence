@@ -28,7 +28,7 @@ START HERE: docs/DOC_INVENTORY.md
          ↓           ↓
     Code changes  Doc updates
          ↓           ↓
-    Update WORKLOG.md + CHANGELOG.md
+    Update Deprecated / Historical + CHANGELOG.md
 ```
 
 ### 🏢 If you're an organization:
@@ -78,7 +78,7 @@ docs/INTEGRATION.md                [Multi-AI workflow]
 ### Tier 4: Task Logs & Status
 
 ```
-WORKLOG.md                         [Recent work]
+Deprecated / Historical                         [Recent work]
 PROJECT_STATUS.md                  [Current phase]
 CHANGELOG.md                       [Version history]
 TASK-{DATE}-{ID}.md                [Specific task logs]
@@ -165,7 +165,7 @@ Agent starts here:
     ↓
     References DOC_ORGANIZATION_STANDARD.md when creating docs
     ↓
-    Updates WORKLOG.md with progress
+    Updates Deprecated / Historical with progress
     ↓
     Project lead reviews PROJECT_STATUS.md
     ↓
@@ -200,7 +200,7 @@ ls -la docs/{AGENTS,ARCHITECTURE,DEVELOPMENT,DOC_ORGANIZATION_STANDARD,DOC_INVEN
 
 | Frequency | Task | Owner |
 |-----------|------|-------|
-| Per work session | Update WORKLOG.md | Current agent |
+| Per work session | Update Deprecated / Historical | Current agent |
 | Weekly | Update PROJECT_STATUS.md | Project lead |
 | Per change | Update CHANGELOG.md | Current agent |
 | Monthly | Prune transient docs | Project lead |
@@ -271,3 +271,4 @@ This documentation system was designed with **you** in mind:
 **Last Updated**: 2026-01-10  
 **Status**: ✅ Ready for production  
 **Questions?** Reference the appropriate doc above.
+

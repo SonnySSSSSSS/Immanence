@@ -26,7 +26,7 @@ PROJECT_ROOT/
 │   ├── [FEATURE]_SYSTEM.md               [Tier 3: Feature-specific]
 │   ├── [FEATURE]_SYSTEM.md               [Tier 3: Feature-specific]
 │   │
-│   ├── WORKLOG.md                        [Tier 4: Recent work]
+│   ├── Deprecated / Historical                        [Tier 4: Recent work]
 │   ├── PROJECT_STATUS.md                 [Tier 4: Current phase]
 │   ├── CHANGELOG.md                      [Tier 4: Version history]
 │   ├── TASK-{DATE}-{ID}.md               [Tier 4: Task logs]
@@ -55,7 +55,7 @@ Each project fills in these blanks:
 **Owner**: [PROJECT_LEAD]  
 **Primary Language**: [e.g., Python, JavaScript, Go]  
 **Tech Stack**: [e.g., React + Zustand + Vite]  
-**Agent Support**: [e.g., Claude Code, Gemini, Codex CLI]  
+**Agent Support**: [e.g., Claude Code, Deprecated / Historical, Codex CLI]  
 
 ## Quick Commands
 
@@ -358,7 +358,7 @@ ORGANIZATION_DOCS/
 │
 ├── AGENT_PROFILES/
 │   ├── claude-code.md
-│   ├── gemini-pro.md
+│   ├── Deprecated / Historical-pro.md
 │   └── codex-cli.md
 │
 └── PROJECTS/
@@ -387,7 +387,7 @@ Each `.github/copilot-instructions.md` references:
 
 | Task | Frequency | Owner |
 |------|-----------|-------|
-| Update per-project WORKLOG.md | Per work session | Current agent |
+| Update per-project Deprecated / Historical | Per work session | Current agent |
 | Update per-project PROJECT_STATUS.md | Weekly | Project lead |
 | Prune transient docs per project | Monthly | Project lead |
 | Review organization standards | Quarterly | Org lead |
@@ -414,7 +414,7 @@ touch docs/DEVELOPMENT.md
 touch docs/PHILOSOPHY.md
 
 # Create Tier 4 files
-touch WORKLOG.md
+touch Deprecated / Historical
 touch PROJECT_STATUS.md
 touch CHANGELOG.md
 
@@ -465,3 +465,4 @@ This standard is designed to be **flexible** and **scalable**:
 - **Iterate** based on agent feedback and team needs
 
 The goal is: **Agents productive in 15 minutes, project leads clear on status in 30 seconds.**
+

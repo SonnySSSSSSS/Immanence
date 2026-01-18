@@ -328,29 +328,30 @@ Currently works because the modal renders circuit data differently, but schema c
 - `docs/CYCLE_SYSTEM.md` - Curriculum and cycle details
 - `CLAUDE.md` - Development rules and protected files
 - `docs/MULTI_AI_WORKFLOW.md` - Multi-AI collaboration protocol
-- `docs/WORKLOG.md` - Active development log
+- `Deprecated / Historical` - Active development log
 
 ## AI Collaboration Notes
 
-**For Gemini/Antigravity**:
+**For Deprecated / Historical**:
 
 ⚠️ **DO NOT MODIFY** these lines without coordination:
 - `PracticeSection.jsx` lines 217-235 (circuit initialization)
 - `PracticeSection.jsx` lines 476-485 (handleStop circuit detection)
 - `PracticeSection.jsx` lines 573-575 (instrumentation duration)
 
-✅ **Safe to modify** (with worklog entry):
+✅ **Safe to modify** (with Deprecated / Historical entry):
 - Summary modal styling/layout
 - Circuit completion message text
 - Additional telemetry/logging
 - Circuit name customization
 
 📋 **Before touching PracticeSection.jsx**:
-1. Read `docs/WORKLOG.md`
+1. Read `Deprecated / Historical`
 2. Check if Claude has it marked IN-PROGRESS
-3. Add your own worklog entry
+3. Add your own Deprecated / Historical entry
 4. Increment version number
 
 ---
 
 **End of Documentation**
+
