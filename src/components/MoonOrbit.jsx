@@ -10,6 +10,8 @@ import './moonAnimations.css';
 const TWO_PI = Math.PI * 2;
 const TRAIL_DOTS = 60;
 const TICK_COUNT = 24;
+const TRAIL_BASE_RADIUS = 1.6;
+const TRAIL_MAX_RADIUS = 3.0;
 
 /**
  * MoonOrbit - Atmospheric moon with volumetric light behavior
@@ -22,7 +24,6 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
     const moonAngle = (progress01 * TWO_PI) - Math.PI / 2; // Start at 12 o'clock
     const orbitRadius = avatarRadius * 1.4;
     const moonRadius = 8;
-    const markerBaseRadius = Math.max(1.6, avatarRadius * 0.012);
     const activeIndex = Math.floor(progress01 * TRAIL_DOTS);
     const dotAngles = useMemo(
         () => Array.from({ length: TRAIL_DOTS }, (_, i) => (i / TRAIL_DOTS) * TWO_PI),
@@ -56,12 +57,12 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                     y2={centerY}
                     gradientUnits="userSpaceOnUse"
                 >
-                    <stop offset="0%" stopColor="rgba(52, 211, 153, 0.55)" />
-                    <stop offset="50%" stopColor="rgba(52, 211, 153, 0.38)" />
-                    <stop offset="100%" stopColor="rgba(52, 211, 153, 0.28)" />
+                    <stop offset="0%" stopColor="rgba(52, 211, 153, 0.58)" />
+                    <stop offset="50%" stopColor="rgba(52, 211, 153, 0.4)" />
+                    <stop offset="100%" stopColor="rgba(52, 211, 153, 0.24)" />
                 </linearGradient>
                 <filter id="orbitGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur" />
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
                     <feMerge>
                         <feMergeNode in="blur" />
                         <feMergeNode in="SourceGraphic" />
@@ -77,7 +78,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                 fill="none"
                 stroke="url(#orbitStrokeGradient)"
                 strokeWidth={2}
-                strokeOpacity={0.45}
+                strokeOpacity={0.38}
                 filter="url(#orbitGlow)"
             />
             <circle
@@ -87,7 +88,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                 fill="none"
                 stroke="url(#orbitStrokeGradient)"
                 strokeWidth={1.2}
-                strokeOpacity={0.55}
+                strokeOpacity={0.6}
             />
 
             {/* Tick Marks */}
@@ -106,7 +107,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                         y1={y1}
                         x2={x2}
                         y2={y2}
-                        stroke="rgba(248, 250, 252, 0.25)"
+                        stroke="rgba(248, 250, 252, 0.18)"
                         strokeWidth={1}
                     />
                 );
@@ -117,17 +118,18 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                 const angle = baseAngle - Math.PI / 2;
                 const dotX = centerX + Math.cos(angle) * orbitRadius;
                 const dotY = centerY + Math.sin(angle) * orbitRadius;
-                const delta = wrapAngle(moonAngle - angle);
+                const delta = wrapAngle(angle - moonAngle);
                 const isCompleted = i < activeIndex;
                 const isCurrent = i === activeIndex;
-                const nearFactor = Math.max(0, 1 - Math.abs(delta) / (Math.PI / 2));
-                const directional = delta <= 0 ? 1 : 0.65;
-                const falloff = 0.5 + 0.5 * (1 - Math.min(1, Math.abs(delta) / Math.PI));
-                const baseAlpha = isCurrent ? 0.9 : (isCompleted ? 0.55 : 0.2);
+                const distance = Math.abs(delta);
+                const nearFactor = Math.max(0, 1 - distance / (Math.PI / 3));
+                const directional = delta >= 0 ? 1 : 0.55;
+                const falloff = 0.3 + 0.7 * (1 - Math.min(1, distance / Math.PI));
+                const baseAlpha = isCurrent ? 0.95 : (isCompleted ? 0.55 : 0.22);
                 const opacity = baseAlpha * falloff * directional;
                 const radius = Math.min(
-                    3.0,
-                    markerBaseRadius + nearFactor * (3.0 - markerBaseRadius) + (isCurrent ? 0.3 : 0)
+                    TRAIL_MAX_RADIUS,
+                    TRAIL_BASE_RADIUS + nearFactor * (TRAIL_MAX_RADIUS - TRAIL_BASE_RADIUS) + (isCurrent ? 0.4 : 0)
                 );
                 const fill = isCompleted || isCurrent ? "var(--accent-color)" : "none";
                 const stroke = isCompleted || isCurrent
@@ -153,25 +155,25 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             {!isDormant && (
                 <>
                     <circle
-                        cx={moonX - Math.sin(moonAngle) * 6}
-                        cy={moonY + Math.cos(moonAngle) * 6}
-                        r={moonRadius * 0.9}
+                        cx={moonX + Math.sin(moonAngle) * (moonRadius * 1.1)}
+                        cy={moonY - Math.cos(moonAngle) * (moonRadius * 1.1)}
+                        r={moonRadius * 0.55}
                         fill="rgba(52, 211, 153, 0.25)"
                         filter="url(#orbitGlow)"
                     />
                     <circle
                         cx={moonX}
                         cy={moonY}
-                        r={moonRadius * 0.85}
+                        r={moonRadius * 0.82}
                         fill="rgba(248, 250, 252, 0.95)"
                     />
                     <circle
                         cx={moonX}
                         cy={moonY}
-                        r={moonRadius * 1.25}
+                        r={moonRadius * 1.18}
                         fill="none"
-                        stroke="rgba(52, 211, 153, 0.65)"
-                        strokeWidth={1.2}
+                        stroke="rgba(52, 211, 153, 0.6)"
+                        strokeWidth={1.1}
                         filter="url(#orbitGlow)"
                     />
                 </>
