@@ -1,5 +1,7 @@
 # Immanence OS - Practice Journal System
 
+Test docs change for CI lane validation.
+
 Complete circuit training practice journal with insights, editing, and export functionality.
 
 ## Overview
