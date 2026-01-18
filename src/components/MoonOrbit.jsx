@@ -1,230 +1,189 @@
 // src/components/MoonOrbit.jsx
-// Moon Atmosphere FX — realistic-mystical light behavior
+// Moon Atmosphere FX - realistic-mystical light behavior
 // 3-Layer System: Atmospheric Halo + Ghost Echo Arc + Phase Rimlight
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { useLunarStore } from '../state/lunarStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
-import { MoonGlowLayer } from './MoonGlowLayer';
 import './moonAnimations.css';
 
 const TWO_PI = Math.PI * 2;
-
-// Normalize angle to 0-2π range
-function normalizeAngle(angle) {
-    const a = angle % TWO_PI;
-    return a < 0 ? a + TWO_PI : a;
-}
+const TRAIL_DOTS = 60;
+const TICK_COUNT = 24;
 
 /**
- * MoonOrbit — Atmospheric moon with volumetric light behavior
+ * MoonOrbit - Atmospheric moon with volumetric light behavior
  */
 export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) {
     const progress = useLunarStore(s => s.progress);
-    const recentActivity = useLunarStore(s => s.recentActivity);
-    const sparkleMode = useLunarStore(s => s.sparkleMode);
-
-    // Track previous progress for ghost echo
-    const prevProgressRef = useRef(progress);
-    const prevAngleRef = useRef(null);
-    const [ghostEcho, setGhostEcho] = useState(null);
-    const [isWobbling, setIsWobbling] = useState(false);
-    const [sparkles, setSparkles] = useState([]);
-
-    // Detect progress changes for animations
-    useEffect(() => {
-        const prevProgress = prevProgressRef.current;
-        const prevAngle = (prevProgress / 12) * TWO_PI - Math.PI / 2;
-        const newAngle = (progress / 12) * TWO_PI - Math.PI / 2;
-
-        if (progress > prevProgress) {
-            // Trigger ghost echo
-            setGhostEcho({
-                startAngle: prevAngle,
-                endAngle: newAngle,
-                key: Date.now(),
-            });
-            // Trigger wobble
-            setIsWobbling(true);
-            setTimeout(() => setIsWobbling(false), 600);
-            // Clear ghost after animation
-            setTimeout(() => setGhostEcho(null), 500);
-        }
-
-        prevProgressRef.current = progress;
-        prevAngleRef.current = newAngle;
-    }, [progress]);
-
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
 
-    const moonAngle = (progress / 12) * TWO_PI - Math.PI / 2; // Start at 12 o'clock
-    const phase = getMoonPhase(progress);
+    const progress01 = ((progress % 12) + 12) % 12 / 12;
+    const moonAngle = (progress01 * TWO_PI) - Math.PI / 2; // Start at 12 o'clock
     const orbitRadius = avatarRadius * 1.4;
     const moonRadius = 8;
+    const markerBaseRadius = Math.max(1.6, avatarRadius * 0.012);
+    const activeIndex = Math.floor(progress01 * TRAIL_DOTS);
+    const dotAngles = useMemo(
+        () => Array.from({ length: TRAIL_DOTS }, (_, i) => (i / TRAIL_DOTS) * TWO_PI),
+        []
+    );
+    const tickAngles = useMemo(
+        () => Array.from({ length: TICK_COUNT }, (_, i) => (i / TICK_COUNT) * TWO_PI),
+        []
+    );
 
     // Moon position
     const moonX = centerX + Math.cos(moonAngle) * orbitRadius;
     const moonY = centerY + Math.sin(moonAngle) * orbitRadius;
+    const isDormant = progress === 0;
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // -----------------------------------------------------------------------------
     // LIGHT MODE: Return nothing - no SVG elements
-    // ═══════════════════════════════════════════════════════════════════════════
+    // -----------------------------------------------------------------------------
     if (isLight) {
         return null;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // RENDER PATH: DARK MODE (Volumetric Cosmic)
-    // ═══════════════════════════════════════════════════════════════════════════
-    const illumination = getIllumination(phase);
-    const isDormant = progress === 0;
-    const haloRadius = moonRadius * (1.5 + illumination * 0.5);
-    const haloOpacity = isDormant ? 0 : (0.12 + illumination * 0.08);
-    const rimlightWidth = 0.5 + illumination * 2;
-    const rimlightOpacity = 0.3 + illumination * 0.5;
-
     return (
         <g className="moon-orbit-dark">
             <defs>
-                <radialGradient id="moonHaloGradient" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="var(--accent-color)" stopOpacity="0.4" />
-                    <stop offset="40%" stopColor="var(--accent-color)" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="var(--accent-color)" stopOpacity="0" />
-                </radialGradient>
-                <filter id="rimlightBlur" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="1" />
-                </filter>
-                <filter id="ghostBlur" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+                <linearGradient
+                    id="orbitStrokeGradient"
+                    x1={centerX - orbitRadius}
+                    y1={centerY}
+                    x2={centerX + orbitRadius}
+                    y2={centerY}
+                    gradientUnits="userSpaceOnUse"
+                >
+                    <stop offset="0%" stopColor="rgba(52, 211, 153, 0.55)" />
+                    <stop offset="50%" stopColor="rgba(52, 211, 153, 0.38)" />
+                    <stop offset="100%" stopColor="rgba(52, 211, 153, 0.28)" />
+                </linearGradient>
+                <filter id="orbitGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur" />
+                    <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
                 </filter>
             </defs>
 
-            {/* Orbit Path */}
+            {/* Orbit Rings */}
             <circle
                 cx={centerX}
                 cy={centerY}
                 r={orbitRadius}
                 fill="none"
-                stroke="var(--accent-color)"
-                strokeWidth={1}
-                strokeOpacity={0.08}
+                stroke="url(#orbitStrokeGradient)"
+                strokeWidth={2}
+                strokeOpacity={0.45}
+                filter="url(#orbitGlow)"
             />
-
-            {/* Ghost Echo */}
-            {ghostEcho && (
-                <path
-                    key={ghostEcho.key}
-                    d={describeArc(centerX, centerY, orbitRadius, ghostEcho.startAngle, ghostEcho.endAngle)}
-                    fill="none"
-                    stroke="rgba(255, 250, 240, 0.3)"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    filter="url(#ghostBlur)"
-                    className="ghost-echo-arc"
-                />
-            )}
-
-            {/* Atmospheric Halo */}
             <circle
-                cx={moonX}
-                cy={moonY}
-                r={haloRadius}
-                fill="url(#moonHaloGradient)"
-                opacity={haloOpacity}
-                className={`moon-star-breathe ${isWobbling ? 'moon-halo-wobble' : ''}`}
+                cx={centerX}
+                cy={centerY}
+                r={orbitRadius * 0.94}
+                fill="none"
+                stroke="url(#orbitStrokeGradient)"
+                strokeWidth={1.2}
+                strokeOpacity={0.55}
             />
 
-            {/* Core Glow */}
-            <circle
-                cx={moonX}
-                cy={moonY}
-                r={haloRadius * 0.6}
-                fill="var(--accent-color)"
-                opacity={haloOpacity * 0.4}
-                className={`moon-star-breathe ${isWobbling ? 'moon-halo-wobble' : ''}`}
-            />
+            {/* Tick Marks */}
+            {tickAngles.map((baseAngle, i) => {
+                const angle = baseAngle - Math.PI / 2;
+                const innerR = orbitRadius * 0.97;
+                const outerR = orbitRadius * 1.01;
+                const x1 = centerX + Math.cos(angle) * innerR;
+                const y1 = centerY + Math.sin(angle) * innerR;
+                const x2 = centerX + Math.cos(angle) * outerR;
+                const y2 = centerY + Math.sin(angle) * outerR;
+                return (
+                    <line
+                        key={`orbit-tick-${i}`}
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="rgba(248, 250, 252, 0.25)"
+                        strokeWidth={1}
+                    />
+                );
+            })}
 
-            {/* Phase Rimlight */}
+            {/* Orbit Dot Trail */}
+            {dotAngles.map((baseAngle, i) => {
+                const angle = baseAngle - Math.PI / 2;
+                const dotX = centerX + Math.cos(angle) * orbitRadius;
+                const dotY = centerY + Math.sin(angle) * orbitRadius;
+                const delta = wrapAngle(moonAngle - angle);
+                const isCompleted = i < activeIndex;
+                const isCurrent = i === activeIndex;
+                const nearFactor = Math.max(0, 1 - Math.abs(delta) / (Math.PI / 2));
+                const directional = delta <= 0 ? 1 : 0.65;
+                const falloff = 0.5 + 0.5 * (1 - Math.min(1, Math.abs(delta) / Math.PI));
+                const baseAlpha = isCurrent ? 0.9 : (isCompleted ? 0.55 : 0.2);
+                const opacity = baseAlpha * falloff * directional;
+                const radius = Math.min(
+                    3.0,
+                    markerBaseRadius + nearFactor * (3.0 - markerBaseRadius) + (isCurrent ? 0.3 : 0)
+                );
+                const fill = isCompleted || isCurrent ? "var(--accent-color)" : "none";
+                const stroke = isCompleted || isCurrent
+                    ? "var(--accent-color)"
+                    : "rgba(248, 250, 252, 0.22)";
+
+                return (
+                    <circle
+                        key={`orbit-dot-${i}`}
+                        cx={dotX}
+                        cy={dotY}
+                        r={radius}
+                        fill={fill}
+                        stroke={stroke}
+                        strokeWidth={1}
+                        opacity={opacity}
+                        filter={isCurrent ? "url(#orbitGlow)" : undefined}
+                    />
+                );
+            })}
+
+            {/* Moon Marker */}
             {!isDormant && (
-                <circle
-                    cx={moonX}
-                    cy={moonY}
-                    r={moonRadius + 1}
-                    fill="none"
-                    stroke="rgba(255, 250, 240, 0.7)"
-                    strokeWidth={rimlightWidth}
-                    strokeOpacity={rimlightOpacity}
-                    filter="url(#rimlightBlur)"
-                />
-            )}
-
-            {/* Standard MoonGlowLayer (fallback/combined) */}
-            <MoonGlowLayer
-                progress={progress}
-                centerX={centerX}
-                centerY={centerY}
-                orbitRadius={orbitRadius}
-            />
-
-            {/* Phase shadows... */}
-            {phase === 'firstQuarter' && (
-                <ellipse cx={moonX - moonRadius * 0.3} cy={moonY} rx={moonRadius * 0.7} ry={moonRadius} fill="rgba(10, 10, 18, 0.75)" />
-            )}
-            {phase === 'lastQuarter' && (
-                <ellipse cx={moonX + moonRadius * 0.3} cy={moonY} rx={moonRadius * 0.7} ry={moonRadius} fill="rgba(10, 10, 18, 0.75)" />
-            )}
-            {phase === 'new' && (
-                <ellipse cx={moonX + moonRadius * 0.4} cy={moonY} rx={moonRadius * 0.8} ry={moonRadius} fill="rgba(10, 10, 18, 0.85)" />
+                <>
+                    <circle
+                        cx={moonX - Math.sin(moonAngle) * 6}
+                        cy={moonY + Math.cos(moonAngle) * 6}
+                        r={moonRadius * 0.9}
+                        fill="rgba(52, 211, 153, 0.25)"
+                        filter="url(#orbitGlow)"
+                    />
+                    <circle
+                        cx={moonX}
+                        cy={moonY}
+                        r={moonRadius * 0.85}
+                        fill="rgba(248, 250, 252, 0.95)"
+                    />
+                    <circle
+                        cx={moonX}
+                        cy={moonY}
+                        r={moonRadius * 1.25}
+                        fill="none"
+                        stroke="rgba(52, 211, 153, 0.65)"
+                        strokeWidth={1.2}
+                        filter="url(#orbitGlow)"
+                    />
+                </>
             )}
         </g>
     );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════
-
-function getMoonPhase(progress) {
-    if (progress === 0) return 'new';
-    if (progress < 4) return 'crescent';
-    if (progress < 6) return 'firstQuarter';
-    if (progress < 9) return 'full';
-    return 'lastQuarter';
-}
-
-function getIllumination(phase) {
-    return {
-        new: 0.15,
-        crescent: 0.35,
-        firstQuarter: 0.5,
-        full: 1.0,
-        lastQuarter: 0.5,
-    }[phase] ?? 0.35;
-}
-
-function describeArc(cx, cy, r, startAngle, endAngle) {
-    let start = normalizeAngle(startAngle);
-    let end = normalizeAngle(endAngle);
-
-    // Handle wrap-around
-    if (end <= start) {
-        end += TWO_PI;
-    }
-
-    // If no meaningful arc, return empty
-    if (end - start < 0.01) return '';
-
-    const startPoint = {
-        x: cx + Math.cos(start) * r,
-        y: cy + Math.sin(start) * r,
-    };
-    const endPoint = {
-        x: cx + Math.cos(end) * r,
-        y: cy + Math.sin(end) * r,
-    };
-    const largeArc = (end - start) > Math.PI ? 1 : 0;
-
-    return `M ${startPoint.x} ${startPoint.y} A ${r} ${r} 0 ${largeArc} 1 ${endPoint.x} ${endPoint.y}`;
+function wrapAngle(angle) {
+    let a = (angle + Math.PI) % TWO_PI;
+    if (a < 0) a += TWO_PI;
+    return a - Math.PI;
 }
 
 export default MoonOrbit;
