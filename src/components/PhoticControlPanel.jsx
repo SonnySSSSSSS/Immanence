@@ -203,9 +203,10 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     >
                         Timing
                     </span>
-                    <div className="flex gap-1">
+                    <div className="grid grid-cols-2 gap-1">
                         <button
                             onClick={() => setPhoticSetting('timingMode', 'simultaneous')}
+                            className="whitespace-nowrap text-center min-w-0"
                             style={{
                                 padding: '4px 10px',
                                 borderRadius: '6px',
@@ -233,6 +234,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                         </button>
                         <button
                             onClick={() => setPhoticSetting('timingMode', 'alternating')}
+                            className="whitespace-nowrap text-center min-w-0"
                             style={{
                                 padding: '4px 10px',
                                 borderRadius: '6px',

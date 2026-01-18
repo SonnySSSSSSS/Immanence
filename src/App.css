@@ -205,3 +205,13 @@
     transform: scale(1.02);
   }
 }
+
+/* Practice panel wallpaper containment */
+.PracticePanelShell {
+  position: relative;
+  overflow: hidden;
+  background-image: url("/bg/practice-breath-mandala.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}

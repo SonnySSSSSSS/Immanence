@@ -1,82 +1,29 @@
 import express from 'express';
 import axios from 'axios';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const defaultComfy = 'http://127.0.0.1:8188';
-const defaultWorkDir = path.resolve('./work');
-
-async function ensureWorkDir(dir) {
-  await fs.mkdir(dir, { recursive: true });
-}
-
-function sanitizeFilename(name) {
-  if (!name) return `asset-${Date.now()}.bin`;
-  return name.replace(/[^a-z0-9._-]/gi, '_');
-}
 
 function buildApp(options) {
-  const { comfyBase, workDir, generateTimeoutMs, historyTimeoutMs, logger } = options;
+  const { comfyBase, logger } = options;
   const app = express();
   app.use(express.json({ limit: '10mb' }));
 
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, comfy: comfyBase, workDir });
+    res.json({ ok: true, comfy: comfyBase });
   });
 
-  app.get('/workflows', async (_req, res) => {
-    try {
-      const dir = path.resolve('./workflows');
-      await fs.mkdir(dir, { recursive: true });
-      const files = await fs.readdir(dir);
-      const workflows = files
-        .filter((f) => f.toLowerCase().endsWith('.json'))
-        .map((f) => ({ id: path.parse(f).name, file: f }));
-      res.json({ workflows });
-    } catch (err) {
-      res.status(500).json({ error: err?.message || 'failed to list workflows' });
-    }
-  });
-
-  app.post('/generate', async (req, res) => {
+  app.post('/prompt', async (req, res) => {
     try {
       const prompt = req.body;
-      if (!prompt) return res.status(400).json({ error: 'prompt required' });
-      const { data } = await axios.post(`${comfyBase}/prompt`, prompt, { timeout: generateTimeoutMs });
+      if (!prompt || typeof prompt !== 'object') {
+        return res.status(400).json({ error: 'prompt object required' });
+      }
+      
+      const { data } = await axios.post(`${comfyBase}/prompt`, prompt, { timeout: 30000 });
       res.json(data);
     } catch (err) {
-      logger(err?.message || 'generate failed');
-      res.status(500).json({ error: err?.message || 'comfy prompt failed' });
-    }
-  });
-
-  app.get('/history/:id', async (req, res) => {
-    try {
-      const { data } = await axios.get(`${comfyBase}/history/${req.params.id}`, { timeout: historyTimeoutMs });
-      res.json(data);
-    } catch (err) {
-      logger(err?.message || 'history failed');
-      res.status(500).json({ error: err?.message || 'history fetch failed' });
-    }
-  });
-
-  app.post('/save', async (req, res) => {
-    try {
-      const { bufferBase64, filename } = req.body;
-      if (!bufferBase64) return res.status(400).json({ error: 'bufferBase64 required' });
-      await ensureWorkDir(workDir);
-      const safeName = sanitizeFilename(filename);
-      const dest = path.join(workDir, safeName);
-      const buffer = Buffer.from(bufferBase64, 'base64');
-      await fs.writeFile(dest, buffer);
-      res.json({ saved: dest });
-    } catch (err) {
-      logger(err?.message || 'save failed');
-      res.status(500).json({ error: err?.message || 'save failed' });
+      logger(`Prompt submission failed: ${err?.message || 'unknown error'}`);
+      res.status(500).json({ error: err?.message || 'comfyui prompt failed' });
     }
   });
 
@@ -86,26 +33,23 @@ function buildApp(options) {
 export function startProxy(opts = {}) {
   const comfyBase = opts.comfyBase || process.env.COMFY_BASE || defaultComfy;
   const port = Number(opts.port ?? process.env.PORT ?? 5050);
-  const workDir = opts.workDir || process.env.WORK_DIR || defaultWorkDir;
-  const generateTimeoutMs = opts.generateTimeoutMs ?? 30000;
-  const historyTimeoutMs = opts.historyTimeoutMs ?? 15000;
   const logger = opts.logger || console.log;
 
-  const app = buildApp({ comfyBase, workDir, generateTimeoutMs, historyTimeoutMs, logger });
-  const server = app.listen(port, async () => {
-    await ensureWorkDir(workDir);
-    logger(`MCP ComfyUI proxy running on http://localhost:${port} → ${comfyBase}`);
+  return new Promise((resolve, reject) => {
+    const app = buildApp({ comfyBase, logger });
+    
+    const server = app.listen(port, '127.0.0.1', () => {
+      logger(`MCP ComfyUI proxy running on http://localhost:${port} → ${comfyBase}`);
+      resolve({ app, server, info: { comfyBase, port } });
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        logger(`Port ${port} already in use`);
+      } else {
+        logger(`Server error: ${err.message}`);
+      }
+      reject(err);
+    });
   });
-
-  return { app, server, info: { comfyBase, workDir, port } };
-}
-
-export function createProxyApp(opts = {}) {
-  const comfyBase = opts.comfyBase || process.env.COMFY_BASE || defaultComfy;
-  const workDir = opts.workDir || process.env.WORK_DIR || defaultWorkDir;
-  const generateTimeoutMs = opts.generateTimeoutMs ?? 30000;
-  const historyTimeoutMs = opts.historyTimeoutMs ?? 15000;
-  const logger = opts.logger || console.log;
-
-  return buildApp({ comfyBase, workDir, generateTimeoutMs, historyTimeoutMs, logger });
 }

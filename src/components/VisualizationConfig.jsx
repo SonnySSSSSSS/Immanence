@@ -39,13 +39,13 @@ export function VisualizationConfig({
                 >
                     Shapes
                 </div>
-                <div className="flex gap-2 mb-4">
+                <div className="grid grid-cols-2 gap-2 mb-4">
                     {BASIC_GEOMETRIES.map((g) => (
                         <button
                             key={g}
                             onClick={() => setGeometry(g)}
                             className={`
-                flex-1 px-3 py-2 rounded-xl text-xs transition-all
+                w-full px-3 py-2 rounded-xl text-xs transition-all text-center min-h-[44px] leading-tight whitespace-normal min-w-0
                 ${geometry === g
                                     ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[var(--text-primary)]'
                                     : 'border-[var(--accent-15)] text-[var(--text-secondary)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
@@ -64,18 +64,18 @@ export function VisualizationConfig({
                 </div>
 
                 <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
+                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold mt-4"
                     style={{ fontFamily: 'var(--font-display)' }}
                 >
                     Sacred Symbols
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2">
                     {RELIGIOUS_GEOMETRIES.map((g, index) => (
                         <button
                             key={g}
                             onClick={() => setGeometry(g)}
                             className={`
-                px-3 py-2 rounded-xl text-xs transition-all
+                w-full px-3 py-2 rounded-xl text-xs transition-all text-center min-h-[44px] leading-tight whitespace-normal min-w-0
                 ${geometry === g
                                     ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[var(--text-primary)]'
                                     : 'border-[var(--accent-15)] text-[var(--text-secondary)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'

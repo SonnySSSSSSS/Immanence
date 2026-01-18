@@ -95,12 +95,12 @@ export function SoundConfig({
                 >
                     Soundscape
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                    {['Binaural Beats', 'Isochronic Tones', 'Mantra', 'Nature', 'Silence'].map((type) => (
+                <div className="grid grid-cols-2 gap-2">
+                    {['Binaural Beats', 'Isochronic Tones', 'Mantra', 'Nature'].map((type) => (
                         <button
                             key={type}
                             onClick={() => setSoundType(type)}
-                            className="rounded-xl px-3 py-2.5 text-center"
+                            className="rounded-xl px-3 py-2.5 text-center leading-tight min-h-[44px] whitespace-normal min-w-0"
                             style={{
                                 fontFamily: "var(--font-display)",
                                 fontSize: "11px",
@@ -110,7 +110,6 @@ export function SoundConfig({
                                 border: `1px solid ${soundType === type ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
                                 color: soundType === type ? "var(--accent-color)" : textColors.secondary,
                                 boxShadow: soundType === type ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
-                                gridColumn: type === 'Silence' ? 'span 3' : 'auto',
                                 transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
                             }}
                         >
@@ -144,7 +143,7 @@ export function SoundConfig({
                     >
                         Pulse Frequency
                     </div>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {ISOCHRONIC_PRESETS.map((preset) => (
                             <button
                                 key={preset.id}

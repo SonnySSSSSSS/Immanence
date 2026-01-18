@@ -65,7 +65,7 @@ export function CymaticsConfig({
                 >
                     Frequency Set
                 </div>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                     {frequencySets.map((set) => (
                         <button
                             key={set.id}
@@ -84,7 +84,7 @@ export function CymaticsConfig({
                                     setShowFrequencyModal(true);
                                 }
                             }}
-                            className="flex-1 px-3 py-2 rounded-full text-[10px]"
+                            className="px-3 py-2 rounded-full text-[10px] text-center min-h-[44px] leading-tight whitespace-normal min-w-0 break-words max-w-full"
                             style={{
                                 border: frequencySet === set.id ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
                                 background: frequencySet === set.id ? 'var(--accent-10)' : 'transparent',

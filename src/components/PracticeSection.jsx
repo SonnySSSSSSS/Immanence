@@ -432,9 +432,8 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     >
       {/* Glassmorphic Main Panel */}
       <div 
-        className="relative"
+        className="relative PracticePanelShell overflow-x-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(15, 20, 25, 0.55) 0%, rgba(10, 12, 18, 0.65) 50%, rgba(8, 10, 15, 0.75) 100%)',
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           borderRadius: '20px',

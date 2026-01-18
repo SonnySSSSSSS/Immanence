@@ -9,8 +9,6 @@
       "Bash(robocopy:*)",
       "Bash(powershell -Command \"robocopy ''C:\\Users\\trinh\\.claude-worktrees\\immanence-os\\suspicious-cori'' ''D:\\Unity Apps\\immanence-os'' /E /XD node_modules .git dist .vite .cache .agent /XF *.log /NFL /NDL /NJH /NJS\")",
       "Skill(superpowers:brainstorming)",
-      "Bash(claude mcp list:*)",
-      "Bash(claude mcp add:*)",
       "Bash(curl:*)",
       "Bash(python:*)",
       "Bash(where /r C: immanence_bg_00001_.png)",
@@ -19,7 +17,23 @@
       "Bash(ls:*)",
       "Bash(npm run build:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Breath Benchmark System and Sound Engine\n\nFeatures:\n- Breath capacity benchmark test \\(4-phase measurement\\)\n- Progressive pattern scaling \\(75% → 85% → 100%\\)\n- Weekly re-benchmark prompt with radiate animation\n- Breath sound engine with phase-synced audio\n  - Rising pitch inhale, falling pitch exhale\n  - Steady hold tone with subtle vibrato\n\nNew files:\n- src/state/breathBenchmarkStore.js\n- src/components/BreathBenchmark.jsx\n- src/hooks/useBreathSoundEngine.js\n\nModified:\n- BreathConfig.jsx: benchmark button + sound toggle\n- BreathingRing.jsx: sound engine integration\n- PracticeSection.jsx: progressive pattern calculation\n- settingsStore.js: breathSoundEnabled setting\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Breath Benchmark System and Sound Engine\n\nFeatures:\n- Breath capacity benchmark test \\(4-phase measurement\\)\n- Progressive pattern scaling \\(75% → 85% → 100%\\)\n- Weekly re-benchmark prompt with radiate animation\n- Breath sound engine with phase-synced audio\n  - Rising pitch inhale, falling pitch exhale\n  - Steady hold tone with subtle vibrato\n\nNew files:\n- src/state/breathBenchmarkStore.js\n- src/components/BreathBenchmark.jsx\n- src/hooks/useBreathSoundEngine.js\n\nModified:\n- BreathConfig.jsx: benchmark button + sound toggle\n- BreathingRing.jsx: sound engine integration\n- PracticeSection.jsx: progressive pattern calculation\n- settingsStore.js: breathSoundEnabled setting\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git log:*)",
+      "Bash(npm install:*)",
+      "Bash(npm --version:*)",
+      "Bash(node --version:*)",
+      "Bash(node:*)"
     ]
+  },
+  "mcpServers": {
+    "comfyui": {
+      "command": "node",
+      "args": [
+        "tools/comfyui-mcp-server.js"
+      ],
+      "env": {
+        "COMFYUI_URL": "http://127.0.0.1:8188"
+      }
+    }
   }
 }
