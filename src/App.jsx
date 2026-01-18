@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
+// Test CI lane enforcement - trivial comment
 import { Avatar } from "./components/avatar";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
@@ -30,7 +31,7 @@ import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 
-function SectionView({ section, isPracticing, currentPracticeId, isFullscreenExperience, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
+function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
   // Navigation and Application sections handle their own avatars and stage titles
   // RitualLibrary also handles its own UI (no avatar needed)
   // Hide avatar during any active practice session
@@ -394,7 +395,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.23.97
+                        v3.24.4
                     </div>
                   </div>
 
