@@ -35,6 +35,10 @@ export function AvatarContainer({
     const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
 
     const moonAngle = (moonProgress / 12) * (Math.PI * 2) - Math.PI / 2;
+    const moonOrbitRadius = 138 * 1.4;
+    const moonX = 300 + Math.cos(moonAngle) * moonOrbitRadius;
+    const moonY = 300 + Math.sin(moonAngle) * moonOrbitRadius;
+    const moonPositionNorm = { x: moonX / 600, y: moonY / 600 };
     const shadowDist = isLight ? 10 : 0;
     const shadowX = -Math.cos(moonAngle) * shadowDist;
     const shadowY = -Math.sin(moonAngle) * shadowDist;
@@ -121,6 +125,7 @@ export function AvatarContainer({
                                 breathState={breathState}
                                 weeklyPracticeLog={weeklyPracticeLog}
                                 weeklyConsistency={weeklyConsistency}
+                                moonPositionNorm={moonPositionNorm}
                             />
                         </div>
                     )}

@@ -170,7 +170,7 @@ class Particle {
     }
   }
 
-  draw(ctx, centerX, centerY, scaleMod, glowMod, isLight = false) {
+  draw(ctx, centerX, centerY, scaleMod, glowMod, isLight = false, moonWorld = null, moonDimRadius = null) {
     if (this.trail.length < 2 || this.life <= 0) return;
     
     // Safety guards for invalid values
@@ -201,7 +201,7 @@ class Particle {
       ctx.lineWidth = this.size * (1 - t * 0.9);
       // Fainter alpha in light mode for "dust/mote" feel
       const baseAlpha = isLight ? 0.35 : 0.9;
-      const alpha = this.brightness * baseAlpha * (1 - t * t) * glowMod * lifeMod;
+      const alpha = this.brightness * baseAlpha * (1 - t * t) * glowMod * lifeMod * proximityDim;
 
       let colorStr;
       if (isLight) {
@@ -220,6 +220,14 @@ class Particle {
     const head = this.trail[0];
     const hx = centerX + head.x * scaleMod;
     const hy = centerY + head.y * scaleMod;
+    let proximityDim = 1;
+    if (moonWorld && Number.isFinite(moonDimRadius)) {
+      const dx = head.x - moonWorld.x;
+      const dy = head.y - moonWorld.y;
+      if ((dx * dx + dy * dy) < (moonDimRadius * moonDimRadius)) {
+        proximityDim = 0.4;
+      }
+    }
     
     // Guard: Skip gradient rendering if coordinates are invalid
     if (!Number.isFinite(hx) || !Number.isFinite(hy)) {
@@ -233,7 +241,7 @@ class Particle {
     // Halo - skip in light mode (causes gray circles)
     if (!isLight && Number.isFinite(haloRadius)) {
       const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, haloRadius);
-      halo.addColorStop(0, `hsla(${safeH}, ${safeS}%, ${safeL}%, ${this.brightness * 0.5 * glowMod * lifeMod})`);
+      halo.addColorStop(0, `hsla(${safeH}, ${safeS}%, ${safeL}%, ${this.brightness * 0.5 * glowMod * lifeMod * proximityDim})`);
       halo.addColorStop(1, 'transparent');
       ctx.fillStyle = halo;
       ctx.beginPath();
@@ -244,8 +252,8 @@ class Particle {
     // Core
     if (Number.isFinite(coreRadius)) {
       const core = ctx.createRadialGradient(hx, hy, 0, hx, hy, coreRadius);
-      core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod * lifeMod})`);
-      core.addColorStop(0.4, `hsla(${safeH}, ${safeS}%, 85%, ${this.brightness * 0.9 * glowMod * lifeMod})`);
+      core.addColorStop(0, `rgba(255, 255, 250, ${1 * glowMod * lifeMod * proximityDim})`);
+      core.addColorStop(0.4, `hsla(${safeH}, ${safeS}%, 85%, ${this.brightness * 0.9 * glowMod * lifeMod * proximityDim})`);
       core.addColorStop(1, 'transparent');
       ctx.fillStyle = core;
       ctx.beginPath();
@@ -547,7 +555,7 @@ function drawStreakArc(ctx, nodes, radius) {
 }
 
 // MAIN COMPONENT
-export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], weeklyConsistency = 0 }) {
+export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], weeklyConsistency = 0, moonPositionNorm = null }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const particlesRef = useRef([]);
@@ -713,6 +721,14 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         return;
       }
 
+      const moonPx = moonPositionNorm
+        ? { x: moonPositionNorm.x * width, y: moonPositionNorm.y * height }
+        : null;
+      const moonWorld = moonPx
+        ? { x: (moonPx.x - centerX) / scale, y: (moonPx.y - centerY) / scale }
+        : null;
+      const moonDimRadius = moonWorld ? 40 / scale : null;
+
       // Virtual dimensions
       const flameRadius = VIRTUAL_SIZE * FLAME_RADIUS_PCT;
       const runeRingRadius = VIRTUAL_SIZE * RUNE_RING_RADIUS_PCT;
@@ -829,7 +845,7 @@ export function AvatarLuminousCanvas({ breathState, weeklyPracticeLog = [], week
         particlesRef.current.forEach((particle) => {
           particle.update(16, isLightRef.current);
           // Pass 0,0 as center because we are already translated
-          particle.draw(ctx, 0, 0, scaleMod, glowMod, isLightRef.current);
+          particle.draw(ctx, 0, 0, scaleMod, glowMod, isLightRef.current, moonWorld, moonDimRadius);
         });
       }
 
