@@ -31,7 +31,7 @@ import { BreathSessionDisplay } from "../BreathSessionDisplay.jsx";
 import { ScrollingWheel } from "./ScrollingWheel.jsx";
 import { PracticeConfigView } from "./PracticeConfigView.jsx";
 import { SessionSummaryModal } from "./SessionSummaryModal.jsx";
-import { PRACTICE_REGISTRY, GRID_PRACTICE_IDS, PRACTICE_UI_WIDTH, labelToPracticeId } from "./constants.js";
+import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, PRACTICE_UI_WIDTH, labelToPracticeId } from "./constants.js";
 
 const DEV_FX_GALLERY_ENABLED = true;
 
@@ -1278,7 +1278,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       handleSelectPractice={handleSelectPractice}
       uiTokens={uiTokens}
       PRACTICE_REGISTRY={PRACTICE_REGISTRY}
-      GRID_PRACTICE_IDS={GRID_PRACTICE_IDS}
+      PRACTICE_IDS={PRACTICE_IDS}
       PRACTICE_UI_WIDTH={PRACTICE_UI_WIDTH}
       duration={duration}
       setDuration={setDuration}

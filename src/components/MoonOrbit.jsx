@@ -1,10 +1,11 @@
 // src/components/MoonOrbit.jsx
 // Moon Atmosphere FX - realistic-mystical light behavior
-// 3-Layer System: Atmospheric Halo + Ghost Echo Arc + Phase Rimlight
+// Stroke-based lunar orbit + directional wake
 
-import React, { useMemo, useId } from 'react';
+import React, { useMemo } from 'react';
 import { useLunarStore } from '../state/lunarStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
+import { useTrackingStore } from '../state/trackingStore';
 import './moonAnimations.css';
 
 const TWO_PI = Math.PI * 2;
@@ -14,6 +15,8 @@ const DEBUG_PHASE_STRIP = false;
 const PHASE_BASE_RADIUS = 2.6;
 const PHASE_ACTIVE_SCALE = 1.25;
 const PHASE_TRACK_OFFSET = 6;
+const TRAIL_STEPS = 5;
+const TRAIL_LENGTH = 80;
 
 /**
  * MoonOrbit - Atmospheric moon with volumetric light behavior
@@ -21,7 +24,7 @@ const PHASE_TRACK_OFFSET = 6;
 export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) {
     const progress = useLunarStore(s => s.progress);
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
-    const clipPrefix = useId();
+    const streakCurrent = useTrackingStore(s => s.streak?.current ?? 0);
 
     const progress01 = ((progress % 12) + 12) % 12 / 12;
     const moonAngle = (progress01 * TWO_PI) - Math.PI / 2; // Start at 12 o'clock
@@ -50,69 +53,64 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
         return null;
     }
 
-    const baseFill = "rgba(10, 12, 14, 0.55)";
-    const litFill = "rgba(255, 248, 235, 0.85)";
-    const outlineStroke = "rgba(255, 255, 255, 0.12)";
+    const streakStrength = Math.min(1, Math.max(0, streakCurrent / 30));
+    const gold = { r: 255, g: 210, b: 120 };
+    const k = 0.25 + 0.75 * streakStrength;
+    const wakeR = Math.round(gold.r * k);
+    const wakeG = Math.round(gold.g * k);
+    const wakeB = Math.round(gold.b * k);
 
-    const renderPhaseGlyph = ({ cx, cy, r, phaseT, emphasis = 1, maskId, glow = false }) => {
+    const baseStroke = "rgba(255, 255, 255, 0.16)";
+    const litStroke = `rgba(${wakeR}, ${wakeG}, ${wakeB}, 0.8)`;
+    const haloStroke = `rgba(${wakeR}, ${wakeG}, ${wakeB}, ${Math.min(0.25, 0.20 + 0.55 * streakStrength)})`;
+    const moonCoreFill = `rgba(${wakeR}, ${wakeG}, ${wakeB}, ${0.10 + 0.25 * streakStrength})`;
+    const moonRimStroke = `rgba(${wakeR}, ${wakeG}, ${wakeB}, ${Math.min(0.6, 0.35 + 0.25 * streakStrength)})`;
+
+    const tangentX = -Math.sin(moonAngle);
+    const tangentY = Math.cos(moonAngle);
+
+    const trailSegments = !isDormant ? Array.from({ length: TRAIL_STEPS }, (_, i) => {
+        const t = (i + 1) / TRAIL_STEPS; // 0..1
+        const distance = t * TRAIL_LENGTH;
+        const falloff = (1 - t);
+        const alpha = falloff * falloff; // smoothstep-like
+        const size = moonRadius * (0.4 + 0.08 * (1 - t));
+        return {
+            x: moonX - tangentX * distance,
+            y: moonY - tangentY * distance,
+            alpha,
+            size,
+        };
+    }) : [];
+    const renderPhaseGlyph = ({ cx, cy, r, phaseT, emphasis = 1 }) => {
         const illum = 0.5 * (1 - Math.cos(phaseT * TWO_PI));
         const waxing = phaseT < 0.5;
-        const rawOffset = (waxing ? (1 - 2 * illum) : (2 * illum - 1)) * r;
-        const xOffset = Math.max(-r, Math.min(r, rawOffset));
-
-        if (illum < 0.001) {
-            return (
-                <g opacity={emphasis}>
-                    <circle cx={cx} cy={cy} r={r} fill={baseFill} />
-                    <circle cx={cx} cy={cy} r={r} fill="none" stroke={outlineStroke} strokeWidth={1.6} />
-                </g>
-            );
-        }
-
-        if (illum > 0.999) {
-            return (
-                <g opacity={emphasis}>
-                    <circle cx={cx} cy={cy} r={r} fill={baseFill} />
-                    <circle cx={cx} cy={cy} r={r} fill={litFill} filter={glow ? "url(#orbitGlow)" : undefined} />
-                    <circle cx={cx} cy={cy} r={r} fill="none" stroke={outlineStroke} strokeWidth={0.6} />
-                </g>
-            );
-        }
-
-        const litLeft = waxing ? (cx + xOffset) : (cx - r);
-        const litRight = waxing ? (cx + r) : (cx + xOffset);
-        const darkLeft = cx - r;
-        const darkRight = cx + r;
-        const darkWidth = waxing ? Math.max(0, litLeft - darkLeft) : Math.max(0, darkRight - litRight);
-        const darkX = waxing ? darkLeft : litRight;
+        const circumference = TWO_PI * r;
+        const litLength = Math.max(illum * circumference, 0.08 * circumference);
+        const dashArray = `${litLength} ${circumference}`;
+        const dashOffset = -(waxing ? 0.25 : 0.75) * circumference;
 
         return (
             <g opacity={emphasis}>
-                <defs>
-                    <mask id={maskId} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
-                        <rect x={cx - r} y={cy - r} width={r * 2} height={r * 2} fill="black" />
-                        <circle cx={cx} cy={cy} r={r} fill="white" />
-                        {darkWidth > 0 && (
-                            <rect x={darkX} y={cy - r} width={darkWidth} height={r * 2} fill="black" />
-                        )}
-                    </mask>
-                </defs>
-                <circle cx={cx} cy={cy} r={r} fill={baseFill} />
                 <circle
                     cx={cx}
                     cy={cy}
                     r={r}
-                    fill={litFill}
-                    mask={`url(#${maskId})`}
-                    filter={glow ? "url(#orbitGlow)" : undefined}
+                    fill="none"
+                    stroke={baseStroke}
+                    strokeWidth={0.7}
                 />
                 <circle
                     cx={cx}
                     cy={cy}
                     r={r}
                     fill="none"
-                    stroke={outlineStroke}
-                    strokeWidth={0.6}
+                    stroke={litStroke}
+                    strokeWidth={1.2}
+                    strokeDasharray={dashArray}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    opacity={0.9}
                 />
             </g>
         );
@@ -142,9 +140,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                                     cy: y,
                                     r: 8,
                                     phaseT,
-                                    emphasis: 1,
-                                    maskId: `${clipPrefix}-debug-mask-${idx}`,
-                                    glow: false
+                                    emphasis: 1
                                 })}
                             </g>
                         );
@@ -204,7 +200,6 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                 const glyphX = centerX + Math.cos(angle) * phaseTrackRadius;
                 const glyphY = centerY + Math.sin(angle) * phaseTrackRadius;
                 const glyphOpacity = isCurrent ? 0.9 : (isCompleted ? 0.58 : 0.26);
-                const maskId = `${clipPrefix}-phase-mask-${i}`;
 
                 return (
                     <g key={`orbit-phase-${i}`} opacity={glyphOpacity}>
@@ -213,9 +208,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                             cy: glyphY,
                             r: radius,
                             phaseT,
-                            emphasis: 1,
-                            maskId,
-                            glow: isCurrent
+                            emphasis: isCurrent ? 1.15 : 1
                         })}
                     </g>
                 );
@@ -224,6 +217,17 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             {/* Moon Marker */}
             {!isDormant && (
                 <>
+                    {trailSegments.map((segment, idx) => (
+                        <circle
+                            key={`moon-trail-${idx}`}
+                            cx={segment.x}
+                            cy={segment.y}
+                            r={segment.size}
+                            fill="none"
+                            stroke={`rgba(${wakeR}, ${wakeG}, ${wakeB}, ${0.48 * segment.alpha})`}
+                            strokeWidth={2}
+                        />
+                    ))}
                     <circle
                         className="moon-halo-pulse"
                         cx={moonX}
@@ -264,16 +268,16 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                         className="moon-twinkle"
                         cx={moonX}
                         cy={moonY}
-                        r={moonRadius * 0.82}
-                        fill="rgba(248, 250, 252, 0.95)"
+                        r={moonRadius * 0.9}
+                        fill={moonCoreFill}
                     />
                     <circle
                         cx={moonX}
                         cy={moonY}
-                        r={moonRadius * 1.02}
+                        r={moonRadius * 1.04}
                         fill="none"
-                        stroke="rgba(248, 250, 252, 0.45)"
-                        strokeWidth={0.6}
+                        stroke={moonRimStroke}
+                        strokeWidth={0.8}
                     />
                     <circle
                         className="moon-halo-wobble"
