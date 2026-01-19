@@ -85,7 +85,7 @@
 
 /* Optional: apply to halo for constant subtle life */
 .moon-halo-pulse {
-    animation: haloPulse 4s ease-in-out infinite;
+    /* DISABLED for test */ /* animation: haloPulse 4s ease-in-out infinite; */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */

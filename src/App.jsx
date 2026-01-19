@@ -15,7 +15,6 @@ import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
 import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
-import { useCurriculumStore } from "./state/curriculumStore.js";
 import { AvatarPreview } from "./components/AvatarPreview.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
@@ -141,14 +140,8 @@ function App() {
     return () => root.classList.remove('hearth-viewport');
   }, [displayMode]);
 
-  // Curriculum state
-  const { 
-    isCurriculumComplete,
-    onboardingComplete: curriculumOnboardingComplete,
-  } = useCurriculumStore();
+  // Curriculum completion report (manually triggered only, never auto-shown)
   const [showCurriculumReport, setShowCurriculumReport] = useState(false);
-
-
 
   // Check if user has seen welcome screen
   const getHasSeenWelcome = () => {
@@ -222,13 +215,13 @@ function App() {
     initViewportListener();
   }, [initViewportListener]);
 
-  // Check curriculum state (after showWelcome is declared)
-  useEffect(() => {
-    // Show completion report if curriculum complete and not dismissed
-    if (curriculumOnboardingComplete && isCurriculumComplete()) {
-      setShowCurriculumReport(true);
-    }
-  }, [curriculumOnboardingComplete, isCurriculumComplete]);
+  // DISABLED: Never auto-show completion report
+  // User can manually access from HomeHub or CurriculumHub if needed
+  // useEffect(() => {
+  //   if (curriculumOnboardingComplete && isCurriculumComplete()) {
+  //     setShowCurriculumReport(true);
+  //   }
+  // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
   // Note: CSS variables now set by ThemeProvider based on avatarStage
 

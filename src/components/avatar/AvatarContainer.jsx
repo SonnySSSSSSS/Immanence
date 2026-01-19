@@ -219,13 +219,15 @@ export function AvatarContainer({
 
                 {/* Moon Orbit - Dark mode only */}
                 {!isLight && (
-                    <svg
-                        className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-                        viewBox="0 0 600 600"
-                        style={{ overflow: 'visible', zIndex: 100 }}
-                    >
-                        <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
-                    </svg>
+                    <>
+                        <svg
+                            className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+                            viewBox="0 0 600 600"
+                            style={{ overflow: 'visible', zIndex: 100 }}
+                        >
+                            <MoonOrbit avatarRadius={138} centerX={300} centerY={300} />
+                        </svg>
+                    </>
                 )}
 
                 <div

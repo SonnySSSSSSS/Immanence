@@ -204,7 +204,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             }) */}
 
 
-            {/* Orbit Phase Track */}
+            {/* Orbit Phase Track - Progress Meter */}
             {markerAngles.map((baseAngle, i) => {
                 const angle = baseAngle - Math.PI / 2;
                 const isCompleted = i < activeIndex;
@@ -215,27 +215,36 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                 );
                 const isNearCurrent = distFromActive <= 1;
                 
-                const phaseT = i / PHASE_MARKERS;
-                const radius = MILESTONE_R * (isCurrent ? PHASE_ACTIVE_SCALE : 1);
+                const spriteSrc = `/bg/moon-phases/moon_phase_${String(i).padStart(2, '0')}.png`;
+                
+                // Progress meter styling
+                let phaseOpacity = 0.2; // future/unearned
+                let phaseScale = 1;
+                if (isCompleted) {
+                    phaseOpacity = 0.65; // earned phases
+                    phaseScale = 1;
+                }
+                if (isNearCurrent) {
+                    phaseOpacity = 0.80; // neighbors get boost
+                }
+                if (isCurrent) {
+                    phaseOpacity = 1.0; // current is brightest
+                    phaseScale = 1.35;
+                }
+                
+                const markerSize = (isCurrent ? 40 : 32) * phaseScale;
                 const glyphX = centerX + Math.cos(angle) * phaseTrackRadius;
                 const glyphY = centerY + Math.sin(angle) * phaseTrackRadius;
                 
-                // Opacity: brighter for completed + current + neighbors
-                let glyphOpacity = 0.26; // future markers
-                if (isCompleted) glyphOpacity = 0.60; // past markers
-                if (isNearCurrent) glyphOpacity = 0.75; // neighbors
-                if (isCurrent) glyphOpacity = 0.95; // current marker
-
                 return (
-                    <g key={`orbit-phase-${i}`} opacity={glyphOpacity}>
-                        {renderPhaseGlyph({
-                            cx: glyphX,
-                            cy: glyphY,
-                            r: radius,
-                            phaseT,
-                            emphasis: isCurrent ? 1.15 : 1,
-                            index: i
-                        })}
+                    <g key={`orbit-phase-${i}`} opacity={phaseOpacity}>
+                        <image
+                            href={spriteSrc}
+                            x={glyphX - markerSize / 2}
+                            y={glyphY - markerSize / 2}
+                            width={markerSize}
+                            height={markerSize}
+                        />
                     </g>
                 );
             })}
