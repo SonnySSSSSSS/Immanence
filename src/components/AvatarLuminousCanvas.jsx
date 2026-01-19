@@ -188,6 +188,17 @@ class Particle {
     const safeS = typeof this.color?.s === 'number' && !isNaN(this.color.s) ? this.color.s : 95;
     const safeL = typeof this.color?.l === 'number' && !isNaN(this.color.l) ? this.color.l : 63;
 
+    // Calculate proximityDim before trail loop (based on head position)
+    let proximityDim = 1;
+    if (this.trail.length > 0 && moonWorld && Number.isFinite(moonDimRadius)) {
+      const head = this.trail[0];
+      const dx = head.x - moonWorld.x;
+      const dy = head.y - moonWorld.y;
+      if ((dx * dx + dy * dy) < (moonDimRadius * moonDimRadius)) {
+        proximityDim = 0.4;
+      }
+    }
+
     // Trail
     for (let i = 0; i < this.trail.length - 1; i++) {
       const p1 = this.trail[i];
@@ -220,14 +231,6 @@ class Particle {
     const head = this.trail[0];
     const hx = centerX + head.x * scaleMod;
     const hy = centerY + head.y * scaleMod;
-    let proximityDim = 1;
-    if (moonWorld && Number.isFinite(moonDimRadius)) {
-      const dx = head.x - moonWorld.x;
-      const dy = head.y - moonWorld.y;
-      if ((dx * dx + dy * dy) < (moonDimRadius * moonDimRadius)) {
-        proximityDim = 0.4;
-      }
-    }
     
     // Guard: Skip gradient rendering if coordinates are invalid
     if (!Number.isFinite(hx) || !Number.isFinite(hy)) {

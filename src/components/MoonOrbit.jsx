@@ -5,18 +5,18 @@
 import React, { useMemo } from 'react';
 import { useLunarStore } from '../state/lunarStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
-import { useTrackingStore } from '../state/trackingStore';
 import './moonAnimations.css';
 
 const TWO_PI = Math.PI * 2;
-const PHASE_MARKERS = 32;
+const PHASE_MARKERS = 40;
 const TICK_COUNT = 24;
-const DEBUG_PHASE_STRIP = false;
-const PHASE_BASE_RADIUS = 2.6;
+const DEBUG_PHASE_STRIP = false; // Enable to validate phase rendering
 const PHASE_ACTIVE_SCALE = 1.25;
-const PHASE_TRACK_OFFSET = 6;
+const PHASE_TRACK_OFFSET = 0; // Glyphs sit ON the orbit ring, not offset
 const TRAIL_STEPS = 5;
-const TRAIL_LENGTH = 80;
+const TRAIL_LENGTH = 60; // Increased 50%
+const WAKE_RADIUS_SCALE = 1.5; // 50% larger wake
+const BLUR_STDDEV = 2.25; // 1.5x larger blur
 
 /**
  * MoonOrbit - Atmospheric moon with volumetric light behavior
@@ -24,13 +24,15 @@ const TRAIL_LENGTH = 80;
 export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) {
     const progress = useLunarStore(s => s.progress);
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
-    const streakCurrent = useTrackingStore(s => s.streak?.current ?? 0);
 
     const progress01 = ((progress % 12) + 12) % 12 / 12;
     const moonAngle = (progress01 * TWO_PI) - Math.PI / 2; // Start at 12 o'clock
     const orbitRadius = avatarRadius * 1.4;
-    const phaseTrackRadius = orbitRadius + PHASE_TRACK_OFFSET;
+    const phaseTrackRadius = orbitRadius + PHASE_TRACK_OFFSET; // Now sits ON the ring
+    
     const moonRadius = 9.2;
+    const MILESTONE_R = moonRadius * 0.85; // Milestone glyphs sized to match moon feel
+    
     const activeIndex = Math.floor(progress01 * PHASE_MARKERS);
     const markerAngles = useMemo(
         () => Array.from({ length: PHASE_MARKERS }, (_, i) => (i / PHASE_MARKERS) * TWO_PI),
@@ -53,18 +55,16 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
         return null;
     }
 
-    const streakStrength = Math.min(1, Math.max(0, streakCurrent / 30));
-    const gold = { r: 255, g: 210, b: 120 };
-    const k = 0.25 + 0.75 * streakStrength;
-    const wakeR = Math.round(gold.r * k);
-    const wakeG = Math.round(gold.g * k);
-    const wakeB = Math.round(gold.b * k);
+    // Heat tracking: based on progress to enable gold heating
+    const heat = Math.max(0, Math.min(1, progress / 12)); // 0..1 as moon progresses
+    const glowIntensity = 0.6 + 0.4 * heat; // Glow increases with heat
 
     const baseStroke = "rgba(255, 255, 255, 0.16)";
-    const litStroke = `rgba(${wakeR}, ${wakeG}, ${wakeB}, 0.8)`;
-    const haloStroke = `rgba(${wakeR}, ${wakeG}, ${wakeB}, ${Math.min(0.25, 0.20 + 0.55 * streakStrength)})`;
-    const moonCoreFill = `rgba(${wakeR}, ${wakeG}, ${wakeB}, ${0.10 + 0.25 * streakStrength})`;
-    const moonRimStroke = `rgba(${wakeR}, ${wakeG}, ${wakeB}, ${Math.min(0.6, 0.35 + 0.25 * streakStrength)})`;
+    const litStroke = "rgba(140, 255, 225, 0.72)";
+    const haloStroke = `rgba(${Math.round(140 + 60 * heat)}, 255, ${Math.round(225 - 50 * heat)}, ${0.22 * glowIntensity})`;
+    const moonCoreFill = heat > 0.1 ? `rgba(255, 230, 150, ${0.5 + 0.5 * heat})` : "rgba(248, 250, 252, 0.96)";
+    const moonRimStroke = `rgba(248, 250, 252, ${0.42 * glowIntensity})`;
+
 
     const tangentX = -Math.sin(moonAngle);
     const tangentY = Math.cos(moonAngle);
@@ -74,7 +74,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
         const distance = t * TRAIL_LENGTH;
         const falloff = (1 - t);
         const alpha = falloff * falloff; // smoothstep-like
-        const size = moonRadius * (0.4 + 0.08 * (1 - t));
+        const size = moonRadius * WAKE_RADIUS_SCALE * (0.4 + 0.08 * (1 - t)) * 6; // 500% larger moons
         return {
             x: moonX - tangentX * distance,
             y: moonY - tangentY * distance,
@@ -82,35 +82,72 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             size,
         };
     }) : [];
-    const renderPhaseGlyph = ({ cx, cy, r, phaseT, emphasis = 1 }) => {
-        const illum = 0.5 * (1 - Math.cos(phaseT * TWO_PI));
+    const renderPhaseGlyph = ({ cx, cy, r, phaseT, emphasis = 1, index }) => {
+        // Calculate lunar phase illumination
+        const a = phaseT * TWO_PI;
+        const k = (1 - Math.cos(a)) / 2; // 0 = new moon, 0.5 = quarter, 1 = full
         const waxing = phaseT < 0.5;
-        const circumference = TWO_PI * r;
-        const litLength = Math.max(illum * circumference, 0.08 * circumference);
-        const dashArray = `${litLength} ${circumference}`;
-        const dashOffset = -(waxing ? 0.25 : 0.75) * circumference;
-
+        
+        // Terminator X offset (straight edge)
+        let terminatorX = (1 - 2 * k) * r; // k=0 -> +r (new), k=0.5 -> 0 (quarter), k=1 -> -r (full)
+        if (!waxing) terminatorX = -terminatorX; // Flip for waning phase
+        
+        // Organic scale variation (subtle)
+        const scaleJitter = 0.98 + 0.04 * Math.sin(index * 2.3);
+        const effectiveR = r * scaleJitter;
+        
+        const clipId = `phase-clip-${index}`;
+        const clipIdFeather = `phase-clip-feather-${index}`;
+        
         return (
             <g opacity={emphasis}>
+                {/* Define clipPaths for lit portion */}
+                <defs>
+                    <clipPath id={clipId}>
+                        <rect
+                            x={cx + terminatorX}
+                            y={cy - effectiveR}
+                            width={effectiveR * 2}
+                            height={effectiveR * 2}
+                        />
+                    </clipPath>
+                    <clipPath id={clipIdFeather}>
+                        <rect
+                            x={cx + terminatorX}
+                            y={cy - effectiveR - 0.3}
+                            width={effectiveR * 2}
+                            height={effectiveR * 2 + 0.6}
+                        />
+                    </clipPath>
+                </defs>
+                
+                {/* Base (unlit) disc - darker for better contrast */}
                 <circle
                     cx={cx}
                     cy={cy}
-                    r={r}
-                    fill="none"
-                    stroke={baseStroke}
-                    strokeWidth={0.7}
+                    r={effectiveR}
+                    fill="rgba(0, 0, 0, 0.45)"
+                    stroke="rgba(255, 220, 140, 0.25)"
+                    strokeWidth={0.6}
                 />
+                
+                {/* Lit portion (clipped) - warm ivory */}
                 <circle
                     cx={cx}
                     cy={cy}
-                    r={r}
-                    fill="none"
-                    stroke={litStroke}
-                    strokeWidth={1.2}
-                    strokeDasharray={dashArray}
-                    strokeDashoffset={dashOffset}
-                    strokeLinecap="round"
-                    opacity={0.9}
+                    r={effectiveR}
+                    fill="rgba(244, 232, 210, 0.88)"
+                    clipPath={`url(#${clipId})`}
+                />
+                
+                {/* Feathered edge for smooth terminator */}
+                <circle
+                    cx={cx}
+                    cy={cy}
+                    r={effectiveR + 0.3}
+                    fill="rgba(244, 232, 210, 0.25)"
+                    clipPath={`url(#${clipIdFeather})`}
+                    style={{ filter: 'blur(0.6px)' }}
                 />
             </g>
         );
@@ -118,15 +155,8 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
 
     return (
         <g className="moon-orbit-dark">
-            <defs>
-                <filter id="orbitGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
-                    <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-            </defs>
+            {/* DEBUG: Red square proof - remove after verification */}
+            <rect x="8" y="8" width="10" height="10" fill="red" />
 
             {DEBUG_PHASE_STRIP && (
                 <g>
@@ -140,7 +170,8 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                                     cy: y,
                                     r: 8,
                                     phaseT,
-                                    emphasis: 1
+                                    emphasis: 1,
+                                    index: `debug-${idx}`
                                 })}
                             </g>
                         );
@@ -148,28 +179,10 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                 </g>
             )}
 
-            {/* Orbit Rings */}
-            <circle
-                cx={centerX}
-                cy={centerY}
-                r={orbitRadius}
-                fill="none"
-                stroke="rgba(248, 250, 252, 0.18)"
-                strokeWidth={2}
-                strokeOpacity={0.35}
-            />
-            <circle
-                cx={centerX}
-                cy={centerY}
-                r={orbitRadius * 0.94}
-                fill="none"
-                stroke="rgba(248, 250, 252, 0.18)"
-                strokeWidth={1.1}
-                strokeOpacity={0.4}
-            />
+            {/* Orbit Rings - REMOVED (eliminated green path) */}
 
-            {/* Tick Marks */}
-            {tickAngles.map((baseAngle, i) => {
+            {/* Tick Marks - DISABLED to find green line source */}
+            {/* tickAngles.map((baseAngle, i) => {
                 const angle = baseAngle - Math.PI / 2;
                 const innerR = orbitRadius * 0.97;
                 const outerR = orbitRadius * 1.01;
@@ -188,18 +201,30 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                         strokeWidth={1}
                     />
                 );
-            })}
+            }) */}
+
 
             {/* Orbit Phase Track */}
             {markerAngles.map((baseAngle, i) => {
                 const angle = baseAngle - Math.PI / 2;
                 const isCompleted = i < activeIndex;
                 const isCurrent = i === activeIndex;
+                const distFromActive = Math.min(
+                    Math.abs(i - activeIndex),
+                    PHASE_MARKERS - Math.abs(i - activeIndex)
+                );
+                const isNearCurrent = distFromActive <= 1;
+                
                 const phaseT = i / PHASE_MARKERS;
-                const radius = PHASE_BASE_RADIUS * (isCurrent ? PHASE_ACTIVE_SCALE : 1);
+                const radius = MILESTONE_R * (isCurrent ? PHASE_ACTIVE_SCALE : 1);
                 const glyphX = centerX + Math.cos(angle) * phaseTrackRadius;
                 const glyphY = centerY + Math.sin(angle) * phaseTrackRadius;
-                const glyphOpacity = isCurrent ? 0.9 : (isCompleted ? 0.58 : 0.26);
+                
+                // Opacity: brighter for completed + current + neighbors
+                let glyphOpacity = 0.26; // future markers
+                if (isCompleted) glyphOpacity = 0.60; // past markers
+                if (isNearCurrent) glyphOpacity = 0.75; // neighbors
+                if (isCurrent) glyphOpacity = 0.95; // current marker
 
                 return (
                     <g key={`orbit-phase-${i}`} opacity={glyphOpacity}>
@@ -208,7 +233,8 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                             cy: glyphY,
                             r: radius,
                             phaseT,
-                            emphasis: isCurrent ? 1.15 : 1
+                            emphasis: isCurrent ? 1.15 : 1,
+                            index: i
                         })}
                     </g>
                 );
@@ -217,6 +243,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             {/* Moon Marker */}
             {!isDormant && (
                 <>
+                    {/* Wake Trail - 50% larger with blur */}
                     {trailSegments.map((segment, idx) => (
                         <circle
                             key={`moon-trail-${idx}`}
@@ -224,46 +251,33 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                             cy={segment.y}
                             r={segment.size}
                             fill="none"
-                            stroke={`rgba(${wakeR}, ${wakeG}, ${wakeB}, ${0.48 * segment.alpha})`}
-                            strokeWidth={2}
+                            stroke={`rgba(140, 255, 225, ${0.34 * segment.alpha})`}
+                            strokeWidth={1.425}
+                            style={{ filter: `blur(${BLUR_STDDEV}px)` }}
                         />
                     ))}
+
+                    {/* Pulse Circle - FILLED with gold, SAME SIZE as moon */}
                     <circle
                         className="moon-halo-pulse"
                         cx={moonX}
                         cy={moonY}
-                        r={moonRadius * 2.1}
-                        fill="rgba(52, 211, 153, 0.12)"
-                        filter="url(#orbitGlow)"
+                        r={moonRadius}
+                        fill={`rgba(255, 200, 100, ${0.25 * glowIntensity})`}
+                        style={{ filter: `blur(${BLUR_STDDEV * 0.8}px)` }}
                     />
+
+                    {/* Halo Stroke - single thin stroke */}
                     <circle
-                        cx={moonX - Math.sin(moonAngle) * (moonRadius * 1.8)}
-                        cy={moonY + Math.cos(moonAngle) * (moonRadius * 1.8)}
-                        r={moonRadius * 2.6}
-                        fill="rgba(52, 211, 153, 0.24)"
-                        filter="url(#orbitGlow)"
+                        cx={moonX}
+                        cy={moonY}
+                        r={moonRadius * 1.5}
+                        fill="none"
+                        stroke={haloStroke}
+                        strokeWidth={1.2}
                     />
-                    {[
-                        { offset: 8, radius: moonRadius * 1.2, opacity: 0.22 },
-                        { offset: 16, radius: moonRadius * 0.9, opacity: 0.14 },
-                        { offset: 26, radius: moonRadius * 0.7, opacity: 0.08 }
-                    ].map((puff, idx) => (
-                        <circle
-                            key={`moon-puff-${idx}`}
-                            cx={moonX - Math.sin(moonAngle) * puff.offset}
-                            cy={moonY + Math.cos(moonAngle) * puff.offset}
-                            r={puff.radius}
-                            fill={`rgba(52, 211, 153, ${puff.opacity})`}
-                            filter="url(#orbitGlow)"
-                        />
-                    ))}
-                    <circle
-                        cx={moonX + Math.sin(moonAngle) * (moonRadius * 1.1)}
-                        cy={moonY - Math.cos(moonAngle) * (moonRadius * 1.1)}
-                        r={moonRadius * 0.55}
-                        fill="rgba(52, 211, 153, 0.25)"
-                        filter="url(#orbitGlow)"
-                    />
+
+                    {/* Moon Core */}
                     <circle
                         className="moon-twinkle"
                         cx={moonX}
@@ -271,6 +285,8 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                         r={moonRadius * 0.9}
                         fill={moonCoreFill}
                     />
+
+                    {/* Moon Rim Highlight */}
                     <circle
                         cx={moonX}
                         cy={moonY}
@@ -278,16 +294,6 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                         fill="none"
                         stroke={moonRimStroke}
                         strokeWidth={0.8}
-                    />
-                    <circle
-                        className="moon-halo-wobble"
-                        cx={moonX}
-                        cy={moonY}
-                        r={moonRadius * 1.18}
-                        fill="none"
-                        stroke="rgba(52, 211, 153, 0.6)"
-                        strokeWidth={1.1}
-                        filter="url(#orbitGlow)"
                     />
                 </>
             )}

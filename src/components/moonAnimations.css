@@ -128,7 +128,7 @@
 }
 
 .moon-twinkle {
-    animation: moonTwinkle 4.5s ease-in-out infinite;
+    /* Animation removed - moon disc must be stable */
 }
 
 /* Combined pulse + twinkle for stars */

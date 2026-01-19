@@ -148,6 +148,7 @@ export function AvatarContainer({
                                 zIndex: 6
                             }}
                         >
+                            {/* Outer decorative ring */}
                             <div
                                 className="absolute"
                                 style={{
@@ -161,33 +162,8 @@ export function AvatarContainer({
                                     boxShadow: `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.2)`,
                                 }}
                             />
-                            <div
-                                className="absolute"
-                                style={{
-                                    width: "102%",
-                                    height: "102%",
-                                    top: "50%",
-                                    left: "50%",
-                                    transform: "translate(-50%, -50%)",
-                                    borderRadius: "50%",
-                                    border: `1.5px solid hsla(${h}, ${s}%, ${l}%, 0.45)`,
-                                    boxShadow: `inset 0 0 1px hsla(${h}, ${s}%, ${l}%, 0.4)`,
-                                }}
-                            >
-                                <div
-                                    className="absolute"
-                                    style={{
-                                        width: "2px",
-                                        height: "10px",
-                                        top: "-5px",
-                                        left: "50%",
-                                        transform: "translateX(-50%)",
-                                        background: `hsla(${h}, ${s}%, ${l}%, 0.98)`,
-                                        boxShadow: `0 0 8px hsla(${h}, ${s}%, ${l}%, 0.9), 0 0 12px hsla(${h}, ${s}%, ${l}%, 0.4)`,
-                                        zIndex: 20
-                                    }}
-                                />
-                            </div>
+
+                            {/* Middle ring with vertical dash - REMOVED */}
                         </div>
                     )}
 
