@@ -156,6 +156,15 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
             <circle
                 cx={centerX}
                 cy={centerY}
+                r={orbitRadius}
+                fill="none"
+                stroke="rgba(248, 250, 252, 0.18)"
+                strokeWidth={2}
+                strokeOpacity={0.35}
+            />
+            <circle
+                cx={centerX}
+                cy={centerY}
                 r={orbitRadius * 0.94}
                 fill="none"
                 stroke="rgba(248, 250, 252, 0.18)"
@@ -226,14 +235,14 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                     <circle
                         cx={moonX - Math.sin(moonAngle) * (moonRadius * 1.8)}
                         cy={moonY + Math.cos(moonAngle) * (moonRadius * 1.8)}
-                        r={moonRadius * 3.9}
+                        r={moonRadius * 2.6}
                         fill="rgba(52, 211, 153, 0.24)"
                         filter="url(#orbitGlow)"
                     />
                     {[
-                        { offset: 8, radius: moonRadius * 1.8, opacity: 0.22 },
-                        { offset: 16, radius: moonRadius * 1.35, opacity: 0.14 },
-                        { offset: 26, radius: moonRadius * 1.05, opacity: 0.08 }
+                        { offset: 8, radius: moonRadius * 1.2, opacity: 0.22 },
+                        { offset: 16, radius: moonRadius * 0.9, opacity: 0.14 },
+                        { offset: 26, radius: moonRadius * 0.7, opacity: 0.08 }
                     ].map((puff, idx) => (
                         <circle
                             key={`moon-puff-${idx}`}
@@ -265,6 +274,16 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                         fill="none"
                         stroke="rgba(248, 250, 252, 0.45)"
                         strokeWidth={0.6}
+                    />
+                    <circle
+                        className="moon-halo-wobble"
+                        cx={moonX}
+                        cy={moonY}
+                        r={moonRadius * 1.18}
+                        fill="none"
+                        stroke="rgba(52, 211, 153, 0.6)"
+                        strokeWidth={1.1}
+                        filter="url(#orbitGlow)"
                     />
                 </>
             )}
