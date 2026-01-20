@@ -26,6 +26,7 @@ import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
+import { useNavigationStore } from "../state/navigationStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 
@@ -47,7 +48,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   
   // Curriculum state
   const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
-  const practiceTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
+  const curriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
+  const navigationScheduleSlots = useNavigationStore(s => s.scheduleSlots);
+  const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
+    ? navigationScheduleSlots.map(slot => slot.time)
+    : curriculumPracticeTimeSlots;
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
   const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);

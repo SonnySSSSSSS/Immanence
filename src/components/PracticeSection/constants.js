@@ -77,6 +77,15 @@ export const PRACTICE_REGISTRY = {
       photic: { id: "photic", label: "Photic Circles", Config: PhoticControlPanel }
     },
     defaultSubMode: "visualization",
+  feeling: {
+    id: "feeling",
+    label: "Feeling Meditation",
+    labelLine1: "FEELING",
+    labelLine2: "MEDITATION",
+    icon: "?",
+    supportsDuration: true,
+    requiresFullscreen: false,
+  },
   }
 };
 

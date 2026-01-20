@@ -66,7 +66,11 @@ const PER_PRACTICE_DEFAULTS = {
   },
   perception: {
     activeMode: "visualization"
-  }
+  },
+  feeling: {
+    intent: 'compassion',
+    promptText: 'Hold the feeling; when it fades, return.',
+  },
 };
 
 export const DEFAULT_PREFERENCES = {

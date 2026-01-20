@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
+import { EVENING_TEST_CIRCUIT } from '../data/pilotTestProgram.js';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 
 export const FOUNDATION_CIRCUIT = {
@@ -49,7 +50,7 @@ export const useCurriculumStore = create(
             thoughtCatalog: [], // User's 5-8 personal thoughts for ritual observation
 
             // CURRICULUM STATE
-            activeCurriculumId: 'ritual-foundation-14',
+            activeCurriculumId: 'pilot-test-program',
             curriculumStartDate: null,
             dayCompletions: {},
 			legCompletions: {},
@@ -65,7 +66,7 @@ export const useCurriculumStore = create(
                 focus: { name: 'Focus Path', description: 'Concentration and mental clarity', exercises: [] },
                 body: { name: 'Body Path', description: 'Somatic awareness and embodied presence', exercises: [] },
             },
-            circuits: [FOUNDATION_CIRCUIT],
+            circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT],
             progress: {},
 
             // ONBOARDING ACTIONS
@@ -449,7 +450,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                     onboardingDismissedAt: null,
                     practiceTimeSlots: [],
                     thoughtCatalog: [],
-                    activeCurriculumId: 'ritual-foundation-14',
+                    activeCurriculumId: 'pilot-test-program',
                     curriculumStartDate: null,
                     dayCompletions: {},
 					legCompletions: {},
@@ -461,7 +462,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                         focus: { name: 'Focus Path', description: '', exercises: [] },
                         body: { name: 'Body Path', description: '', exercises: [] },
                     },
-                    circuits: [FOUNDATION_CIRCUIT],
+                    circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT],
                     progress: {},
                 });
             },

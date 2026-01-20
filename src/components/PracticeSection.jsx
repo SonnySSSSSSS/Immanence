@@ -112,6 +112,11 @@ const PracticeIcons = {
       <path d="M36 12C41 17 41 31 36 36" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
     </svg>
   ),
+  feeling: ({ color = 'currentColor', size = 32 }) => (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <path d="M24 36C18 30 12 26 12 20C12 15.6 15.6 12 20 12C22.6 12 24.8 13.2 26 15C27.2 13.2 29.4 12 32 12C36.4 12 40 15.6 40 20C40 26 34 30 28 36L24 40L24 40" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
   perception: ({ color = 'currentColor', size = 32 }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <path d="M8 24C8 24 14 12 24 12C34 12 40 24 40 24C40 24 34 36 24 36C14 36 8 24 8 24Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
@@ -123,7 +128,7 @@ const PracticeIcons = {
 
 function PracticeSelector({ selectedId, onSelect }) {
   const items = useMemo(() => {
-    return ['breath', 'integration', 'circuit', 'awareness', 'resonance', 'perception'].map((id) => {
+    return ['breath', 'integration', 'circuit', 'awareness', 'resonance', 'perception', 'feeling'].map((id) => {
       const p = PRACTICE_REGISTRY[id];
       return {
         id: id,
@@ -150,6 +155,7 @@ function getRailColor(id) {
     awareness: "rgba(56,189,248,0.95)",
     resonance: "rgba(245,158,11,0.95)",
     perception: "rgba(96,165,250,0.95)",
+    feeling: "rgba(244,114,182,0.95)",
   };
   return colors[id] || "rgba(255,255,255,0.65)";
 }
@@ -574,6 +580,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     getActivePracticeLeg,
     activePracticeSession,
     clearActivePracticeSession,
+    getCircuit,
   } = useCurriculumStore();
   
   // Handle curriculum auto-start and initialization
@@ -673,6 +680,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [activeRitual, setActiveRitual] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [countdownValue, setCountdownValue] = useState(null);
+  const circuitCountdownRef = useRef(null);
 
   // Sound/Visual ephemeral state
   const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
@@ -705,6 +713,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     driftEnabled,
     audioEnabled: cymaticsAudioEnabled 
   } = practiceParams.cymatics;
+
+  const { intent: feelingIntent, promptText: feelingPromptText } = practiceParams.feeling || {};
 
   // Vipassana params correspond to specific visualization types
   const actualPracticeIdForVippa = getActualPracticeId(practiceId);
@@ -906,6 +916,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   };
 
+  const startCircuitCountdown = (nextExercise) => {
+    if (circuitCountdownRef.current) {
+      clearInterval(circuitCountdownRef.current);
+    }
+
+    setCountdownValue(10);
+    circuitCountdownRef.current = setInterval(() => {
+      setCountdownValue((prev) => {
+        if (prev <= 1) {
+          clearInterval(circuitCountdownRef.current);
+          circuitCountdownRef.current = null;
+          setupCircuitExercise(nextExercise);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const advanceCircuitExercise = () => {
     if (!activeCircuitId || !circuitConfig) return;
 
@@ -913,7 +942,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (nextIndex < circuitConfig.exercises.length) {
       setCircuitExerciseIndex(nextIndex);
       const nextExercise = circuitConfig.exercises[nextIndex];
-      setupCircuitExercise(nextExercise);
+      startCircuitCountdown(nextExercise);
     } else {
       handleCircuitComplete();
     }
@@ -1026,6 +1055,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Visualization") subType = geometry;
     if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
     if (practice === "Ritual") subType = activeRitual?.id;
+    if (practice === "Feeling Meditation") subType = feelingIntent || null;
 
     const sessionPayload = {
       id,
@@ -1045,6 +1075,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'somatic vipassana') domain = sensoryType;
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
+      else if (p.includes('feeling')) domain = 'focus';
 
       recordedSession = recordSession({
         domain,
@@ -1208,6 +1239,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
          updateParams('breath', { preset: activeLeg.practiceConfig.breathPattern });
       }
 
+      if (activeLeg.practiceType === 'Circuit' && activeLeg.practiceConfig?.circuitId) {
+        const circuitDef = getCircuit?.(activeLeg.practiceConfig.circuitId);
+        if (circuitDef?.exercises?.length) {
+          const exercises = circuitDef.exercises.map((exercise) => ({
+            exercise,
+            duration: exercise.duration,
+          }));
+          setCircuitConfig({ exercises, exerciseDuration: null });
+        }
+      }
+
       setIsRunning(true);
       setTimeout(() => {
         executeStart();
@@ -1318,6 +1360,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     else if (p === 'ritual' || practiceId === 'integration') domain = 'ritual';
     else if (p === 'sound') domain = 'sound';
     else if (p === 'photic') domain = 'photic';
+    else if (p === 'feeling') domain = 'focus';
     else if (practiceId === 'resonance') domain = p === 'cymatics' ? 'visualization' : 'sound'; // resonance maps to sub-domain
 
     startSession(
@@ -1425,7 +1468,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         interval = setInterval(() => {
           setTimeLeft((prev) => prev - 1);
         }, 1000);
-      } else if (timeLeft === 0) {
+      } else if (timeLeft === 0 && countdownValue === null) {
         if (activeCircuitId && circuitConfig) {
           advanceCircuitExercise();
         } else {
@@ -1599,7 +1642,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
           ) : actualRunningPracticeId === "breath" ? (
-            <div className="flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
+          <div className="flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
               <BreathingRing
                 breathPattern={breathingPatternForRing}
                 onTap={handleAccuracyTap}
@@ -1673,7 +1716,30 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 </div>
               )}
             </div>
-          ) : practiceId === "somatic_vipassana" ? (
+                    ) : actualRunningPracticeId === "feeling" ? (
+            <div className="flex flex-col items-center justify-center text-center px-6 py-8">
+              <div
+                className="text-2xl mb-3"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  letterSpacing: 'var(--tracking-mythic)',
+                  color: 'var(--accent-color)',
+                }}
+              >
+                Feeling Meditation
+              </div>
+              <div
+                className="text-sm uppercase tracking-[0.2em] mb-3"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Intent: {feelingIntent || 'compassion'}
+              </div>
+              <div className="text-sm max-w-[420px]" style={{ color: 'var(--text-secondary)' }}>
+                {feelingPromptText || 'Hold the feeling; when it fades, return.'}
+              </div>
+            </div>
+) : practiceId === "somatic_vipassana" ? (
             <SensorySession
               sensoryType={sensoryType}
               duration={duration}

@@ -218,8 +218,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         );
     }
 
-    if (!onboardingComplete) return null;
-
     const dayNumber = getCurrentDayNumber();
     const todaysPractice = getTodaysPractice();
     const isComplete = isTodayComplete();
