@@ -22,7 +22,8 @@
       "Bash(npm install:*)",
       "Bash(npm --version:*)",
       "Bash(node --version:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run lint)"
     ]
   },
   "mcpServers": {

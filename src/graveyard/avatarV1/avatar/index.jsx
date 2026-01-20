@@ -10,7 +10,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import "../Avatar.css";
 import { LABELS, STAGE_GLOW_COLORS, getMandalaState } from "./constants";
 import { AvatarContainer } from "./AvatarContainer";
-import { useSettingsStore } from "../../state/settingsStore";
+import { useSettingsStore } from "../../../state/settingsStore";
+import { AvatarV2 } from "../../../components/avatarV2/AvatarV2.jsx";
 
 export function Avatar({
     mode,
@@ -102,6 +103,20 @@ export function Avatar({
     const avgAccuracy = mandalaData.avgAccuracy || 0;
     const weeklyConsistency = mandalaData.weeklyConsistency || 0;
     const weeklyPracticeLog = mandalaData.weeklyPracticeLog || [false, false, false, false, false, false, false];
+    const phase = mandalaData.phase || 'foundation';
+    const { focus = 0, clarity = 0, distortion = 0 } = mandalaData.transient || {};
+
+    const accLabel =
+        avgAccuracy >= 0.85 ? 'ex' :
+        avgAccuracy >= 0.7 ? 'gd' :
+        avgAccuracy >= 0.5 ? 'ok' : 'wk';
+    const accPct = Math.round(avgAccuracy * 100);
+
+    const wkLabel =
+        weeklyConsistency >= 0.85 ? 'ex' :
+        weeklyConsistency >= 0.7 ? 'gd' :
+        weeklyConsistency >= 0.5 ? 'ok' : 'wk';
+    const wkPct = Math.round(weeklyConsistency * 100);
 
     const safePattern = breathPattern || {};
     const patternForBreath = {
@@ -127,25 +142,22 @@ export function Avatar({
     };
 
     return (
-        <div
-            className="relative flex flex-col items-center overflow-visible"
-            onClick={mode === 'hub' ? undefined : handleSigilClick}
-            style={{ cursor: mode === 'hub' ? 'default' : 'pointer' }}
-        >
-            <AvatarContainer
-                mode={mode}
-                breathPattern={patternForBreath}
-                stage={currentStage}
-                path={path}
-                showCore={showCore}
-                attention={attention}
-                variationIndex={variationIndex}
-                hasVariations={maxVariations > 1}
-                weeklyConsistency={weeklyConsistency}
-                weeklyPracticeLog={weeklyPracticeLog}
-                breathState={breathState}
-                isPracticing={isPracticing}
-            />
+        <div className="flex flex-col items-center">
+            <div className="relative w-56 h-56 flex items-center justify-center">
+                <div className="relative w-48 h-48">
+                    <AvatarV2 />
+                </div>
+            </div>
+
+            <div className="mt-3 text-[10px] text-white/70 text-center space-y-0.5">
+                <div>
+                    acc {accPct} ({accLabel}) · wk {wkPct} ({wkLabel}) · phase {phase}
+                </div>
+                <div>
+                    live f {Math.round(focus * 100)} · c {Math.round(clarity * 100)} · d{" "}
+                    {Math.round(distortion * 100)}
+                </div>
+            </div>
         </div>
     );
 }

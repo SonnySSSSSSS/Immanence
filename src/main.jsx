@@ -5,6 +5,21 @@ import { TracePage } from "./pages/TracePage.jsx";
 import "./immanence.css";
 import "./index.css";
 
+// DEV: ensure no stale SW/caches (Edge commonly keeps old PWA assets)
+if (import.meta.env.DEV && "serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((regs) => regs.forEach((r) => r.unregister()))
+    .catch(() => {});
+
+  if ("caches" in window) {
+    caches
+      .keys()
+      .then((keys) => keys.forEach((k) => caches.delete(k)))
+      .catch(() => {});
+  }
+}
+
 // Simple path-based routing (no React Router needed)
 const getRoute = () => {
   const path = window.location.pathname;

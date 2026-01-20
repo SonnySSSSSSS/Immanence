@@ -133,6 +133,13 @@ function App() {
     ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
     : '#000';
 
+  // Disable browser scroll restoration (fixes Edge loading Home scrolled down)
+  useEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
     if (!root) return;
@@ -181,6 +188,14 @@ function App() {
 
   // Screen Wake Lock when in Vigilance Mode
   useWakeLock(isMinimized);
+
+  // Scroll to top when Home is shown (initial load or navigation back to Home)
+  const isHub = activeSection === null;
+  useEffect(() => {
+    if (isHub) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [isHub]);
 
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
@@ -246,7 +261,6 @@ function App() {
     }
   };
 
-  const isHub = activeSection === null;
   return (
     <ThemeProvider currentStage={avatarStage}>
 
