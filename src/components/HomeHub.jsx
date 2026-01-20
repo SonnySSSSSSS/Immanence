@@ -6,9 +6,7 @@ import { createPortal } from 'react-dom';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Avatar } from "./avatar";
 import { StageTitle } from "./StageTitle.jsx";
-import { STAGE_COLORS } from "../constants/stageColors.js";
 import { HubCardSwiper } from "./HubCardSwiper.jsx";
 import { CompactStatsCard } from "./CompactStatsCard.jsx";
 import { ExportDataButton } from "./ExportDataButton.jsx";
@@ -26,6 +24,7 @@ import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
+import { CurriculumOnboarding } from "./CurriculumOnboarding.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
@@ -53,7 +52,19 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);
   const [launcherContext, setLauncherContext] = useState(null);
+  const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
+  const [showFoundationOnboarding, setShowFoundationOnboarding] = useState(false);
   const [frameRect, setFrameRect] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem('immanenceOS.curriculum');
+      setHasPersistedCurriculumData(raw !== null);
+    } catch {
+      setHasPersistedCurriculumData(true);
+    }
+  }, []);
 
   useLayoutEffect(() => {
     const update = (tag = "update") => {
@@ -222,6 +233,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
 
+  const shouldRenderCurriculumCard = curriculumActive || hasPersistedCurriculumData === false;
+
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx globally */}
@@ -267,33 +280,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           />
 
-          {/* Avatar with multi-layered shadows for depth */}
-          <div
-            className="relative z-10 transition-all duration-500"
-            style={{
-              filter: isLight
-                ? `drop-shadow(0 4px 12px ${STAGE_COLORS[currentStage]?.shadow || 'rgba(120, 90, 60, 0.4)'})
-                   drop-shadow(0 12px 32px ${STAGE_COLORS[currentStage]?.shadow || 'rgba(120, 90, 60, 0.25)'})
-                   drop-shadow(0 20px 60px rgba(0, 0, 0, 0.12))
-                   drop-shadow(0 6px 20px ${STAGE_COLORS[currentStage]?.shadowDeep || 'rgba(100, 75, 50, 0.5)'})
-                   drop-shadow(0 0 40px ${STAGE_COLORS[currentStage]?.shadow || 'rgba(120, 90, 60, 0.15)'})`
-                : `drop-shadow(0 8px 20px ${STAGE_COLORS[currentStage]?.shadowDark || 'rgba(0, 0, 0, 0.7)'})
-                   drop-shadow(0 16px 48px ${STAGE_COLORS[currentStage]?.shadowDark || 'rgba(0, 0, 0, 0.6)'})
-                   drop-shadow(0 10px 30px ${STAGE_COLORS[currentStage]?.shadowDeep || 'rgba(0, 0, 0, 0.8)'})
-                   drop-shadow(0 0 60px ${STAGE_COLORS[currentStage]?.shadowDark || 'rgba(0, 0, 0, 0.4)'})`,
-              transform: isSanctuary ? 'scale(1.35)' : 'scale(1)',
-            }}
-          >
-            {/* Avatar without side navigation */}
-            <Avatar
-              mode="hub"
-              onStageChange={onStageChange}
-              stage={currentStage}
-              path={previewPath}
-              showCore={previewShowCore}
-              isPracticing={isPracticing}
-            />
-          </div>
         </div>
 
         {/* STATUS & CONTROL INSTRUMENT - Agency | Continuity (No StageTitle - moved to top) */}
@@ -327,18 +313,27 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         />
       )}
 
+      {showFoundationOnboarding && (
+        <CurriculumOnboarding
+          onDismiss={() => setShowFoundationOnboarding(false)}
+          onComplete={() => setShowFoundationOnboarding(false)}
+        />
+      )}
+
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
-{curriculumActive && (
+{shouldRenderCurriculumCard && (
   <div className="w-full">
     <DailyPracticeCard
       onStartPractice={handleStartPractice}
       onViewCurriculum={() => setShowCurriculumHub(true)}
       onNavigate={onSelectSection}
+      hasPersistedCurriculumData={hasPersistedCurriculumData}
+      onStartSetup={() => setShowFoundationOnboarding(true)}
     />
   </div>
 )}

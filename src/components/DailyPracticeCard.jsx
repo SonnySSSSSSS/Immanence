@@ -29,7 +29,7 @@ const THEME_CONFIG = {
     }
 };
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
@@ -107,6 +107,110 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             setGradientAngle(calculateGradientAngle(rect, getAvatarCenter()));
         }
     }, [isLight, displayMode]);
+
+
+    if (!onboardingComplete && hasPersistedCurriculumData === false) {
+        const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
+        return (
+            <div
+                className="w-full relative transition-all duration-700 ease-in-out"
+                style={{
+                    maxWidth: isSanctuary ? '656px' : '430px',
+                    margin: '0 auto',
+                }}
+            >
+                <div
+                    className="w-full relative"
+                    style={{
+                        borderRadius: '24px',
+                        border: isLight
+                            ? `2px solid ${primaryHex}40`
+                            : `2px solid ${primaryHex}60`,
+                        boxShadow: isLight
+                            ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
+                            : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`
+                    }}
+                >
+                    <div
+                        ref={cardRef}
+                        className="w-full relative overflow-hidden rounded-[24px]"
+                        style={{
+                            background: isLight ? '#faf6ee' : 'rgb(20, 15, 25)',
+                            border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
+                        }}
+                    >
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                filter: isLight ? 'saturate(1.1)' : 'none',
+                                transition: 'all 0.7s ease-in-out',
+                            }}
+                        />
+
+                        <div className="absolute inset-0 pointer-events-none" style={{ 
+                            background: isLight 
+                                ? 'linear-gradient(to right, rgba(250, 246, 238, 0) 0%, rgba(250, 246, 238, 0.3) 30%, rgba(250, 246, 238, 0.9) 100%)' 
+                                : 'linear-gradient(to right, rgba(20, 15, 25, 0) 0%, rgba(20, 15, 25, 0.45) 40%, rgba(20, 15, 25, 0.95) 100%)' 
+                        }} />
+
+                        <div 
+                            className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] min-h-[460px] max-h-[600px] overflow-hidden flex flex-col"
+                            style={{
+                                background: isLight ? 'rgba(250, 246, 238, 0.72)' : 'rgba(20, 15, 25, 0.78)',
+                                backdropFilter: 'blur(16px)',
+                                WebkitBackdropFilter: 'blur(16px)',
+                                borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
+                            }}
+                        >
+                            {isLight && (
+                                <div
+                                    className="absolute inset-0 pointer-events-none opacity-40"
+                                    style={{
+                                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.png)`,
+                                        backgroundSize: 'cover',
+                                        mixBlendMode: 'multiply',
+                                    }}
+                                />
+                            )}
+
+                            <div className="p-6 sm:p-7 relative z-10 flex flex-col gap-5">
+                                <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
+
+                                <div>
+                                    <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
+                                        Today's Practice
+                                    </div>
+                                    <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                        NO CURRICULUM DATA
+                                    </div>
+                                    <div className="text-[11px] opacity-70 leading-snug mt-3" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                        This browser has no onboarding/curriculum saved yet.
+                                    </div>
+                                </div>
+
+                                <div className="mt-auto">
+                                    <button
+                                        onClick={() => onStartSetup?.()}
+                                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
+                                        style={{
+                                            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                            color: '#fff',
+                                            boxShadow: '0 3px 10px var(--accent-30)',
+                                        }}
+                                    >
+                                        START SETUP
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!onboardingComplete) return null;
 
