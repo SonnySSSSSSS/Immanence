@@ -56,6 +56,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         setActivePracticeSession,
         _devReset,
         practiceTimeSlots: storePracticeTimeSlots,
+        lastSessionFailed,
+        clearLastSessionFailed,
     } = useCurriculumStore();
 
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
@@ -326,12 +328,27 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     if (!todaysPractice) return null;
 
     const handleStartLeg = (leg) => {
+        // Clear any pilot session failure flag on restart
+        if (lastSessionFailed) {
+            clearLastSessionFailed();
+        }
+        
+        // Inject pilot metadata based on the leg being launched (not curriculum id)
+        const isPilotLeg =
+            leg?.label === 'Morning Breath' ||
+            leg?.label === 'Evening Circuit' ||
+            leg?.practiceConfig?.circuitId === 'evening-test-circuit';
+
+        const metadata = isPilotLeg
+            ? { owner: 'pilot', programId: 'pilot-test-program' }
+            : {};
+
         if (leg.launcherId) {
-            onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId });
+            onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId, metadata });
             return;
         }
-        setActivePracticeSession(dayNumber, leg.legNumber);
-        onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId });
+        setActivePracticeSession(dayNumber, leg.legNumber, metadata);
+        onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId, metadata });
     };
 
     const completedLegs = legs.filter(l => l.completed).length;
@@ -500,7 +517,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 {/* Action */}
                                                 {!leg.completed ? (
                                                     <div className="flex flex-col items-end gap-1">
-                                                        {isNextLeg && (
+                                                        {isNextLeg && lastSessionFailed && (
+                                                            <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#dc2626' : '#ff6b6b' }}>
+                                                                ⚠ Incomplete
+                                                            </div>
+                                                        )}
+                                                        {isNextLeg && !lastSessionFailed && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b6b2c' : 'var(--accent-50)' }}>
                                                                 Next Up
                                                             </div>
@@ -516,7 +538,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 color: isLockedLeg ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
                                                                 boxShadow: isLockedLeg ? 'none' : '0 3px 10px var(--accent-30)',
                                                                 cursor: isLockedLeg ? 'not-allowed' : 'pointer',
-                                                                ...(isNextLeg && {
+                                                                ...(isNextLeg && !lastSessionFailed && {
                                                                     boxShadow: '0 8px 20px var(--accent-30)',
                                                                 }),
                                                                 ...(!isLockedLeg && {
@@ -524,7 +546,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 })
                                                             }}
                                                         >
-                                                            Start
+                                                            {lastSessionFailed && isNextLeg ? 'Restart' : 'Start'}
                                                         </button>
                                                     </div>
                                                 ) : (

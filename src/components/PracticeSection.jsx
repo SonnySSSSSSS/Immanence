@@ -44,6 +44,8 @@ import { TempoSyncSessionPanel } from "./TempoSyncSessionPanel.jsx";
 import { useBreathSessionState } from "./practice/useBreathSessionState.js";
 import { CircuitTrainingSelector } from "./practice/CircuitTrainingSelector.jsx";
 import PracticeSectionShell from "./practice/PracticeSectionShell.jsx";
+import { FeedbackModal } from "./FeedbackModal.jsx";
+import { FeelingMeditationSession } from "./FeelingMeditationSession.jsx";
 import PracticeHeader from "./practice/PracticeHeader.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
@@ -579,6 +581,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     getActivePracticeDay,
     getActivePracticeLeg,
     activePracticeSession,
+    activePracticeLeg,
     clearActivePracticeSession,
     getCircuit,
   } = useCurriculumStore();
@@ -664,9 +667,33 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
   const [lastSessionId, setLastSessionId] = useState(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const { startMicroNote, pendingMicroNote } = useJournalStore();
 
+  // Fail-on-exit: Mark pilot session failed if unmounting mid-practice (pilot only, no curriculum mutation)
+  useEffect(() => {
+    return () => {
+      if (isRunning && activePracticeSession) {
+        // Detect pilot session via embedded owner marker or evening circuit id
+        const session = useCurriculumStore.getState().activePracticeSession;
+        const isPilotByMarker = typeof session === 'object' && session?.owner === 'pilot';
+        const isPilotEvening = activeCircuitId === "evening-test-circuit";
+        const isPilotSession = isPilotByMarker || isPilotEvening;
+        
+        if (isPilotSession) {
+          useCurriculumStore.getState().setLastSessionFailed(true);
+        }
+        
+        // Only clear curriculum state if this is a curriculum-owned session
+        const isCurriculumSession = !isPilotSession && activePracticeSession;
+        if (isCurriculumSession) {
+          clearActivePracticeSession();
+        }
+      }
+    };
+
   // Practice session internals
+    }, [isRunning, activePracticeSession, activeCircuitId]);
   const [activeCircuitId, setActiveCircuitId] = useState(null);
   const [circuitConfig, setCircuitConfig] = useState(null);
   const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
@@ -980,6 +1007,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       totalDuration: totalDuration,
     });
     setShowSummary(true);
+    
+    // Show evening feedback for evening circuit completion (pilot)
+    if (activeCircuitId === 'evening-test-circuit') {
+      setTimeout(() => setShowFeedbackModal(true), 500);
+    }
 
     if (recordedSession) {
       setLastSessionId(recordedSession.id);
@@ -1008,6 +1040,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleStop = () => {
     // Capture curriculum context BEFORE clearing
     const savedActivePracticeSession = activePracticeSession;
+    const activeSessionDayNumber = typeof savedActivePracticeSession === 'object'
+      ? savedActivePracticeSession?.dayNumber
+      : savedActivePracticeSession;
     const isCircuitSession = activeCircuitId && circuitConfig;
 
     // If this is a circuit session, delegate to circuit handler
@@ -1015,7 +1050,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       handleCircuitComplete();
       return;
     }
-    const wasFromCurriculum = savedActivePracticeSession;
+    const wasFromCurriculum = !!activeSessionDayNumber;
 
     // Stop tempo sync audio if playing
     if (window.__tempoSyncStopAudio) {
@@ -1124,12 +1159,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
       if (curriculumDay) {
         // Find which leg was just completed
-        const completedLegs = getDayLegsWithStatus(savedActivePracticeSession).filter(leg => leg.completed);
+        const completedLegs = getDayLegsWithStatus(activeSessionDayNumber).filter(leg => leg.completed);
         currentLegNumber = completedLegs.length + 1; // Next leg to complete
         totalLegsForDay = curriculumDay.legs ? curriculumDay.legs.length : 1;
 
         // Log this leg as complete
-        logLegCompletion(savedActivePracticeSession, currentLegNumber, {
+        logLegCompletion(activeSessionDayNumber, currentLegNumber, {
           duration: actualDurationSeconds / 60,
           focusRating: null, // Will be collected in session summary
           challenges: [],
@@ -1144,7 +1179,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
         // If this is the last leg, calculate daily stats
         if (!nextLeg || currentLegNumber === totalLegsForDay) {
-          const allLegsWithStatus = getDayLegsWithStatus(savedActivePracticeSession);
+          const allLegsWithStatus = getDayLegsWithStatus(activeSessionDayNumber);
           const totalMinutes = allLegsWithStatus.reduce((sum, leg) =>
             sum + (leg.completion?.duration || 0), 0
           );
@@ -1161,7 +1196,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           }
 
           // Get tomorrow's practice info
-          const tomorrowDay = getCurriculumDay(savedActivePracticeSession + 1);
+          const tomorrowDay = getCurriculumDay(activeSessionDayNumber + 1);
           const nextPracticeTime = tomorrowDay?.legs?.[0]?.time || practiceTimeSlots[0] || '06:00';
           const nextPracticeType = tomorrowDay?.legs?.[0]?.practiceType || 'Breath & Stillness';
 
@@ -1184,7 +1219,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         breathCount,
         exitType,
         nextLeg: nextLegInfo,
-        curriculumDayNumber: wasFromCurriculum ? savedActivePracticeSession : null,
+        curriculumDayNumber: wasFromCurriculum ? activeSessionDayNumber : null,
         legNumber: currentLegNumber,
         totalLegs: totalLegsForDay,
         dailyStats: dailyStatsInfo,
@@ -1947,6 +1982,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           >
             Get Ready...
           </div>
+          {/* Next practice info for circuit transitions */}
+          {activeCircuitId && circuitConfig && circuitExerciseIndex < circuitConfig.exercises.length && (
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '16px',
+                fontWeight: 500,
+                color: 'rgba(255, 255, 255, 0.8)',
+                marginTop: '24px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ opacity: 0.6, fontSize: '12px', marginBottom: '8px' }}>Next:</div>
+              <div>
+                {circuitConfig.exercises[circuitExerciseIndex].exercise.name}
+                {' '}({circuitConfig.exercises[circuitExerciseIndex].duration}m)
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1998,6 +2052,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }
       `}</style>
       </PracticeSectionShell>
+      
+      {/* Evening Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={() => setShowFeedbackModal(false)}
+      />
     </>
   );
 }

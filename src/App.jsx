@@ -25,6 +25,7 @@ import { HardwareGuide } from "./components/HardwareGuide.jsx";
 import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
+import { SettingsPanel } from "./components/SettingsPanel.jsx";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 
@@ -140,6 +141,7 @@ function App() {
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const showFxGallery = true; // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
+  const [showSettings, setShowSettings] = useState(false); // Settings panel
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
@@ -220,6 +222,12 @@ function App() {
           onDismiss={() => setShowCurriculumReport(false)}
         />
       )}
+
+      {/* Settings Panel */}
+      <SettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
 
       {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}
       <DevPanel
@@ -325,6 +333,15 @@ function App() {
                     <DisplayModeToggle />
                     <button
                       type="button"
+                      onClick={() => setShowSettings(v => !v)}
+                      className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
+                      title="Settings"
+                      style={{ color: showSettings ? 'var(--accent-color)' : undefined }}
+                    >
+                      ⚙️
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setShowDevPanel(v => !v)}
                       className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
                       title="Dev Panel (Ctrl+Shift+D)"
@@ -336,7 +353,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.24.10
+                        v3.25.1
                     </div>
                   </div>
 

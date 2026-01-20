@@ -1,5 +1,5 @@
-@echo off
-setlocal enabledelayedexpansion
+@echo on
+setlocal EnableExtensions EnableDelayedExpansion
 
 :: ============================================================================
 :: IMMANENCE OS - WORK MANAGER (SAFE)
@@ -25,11 +25,16 @@ set "EXCLUDE_LIST=node_modules .git dist .cache .vite .agent"
 cd /d "%PROJECT_DIR%" || (
   echo [FATAL] Could not cd to PROJECT_DIR:
   echo   %PROJECT_DIR%
+  echo [ERROR] Script exited at %~nx0 line %~nx0
   pause
   exit /b 1
 )
 
-call :ASSERT_REPO || exit /b 1
+call :ASSERT_REPO || (
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
+  exit /b 1
+)
 
 :: ============================================================================
 :: MENU
@@ -86,6 +91,7 @@ goto MENU
 if not exist "%PROJECT_DIR%\.git" (
   echo [FATAL] PROJECT_DIR is not a git repo:
   echo   %PROJECT_DIR%
+  echo [ERROR] Script exited at %~nx0 line %~nx0
   pause
   exit /b 1
 )
@@ -120,6 +126,8 @@ set "RC=%~1"
 :: Robocopy codes: 0-7 are OK/success-with-info, 8+ are failures.
 if %RC% GEQ 8 (
   echo [ROBOCOPY] FAILED with code %RC%
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
   exit /b 1
 )
 echo [ROBOCOPY] OK (code %RC%)
@@ -252,6 +260,10 @@ goto MENU
 
 :DO_DEPLOY
 echo.
+echo ===============================
+echo [DEPLOY] Starting deploy step
+echo ===============================
+echo.
 echo ========================================
 echo DEPLOY (SAFE)
 echo ========================================
@@ -263,17 +275,54 @@ echo [SAFETY] Branch: %ORIGINAL_BRANCH%
 echo [SAFETY] Commit: %ORIGINAL_COMMIT%
 echo.
 
-echo [DEPLOY] Building...
-if exist "dist" rmdir /s /q "dist"
-call npm run build 2>&1
+git ls-remote --exit-code --heads origin gh-pages >nul 2>&1
 if errorlevel 1 (
-  echo [DEPLOY] FAILED - build failed
+  echo [DEPLOY] gh-pages branch missing. Creating...
+  git checkout --orphan gh-pages
+  if errorlevel 1 (
+    echo [DEPLOY] GIT COMMAND FAILED
+    echo [ERROR] Script exited at %~nx0 line %~nx0
+    pause
+    exit /b 1
+  )
+  git rm -rf .
+  echo.>index.html
+  git add index.html
+  git commit -m "Initialize gh-pages"
+  git push origin gh-pages
+  if errorlevel 1 (
+    echo [DEPLOY] GIT COMMAND FAILED
+    echo [ERROR] Script exited at %~nx0 line %~nx0
+    pause
+    exit /b 1
+  )
+  git checkout %ORIGINAL_BRANCH%
+  if errorlevel 1 (
+    echo [DEPLOY] GIT COMMAND FAILED
+    echo [ERROR] Script exited at %~nx0 line %~nx0
+    pause
+    exit /b 1
+  )
+)
+
+echo [DEPLOY] Running build...
+if exist "dist" rmdir /s /q "dist"
+npm run build
+if errorlevel 1 (
+  echo [DEPLOY] BUILD FAILED
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
   exit /b 1
 )
 if not exist "dist" (
   echo [DEPLOY] FAILED - dist folder missing
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
   exit /b 1
 )
+
+echo [DEPLOY] Writing .nojekyll
+echo.>dist\.nojekyll
 
 set "DEPLOY_TEMP=%TEMP%\immanence-gh-pages-deploy"
 if exist "%DEPLOY_TEMP%" rmdir /s /q "%DEPLOY_TEMP%"
@@ -283,7 +332,9 @@ echo [DEPLOY] Cloning gh-pages to temp...
 git clone --depth 1 --branch gh-pages "%DEPLOY_REPO%" "%DEPLOY_TEMP%" 2>&1
 if errorlevel 1 (
   echo [DEPLOY] FAILED - could not clone gh-pages
-  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  echo [DEPLOY] GIT COMMAND FAILED
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
   exit /b 1
 )
 
@@ -293,24 +344,47 @@ for /d %%d in (*) do if not "%%d"==".git" rmdir /s /q "%%d" 2>nul
 for %%f in (*) do if not "%%f"==".git" del /q "%%f" 2>nul
 popd
 
-xcopy /E /I /Y "%PROJECT_DIR%\dist\*" "%DEPLOY_TEMP%\" >nul
-if errorlevel 1 (
+robocopy "%PROJECT_DIR%\dist" "%DEPLOY_TEMP%" /E /R:1 /W:1 /NFL /NDL
+if errorlevel 8 (
   echo [DEPLOY] FAILED - copy dist to temp failed
   rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
   exit /b 1
+)
+
+if not exist "%DEPLOY_TEMP%\404.html" (
+  echo [DEPLOY] Adding SPA 404 fallback
+  copy "%DEPLOY_TEMP%\index.html" "%DEPLOY_TEMP%\404.html" >nul
 )
 
 echo [DEPLOY] Committing + pushing from temp...
 pushd "%DEPLOY_TEMP%"
 git add -A
 git commit -m "Deploy v%CURRENT_VERSION%: %date% %time%" 2>&1
+if errorlevel 1 (
+  echo [DEPLOY] FAILED - nothing committed to gh-pages
+  popd
+  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
+  exit /b 1
+)
 git push origin gh-pages 2>&1
+if errorlevel 1 (
+  echo [DEPLOY] GIT COMMAND FAILED
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
+  exit /b 1
+)
 set "PUSH_RESULT=!errorlevel!"
 popd
 
 if %PUSH_RESULT% NEQ 0 (
   echo [DEPLOY] FAILED - push gh-pages failed
   rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+  echo [ERROR] Script exited at %~nx0 line %~nx0
+  pause
   exit /b 1
 )
 
@@ -322,6 +396,8 @@ echo DEPLOY SUCCESS
 echo ========================================
 echo Live at: %DEPLOY_URL%
 echo.
+echo [DEPLOY] SUCCESS — gh-pages updated
+pause
 exit /b 0
 
 :: ============================================================================
@@ -595,4 +671,7 @@ goto MENU
 :END
 echo.
 echo Goodbye!
+echo.
+echo [WORK-MANAGER] Script finished.
+pause
 exit /b 0

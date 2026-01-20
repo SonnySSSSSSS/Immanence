@@ -59,6 +59,7 @@ export const useCurriculumStore = create(
             activePracticeSession: null,
             activePracticeLeg: null,
             activePracticeStartedAt: null,
+            lastSessionFailed: false,
 
             // LEGACY STATE
             paths: {
@@ -173,11 +174,17 @@ export const useCurriculumStore = create(
             },
 
             // ACTIVE PRACTICE SESSION ACTIONS
-            setActivePracticeSession: (dayNumber, legNumber = null) => {
+            setActivePracticeSession: (dayNumber, legNumber = null, metadata = {}) => {
+                const startedAt = new Date().toISOString();
                 set({
-                    activePracticeSession: dayNumber,
+                    activePracticeSession: {
+                        dayNumber,
+                        legNumber,
+                        startedAt,
+                        ...(metadata || {}),
+                    },
                     activePracticeLeg: legNumber,
-                    activePracticeStartedAt: new Date().toISOString(),
+                    activePracticeStartedAt: startedAt,
                 });
             },
 
@@ -189,10 +196,16 @@ export const useCurriculumStore = create(
                 });
             },
 
+            setLastSessionFailed: (v) => set({ lastSessionFailed: !!v }),
+            clearLastSessionFailed: () => set({ lastSessionFailed: false }),
+
             getActivePracticeDay: () => {
                 const state = get();
-                if (!state.activePracticeSession) return null;
-                return state.getCurriculumDay(state.activePracticeSession);
+                const session = state.activePracticeSession;
+                if (!session) return null;
+                const dayNumber = typeof session === 'object' ? session.dayNumber : session;
+                if (!dayNumber) return null;
+                return state.getCurriculumDay(dayNumber);
             },
 
             getActivePracticeLeg: () => {
@@ -457,6 +470,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                     activePracticeSession: null,
                     activePracticeLeg: null,
                     activePracticeStartedAt: null,
+                    lastSessionFailed: false,
                     paths: {
                         breath: { name: 'Breath Path', description: '', exercises: [] },
                         focus: { name: 'Focus Path', description: '', exercises: [] },

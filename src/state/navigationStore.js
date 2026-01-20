@@ -13,6 +13,8 @@ export const useNavigationStore = create(
             // Selection state (before beginning a path)
             selectedPathId: null,
             setSelectedPath: (id) => set({ selectedPathId: id }),
+            
+            // Pilot session tracking moved to curriculumStore
 
             // Active path state (after beginning)
             activePath: null, // { pathId, startDate, currentWeek, completedWeeks: [] }

@@ -1,0 +1,86 @@
+{
+  "hash": "e6ccf608",
+  "configHash": "40de51f2",
+  "lockfileHash": "19f9f6f2",
+  "browserHash": "d696f07c",
+  "optimized": {
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "a7407e44",
+      "needsInterop": false
+    },
+    "react-dom": {
+      "src": "../../node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "9f52401c",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "118d2d4c",
+      "needsInterop": true
+    },
+    "react-markdown": {
+      "src": "../../node_modules/react-markdown/index.js",
+      "file": "react-markdown.js",
+      "fileHash": "f2a09005",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "4a41231f",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "2dee404d",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "503efc47",
+      "needsInterop": true
+    },
+    "web-audio-beat-detector": {
+      "src": "../../node_modules/web-audio-beat-detector/build/es2019/module.js",
+      "file": "web-audio-beat-detector.js",
+      "fileHash": "89c7eeba",
+      "needsInterop": false
+    },
+    "zustand": {
+      "src": "../../node_modules/zustand/esm/index.mjs",
+      "file": "zustand.js",
+      "fileHash": "d89be2b7",
+      "needsInterop": false
+    },
+    "zustand/middleware": {
+      "src": "../../node_modules/zustand/esm/middleware.mjs",
+      "file": "zustand_middleware.js",
+      "fileHash": "b1c4ad9e",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-DUEDWNxO": {
+      "file": "chunk-DUEDWNxO.js",
+      "isDynamicEntry": false
+    },
+    "jsx-runtime-CQf3Gven": {
+      "file": "jsx-runtime-CQf3Gven.js",
+      "isDynamicEntry": false
+    },
+    "react-dom-BpfFNzFJ": {
+      "file": "react-dom-BpfFNzFJ.js",
+      "isDynamicEntry": false
+    },
+    "react-x9Y-BYRK": {
+      "file": "react-x9Y-BYRK.js",
+      "isDynamicEntry": false
+    }
+  }
+}

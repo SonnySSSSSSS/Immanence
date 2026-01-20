@@ -11,12 +11,21 @@ import { CurriculumOnboarding } from './CurriculumOnboarding.jsx';
 import { useState } from 'react';
 
 export function PathSelectionGrid() {
-    const paths = getAllPaths();
+    const allPaths = getAllPaths();
+    // PILOT: Only show Initiation Path
+    const paths = allPaths.filter(p => p.id === 'initiation');
     const { selectedPathId, setSelectedPath, activePath } = useNavigationStore();
     const { currentCycle } = useCycleStore();
     const { onboardingComplete, shouldShowOnboarding } = useCurriculumStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    
+    // Auto-select Initiation Path on mount
+    React.useEffect(() => {
+      if (!selectedPathId && paths.length > 0) {
+        setSelectedPath('initiation');
+      }
+    }, [selectedPathId, setSelectedPath, paths.length]);
 
     const [showCycleChoice, setShowCycleChoice] = useState(false);
     const [showThoughtDetachmentOnboarding, setShowThoughtDetachmentOnboarding] = useState(false);
