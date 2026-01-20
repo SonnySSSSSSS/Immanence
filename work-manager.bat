@@ -216,7 +216,7 @@ echo.
 git diff-index --quiet HEAD --
 if errorlevel 1 (
   echo [WARNING] You have uncommitted changes.
-  echo Recommend: run option 1 (Save Work) first.
+  echo Recommend: run option 1 ^(Save Work^) first.
   echo.
   set /p "CONTINUE_DEPLOY=Continue anyway? [Y/N]: "
   if /i not "!CONTINUE_DEPLOY!"=="Y" (
