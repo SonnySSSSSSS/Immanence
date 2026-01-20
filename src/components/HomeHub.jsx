@@ -24,7 +24,6 @@ import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
-import { CurriculumOnboarding } from "./CurriculumOnboarding.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
@@ -53,7 +52,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);
   const [launcherContext, setLauncherContext] = useState(null);
   const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
-  const [showFoundationOnboarding, setShowFoundationOnboarding] = useState(false);
   const [frameRect, setFrameRect] = useState(null);
 
   useEffect(() => {
@@ -313,13 +311,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         />
       )}
 
-      {showFoundationOnboarding && (
-        <CurriculumOnboarding
-          onDismiss={() => setShowFoundationOnboarding(false)}
-          onComplete={() => setShowFoundationOnboarding(false)}
-        />
-      )}
-
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
@@ -333,7 +324,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       onViewCurriculum={() => setShowCurriculumHub(true)}
       onNavigate={onSelectSection}
       hasPersistedCurriculumData={hasPersistedCurriculumData}
-      onStartSetup={() => setShowFoundationOnboarding(true)}
+      onStartSetup={() => onSelectSection('navigation')}
     />
   </div>
 )}

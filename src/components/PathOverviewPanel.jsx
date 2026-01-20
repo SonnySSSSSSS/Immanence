@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { treatiseChapters } from '../data/treatise.generated.js';
 
@@ -10,8 +11,9 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
     const isLight = colorScheme === 'light';
 
     if (!path) return null;
-    const { beginPath } = useNavigationStore();
+    const { beginPath, scheduleSlots, setScheduleSlots } = useNavigationStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);
+    const [scheduleRequired, setScheduleRequired] = useState(false);
 
     if (!path || path.placeholder) return null;
 
@@ -23,8 +25,23 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
         );
     };
 
+    const scheduleTimes = (scheduleSlots || []).map(slot => slot.time).filter(Boolean);
+
+    const handleScheduleChange = (nextTimes) => {
+        setScheduleRequired(false);
+        setScheduleSlots(nextTimes.map((time, index) => ({ slotId: index + 1, time })));
+    };
+
     const handleBegin = () => {
-        beginPath(path.id); // Changed from pathId to path.id
+        if (scheduleTimes.length === 0) {
+            setScheduleRequired(true);
+            return;
+        }
+        if (onBegin) {
+            onBegin(path.id);
+        } else {
+            beginPath(path.id);
+        }
     };
 
     // Helper to get chapter title from ID
@@ -335,6 +352,27 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
                 </div>
             )}
 
+            {/* Practice Times */}
+            <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
+                    Select your practice times
+                </div>
+                <div className="mb-3" style={{ color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.7)', fontSize: '12px' }}>
+                    Choose at least one time to begin this path.
+                </div>
+                <PracticeTimesPicker
+                    value={scheduleTimes}
+                    onChange={handleScheduleChange}
+                    maxSlots={3}
+                    title={null}
+                />
+                {scheduleRequired && (
+                    <div className="mt-3 text-[11px] uppercase tracking-wider" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                        Select at least one time to continue.
+                    </div>
+                )}
+            </div>
+
             {/* Ornamental Divider */}
             <div className="flex items-center justify-center py-2">
                 <div className="flex items-center gap-4 text-[var(--accent-30)]">
@@ -347,8 +385,9 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
             {/* BEGIN Button */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <button
-                    onClick={() => onBegin(path.id)}
-                    className="w-full py-4 rounded-full font-bold text-lg transition-all group relative overflow-hidden"
+                    onClick={handleBegin}
+                    disabled={scheduleTimes.length === 0}
+                    className="w-full py-4 rounded-full font-bold text-lg transition-all group relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{
                         fontFamily: 'var(--font-display)',
                         letterSpacing: 'var(--tracking-mythic)',

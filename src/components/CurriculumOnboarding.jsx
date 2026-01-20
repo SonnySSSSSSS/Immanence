@@ -16,6 +16,7 @@ import React, { useState } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
+import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -225,14 +226,6 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
 }
 
 function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, isLight }) {
-    const toggleTime = (timeValue) => {
-        if (selectedTimes.includes(timeValue)) {
-            setSelectedTimes(selectedTimes.filter(t => t !== timeValue));
-        } else if (selectedTimes.length < 2) {
-            setSelectedTimes([...selectedTimes, timeValue]);
-        }
-    };
-
     return (
         <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <h2
@@ -253,36 +246,13 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
                 (Optional — you can skip this)
             </p>
 
-            {/* Time Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto no-scrollbar\">
-                {TIME_OPTIONS.map(option => {
-                    const isSelected = selectedTimes.includes(option.value);
-                    return (
-                        <button
-                            key={option.value}
-                            onClick={() => toggleTime(option.value)}
-                            className="px-3 py-2 rounded-lg text-sm font-medium transition-all min-w-0"
-                            style={{
-                                background: isSelected 
-                                    ? 'var(--accent-color)' 
-                                    : isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
-                                color: isSelected 
-                                    ? (isLight ? 'white' : '#050508') 
-                                    : isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)',
-                                border: `1px solid ${isSelected ? 'var(--accent-color)' : 'transparent'}`,
-                            }}
-                        >
-                            {option.label}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {selectedTimes.length > 0 && (
-                <p className="text-[13px]" style={{ color: 'var(--accent-color)' }}>
-                    Selected: {selectedTimes.map(t => TIME_OPTIONS.find(o => o.value === t)?.label).join(', ')}
-                </p>
-            )}
+            <PracticeTimesPicker
+                value={selectedTimes}
+                onChange={setSelectedTimes}
+                maxSlots={2}
+                timeOptions={TIME_OPTIONS.map(option => option.value)}
+                title={null}
+            />
 
             <div className="flex gap-4 justify-center pt-2">
                 <PillButton onClick={onBack} variant="secondary" size="md">
