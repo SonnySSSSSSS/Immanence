@@ -55,6 +55,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         getDayLegsWithStatus,
         setActivePracticeSession,
         _devReset,
+        practiceTimeSlots,
     } = useCurriculumStore();
 
     // Parse hex to RGB for dynamic effects
@@ -108,8 +109,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         }
     }, [isLight, displayMode]);
 
+    const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
 
-    if (!onboardingComplete && hasPersistedCurriculumData === false) {
+
+    if (needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
         return (
             <div
