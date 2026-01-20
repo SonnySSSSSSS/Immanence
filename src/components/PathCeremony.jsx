@@ -4,7 +4,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
 import { getEmergenceText, getFullShiftText } from '../data/pathDescriptions';
-import { Avatar } from './avatar';
 
 /**
  * PathCeremony — A full-screen ceremonial modal
@@ -169,23 +168,6 @@ export function PathCeremony({ stage = 'flame' }) {
             >
                 {title}
             </h1>
-
-            {/* Avatar */}
-            <div
-                style={{
-                    opacity: animationPhase === 'entering' ? 0 : 1,
-                    transform: animationPhase === 'entering' ? 'scale(0.8)' : 'scale(1)',
-                    transition: 'all 0.8s ease-out 0.4s',
-                    marginBottom: '1.5rem',
-                }}
-            >
-                <Avatar
-                    mode="home"
-                    stage={stage}
-                    path={path}
-                    showCore={false}
-                />
-            </div>
 
             {/* Stage and Path */}
             <div

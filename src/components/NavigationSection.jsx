@@ -6,7 +6,6 @@ import { PathOverviewPanel } from './PathOverviewPanel.jsx';
 import { ActivePathState } from './ActivePathState.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { CodexChamber } from './Codex/CodexChamber.jsx';
-import { Avatar } from './avatar';
 import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 import { ConsistencyFoundation } from './Cycle/ConsistencyFoundation.jsx';
@@ -43,16 +42,6 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         paddingBottom: isSanctuary ? '48px' : '32px',
       }}
     >
-      {/* Avatar - consistent across sections */}
-      <div
-        className="flex flex-col items-center"
-        style={{ paddingTop: isSanctuary ? '32px' : '16px' }}
-      >
-        <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="navigation" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
-        </div>
-      </div>
-
       {/* Cycle & Consistency System */}
       <div
         style={{

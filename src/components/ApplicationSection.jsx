@@ -1,6 +1,5 @@
 // src/components/ApplicationSection.jsx
 import { useNavigationStore } from '../state/navigationStore.js';
-import { Avatar } from './avatar';
 import { SigilSealingArea } from './SigilSealingArea.jsx';
 import { ApplicationTrackingCard } from './ApplicationTrackingCard.jsx';
 
@@ -24,12 +23,6 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
   if (!activePath) {
     return (
       <div className="w-full max-w-4xl mx-auto space-y-8 pb-12">
-        <div className="flex flex-col items-center pt-8">
-          <div style={{ transform: 'scale(0.75)' }}>
-            <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
-          </div>
-        </div>
-
         {/* Empty State */}
         <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
           <h2
@@ -72,13 +65,6 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
   // Active path - show permanent sigil sealing area
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Avatar & Navigation Toggle */}
-      <div className="flex flex-col items-center pt-8 gap-6">
-        <div style={{ transform: 'scale(0.65)' }}>
-          <Avatar mode="application" onStageChange={onStageChange} stage={currentStage} path={previewPath} showCore={previewShowCore} />
-        </div>
-      </div>
-
       {/* Permanent Sigil Sealing Area */}
       <SigilSealingArea />
 

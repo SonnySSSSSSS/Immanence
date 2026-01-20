@@ -1,6 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
-import { Avatar } from "./components/avatar";
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
 import { HomeHub } from "./components/HomeHub.jsx";
@@ -15,7 +14,6 @@ import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
 import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
-import { AvatarPreview } from "./components/AvatarPreview.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { WidthToggle } from "./components/WidthToggle.jsx";
@@ -31,11 +29,6 @@ import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import "./App.css";
 
 function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
-  // Navigation and Application sections handle their own avatars and stage titles
-  // RitualLibrary also handles its own UI (no avatar needed)
-  // Hide avatar during any active practice session
-  const showAvatar = section !== 'navigation' && section !== 'application' && section !== 'ritualLibrary' && !isPracticing;
-
   // Special case: Awareness (Insight Meditation) renders PracticeSection directly (no avatar wrapper)
   const isInsightMeditation = isPracticing && (currentPracticeId === 'awareness' || currentPracticeId === 'cognitive_vipassana');
   if (isInsightMeditation) {
@@ -59,40 +52,6 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
 
   return (
     <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
-      {showAvatar && (
-          <div 
-            className="w-full relative z-20 flex flex-col items-center"
-            style={{
-              marginTop: section === 'practice' ? '0.25rem' : '1.5rem',
-              // Reclaim vertical space by overlapping the next section when shrunk
-              marginBottom: section === 'practice' ? '-180px' : '12px',
-              pointerEvents: 'none', // Avatar shouldn't block clicks
-            }}
-          >
-            {/* Avatar with scale/fade during practice */}
-            <div
-              className="transition-all duration-700 ease-in-out"
-              style={{
-                transform: section === 'practice' ? 'scale(0.5)' : 'scale(0.5625)',
-                transformOrigin: 'top center',
-                opacity: 1,
-                zIndex: 100,
-                willChange: 'transform',
-              }}
-            >
-            <Avatar
-              mode={section}
-              breathState={breathState}
-              onStageChange={onStageChange}
-              stage={currentStage}
-              path={previewPath}
-              showCore={previewShowCore}
-              attention={previewAttention}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="w-full relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
         {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} onOpenPhotic={onOpenPhotic} />}
 
@@ -179,7 +138,6 @@ function App() {
   const [isPracticing, setIsPracticing] = useState(false);
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
-  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const showFxGallery = true; // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
@@ -207,17 +165,6 @@ function App() {
   useEffect(() => {
     setAvatarStage(previewStage);
   }, [previewStage]);
-
-  // Keyboard shortcut: Shift+P to open Avatar Preview
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.shiftKey && e.key === 'P') {
-        setShowAvatarPreview((v) => !v);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   // Preload critical images on app start
   useEffect(() => {
@@ -271,19 +218,6 @@ function App() {
       {showCurriculumReport && (
         <CurriculumCompletionReport
           onDismiss={() => setShowCurriculumReport(false)}
-        />
-      )}
-
-      {/* Avatar Preview Debug Panel */}
-      {showAvatarPreview && (
-        <AvatarPreview
-          onClose={() => setShowAvatarPreview(false)}
-          stage={previewStage}
-          path={previewPath}
-          showCore={previewShowCore}
-          onStageChange={setPreviewStage}
-          onPathChange={setPreviewPath}
-          onShowCoreChange={setPreviewShowCore}
         />
       )}
 

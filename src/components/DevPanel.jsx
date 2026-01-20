@@ -7,7 +7,6 @@ import { useLunarStore } from '../state/lunarStore';
 import { usePathStore, PATH_NAMES, PATH_SYMBOLS } from '../state/pathStore';
 import { useAttentionStore } from '../state/attentionStore';
 import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
-import { Avatar } from './avatar';
 import * as devHelpers from '../utils/devHelpers';
 import { calculatePathProbabilities, getDominantPath, determinePathState } from '../utils/attentionPathScoring';
 import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';
@@ -966,22 +965,6 @@ export function DevPanel({
                         onToggle={() => toggleSection('avatar')}
                         isLight={isLight}
                     >
-                        {/* Avatar display */}
-                        <div className="flex justify-center mb-4 scale-50 origin-center -my-16">
-                            <Avatar
-                                mode="hub"
-                                stage={avatarStage}
-                                path={showCore ? null : avatarPath}
-                                showCore={showCore}
-                                attention={avatarAttention}
-                            />
-                        </div>
-
-                        {/* Variation info */}
-                        <div className="text-xs text-center mb-4" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)' }}>
-                            Click avatar to cycle through variations
-                        </div>
-
                         {/* Stage selector */}
                         <div className="flex items-center gap-3 mb-3">
                             <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Stage</label>
