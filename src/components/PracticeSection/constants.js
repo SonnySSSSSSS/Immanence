@@ -1,9 +1,5 @@
-import { CircuitConfig } from "../Cycle/CircuitConfig.jsx";
-import { SoundConfig } from "../SoundConfig.jsx";
-import { VisualizationConfig } from "../VisualizationConfig.jsx";
-import { CymaticsConfig } from "../CymaticsConfig.jsx";
-import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
-import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+// Config components are imported directly by consumers to avoid circular dependencies
+// This file only exports configuration data, not React components
 
 export const PRACTICE_REGISTRY = {
   breath: {
@@ -22,7 +18,7 @@ export const PRACTICE_REGISTRY = {
     labelLine2: "",
     icon: "◈",
     supportsDuration: false,
-    Config: RitualSelectionDeck,
+    configComponent: "RitualSelectionDeck",
     requiresFullscreen: false,
     alias: "ritual",
   },
@@ -32,7 +28,7 @@ export const PRACTICE_REGISTRY = {
     labelLine1: "CIRCUIT",
     labelLine2: "",
     icon: "↺",
-    Config: CircuitConfig,
+    configComponent: "CircuitConfig",
     supportsDuration: true,
     requiresFullscreen: false,
   },
@@ -59,8 +55,8 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
     subModes: {
-      aural: { id: "sound", label: "Sound", Config: SoundConfig },
-      cymatics: { id: "cymatics", label: "Cymatics", Config: CymaticsConfig }
+      aural: { id: "sound", label: "Sound", configComponent: "SoundConfig" },
+      cymatics: { id: "cymatics", label: "Cymatics", configComponent: "CymaticsConfig" }
     },
     defaultSubMode: "aural",
   },
@@ -73,8 +69,8 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
     subModes: {
-      visualization: { id: "visualization", label: "Visualization", Config: VisualizationConfig },
-      photic: { id: "photic", label: "Photic Circles", Config: PhoticControlPanel }
+      visualization: { id: "visualization", label: "Visualization", configComponent: "VisualizationConfig" },
+      photic: { id: "photic", label: "Photic Circles", configComponent: "PhoticControlPanel" }
     },
     defaultSubMode: "visualization",
   },

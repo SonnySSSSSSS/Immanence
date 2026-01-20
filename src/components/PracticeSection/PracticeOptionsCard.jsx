@@ -3,6 +3,24 @@ import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
 import { PRACTICE_REGISTRY, DURATIONS, PRACTICE_UI_WIDTH, resolvePracticeId, OLD_TO_NEW_PRACTICE_MAP } from "./constants.js";
 
+// Import config components directly to avoid circular dependencies
+import { CircuitConfig } from "../Cycle/CircuitConfig.jsx";
+import { SoundConfig } from "../SoundConfig.jsx";
+import { VisualizationConfig } from "../VisualizationConfig.jsx";
+import { CymaticsConfig } from "../CymaticsConfig.jsx";
+import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
+import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+
+// Map string names to actual components
+const CONFIG_COMPONENTS = {
+  CircuitConfig,
+  SoundConfig,
+  VisualizationConfig,
+  CymaticsConfig,
+  RitualSelectionDeck,
+  PhoticControlPanel,
+};
+
 export function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {
   const cardRef = useRef(null);
   const resolvedId = resolvePracticeId(practiceId);
@@ -13,6 +31,10 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
   const hasSubModes = p?.subModes && Object.keys(p.subModes).length > 0;
   const activeMode = hasSubModes ? (setters.activeMode || p.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? p.subModes[activeMode] : null;
+  
+  // Resolve config components from string names
+  const ConfigComponent = p?.configComponent ? CONFIG_COMPONENTS[p.configComponent] : null;
+  const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
 
   // Intentional Reveal Logic: Scroll into view when expanded
   useEffect(() => {
@@ -335,8 +357,8 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                  </div>
 
                  {/* Render the Config for the active sub-mode */}
-                 {activeSubMode?.Config ? (
-                   <activeSubMode.Config 
+                 {ActiveSubModeConfig ? (
+                   <ActiveSubModeConfig 
                      {...setters}
                      isLight={tokens.isLight}
                      selectedRitualId={setters.selectedRitualId}
@@ -347,8 +369,8 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                    </div>
                  )}
                </div>
-             ) : p.Config ? (
-               <p.Config 
+             ) : ConfigComponent ? (
+               <ConfigComponent 
                  {...setters}
                  isLight={tokens.isLight}
                  selectedRitualId={setters.selectedRitualId}

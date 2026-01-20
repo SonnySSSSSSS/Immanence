@@ -52,6 +52,16 @@ import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
 
+// Map string names to actual components (components already imported above)
+const CONFIG_COMPONENTS = {
+  CircuitConfig,
+  SoundConfig,
+  VisualizationConfig,
+  CymaticsConfig,
+  RitualSelectionDeck,
+  PhoticControlPanel,
+};
+
 const DEV_FX_GALLERY_ENABLED = true;
 
 // Safe practice config lookup that resolves old IDs
@@ -356,7 +366,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             titleTextMarginBottom={menuTitleTextMarginBottom}
             configPanelMarginBottom={menuConfigPanelMarginBottom}
             practice={p}
-            ConfigComponent={p.Config}
+            ConfigComponent={p.configComponent ? CONFIG_COMPONENTS[p.configComponent] : null}
             setters={setters}
             isLight={tokens.isLight}
             selectedRitualId={setters.selectedRitualId}

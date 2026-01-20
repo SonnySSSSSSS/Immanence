@@ -1,6 +1,24 @@
 import React from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 
+// Import config components directly to avoid circular dependencies
+import { CircuitConfig } from "../Cycle/CircuitConfig.jsx";
+import { SoundConfig } from "../SoundConfig.jsx";
+import { VisualizationConfig } from "../VisualizationConfig.jsx";
+import { CymaticsConfig } from "../CymaticsConfig.jsx";
+import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
+import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+
+// Map string names to actual components
+const CONFIG_COMPONENTS = {
+  CircuitConfig,
+  SoundConfig,
+  VisualizationConfig,
+  CymaticsConfig,
+  RitualSelectionDeck,
+  PhoticControlPanel,
+};
+
 function PracticeMenu({
   containerKey,
   label,
@@ -28,6 +46,9 @@ function PracticeMenu({
   const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
   const activeMode = hasSubModes ? (setters.activeMode || practice.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
+  
+  // Resolve config components from string names
+  const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
   return (
     <div 
       key={containerKey} 
@@ -123,8 +144,8 @@ function PracticeMenu({
           </div>
 
           {/* Render the Config for the active sub-mode */}
-          {activeSubMode?.Config ? (
-            <activeSubMode.Config 
+          {ActiveSubModeConfig ? (
+            <ActiveSubModeConfig 
               {...setters}
               isLight={isLight}
               selectedRitualId={selectedRitualId}
