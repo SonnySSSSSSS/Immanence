@@ -307,7 +307,7 @@ if errorlevel 1 (
 
 echo [DEPLOY] Running build...
 if exist "dist" rmdir /s /q "dist"
-npm run build
+call npm run build
 if errorlevel 1 (
   echo [DEPLOY] BUILD FAILED
   echo [ERROR] Script exited at %~nx0 line %~nx0
