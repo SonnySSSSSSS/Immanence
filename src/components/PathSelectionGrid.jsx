@@ -14,18 +14,11 @@ export function PathSelectionGrid() {
     const allPaths = getAllPaths();
     // PILOT: Only show Initiation Path
     const paths = allPaths.filter(p => p.id === 'initiation');
-    const { selectedPathId, setSelectedPath, activePath } = useNavigationStore();
+    const { selectedPathId, setSelectedPath, activePath, abandonPath } = useNavigationStore();
     const { currentCycle } = useCycleStore();
     const { onboardingComplete, shouldShowOnboarding } = useCurriculumStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    
-    // Auto-select Initiation Path on mount
-    React.useEffect(() => {
-      if (!selectedPathId && paths.length > 0) {
-        setSelectedPath('initiation');
-      }
-    }, [selectedPathId, setSelectedPath, paths.length]);
 
     const [showCycleChoice, setShowCycleChoice] = useState(false);
     const [showThoughtDetachmentOnboarding, setShowThoughtDetachmentOnboarding] = useState(false);
@@ -87,6 +80,10 @@ export function PathSelectionGrid() {
                                 if (entry.isProgram) {
                                     entry.onClick();
                                 } else if (!isPlaceholder) {
+                                    // Clear activePath if it's for a different path
+                                    if (activePath && activePath.pathId !== entry.id) {
+                                        abandonPath();
+                                    }
                                     setSelectedPath(entry.id);
                                 }
                             }}

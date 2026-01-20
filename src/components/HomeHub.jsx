@@ -55,7 +55,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     : curriculumPracticeTimeSlots;
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
   const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
-  const [showCurriculumHub, setShowCurriculumHub] = useState(false);
+  const [showCurriculumHub, setShowCurriculumHubState] = useState(false);
+  const openCurriculumHub = React.useCallback(() => {
+    console.log('[HomeHub] openCurriculumHub -> true');
+    console.trace('[HomeHub] openCurriculumHub stack');
+    setShowCurriculumHubState(true);
+  }, []);
+  const closeCurriculumHub = React.useCallback(() => {
+    console.log('[HomeHub] closeCurriculumHub -> false');
+    console.trace('[HomeHub] closeCurriculumHub stack');
+    setShowCurriculumHubState(false);
+  }, []);
   const [launcherContext, setLauncherContext] = useState(null);
   const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
   const [frameRect, setFrameRect] = useState(null);
@@ -324,7 +334,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 <div className="w-full">
   <DailyPracticeCard
     onStartPractice={handleStartPractice}
-    onViewCurriculum={() => setShowCurriculumHub(true)}
+    onViewCurriculum={openCurriculumHub}
     onNavigate={onSelectSection}
     hasPersistedCurriculumData={hasPersistedCurriculumData}
     onboardingComplete={curriculumOnboardingComplete}
@@ -381,7 +391,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             return isComplete ? (
               // Show completion report if curriculum is done
               <CurriculumCompletionReport
-                onDismiss={() => setShowCurriculumHub(false)}
+                onDismiss={closeCurriculumHub}
               />
             ) : (
               // Show curriculum hub - PORTAL with frame wrapper
@@ -391,7 +401,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                   className="absolute inset-0 bg-black/40 backdrop-blur-xl"
                   onClick={() => {
                     console.log('[HomeHub] Backdrop clicked');
-                    setShowCurriculumHub(false);
+                    closeCurriculumHub();
                   }}
                 />
 
@@ -445,7 +455,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                       <button
                         onClick={() => {
                           console.log('[HomeHub] Close button clicked');
-                          setShowCurriculumHub(false);
+                          closeCurriculumHub();
                         }}
                         className="p-2 rounded-full transition-colors"
                         style={{
@@ -460,7 +470,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
                     {/* Body - THE ONLY SCROLL CONTAINER */}
                     <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar\">
-                      <CurriculumHub onClose={() => setShowCurriculumHub(false)} isInModal />
+                      <CurriculumHub onClose={closeCurriculumHub} isInModal />
                     </div>
                   </div>
                 </div>

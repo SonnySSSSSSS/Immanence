@@ -3,7 +3,7 @@
 // Phase 2: Wired to Zustand store via useCircuitManager
 import { useState } from 'react';
 import { useCircuitManager } from '../../state/circuitManager';
-import { CircuitConfig } from './CircuitConfig';
+import { CircuitConfig } from './CircuitConfig.jsx';
 
 export function CircuitTrainer({ onSelectCircuit }) {
     const allCircuits = useCircuitManager(s => s.getAllCircuits());

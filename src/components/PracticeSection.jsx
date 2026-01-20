@@ -680,6 +680,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const { startMicroNote, pendingMicroNote } = useJournalStore();
 
+  // Practice session internals - MUST be declared before any useEffect that references them
+  const [activeCircuitId, setActiveCircuitId] = useState(null);
+  const [circuitConfig, setCircuitConfig] = useState(null);
+  const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
+  const [circuitSavedPractice, setCircuitSavedPractice] = useState(null);
+  const [tapErrors, setTapErrors] = useState([]);
+  const [lastErrorMs, setLastErrorMs] = useState(null);
+  const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
+  const [breathCount, setBreathCount] = useState(0);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+
   // Fail-on-exit: Mark pilot session failed if unmounting mid-practice (pilot only, no curriculum mutation)
   useEffect(() => {
     return () => {
@@ -701,18 +712,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }
       }
     };
-
-  // Practice session internals
     }, [isRunning, activePracticeSession, activeCircuitId]);
-  const [activeCircuitId, setActiveCircuitId] = useState(null);
-  const [circuitConfig, setCircuitConfig] = useState(null);
-  const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
-  const [circuitSavedPractice, setCircuitSavedPractice] = useState(null);
-  const [tapErrors, setTapErrors] = useState([]);
-  const [lastErrorMs, setLastErrorMs] = useState(null);
-  const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
-  const [breathCount, setBreathCount] = useState(0);
-  const [sessionStartTime, setSessionStartTime] = useState(null);
   const [visualizationCycles, setVisualizationCycles] = useState(0);
   const [activeRitual, setActiveRitual] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);

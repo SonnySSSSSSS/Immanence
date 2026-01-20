@@ -6,6 +6,7 @@ export const paths = [
         id: "initiation",
         title: "Initiation Path",
         subtitle: "A simple beginning",
+        description: "A foundational 2-week journey to establish daily practice rhythms and begin your integration path.",
         glyph: "✨",
         duration: 2, // 2 weeks
 

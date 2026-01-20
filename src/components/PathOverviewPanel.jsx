@@ -60,15 +60,9 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
 
     return (
         <div
-            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl relative no-scrollbar"
+            className="w-full max-w-2xl mx-auto p-8 relative"
             style={{
-                background: isLight
-                    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)'
-                    : 'linear-gradient(180deg, rgba(26, 15, 28, 0.98) 0%, rgba(21, 11, 22, 0.99) 100%)',
-                border: isLight ? '1px solid rgba(180, 140, 90, 0.3)' : '1px solid rgba(250, 208, 120, 0.3)',
-                boxShadow: isLight
-                    ? '0 20px 50px rgba(180, 140, 90, 0.15)'
-                    : '0 0 60px rgba(0,0,0,0.8), 0 0 20px rgba(250, 208, 120, 0.1)'
+                // No background/border/shadow - handled by wrapper in NavigationSection
             }}
         >
             {/* Center top ornament */}

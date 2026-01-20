@@ -12,7 +12,11 @@ export const useNavigationStore = create(
         (set, get) => ({
             // Selection state (before beginning a path)
             selectedPathId: null,
-            setSelectedPath: (id) => set({ selectedPathId: id }),
+            setSelectedPath: (id) => {
+                console.log("[navigationStore] setSelectedPath ->", id);
+                console.trace("[navigationStore] setSelectedPath stack");
+                set({ selectedPathId: id });
+            },
             
             // Pilot session tracking moved to curriculumStore
 
