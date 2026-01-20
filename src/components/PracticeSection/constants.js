@@ -77,6 +77,7 @@ export const PRACTICE_REGISTRY = {
       photic: { id: "photic", label: "Photic Circles", Config: PhoticControlPanel }
     },
     defaultSubMode: "visualization",
+  },
   feeling: {
     id: "feeling",
     label: "Feeling Meditation",
@@ -86,7 +87,6 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
   },
-  }
 };
 
 export const PRACTICE_IDS = Object.keys(PRACTICE_REGISTRY);

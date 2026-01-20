@@ -1716,7 +1716,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 </div>
               )}
             </div>
-                    ) : actualRunningPracticeId === "feeling" ? (
+          ) : actualRunningPracticeId === "feeling" ? (
             <div className="flex flex-col items-center justify-center text-center px-6 py-8">
               <div
                 className="text-2xl mb-3"
@@ -1739,7 +1739,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 {feelingPromptText || 'Hold the feeling; when it fades, return.'}
               </div>
             </div>
-) : practiceId === "somatic_vipassana" ? (
+          ) : practiceId === "somatic_vipassana" ? (
             <SensorySession
               sensoryType={sensoryType}
               duration={duration}

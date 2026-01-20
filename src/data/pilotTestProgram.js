@@ -54,7 +54,7 @@ const buildPilotDays = (totalDays = 14) => {
                     label: 'Evening Circuit',
                     practiceType: 'Circuit',
                     practiceConfig: { circuitId: 'evening-test-circuit', duration: 15 },
-                    description: 'Breath → Visualization → Feeling Meditation',
+                    description: 'Breath / Visualization / Feeling Meditation',
                     focusArea: 'integration',
                 },
             ],
