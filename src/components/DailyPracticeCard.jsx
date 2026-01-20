@@ -29,7 +29,7 @@ const THEME_CONFIG = {
     }
 };
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
@@ -45,7 +45,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const primaryHex = theme?.accent?.primary || '#4ade80';
 
     const {
-        onboardingComplete,
+        onboardingComplete: storeOnboardingComplete,
         activeCurriculumId,
         getCurrentDayNumber,
         getTodaysPractice,
@@ -55,8 +55,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         getDayLegsWithStatus,
         setActivePracticeSession,
         _devReset,
-        practiceTimeSlots,
+        practiceTimeSlots: storePracticeTimeSlots,
     } = useCurriculumStore();
+
+    const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
+    const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
 
     // Parse hex to RGB for dynamic effects
     const baseAccent = useMemo(() => {

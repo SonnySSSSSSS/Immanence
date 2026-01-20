@@ -46,7 +46,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [cloudBackground, setCloudBackground] = useState('cloudier'); // 'light_clouds', 'cloudier', 'cloudiest', or 'none'
   
   // Curriculum state
-  const curriculumActive = useCurriculumStore(s => s.onboardingComplete);
+  const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
+  const practiceTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
   const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
   const [showCurriculumHub, setShowCurriculumHub] = useState(false);
@@ -231,8 +232,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
 
-  const shouldRenderCurriculumCard = curriculumActive || hasPersistedCurriculumData === false;
-
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx globally */}
@@ -317,17 +316,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
-{shouldRenderCurriculumCard && (
-  <div className="w-full">
-    <DailyPracticeCard
-      onStartPractice={handleStartPractice}
-      onViewCurriculum={() => setShowCurriculumHub(true)}
-      onNavigate={onSelectSection}
-      hasPersistedCurriculumData={hasPersistedCurriculumData}
-      onStartSetup={() => onSelectSection('navigation')}
-    />
-  </div>
-)}
+<div className="w-full">
+  <DailyPracticeCard
+    onStartPractice={handleStartPractice}
+    onViewCurriculum={() => setShowCurriculumHub(true)}
+    onNavigate={onSelectSection}
+    hasPersistedCurriculumData={hasPersistedCurriculumData}
+    onboardingComplete={curriculumOnboardingComplete}
+    practiceTimeSlots={practiceTimeSlots}
+    onStartSetup={() => onSelectSection('navigation')}
+  />
+</div>
 
         {/* TRACKING HUB - Swipeable Stats Cards */}
         <div className="w-full">
