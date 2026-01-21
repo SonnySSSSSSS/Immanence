@@ -5,28 +5,39 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 export function ActivePathState() {
-    const { activePath, completeWeek, abandonPath, isWeekCompleted } = useNavigationStore();
+    const { activePath, completeWeek, abandonPath, restartPath, isWeekCompleted } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
+    const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
     if (!activePath) return null;
 
-    const path = getPathById(activePath.pathId);
+    const path = getPathById(activePath.activePathId);
     if (!path) return null;
 
-    const currentWeekData = path.weeks.find(w => w.number === activePath.currentWeek);
-    const isPathComplete = activePath.currentWeek > path.duration;
+    // Calculate current week from weekCompletionDates: first uncompleted week
+    const currentWeek = Object.keys(activePath.weekCompletionDates || {}).length + 1;
+    const currentWeekData = path.weeks.find(w => w.number === currentWeek);
+    const isPathComplete = currentWeek > path.duration;
 
     const handleCompleteWeek = () => {
-        if (activePath.currentWeek <= path.duration) {
-            completeWeek(activePath.currentWeek);
+        if (currentWeek <= path.duration) {
+            completeWeek(currentWeek);
         }
     };
 
     const handleAbandon = () => {
         abandonPath();
         setShowAbandonConfirm(false);
+    };
+
+    const handleRestart = () => {
+        console.log('[UI] Restart path clicked');
+        console.log('[UI] Calling restartPath()');
+        restartPath();
+        console.log('[UI] restartPath() returned');
+        setShowRestartConfirm(false);
     };
 
     return (
@@ -78,7 +89,7 @@ export function ActivePathState() {
                 >
                     {isPathComplete
                         ? 'Path Complete! 🎉'
-                        : `Week ${activePath.currentWeek} of ${path.duration}`
+                        : `Week ${currentWeek} of ${path.duration}`
                     }
                 </p>
             </div>
@@ -98,7 +109,7 @@ export function ActivePathState() {
                 <div className="flex items-center gap-2 mb-4">
                     {path.weeks.map((week, idx) => {
                         const isCompleted = isWeekCompleted(week.number);
-                        const isCurrent = activePath.currentWeek === week.number;
+                        const isCurrent = currentWeek === week.number;
                         return (
                             <React.Fragment key={week.number}>
                                 <div
@@ -309,7 +320,7 @@ export function ActivePathState() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
                 {!isPathComplete ? (
                     <>
                         <button
@@ -317,7 +328,17 @@ export function ActivePathState() {
                             className="flex-1 px-6 py-3 rounded-full text-[#050508] font-bold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
                             style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
                         >
-                            COMPLETE WEEK {activePath.currentWeek}
+                            COMPLETE WEEK {currentWeek}
+                        </button>
+
+                        <button
+                            onClick={() => setShowRestartConfirm(true)}
+                            className="px-4 py-3 text-sm transition-colors"
+                            style={{ color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)' }}
+                            onMouseEnter={(e) => e.target.style.color = isLight ? 'rgba(90, 77, 60, 0.85)' : 'rgba(253,251,245,0.85)'}
+                            onMouseLeave={(e) => e.target.style.color = isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)'}
+                        >
+                            Restart path
                         </button>
 
                         {!showAbandonConfirm ? (
@@ -331,7 +352,7 @@ export function ActivePathState() {
                                 Abandon path
                             </button>
                         ) : (
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                                 <button
                                     onClick={handleAbandon}
                                     className="px-4 py-2 text-sm text-red-400 border border-red-400/30 rounded-full hover:bg-red-400/10 transition-colors"
@@ -379,6 +400,65 @@ export function ActivePathState() {
                     </button>
                 )}
             </div>
+
+            {showRestartConfirm && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    style={{ background: 'rgba(0,0,0,0.65)' }}
+                    onClick={() => setShowRestartConfirm(false)}
+                >
+                    <div
+                        className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+                        style={{
+                            background: isLight ? 'rgba(255,255,255,0.95)' : 'rgba(20,15,25,0.95)',
+                            border: isLight ? '1px solid rgba(180, 140, 90, 0.3)' : '1px solid var(--accent-20)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3
+                            className="text-lg font-bold mb-2"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: 'var(--tracking-wide)',
+                                color: isLight ? 'rgba(140, 100, 40, 0.9)' : 'var(--accent-color)'
+                            }}
+                        >
+                            Restart Path?
+                        </h3>
+                        <p
+                            className="text-sm mb-4"
+                            style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}
+                        >
+                            This will reset your progress and start the path again from Day 1. Past sessions and reports will be preserved.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowRestartConfirm(false)}
+                                className="px-4 py-2 rounded-full border transition-colors"
+                                style={{
+                                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.8)',
+                                    borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)',
+                                    background: isLight ? 'rgba(255,255,255,0.6)' : 'transparent'
+                                }}
+                                onMouseEnter={(e) => e.target.style.background = isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-10)'}
+                                onMouseLeave={(e) => e.target.style.background = isLight ? 'rgba(255,255,255,0.6)' : 'transparent'}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRestart}
+                                className="px-4 py-2 rounded-full text-[#050508] font-semibold transition-all"
+                                style={{
+                                    background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))',
+                                    boxShadow: '0 0 18px var(--accent-30)'
+                                }}
+                            >
+                                Restart Path
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

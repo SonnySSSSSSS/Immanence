@@ -31,7 +31,7 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
     const weekStats = getStats(7);
 
     // Get path application items if available
-    const path = activePath ? getPathById(activePath.pathId) : null;
+    const path = activePath ? getPathById(activePath.activePathId) : null;
     const applicationItems = path?.applicationItems || [];
 
     const normalizeCategoryKey = (label) =>

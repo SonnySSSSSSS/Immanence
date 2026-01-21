@@ -27,6 +27,7 @@ import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
+import { useUiStore } from "../state/uiStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 
@@ -50,6 +51,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
   const curriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
   const navigationScheduleSlots = useNavigationStore(s => s.scheduleSlots);
+  const activePath = useNavigationStore(s => s.activePath);
+  const currentPathId = activePath?.activePathId ?? activePath?.pathId ?? null;
   const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
     ? navigationScheduleSlots.map(slot => slot.time)
     : curriculumPracticeTimeSlots;
@@ -200,6 +203,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   }, []);
 
   const handleStartPractice = (leg, context = {}) => {
+    // Handle curriculum launcher (leg with launcherId)
     if (leg?.launcherId) {
       setLauncherContext({
         leg,
@@ -208,6 +212,23 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       });
       return;
     }
+    
+    // Handle path-based practice start (leg is object with practiceId and pathContext)
+    if (leg?.practiceId) {
+      console.log("[HomeHub] Starting path-based practice", { practiceId: leg.practiceId, pathContext: leg.pathContext });
+      // Store practice launch context in zustand store (transient, not persisted)
+      useUiStore.getState().setPracticeLaunchContext({
+        source: "dailySchedule",
+        activePathId: leg.pathContext?.activePathId,
+        slotTime: leg.pathContext?.slotTime,
+        slotIndex: leg.pathContext?.slotIndex,
+        practiceId: leg.practiceId,
+      });
+      onSelectSection('practice');
+      return;
+    }
+    
+    // Default: open practice section
     onSelectSection('practice');
   };
 
@@ -332,6 +353,13 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
 <div className="w-full">
+  {(() => {
+    console.log('[HomeHub] active run', {
+      runId: activePath?.runId,
+      activePathId: activePath?.activePathId,
+    });
+    return null;
+  })()}
   <DailyPracticeCard
     onStartPractice={handleStartPractice}
     onViewCurriculum={openCurriculumHub}

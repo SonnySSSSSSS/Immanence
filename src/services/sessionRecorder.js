@@ -4,6 +4,14 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { syncFromProgressStore } from '../state/mandalaStore';
 import { logPractice } from './cycleManager';
 
+// DEV-only regression guard: prevent legacy writer reintroduction
+if (import.meta.env.DEV) {
+  const ps = useProgressStore.getState();
+  if (typeof ps.recordSession === "function") {
+    console.error("[LEGACY BLOCK] progressStore.recordSession exists; do not use legacy sessions.");
+  }
+}
+
 const mapDomainToCycleType = (domain) => {
     if (domain === 'breathwork') return 'breath';
     if (domain === 'visualization') return 'focus';
@@ -34,25 +42,29 @@ const resolveStartedAt = ({ startedAt, endedAt, durationSec }) => {
 
 const buildPathContext = ({ activePath, activePathId, endedAt }) => {
     if (!activePathId && !activePath) {
-        return { activePathId: null, dayIndex: null };
+        return { activePathId: null, runId: null, dayIndex: null, weekIndex: null };
     }
 
-    const resolvedActivePathId = activePathId || activePath?.activePathId || activePath?.pathId || null;
-    const pathStart = activePath?.startedAt || activePath?.startDate || null;
+    const resolvedActivePathId = activePathId || activePath?.activePathId || null;
+    const resolvedRunId = activePath?.runId || null;
+    const pathStart = activePath?.startedAt || null;
     if (!pathStart || !endedAt) {
-        return { activePathId: resolvedActivePathId, dayIndex: null };
+        return { activePathId: resolvedActivePathId, runId: resolvedRunId, dayIndex: null, weekIndex: null };
     }
 
     const startMs = new Date(pathStart).getTime();
     const endMs = new Date(endedAt).getTime();
     if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
-        return { activePathId: resolvedActivePathId, dayIndex: null };
+        return { activePathId: resolvedActivePathId, runId: resolvedRunId, dayIndex: null, weekIndex: null };
     }
 
     const dayIndex = Math.floor((endMs - startMs) / (24 * 60 * 60 * 1000)) + 1;
+    const weekIndex = dayIndex > 0 ? Math.ceil(dayIndex / 7) : null;
     return {
         activePathId: resolvedActivePathId,
+        runId: resolvedRunId,
         dayIndex: dayIndex > 0 ? dayIndex : null,
+        weekIndex,
     };
 };
 
@@ -137,22 +149,25 @@ export function recordPracticeSession(payload = {}, options = {}) {
         configSnapshot,
         completion: normalizedCompletion,
         pathContext: {
+            runId: normalizedPathContext.runId,
             activePathId: normalizedPathContext.activePathId,
             dayIndex: dayIndex ?? normalizedPathContext.dayIndex,
+            weekIndex: normalizedPathContext.weekIndex,
         },
     };
 
-    if (persistSession) {
-        recordedSession = useProgressStore.getState().recordSession({
-            domain,
-            duration,
-            metadata,
-            instrumentation: instrumentationData,
+    // DEV-ONLY: Guard against missing runId when activePath exists
+    if (isDev && activePath && !normalizedPathContext?.runId) {
+        console.error('[sessionRecorder] CRITICAL: Missing runId in pathContext despite active path', {
+            activePath,
+            normalizedPathContext,
+            providedActivePathId: activePathId,
+            note: 'This session will be orphaned from run tracking'
         });
+    }
 
-        if (recordedSession?.id) {
-            normalizedSession.id = recordedSession.id;
-        } else if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    if (persistSession) {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
             normalizedSession.id = crypto.randomUUID();
         } else {
             normalizedSession.id = String(Date.now());

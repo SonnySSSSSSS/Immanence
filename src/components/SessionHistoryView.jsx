@@ -290,7 +290,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         }
 
         if (domain === 'navigation') {
-            const summary = getScheduleAdherenceSummary?.(days, navigationActivePath?.pathId);
+            const summary = getScheduleAdherenceSummary?.(days, navigationActivePath?.activePathId);
             if (!summary || summary.avgAbsDeltaMinutes === null) {
                 return `No schedule adherence records in the last ${days} days.`;
             }
@@ -392,15 +392,15 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     }, [scheduleSlotsState, getScheduleSlots]);
 
     const adherenceSummary7 = useMemo(
-        () => getScheduleAdherenceSummary?.(7, navigationActivePath?.pathId) || null,
+        () => getScheduleAdherenceSummary?.(7, navigationActivePath?.activePathId) || null,
         [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
     );
     const adherenceSummary30 = useMemo(
-        () => getScheduleAdherenceSummary?.(30, navigationActivePath?.pathId) || null,
+        () => getScheduleAdherenceSummary?.(30, navigationActivePath?.activePathId) || null,
         [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
     );
     const adherenceSummary90 = useMemo(
-        () => getScheduleAdherenceSummary?.(90, navigationActivePath?.pathId) || null,
+        () => getScheduleAdherenceSummary?.(90, navigationActivePath?.activePathId) || null,
         [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
     );
 
@@ -409,7 +409,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         practice: allSessions.length,
         circuits: circuitEntries.length,
         wisdom: readingSessions.length + quizAttempts.length,
-        navigation: navigationActivePath?.completedWeeks?.length || 0,
+        navigation: Object.keys(navigationActivePath?.weekCompletionDates || {}).length || 0,
         application: applicationLogs.length,
         reports: '',
         insights: ''
@@ -904,7 +904,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
             case 'wisdom':
                 return `${readingStats.totalSessions} readings | ${quizStats.totalAttempts} quizzes | ${watchStats.completed} videos`;
             case 'navigation':
-                return `${navigationSummary.activePath?.completedWeeks?.length || 0} weeks completed | ${navigationSummary.unlockedCount} unlocked`;
+                return `${Object.keys(navigationSummary.activePath?.weekCompletionDates || {}).length} weeks completed | ${navigationSummary.unlockedCount} unlocked`;
             case 'application':
                 return `${applicationSummary.totalLogs} logs | ${applicationSummary.modeSessionsCount} mode sessions | ${applicationSummary.chainCount} chains`;
             case 'insights':
@@ -1136,10 +1136,10 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                                 <div style={summaryCardStyle}>
                                     {navigationSummary.activePath ? (
                                         <div style={summaryRowStyle}>
-                                            <div><strong>Active path:</strong> {navigationSummary.activePath.pathId}</div>
+                                            <div><strong>Active path:</strong> {navigationSummary.activePath.activePathId}</div>
                                             <div><strong>Paths completed:</strong> 0</div>
-                                            <div><strong>Weeks completed:</strong> {navigationSummary.activePath.completedWeeks?.length || 0}</div>
-                                            <div><strong>Current week:</strong> {navigationSummary.activePath.currentWeek || 1}</div>
+                                            <div><strong>Weeks completed:</strong> {Object.keys(navigationSummary.activePath.weekCompletionDates || {}).length}</div>
+                                            <div><strong>Current week:</strong> {Object.keys(navigationSummary.activePath.weekCompletionDates || {}).length + 1}</div>
                                         </div>
                                     ) : (
                                         <div style={{ fontSize: '12px', opacity: 0.7 }}>No active path selected.</div>

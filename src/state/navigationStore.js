@@ -1,7 +1,7 @@
 // src/state/navigationStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getDateKey } from '../utils/dateUtils';
+import { getDateKey, getLocalDateKey } from '../utils/dateUtils';
 import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
@@ -48,10 +48,11 @@ export const useNavigationStore = create(
             // Pilot session tracking moved to curriculumStore
 
             // Active path state (after beginning)
-            activePath: null, // Legacy fields retained for UI; extended tracking fields added on beginPath
+            activePath: null, // Canonical fields only
 
             // Begin a new path
             beginPath: (pathId) => {
+                const runId = crypto.randomUUID();
                 const startedAt = new Date().toISOString();
                 const durationDays = getPathDurationDays(pathId);
                 const endsAt = computeEndsAt(startedAt, durationDays);
@@ -62,6 +63,7 @@ export const useNavigationStore = create(
                 set({
                     activePath: {
                         // Canonical tracking fields
+                        runId,
                         activePathId: pathId,
                         startedAt,
                         endsAt,
@@ -78,12 +80,6 @@ export const useNavigationStore = create(
                             streakBest: 0,
                             lastSessionAt: null,
                         },
-
-                        // Legacy UI fields
-                        pathId,
-                        startDate: startedAt,
-                        currentWeek: 1,
-                        completedWeeks: [],
                         weekCompletionDates: {} // { 1: "2024-01-15", 2: "2024-01-22", ... }
                     },
                     selectedPathId: pathId // Keep selection synced
@@ -95,15 +91,12 @@ export const useNavigationStore = create(
                 const state = get();
                 if (!state.activePath) return;
 
-                const path = getPathById(state.activePath.pathId || state.activePath.activePathId);
+                const path = getPathById(state.activePath.activePathId);
                 const totalWeeks = path?.duration || null;
-                const nextWeek = weekNumber + 1;
-                const isComplete = totalWeeks ? nextWeek > totalWeeks : false;
+                const isComplete = totalWeeks ? weekNumber >= totalWeeks : false;
 
                 const nextActivePath = {
                     ...state.activePath,
-                    currentWeek: nextWeek,
-                    completedWeeks: [...state.activePath.completedWeeks, weekNumber],
                     weekCompletionDates: {
                         ...state.activePath.weekCompletionDates,
                         [weekNumber]: new Date().toISOString()
@@ -138,7 +131,8 @@ export const useNavigationStore = create(
             // Check if a week is completed
             isWeekCompleted: (weekNumber) => {
                 const state = get();
-                return state.activePath?.completedWeeks.includes(weekNumber) || false;
+                if (!state.activePath?.weekCompletionDates) return false;
+                return state.activePath.weekCompletionDates[weekNumber] !== undefined;
             },
 
             // Check if path is completed
@@ -376,11 +370,182 @@ export const useNavigationStore = create(
              */
             getScheduleAdherenceLog: () => {
                 return get().scheduleAdherenceLog;
+            },
+
+            /**
+             * Compute progress metrics for the active path
+             * Returns: { durationDays, dayIndex, timePct, expectedSessionsSoFar, completedSessionsSoFar, adherencePct }
+             */
+            computeProgressMetrics: () => {
+                const state = get();
+                if (!state.activePath) {
+                    return {
+                        durationDays: 0,
+                        dayIndex: 0,
+                        timePct: 0,
+                        expectedSessionsSoFar: 0,
+                        completedSessionsSoFar: 0,
+                        adherencePct: 0
+                    };
+                }
+
+                const path = getPathById(state.activePath.activePathId);
+                const durationDays = path?.tracking?.durationDays || (path?.duration * 7) || 0;
+                
+                if (!state.activePath.startedAt || durationDays === 0) {
+                    return {
+                        durationDays,
+                        dayIndex: 0,
+                        timePct: 0,
+                        expectedSessionsSoFar: 0,
+                        completedSessionsSoFar: 0,
+                        adherencePct: 0
+                    };
+                }
+
+                // Compute day index (1-based, local date)
+                const startedAtDate = new Date(state.activePath.startedAt);
+                const startedAtLocalKey = getLocalDateKey(startedAtDate); // YYYY-MM-DD in local timezone
+                const todayKey = getLocalDateKey(); // Today in local timezone
+                
+                const startDay = new Date(startedAtLocalKey);
+                const today = new Date(todayKey);
+                const daysSinceStart = Math.floor((today - startDay) / (1000 * 60 * 60 * 24));
+                const dayIndex = Math.min(Math.max(daysSinceStart + 1, 1), durationDays);
+                const timePct = Math.round((dayIndex / durationDays) * 100);
+
+                // Expected sessions so far
+                const expectedPerDay = state.activePath.schedule?.selectedTimes?.length || 0;
+                const expectedSessionsSoFar = Math.min(dayIndex, durationDays) * expectedPerDay;
+
+                // Completed sessions so far (scoped to current run)
+                const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
+                const completedSessionsSoFar = sessionsV2.filter(
+                    s => (s.pathContext?.runId === state.activePath.runId) && (s.completion === "completed")
+                ).length;
+
+                // Adherence %
+                const adherencePct = expectedSessionsSoFar === 0 
+                    ? 0 
+                    : Math.min(Math.round((completedSessionsSoFar / expectedSessionsSoFar) * 100), 100);
+
+                return {
+                    durationDays,
+                    dayIndex,
+                    timePct,
+                    expectedSessionsSoFar,
+                    completedSessionsSoFar,
+                    adherencePct
+                };
+            },
+
+            /**
+             * Compute consecutive missed days and broken state
+             * A day is missed if: (1) expectedPerDay > 0, (2) no completed sessions that day
+             * Path broken if: consecutiveMissedDays >= 2
+             * Uses local date keys to account for timezone
+             */
+            computeMissState: () => {
+                const state = get();
+                if (!state.activePath) {
+                    return { consecutiveMissedDays: 0, broken: false };
+                }
+
+                const path = getPathById(state.activePath.activePathId);
+                const durationDays = path?.tracking?.durationDays || (path?.duration * 7) || 0;
+                const expectedPerDay = state.activePath.schedule?.selectedTimes?.length || 0;
+
+                if (!state.activePath.startedAt || expectedPerDay === 0) {
+                    return { consecutiveMissedDays: 0, broken: false };
+                }
+
+                const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
+                const startedAtLocalKey = getLocalDateKey(new Date(state.activePath.startedAt));
+                
+                // Build map of completed sessions by date (using local date keys, scoped to current run)
+                const completedByDate = {};
+                sessionsV2.forEach(s => {
+                    if ((s.pathContext?.runId === state.activePath.runId) && (s.completion === "completed")) {
+                        const dateKey = getLocalDateKey(new Date(s.startedAt));
+                        if (dateKey) {
+                            completedByDate[dateKey] = (completedByDate[dateKey] || 0) + 1;
+                        }
+                    }
+                });
+
+                // Walk backwards from today to find consecutive misses
+                const todayKey = getLocalDateKey();
+                let consecutiveMissedDays = 0;
+                let currentDate = new Date(todayKey);
+                const startDate = new Date(startedAtLocalKey);
+
+                while (currentDate >= startDate) {
+                    const dateKey = getLocalDateKey(currentDate);
+                    const completed = completedByDate[dateKey] || 0;
+                    
+                    if (completed === 0) {
+                        consecutiveMissedDays++;
+                    } else {
+                        break; // Stop at first day with sessions
+                    }
+                    
+                    currentDate.setDate(currentDate.getDate() - 1);
+                }
+
+                return {
+                    consecutiveMissedDays,
+                    broken: consecutiveMissedDays >= 2
+                };
+            },
+
+            /**
+             * Restart the current path
+             * Generates new runId for clean state tracking
+             * Resets activePath timestamps, clears progress tracking, maintains session history
+             */
+            restartPath: () => {
+                console.log('[restartPath] invoked', { prevRunId: get().activePath?.runId });
+                const state = get();
+                if (!state.activePath) return;
+
+                const runId = crypto.randomUUID();
+                console.log('[restartPath] NEW RUN', runId);
+                const pathId = state.activePath.activePathId;
+                const durationDays = getPathDurationDays(pathId);
+                const startedAt = new Date().toISOString();
+                const endsAt = computeEndsAt(startedAt, durationDays);
+
+                set({
+                    activePath: {
+                        ...state.activePath,
+                        runId,
+                        startedAt,
+                        endsAt,
+                        status: 'active',
+                        progress: {
+                            sessionsCompleted: 0,
+                            totalMinutes: 0,
+                            daysPracticed: 0,
+                            streakCurrent: 0,
+                            streakBest: 0,
+                            lastSessionAt: null,
+                        },
+                        weekCompletionDates: {},
+                        missState: { consecutiveMissedDays: 0, broken: false }
+                    }
+                });
+
+                console.assert(!!runId, '[restartPath] runId missing after restart');
+                console.log('[restartPath] NEW RUN', {
+                    runId,
+                    activePathId: pathId,
+                    startedAt,
+                });
             }
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 2,  // Bumped version for new fields
+            version: 3,  // Bumped for legacy field removal
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
                 const { selectedPathId, ...rest } = state;
@@ -389,12 +554,29 @@ export const useNavigationStore = create(
             migrate: (persistedState) => {
                 // Drop any legacy selections to prevent auto-open after hydration
                 const { selectedPathId: _legacySelection, ...rest } = persistedState || {};
+                
+                // Clean up legacy fields from activePath if present
+                if (rest?.activePath) {
+                    const { pathId: _, startDate: __, currentWeek: ___, completedWeeks: ____, ...cleanPath } = rest.activePath;
+                    rest.activePath = cleanPath;
+                }
+                
                 return { ...rest, selectedPathId: null };
             },
             onRehydrateStorage: () => (state) => {
                 // Force-clear selection after every hydration cycle
                 if (state?.selectedPathId) {
                     state.selectedPathId = null;
+                }
+                
+                // Ensure no legacy fields in activePath after rehydration
+                if (state?.activePath) {
+                    const legacyKeys = ['pathId', 'startDate', 'currentWeek', 'completedWeeks'];
+                    legacyKeys.forEach(key => {
+                        if (key in state.activePath) {
+                            delete state.activePath[key];
+                        }
+                    });
                 }
             }
         }

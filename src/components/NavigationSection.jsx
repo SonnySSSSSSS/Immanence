@@ -200,7 +200,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             onClick={(e) => e.stopPropagation()}
           >
             {/* If this is the user's active path, show progress; else show overview to begin */}
-            {activePath?.pathId === overlayPathId ? (
+            {activePath?.activePathId === overlayPathId ? (
               <div className="p-4">
                 <ActivePathState />
                 <button

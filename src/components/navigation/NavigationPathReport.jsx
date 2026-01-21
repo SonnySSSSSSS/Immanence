@@ -20,8 +20,8 @@ export function NavigationPathReport() {
             return;
         }
 
-        const pathId = activePath.activePathId || activePath.pathId || null;
-        const startedAt = activePath.startedAt || activePath.startDate || null;
+        const pathId = activePath.activePathId || null;
+        const startedAt = activePath.startedAt || null;
         if (!pathId || !startedAt) {
             setReport(null);
             return;

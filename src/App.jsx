@@ -12,7 +12,6 @@ import { NavigationSection } from "./components/NavigationSection.jsx";
 import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.jsx";
 import { Background } from "./components/Background.jsx";
 import { IndrasNet } from "./components/IndrasNet.jsx";
-import { WelcomeScreen } from "./components/WelcomeScreen.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
@@ -28,6 +27,7 @@ import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
+import AuthGate from "./components/auth/AuthGate";
 
 function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
   // Special case: Awareness (Insight Meditation) renders PracticeSection directly (no avatar wrapper)
@@ -110,16 +110,6 @@ function App() {
   // Curriculum completion report (manually triggered only, never auto-shown)
   const [showCurriculumReport, setShowCurriculumReport] = useState(false);
 
-  // Check if user has seen welcome screen
-  const getHasSeenWelcome = () => {
-    try {
-      const stored = localStorage.getItem('immanenceOS.hasSeenWelcome');
-      return stored === 'true';
-    } catch {
-      return false;
-    }
-  };
-
   // Load default view preference (defaulting to hub)
   const getDefaultView = () => {
     try {
@@ -130,7 +120,6 @@ function App() {
     }
   };
 
-  const [showWelcome, setShowWelcome] = useState(!getHasSeenWelcome());
   const [defaultView] = useState(getDefaultView());
   const [activeSection, setActiveSection] = useState(() => {
     // If default view is 'navigation', start there
@@ -201,20 +190,9 @@ function App() {
     setIsFullscreenExperience(val && requiresFullscreen);
   };
 
-  const handleDismissWelcome = () => {
-    setShowWelcome(false);
-    try {
-      localStorage.setItem('immanenceOS.hasSeenWelcome', 'true');
-    } catch {
-      // ignore
-    }
-  };
-
   return (
+    <AuthGate>
     <ThemeProvider currentStage={avatarStage}>
-
-      {/* Show welcome screen on first visit */}
-      {showWelcome && <WelcomeScreen onDismiss={handleDismissWelcome} />}
 
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
@@ -353,7 +331,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.25.25
+                        v3.25.26
                     </div>
                   </div>
 
@@ -435,6 +413,7 @@ function App() {
         </div >
       </div >
     </ThemeProvider >
+    </AuthGate>
   );
 }
 

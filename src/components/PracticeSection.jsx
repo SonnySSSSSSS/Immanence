@@ -50,6 +50,7 @@ import PracticeHeader from "./practice/PracticeHeader.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
+import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
 
 // Map string names to actual components (components already imported above)
@@ -172,7 +173,7 @@ function getRailColor(id) {
   return colors[id] || "rgba(255,255,255,0.65)";
 }
 
-function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark, onDisableBenchmark }) {
+function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark, onDisableBenchmark, breathSubmode, onBreathSubmodeChange }) {
   const cardRef = useRef(null);
   const p = getPracticeConfig(practiceId);
   const practice = p?.label;
@@ -182,7 +183,6 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
-  const [breathSubmode, setBreathSubmode] = useState("breath");
   const label = p?.label;
   const pattern = setters?.pattern;
   const onPatternChange = setters?.setPattern;
@@ -205,9 +205,9 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
   useEffect(() => {
     if (practiceId !== 'breath' && breathSubmode !== 'breath') {
-      setBreathSubmode('breath');
+      onBreathSubmodeChange('breath');
     }
-  }, [practiceId, breathSubmode]);
+  }, [practiceId, breathSubmode, onBreathSubmodeChange]);
 
   useEffect(() => {
     if (practiceId !== 'breath' || breathSubmode !== 'stillness') return;
@@ -340,7 +340,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             practiceId={practiceId}
             label={label}
             breathSubmode={breathSubmode}
-            onBreathSubmodeChange={setBreathSubmode}
+            onBreathSubmodeChange={onBreathSubmodeChange}
             pattern={pattern}
             onPatternChange={onPatternChange}
             onRunBenchmark={onRunBenchmark}
@@ -678,6 +678,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [sessionSummary, setSessionSummary] = useState(null);
   const [lastSessionId, setLastSessionId] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [breathSubmode, setBreathSubmode] = useState("breath");
   const { startMicroNote, pendingMicroNote } = useJournalStore();
 
   // Practice session internals - MUST be declared before any useEffect that references them
@@ -996,28 +997,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     let recordedSession = null;
     try {
-      const activePath = useNavigationStore.getState().activePath;
-      const activePathId = activePath?.activePathId || activePath?.pathId || null;
+      const endedAtIso = new Date().toISOString();
+      const startedAtIso = new Date(Date.now() - (totalDuration * 60 * 1000)).toISOString();
 
-      recordedSession = recordSession({
+      recordedSession = recordPracticeSession({
         domain: 'circuit-training',
         duration: totalDuration,
+        exitType: 'completed',
         practiceId: 'circuit',
         practiceMode: null,
         configSnapshot: {
           circuitName: 'Custom Circuit',
           exerciseCount: circuitConfig.exercises.length,
           exercises: circuitConfig.exercises,
-          duration: totalDuration,
         },
-        completion: 'completed',
-        activePathId,
-        metadata: {
-          circuitName: 'Custom Circuit',
-          exerciseCount: circuitConfig.exercises.length,
-          legacyImport: false
-        },
-        exitType: 'completed',
+        startedAt: startedAtIso,
+        endedAt: endedAtIso,
       });
     } catch (e) {
       console.error("Failed to save circuit session:", e);
@@ -1141,36 +1136,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       const completion = exitType === 'completed' ? 'completed' : 'abandoned';
       const practiceMode = practiceParams?.activeMode || (practiceId === 'breath' ? breathSubmode : null);
 
-      recordedSession = recordSession({
-        domain,
-        duration: duration,
-        practiceId: actualPracticeId,
-        practiceMode,
+      const endedAtIso = new Date().toISOString();
+      const startedAtIso = new Date(Date.now() - (instrumentationData.duration_ms || 0)).toISOString();
+      const exitTypeString = exitType ?? 'abandoned';
+      const actualDurationMinutes = duration;
+      const actualDomain = domain;
+
+      recordedSession = recordPracticeSession({
+        domain: actualDomain,
+        duration: actualDurationMinutes,
+        exitType: exitTypeString,
+
+        practiceId: actualPracticeId ?? practiceId,
+        practiceMode: practiceMode ?? null,
         configSnapshot: {
-          practiceId: actualPracticeId,
-          duration,
-          practiceParams,
-          pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
-          preset,
-          sensoryType,
-          soundType,
-          geometry,
-          selectedFrequency: selectedFrequency?.hz || null,
-          breathSubmode,
+          breathSubmode: breathSubmode ?? null,
         },
-        completion,
-        activePathId,
-        metadata: {
-          subType,
-          pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
-          tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-          ritualId: activeRitual?.id,
-          legacyImport: false
-        },
-        instrumentation: instrumentationData,
-        exitType,
-        cycleEnabled: true,
-        cycleMinDuration: 10,
+
+        startedAt: startedAtIso,
+        endedAt: endedAtIso,
       });
     } catch (e) {
       console.error("Failed to save session:", e);
@@ -2084,6 +2068,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         tempoBeatsPerPhase={tempoBeatsPerPhase}
         onRunBenchmark={handleRunBenchmark}
         onDisableBenchmark={() => setShowBreathBenchmark(false)}
+        breathSubmode={breathSubmode}
+        onBreathSubmodeChange={setBreathSubmode}
       />
 
       <style>{`

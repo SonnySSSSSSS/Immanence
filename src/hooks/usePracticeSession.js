@@ -172,7 +172,7 @@ export function usePracticeSession(options = {}) {
         else if (p === 'sound') domain = 'sound';
 
         const activePath = useNavigationStore.getState().activePath;
-        const activePathId = activePath?.activePathId || activePath?.pathId || null;
+        const activePathId = activePath?.activePathId || null;
         const completion = exitType === 'completed' ? 'completed' : 'abandoned';
         const practiceId = practice ? practice.toLowerCase().replace(/\s+/g, '_') : null;
 

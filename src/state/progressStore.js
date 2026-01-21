@@ -33,7 +33,15 @@ function isYesterday(dateKey) {
 
 export const useProgressStore = create(
     persist(
-        (set, get) => ({
+        (set, get) => {
+            // DEV assertion: Catch legacy sessions field regression
+            if (import.meta.env.DEV) {
+                const state = get?.() || {};
+                if (state.sessions && Array.isArray(state.sessions)) {
+                    console.error('[LEGACY] progressStore.sessions still exists in state');
+                }
+            }
+            return {
             // === Raw Events (source of truth) ===
             sessions: [],
             // Each session: { id, date, domain, duration, metadata }
@@ -70,158 +78,12 @@ export const useProgressStore = create(
                 visualization: 20,
                 wisdom: 15,
             },
-
-            // === Export Version ===
-            exportVersion: 1,
-
-            // === Long-Term Tracking (Precomputed Aggregates) ===
-            annualRollups: [],
-            /* Structure:
-            [{
-              year: 2024,
-              totalSessions: 120,
-              totalMinutes: 3600,
-              practiceDay: 95,
-              longestStreak: 28,
-              domainBreakdown: { breathwork: 60, visualization: 40, wisdom: 20 },
-              monthlyBreakdown: [{ month: 1, sessions: 10, minutes: 300 }, ...],
-              avgSessionDuration: 30,
-              consistencyRate: 0.26 // days practiced / 365
-            }]
-            */
-
-            lifetimeMilestones: {
-                totalSessions: 0,
-                totalMinutes: 0,
-                practiceDays: 0,
-                longestStreak: 0,
-                memberSince: null, // first session date
-                yearsActive: 0,
-                favoriteDomain: null,
-                totalRituals: 0
-            },
-
-            // === Cycle & Consistency System ===
-            // Benchmark tracking (self-reported metrics)
-            benchmarks: {
-                breath: {
-                    holdDuration: [], // [{ date, value, cycleDay, cycleType }]
-                    cycleConsistency: [],
-                    lastMeasured: null,
-                },
-                focus: {
-                    flameDuration: [],
-                    distractionCount: [],
-                    lastMeasured: null,
-                },
-                body: {
-                    scanCompletionTime: [],
-                    awarenessResolution: [],
-                    lastMeasured: null,
-                },
-            },
-
-            // Detailed practice history (for circuits & consistency)
-            practiceHistory: [],
-            /* Structure:
-            [{
-                date: timestamp,
-                type: 'breath' | 'flame' | 'body' | 'circuit',
-                duration: number, // minutes
-                timeOfDay: 'HH:MM',
-                exercises: [], // for circuits
-                contributions: { // for multi-path tracking
-                    breath: 5, // minutes
-                    flame: 5,
-                    body: 5
-                }
-            }]
-            */
-
-            // Consistency metrics
-            consistencyMetrics: {
-                averageTimeOfDay: null,
-                timeConsistencyScore: 0,
-                durationConsistency: 0,
-                frequencyPattern: 'irregular', // 'daily' | 'flexible' | 'irregular'
-            },
+            durationConsistency: 0,
+            frequencyPattern: 'irregular', // 'daily' | 'flexible' | 'irregular'
 
             // ========================================
             // ACTIONS
             // ========================================
-
-            /**
-             * Record a practice session
-             * @param {Object} params
-             * @param {string} params.domain - 'breathwork' | 'visualization' | 'wisdom'
-             * @param {number} params.duration - minutes
-             * @param {Object} [params.metadata] - domain-specific data
-             * @param {Object} [params.instrumentation] - attention path instrumentation data
-             */
-            // Internal: do not call directly from feature code.
-            // Use src/services/sessionRecorder.js recordPracticeSession() as the single write entry point.
-            recordSession: ({ domain, duration, metadata = {}, instrumentation = null }) => {
-                const state = get();
-                const now = new Date();
-                const dateKey = getDateKey(now);
-
-                const newSession = {
-                    id: crypto?.randomUUID?.() || String(Date.now()),
-                    date: now.toISOString(),
-                    dateKey,
-                    domain,
-                    duration,
-                    metadata,
-                    // === Attention Path Instrumentation ===
-                    // These fields enable attention path calculation
-                    start_time: instrumentation?.start_time ?? null,
-                    end_time: instrumentation?.end_time ?? null,
-                    duration_ms: instrumentation?.duration_ms ?? (duration * 60 * 1000),
-                    exit_type: instrumentation?.exit_type ?? 'completed',
-                    practice_family: instrumentation?.practice_family ?? null,
-                    alive_signal_count: instrumentation?.alive_signal_count ?? 0,
-                    pause_count: instrumentation?.pause_count ?? 0,
-                    pause_total_ms: instrumentation?.pause_total_ms ?? 0,
-                    switch_count: instrumentation?.switch_count ?? 0,
-                    
-                    // Layer 1: Post-Session Micro-Note (Journal)
-                    journal: null,
-                };
-
-                // Update streak
-                const streakUpdate = calculateStreakUpdate(state, dateKey);
-
-                set({
-                    sessions: [...state.sessions, newSession],
-                    streak: streakUpdate,
-                    lastPracticeType: domain
-                });
-
-                // Also record for path calculation
-                try {
-                    usePathStore.getState().recordPractice({
-                        domain,
-                        duration,
-                        timestamp: now.getTime(),
-                        metadata
-                    });
-                } catch (e) {
-                    console.warn('pathStore not available:', e);
-                }
-
-                // Also record for lunar tracking (stage progression)
-                try {
-                    useLunarStore.getState().recordPracticeDay(dateKey);
-                } catch (e) {
-                    console.warn('lunarStore not available:', e);
-                }
-
-                // Trigger weekly attention aggregation
-                triggerWeeklyAggregation();
-                
-                // Return the session so caller can use its ID
-                return newSession;
-            },
 
             /**
              * Record a normalized session (schema-aligned)
@@ -860,7 +722,8 @@ export const useProgressStore = create(
                 
                 set({ annualRollups, lifetimeMilestones });
             }
-        }),
+        };
+        },
         {
             name: 'immanenceOS.progress',
             version: 1,

@@ -43,7 +43,7 @@ export function SigilSealingArea() {
         // If a path was drawn, log it as awareness
         if (currentPath.length > 10 && activePath) {
             // Log the gesture (using a generic category for sigil tracing)
-            logAwareness('awareness-traced', activePath.pathId);
+            logAwareness('awareness-traced', activePath.activePathId);
 
             // Show success feedback
             setShowSuccessFeedback(true);
@@ -72,7 +72,7 @@ export function SigilSealingArea() {
         setCurrentPath([]);
     };
 
-    const path = activePath ? getPathById(activePath.pathId) : null;
+    const path = activePath ? getPathById(activePath.activePathId) : null;
 
     return (
         <div className="w-full max-w-2xl mx-auto space-y-6">

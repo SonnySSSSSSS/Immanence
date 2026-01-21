@@ -2,8 +2,14 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { useNavigationStore } from '../state/navigationStore.js';
+import { useProgressStore } from '../state/progressStore.js';
+import { METRIC_LABELS } from "../constants/metricsLabels";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 import { useTheme } from '../context/ThemeContext.jsx';
+import { getPathById } from '../data/navigationData.js';
+import { getLocalDateKey } from '../utils/dateUtils.js';
+import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 
 /**
  * THEME CONFIGURATION
@@ -29,12 +35,170 @@ const THEME_CONFIG = {
     }
 };
 
+/**
+ * Map practice type to canonical practiceId
+ * Handles common variations in navigationData type names
+ */
+function resolvePracticeIdFromType(type) {
+    if (!type) return null;
+    const lower = type.toLowerCase();
+    
+    if (lower.includes('breath')) return 'breath';
+    if (lower.includes('circuit')) return 'circuit';
+    if (lower.includes('scan') || lower.includes('somatic')) return 'awareness';
+    if (lower.includes('resonance') || lower.includes('sound')) return 'resonance';
+    if (lower.includes('visualization') || lower.includes('photic')) return 'perception';
+    if (lower.includes('feeling') || lower.includes('meditation')) return 'feeling';
+    if (lower.includes('integration') || lower.includes('ritual')) return 'integration';
+    
+    return null;
+}
+
+/**
+ * Get the week object for a given dayIndex (1-based)
+ */
+function getWeekForDay(path, dayIndex) {
+    if (!path?.weeks || !dayIndex) return null;
+    const weekIndex = Math.ceil(dayIndex / 7); // 1-based
+    return path.weeks.find(w => w.number === weekIndex) ?? null;
+}
+
+/**
+ * Normalize a list to match slot count
+ * Pads by repeating the last element if necessary
+ */
+function normalizeListForSlots(list, slotCount) {
+    if (!Array.isArray(list) || slotCount === 0) return [];
+    const out = [];
+    for (let i = 0; i < slotCount; i++) {
+        out.push(list[Math.min(i, list.length - 1)]);
+    }
+    return out;
+}
+
+/**
+ * Resolve practice ID from various entry formats
+ * Supports: string (direct ID), object with .type or .practiceId
+ */
+function resolvePracticeIdFromEntry(entry) {
+    if (!entry) return null;
+    
+    // Direct string ID
+    if (typeof entry === 'string' && !entry.includes('(') && !entry.includes(' ')) {
+        return entry; // Assume it's a practiceId
+    }
+    
+    // Object with practiceId field
+    if (entry?.practiceId) {
+        return entry.practiceId;
+    }
+    
+    // Object with type field (use type resolver)
+    if (entry?.type) {
+        return resolvePracticeIdFromType(entry.type);
+    }
+    
+    // String description - try to infer from keywords
+    if (typeof entry === 'string') {
+        return resolvePracticeIdFromType(entry);
+    }
+    
+    return null;
+}
+
 export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
     const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
+
+    // Navigation path fallback
+    const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
+    const activePathObj = activePathId ? getPathById(activePathId) : null;
+    const activePath = useNavigationStore(s => s.activePath);
+    const times = activePath?.schedule?.selectedTimes || []; // ["06:00","20:00"]
+
+    // Today's session tracking (using local date key for timezone correctness, scoped to current run)
+    const todayKey = getLocalDateKey();
+    const sessionsV2 = useProgressStore(s => s.sessionsV2 || []);
+    
+    console.log('[DailyPracticeCard] scope check', {
+        runId: activePath?.runId,
+        activePathId: activePath?.activePathId,
+        sessions: sessionsV2.slice(-3),
+    });
+    
+    const todaySessions = useMemo(() => 
+        sessionsV2.filter(
+            s => (s.pathContext?.runId === activePath?.runId) && (getLocalDateKey(new Date(s.startedAt)) === todayKey)
+        ),
+        [sessionsV2, activePath?.runId, todayKey]
+    );
+
+    const completedCount = useMemo(
+        () => todaySessions.filter(s => s.completion === "completed").length,
+        [todaySessions]
+    );
+
+    const nextIndex = Math.min(completedCount, times.length);
+    
+    // Deterministic "today complete" flag: all expected slots completed
+    const isScheduleComplete = useMemo(
+        () => times.length > 0 && completedCount >= times.length,
+        [times.length, completedCount]
+    );
+    
+    // Backward compat: allDone is same as isScheduleComplete
+    const allDone = isScheduleComplete;
+
+    // Progress metrics (time + adherence)
+    const computeProgressMetrics = useNavigationStore(s => s.computeProgressMetrics);
+    const computeMissState = useNavigationStore(s => s.computeMissState);
+    const restartPath = useNavigationStore(s => s.restartPath);
+    
+    const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
+    const missState = useMemo(() => computeMissState(), [computeMissState, sessionsV2.length]);
+
+    // Canonical practice IDs for each slot (from week-specific practices, fallback to path-level)
+    const slotPracticeIds = useMemo(() => {
+        if (!activePathObj || !metrics.dayIndex || times.length === 0) return [];
+        
+        const week = getWeekForDay(activePathObj, metrics.dayIndex);
+        
+        // Prefer week-specific practices; fallback to path-level practices
+        const weekPractices = Array.isArray(week?.practices) ? week.practices : null;
+        const fallbackPractices = Array.isArray(activePathObj?.practices) ? activePathObj.practices : null;
+        
+        const raw = normalizeListForSlots(weekPractices ?? fallbackPractices ?? [], times.length);
+        return raw.map(resolvePracticeIdFromEntry);
+    }, [activePathObj, metrics.dayIndex, times.length]);
+
+    // Practice names for each slot (based on current week)
+    const practiceLabels = useMemo(() => {
+        if (!activePathObj || !metrics.dayIndex) return [];
+        
+        const weekIndex = Math.ceil(metrics.dayIndex / 7);
+        const week = activePathObj.weeks?.find(w => w.number === weekIndex) || activePathObj.weeks?.[0];
+        
+        if (!week) return [];
+        
+        // Extract practice labels from week.focus or week.practices
+        let labels = [];
+        if (week.focus) {
+            // If focus is a string like "Morning breath (7min) + Evening circuit (15min)", split by patterns
+            labels = [week.focus];
+        } else if (week.practices && Array.isArray(week.practices)) {
+            labels = week.practices.map(p => typeof p === 'string' ? p : (p.name || p.type || ''));
+        }
+        
+        // Pad or repeat to match number of times
+        while (labels.length < times.length) {
+            labels.push(labels[0] || '');
+        }
+        
+        return labels.slice(0, times.length);
+    }, [activePathObj, metrics.dayIndex, times.length]);
 
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
@@ -116,6 +280,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
 
+    const user = useAuthUser();
+    const displayName = getDisplayName(user);
+
 
     if (needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
@@ -187,31 +354,172 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             <div className="p-6 sm:p-7 relative z-10 flex flex-col gap-5">
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
-                                <div>
-                                    <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                                        Today's Practice
-                                    </div>
-                                    <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
-                                        NO CURRICULUM DATA
-                                    </div>
-                                    <div className="text-[11px] opacity-70 leading-snug mt-3" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
-                                        This browser has no onboarding/curriculum saved yet.
-                                    </div>
-                                </div>
+                                {!activePathObj ? (
+                                    <>
+                                        <div>
+                                            <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
+                                                Today's Practice
+                                            </div>
+                                            <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                                NO CURRICULUM DATA
+                                            </div>
+                                            <div className="text-[11px] opacity-70 leading-snug mt-3" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                This browser has no onboarding/curriculum saved yet.
+                                            </div>
+                                        </div>
 
-                                <div className="mt-auto">
-                                    <button
-                                        onClick={() => onStartSetup?.()}
-                                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
-                                        style={{
-                                            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                                            color: '#fff',
-                                            boxShadow: '0 3px 10px var(--accent-30)',
-                                        }}
-                                    >
-                                        START SETUP
-                                    </button>
-                                </div>
+                                        <div className="mt-auto">
+                                            <button
+                                                onClick={() => onStartSetup?.()}
+                                                className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                    color: '#fff',
+                                                    boxShadow: '0 3px 10px var(--accent-30)',
+                                                }}
+                                            >
+                                                START SETUP
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : missState.broken ? (
+                                    <div className="text-center">
+                                        <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>PATH STATUS</div>
+                                        <div className="mt-4 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>Path Broken</div>
+                                        <div className="mt-2 text-sm opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>Missed {missState.consecutiveMissedDays} consecutive days.</div>
+                                        <div className="mt-6">
+                                            <button
+                                                onClick={() => restartPath?.()}
+                                                className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                    color: '#fff',
+                                                    boxShadow: '0 3px 10px var(--accent-30)',
+                                                }}
+                                            >
+                                                Restart Path
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : allDone ? (
+                                    <div className="text-center">
+                                        <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>TODAY'S SCHEDULE</div>
+                                        <div className="mt-4 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>TODAY'S PRACTICES COMPLETED</div>
+                                        <div className="mt-2 text-sm opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>Great job on your {completedCount} session{completedCount !== 1 ? 's' : ''}!</div>
+                                    </div>
+                                ) : times.length > 0 ? (
+                                    <div>
+                                        <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>TODAY'S SCHEDULE</div>
+                                        <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
+                                        <div className="mt-2 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>{activePathObj.title}</div>
+                                        
+                                        {/* Progress Meter */}
+                                        {metrics.durationDays > 0 && (
+                                            <div className="mt-4 space-y-2">
+                                                <div className="flex justify-between text-[10px] opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                    <span>DAY {metrics.dayIndex} OF {metrics.durationDays}</span>
+                                                    <span>{METRIC_LABELS.adherence}: {Math.round(metrics.adherencePct)}%</span>
+                                                </div>
+                                                <div className="flex justify-end text-[10px] opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                    <span>{METRIC_LABELS.program}: {Math.round(metrics.timePct)}%</span>
+                                                </div>
+                                                <div 
+                                                    className="h-2 rounded-full overflow-hidden"
+                                                    style={{
+                                                        background: isLight ? 'rgba(180, 140, 60, 0.1)' : 'rgba(255, 255, 255, 0.05)'
+                                                    }}
+                                                >
+                                                    <div 
+                                                        className="h-full transition-all duration-500"
+                                                        style={{
+                                                            width: `${metrics.adherencePct}%`,
+                                                            background: 'linear-gradient(90deg, var(--accent-color), var(--accent-70))',
+                                                            boxShadow: '0 0 10px var(--accent-30)'
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-4 space-y-2">
+                                            {times.map((time, idx) => {
+                                                const isDone = idx < completedCount;
+                                                const isNext = idx === nextIndex;
+                                                return (
+                                                    <div 
+                                                        key={idx}
+                                                        className="flex items-center justify-between p-3 rounded-lg transition-all"
+                                                        style={{
+                                                            background: isLight ? 'rgba(180, 140, 60, 0.05)' : 'rgba(255, 255, 255, 0.03)',
+                                                            opacity: isDone ? 0.5 : 1,
+                                                        }}
+                                                    >
+                                                        <div className={isDone ? 'line-through' : ''} style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                            <span className="text-sm font-semibold">{time}</span>
+                                                            {practiceLabels[idx] && (
+                                                                <div className="text-[9px] opacity-60 mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                                    {practiceLabels[idx]}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                const practiceId = slotPracticeIds[idx];
+                                                                console.log("[DailyPracticeCard] START slot", { 
+                                                                    slotTime: time, 
+                                                                    slotIndex: idx,
+                                                                    practiceId,
+                                                                    activePathId: activePath?.activePathId,
+                                                                    dayIndex: metrics.dayIndex,
+                                                                    weekIndex: Math.ceil(metrics.dayIndex / 7)
+                                                                });
+                                                                
+                                                                if (!practiceId) {
+                                                                    console.warn("[DailyPracticeCard] No practiceId resolved for slot", idx);
+                                                                    return;
+                                                                }
+                                                                
+                                                                onStartPractice?.({ 
+                                                                    practiceId, 
+                                                                    pathContext: { 
+                                                                        activePathId: activePath?.activePathId, 
+                                                                        slotTime: time, 
+                                                                        slotIndex: idx,
+                                                                        dayIndex: metrics.dayIndex,
+                                                                        weekIndex: Math.ceil(metrics.dayIndex / 7)
+                                                                    }
+                                                                });
+                                                            }}
+                                                            disabled={!isNext || !slotPracticeIds[idx]}
+                                                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                                                                isNext && slotPracticeIds[idx]
+                                                                    ? 'btn-primary hover:scale-105 cursor-pointer' 
+                                                                    : 'btn-muted opacity-50 cursor-not-allowed'
+                                                            }`}
+                                                            style={isNext && slotPracticeIds[idx] ? {
+                                                                background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                                color: '#fff',
+                                                                boxShadow: '0 3px 10px var(--accent-30)',
+                                                            } : {
+                                                                background: isLight ? 'rgba(180, 140, 60, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                                                                color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253, 251, 245, 0.5)',
+                                                            }}
+                                                            >
+                                                            {isDone ? 'Done' : isNext ? 'Start' : 'Locked'}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>TODAY'S PRACTICE</div>
+                                        <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
+                                        <div className="mt-2 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>{activePathObj.title}</div>
+                                        <div className="mt-2 text-sm opacity-80" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>No practice times scheduled for today</div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -435,6 +743,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                             Today's Practice
                                         </div>
+                                        <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
                                         <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                             {todaysPractice.title || `Day ${dayNumber}`}
                                         </div>

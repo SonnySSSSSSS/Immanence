@@ -415,8 +415,6 @@ export const useTrackingStore = create(
                 set({
                     activePath: {
                         ...state.activePath,
-                        currentWeek: weekNumber + 1,
-                        completedWeeks: [...state.activePath.completedWeeks, weekNumber],
                         weekCompletionDates: {
                             ...state.activePath.weekCompletionDates,
                             [weekNumber]: getDateKey(),
@@ -675,9 +673,9 @@ export const useTrackingStore = create(
                     timeByType,
                     pathProgress: state.activePath ? {
                         name: state.activePath.pathName,
-                        currentWeek: state.activePath.currentWeek,
+                        currentWeek: Object.keys(state.activePath.weekCompletionDates || {}).length + 1,
                         totalWeeks: state.activePath.totalWeeks,
-                        completion: state.activePath.completedWeeks.length / state.activePath.totalWeeks,
+                        completion: Object.keys(state.activePath.weekCompletionDates || {}).length / (state.activePath.totalWeeks || 1),
                     } : null,
                     treatise: state.treatiseProgress,
                     videos: state.videoProgress,

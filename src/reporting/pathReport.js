@@ -11,9 +11,9 @@ const safeParse = (raw, fallback) => {
     }
 };
 
-export const buildPathReportKey = (pathId, startedAt) => {
-    if (!pathId || !startedAt) return null;
-    return `${pathId}__${startedAt}`;
+export const buildPathReportKey = (runId) => {
+    if (!runId) return null;
+    return `run__${runId}`;
 };
 
 export const loadPathReports = () => {
@@ -23,10 +23,15 @@ export const loadPathReports = () => {
 
 export const savePathReport = (report) => {
     if (typeof window === 'undefined' || !report) return null;
-    const key = buildPathReportKey(report.pathId, report.startedAt);
+    const key = buildPathReportKey(report.runId);
     if (!key) return null;
 
     const reports = loadPathReports();
+    // Guard: do not overwrite existing reports (one report per run)
+    if (reports[key]) {
+        console.warn('[savePathReport] Report already exists for runId:', report.runId);
+        return key;
+    }
     reports[key] = report;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
     return key;
@@ -82,14 +87,16 @@ const computeDaysElapsed = (startedAt, endedAt) => {
 export const generatePathReport = ({ activePath, sessions }) => {
     if (!activePath) return null;
 
-    const pathId = activePath.activePathId || activePath.pathId || null;
-    const startedAt = activePath.startedAt || activePath.startDate || null;
+    const runId = activePath.runId || null;
+    const pathId = activePath.activePathId || null;
+    const startedAt = activePath.startedAt || null;
     const endedAt = activePath.endsAt || new Date().toISOString();
-    if (!pathId || !startedAt) return null;
+    if (!runId || !pathId || !startedAt) return null;
 
+    // Scope sessions by runId (authoritative link to this run)
     const scopedSessions = (sessions || []).filter((session) => {
-        const sessionPathId = session?.pathContext?.activePathId || null;
-        if (sessionPathId !== pathId) return false;
+        const sessionRunId = session?.pathContext?.runId || null;
+        if (sessionRunId !== runId) return false;
         if (startedAt && session.startedAt && session.startedAt < startedAt) return false;
         if (endedAt && session.endedAt && session.endedAt > endedAt) return false;
         return true;
@@ -123,6 +130,7 @@ export const generatePathReport = ({ activePath, sessions }) => {
     else if (activePath.endsAt && new Date(activePath.endsAt) <= new Date()) completion = 'mostly_completed';
 
     return {
+        runId,
         pathId,
         startedAt,
         endedAt,

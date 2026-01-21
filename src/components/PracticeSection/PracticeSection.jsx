@@ -20,6 +20,7 @@ import { useSessionInstrumentation } from "../../hooks/useSessionInstrumentation
 import { recordPracticeSession } from '../../services/sessionRecorder.js';
 import { useCurriculumStore } from '../../state/curriculumStore.js';
 import { useNavigationStore } from '../../state/navigationStore.js';
+import { useUiStore } from '../../state/uiStore.js';
 import { logCircuitCompletion } from '../../services/circuitManager.js';
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../../state/displayModeStore.js";
@@ -83,6 +84,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           setHasExpandedOnce(true); // Bypass animation for auto-starts
         }
       }
+    }
+  }, []);
+
+  // Consume practice launch context from daily schedule
+  useEffect(() => {
+    const launchContext = useUiStore.getState().practiceLaunchContext;
+    if (launchContext?.source === "dailySchedule" && launchContext?.practiceId) {
+      console.log("[PracticeSection] Consuming launch context", launchContext);
+      setPracticeId(launchContext.practiceId);
+      setHasExpandedOnce(true);
+      // Clear context after consuming to prevent re-triggers
+      useUiStore.getState().clearPracticeLaunchContext();
     }
   }, []);
 

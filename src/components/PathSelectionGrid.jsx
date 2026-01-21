@@ -45,9 +45,9 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {combinedEntries.map((entry) => {
-                    const isActive = entry.isProgram ? entry.isActive : activePath?.pathId === entry.id;
+                    const isActive = entry.isProgram ? entry.isActive : activePath?.activePathId === entry.id;
                     const isSelected = selectedPathId === entry.id;
-                    const hasActivePathMatch = activePath && activePath.pathId === entry.id;
+                    const hasActivePathMatch = activePath && activePath.activePathId === entry.id;
                     const isPlaceholder = entry.placeholder;
 
                     return (
@@ -58,7 +58,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                     entry.onClick();
                                 } else if (!isPlaceholder) {
                                     // Clear activePath if it's for a different path
-                                    if (activePath && activePath.pathId !== entry.id) {
+                                    if (activePath && activePath.activePathId !== entry.id) {
                                         abandonPath();
                                     }
                                     // Notify parent to open overlay
