@@ -19,6 +19,7 @@ import { ringFXPresets, getCategories } from "../../data/ringFXPresets.js";
 import { useSessionInstrumentation } from "../../hooks/useSessionInstrumentation.js";
 import { recordPracticeSession } from '../../services/sessionRecorder.js';
 import { useCurriculumStore } from '../../state/curriculumStore.js';
+import { useNavigationStore } from '../../state/navigationStore.js';
 import { logCircuitCompletion } from '../../services/circuitManager.js';
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../../styles/cardMaterial.js";
 import { useDisplayModeStore } from "../../state/displayModeStore.js";
@@ -196,6 +197,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       updateParams('breath', { pattern: val });
     }
   };
+  // Apply traditional breath ratio - feeds into the same engine
+  const applyBreathRatio = ([inhale, hold1, exhale, hold2]) => {
+    setPattern({ inhale, hold1, exhale, hold2 });
+  };
   const setSoundType = (val) => updateParams('sound', { soundType: val });
   const setSoundVolume = (val) => updateParams('sound', { volume: val });
   const setBinauralPreset = (val) => updateParams('sound', { binauralPresetId: val?.name || val });
@@ -350,9 +355,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     let recordedSession = null;
     try {
+      const activePath = useNavigationStore.getState().activePath;
+      const activePathId = activePath?.activePathId || activePath?.pathId || null;
+
       recordedSession = recordPracticeSession({
         domain: 'circuit-training',
         duration: totalDuration,
+        practiceId: 'circuit',
+        practiceMode: null,
+        configSnapshot: {
+          circuitName: 'Custom Circuit',
+          exerciseCount: circuitConfig.exercises.length,
+          exercises: circuitConfig.exercises,
+          duration: totalDuration,
+        },
+        completion: 'completed',
+        activePathId,
         metadata: {
           circuitName: 'Custom Circuit',
           exerciseCount: circuitConfig.exercises.length,
@@ -461,9 +479,28 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
 
+      const activePath = useNavigationStore.getState().activePath;
+      const activePathId = activePath?.activePathId || activePath?.pathId || null;
+      const actualPracticeId = practice?.toLowerCase().replace(/\s+/g, '_');
+      const completion = exitType === 'completed' ? 'completed' : 'abandoned';
+      const practiceMode = null;
+
       recordedSession = recordPracticeSession({
         domain,
         duration: duration,
+        practiceId: actualPracticeId,
+        practiceMode,
+        configSnapshot: {
+          practiceId: actualPracticeId,
+          duration,
+          pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
+          sensoryType,
+          soundType,
+          geometry,
+          selectedFrequency: selectedFrequency?.hz || null,
+        },
+        completion,
+        activePathId,
         metadata: {
           subType,
           pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
@@ -1266,6 +1303,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setCarrierFrequency, setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry, 
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
     setFrequencySet, setSelectedFrequency, setDriftEnabled,
+    applyBreathRatio,
     onToggleRunning: handleStart, 
     onSelectRitual: handleSelectRitual, 
     selectedRitualId: activeRitual?.id,

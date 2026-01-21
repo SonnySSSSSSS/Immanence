@@ -2,10 +2,37 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getDateKey } from '../utils/dateUtils';
+import { getPathById } from '../data/navigationData.js';
+import { useProgressStore } from './progressStore';
+import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
 const SCHEDULE_MATCH_RADIUS_MIN = 90;
+
+const getPathDurationDays = (pathId) => {
+    const path = getPathById(pathId);
+    if (!path) return null;
+    if (typeof path?.tracking?.durationDays === 'number') return path.tracking.durationDays;
+    if (typeof path?.duration === 'number') return path.duration * 7;
+    return null;
+};
+
+const computeEndsAt = (startedAt, durationDays) => {
+    if (!startedAt || !durationDays) return null;
+    const start = new Date(startedAt);
+    if (Number.isNaN(start.getTime())) return null;
+    const end = new Date(start.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+    return end.toISOString();
+};
+
+const getTimezone = () => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    } catch {
+        return null;
+    }
+};
 
 export const useNavigationStore = create(
     persist(
@@ -21,14 +48,40 @@ export const useNavigationStore = create(
             // Pilot session tracking moved to curriculumStore
 
             // Active path state (after beginning)
-            activePath: null, // { pathId, startDate, currentWeek, completedWeeks: [] }
+            activePath: null, // Legacy fields retained for UI; extended tracking fields added on beginPath
 
             // Begin a new path
             beginPath: (pathId) => {
+                const startedAt = new Date().toISOString();
+                const durationDays = getPathDurationDays(pathId);
+                const endsAt = computeEndsAt(startedAt, durationDays);
+                const selectedTimes = (get().scheduleSlots || [])
+                    .map(slot => slot.time)
+                    .filter(Boolean);
+
                 set({
                     activePath: {
+                        // Canonical tracking fields
+                        activePathId: pathId,
+                        startedAt,
+                        endsAt,
+                        status: 'active',
+                        schedule: {
+                            selectedTimes,
+                            timezone: getTimezone(),
+                        },
+                        progress: {
+                            sessionsCompleted: 0,
+                            totalMinutes: 0,
+                            daysPracticed: 0,
+                            streakCurrent: 0,
+                            streakBest: 0,
+                            lastSessionAt: null,
+                        },
+
+                        // Legacy UI fields
                         pathId,
-                        startDate: new Date().toISOString(),
+                        startDate: startedAt,
                         currentWeek: 1,
                         completedWeeks: [],
                         weekCompletionDates: {} // { 1: "2024-01-15", 2: "2024-01-22", ... }
@@ -42,17 +95,36 @@ export const useNavigationStore = create(
                 const state = get();
                 if (!state.activePath) return;
 
+                const path = getPathById(state.activePath.pathId || state.activePath.activePathId);
+                const totalWeeks = path?.duration || null;
+                const nextWeek = weekNumber + 1;
+                const isComplete = totalWeeks ? nextWeek > totalWeeks : false;
+
+                const nextActivePath = {
+                    ...state.activePath,
+                    currentWeek: nextWeek,
+                    completedWeeks: [...state.activePath.completedWeeks, weekNumber],
+                    weekCompletionDates: {
+                        ...state.activePath.weekCompletionDates,
+                        [weekNumber]: new Date().toISOString()
+                    },
+                    status: isComplete ? 'completed' : state.activePath.status
+                };
+
                 set({
-                    activePath: {
-                        ...state.activePath,
-                        currentWeek: weekNumber + 1,
-                        completedWeeks: [...state.activePath.completedWeeks, weekNumber],
-                        weekCompletionDates: {
-                            ...state.activePath.weekCompletionDates,
-                            [weekNumber]: new Date().toISOString()
-                        }
-                    }
+                    activePath: nextActivePath
                 });
+
+                if (isComplete) {
+                    const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
+                    const report = generatePathReport({
+                        activePath: nextActivePath,
+                        sessions: sessionsV2,
+                    });
+                    if (report) {
+                        savePathReport(report);
+                    }
+                }
             },
 
             // Abandon current path
@@ -151,7 +223,18 @@ export const useNavigationStore = create(
                         time: slot.time
                     }))
                     .slice(0, 3);
-                set({ scheduleSlots: normalized });
+
+                set((state) => ({
+                    scheduleSlots: normalized,
+                    activePath: state.activePath ? {
+                        ...state.activePath,
+                        schedule: {
+                            ...(state.activePath.schedule || {}),
+                            selectedTimes: normalized.map(slot => slot.time),
+                            timezone: state.activePath.schedule?.timezone || getTimezone(),
+                        }
+                    } : state.activePath
+                }));
             },
 
             /**
@@ -298,8 +381,21 @@ export const useNavigationStore = create(
         {
             name: 'immanenceOS.navigationState',
             version: 2,  // Bumped version for new fields
+            // Do not persist transient UI selections to avoid auto-opening overlays on load
+            partialize: (state) => {
+                const { selectedPathId, ...rest } = state;
+                return rest;
+            },
             migrate: (persistedState) => {
-                return persistedState;
+                // Drop any legacy selections to prevent auto-open after hydration
+                const { selectedPathId: _legacySelection, ...rest } = persistedState || {};
+                return { ...rest, selectedPathId: null };
+            },
+            onRehydrateStorage: () => (state) => {
+                // Force-clear selection after every hydration cycle
+                if (state?.selectedPathId) {
+                    state.selectedPathId = null;
+                }
             }
         }
     )

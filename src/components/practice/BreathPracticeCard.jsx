@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
+import { TraditionalBreathRatios } from "../PracticeSection/TraditionalBreathRatios.jsx";
 
 function BreathPracticeCard({
   practiceId,
@@ -23,6 +24,9 @@ function BreathPracticeCard({
   onToggleTrajectory,
   onOpenTrajectory,
 }) {
+  // Sub-method for breath mode: expansion (sliders) vs traditional (presets)
+  const [breathMethod, setBreathMethod] = useState("expansion");
+
   return (
     <div className="relative px-8 animate-in fade-in duration-300">
       {/* Practice Title & Icon */}
@@ -52,6 +56,7 @@ function BreathPracticeCard({
           {label}
         </h2>
 
+        {/* Top Level: Breath vs Stillness */}
         {practiceId === 'breath' && (
           <div className="flex items-center gap-2" style={{ marginTop: '10px' }}>
             {[
@@ -87,114 +92,159 @@ function BreathPracticeCard({
 
       {/* Dynamic Config Panel */}
       <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
-        <>
-          <div 
-            className="breath-wave-glow"
-            style={{
-              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
-              backdropFilter: 'blur(32px) saturate(160%)',
-              WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-              borderRadius: '16px',
-              padding: '20px',
-              border: '1px solid rgba(212, 175, 55, 0.25)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-            }}
-          >
-            <BreathWaveform pattern={pattern} />
-          </div>
+        {/* Breath Mode Content */}
+        {breathSubmode === 'breath' && (
+          <>
+            {/* Waveform - always visible in breath mode */}
+            <div
+              className="breath-wave-glow"
+              style={{
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
+                backdropFilter: 'blur(32px) saturate(160%)',
+                WebkitBackdropFilter: 'blur(32px) saturate(160%)',
+                borderRadius: '16px',
+                padding: '20px',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+              }}
+            >
+              <BreathWaveform pattern={pattern} />
+            </div>
 
-          {/* Breath Phase Input Controls */}
-          <div
-            className="flex justify-center gap-8"
-            style={{ marginTop: '24px', marginBottom: '16px' }}
-          >
-            {[
-              { label: 'INHALE', key: 'inhale', min: 1 },
-              { label: 'HOLD 1', key: 'hold1', min: 0 },
-              { label: 'EXHALE', key: 'exhale', min: 1 },
-              { label: 'HOLD 2', key: 'hold2', min: 0 }
-            ].map((phase) => (
-              <div key={phase.key} className="flex flex-col items-center">
-                <label
-                  style={{
-                    fontSize: '9px',
-                    letterSpacing: '0.12em',
-                    color: 'rgba(255,255,255,0.4)',
-                    marginBottom: '8px',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  {phase.label}
-                </label>
-                <input
-                  type="number"
-                  min={phase.min}
-                  max="60"
-                  value={pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
-                  onChange={(e) => {
-                    const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
-                    onPatternChange?.((prev) => ({ ...prev, [phase.key]: val }));
-                  }}
-                  className="breath-input"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '6px',
-                    padding: '6px 0',
-                    width: '44px',
-                    color: 'var(--accent-color)',
-                    textAlign: 'center',
-                    fontSize: '18px',
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-display)',
-                    outline: 'none',
-                    transition: 'all 200ms'
+            {/* Breath Phase Input Controls - always visible */}
+            <div
+              className="flex justify-center gap-8"
+              style={{ marginTop: '24px', marginBottom: '16px' }}
+            >
+              {[
+                { label: 'INHALE', key: 'inhale', min: 1 },
+                { label: 'HOLD 1', key: 'hold1', min: 0 },
+                { label: 'EXHALE', key: 'exhale', min: 1 },
+                { label: 'HOLD 2', key: 'hold2', min: 0 }
+              ].map((phase) => (
+                <div key={phase.key} className="flex flex-col items-center">
+                  <label
+                    style={{
+                      fontSize: '9px',
+                      letterSpacing: '0.12em',
+                      color: 'rgba(255,255,255,0.4)',
+                      marginBottom: '8px',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 600,
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {phase.label}
+                  </label>
+                  <input
+                    type="number"
+                    min={phase.min}
+                    max="60"
+                    value={pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
+                    onChange={(e) => {
+                      const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
+                      onPatternChange?.((prev) => ({ ...prev, [phase.key]: val }));
+                    }}
+                    className="breath-input"
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '6px',
+                      padding: '6px 0',
+                      width: '44px',
+                      color: 'var(--accent-color)',
+                      textAlign: 'center',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                      outline: 'none',
+                      transition: 'all 200ms'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Expansion vs Traditional Toggle - below inputs */}
+            <div className="flex items-center justify-center gap-2" style={{ marginBottom: '16px' }}>
+              {[
+                { id: 'expansion', label: 'Expansion' },
+                { id: 'traditional', label: 'Traditional' }
+              ].map((item) => {
+                const isActive = breathMethod === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setBreathMethod(item.id)}
+                    className="px-3 py-1 rounded-full transition-all"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                      background: isActive ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                      border: isActive ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Traditional Ratios Panel - shown when traditional method selected */}
+            {breathMethod === 'traditional' && (
+              <div style={{ marginBottom: '16px' }}>
+                <TraditionalBreathRatios
+                  onSelectRatio={([inhale, hold1, exhale, hold2]) => {
+                    onPatternChange?.({ inhale, hold1, exhale, hold2 });
                   }}
                 />
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Benchmark Button */}
-          {breathSubmode === 'breath' && (
-            <div className="flex justify-center" style={{ marginBottom: '16px' }}>
-              <button
-                onClick={onRunBenchmark}
-                className="benchmark-button"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  background: 'rgba(212, 175, 55, 0.08)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)',
-                  color: 'rgba(212, 175, 55, 0.9)',
-                  cursor: 'pointer',
-                  transition: 'all 200ms',
-                  boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                  e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
-                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                  e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
-                }}
-              >
-                ?? Measure Capacity
-              </button>
-            </div>
-          )}
+            {/* Benchmark Button - only for expansion method */}
+            {breathMethod === 'expansion' && (
+              <div className="flex justify-center" style={{ marginBottom: '16px' }}>
+                <button
+                  onClick={onRunBenchmark}
+                  className="benchmark-button"
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '9px',
+                    fontWeight: 600,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: 'rgba(212, 175, 55, 0.08)',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    color: 'rgba(212, 175, 55, 0.9)',
+                    cursor: 'pointer',
+                    transition: 'all 200ms',
+                    boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                    e.currentTarget.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 0 8px rgba(212, 175, 55, 0.1)';
+                  }}
+                >
+                  ✦ Measure Capacity
+                </button>
+              </div>
+            )}
 
-          <style>{`
+            <style>{`
             .breath-input::-webkit-inner-spin-button,
             .breath-input::-webkit-outer-spin-button {
               -webkit-appearance: none;
@@ -247,7 +297,8 @@ function BreathPracticeCard({
               opacity: 0.6;
             }
           `}</style>
-        </>
+          </>
+        )}
       </div>
 
       {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
@@ -264,8 +315,8 @@ function BreathPracticeCard({
         </div>
       )}
 
-      {/* Collapsible Tempo Sync Section (Breath Practice Only) */}
-      {breathSubmode === 'breath' && (
+      {/* Collapsible Tempo Sync Section (Breath Practice + Expansion Method Only) */}
+      {breathSubmode === 'breath' && breathMethod === 'expansion' && (
         <div style={{ marginBottom: '24px' }}>
           <button
             onClick={onToggleTempoSync}

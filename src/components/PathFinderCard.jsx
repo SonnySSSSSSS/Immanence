@@ -31,23 +31,28 @@ const PATH_PROMPTS = [
     }
 ];
 
-export function PathFinderCard({ onPathRecommended }) {
+export function PathFinderCard({ onPathRecommended, selectedPathId }) {
     const {
         pathAssessment,
-        setPathAssessment,
-        setSelectedPath
+        setPathAssessment
     } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const [isExpanded, setIsExpanded] = React.useState(false);
+
+    // Collapse when a path is selected
+    React.useEffect(() => {
+        if (selectedPathId) {
+            setIsExpanded(false);
+        }
+    }, [selectedPathId]);
 
     const handleSelect = (promptId) => {
         setPathAssessment(promptId);
         const prompt = PATH_PROMPTS.find(p => p.id === promptId);
         if (prompt && onPathRecommended) {
-            // Trigger scroll/highlight for recommended path
+            // Scroll only; user must click the card to open the overlay
             onPathRecommended(prompt.recommendedPath);
-            // Also set it as selected
-            setSelectedPath(prompt.recommendedPath);
         }
     };
 
@@ -60,6 +65,36 @@ export function PathFinderCard({ onPathRecommended }) {
 
     const selectedPrompt = PATH_PROMPTS.find(p => p.id === pathAssessment);
 
+    // Collapsed state
+    if (!isExpanded) {
+        return (
+            <div className="w-full">
+                <button
+                    onClick={() => setIsExpanded(true)}
+                    className="w-full text-center py-3 rounded-xl transition-all border"
+                    style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
+                        color: isLight ? 'rgba(60, 52, 37, 0.95)' : 'rgba(253,251,245,0.95)',
+                        background: isLight
+                            ? 'rgba(180, 140, 90, 0.15)'
+                            : 'rgba(253, 251, 245, 0.08)',
+                        borderColor: isLight
+                            ? 'rgba(180, 140, 90, 0.3)'
+                            : 'rgba(253, 251, 245, 0.15)',
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)',
+                    }}
+                >
+                    ✨ For path guidance, click here...
+                </button>
+            </div>
+        );
+    }
+
+    // Expanded state
     return (
         <div className="w-full">
             <div
@@ -232,10 +267,13 @@ export function PathFinderCard({ onPathRecommended }) {
                         </div>
                     )}
 
-                    {/* Skip Link */}
+                    {/* Skip/Close Link */}
                     <div className="text-center mt-4">
                         <button
-                            onClick={handleSkip}
+                            onClick={() => {
+                                handleSkip();
+                                setIsExpanded(false);
+                            }}
                             className="text-xs transition-colors"
                             style={{
                                 fontFamily: 'var(--font-body)',

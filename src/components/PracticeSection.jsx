@@ -996,9 +996,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     let recordedSession = null;
     try {
+      const activePath = useNavigationStore.getState().activePath;
+      const activePathId = activePath?.activePathId || activePath?.pathId || null;
+
       recordedSession = recordSession({
         domain: 'circuit-training',
         duration: totalDuration,
+        practiceId: 'circuit',
+        practiceMode: null,
+        configSnapshot: {
+          circuitName: 'Custom Circuit',
+          exerciseCount: circuitConfig.exercises.length,
+          exercises: circuitConfig.exercises,
+          duration: totalDuration,
+        },
+        completion: 'completed',
+        activePathId,
         metadata: {
           circuitName: 'Custom Circuit',
           exerciseCount: circuitConfig.exercises.length,
@@ -1122,9 +1135,31 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'sound') domain = 'sound';
       else if (p.includes('feeling')) domain = 'focus';
 
+      const activePath = useNavigationStore.getState().activePath;
+      const activePathId = activePath?.activePathId || activePath?.pathId || null;
+      const actualPracticeId = getActualPracticeId(practiceId);
+      const completion = exitType === 'completed' ? 'completed' : 'abandoned';
+      const practiceMode = practiceParams?.activeMode || (practiceId === 'breath' ? breathSubmode : null);
+
       recordedSession = recordSession({
         domain,
         duration: duration,
+        practiceId: actualPracticeId,
+        practiceMode,
+        configSnapshot: {
+          practiceId: actualPracticeId,
+          duration,
+          practiceParams,
+          pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
+          preset,
+          sensoryType,
+          soundType,
+          geometry,
+          selectedFrequency: selectedFrequency?.hz || null,
+          breathSubmode,
+        },
+        completion,
+        activePathId,
         metadata: {
           subType,
           pattern: practice === "Breath & Stillness" ? { ...pattern } : null,

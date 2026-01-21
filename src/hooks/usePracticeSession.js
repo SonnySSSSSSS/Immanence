@@ -6,6 +6,7 @@ import { loadPreferences, savePreferences } from '../state/practiceStore.js';
 import { recordPracticeSession } from '../services/sessionRecorder.js';
 import { useSessionInstrumentation } from './useSessionInstrumentation.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
+import { useNavigationStore } from '../state/navigationStore.js';
 
 /**
  * Custom hook for managing practice session lifecycle
@@ -170,9 +171,26 @@ export function usePracticeSession(options = {}) {
         else if (p === 'ritual') domain = 'ritual';
         else if (p === 'sound') domain = 'sound';
 
+        const activePath = useNavigationStore.getState().activePath;
+        const activePathId = activePath?.activePathId || activePath?.pathId || null;
+        const completion = exitType === 'completed' ? 'completed' : 'abandoned';
+        const practiceId = practice ? practice.toLowerCase().replace(/\s+/g, '_') : null;
+
         recordPracticeSession({
           domain,
           duration: duration,
+          practiceId,
+          practiceMode: null,
+          configSnapshot: {
+            duration,
+            pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
+            sensoryType,
+            soundType,
+            geometry,
+            selectedFrequency: selectedFrequency?.hz || null,
+          },
+          completion,
+          activePathId,
           metadata: {
             subType,
             pattern: practice === "Breath & Stillness" ? { ...pattern } : null,

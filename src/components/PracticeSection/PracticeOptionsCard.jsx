@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
 import { PRACTICE_REGISTRY, DURATIONS, PRACTICE_UI_WIDTH, resolvePracticeId, OLD_TO_NEW_PRACTICE_MAP } from "./constants.js";
@@ -10,7 +10,9 @@ import { VisualizationConfig } from "../VisualizationConfig.jsx";
 import { CymaticsConfig } from "../CymaticsConfig.jsx";
 import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+import { TraditionalBreathRatios } from "./TraditionalBreathRatios.jsx";
 
+// v3.25.22-breath-modes
 // Map string names to actual components
 const CONFIG_COMPONENTS = {
   CircuitConfig,
@@ -23,6 +25,9 @@ const CONFIG_COMPONENTS = {
 
 export function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {
   const cardRef = useRef(null);
+  // Breath sub-mode state: expansion vs traditional ratios
+  const [breathMode, setBreathMode] = useState("expansion"); // "expansion" | "traditional"
+  console.log('[PracticeOptionsCard] practiceId:', practiceId, 'breathMode:', breathMode);
   const resolvedId = resolvePracticeId(practiceId);
   const p = PRACTICE_REGISTRY[resolvedId];
   const isCollapsed = !practiceId;
@@ -182,115 +187,200 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
           <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
              {practiceId === 'breath' ? (
                <>
-                 <div 
-                   className="breath-wave-glow"
-                   style={{
-                     background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
-                     backdropFilter: 'blur(32px) saturate(160%)',
-                     WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-                     borderRadius: '16px',
-                     padding: '20px',
-                     border: '1px solid rgba(212, 175, 55, 0.25)',
-                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-                   }}
-                 >
-                   <BreathWaveform pattern={setters.pattern} />
+                 {/* Breath Mode Selector */}
+                 <div style={{ marginBottom: '20px' }}>
+                   <div className="flex gap-2 justify-center flex-wrap">
+                     <button
+                       onClick={() => setBreathMode("expansion")}
+                       style={{
+                         fontFamily: 'var(--font-display)',
+                         fontSize: '10px',
+                         fontWeight: 600,
+                         letterSpacing: '0.12em',
+                         textTransform: 'uppercase',
+                         padding: '10px 16px',
+                         borderRadius: '8px',
+                         border: breathMode === "expansion"
+                           ? '1.5px solid var(--accent-color)'
+                           : '1px solid rgba(255,255,255,0.2)',
+                         background: breathMode === "expansion"
+                           ? 'rgba(212, 175, 55, 0.15)'
+                           : 'rgba(255,255,255,0.03)',
+                         color: breathMode === "expansion"
+                           ? 'var(--accent-color)'
+                           : 'rgba(255,255,255,0.6)',
+                         cursor: 'pointer',
+                         transition: 'all 200ms',
+                         boxShadow: breathMode === "expansion"
+                           ? '0 0 16px rgba(212, 175, 55, 0.3)'
+                           : 'none',
+                       }}
+                       onMouseEnter={(e) => {
+                         if (breathMode !== "expansion") {
+                           e.target.style.background = 'rgba(255,255,255,0.08)';
+                         }
+                       }}
+                       onMouseLeave={(e) => {
+                         if (breathMode !== "expansion") {
+                           e.target.style.background = 'rgba(255,255,255,0.03)';
+                         }
+                       }}
+                     >
+                       Breath Expansion
+                     </button>
+                     <button
+                       onClick={() => setBreathMode("traditional")}
+                       style={{
+                         fontFamily: 'var(--font-display)',
+                         fontSize: '10px',
+                         fontWeight: 600,
+                         letterSpacing: '0.12em',
+                         textTransform: 'uppercase',
+                         padding: '10px 16px',
+                         borderRadius: '8px',
+                         border: breathMode === "traditional"
+                           ? '1.5px solid var(--accent-color)'
+                           : '1px solid rgba(255,255,255,0.2)',
+                         background: breathMode === "traditional"
+                           ? 'rgba(212, 175, 55, 0.15)'
+                           : 'rgba(255,255,255,0.03)',
+                         color: breathMode === "traditional"
+                           ? 'var(--accent-color)'
+                           : 'rgba(255,255,255,0.6)',
+                         cursor: 'pointer',
+                         transition: 'all 200ms',
+                         boxShadow: breathMode === "traditional"
+                           ? '0 0 16px rgba(212, 175, 55, 0.3)'
+                           : 'none',
+                       }}
+                       onMouseEnter={(e) => {
+                         if (breathMode !== "traditional") {
+                           e.target.style.background = 'rgba(255,255,255,0.08)';
+                         }
+                       }}
+                       onMouseLeave={(e) => {
+                         if (breathMode !== "traditional") {
+                           e.target.style.background = 'rgba(255,255,255,0.03)';
+                         }
+                       }}
+                     >
+                       Traditional Ratios
+                     </button>
+                   </div>
                  </div>
 
-                 {/* Breath Phase Input Controls */}
-                 <div
-                   className="flex justify-center gap-8"
-                   style={{ marginTop: '24px', marginBottom: '16px' }}
-                 >
-                   {[
-                     { label: 'INHALE', key: 'inhale', min: 1 },
-                     { label: 'HOLD 1', key: 'hold1', min: 0 },
-                     { label: 'EXHALE', key: 'exhale', min: 1 },
-                     { label: 'HOLD 2', key: 'hold2', min: 0 }
-                   ].map((phase) => (
-                     <div key={phase.key} className="flex flex-col items-center">
-                       <label
-                         style={{
-                           fontSize: '9px',
-                           letterSpacing: '0.12em',
-                           color: 'rgba(255,255,255,0.4)',
-                           marginBottom: '8px',
-                           fontFamily: 'var(--font-display)',
-                           fontWeight: 600,
-                           textTransform: 'uppercase'
-                         }}
-                       >
-                         {phase.label}
-                       </label>
-                       <input
-                         type="number"
-                         min={phase.min}
-                         max="60"
-                         value={setters.pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
-                         onChange={(e) => {
-                           const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
-                           setters.setPattern?.((prev) => ({ ...prev, [phase.key]: val }));
-                         }}
-                         className="breath-input"
-                         style={{
-                           background: 'rgba(255,255,255,0.03)',
-                           border: '1px solid rgba(255,255,255,0.1)',
-                           borderRadius: '6px',
-                           padding: '6px 0',
-                           width: '44px',
-                           color: 'var(--accent-color)',
-                           textAlign: 'center',
-                           fontSize: '18px',
-                           fontWeight: 700,
-                           fontFamily: 'var(--font-display)',
-                           outline: 'none',
-                           transition: 'all 200ms'
-                         }}
-                       />
+                 {/* Breath Expansion Panel */}
+                 {breathMode === "expansion" && (
+                   <>
+                     <div 
+                       className="breath-wave-glow"
+                       style={{
+                         background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
+                         backdropFilter: 'blur(32px) saturate(160%)',
+                         WebkitBackdropFilter: 'blur(32px) saturate(160%)',
+                         borderRadius: '16px',
+                         padding: '20px',
+                         border: '1px solid rgba(212, 175, 55, 0.25)',
+                         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+                       }}
+                     >
+                       <BreathWaveform pattern={setters.pattern} />
                      </div>
-                   ))}
-                 </div>
-                 <style>{`
-                   .breath-input::-webkit-inner-spin-button,
-                   .breath-input::-webkit-outer-spin-button {
-                     -webkit-appearance: none;
-                     margin: 0;
-                   }
-                   .breath-input { -moz-appearance: textfield; }
-                   .breath-input:focus {
-                     border-color: rgba(212, 175, 55, 0.5);
-                     background: rgba(212, 175, 55, 0.05);
-                     box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
-                   }
-                   .breath-wave-glow {
-                     position: relative;
-                   }
-                   .breath-wave-glow::before {
-                     content: "";
-                     position: absolute;
-                     inset: -12px;
-                     background: radial-gradient(
-                       ellipse at center,
-                       rgba(233,195,90,0.25),
-                       rgba(233,195,90,0.12) 40%,
-                       rgba(233,195,90,0.04) 60%,
-                       transparent 70%
-                     );
-                     filter: blur(18px);
-                     pointer-events: none;
-                     z-index: 0;
-                     animation: breath-pulse-glow 8s infinite ease-in-out;
-                   }
-                   .breath-wave-glow > * {
-                     position: relative;
-                     z-index: 1;
-                   }
-                   @keyframes breath-pulse-glow {
-                     0%, 100% { opacity: 0.7; }
-                     50%      { opacity: 1; }
-                   }
-                   .practice-tab::before {
-                     content: '';
+
+                     {/* Breath Phase Input Controls */}
+                     <div
+                       className="flex justify-center gap-8"
+                       style={{ marginTop: '24px', marginBottom: '16px' }}
+                     >
+                       {[
+                         { label: 'INHALE', key: 'inhale', min: 1 },
+                         { label: 'HOLD 1', key: 'hold1', min: 0 },
+                         { label: 'EXHALE', key: 'exhale', min: 1 },
+                         { label: 'HOLD 2', key: 'hold2', min: 0 }
+                       ].map((phase) => (
+                         <div key={phase.key} className="flex flex-col items-center">
+                           <label
+                             style={{
+                               fontSize: '9px',
+                               letterSpacing: '0.12em',
+                               color: 'rgba(255,255,255,0.4)',
+                               marginBottom: '8px',
+                               fontFamily: 'var(--font-display)',
+                               fontWeight: 600,
+                               textTransform: 'uppercase'
+                             }}
+                           >
+                             {phase.label}
+                           </label>
+                           <input
+                             type="number"
+                             min={phase.min}
+                             max="60"
+                             value={setters.pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
+                             onChange={(e) => {
+                               const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
+                               setters.setPattern?.((prev) => ({ ...prev, [phase.key]: val }));
+                             }}
+                             className="breath-input"
+                             style={{
+                               background: 'rgba(255,255,255,0.03)',
+                               border: '1px solid rgba(255,255,255,0.1)',
+                               borderRadius: '6px',
+                               padding: '6px 0',
+                               width: '44px',
+                               color: 'var(--accent-color)',
+                               textAlign: 'center',
+                               fontSize: '18px',
+                               fontWeight: 700,
+                               fontFamily: 'var(--font-display)',
+                               outline: 'none',
+                               transition: 'all 200ms'
+                             }}
+                           />
+                         </div>
+                       ))}
+                     </div>
+                     <style>{`
+                       .breath-input::-webkit-inner-spin-button,
+                       .breath-input::-webkit-outer-spin-button {
+                         -webkit-appearance: none;
+                         margin: 0;
+                       }
+                       .breath-input { -moz-appearance: textfield; }
+                       .breath-input:focus {
+                         border-color: rgba(212, 175, 55, 0.5);
+                         background: rgba(212, 175, 55, 0.05);
+                         box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
+                       }
+                       .breath-wave-glow {
+                         position: relative;
+                       }
+                       .breath-wave-glow::before {
+                         content: "";
+                         position: absolute;
+                         inset: -12px;
+                         background: radial-gradient(
+                           ellipse at center,
+                           rgba(233,195,90,0.25),
+                           rgba(233,195,90,0.12) 40%,
+                           rgba(233,195,90,0.04) 60%,
+                           transparent 70%
+                         );
+                         filter: blur(18px);
+                         pointer-events: none;
+                         z-index: 0;
+                         animation: breath-pulse-glow 8s infinite ease-in-out;
+                       }
+                       .breath-wave-glow > * {
+                         position: relative;
+                         z-index: 1;
+                       }
+                       @keyframes breath-pulse-glow {
+                         0%, 100% { opacity: 0.7; }
+                         50%      { opacity: 1; }
+                       }
+                       .practice-tab::before {
+                         content: '';
                      position: absolute;
                      inset: 0;
                      border-radius: 16px;
@@ -303,6 +393,15 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                      opacity: 0.6;
                    }
                  `}</style>
+                   </>
+                 )}
+
+                 {/* Traditional Ratios Panel */}
+                 {breathMode === "traditional" && (
+                   <TraditionalBreathRatios
+                     onSelectRatio={(ratio) => setters.applyBreathRatio?.(ratio)}
+                   />
+                 )}
                </>
              ) : hasSubModes ? (
                <div>
@@ -487,3 +586,4 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
     </div>
   );
 }
+

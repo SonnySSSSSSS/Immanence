@@ -40,6 +40,9 @@ export const useProgressStore = create(
             // domain: 'breathwork' | 'visualization' | 'wisdom'
             // metadata varies by domain
 
+            sessionsV2: [],
+            // Each normalized session: { id, startedAt, endedAt, durationSec, practiceId, practiceMode, configSnapshot, completion, pathContext }
+
             honorLogs: [],
             // Each: { id, date, domain, duration, note }
 
@@ -221,6 +224,21 @@ export const useProgressStore = create(
             },
 
             /**
+             * Record a normalized session (schema-aligned)
+             */
+            recordSessionV2: (normalizedSession) => {
+                const state = get();
+                const session = normalizedSession || null;
+                if (!session) return null;
+
+                set({
+                    sessionsV2: [...state.sessionsV2, session]
+                });
+
+                return session;
+            },
+
+            /**
              * Log off-app (honor) practice
              */
             logHonorPractice: ({ domain, duration, note = '', date = null }) => {
@@ -346,6 +364,7 @@ export const useProgressStore = create(
                     exportVersion: state.exportVersion,
                     exportDate: new Date().toISOString(),
                     sessions: state.sessions,
+                    sessionsV2: state.sessionsV2,
                     honorLogs: state.honorLogs,
                     streak: state.streak,
                     vacation: state.vacation,

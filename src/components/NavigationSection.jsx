@@ -4,16 +4,16 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { PathSelectionGrid } from './PathSelectionGrid.jsx';
 import { PathOverviewPanel } from './PathOverviewPanel.jsx';
 import { ActivePathState } from './ActivePathState.jsx';
+import { NavigationPathReport } from './navigation/NavigationPathReport.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { CodexChamber } from './Codex/CodexChamber.jsx';
 import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
-import { ConsistencyFoundation } from './Cycle/ConsistencyFoundation.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
 
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide }) {
-  const { selectedPathId, setSelectedPath, activePath } = useNavigationStore();
+  const { activePath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
@@ -23,15 +23,18 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
   const [showCodex, setShowCodex] = useState(false);
   const [navModalOpen, setNavModalOpen] = useState(false);
 
-  // Clear selectedPathId on mount to prevent auto-open from persisted state
-  // User must explicitly click a path card to open the overlay
-  React.useEffect(() => {
-    if (selectedPathId && !activePath) {
-      setSelectedPath(null);
-    }
-    // Only run on mount, not on every selectedPathId change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Local state for path overlay - only opens via explicit user click, never from persisted state
+  const [overlayPathId, setOverlayPathId] = useState(null);
+  const overlayPath = overlayPathId ? getPathById(overlayPathId) : null;
+
+  // Handler for when user clicks a path card in the grid
+  const handlePathSelected = (pathId) => {
+    setOverlayPathId(pathId);
+  };
+
+  const closeOverlay = () => {
+    setOverlayPathId(null);
+  };
 
   const handlePathRecommended = (pathId) => {
     if (pathId && pathGridRef.current) {
@@ -53,18 +56,6 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         paddingBottom: isSanctuary ? '48px' : '32px',
       }}
     >
-      {/* Cycle & Consistency System */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          paddingTop: isSanctuary ? '16px' : '8px',
-        }}
-      >
-        <ConsistencyFoundation />
-      </div>
-
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
       {!activePath && (
         <div
@@ -85,7 +76,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
           </div>
 
           {/* Path Finder Card */}
-          <PathFinderCard onPathRecommended={handlePathRecommended} />
+          <PathFinderCard onPathRecommended={handlePathRecommended} selectedPathId={overlayPathId} />
         </div>
       )}
 
@@ -97,9 +88,10 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             fontFamily: 'var(--font-body)',
             fontSize: '11px',
             letterSpacing: 'var(--tracking-wide)',
-            color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.4)',
+            color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.8)',
             textTransform: 'uppercase',
-            fontStyle: 'italic'
+            fontStyle: 'italic',
+            textShadow: isLight ? 'none' : '0 2px 8px rgba(0,0,0,0.5)'
           }}
         >
           Choose direction. Progress deliberately.
@@ -153,18 +145,30 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         ) : (
           <div className="space-y-6" ref={pathGridRef}>
             {/* Path Selection Grid - always visible */}
-            <PathSelectionGrid />
+            <PathSelectionGrid onPathSelected={handlePathSelected} selectedPathId={overlayPathId} />
 
-            {/* Path panels - simple conditional */}
-            {activePath ? (
-              <ActivePathState />
-            ) : null}
+            {/* Active Path Display - shows current path progress inline */}
+            {activePath && (
+              <div className="mt-8">
+                {/* Active Path Header */}
+                <div
+                  className="text-[9px] uppercase tracking-[0.24em] mb-3"
+                  style={{ color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)' }}
+                >
+                  Active Path
+                </div>
+                <ActivePathState />
+                <NavigationPathReport />
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Path Overview Modal Overlay - adapts to hearth/sanctuary */}
-      {selectedPathId && !activePath && (
+      {/* Path Overlay Modal - adapts to hearth/sanctuary */}
+      {/* Uses LOCAL state (overlayPathId) so it NEVER auto-opens from persisted store */}
+      {/* Shows ActivePathState if clicking on already-active path, else PathOverviewPanel */}
+      {overlayPathId && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{
@@ -173,7 +177,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              setSelectedPath(null);
+              closeOverlay();
             }
           }}
         >
@@ -195,10 +199,27 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <PathOverviewPanel
-              path={getPathById(selectedPathId)}
-              onClose={() => setSelectedPath(null)}
-            />
+            {/* If this is the user's active path, show progress; else show overview to begin */}
+            {activePath?.pathId === overlayPathId ? (
+              <div className="p-4">
+                <ActivePathState />
+                <button
+                  onClick={closeOverlay}
+                  className="mt-4 w-full py-3 rounded-full border transition-colors text-center"
+                  style={{
+                    borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)',
+                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.7)',
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <PathOverviewPanel
+                path={overlayPath}
+                onClose={closeOverlay}
+              />
+            )}
           </div>
         </div>
       )}
