@@ -379,7 +379,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const playbackStatusLabel = playbackState === 'paused' ? 'Paused' : playbackState === 'ended' ? 'Ended' : 'Idle';
 
   return (
-    <div style={{ marginTop: '16px' }}>
+    <div style={{ marginTop: '16px' }} data-tutorial="tempo-sync-panel">
       {/* Enable/Disable Toggle */}
       <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>

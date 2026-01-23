@@ -106,7 +106,7 @@ function resolvePracticeIdFromEntry(entry) {
     return null;
 }
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
@@ -380,6 +380,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             >
                                                 START SETUP
                                             </button>
+                                            <p className="mt-4 text-[11px] text-white/60">
+                                                Click &quot;Start Setup&quot; to begin your journey
+                                            </p>
                                         </div>
                                     </>
                                 ) : missState.broken ? (
@@ -663,7 +666,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     return (
         <div
-            className="w-full relative transition-all duration-700 ease-in-out"
+            data-tutorial="home-daily-card"
+            className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
             style={{
                 maxWidth: isSanctuary ? '656px' : '430px',
                 margin: '0 auto',
@@ -910,6 +914,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             {progress.rate}%
                                         </div>
                                         <button 
+                                            data-tutorial="home-curriculum-card"
                                             onClick={() => {
                                                 console.log('[DailyPracticeCard] Path button clicked, calling onViewCurriculum');
                                                 onViewCurriculum();

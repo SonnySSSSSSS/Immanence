@@ -46,11 +46,14 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
 
             {/* Grid container */}
             <div
-                className="grid gap-3 px-2 pb-4 custom-scrollbar"
+                className="grid gap-3 pb-4 custom-scrollbar"
                 style={{
-                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
                     maxHeight: '400px',
                     overflowY: 'auto',
+                    paddingLeft: '12px',
+                    paddingRight: '14px',
+                    boxSizing: 'border-box',
                 }}
             >
                 {rituals.length === 0 ? (
@@ -76,6 +79,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                 onMouseLeave={handleMouseLeave}
                                 className="rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
                                 style={{
+                                    minWidth: 0, /* Prevents overflow in grid */
                                     background: isSelected
                                         ? (isLight 
                                             ? 'linear-gradient(180deg, rgba(160,120,60,0.15) 0%, rgba(255,255,255,0.8) 100%)'

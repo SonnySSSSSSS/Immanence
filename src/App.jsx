@@ -25,6 +25,8 @@ import { useWakeLock } from "./hooks/useWakeLock.js";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
+import { TutorialOverlay } from "./components/tutorial/TutorialOverlay.jsx";
+import { useTutorialStore } from "./state/tutorialStore.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -327,11 +329,38 @@ function App() {
                     >
                       🎨
                     </button>
+                    <button
+                      type="button"
+                      data-tutorial="global-tutorial-button"
+                      onClick={() => {
+                        const tutorialStore = useTutorialStore.getState();
+                        const resolvedPracticeId =
+                          typeof activePracticeId === "string" && activePracticeId.length > 0
+                            ? activePracticeId
+                            : null;
+                        const tutorialId = (() => {
+                          if (!activeSection) return 'page:home';
+                          if (activeSection === 'practice') {
+                            return resolvedPracticeId ? `practice:${resolvedPracticeId}` : 'page:practice';
+                          }
+                          if (activeSection === 'wisdom') return 'page:wisdom';
+                          if (activeSection === 'application') return 'page:application';
+                          if (activeSection === 'navigation') return 'page:navigation';
+                          return 'page:home';
+                        })();
+                        tutorialStore.openTutorial(tutorialId);
+                      }}
+                      className={`text-[10px] uppercase tracking-[0.15em] px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                      style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
+                      title="Tutorial"
+                    >
+                      ?
+                    </button>
                     <div
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.25.26
+                        v3.25.37
                     </div>
                   </div>
 
@@ -410,6 +439,9 @@ function App() {
 
           {/* Indra's Net - animated web at bottom (hidden during practice sessions) */}
           <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} displayMode={displayMode} currentPracticeId={activePracticeId} />
+
+          {/* Tutorial overlay system */}
+          <TutorialOverlay />
         </div >
       </div >
     </ThemeProvider >

@@ -48,6 +48,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
 
   return (
     <div
+      data-tutorial="navigation-root"
       className="w-full max-w-6xl mx-auto"
       style={{
         display: 'flex',

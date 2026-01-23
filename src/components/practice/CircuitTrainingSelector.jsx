@@ -142,14 +142,15 @@ export function CircuitTrainingSelector({
               "fixed z-[100000] " +
               "rounded-lg border border-white/10 " +
               "shadow-[0_12px_40px_rgba(0,0,0,0.6)] " +
-              "transition-all duration-150 ease-out " +
-              (animIn ? "opacity-100 scale-100" : "opacity-0 scale-95")
+              "transition-all duration-150 ease-out"
             }
             style={{
               top: `${portalPos.top}px`,
               left: `${portalPos.left}px`,
               width: `${portalPos.width}px`,
               transformOrigin: 'top center',
+              transform: animIn ? 'scaleY(1)' : 'scaleY(0.92)',
+              opacity: animIn ? 1 : 0,
               backgroundImage: 'linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url("/bg/practice-breath-mandala.png")',
               backgroundSize: 'auto, cover',
               backgroundPosition: 'center, center',

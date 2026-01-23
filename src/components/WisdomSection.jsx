@@ -1671,7 +1671,7 @@ export function WisdomSection() {
         onNavigate={(ch) => setModalChapter(ch)}
       />
 
-      <div className="w-full max-w-5xl mx-auto">
+      <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto">
         <div
           className="border border-[var(--accent-15)] backdrop-blur-xl px-7 pt-8 pb-9 space-y-5 relative"
           style={{

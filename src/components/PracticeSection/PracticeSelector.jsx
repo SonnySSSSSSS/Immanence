@@ -23,6 +23,7 @@ export function PracticeSelector({
   return (
     <div 
       className="w-full" 
+      data-tutorial="practice-selector"
       style={{ 
         marginBottom: '16px',
         maxWidth: PRACTICE_UI_WIDTH.maxWidth,

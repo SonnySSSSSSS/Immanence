@@ -3,6 +3,7 @@ import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
 import { TraditionalBreathRatios } from "../PracticeSection/TraditionalBreathRatios.jsx";
+import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
 
 function BreathPracticeCard({
   practiceId,
@@ -27,38 +28,21 @@ function BreathPracticeCard({
   // Sub-method for breath mode: expansion (sliders) vs traditional (presets)
   const [breathMethod, setBreathMethod] = useState("expansion");
 
+  // Determine tutorial ID based on current submode
+  const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
+
   return (
     <div className="relative px-8 animate-in fade-in duration-300">
-      {/* Practice Title & Icon */}
-      <div className="flex flex-col items-center text-center" style={{ marginTop: '20px', marginBottom: practiceId === 'breath' ? '16px' : '24px' }}>
-        {/* Small decorative star */}
-        <div
-          style={{
-            fontSize: '18px',
-            color: '#D4AF37',
-            textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
-            marginBottom: '16px'
-          }}
-        >
-          ?
-        </div>
-        
-        {/* Title with proper typography */}
-        <h2 style={{ 
-          fontFamily: 'var(--font-display)', 
-          fontSize: '16px', 
-          fontWeight: 600,
-          letterSpacing: '0.12em', 
-          textTransform: 'uppercase',
-          color: '#F5E6D3',
-          marginBottom: practiceId === 'breath' ? '8px' : '0'
-        }}>
-          {label}
-        </h2>
-
-        {/* Top Level: Breath vs Stillness */}
+      {/* HEADER - using shared component */}
+      <PracticeMenuHeader
+        title={label}
+        tutorialId={tutorialId}
+        showTutorial={true}
+        marginBottom={practiceId === 'breath' ? '16px' : '24px'}
+      >
+        {/* Top Level: Breath vs Stillness submode toggle */}
         {practiceId === 'breath' && (
-          <div className="flex items-center gap-2" style={{ marginTop: '10px' }}>
+          <div className="flex items-center justify-center gap-2" style={{ marginTop: '10px' }}>
             {[
               { id: 'breath', label: 'Breath' },
               { id: 'stillness', label: 'Stillness' }
@@ -88,7 +72,7 @@ function BreathPracticeCard({
             })}
           </div>
         )}
-      </div>
+      </PracticeMenuHeader>
 
       {/* Dynamic Config Panel */}
       <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
@@ -303,7 +287,10 @@ function BreathPracticeCard({
 
       {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
       {supportsDuration && practiceId !== 'circuit' && (
-        <div style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}>
+        <div 
+          style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}
+          data-tutorial={breathSubmode === 'stillness' ? 'stillness-options' : undefined}
+        >
           <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
             Sacred Duration (minutes)
           </div>

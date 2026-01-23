@@ -28,8 +28,10 @@ import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
 import { useUiStore } from "../state/uiStore.js";
+import { useTutorialStore } from "../state/tutorialStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
+import { TUTORIALS } from "../tutorials/tutorialRegistry.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -43,6 +45,10 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const displayMode = useDisplayModeStore(s => s.viewportMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
+
+  const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
+  const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
+  const isDailyCardTutorialTarget = isTutorialOpen && activeTutorialTarget?.includes('home-daily-card');
 
   // Cloud background test state
   const [cloudBackground, setCloudBackground] = useState('cloudier'); // 'light_clouds', 'cloudier', 'cloudiest', or 'none'
@@ -368,6 +374,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     onboardingComplete={curriculumOnboardingComplete}
     practiceTimeSlots={practiceTimeSlots}
     onStartSetup={() => onSelectSection('navigation')}
+    isTutorialTarget={isDailyCardTutorialTarget}
   />
 </div>
 

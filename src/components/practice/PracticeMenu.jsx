@@ -1,5 +1,6 @@
 import React from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
+import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
 
 // Import config components directly to avoid circular dependencies
 import { CircuitConfig } from "../Cycle/CircuitConfig.jsx";
@@ -54,40 +55,20 @@ function PracticeMenu({
       key={containerKey} 
       className="relative px-8 animate-in fade-in duration-300"
     >
-    {/* Practice Title & Icon */}
-    <div className="flex flex-col items-center text-center" style={{ marginTop: '20px', marginBottom: titleContainerMarginBottom }}>
-      {/* Small decorative star */}
-      <div
-        style={{
-          fontSize: '18px',
-          color: '#D4AF37',
-          textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
-          marginBottom: '16px'
-        }}
-      >
-        ?
-      </div>
-      
-      {/* Title with proper typography */}
-      <h2 style={{ 
-        fontFamily: 'var(--font-display)', 
-        fontSize: '16px', 
-        fontWeight: 600,
-        letterSpacing: '0.12em', 
-        textTransform: 'uppercase',
-        color: '#F5E6D3',
-        marginBottom: titleTextMarginBottom
-      }}>
-        {label}
-      </h2>
-      
-      {/* Inline subtitle for breath intentionally removed (redundant with inputs below) */}
+    {/* HEADER - using shared component */}
+    <PracticeMenuHeader
+      title={label}
+      tutorialId={`practice:${practice?.id || 'breath'}`}
+      showTutorial={true}
+      marginBottom={titleContainerMarginBottom}
+    >
+      {/* Inline subtitle for ritual */}
       {showRitualSubtitle && (
-        <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
+        <p className="mt-2 uppercase text-center" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
           {ritualSubtitleText}
         </p>
       )}
-    </div>
+    </PracticeMenuHeader>
 
     {/* Dynamic Config Panel */}
     <div className="min-h-[100px]" style={{ marginBottom: configPanelMarginBottom }}>

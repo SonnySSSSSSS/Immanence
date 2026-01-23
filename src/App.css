@@ -215,3 +215,318 @@
   background-position: center;
   background-repeat: no-repeat;
 }
+
+/* Tutorial System Styles */
+.tutorial-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.tutorial-tooltip {
+  position: fixed;
+  max-width: 360px;
+  border-radius: 16px;
+  background: rgba(10, 10, 14, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  z-index: 10000; /* Must be above highlight (9998) and scrim (9999) */
+}
+
+.tutorial-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tutorial-tooltip-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+.tutorial-tooltip-close {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 24px;
+  transition: color 150ms;
+}
+
+.tutorial-tooltip-close:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.tutorial-tooltip-body {
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tutorial-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tutorial-step-counter {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.tutorial-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.tutorial-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.tutorial-btn-primary {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-70));
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-30);
+}
+
+.tutorial-btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px var(--accent-40);
+}
+
+.tutorial-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tutorial-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tutorial-highlight {
+  position: fixed;
+  border-radius: 12px;
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 0 4px var(--accent-20), 0 0 20px var(--accent-40);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.tutorial-target {
+  position: relative;
+  z-index: 2;
+  border-radius: 24px;
+}
+
+.tutorial-target::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 0 4px var(--accent-20), 0 0 20px var(--accent-40);
+}
+
+/* Tutorial Hint Overlay & Button Wrapper */
+.tutorialButtonWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tutorialHint {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 50;
+  max-width: 240px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(10, 10, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.tutorialHintText {
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.82);
+  padding-right: 18px;
+}
+
+.tutorialHintClose {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.tutorialHintClose:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tutorialHintArrow {
+  position: absolute;
+  right: 16px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  background: rgba(10, 10, 14, 0.92);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.practiceHeader {
+  display: grid;
+  grid-template-rows: auto auto;
+  row-gap: 12px;
+  padding: 0 22px;
+  box-sizing: border-box;
+}
+
+.practiceHeaderHelpRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.practiceHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.practiceHeaderLeft {
+  justify-self: start;
+  min-width: 0;
+}
+
+.practiceHeaderCenter {
+  justify-self: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.practiceHeaderRight {
+  justify-self: end;
+  min-width: 0;
+}
+
+.practiceTutorialBtn {
+  white-space: nowrap;
+}
+
+/* Unified Practice Menu Header - 2-row layout (overlap-proof) */
+.practiceMenuHeader {
+  display: grid;
+  grid-template-rows: auto auto;
+  row-gap: 14px;
+  padding: 0 22px;
+  box-sizing: border-box;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* Top row: tutorial button centered */
+.practiceMenuHeaderTopRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  justify-self: stretch;
+}
+
+.practiceMenuHeaderTopLeft {
+  justify-self: start;
+  min-width: 0;
+}
+
+.practiceMenuHeaderTopRight {
+  justify-self: end;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* Title row: centered on its own line */
+.practiceMenuHeaderTitleRow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.practiceMenuHeaderTitle {
+  margin: 0;
+  text-align: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
+
+.practiceMenuHeaderTutorial {
+  white-space: nowrap;
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  inset: auto !important;
+  top: auto !important;
+  justify-self: center;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.practiceMenuHeaderTutorial:hover {
+  opacity: 1;
+}
+
+/* Tutorial Pick mode: allow click-through on ignorable overlay layers */
+html.tutorial-pick-mode [data-pick-ignore="true"] {
+  pointer-events: none !important;
+}
+
+/* DEBUG: stop fly-in without changing layout */
+div.fixed.z-\[100000\] {
+  transform: none !important;
+  animation: none !important;
+  transition-property: none !important;
+}

@@ -22,7 +22,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
   // No active path - show empty state
   if (!activePath) {
     return (
-      <div className="w-full max-w-4xl mx-auto space-y-8 pb-12">
+      <div data-tutorial="application-root" className="w-full max-w-4xl mx-auto space-y-8 pb-12">
         {/* Empty State */}
         <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
           <h2
@@ -64,7 +64,7 @@ export function ApplicationSection({ onStageChange, currentStage, previewPath, p
 
   // Active path - show permanent sigil sealing area
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
+    <div data-tutorial="application-root" className="w-full max-w-4xl mx-auto space-y-6 pb-12">
       {/* Permanent Sigil Sealing Area */}
       <SigilSealingArea />
 

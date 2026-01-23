@@ -226,7 +226,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                     </span>
                 </div>
 
-                <div className="relative overflow-hidden mb-4" style={{ height: '140px' }}>
+                <div className="relative overflow-visible mb-4" style={{ height: '140px' }}>
                     <motion.div
                         className="flex gap-3 h-full px-1"
                         drag="x"
@@ -240,7 +240,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 setPageIndex(prev => prev - 1);
                             }
                         }}
-                        style={{ cursor: 'grab' }}
+                        style={{ cursor: 'grab', padding: '6px 0' }}
                         whileTap={{ cursor: 'grabbing' }}
                     >
                         <AnimatePresence mode="wait">
@@ -262,7 +262,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                             className="flex-1 max-w-[calc(50%-6px)]"
                                             disabled={isAtMax}
                                             style={{
-                                                padding: '16px 12px',
+                                                padding: '14px 12px',
                                                 borderRadius: '12px',
                                                 border: isSelected
                                                     ? '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)'
@@ -278,7 +278,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                                 opacity: isAtMax ? 0.4 : 1,
                                                 cursor: isAtMax ? 'not-allowed' : 'pointer',
                                             }}
-                                            whileHover={isAtMax ? {} : { scale: 1.02, y: -2 }}
+                                            whileHover={isAtMax ? {} : { scale: 1.03, y: -2 }}
                                             whileTap={isAtMax ? {} : { scale: 0.98 }}
                                         >
                                             <div className="flex flex-col items-center gap-3">
