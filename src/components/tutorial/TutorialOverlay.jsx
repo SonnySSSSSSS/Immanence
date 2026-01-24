@@ -1,7 +1,8 @@
 // src/components/tutorial/TutorialOverlay.jsx
 import React, { useEffect, useState, useCallback, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useTutorialStore } from '../../state/tutorialStore';
+import ReactMarkdown from 'react-markdown';
+import { useTutorialStore, isTutorialAdminMode } from '../../state/tutorialStore';
 import { TUTORIALS } from '../../tutorials/tutorialRegistry';
 
 const OVERRIDE_STORAGE_KEY = 'immanence.tutorial.overrides';
@@ -54,6 +55,7 @@ export const TutorialOverlay = () => {
   const [highlightRect, setHighlightRect] = useState(null);
   const [pickModeActive, setPickModeActive] = useState(false);
   const [overrideReloadTrigger, setOverrideReloadTrigger] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
   const tooltipRef = useRef(null);
 
   // Inspect mode: allows devtools to click/select highlight/tooltip instead of scrim
@@ -329,13 +331,77 @@ export const TutorialOverlay = () => {
                 <span style={{ fontSize: '10px', opacity: 0.6, marginLeft: '8px' }}>(override)</span>
               )}
             </h3>
-            <button className="tutorial-tooltip-close" onClick={handleClose} aria-label="Close tutorial">
-              x
-            </button>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              {isTutorialAdminMode() && (
+                <button
+                  className="tutorial-tooltip-close"
+                  onClick={() => setIsEditing(!isEditing)}
+                  aria-label="Edit tutorial"
+                  style={{ fontSize: '16px' }}
+                >
+                  ✎
+                </button>
+              )}
+              <button className="tutorial-tooltip-close" onClick={handleClose} aria-label="Close tutorial">
+                x
+              </button>
+            </div>
           </div>
 
           <div className="tutorial-tooltip-body">
-            <p>{currentStep?.body}</p>
+            {isEditing ? (
+              <InlineStepEditor
+                tutorial={tutorial}
+                stepIndex={stepIndex}
+                onSave={() => {
+                  setOverrideReloadTrigger(prev => prev + 1);
+                  setIsEditing(false);
+                }}
+                onCancel={() => setIsEditing(false)}
+              />
+            ) : (
+              <>
+                <ReactMarkdown
+                  allowedElements={['p', 'br', 'strong', 'em', 'code', 'ul', 'ol', 'li', 'a']}
+                  unwrapDisallowed={true}
+                  components={{
+                    a: ({ href, ...props }) => {
+                      const safeHref =
+                        href && (href.startsWith('https://') || href.startsWith('http://'))
+                          ? href
+                          : '#';
+
+                      return (
+                        <a
+                          {...props}
+                          href={safeHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      );
+                    },
+                  }}
+                >
+                  {currentStep?.body || ''}
+                </ReactMarkdown>
+                {currentStep?.media && currentStep.media.length > 0 && (
+                  <div style={{ marginTop: '12px' }}>
+                    {currentStep.media.map((m, i) => (
+                      <div key={i}>
+                        <img
+                          src={import.meta.env.BASE_URL + 'tutorial/' + m.key}
+                          alt={m.alt}
+                          style={{ maxWidth: '100%', maxHeight: '220px', objectFit: 'contain' }}
+                        />
+                        {m.caption && (
+                          <div className="tutorial-tooltip-media-caption">{m.caption}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="tutorial-tooltip-footer">
@@ -360,3 +426,163 @@ export const TutorialOverlay = () => {
 
   return createPortal(overlayJsx, document.body);
 };
+
+// Inline step editor component
+function InlineStepEditor({ tutorial, stepIndex, onSave, onCancel }) {
+  const step = tutorial.steps[stepIndex];
+  const [title, setTitle] = useState(step?.title || '');
+  const [body, setBody] = useState(step?.body || '');
+  const [errors, setErrors] = useState([]);
+
+  const validateStep = () => {
+    const newErrors = [];
+    if (!title.trim()) {
+      newErrors.push('Title is required');
+    }
+    if (title.length > 60) {
+      newErrors.push('Title must be max 60 characters');
+    }
+    if (!body.trim()) {
+      newErrors.push('Body is required');
+    }
+    if (body.length > 1200) {
+      newErrors.push('Body must be max 1200 characters');
+    }
+    if (body.includes('<') || body.includes('>')) {
+      newErrors.push('HTML tags not allowed');
+    }
+    if (body.includes('```') || body.includes('|---')) {
+      newErrors.push('Code blocks and tables not allowed');
+    }
+    return newErrors;
+  };
+
+  const handleSave = () => {
+    const newErrors = validateStep();
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    // Save override
+    try {
+      const overrideKey = 'immanence.tutorial.overrides';
+      const raw = localStorage.getItem(overrideKey);
+      const overrides = raw ? JSON.parse(raw) : {};
+      const tutorialId = Object.keys(overrides).find(key => overrides[key] === tutorial) ||
+                         Object.keys(TUTORIALS).find(key => TUTORIALS[key] === tutorial);
+
+      if (tutorialId) {
+        const updatedTutorial = JSON.parse(JSON.stringify(tutorial));
+        updatedTutorial.steps[stepIndex] = { ...step, title, body };
+        overrides[tutorialId] = updatedTutorial;
+        localStorage.setItem(overrideKey, JSON.stringify(overrides));
+        window.dispatchEvent(new CustomEvent('tutorial-override-changed'));
+        onSave();
+      }
+    } catch (err) {
+      setErrors(['Failed to save: ' + err.message]);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div>
+        <label style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>Title (max 60 chars)</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setErrors([]);
+          }}
+          maxLength={60}
+          style={{
+            width: '100%',
+            padding: '6px 8px',
+            marginTop: '4px',
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            color: 'rgba(255, 255, 255, 0.9)',
+            fontSize: '13px',
+            fontFamily: 'inherit',
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>Body (max 1200 chars, markdown OK)</label>
+        <textarea
+          value={body}
+          onChange={(e) => {
+            setBody(e.target.value);
+            setErrors([]);
+          }}
+          maxLength={1200}
+          style={{
+            width: '100%',
+            height: '100px',
+            padding: '8px',
+            marginTop: '4px',
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            color: 'rgba(255, 255, 255, 0.9)',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            resize: 'vertical',
+          }}
+        />
+        <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px' }}>
+          {body.length} / 1200
+        </div>
+      </div>
+
+      {errors.length > 0 && (
+        <div style={{ fontSize: '11px', color: '#ff6b6b' }}>
+          {errors.map((err, i) => (
+            <div key={i}>• {err}</div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+        <button
+          onClick={onCancel}
+          style={{
+            padding: '6px 12px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontSize: '12px',
+            cursor: 'pointer',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.15)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: '6px 12px',
+            background: 'rgba(147, 197, 253, 0.2)',
+            border: '1px solid rgba(147, 197, 253, 0.4)',
+            borderRadius: '4px',
+            color: 'rgba(147, 197, 253, 0.9)',
+            fontSize: '12px',
+            cursor: 'pointer',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(147, 197, 253, 0.3)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(147, 197, 253, 0.2)'}
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
