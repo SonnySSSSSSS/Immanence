@@ -111,24 +111,6 @@ export default function AuthGate({ children }) {
   return (
     <>
       {children}
-      <button
-        type="button"
-        onClick={handleSignOut}
-        style={{
-          position: "fixed",
-          right: 12,
-          bottom: 12,
-          padding: "8px 10px",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(0,0,0,0.35)",
-          cursor: "pointer",
-          fontSize: 12,
-        }}
-        aria-label="Sign out"
-      >
-        Sign out
-      </button>
     </>
   );
 }

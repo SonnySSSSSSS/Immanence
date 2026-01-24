@@ -2,6 +2,7 @@
 // Settings panel with reset functionality for pilot testing
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { supabase } from '../lib/supabaseClient';
 
 export function SettingsPanel({ isOpen, onClose }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -29,6 +30,10 @@ export function SettingsPanel({ isOpen, onClose }) {
       // Reload the app
       window.location.reload();
     }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
@@ -96,6 +101,22 @@ export function SettingsPanel({ isOpen, onClose }) {
           }}
         >
           Reset Local Data
+        </button>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleSignOut}
+          className="w-full px-4 py-3 rounded-lg font-bold text-sm transition-all mb-4"
+          style={{
+            background: isLight 
+              ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+              : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+            color: '#fff',
+            fontFamily: 'var(--font-display)',
+            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+          }}
+        >
+          Sign Out
         </button>
 
         {/* Warning Text */}

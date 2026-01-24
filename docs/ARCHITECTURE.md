@@ -361,6 +361,57 @@ Experimental photic entrainment overlay for light-based meditation. Renders two 
 - "Photic" button in `PracticeSection` practice type switcher
 - Opens overlay with last-used settings from `settingsStore.photic`
 
+## Tutorial System
+
+The app's tutorials are implemented as an overlay-based tooltip system anchored to UI elements via `data-tutorial` attributes. Tutorials are opened from the top-menu `?` button, which resolves a `tutorialId` from the active section/practice and calls the tutorial store to open the corresponding tutorial.
+
+### Core Components
+
+- **TutorialOverlay**: Renders the tutorial tooltip + scrim using a portal to `document.body`. Tooltip positioning is calculated relative to the app frame (when present) or the viewport. If an anchor target is not found after retries, the tooltip centers as a fallback.
+- **Anchor Targets**: UI elements expose stable anchors through `data-tutorial` attributes; anchor IDs are centralized (e.g., `anchorIds.js`).
+
+### Content Model
+
+- Tutorial content is defined in a **registry** as inline JS objects keyed by `tutorialId` (e.g., `page:home`, `practice:breath`).
+- Each tutorial contains ordered **steps**, each with:
+  - `title` (string)
+  - `body` (string; restricted markdown)
+  - `target` (anchor ID)
+  - `placement` (tooltip placement hint)
+  - Optional `media` array (whitelisted local images): `{ key, alt, caption? }`
+
+### State + Persistence
+
+- State is managed by a Zustand store (open/close, current `tutorialId`, `stepIndex`).
+- Completion state is persisted in localStorage under `immanence.tutorial`.
+- Content overrides (admin/dev) persist in localStorage under `immanence.tutorial.overrides`.
+
+### Admin/Dev Editing Mode
+
+Tutorial editing is **admin/dev-only** and is gated at runtime by:
+
+- `localStorage.getItem("immanence.tutorial.admin") === "1"`
+
+When enabled, the tutorial overlay exposes an in-place editor for the current tutorial step and an extended dev JSON editor. Normal users never see edit controls.
+
+### Rendering Safety + Hardening
+
+Tutorial rendering is hardened to prevent XSS, path tricks, and layout breakage:
+
+- **Restricted markdown rendering**:
+  - Only allows: `p`, `br`, `strong`, `em`, `code` (inline), `ul`, `ol`, `li`, `a`
+  - Links enforce safe protocols (http/https only); unsafe protocols resolve to `#`
+- **Whitelisted images**:
+  - Images are loaded from `/public/tutorial/` only
+  - Render-time validation rejects invalid keys (no slashes, limited extensions)
+- **Layout safety**:
+  - Tooltip has a viewport-bounded max height and a scrollable body region
+  - CSS forces long strings (URLs/inline code) to wrap to prevent horizontal overflow
+- **DoS prevention**:
+  - Step `body` is clamped at render time (e.g., 2000 chars) to prevent freezes from tampered localStorage; a "[content truncated]" note appears only in admin mode
+
+These render-time guards intentionally mirror editor-time validation to ensure localStorage tampering cannot bypass constraints.
+
 ## Guardrails
 
 - Prefer **selectors over prop drilling**: lift data into Zustand selectors (e.g., `getStreakInfo`, `getDayLegsWithStatus`) instead of passing nested props between cards.
