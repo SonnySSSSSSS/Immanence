@@ -103,6 +103,14 @@ export const TutorialOverlay = () => {
   const currentStep = tutorial?.steps?.[stepIndex];
   const isLastStep = tutorial && stepIndex === tutorial.steps.length - 1;
 
+  // Render-time content clamping (single source of truth)
+  const TUTORIAL_BODY_MAX_CHARS = 2000;
+  const rawBody = currentStep?.body || '';
+  const isBodyTruncated = rawBody.length > TUTORIAL_BODY_MAX_CHARS;
+  const safeBody = isBodyTruncated
+    ? rawBody.slice(0, TUTORIAL_BODY_MAX_CHARS)
+    : rawBody;
+
   // Removed: component-owned highlight special case
   // All highlights now wrap the tooltip, not the target element
 
@@ -382,24 +390,13 @@ export const TutorialOverlay = () => {
                     },
                   }}
                 >
-                  {(() => {
-                    const TUTORIAL_BODY_MAX_CHARS = 2000;
-                    const rawBody = currentStep?.body || '';
-                    return rawBody.length > TUTORIAL_BODY_MAX_CHARS
-                      ? rawBody.slice(0, TUTORIAL_BODY_MAX_CHARS)
-                      : rawBody;
-                  })()}
+                  {safeBody}
                 </ReactMarkdown>
-                {(() => {
-                  const TUTORIAL_BODY_MAX_CHARS = 2000;
-                  const rawBody = currentStep?.body || '';
-                  const isBodyTruncated = rawBody.length > TUTORIAL_BODY_MAX_CHARS;
-                  return isBodyTruncated && isTutorialAdminMode() ? (
-                    <div className="tutorial-tooltip-truncated-note">
-                      [content truncated]
-                    </div>
-                  ) : null;
-                })()}
+                {isBodyTruncated && isTutorialAdminMode() && (
+                  <div className="tutorial-tooltip-truncated-note">
+                    [content truncated]
+                  </div>
+                )}
                 {currentStep?.media && currentStep.media.length > 0 && (
                   <div style={{ marginTop: '12px' }}>
                     {currentStep.media.map((m, i) => {
