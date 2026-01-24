@@ -42,3 +42,10 @@ __pycache__/
 
 # Windows reserved device names
 [Nn][Uu][Ll]
+
+# local legacy backups
+_backup_assets/
+public/generated/
+public/videos/
+node-v*.msi
+
