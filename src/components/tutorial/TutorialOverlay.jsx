@@ -386,18 +386,31 @@ export const TutorialOverlay = () => {
                 </ReactMarkdown>
                 {currentStep?.media && currentStep.media.length > 0 && (
                   <div style={{ marginTop: '12px' }}>
-                    {currentStep.media.map((m, i) => (
-                      <div key={i}>
-                        <img
-                          src={import.meta.env.BASE_URL + 'tutorial/' + m.key}
-                          alt={m.alt}
-                          style={{ maxWidth: '100%', maxHeight: '220px', objectFit: 'contain' }}
-                        />
-                        {m.caption && (
-                          <div className="tutorial-tooltip-media-caption">{m.caption}</div>
-                        )}
-                      </div>
-                    ))}
+                    {currentStep.media.map((m, i) => {
+                      const keyPattern = /^[a-zA-Z0-9._-]+\.(png|jpg|jpeg|webp)$/;
+
+                      if (!m?.key || m.key.includes('/') || !keyPattern.test(m.key)) {
+                        console.warn('[Tutorial] Invalid media key rejected:', m?.key);
+                        return null;
+                      }
+
+                      return (
+                        <div key={i}>
+                          <img
+                            src={import.meta.env.BASE_URL + 'tutorial/' + m.key}
+                            alt={m?.alt || ''}
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '220px',
+                              objectFit: 'contain',
+                            }}
+                          />
+                          {m?.caption && (
+                            <div className="tutorial-tooltip-media-caption">{m.caption}</div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </>
