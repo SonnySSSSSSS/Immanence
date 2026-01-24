@@ -2,6 +2,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Dev gate: returns true if admin mode is enabled via localStorage
+export function isTutorialAdminMode() {
+  try {
+    return localStorage.getItem("immanence.tutorial.admin") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export const useTutorialStore = create(
   persist(
     (set, get) => ({

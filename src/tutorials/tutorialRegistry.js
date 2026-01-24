@@ -1,4 +1,7 @@
 // src/tutorials/tutorialRegistry.js
+// Tutorial media format: { key: string, alt: string, caption?: string }
+// Keys must be filenames under /public/tutorial/ (no path traversal)
+
 export const TUTORIALS = {
   "page:home": {
     title: "Home Hub",
