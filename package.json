@@ -1,17 +1,19 @@
 {
-  "homepage": "https://SonnySSSSSSS.github.io/Immanence",
   "name": "immanence-os",
   "private": true,
   "type": "module",
+  "homepage": "https://SonnySSSSSSS.github.io/Immanence",
+
   "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
-    "dev": "vite",
+    "dev": "node scripts/guard-dev.mjs && vite",
     "dev:clean": "powershell -ExecutionPolicy Bypass -File ./dev-reset.ps1 && npm run dev",
     "build": "vite build",
+    "preview": "vite preview",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
+
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
@@ -30,6 +32,7 @@
     "web-audio-beat-detector": "^8.2.33",
     "zustand": "^5.0.8"
   },
+
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/react": "^19.2.5",
@@ -45,6 +48,7 @@
     "tailwindcss": "3.4",
     "vite": "npm:rolldown-vite@7.2.5"
   },
+
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
   }

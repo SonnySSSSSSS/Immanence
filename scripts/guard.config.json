@@ -1,0 +1,12 @@
+{
+  "requireRemoteNames": ["origin2"],
+  "forbidPathPrefixes": [
+    "_backup_assets/",
+    "public/generated/"
+  ],
+  "forbidPathRegex": [
+    "^node-v\\d+.*\\.msi$",
+    "^node-v\\d+.*\\.exe$"
+  ],
+  "maxChangedEntries": 80
+}
