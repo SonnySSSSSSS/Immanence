@@ -382,8 +382,24 @@ export const TutorialOverlay = () => {
                     },
                   }}
                 >
-                  {currentStep?.body || ''}
+                  {(() => {
+                    const TUTORIAL_BODY_MAX_CHARS = 2000;
+                    const rawBody = currentStep?.body || '';
+                    return rawBody.length > TUTORIAL_BODY_MAX_CHARS
+                      ? rawBody.slice(0, TUTORIAL_BODY_MAX_CHARS)
+                      : rawBody;
+                  })()}
                 </ReactMarkdown>
+                {(() => {
+                  const TUTORIAL_BODY_MAX_CHARS = 2000;
+                  const rawBody = currentStep?.body || '';
+                  const isBodyTruncated = rawBody.length > TUTORIAL_BODY_MAX_CHARS;
+                  return isBodyTruncated && isTutorialAdminMode() ? (
+                    <div className="tutorial-tooltip-truncated-note">
+                      [content truncated]
+                    </div>
+                  ) : null;
+                })()}
                 {currentStep?.media && currentStep.media.length > 0 && (
                   <div style={{ marginTop: '12px' }}>
                     {currentStep.media.map((m, i) => {
