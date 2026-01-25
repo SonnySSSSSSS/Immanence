@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
@@ -192,8 +192,21 @@ function App() {
     setIsFullscreenExperience(val && requiresFullscreen);
   };
 
+  const handleAuthChange = useCallback((event, session) => {
+    if (event === "SIGNED_OUT") {
+      setShowSettings(false);
+      setActiveSection(null);
+      return;
+    }
+
+    if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      setShowSettings(false);
+      setActiveSection(null);
+    }
+  }, []);
+
   return (
-    <AuthGate>
+    <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={avatarStage}>
 
       {/* Curriculum Completion Report */}
@@ -207,6 +220,10 @@ function App() {
       <SettingsPanel
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
+        onSignedOut={() => {
+          setShowSettings(false);
+          setActiveSection(null);
+        }}
       />
 
       {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}

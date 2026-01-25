@@ -549,6 +549,7 @@ export function DevPanel({
     // Gyro simulation state
     const [gyroX, setGyroX] = useState(0);
     const [gyroY, setGyroY] = useState(0);
+    const isTutorialAdminOn = localStorage.getItem("immanence.tutorial.admin") === "1";
 
     // Toggle section
     const toggleSection = (section) => {
@@ -584,6 +585,15 @@ export function DevPanel({
     const openInspector = () => {
         setStoreSnapshot(devHelpers.getStoreSnapshot());
         setInspectorOpen(true);
+    };
+
+    const handleTutorialAdminToggle = () => {
+        if (isTutorialAdminOn) {
+            localStorage.removeItem("immanence.tutorial.admin");
+        } else {
+            localStorage.setItem("immanence.tutorial.admin", "1");
+        }
+        location.reload();
     };
 
     return (
@@ -1115,6 +1125,22 @@ export function DevPanel({
                         onToggle={() => toggleSection('tutorialTools')}
                         isLight={isLight}
                     >
+                        <div className="flex items-center justify-between mb-4 bg-white/5 rounded-lg px-3 py-2">
+                            <div className="flex flex-col">
+                                <span className="text-xs text-white/90">Tutorial Admin Mode</span>
+                                <span className="text-[10px] text-white/40">Enable tutorial edit controls</span>
+                            </div>
+                            <button
+                                onClick={handleTutorialAdminToggle}
+                                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${isTutorialAdminOn
+                                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                                    : 'bg-white/5 text-white/50 border border-white/10'
+                                    }`}
+                            >
+                                {isTutorialAdminOn ? 'ON' : 'OFF'}
+                            </button>
+                        </div>
+
                         <div className="flex items-center justify-between mb-4 bg-white/5 rounded-lg px-3 py-2">
                             <div className="flex flex-col">
                                 <span className="text-xs text-white/90">Coordinate Helper</span>

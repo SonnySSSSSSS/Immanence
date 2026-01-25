@@ -2,11 +2,13 @@
 // Settings panel with reset functionality for pilot testing
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
 import { supabase } from '../lib/supabaseClient';
 
-export function SettingsPanel({ isOpen, onClose }) {
+export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+  const resetSettings = useSettingsStore(s => s.resetSettings);
 
   if (!isOpen) return null;
 
@@ -34,6 +36,16 @@ export function SettingsPanel({ isOpen, onClose }) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    resetSettings();
+    clearSettingsPersistedState();
+    onClose?.();
+    onSignedOut?.();
+    try {
+      const baseUrl = import.meta.env.BASE_URL || "/";
+      window.history.replaceState(null, "", baseUrl);
+    } catch {
+      // Ignore history errors in non-browser contexts
+    }
   };
 
   return (

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { setAuthUser } from "../../state/useAuthUser";
 
-export default function AuthGate({ children }) {
+export default function AuthGate({ children, onAuthChange }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -16,12 +17,18 @@ export default function AuthGate({ children }) {
     supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted) return;
       if (error) console.error("[AuthGate] getSession error", error);
-      setSession(data?.session ?? null);
+      const nextSession = data?.session ?? null;
+      setSession(nextSession);
+      setAuthUser(nextSession?.user ?? null);
+      onAuthChange?.("INITIAL_SESSION", nextSession);
       setLoading(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession ?? null);
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+      const nextSession = newSession ?? null;
+      setSession(nextSession);
+      setAuthUser(nextSession?.user ?? null);
+      onAuthChange?.(event, nextSession);
     });
 
     return () => {

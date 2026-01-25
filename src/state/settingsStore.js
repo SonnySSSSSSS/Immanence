@@ -3,6 +3,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export const SETTINGS_PERSIST_KEY = 'immanence-settings';
+
+export function clearSettingsPersistedState() {
+    try {
+        localStorage.removeItem(SETTINGS_PERSIST_KEY);
+    } catch {
+        // Ignore storage errors (private mode, blocked storage, etc.)
+    }
+}
+
 export const useSettingsStore = create(
     persist(
         (set) => ({
@@ -176,7 +186,7 @@ export const useSettingsStore = create(
             }),
         }),
         {
-            name: 'immanence-settings',
+            name: SETTINGS_PERSIST_KEY,
             version: 1,
         }
     )

@@ -1,29 +1,25 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+
+let currentUser = null;
+const listeners = new Set();
+
+export function setAuthUser(user) {
+  currentUser = user ?? null;
+  listeners.forEach((listener) => listener(currentUser));
+}
 
 export function useAuthUser() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(currentUser);
 
   useEffect(() => {
-    let mounted = true;
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      setUser(data?.user ?? null);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user ?? null);
-    });
-
+    const handleChange = (nextUser) => setUser(nextUser);
+    listeners.add(handleChange);
     return () => {
-      mounted = false;
-      sub?.subscription?.unsubscribe?.();
+      listeners.delete(handleChange);
     };
   }, []);
 
-  return user;
+  return user ?? null;
 }
 
 export function getDisplayName(user) {
