@@ -72,7 +72,7 @@ echo.
 set /p choice="Select (1-9): "
 
 if "%choice%"=="1" goto SAVE_WORK
-if "%choice%"=="2" goto DEPLOY_WEB
+if "%choice%"=="2" goto deploy
 if "%choice%"=="3" goto SNAPSHOT
 if "%choice%"=="4" goto QUICK
 if "%choice%"=="5" goto RESTORE_BACKUP_LATEST
@@ -201,204 +201,110 @@ pause
 goto MENU
 
 :: ============================================================================
-:: 2) DEPLOY WEB (SAFE, TEMP CLONE)
+:: 2) DEPLOY WEB (SAFE)
 :: ============================================================================
-:DEPLOY_WEB
-call :REFRESH_STATUS
-cls
-echo.
-echo ========================================
-echo DEPLOY TO WEB (GitHub Pages)
-echo ========================================
-echo.
+:deploy
+setlocal EnableExtensions EnableDelayedExpansion
 
-:: Warn if dirty
-git diff-index --quiet HEAD --
-if errorlevel 1 (
-  echo [WARNING] You have uncommitted changes.
-  echo Recommend: run option 1 ^(Save Work^) first.
-  echo.
-  set /p "CONTINUE_DEPLOY=Continue anyway? [Y/N]: "
-  if /i not "!CONTINUE_DEPLOY!"=="Y" (
-    echo Cancelled.
-    pause
-    goto MENU
-  )
-)
+REM Ensure logs folder exists
+if not exist "logs" mkdir "logs" >nul 2>&1
+
+REM Timestamp for log name (YYYYMMDD-HHMMSS)
+for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value ^| find "="') do set "dt=%%I"
+set "ts=!dt:~0,8!-!dt:~8,6!"
+set "LOG=logs\deploy-!ts!.log"
 
 echo.
-echo This will:
-echo   1) npm run build
-echo   2) push dist -> gh-pages (via temp clone)
-echo   3) NOT touch your working tree
+echo.>> "!LOG!"
+echo ============================================
+echo ============================================>> "!LOG!"
+echo DEPLOY START  !date! !time!
+echo DEPLOY START  !date! !time!>> "!LOG!"
+echo Repo: %cd%
+echo Repo: %cd%>> "!LOG!"
+echo ============================================
+echo ============================================>> "!LOG!"
 echo.
-set /p "CONFIRM_DEPLOY=Deploy now? [Y/N]: "
-if /i not "!CONFIRM_DEPLOY!"=="Y" (
-  echo Cancelled.
-  pause
-  goto MENU
-)
+echo.>> "!LOG!"
 
-call :DO_DEPLOY
-set "DEPLOY_RESULT=%errorlevel%"
+call :run_step "git status"            git status
+if errorlevel 1 goto deploy_fail
+call :run_step "git fetch --prune"     git fetch --prune
+if errorlevel 1 goto deploy_fail
+call :run_step "npm ci (optional)"     npm ci
+if errorlevel 1 goto deploy_fail
+call :run_step "npm run build"         npm run build
+if errorlevel 1 goto deploy_fail
+
+REM If you use a specific deploy command, keep it here. Common patterns:
+REM - npm run deploy
+REM - npx gh-pages -d dist
+REM - git push origin main (or working) etc
+call :run_step "npm run deploy"        npm run deploy
+if errorlevel 1 goto deploy_fail
+
 echo.
-if "%DEPLOY_RESULT%"=="0" (
-    echo ========================================
-    echo DEPLOY SUCCESS
-    echo ========================================
-    echo Live at: %DEPLOY_URL%
-    echo.
-) else (
-    echo ========================================
-    echo DEPLOY FAILED
-    echo ========================================
-    echo Check the output above for the first error.
-    echo.
-)
+echo.>> "!LOG!"
+
+:deploy_fail
+echo.
+echo ============================================>> "%LOG%"
+echo DEPLOY FAILED  %date% %time%>> "%LOG%"
+echo ============================================>> "%LOG%"
+echo.
+echo !!! DEPLOY FAILED. See log: %LOG%
+echo.
 pause
+endlocal
+goto menu
+
+echo ============================================
+echo ============================================>> "!LOG!"
+echo DEPLOY SUCCESS  !date! !time!
+echo DEPLOY SUCCESS  !date! !time!>> "!LOG!"
+echo Log: !LOG!
+echo Log: !LOG!>> "!LOG!"
+echo ============================================
+echo ============================================>> "!LOG!"
+echo.
+pause
+endlocal
 goto MENU
 
-:DO_DEPLOY
-echo.
-echo ===============================
-echo [DEPLOY] Starting deploy step
-echo ===============================
-echo.
-echo ========================================
-echo DEPLOY (SAFE)
-echo ========================================
-echo.
+:run_step
+setlocal EnableExtensions EnableDelayedExpansion
 
-for /f "tokens=*" %%b in ('git branch --show-current 2^>nul') do set "ORIGINAL_BRANCH=%%b"
-for /f "tokens=*" %%h in ('git rev-parse HEAD 2^>nul') do set "ORIGINAL_COMMIT=%%h"
-echo [SAFETY] Branch: %ORIGINAL_BRANCH%
-echo [SAFETY] Commit: %ORIGINAL_COMMIT%
-echo.
-
-git ls-remote --exit-code --heads origin gh-pages >nul 2>&1
-if errorlevel 1 (
-  echo [DEPLOY] gh-pages branch missing. Creating...
-  git checkout --orphan gh-pages
-  if errorlevel 1 (
-    echo [DEPLOY] GIT COMMAND FAILED
-    echo [ERROR] Script exited at %~nx0 line %~nx0
-    pause
-    exit /b 1
-  )
-  git rm -rf .
-  echo.>index.html
-  git add index.html
-  git commit -m "Initialize gh-pages"
-  git push origin gh-pages
-  if errorlevel 1 (
-    echo [DEPLOY] GIT COMMAND FAILED
-    echo [ERROR] Script exited at %~nx0 line %~nx0
-    pause
-    exit /b 1
-  )
-  git checkout %ORIGINAL_BRANCH%
-  if errorlevel 1 (
-    echo [DEPLOY] GIT COMMAND FAILED
-    echo [ERROR] Script exited at %~nx0 line %~nx0
-    pause
-    exit /b 1
-  )
-)
-
-echo [DEPLOY] Running build...
-if exist "dist" rmdir /s /q "dist"
-call npm run build
-if errorlevel 1 (
-  echo [DEPLOY] BUILD FAILED
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-if not exist "dist" (
-  echo [DEPLOY] FAILED - dist folder missing
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-
-echo [DEPLOY] Writing .nojekyll
-echo.>dist\.nojekyll
-
-set "DEPLOY_TEMP=%TEMP%\immanence-gh-pages-deploy"
-if exist "%DEPLOY_TEMP%" rmdir /s /q "%DEPLOY_TEMP%"
-mkdir "%DEPLOY_TEMP%"
-
-echo [DEPLOY] Cloning gh-pages to temp...
-git clone --depth 1 --branch gh-pages "%DEPLOY_REPO%" "%DEPLOY_TEMP%" 2>&1
-if errorlevel 1 (
-  echo [DEPLOY] FAILED - could not clone gh-pages
-  echo [DEPLOY] GIT COMMAND FAILED
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-
-echo [DEPLOY] Replacing temp content...
-pushd "%DEPLOY_TEMP%"
-for /d %%d in (*) do if not "%%d"==".git" rmdir /s /q "%%d" 2>nul
-for %%f in (*) do if not "%%f"==".git" del /q "%%f" 2>nul
-popd
-
-robocopy "%PROJECT_DIR%\dist" "%DEPLOY_TEMP%" /E /R:1 /W:1 /NFL /NDL
-if errorlevel 8 (
-  echo [DEPLOY] FAILED - copy dist to temp failed
-  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-
-if not exist "%DEPLOY_TEMP%\404.html" (
-  echo [DEPLOY] Adding SPA 404 fallback
-  copy "%DEPLOY_TEMP%\index.html" "%DEPLOY_TEMP%\404.html" >nul
-)
-
-echo [DEPLOY] Committing + pushing from temp...
-pushd "%DEPLOY_TEMP%"
-git add -A
-git commit -m "Deploy v%CURRENT_VERSION%: %date% %time%" 2>&1
-if errorlevel 1 (
-  echo [DEPLOY] FAILED - nothing committed to gh-pages
-  popd
-  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-git push origin gh-pages 2>&1
-if errorlevel 1 (
-  echo [DEPLOY] GIT COMMAND FAILED
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-set "PUSH_RESULT=!errorlevel!"
-popd
-
-if %PUSH_RESULT% NEQ 0 (
-  echo [DEPLOY] FAILED - push gh-pages failed
-  rmdir /s /q "%DEPLOY_TEMP%" 2>nul
-  echo [ERROR] Script exited at %~nx0 line %~nx0
-  pause
-  exit /b 1
-)
-
-rmdir /s /q "%DEPLOY_TEMP%" 2>nul
+set "STEP_LABEL=%~1"
+shift
 
 echo.
-echo ========================================
-echo DEPLOY SUCCESS
-echo ========================================
-echo Live at: %DEPLOY_URL%
-echo.
-echo [DEPLOY] SUCCESS — gh-pages updated
-pause
-exit /b 0
+echo ---- %STEP_LABEL% ----
+echo ---- %STEP_LABEL% ---->> "%LOG%"
+
+REM Build CMDLINE from the remaining args (%1..), preserving any quotes
+set "CMDLINE="
+:rs_build
+if "%~1"=="" goto rs_built
+set "CMDLINE=!CMDLINE! %1"
+shift
+goto rs_build
+
+:rs_built
+REM Trim leading space
+if defined CMDLINE set "CMDLINE=!CMDLINE:~1!"
+
+echo CMD: !CMDLINE!
+echo CMD: !CMDLINE!>> "%LOG%"
+
+set "STEP_LOG=%TEMP%\deploy-step-%RANDOM%-%RANDOM%.log"
+call !CMDLINE! 1>"!STEP_LOG!" 2>&1
+set "EC=!errorlevel!"
+
+type "!STEP_LOG!"
+type "!STEP_LOG!" 1>> "%LOG%"
+del "!STEP_LOG!" 1>nul 2>&1
+
+endlocal & exit /b %EC%
 
 :: ============================================================================
 :: 3) SNAPSHOT (TIMESTAMPED)
