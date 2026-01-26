@@ -148,40 +148,109 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
           key={practiceId} 
           className="relative px-8 animate-in fade-in duration-300"
         >
-          {/* Practice Title & Icon */}
-          <div className="flex flex-col items-center text-center" style={{ marginTop: '20px', marginBottom: practiceId === 'breath' ? '16px' : '24px' }}>
-            {/* Small decorative star */}
-            <div
-              style={{
-                fontSize: '18px',
-                color: '#D4AF37',
-                textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
-                marginBottom: '16px'
-              }}
-            >
-              ✦
+          {/* Practice Title & Icon - or Title-Tabs for subMode practices */}
+          {hasSubModes ? (
+            // Title-tabs for practices with subModes (Awareness, Perception, Resonance)
+            <div className="flex items-center justify-center gap-4" style={{ marginTop: '20px', marginBottom: '24px' }}>
+              {Object.entries(p.subModes).map(([modeKey, modeConfig], idx) => {
+                const isActive = activeMode === modeKey;
+                return (
+                  <React.Fragment key={modeKey}>
+                    <button
+                      type="button"
+                      onClick={() => setters.setActiveMode?.(modeKey)}
+                      aria-selected={isActive}
+                      aria-label={`${modeConfig.label} mode`}
+                      className="practice-title-tab transition-all"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
+                        paddingBottom: '4px',
+                        cursor: 'pointer',
+                        transition: 'all 300ms ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.color = 'rgba(212, 175, 55, 0.7)';
+                          e.currentTarget.style.opacity = '0.8';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.color = 'rgba(245, 230, 211, 0.45)';
+                          e.currentTarget.style.opacity = '1';
+                        }
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.outline = '2px solid rgba(212, 175, 55, 0.6)';
+                        e.currentTarget.style.outlineOffset = '4px';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.outline = 'none';
+                      }}
+                    >
+                      {modeConfig.label}
+                    </button>
+                    {idx < Object.keys(p.subModes).length - 1 && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: 'rgba(212, 175, 55, 0.7)',
+                          userSelect: 'none',
+                        }}
+                      >
+                        /
+                      </span>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
-            
-            {/* Title with proper typography */}
-            <h2 style={{ 
-              fontFamily: 'var(--font-display)', 
-              fontSize: '16px', 
-              fontWeight: 600,
-              letterSpacing: '0.12em', 
-              textTransform: 'uppercase',
-              color: '#F5E6D3',
-              marginBottom: practiceId === 'breath' ? '8px' : '0'
-            }}>
-              {p.label}
-            </h2>
-            
-            {/* Inline subtitle for breath intentionally removed (redundant with inputs below) */}
-            {p.id === 'ritual' && (
-              <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
-                Select an invocation to begin
-              </p>
-            )}
-          </div>
+          ) : (
+            // Standard title header for practices without subModes
+            <div className="flex flex-col items-center text-center" style={{ marginTop: '20px', marginBottom: '24px' }}>
+              {/* Small decorative star */}
+              <div
+                style={{
+                  fontSize: '18px',
+                  color: '#D4AF37',
+                  textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
+                  marginBottom: '16px'
+                }}
+              >
+                ✦
+              </div>
+
+              {/* Title with proper typography */}
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '16px',
+                fontWeight: 600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: '#F5E6D3',
+                marginBottom: '0'
+              }}>
+                {p.label}
+              </h2>
+
+              {/* Inline subtitle for ritual practices */}
+              {p.id === 'ritual' && (
+                <p className="mt-2 uppercase" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontWeight: 500, letterSpacing: '0.03em', fontSize: '10px', opacity: 0.5 }}>
+                  Select an invocation to begin
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Dynamic Config Panel */}
           <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
@@ -405,56 +474,6 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                </>
              ) : hasSubModes ? (
                <div>
-                 {/* Sub-mode Toggle */}
-                 <div style={{ marginBottom: '24px' }}>
-                   <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: '12px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-                     Select Mode
-                   </div>
-                   <div className="flex gap-3 justify-center flex-wrap">
-                     {Object.entries(p.subModes).map(([modeKey, modeConfig]) => (
-                       <button
-                         key={modeKey}
-                         onClick={() => setters.setActiveMode?.(modeKey)}
-                         style={{
-                           fontFamily: 'var(--font-display)',
-                           fontSize: '10px',
-                           fontWeight: 600,
-                           letterSpacing: '0.12em',
-                           textTransform: 'uppercase',
-                           padding: '10px 16px',
-                           borderRadius: '8px',
-                           border: activeMode === modeKey 
-                             ? '1.5px solid var(--accent-color)' 
-                             : '1px solid rgba(255,255,255,0.2)',
-                           background: activeMode === modeKey 
-                             ? 'rgba(212, 175, 55, 0.15)' 
-                             : 'rgba(255,255,255,0.03)',
-                           color: activeMode === modeKey 
-                             ? 'var(--accent-color)' 
-                             : 'rgba(255,255,255,0.6)',
-                           cursor: 'pointer',
-                           transition: 'all 200ms',
-                           boxShadow: activeMode === modeKey 
-                             ? '0 0 16px rgba(212, 175, 55, 0.3)' 
-                             : 'none',
-                         }}
-                         onMouseEnter={(e) => {
-                           if (activeMode !== modeKey) {
-                             e.target.style.background = 'rgba(255,255,255,0.08)';
-                           }
-                         }}
-                         onMouseLeave={(e) => {
-                           if (activeMode !== modeKey) {
-                             e.target.style.background = 'rgba(255,255,255,0.03)';
-                           }
-                         }}
-                       >
-                         {modeConfig.label}
-                       </button>
-                     ))}
-                   </div>
-                 </div>
-
                  {/* Render the Config for the active sub-mode */}
                  {ActiveSubModeConfig ? (
                    <ActiveSubModeConfig 
