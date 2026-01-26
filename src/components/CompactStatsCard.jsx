@@ -450,8 +450,17 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    const getPracticeSessionTotals = useProgressStore(s => s.getPracticeSessionTotals);
-    const practiceTotals = getPracticeSessionTotals?.() || { sessionsCount: 0, minutesTotal: 0 };
+    const sessionsCount = useProgressStore(s => s.sessions.length);
+    const getStatsByDomain = useProgressStore(s => s.getStatsByDomain);
+    const statsByDomainAll = getStatsByDomain?.({ range: 'ALL' }) || {};
+    const practiceTotals = Object.values(statsByDomainAll).reduce(
+        (acc, stat) => {
+            acc.sessionsCount += stat?.count || 0;
+            acc.minutesTotal += stat?.totalMinutes || 0;
+            return acc;
+        },
+        { sessionsCount: 0, minutesTotal: 0 }
+    );
     const streak = streakInfo?.current ?? streakInfo?.currentStreak ?? 0;
 
     // Get stage from theme
@@ -539,7 +548,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
 
     const currentDomain = domainConfig[domain] || domainConfig.wisdom;
     const getTrajectory = useProgressStore(s => s.getTrajectory);
-    const sessionsCount = useProgressStore(s => s.sessions.length);
     
     const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount]);
     
@@ -782,33 +790,23 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
                     />
                 </div>
 
-                {/* Bottom Section - Archive Link */}
-                <div className="mt-3 flex items-center justify-center gap-6 px-2">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenArchive?.(ARCHIVE_TABS.ALL);
-                        }}
-                        className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                        style={{ color: config.textMain }}
-                    >
-                        ? VIEW ARCHIVE ?
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenReports?.(REPORT_DOMAINS.PRACTICE);
-                        }}
-                        className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                        style={{ color: config.textMain }}
-                    >
-                        ? REPORTS ?
-                    </button>
-                </div>
-            </div>
-                </div>
-            </div>
-        </div>
+                 {/* Bottom Section - Archive Link */}
+                 <div className="mt-3 flex items-center justify-center gap-6 px-2">
+                     <button
+                         onClick={(e) => {
+                             e.stopPropagation();
+                             onOpenArchive?.(ARCHIVE_TABS.ALL);
+                         }}
+                         className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                         style={{ color: config.textMain }}
+                     >
+                         ? VIEW ARCHIVE ?
+                     </button>
+                 </div>
+             </div>
+                 </div>
+             </div>
+         </div>
     </div>
 
     {/* Dev Panel */}

@@ -38,8 +38,7 @@ const DOMAIN_OPTIONS = [
     { key: 'wisdom', label: 'Wisdom' },
     { key: 'application', label: 'Application' },
     { key: 'ritual', label: 'Rituals' },
-    { key: 'portfolio', label: 'Portfolio' },
-    { key: 'lifetime', label: 'Lifetime' }
+    { key: 'portfolio', label: 'Portfolio' }
 ];
 
 const filterByRange = (events, start, end, getTimestamp) => {
@@ -61,6 +60,7 @@ const buildDeltaLine = (label, currentValue, previousValue, unit = '') => {
 
 export function ReportsPanel({ initialReportDomain = 'practice' }) {
     const sessions = useProgressStore(s => s.sessions);
+    const getStatsByDomain = useProgressStore(s => s.getStatsByDomain);
     const streakLongest = useProgressStore(s => s.streak?.longest || 0);
     const annualRollups = useProgressStore(s => s.annualRollups || []);
     const lifetimeMilestones = useProgressStore(s => s.lifetimeMilestones || {});
@@ -81,7 +81,10 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
     const isSanctuary = viewportMode === 'sanctuary';
     const chartWidth = isSanctuary ? 520 : 320;
 
-    const [activeDomain, setActiveDomain] = useState(initialReportDomain || 'practice');
+    const normalizedInitialDomain = DOMAIN_OPTIONS.some(d => d.key === initialReportDomain)
+        ? initialReportDomain
+        : 'practice';
+    const [activeDomain, setActiveDomain] = useState(normalizedInitialDomain);
     const [rangeKey, setRangeKey] = useState('30D');
     const [compareOn, setCompareOn] = useState(false);
     const [reportOutput, setReportOutput] = useState(null);
@@ -199,6 +202,16 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
     }, [unifiedEventsInRange, sessions, streakLongest]);
 
     const practiceData = useMemo(() => {
+        const statsByDomain = getStatsByDomain?.({ range: rangeKey }) || {};
+        const totals = Object.values(statsByDomain).reduce(
+            (acc, stat) => {
+                acc.totalSessions += stat?.count || 0;
+                acc.totalMinutes += stat?.totalMinutes || 0;
+                return acc;
+            },
+            { totalSessions: 0, totalMinutes: 0 }
+        );
+
         const buckets = bucketByTime(sessionsInRange, bucketKind, s => s.date || s.timestamp).map((bucket) => {
             const minutes = bucket.items.reduce((sum, s) => sum + (s.duration || 0), 0);
             const accuracyValues = bucket.items
@@ -215,8 +228,6 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
                 count: bucket.items.length
             };
         });
-        const totalMinutes = buckets.reduce((sum, b) => sum + b.minutes, 0);
-        const totalSessions = sessionsInRange.length;
         const hasAccuracy = buckets.some(b => b.accuracy !== null);
 
         const weekdayCounts = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((label, index) => {
@@ -230,12 +241,12 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
 
         return {
             buckets,
-            totalMinutes,
-            totalSessions,
+            totalMinutes: totals.totalMinutes,
+            totalSessions: totals.totalSessions,
             hasAccuracy,
             weekdayCounts
         };
-    }, [sessionsInRange, bucketKind]);
+    }, [sessionsInRange, bucketKind, getStatsByDomain, rangeKey]);
 
     const practiceCompare = useMemo(() => {
         if (!compareRange) return null;
@@ -482,7 +493,7 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
         },
         {
             key: 'lifetime-insights',
-            domain: 'lifetime',
+            domain: 'portfolio',
             node: (
                 <LifetimeInsightsReport
                     lifetimeMilestones={lifetimeMilestones}
@@ -526,6 +537,7 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
     ]);
 
     const visibleReports = reportList.filter(report => report.domain === activeDomain);
+    const filteredReports = visibleReports.filter(report => report.key !== 'lifetime-insights' || rangeKey === 'ALL');
 
     const reportText = useMemo(() => {
         if (!reportOutput) return '';
@@ -667,7 +679,7 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {visibleReports.map(report => (
+                {filteredReports.map(report => (
                     <React.Fragment key={report.key}>{report.node}</React.Fragment>
                 ))}
             </div>

@@ -52,6 +52,16 @@ function StreakDisplay({ streak }) {
     return <span className="inline-block">{fireEmoji}</span>;
 }
 
+function getNewestDateKey(sessions = []) {
+    let newest = null;
+    sessions.forEach((session) => {
+        const key = session?.dateKey;
+        if (!key) return;
+        if (!newest || key > newest) newest = key;
+    });
+    return newest;
+}
+
 // SessionCard mini-component: displays type, duration, precision
 function SessionCard({ session, isLight }) {
     const practiceTypeLabels = {
@@ -181,9 +191,12 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
             ...generateMockSessions('wisdom', pattern.wisdom)
         ];
 
-        useProgressStore.setState({ 
-            sessions: [...realSessions, ...mockSessions]
-        });
+        const nextSessions = [...realSessions, ...mockSessions];
+        const newestDateKey = mockSessions.length > 0 ? getNewestDateKey(nextSessions) : null;
+        useProgressStore.setState((state) => ({
+            sessions: nextSessions,
+            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
+        }));
         console.log(`✅ Injected ${mockSessions.length} mock sessions (${pattern.label})`);
     }
 
@@ -213,12 +226,17 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
             });
         }
 
-        useProgressStore.setState({ 
-            sessions: [...sessions, ...newSessions],
-            streak: {
-                ...streak,
-                longest: Math.max(streak?.longest || 0, currentStreak + days)
-            }
+        useProgressStore.setState((state) => {
+            const nextSessions = [...state.sessions, ...newSessions];
+            const newestDateKey = newSessions.length > 0 ? getNewestDateKey(nextSessions) : null;
+            return {
+                sessions: nextSessions,
+                streak: {
+                    ...state.streak,
+                    ...(newestDateKey ? { lastPracticeDate: newestDateKey } : {}),
+                    longest: Math.max(state.streak?.longest || 0, currentStreak + days)
+                }
+            };
         });
         console.log(`✅ Added ${days} streak days`);
     }
@@ -300,9 +318,12 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
         
         mockSessions.sort((a, b) => new Date(a.date) - new Date(b.date));
         
-        useProgressStore.setState({ 
-            sessions: [...realSessions, ...mockSessions]
-        });
+        const nextSessions = [...realSessions, ...mockSessions];
+        const newestDateKey = mockSessions.length > 0 ? getNewestDateKey(nextSessions) : null;
+        useProgressStore.setState((state) => ({
+            sessions: nextSessions,
+            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
+        }));
         
         useProgressStore.getState().updateLifetimeTracking();
         
@@ -422,9 +443,12 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
             }
         }
 
-        useProgressStore.setState({ 
-            sessions: [...realSessions, ...newSessions]
-        });
+        const nextSessions = [...realSessions, ...newSessions];
+        const newestDateKey = getNewestDateKey(nextSessions);
+        useProgressStore.setState((state) => ({
+            sessions: nextSessions,
+            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
+        }));
         console.log(`⏱️ Injected ${pattern} timing pattern (7 days)`);
     }
 
@@ -1404,7 +1428,11 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
         ];
 
         // Inject into store (this will overwrite existing sessions)
-        useProgressStore.setState({ sessions: mockSessions });
+        const newestDateKey = mockSessions.length > 0 ? getNewestDateKey(mockSessions) : null;
+        useProgressStore.setState((state) => ({
+            sessions: mockSessions,
+            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
+        }));
         console.log(`✅ Injected ${mockSessions.length} mock sessions (${pattern.label})`);
     };
 

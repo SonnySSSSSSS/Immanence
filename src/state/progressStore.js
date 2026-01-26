@@ -4,19 +4,120 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getDateKey, getWeekStart } from '../utils/dateUtils';
+import { getDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils';
 import { usePathStore } from './pathStore';
 import { useLunarStore } from './lunarStore';
 import { triggerWeeklyAggregation } from './attentionStore';
 import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking';
 
-// Helper: get days between two date keys
+// ========================================
+// V2 COMPATIBILITY HELPERS
+// ========================================
+
+const IS_DEV =
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
+    (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production');
+
+let hasWarnedLegacyOnly = false;
+
+function resolveSessionTimestamp(session) {
+    const raw =
+        session?.date ||
+        session?.timestamp ||
+        session?.startedAt ||
+        session?.endedAt ||
+        null;
+
+    if (raw) return raw;
+    if (session?.dateKey) return `${session.dateKey}T00:00:00`;
+    return null;
+}
+
+function resolveSessionDateKey(session) {
+    if (session?.dateKey) return session.dateKey;
+    const raw = resolveSessionTimestamp(session);
+    if (!raw) return null;
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return null;
+    return getDateKey(date);
+}
+
+function inferDomainFromV2Session(sessionV2) {
+    const explicit = sessionV2?.domain || sessionV2?.practiceDomain || null;
+    if (explicit) return explicit;
+
+    const practiceId = String(sessionV2?.practiceId || '').toLowerCase();
+    const practiceMode = String(sessionV2?.practiceMode || '').toLowerCase();
+    const token = `${practiceId} ${practiceMode}`.trim();
+
+    if (token.includes('breath') || practiceId === 'breath') return 'breathwork';
+    if (token.includes('visual') || token.includes('cymatic') || token.includes('photic')) return 'visualization';
+    if (token.includes('sound')) return 'sound';
+    if (token.includes('ritual') || practiceId === 'integration') return 'ritual';
+    if (token.includes('feel')) return 'focus';
+    if (token.includes('vipassana') || practiceId === 'awareness') return 'focus';
+    if (practiceId === 'circuit') return 'circuit-training';
+
+    return 'unknown';
+}
+
+function asLegacySessionFromV2(sessionV2) {
+    const iso = resolveSessionTimestamp(sessionV2);
+    const dateKey = resolveSessionDateKey(sessionV2);
+    const durationMinutes =
+        typeof sessionV2?.durationSec === 'number'
+            ? sessionV2.durationSec / 60
+            : null;
+
+    return {
+        id: sessionV2?.id || null,
+        date: iso,
+        dateKey,
+        domain: inferDomainFromV2Session(sessionV2),
+        duration: typeof durationMinutes === 'number' ? durationMinutes : 0,
+        metadata: sessionV2?.configSnapshot || sessionV2?.metadata || {},
+        _source: 'sessionsV2',
+    };
+}
+
+/**
+ * Canonical session accessor.
+ * Precedence: normalize `sessionsV2` first, then append legacy `sessions` as fallback.
+ * This keeps V2 authoritative while preserving backward compatibility with existing data.
+ */
+function getCanonicalSessions(state) {
+    const legacy = Array.isArray(state?.sessions) ? state.sessions : [];
+    const v2 = Array.isArray(state?.sessionsV2) ? state.sessionsV2 : [];
+
+    if (IS_DEV && !hasWarnedLegacyOnly && legacy.length > 0 && v2.length === 0) {
+        console.warn('[progressStore] legacy-only sessions detected; consider migrating to sessionsV2.');
+        hasWarnedLegacyOnly = true;
+    }
+
+    const v2AsLegacy = v2.map(asLegacySessionFromV2).filter(s => !!s.dateKey && !!s.date);
+    return [...v2AsLegacy, ...legacy];
+}
+
+function deriveLastPracticeDateFromEvents(state) {
+    const sessions = getCanonicalSessions(state);
+    const honorLogs = Array.isArray(state?.honorLogs) ? state.honorLogs : [];
+
+    const keys = [];
+    for (const s of sessions) {
+        if (s?.dateKey) keys.push(s.dateKey);
+    }
+    for (const h of honorLogs) {
+        if (h?.dateKey) keys.push(h.dateKey);
+    }
+
+    if (keys.length === 0) return null;
+    keys.sort();
+    return keys[keys.length - 1] || null;
+}
+
+// Helper: get days between two UTC date keys
 function daysBetween(dateKey1, dateKey2) {
-    if (!dateKey1 || !dateKey2) return Infinity;
-    const d1 = new Date(dateKey1);
-    const d2 = new Date(dateKey2);
-    const diffMs = Math.abs(d2 - d1);
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return diffDateKeysInDays(dateKey1, dateKey2);
 }
 
 // Helper: check if date is today
@@ -24,11 +125,11 @@ function isToday(dateKey) {
     return dateKey === getDateKey();
 }
 
-// Helper: check if date is yesterday
+// Helper: check if date is yesterday (UTC date keys)
 function isYesterday(dateKey) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return dateKey === getDateKey(yesterday);
+    const todayKey = getDateKey();
+    const yesterdayKey = addDaysToDateKey(todayKey, -1);
+    return dateKey === yesterdayKey;
 }
 
 export const useProgressStore = create(
@@ -176,6 +277,7 @@ export const useProgressStore = create(
 
             /**
              * Delete a session
+             * Legacy-only: edit/delete flows still operate on legacy session entries.
              */
             deleteSession: (sessionId) => {
                 const state = get();
@@ -196,6 +298,7 @@ export const useProgressStore = create(
 
             /**
              * Update session journal or metadata
+             * Legacy-only: journal edits currently target legacy sessions.
              */
             updateSession: (sessionId, updates) => {
                 set(state => ({
@@ -244,6 +347,8 @@ export const useProgressStore = create(
              */
             getStreakInfo: () => {
                 const state = get();
+                const effectiveLastPracticeDate =
+                    state?.streak?.lastPracticeDate || deriveLastPracticeDateFromEvents(state);
 
                 if (state.vacation.active) {
                     return {
@@ -256,7 +361,7 @@ export const useProgressStore = create(
                 }
 
                 const current = deriveCurrentStreak(state);
-                const { lastPracticeDate } = state.streak;
+                const lastPracticeDate = effectiveLastPracticeDate;
 
                 return {
                     current,
@@ -272,7 +377,9 @@ export const useProgressStore = create(
              */
             getDomainStats: (domain) => {
                 const state = get();
-                const domainSessions = state.sessions.filter(s => s.domain === domain);
+                const practiceSessions = getCanonicalSessions(state);
+                const legacyDomainSessions = (Array.isArray(state.sessions) ? state.sessions : []).filter(s => s.domain === domain);
+                const domainSessions = practiceSessions.filter(s => s.domain === domain);
                 const domainHonor = state.honorLogs.filter(h => h.domain === domain);
 
                 // Map domain to consistency history types
@@ -307,14 +414,14 @@ export const useProgressStore = create(
                 if (domain === 'breathwork') {
                     // Count pattern types (using subType which is the pattern name like 'Box', '4-7-8')
                     const patterns = {};
-                    domainSessions.forEach(s => {
+                    legacyDomainSessions.forEach(s => {
                         // Use subType (pattern name) not pattern (the object)
                         const p = s.metadata?.subType || 'custom';
                         patterns[p] = (patterns[p] || 0) + 1;
                     });
 
                     // Calculate avg accuracy
-                    const accuracies = domainSessions
+                    const accuracies = legacyDomainSessions
                         .map(s => s.metadata?.accuracy)
                         .filter(a => typeof a === 'number');
                     const avgAccuracy = accuracies.length > 0
@@ -388,10 +495,11 @@ export const useProgressStore = create(
             getWeeklyPattern: () => {
                 const state = get();
                 const weekStart = getWeekStart();
+                const practiceSessions = getCanonicalSessions(state);
 
                 // Collect all practice dates this week
                 const allDates = new Set([
-                    ...state.sessions.map(s => s.dateKey),
+                    ...practiceSessions.map(s => s.dateKey),
                     ...state.honorLogs.map(h => h.dateKey)
                 ]);
 
@@ -411,7 +519,8 @@ export const useProgressStore = create(
              */
             getHonorStatus: () => {
                 const state = get();
-                const totalPractices = state.sessions.length + state.honorLogs.length;
+                const practiceSessions = getCanonicalSessions(state);
+                const totalPractices = practiceSessions.length + state.honorLogs.length;
                 const honorCount = state.honorLogs.length;
                 const ratio = totalPractices > 0 ? honorCount / totalPractices : 0;
 
@@ -448,42 +557,35 @@ export const useProgressStore = create(
              */
             getSessionsWithJournal: () => {
                 const state = get();
+                const sessions = getCanonicalSessions(state);
                 // We'll return the filtered array. Note: In Zustand, if we want actual memoization
                 // against the sessions array specifically, we'd usually use a creation function 
                 // or a selector outside the store, but adding it here as a helper is common.
                 // However, the infinite loop in components usually happens because of:
                 // const filtered = useStore(s => s.sessions.filter(...))
                 // This creates a new array every time ANY part of the state changes.
-                return state.sessions.filter(s => s.journal);
+                return sessions.filter(s => s.journal);
             },
 
             /**
              * Get all sessions (chronological)
              */
             getSessions: () => {
-                return get().sessions;
+                const state = get();
+                return getCanonicalSessions(state);
             },
 
             /**
              * Get totals from practice sessions only (spine)
              */
             getPracticeSessionTotals: () => {
-                const sessions = get().sessions;
+                const state = get();
+                const sessions = getCanonicalSessions(state);
                 const minutesTotal = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
                 const sessionsCount = sessions.length;
                 const isDev =
                     (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
                     (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production');
-                if (isDev) {
-                    const expectedCount = Array.isArray(get().sessions) ? get().sessions.length : 0;
-                    if (sessionsCount !== expectedCount) {
-                        console.warn('[progressStore.getPracticeSessionTotals] Session count mismatch', {
-                            sessionsCount,
-                            expectedCount,
-                            note: 'Check session migration or sessionRecorder writes.'
-                        });
-                    }
-                }
                 return {
                     sessionsCount,
                     minutesTotal
@@ -495,9 +597,10 @@ export const useProgressStore = create(
              */
             getAllStats: () => {
                 const state = get();
+                const sessions = getCanonicalSessions(state);
                 const domainTotals = {};
 
-                state.sessions.forEach(s => {
+                sessions.forEach(s => {
                     const key = s.domain || 'unknown';
                     if (!domainTotals[key]) {
                         domainTotals[key] = { count: 0, totalMinutes: 0 };
@@ -510,19 +613,67 @@ export const useProgressStore = create(
             },
 
             /**
+             * Canonical selector: sessions/minutes by domain, optionally windowed.
+             *
+             * @param {{ range: '30D'|'90D'|'12M'|'ALL' }} params
+             * @returns {Record<string, { count: number, totalMinutes: number }>}
+             */
+            getStatsByDomain: ({ range } = {}) => {
+                const state = get();
+                const sessions = getCanonicalSessions(state);
+
+                if (!range || range === 'ALL') {
+                    return state.getAllStats();
+                }
+
+                const end = new Date();
+                end.setHours(23, 59, 59, 999);
+
+                const days = range === '30D' ? 30 : range === '90D' ? 90 : 365;
+                const start = new Date(end);
+                start.setDate(start.getDate() - (days - 1));
+                start.setHours(0, 0, 0, 0);
+
+                const domainTotals = {};
+
+                sessions.forEach((session) => {
+                    const raw = resolveSessionTimestamp(session);
+                    if (!raw) return;
+                    const date = new Date(raw);
+                    if (Number.isNaN(date.getTime())) return;
+                    if (date < start || date > end) return;
+
+                    const key = session?.domain || 'unknown';
+                    if (!domainTotals[key]) {
+                        domainTotals[key] = { count: 0, totalMinutes: 0 };
+                    }
+                    domainTotals[key].count += 1;
+                    domainTotals[key].totalMinutes += session?.duration || 0;
+                });
+
+                return domainTotals;
+            },
+
+            /**
              * Get timing offsets for the past 7 days (Mon-Sun)
              * Uses average time-of-day as the baseline when no schedule exists
              */
             getWeeklyTimingOffsets: (domain = 'breathwork') => {
                 const state = get();
+                const practiceSessions = getCanonicalSessions(state);
                 const now = new Date();
                 const weekStart = getWeekStart(now);
                 weekStart.setHours(0, 0, 0, 0);
 
-                const weekSessions = state.sessions.filter(s => s.domain === domain).filter(s => {
-                    const sDate = new Date(s.date);
-                    return sDate >= weekStart && sDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-                });
+                const weekSessions = practiceSessions
+                    .filter(s => s.domain === domain)
+                    .filter(s => {
+                        const raw = resolveSessionTimestamp(s);
+                        if (!raw) return false;
+                        const sDate = new Date(raw);
+                        if (Number.isNaN(sDate.getTime())) return false;
+                        return sDate >= weekStart && sDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    });
 
                 if (weekSessions.length === 0) {
                     return Array.from({ length: 7 }, (_, i) => {
@@ -537,7 +688,7 @@ export const useProgressStore = create(
                     return d.getHours() * 60 + d.getMinutes();
                 };
 
-                const allMinutes = weekSessions.map(s => toMinutes(s.date));
+                const allMinutes = weekSessions.map(s => toMinutes(resolveSessionTimestamp(s)));
                 const baseline = allMinutes.reduce((a, b) => a + b, 0) / allMinutes.length;
 
                 const weekOffsets = [];
@@ -546,14 +697,14 @@ export const useProgressStore = create(
                     d.setDate(weekStart.getDate() + i);
                     const dateKey = getDateKey(d);
 
-                    const daySessions = weekSessions.filter(s => s.dateKey === dateKey);
+                    const daySessions = weekSessions.filter(s => resolveSessionDateKey(s) === dateKey);
                     if (daySessions.length === 0) {
                         weekOffsets.push({ dateKey, offsetMinutes: null, practiced: false });
                         continue;
                     }
 
                     const dayAvg = daySessions
-                        .map(s => toMinutes(s.date))
+                        .map(s => toMinutes(resolveSessionTimestamp(s)))
                         .reduce((a, b) => a + b, 0) / daySessions.length;
 
                     weekOffsets.push({
@@ -571,6 +722,7 @@ export const useProgressStore = create(
              */
             getTrajectory: (weekCount = 8) => {
                 const state = get();
+                const practiceSessions = getCanonicalSessions(state);
                 const weeks = [];
 
                 for (let offset = weekCount - 1; offset >= 0; offset--) {
@@ -582,8 +734,11 @@ export const useProgressStore = create(
                     const endOfWeek = new Date(startOfWeek);
                     endOfWeek.setDate(startOfWeek.getDate() + 7);
 
-                    const weekSessions = state.sessions.filter(s => {
-                        const sDate = new Date(s.date);
+                    const weekSessions = practiceSessions.filter(s => {
+                        const raw = resolveSessionTimestamp(s);
+                        if (!raw) return false;
+                        const sDate = new Date(raw);
+                        if (Number.isNaN(sDate.getTime())) return false;
                         return sDate >= startOfWeek && sDate < endOfWeek;
                     });
 
@@ -712,7 +867,7 @@ export const useProgressStore = create(
              */
             updateLifetimeTracking: () => {
                 const state = get();
-                const sessions = state.sessions || [];
+                const sessions = getCanonicalSessions(state);
                 
                 // Recompute annual rollups
                 const annualRollups = updateAnnualRollups(sessions);
@@ -782,20 +937,22 @@ function calculateStreakUpdate(state, dateKey) {
  * (We don't store current, we derive it)
  */
 function deriveCurrentStreak(state) {
-    const { lastPracticeDate } = state.streak;
+    const lastPracticeDate =
+        state?.streak?.lastPracticeDate || deriveLastPracticeDateFromEvents(state);
 
     if (!lastPracticeDate) return 0;
 
-    const today = getDateKey();
+    const todayKey = getDateKey();
+    const yesterdayKey = addDaysToDateKey(todayKey, -1);
 
     // If practiced today, streak is at least 1
-    if (lastPracticeDate === today) {
+    if (lastPracticeDate === todayKey) {
         // Count consecutive days backwards from today
         return countConsecutiveDays(state);
     }
 
     // If practiced yesterday, streak still valid but at risk
-    if (isYesterday(lastPracticeDate)) {
+    if (lastPracticeDate === yesterdayKey) {
         return countConsecutiveDays(state);
     }
 
@@ -808,30 +965,32 @@ function deriveCurrentStreak(state) {
  */
 function countConsecutiveDays(state) {
     // Get all unique practice dates
+    const practiceSessions = getCanonicalSessions(state);
     const allDates = new Set([
-        ...state.sessions.map(s => s.dateKey),
+        ...practiceSessions.map(s => s.dateKey),
         ...state.honorLogs.map(h => h.dateKey)
     ]);
 
     if (allDates.size === 0) return 0;
 
-    // Start from today and count backwards
+    // Start from today (UTC key) and count backwards using date-key arithmetic
     let count = 0;
-    let current = new Date();
+    const todayKey = getDateKey();
+    let currentKey = todayKey;
 
     // If practiced today, start counting from today
     // If not, check if practiced yesterday to continue counting
-    if (!allDates.has(getDateKey(current))) {
-        current.setDate(current.getDate() - 1);
-        if (!allDates.has(getDateKey(current))) {
+    if (!allDates.has(currentKey)) {
+        currentKey = addDaysToDateKey(todayKey, -1);
+        if (!currentKey || !allDates.has(currentKey)) {
             return 0; // Neither today nor yesterday
         }
     }
 
     // Count consecutive days backwards
-    while (allDates.has(getDateKey(current))) {
+    while (currentKey && allDates.has(currentKey)) {
         count++;
-        current.setDate(current.getDate() - 1);
+        currentKey = addDaysToDateKey(currentKey, -1);
     }
 
     return count;
