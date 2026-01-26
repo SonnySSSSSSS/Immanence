@@ -114,22 +114,24 @@ export function PracticeMenuHeader({
         <div />
       </div>
 
-      {/* Title row: centered title on its own line */}
-      <div className="practiceMenuHeaderTitleRow">
-        <div
-          className="practiceMenuHeaderTitle"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '16px',
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#F5E6D3',
-          }}
-        >
-          {title}
+      {/* Title row: centered title on its own line (only render if title provided) */}
+      {title && (
+        <div className="practiceMenuHeaderTitleRow">
+          <div
+            className="practiceMenuHeaderTitle"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '16px',
+              fontWeight: 600,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: '#F5E6D3',
+            }}
+          >
+            {title}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Optional children (e.g., submode toggles) */}
       {children}

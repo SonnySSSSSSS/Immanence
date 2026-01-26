@@ -381,7 +381,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.25.50
+                        v3.25.52
                     </div>
                   </div>
 

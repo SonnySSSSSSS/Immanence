@@ -37,14 +37,14 @@ function BreathPracticeCard({
       {practiceId === 'breath' && (
         <div
           style={{
-            fontSize: '9px',
+            fontSize: '14px',
             fontFamily: 'var(--font-display)',
             fontWeight: 600,
-            letterSpacing: '0.15em',
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: 'rgba(245, 230, 211, 0.5)',
+            color: '#F5E6D3',
             marginTop: '20px',
-            marginBottom: '12px',
+            marginBottom: '24px',
             textAlign: 'center',
           }}
         >

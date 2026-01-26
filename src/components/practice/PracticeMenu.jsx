@@ -74,54 +74,36 @@ function PracticeMenu({
     <div className="min-h-[100px]" style={{ marginBottom: configPanelMarginBottom }}>
       {hasSubModes ? (
         <div>
-          {/* Sub-mode Toggle */}
-          <div style={{ marginBottom: '24px' }}>
-            <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: '12px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-              Select Mode
-            </div>
-            <div className="flex gap-3 justify-center flex-wrap">
-              {Object.entries(practice.subModes).map(([modeKey, modeConfig]) => (
-                <button
-                  key={modeKey}
-                  onClick={() => setters.setActiveMode?.(modeKey)}
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    border: activeMode === modeKey 
-                      ? '1.5px solid var(--accent-color)' 
-                      : '1px solid rgba(255,255,255,0.2)',
-                    background: activeMode === modeKey 
-                      ? 'rgba(212, 175, 55, 0.15)' 
-                      : 'rgba(255,255,255,0.03)',
-                    color: activeMode === modeKey 
-                      ? 'var(--accent-color)' 
-                      : 'rgba(255,255,255,0.6)',
-                    cursor: 'pointer',
-                    transition: 'all 200ms',
-                    boxShadow: activeMode === modeKey 
-                      ? '0 0 16px rgba(212, 175, 55, 0.3)' 
-                      : 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (activeMode !== modeKey) {
-                      e.target.style.background = 'rgba(255,255,255,0.08)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeMode !== modeKey) {
-                      e.target.style.background = 'rgba(255,255,255,0.03)';
-                    }
-                  }}
-                >
-                  {modeConfig.label}
-                </button>
-              ))}
-            </div>
+          {/* Sub-mode Toggle - Title-as-tabs style */}
+          <div className="flex items-center justify-center gap-2" style={{ marginTop: '20px', marginBottom: '24px', flexWrap: 'nowrap', overflow: 'hidden' }}>
+            {Object.entries(practice.subModes).map(([modeKey, modeConfig], idx) => {
+              const isActive = activeMode === modeKey;
+              return (
+                <React.Fragment key={modeKey}>
+                  <button
+                    onClick={() => setters.setActiveMode?.(modeKey)}
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      padding: '4px 0',
+                      border: 'none',
+                      background: 'transparent',
+                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                      borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'all 200ms',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {modeConfig.label}
+                  </button>
+                  {idx < Object.keys(practice.subModes).length - 1 && <span style={{ color: 'rgba(245, 230, 211, 0.4)', margin: '0 6px' }}>/</span>}
+                </React.Fragment>
+              );
+            })}
           </div>
 
           {/* Render the Config for the active sub-mode */}
