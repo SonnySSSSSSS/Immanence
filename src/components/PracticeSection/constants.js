@@ -13,7 +13,7 @@ export const PRACTICE_REGISTRY = {
   },
   integration: {
     id: "integration",
-    label: "Rituals (integration)",
+    label: "Rituals",
     labelLine1: "INTEGRATION",
     labelLine2: "",
     icon: "◈",

@@ -171,47 +171,64 @@ export function CircuitTrainingSelector({
             }}
           >
             <div className="py-1.5">
-              {items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => select(item.id)}
-                  className={
-                    "w-full text-left px-3 py-2 transition-colors " +
-                    (item.id === activeId 
-                      ? "bg-white/8" 
-                      : "hover:bg-white/5 active:bg-white/8")
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Color pill */}
+              {items.map((item, idx) => (
+                <div key={item.id}>
+                  {/* Section header for FOUNDATION (before breath item) */}
+                  {item.id === 'breath' && idx > 0 && (
                     <div
-                      className="w-2 h-5 rounded-full flex-shrink-0"
                       style={{
-                        background: item.rail,
-                        opacity: item.id === activeId ? 1 : 0.55,
+                        padding: '6px 12px 4px 12px',
+                        fontSize: '9px',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        letterSpacing: '0.15em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.4)',
                       }}
-                    />
-
-                    {/* Label */}
-                    <div className="flex-1 min-w-0">
+                    >
+                      FOUNDATION
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => select(item.id)}
+                    className={
+                      "w-full text-left px-3 py-2 transition-colors " +
+                      (item.id === activeId
+                        ? "bg-white/8"
+                        : "hover:bg-white/5 active:bg-white/8")
+                    }
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Color pill */}
                       <div
-                        className={
-                          "text-sm leading-tight truncate " +
-                          (item.id === activeId 
-                            ? "text-white font-medium" 
-                            : "text-white/70")
-                        }
+                        className="w-2 h-5 rounded-full flex-shrink-0"
                         style={{
-                          fontFamily: 'var(--font-display)',
-                          color: item.id === activeId ? item.rail : undefined,
+                          background: item.rail,
+                          opacity: item.id === activeId ? 1 : 0.55,
                         }}
-                      >
-                        {item.label}
+                      />
+
+                      {/* Label */}
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className={
+                            "text-sm leading-tight truncate " +
+                            (item.id === activeId
+                              ? "text-white font-medium"
+                              : "text-white/70")
+                          }
+                          style={{
+                            fontFamily: 'var(--font-display)',
+                            color: item.id === activeId ? item.rail : undefined,
+                          }}
+                        >
+                          {item.label}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
