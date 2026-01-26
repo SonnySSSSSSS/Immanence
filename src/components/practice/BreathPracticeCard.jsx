@@ -33,41 +33,98 @@ function BreathPracticeCard({
 
   return (
     <div className="relative px-8 animate-in fade-in duration-300">
+      {/* FOUNDATION section header (above Breath & Stillness tabs) */}
+      {practiceId === 'breath' && (
+        <div
+          style={{
+            fontSize: '9px',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 600,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: 'rgba(245, 230, 211, 0.5)',
+            marginTop: '20px',
+            marginBottom: '12px',
+            textAlign: 'center',
+          }}
+        >
+          FOUNDATION
+        </div>
+      )}
+
       {/* HEADER - using shared component */}
       <PracticeMenuHeader
-        title={label}
+        title={practiceId === 'breath' ? undefined : label}
         tutorialId={tutorialId}
         showTutorial={true}
-        marginBottom={practiceId === 'breath' ? '16px' : '24px'}
+        marginBottom={practiceId === 'breath' ? '0px' : '24px'}
       >
-        {/* Top Level: Breath vs Stillness submode toggle */}
+        {/* Top Level: Breath vs Stillness as Title-like Tabs */}
         {practiceId === 'breath' && (
-          <div className="flex items-center justify-center gap-2" style={{ marginTop: '10px' }}>
+          <div className="flex items-center justify-center gap-4" style={{ marginTop: '20px', marginBottom: '24px' }}>
             {[
               { id: 'breath', label: 'Breath' },
               { id: 'stillness', label: 'Stillness' }
-            ].map((item) => {
+            ].map((item, idx) => {
               const isActive = breathSubmode === item.id;
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onBreathSubmodeChange?.(item.id)}
-                  className="px-3 py-1 rounded-full transition-all"
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '9px',
-                    fontWeight: 700,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
-                    background: isActive ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                    border: isActive ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
-                    boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none'
-                  }}
-                >
-                  {item.label}
-                </button>
+                <React.Fragment key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => onBreathSubmodeChange?.(item.id)}
+                    aria-selected={isActive}
+                    aria-label={`${item.label} mode`}
+                    className="breath-title-tab transition-all"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
+                      paddingBottom: '4px',
+                      cursor: 'pointer',
+                      transition: 'all 300ms ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = 'rgba(212, 175, 55, 0.7)';
+                        e.currentTarget.style.opacity = '0.8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = 'rgba(245, 230, 211, 0.45)';
+                        e.currentTarget.style.opacity = '1';
+                      }
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.outline = '2px solid rgba(212, 175, 55, 0.6)';
+                      e.currentTarget.style.outlineOffset = '4px';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.outline = 'none';
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                  {idx === 0 && (
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: 'rgba(212, 175, 55, 0.7)',
+                        userSelect: 'none',
+                      }}
+                    >
+                      &
+                    </span>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
@@ -79,6 +136,37 @@ function BreathPracticeCard({
         {/* Breath Mode Content */}
         {breathSubmode === 'breath' && (
           <>
+            {/* Expansion vs Traditional Toggle - first after header */}
+            <div className="flex items-center justify-center gap-2" style={{ marginBottom: '16px' }}>
+              {[
+                { id: 'expansion', label: 'Expansion' },
+                { id: 'traditional', label: 'Traditional' }
+              ].map((item) => {
+                const isActive = breathMethod === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setBreathMethod(item.id)}
+                    className="px-3 py-1 rounded-full transition-all"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                      background: isActive ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                      border: isActive ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Waveform - always visible in breath mode */}
             <div
               className="breath-wave-glow"
@@ -147,37 +235,6 @@ function BreathPracticeCard({
                   />
                 </div>
               ))}
-            </div>
-
-            {/* Expansion vs Traditional Toggle - below inputs */}
-            <div className="flex items-center justify-center gap-2" style={{ marginBottom: '16px' }}>
-              {[
-                { id: 'expansion', label: 'Expansion' },
-                { id: 'traditional', label: 'Traditional' }
-              ].map((item) => {
-                const isActive = breathMethod === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setBreathMethod(item.id)}
-                    className="px-3 py-1 rounded-full transition-all"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
-                      background: isActive ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                      border: isActive ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.2)' : 'none'
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
             </div>
 
             {/* Traditional Ratios Panel - shown when traditional method selected */}
@@ -283,24 +340,103 @@ function BreathPracticeCard({
           `}</style>
           </>
         )}
-      </div>
 
-      {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
-      {supportsDuration && practiceId !== 'circuit' && (
-        <div 
-          style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}
-          data-tutorial={breathSubmode === 'stillness' ? 'stillness-options' : undefined}
-        >
-          <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-            Sacred Duration (minutes)
-          </div>
-          <SacredTimeSlider 
-            value={duration} 
-            onChange={onDurationChange} 
-            options={durationOptions} 
-          />
-        </div>
-      )}
+        {/* Stillness Mode Content */}
+        {breathSubmode === 'stillness' && (
+          <>
+            {/* Waveform - visible in stillness mode */}
+            <div
+              className="breath-wave-glow"
+              style={{
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
+                backdropFilter: 'blur(32px) saturate(160%)',
+                WebkitBackdropFilter: 'blur(32px) saturate(160%)',
+                borderRadius: '16px',
+                padding: '20px',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+              }}
+            >
+              <BreathWaveform pattern={pattern} />
+            </div>
+
+            {/* Phase Display - read-only in stillness mode */}
+            <div
+              className="flex justify-center gap-8"
+              style={{ marginTop: '24px', marginBottom: '16px' }}
+            >
+              {[
+                { label: 'INHALE', key: 'inhale', min: 1 },
+                { label: 'HOLD 1', key: 'hold1', min: 0 },
+                { label: 'EXHALE', key: 'exhale', min: 1 },
+                { label: 'HOLD 2', key: 'hold2', min: 0 }
+              ].map((phase) => (
+                <div key={phase.key} className="flex flex-col items-center">
+                  <label
+                    style={{
+                      fontSize: '9px',
+                      letterSpacing: '0.12em',
+                      color: 'rgba(255,255,255,0.4)',
+                      marginBottom: '8px',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 600,
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {phase.label}
+                  </label>
+                  <div
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '6px',
+                      padding: '8px 0',
+                      width: '44px',
+                      color: 'var(--accent-color)',
+                      textAlign: 'center',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                    }}
+                  >
+                    {pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <style>{`
+            .breath-wave-glow {
+              position: relative;
+            }
+            .breath-wave-glow::before {
+              content: "";
+              position: absolute;
+              inset: -12px;
+              background: radial-gradient(
+                ellipse at center,
+                rgba(233,195,90,0.25),
+                rgba(233,195,90,0.12) 40%,
+                rgba(233,195,90,0.04) 60%,
+                transparent 70%
+              );
+              filter: blur(18px);
+              pointer-events: none;
+              z-index: 0;
+              animation: breath-pulse-glow 8s infinite ease-in-out;
+            }
+            .breath-wave-glow > * {
+              position: relative;
+              z-index: 1;
+            }
+            @keyframes breath-pulse-glow {
+              0%, 100% { opacity: 0.7; }
+              50%      { opacity: 1; }
+            }
+            `}</style>
+          </>
+        )}
+      </div>
 
       {/* Collapsible Tempo Sync Section (Breath Practice + Expansion Method Only) */}
       {breathSubmode === 'breath' && breathMethod === 'expansion' && (
@@ -359,6 +495,23 @@ function BreathPracticeCard({
               }
             }
           `}</style>
+        </div>
+      )}
+
+      {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
+      {supportsDuration && practiceId !== 'circuit' && (
+        <div
+          style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}
+          data-tutorial={breathSubmode === 'stillness' ? 'stillness-options' : undefined}
+        >
+          <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
+            Sacred Duration (minutes)
+          </div>
+          <SacredTimeSlider
+            value={duration}
+            onChange={onDurationChange}
+            options={durationOptions}
+          />
         </div>
       )}
 
