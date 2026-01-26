@@ -74,15 +74,6 @@ export const PRACTICE_REGISTRY = {
     },
     defaultSubMode: "visualization",
   },
-  feeling: {
-    id: "feeling",
-    label: "Feeling Meditation",
-    labelLine1: "FEELING",
-    labelLine2: "MEDITATION",
-    icon: "?",
-    supportsDuration: true,
-    requiresFullscreen: false,
-  },
 };
 
 export const PRACTICE_IDS = Object.keys(PRACTICE_REGISTRY);
@@ -106,6 +97,7 @@ export const OLD_TO_NEW_PRACTICE_MAP = {
   'ritual': 'integration',
   'cognitive_vipassana': 'awareness',
   'somatic_vipassana': 'awareness',
+  'feeling': 'awareness',
   'sound': 'resonance',
   'cymatics': 'resonance',
   'visualization': 'perception',

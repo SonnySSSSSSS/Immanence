@@ -45,7 +45,6 @@ import { useBreathSessionState } from "./practice/useBreathSessionState.js";
 import { CircuitTrainingSelector } from "./practice/CircuitTrainingSelector.jsx";
 import PracticeSectionShell from "./practice/PracticeSectionShell.jsx";
 import { FeedbackModal } from "./FeedbackModal.jsx";
-import { FeelingMeditationSession } from "./FeelingMeditationSession.jsx";
 import PracticeHeader from "./practice/PracticeHeader.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
@@ -141,7 +140,7 @@ const PracticeIcons = {
 
 function PracticeSelector({ selectedId, onSelect }) {
   const items = useMemo(() => {
-    return ['breath', 'integration', 'circuit', 'awareness', 'resonance', 'perception', 'feeling'].map((id) => {
+    return ['breath', 'integration', 'circuit', 'awareness', 'resonance', 'perception'].map((id) => {
       const p = PRACTICE_REGISTRY[id];
       return {
         id: id,
@@ -168,7 +167,6 @@ function getRailColor(id) {
     awareness: "rgba(56,189,248,0.95)",
     resonance: "rgba(245,158,11,0.95)",
     perception: "rgba(96,165,250,0.95)",
-    feeling: "rgba(244,114,182,0.95)",
   };
   return colors[id] || "rgba(255,255,255,0.65)";
 }
@@ -681,6 +679,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [breathSubmode, setBreathSubmode] = useState("breath");
   const { startMicroNote, pendingMicroNote } = useJournalStore();
 
+  const resolveTutorialPracticeId = useCallback((baseId) => {
+    if (!baseId) return null;
+    if (baseId === 'breath') {
+      return breathSubmode === 'stillness' ? 'stillness' : 'breath';
+    }
+    const practice = PRACTICE_REGISTRY[baseId];
+    if (!practice?.subModes) return baseId;
+    const activeMode = practiceParams[baseId]?.activeMode || practice.defaultSubMode;
+    const subMode = practice.subModes[activeMode];
+    return subMode?.id || baseId;
+  }, [breathSubmode, practiceParams]);
+
+  const tutorialPracticeId = resolveTutorialPracticeId(practiceId);
+
+  useEffect(() => {
+    if (isRunning) return;
+    onPracticingChange?.(false, tutorialPracticeId ?? null, false);
+  }, [isRunning, tutorialPracticeId, onPracticingChange]);
+
   // Practice session internals - MUST be declared before any useEffect that references them
   const [activeCircuitId, setActiveCircuitId] = useState(null);
   const [circuitConfig, setCircuitConfig] = useState(null);
@@ -751,8 +768,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     driftEnabled,
     audioEnabled: cymaticsAudioEnabled 
   } = practiceParams.cymatics;
-
-  const { intent: feelingIntent, promptText: feelingPromptText } = practiceParams.feeling || {};
 
   // Vipassana params correspond to specific visualization types
   const actualPracticeIdForVippa = getActualPracticeId(practiceId);
@@ -1108,7 +1123,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Visualization") subType = geometry;
     if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
     if (practice === "Ritual") subType = activeRitual?.id;
-    if (practice === "Feeling Meditation") subType = feelingIntent || null;
 
     const sessionPayload = {
       id,
@@ -1714,6 +1728,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 startTime={sessionStartTime}
                 pathId={avatarPath}
                 fxPreset={currentFxPreset}
+                totalSessionDurationSec={duration}
               />
 
               {/* Tempo Sync Session Panel - 3-phase cap schedule display */}
@@ -1779,29 +1794,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   </button>
                 </div>
               )}
-            </div>
-          ) : actualRunningPracticeId === "feeling" ? (
-            <div className="flex flex-col items-center justify-center text-center px-6 py-8">
-              <div
-                className="text-2xl mb-3"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  color: 'var(--accent-color)',
-                }}
-              >
-                Feeling Meditation
-              </div>
-              <div
-                className="text-sm uppercase tracking-[0.2em] mb-3"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Intent: {feelingIntent || 'compassion'}
-              </div>
-              <div className="text-sm max-w-[420px]" style={{ color: 'var(--text-secondary)' }}>
-                {feelingPromptText || 'Hold the feeling; when it fades, return.'}
-              </div>
             </div>
           ) : practiceId === "somatic_vipassana" ? (
             <SensorySession
@@ -2073,6 +2065,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       />
 
       <style>{`
+        .practiceMenuHeader .tutorialButtonWrap { display: none !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }

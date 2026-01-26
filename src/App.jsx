@@ -27,6 +27,7 @@ import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
 import { TutorialOverlay } from "./components/tutorial/TutorialOverlay.jsx";
 import { useTutorialStore } from "./state/tutorialStore.js";
+import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -191,6 +192,23 @@ function App() {
     // Set fullscreen experience based on practice metadata
     setIsFullscreenExperience(val && requiresFullscreen);
   };
+  const resolvedPracticeId =
+    typeof activePracticeId === "string" && activePracticeId.length > 0
+      ? activePracticeId
+      : null;
+  const resolvedPracticeTutorialId = resolvedPracticeId ? `practice:${resolvedPracticeId}` : null;
+  const practiceTutorialId =
+    resolvedPracticeTutorialId && TUTORIALS[resolvedPracticeTutorialId]
+      ? resolvedPracticeTutorialId
+      : 'page:practice';
+  const headerTutorialId = (() => {
+    if (!activeSection) return 'page:home';
+    if (activeSection === 'practice') return practiceTutorialId;
+    if (activeSection === 'wisdom') return 'page:wisdom';
+    if (activeSection === 'application') return 'page:application';
+    if (activeSection === 'navigation') return 'page:navigation';
+    return 'page:home';
+  })();
 
   const handleAuthChange = useCallback((event, session) => {
     if (event === "SIGNED_OUT") {
@@ -351,21 +369,7 @@ function App() {
                       data-tutorial="global-tutorial-button"
                       onClick={() => {
                         const tutorialStore = useTutorialStore.getState();
-                        const resolvedPracticeId =
-                          typeof activePracticeId === "string" && activePracticeId.length > 0
-                            ? activePracticeId
-                            : null;
-                        const tutorialId = (() => {
-                          if (!activeSection) return 'page:home';
-                          if (activeSection === 'practice') {
-                            return resolvedPracticeId ? `practice:${resolvedPracticeId}` : 'page:practice';
-                          }
-                          if (activeSection === 'wisdom') return 'page:wisdom';
-                          if (activeSection === 'application') return 'page:application';
-                          if (activeSection === 'navigation') return 'page:navigation';
-                          return 'page:home';
-                        })();
-                        tutorialStore.openTutorial(tutorialId);
+                        tutorialStore.openTutorial(headerTutorialId);
                       }}
                       className={`text-[10px] uppercase tracking-[0.15em] px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                       style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
@@ -377,7 +381,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.25.40
+                        v3.25.44
                     </div>
                   </div>
 
