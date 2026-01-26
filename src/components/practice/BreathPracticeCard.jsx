@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { TrajectoryCard } from "../TrajectoryCard.jsx";
 import BreathWaveform from "../BreathWaveform.jsx";
@@ -31,6 +31,7 @@ function BreathPracticeCard({
   // Focus / Explore progressive disclosure
   const [mode, setMode] = useState("focus");
   const isFocusMode = mode === "focus";
+  const editButtonRef = useRef(null);
 
   // Determine tutorial ID based on current submode
   const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
@@ -40,6 +41,11 @@ function BreathPracticeCard({
     setMode("focus");
     onStart?.();
   };
+
+  // Imperative edit handler using ref to bypass event capture issues
+  const handleEditClick = useCallback(() => {
+    setMode("explore");
+  }, []);
 
   // Collapsed summary component (focus mode)
   const CollapsedSummary = () => (
@@ -73,10 +79,11 @@ function BreathPracticeCard({
           </div>
         </div>
       </div>
-      {/* Edit Button */}
+      {/* Edit Button - use onMouseDown to bypass capture-phase click interception */}
       <button
+        ref={editButtonRef}
         type="button"
-        onClick={() => { console.log("EDIT_CLICK"); setMode("explore"); }}
+        onMouseDown={handleEditClick}
         style={{
           width: '100%',
           padding: '8px 12px',
@@ -91,6 +98,8 @@ function BreathPracticeCard({
           cursor: 'pointer',
           fontFamily: 'var(--font-display)',
           transition: 'all 200ms',
+          WebkitTouchCallout: 'none',
+          userSelect: 'none',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
@@ -217,9 +226,6 @@ function BreathPracticeCard({
               pointerEvents: "auto",
             }}
           >
-            <div style={{ fontSize: "10px", opacity: 0.6, marginBottom: "8px" }}>
-              MODE_PROBE: {mode}
-            </div>
             <CollapsedSummary />
           </div>
         )}
