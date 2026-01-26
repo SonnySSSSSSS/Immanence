@@ -65,6 +65,8 @@ const CONFIG_COMPONENTS = {
 
 const DEV_FX_GALLERY_ENABLED = true;
 const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
+const LAST_RITUAL_ID_KEY = "immanenceOS.rituals.lastRitualId";
+const LAST_RITUAL_AT_KEY = "immanenceOS.rituals.lastRitualAt";
 
 // Safe practice config lookup that resolves old IDs
 const getPracticeConfig = (id) => {
@@ -262,6 +264,31 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
       return;
     }
   };
+
+  // Read and compute last-practiced ritual for integration practice
+  const lastRitualId = localStorage.getItem(LAST_RITUAL_ID_KEY);
+  const lastRitualAtMs = lastRitualId ? parseInt(localStorage.getItem(LAST_RITUAL_AT_KEY) || '0', 10) : 0;
+  const isLastRecent = lastRitualAtMs > 0 && (Date.now() - lastRitualAtMs) < (7 * 24 * 60 * 60 * 1000);
+  const lastRitual = isLastRecent && lastRitualId ? getRitualById(lastRitualId) : null;
+  const lastPracticedLabel = lastRitual ? (lastRitual.name || lastRitual.title || lastRitual.id) : null;
+
+  const handleLastPracticedStart = () => {
+    if (!lastRitual) return;
+
+    // Use the same path as Quick Start
+    if (typeof setters?.onSelectRitual === "function") {
+      setters.onSelectRitual(lastRitual);
+      return;
+    }
+
+    // Fallback: set selection + start
+    if (typeof setters?.setSelectedRitualId === "function") {
+      setters.setSelectedRitualId(lastRitual.id);
+      handleBeginPractice();
+      return;
+    }
+  };
+
   const tempoSyncSlot = <TempoSyncPanel isPracticing={isRunning} />;
 
   return (
@@ -399,6 +426,8 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             showStartButton={menuShowStartButton}
             onStart={handleBeginPractice}
             onQuickStart={practiceId === "integration" ? handleQuickStartRitual : undefined}
+            onLastPracticedStart={practiceId === "integration" && lastRitual ? handleLastPracticedStart : undefined}
+            lastPracticedLabel={practiceId === "integration" && lastRitual ? lastPracticedLabel : undefined}
             startButtonLabel={menuStartButtonLabel}
           />
         ))}
@@ -1537,6 +1566,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleRitualComplete = () => {
+    // Persist last-practiced ritual on successful completion
+    if (activeRitual?.id) {
+      localStorage.setItem(LAST_RITUAL_ID_KEY, activeRitual.id);
+      localStorage.setItem(LAST_RITUAL_AT_KEY, String(Date.now()));
+    }
+
     handleStop();
 
     // Navigate back to home after ritual completion

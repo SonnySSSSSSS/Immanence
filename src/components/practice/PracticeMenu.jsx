@@ -42,6 +42,8 @@ function PracticeMenu({
   showStartButton,
   onStart,
   onQuickStart,
+  onLastPracticedStart,
+  lastPracticedLabel,
   startButtonLabel,
 }) {
   // Handle subModes for consolidated practices
@@ -164,6 +166,45 @@ function PracticeMenu({
                   Select a ritual below
                 </div>
               )}
+            </div>
+          )}
+          {(practice?.id === "integration" || practice?.label === "Rituals") && onLastPracticedStart && lastPracticedLabel && (
+            <div
+              style={{
+                padding: "12px 14px",
+                marginBottom: "12px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              <button
+                type="button"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.9)",
+                  color: "#000",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+                onClick={() => onLastPracticedStart?.()}
+              >
+                Last practiced: {lastPracticedLabel}
+              </button>
+
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 11,
+                  opacity: 0.6,
+                }}
+              >
+                Continue a recent ritual
+              </div>
             </div>
           )}
           <ConfigComponent 
