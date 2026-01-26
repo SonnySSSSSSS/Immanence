@@ -210,7 +210,15 @@ function BreathPracticeCard({
       <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
         {/* Focus Mode: Collapsed Summary */}
         {isFocusMode && practiceId === 'breath' && (
-          <CollapsedSummary />
+          <div
+            className="relative z-20"
+            style={{
+              marginBottom: '16px',
+              pointerEvents: "auto",
+            }}
+          >
+            <CollapsedSummary />
+          </div>
         )}
 
         {/* Explore Mode: Full Config UI */}
