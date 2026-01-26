@@ -76,7 +76,7 @@ function BreathPracticeCard({
       {/* Edit Button */}
       <button
         type="button"
-        onClick={() => setMode("explore")}
+        onClick={() => { console.log("EDIT_CLICK"); setMode("explore"); }}
         style={{
           width: '100%',
           padding: '8px 12px',
@@ -217,6 +217,9 @@ function BreathPracticeCard({
               pointerEvents: "auto",
             }}
           >
+            <div style={{ fontSize: "10px", opacity: 0.6, marginBottom: "8px" }}>
+              MODE_PROBE: {mode}
+            </div>
             <CollapsedSummary />
           </div>
         )}
