@@ -144,10 +144,29 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
           </span>
         </div>
       ) : (
-        <div 
-          key={practiceId} 
+        <div
+          key={practiceId}
           className="relative px-8 animate-in fade-in duration-300"
         >
+          {/* Parent section header for Breath & Stillness */}
+          {practiceId === 'breath' && (
+            <div
+              style={{
+                fontSize: '9px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'rgba(245, 230, 211, 0.5)',
+                marginTop: '20px',
+                marginBottom: '12px',
+                textAlign: 'center',
+              }}
+            >
+              FOUNDATION
+            </div>
+          )}
+
           {/* Practice Title & Icon - or Title-Tabs for subMode practices */}
           {hasSubModes ? (
             // Title-tabs for practices with subModes (Awareness, Perception, Resonance)

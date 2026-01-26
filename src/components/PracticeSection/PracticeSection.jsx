@@ -99,6 +99,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, []);
 
+  // Reset activeMode when practiceId changes
+  useEffect(() => {
+    const p = PRACTICE_REGISTRY[practiceId];
+    setActiveMode(p?.defaultSubMode || null);
+  }, [practiceId]);
+
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
   
@@ -148,6 +154,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [visualizationCycles, setVisualizationCycles] = useState(0);
   const [activeRitual, setActiveRitual] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  // Submode selection state (for practices with subModes: Awareness, Perception, Resonance)
+  const [activeMode, setActiveMode] = useState(() => {
+    const p = PRACTICE_REGISTRY[practiceId];
+    return p?.defaultSubMode || null;
+  });
 
   // Sound/Visual ephemeral state
   const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
@@ -1312,13 +1324,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     preset, pattern, soundType, soundVolume, binauralPreset, isochronicPreset, carrierFrequency,
     sensoryType, vipassanaTheme, vipassanaElement, geometry, fadeInDuration, displayDuration,
     fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
-    setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset, 
-    setCarrierFrequency, setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry, 
+    setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset,
+    setCarrierFrequency, setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry,
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
     setFrequencySet, setSelectedFrequency, setDriftEnabled,
     applyBreathRatio,
-    onToggleRunning: handleStart, 
-    onSelectRitual: handleSelectRitual, 
+    activeMode, setActiveMode,
+    onToggleRunning: handleStart,
+    onSelectRitual: handleSelectRitual,
     selectedRitualId: activeRitual?.id,
     isEmbedded: true
   };
