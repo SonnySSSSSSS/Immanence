@@ -13,14 +13,58 @@ import { PathParticles } from "./PathParticles.jsx";
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5 }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5, totalSessionDurationSec = null }) {
+  const lockedPatternRef = useRef(null);
+  const pendingPatternRef = useRef(null);
+  const incomingPatternRef = useRef(breathPattern);
+
+  const patternKey = (pattern) => ([
+    pattern?.inhale ?? 0,
+    pattern?.holdTop ?? 0,
+    pattern?.exhale ?? 0,
+    pattern?.holdBottom ?? 0,
+  ]).join('|');
+
+  // Initialize locked pattern on mount (ONLY ONCE)
+  // This ensures lockedPatternRef is set before animation loop runs
+  useEffect(() => {
+    if (!lockedPatternRef.current && breathPattern) {
+      lockedPatternRef.current = breathPattern;
+      incomingPatternRef.current = breathPattern;
+    }
+  }, []); // Empty deps: runs ONLY on mount
+
+  // Track pattern changes and queue them as pending
+  useEffect(() => {
+    const incoming = breathPattern || {};
+    incomingPatternRef.current = incoming;
+
+    if (!lockedPatternRef.current) {
+      // If locked not yet set (shouldn't happen due to mount effect above)
+      lockedPatternRef.current = incoming;
+      return;
+    }
+
+    const incomingKey = patternKey(incoming);
+    const lockedKey = patternKey(lockedPatternRef.current);
+    if (incomingKey !== lockedKey) {
+      // Queue pattern change for next wrap boundary
+      pendingPatternRef.current = incoming;
+    }
+  }, [breathPattern]);
+
+  // Use locked pattern if available, otherwise incoming pattern
+  // After first frame, locked pattern is always set (see animation loop)
+  const effectivePattern = lockedPatternRef.current || incomingPatternRef.current || {};
   const {
     inhale = 4,
     holdTop = 4,
     exhale = 4,
     holdBottom = 2,
-  } = breathPattern || {};
+  } = effectivePattern;
 
+  // Total cycle duration - derived from the effective (locked or initial) pattern
+  // This is used for phase boundary calculations
   const total = inhale + holdTop + exhale + holdBottom;
   const minScale = 0.9;  // Decreased 10% from 1.0
   const maxScale = 1.32; // Increased 10% from 1.2
@@ -42,7 +86,15 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const [currentPhase, setCurrentPhase] = useState(null);
   const lastTapPhaseRef = useRef(null);
 
+  // Normalized capacity phase (0-1) for unified UI display
+  // Applies across all session types, not just tempo-synced
+  const [capacityPhaseNorm, setCapacityPhaseNorm] = useState(0);
+  const capacityPhaseNumber = capacityPhaseNorm < 0.333 ? 1 : capacityPhaseNorm < 0.667 ? 2 : 3;
+  const capacityPhaseLabel = capacityPhaseNorm < 0.333 ? '50%' : capacityPhaseNorm < 0.667 ? '75%' : '90%';
+
   // Phase boundaries (as fractions of cycle)
+  // These are calculated from total, which comes from the locked pattern
+  // Guaranteed to be in sync with progress calculation in animation loop
   const tInhale = inhale / total;
   const tHoldTop = (inhale + holdTop) / total;
   const tExhale = (inhale + holdTop + exhale) / total;
@@ -60,13 +112,31 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     }
   }, [progress, tInhale, tHoldTop, tExhale]);
 
+  // Calculate normalized capacity phase (0-1) for session-wide UI display
+  // Updates based on elapsed time and total session duration
+  useEffect(() => {
+    if (!startTime || !totalSessionDurationSec || totalSessionDurationSec <= 0) return;
+
+    const updateCapacityPhase = () => {
+      const elapsed = (performance.now() - startTime) / 1000; // in seconds
+      // NOTE: totalSessionDurationSec is in MINUTES from PracticeSection, convert to seconds
+      const sessionDurationSeconds = totalSessionDurationSec * 60;
+      const normalized = Math.min(1, Math.max(0, elapsed / sessionDurationSeconds));
+      setCapacityPhaseNorm(normalized);
+    };
+
+    const interval = setInterval(updateCapacityPhase, 500); // Update every 500ms
+    updateCapacityPhase(); // Initial update
+    return () => clearInterval(interval);
+  }, [startTime, totalSessionDurationSec]);
+
   // Breath sound engine - continuous audio feedback synced to breath phases
   const soundPhase = currentPhase === 'hold-top' ? 'holdTop' :
                      currentPhase === 'hold-bottom' ? 'holdBottom' :
                      currentPhase;
   useBreathSoundEngine({
     phase: soundPhase,
-    pattern: breathPattern,
+    pattern: effectivePattern,
     isRunning: !!startTime,
     _progress: progress,
   });
@@ -153,20 +223,71 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     previousProgressRef.current = currP;
   }, [progress, tInhale, tHoldTop, tExhale, onCycleComplete]);
 
-  // Main animation loop - SYNCED to session start time
-  useEffect(() => {
-    if (!total || total <= 0) return;
+  // Cycle start time - resets only on wrap boundaries
+  // This prevents t discontinuity when pattern changes mid-cycle
+  const cycleStartTimeRef = useRef(null);
 
-    const cycleMs = total * 1000;
-    // Use provided startTime or current time as reference
-    const referenceTime = startTime || performance.now();
+  // Main animation loop - SYNCED to session start time
+  // CRITICAL: Animation loop NEVER restarts - it runs continuously for entire session
+  // Pattern changes queue as pending and apply at wrap boundaries only
+  // Cycle time is continuous and resets only on actual wraps
+  useEffect(() => {
+    if (!startTime) return;
+
     let frameId = null;
 
     const loop = (now) => {
-      const elapsed = now - referenceTime;
-      const t = (elapsed % cycleMs) / cycleMs;
+      // Initialize cycle start time on first frame
+      if (!cycleStartTimeRef.current) {
+        cycleStartTimeRef.current = now;
+      }
+
+      // LOCKED pattern is the ONLY source of truth
+      // This guarantees cycle length never changes mid-cycle
+      const lockedPattern = lockedPatternRef.current;
+
+      if (!lockedPattern || Object.keys(lockedPattern).length === 0) {
+        frameId = requestAnimationFrame(loop);
+        return;
+      }
+
+      // Calculate cycle total from LOCKED pattern only
+      // All calculations (progress, phase boundaries, wrap detection) use this
+      const cycleTotal = (lockedPattern.inhale || 0)
+        + (lockedPattern.holdTop || 0)
+        + (lockedPattern.exhale || 0)
+        + (lockedPattern.holdBottom || 0);
+
+      const cycleMs = Math.max(cycleTotal, 0.001) * 1000;
+
+      // CRITICAL: elapsed is time since cycle start, not session start
+      // This prevents discontinuity when cycleMs changes mid-cycle
+      const elapsedFromCycleStart = now - cycleStartTimeRef.current;
+
+      // FIXED WRAP DETECTION: Use elapsed time comparison, NOT progress comparison
+      // This prevents false wraps when cycleMs changes mid-cycle
+      // A true wrap occurs when elapsedFromCycleStart >= cycleMs
+      const didWrap = elapsedFromCycleStart >= cycleMs;
+
+      // Single authoritative progress: NOT using modulo to prevent discontinuity
+      // If we haven't wrapped yet, use elapsed directly
+      // This keeps progress smooth even when pattern changes
+      let t = elapsedFromCycleStart / cycleMs;
+
+      // Apply pending pattern ONLY on wrap boundary
+      // Reset cycle start time to begin fresh cycle with new pattern
+      if (didWrap) {
+        cycleStartTimeRef.current = now;
+        if (pendingPatternRef.current) {
+          lockedPatternRef.current = pendingPatternRef.current;
+          pendingPatternRef.current = null;
+        }
+        // After reset, recalculate t for the new cycle (should be near 0)
+        t = (now - cycleStartTimeRef.current) / cycleMs;
+      }
+
       setProgress(t);
-      
+
       frameId = requestAnimationFrame(loop);
     };
 
@@ -174,7 +295,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [total, startTime]); // Re-sync when startTime changes
+  }, [startTime]); // ONLY depends on startTime
 
   // Remove echo after animation completes
   useEffect(() => {
@@ -285,7 +406,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
   return (
     <div
-      className="relative w-full flex items-center justify-center py-16 cursor-pointer"
+      className="w-full flex flex-col items-center cursor-pointer gap-6"
       onClick={handleRingClick}
       style={{ userSelect: "none", overflow: "visible" }}
     >
@@ -344,51 +465,37 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         </div>
       )}
 
-      {/* Main breathing ring with EVENT HORIZON GLOW */}
-      <svg
-        viewBox="-50 -50 300 300"
-        className="w-80 h-80"
+      {/* SVG Ring + Phase Indicator + Particles Container - relative context for absolute positioning */}
+      <div
         style={{
-          position: 'relative',
-          zIndex: 10,
-          pointerEvents: "none",
-          overflow: "visible",
-          // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
-          // Light mode: subtle dark shadow for definition
-          // Dark mode: full colored glow effect with rhythm modulation
-          filter: isLight
-            ? 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.1))'
-            : `drop-shadow(0 0 ${glowLayers.b1.toFixed(1)}px var(--accent-primary)) 
-               drop-shadow(0 0 ${glowLayers.b2.toFixed(1)}px var(--accent-secondary)) 
-               drop-shadow(0 0 ${glowLayers.b3.toFixed(1)}px var(--accent-muted)) 
-               drop-shadow(0 0 ${glowLayers.b4.toFixed(1)}px var(--accent-glow))`
+          position: "relative",
+          width: "320px",
+          height: "320px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          margin: "0 auto"
         }}
       >
-        <circle
-          cx="100"
-          cy="100"
-          r="80"
-          fill="none"
-          stroke="var(--accent-primary)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "100px 100px",
-            transition: "none",
-          }}
-        />
-      </svg>
-
-      {/* Echo effect - appears at max scale, fades out */}
-      {echo && (
+        {/* Main breathing ring with EVENT HORIZON GLOW */}
         <svg
           viewBox="-50 -50 300 300"
-          className="absolute w-80 h-80"
+          className="w-80 h-80"
           style={{
-            animation: "fadeOutEcho 0.4s ease-out forwards",
+            display: "block",
+            zIndex: 10,
             pointerEvents: "none",
             overflow: "visible",
+            position: "absolute",
+            // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
+            // Light mode: subtle dark shadow for definition
+            // Dark mode: full colored glow effect with rhythm modulation
+            filter: isLight
+              ? 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.1))'
+              : `drop-shadow(0 0 ${glowLayers.b1.toFixed(1)}px var(--accent-primary))
+                 drop-shadow(0 0 ${glowLayers.b2.toFixed(1)}px var(--accent-secondary))
+                 drop-shadow(0 0 ${glowLayers.b3.toFixed(1)}px var(--accent-muted))
+                 drop-shadow(0 0 ${glowLayers.b4.toFixed(1)}px var(--accent-glow))`
           }}
         >
           <circle
@@ -397,73 +504,70 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             r="80"
             fill="none"
             stroke="var(--accent-primary)"
-            strokeWidth="3"
+            strokeWidth="4"
             strokeLinecap="round"
             style={{
-              transform: `scale(${maxScale})`,
+              transform: `scale(${scale})`,
               transformOrigin: "100px 100px",
-              opacity: 0.5,
+              transition: "none",
             }}
           />
         </svg>
-      )}
+        {/* PATH PARTICLES - Rendered ON TOP of the ring for visibility */}
+        {/* Canvas is 400x400 for headroom (prevents particle clipping), centered exactly over the ring */}
+        {pathId && fxPreset && fxPreset !== 'none' && (
+          <div
+            style={{
+              position: "absolute",
+              width: 400,
+              height: 400,
+              pointerEvents: 'none',
+              zIndex: 20,
+              overflow: 'visible',
+              left: "50%",
+              top: "50%",
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <PathParticles
+              pathId={pathId}
+              fxPreset={fxPreset}
+              intensity={(() => {
+                // Base breath intensity from scale
+                const breathIntensity = scale === maxScale ? 1 : (scale - minScale) / (maxScale - minScale);
+                // Blend breath intensity with practice energy (60% breath, 40% practice energy)
+                return breathIntensity * 0.6 + practiceEnergy * 0.4;
+              })()}
+              ringScale={scale}
+              ringRadius={85.33}  /* Actual SVG ring radius: r=80 in viewBox 300, scaled to 320px = 80/300*320 */
+              phase={
+                progress < tInhale ? 'inhale' :
+                  progress < tHoldTop ? 'hold' :
+                    progress < tExhale ? 'exhale' :
+                      'rest'
+              }
+              size={400}
+              accentColor={theme.accent.particleColor || primary}
+              isActive={true}
+              isLight={isLight}
+            />
+          </div>
+        )}
 
-      {/* PATH PARTICLES - Rendered ON TOP of the ring for visibility */}
-      {/* Canvas is 400x400 for headroom (prevents particle clipping), centered exactly over the ring */}
-      {pathId && fxPreset && fxPreset !== 'none' && (
+        {/* Phase indicator - centered in circle for focus */}
         <div
-          className="absolute"
           style={{
-            width: 400,
-            height: 400,
-            pointerEvents: 'none',
-            zIndex: 20,
-            overflow: 'visible',
-            /* Center using transform - same technique as phase indicator */
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)'
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            zIndex: 10,
+            pointerEvents: "none",
           }}
         >
-          <PathParticles
-            pathId={pathId}
-            fxPreset={fxPreset}
-            intensity={(() => {
-              // Base breath intensity from scale
-              const breathIntensity = scale === maxScale ? 1 : (scale - minScale) / (maxScale - minScale);
-              // Blend breath intensity with practice energy (60% breath, 40% practice energy)
-              return breathIntensity * 0.6 + practiceEnergy * 0.4;
-            })()}
-            ringScale={scale}
-            ringRadius={85.33}  /* Actual SVG ring radius: r=80 in viewBox 300, scaled to 320px = 80/300*320 */
-            phase={
-              progress < tInhale ? 'inhale' :
-                progress < tHoldTop ? 'hold' :
-                  progress < tExhale ? 'exhale' :
-                    'rest'
-            }
-            size={400}
-            accentColor={theme.accent.particleColor || primary}
-            isActive={true}
-            isLight={isLight}
-          />
-        </div>
-      )}
-
-      {/* Phase indicator - centered in circle for focus */}
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          zIndex: 10,
-          pointerEvents: "none",
-        }}
-      >
         <div
           style={{
             fontSize: "0.875rem",
@@ -515,7 +619,52 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             return Math.ceil(phaseRemaining);
           })()}
         </div>
+
       </div>
+      </div>
+
+      {/* Capacity phase display - below circle */}
+      {totalSessionDurationSec && (
+        <div
+          style={{
+            marginTop: "12px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.7rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: 'var(--accent-secondary)',
+              fontFamily: "var(--font-display)",
+              fontWeight: "600",
+              textShadow: '0 0 6px var(--accent-glow)',
+              opacity: 0.8,
+            }}
+          >
+            PHASE {capacityPhaseNumber}/3
+          </div>
+          <div
+            style={{
+              fontSize: "0.85rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: 'var(--accent-secondary)',
+              fontFamily: "var(--font-display)",
+              fontWeight: "600",
+              textShadow: '0 0 6px var(--accent-glow)',
+              opacity: 0.75,
+            }}
+          >
+            CAPACITY: {capacityPhaseLabel}
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeOutEcho {
