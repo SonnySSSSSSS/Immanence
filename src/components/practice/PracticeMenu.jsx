@@ -41,6 +41,7 @@ function PracticeMenu({
   durationTitleMarginBottom,
   showStartButton,
   onStart,
+  onQuickStart,
   startButtonLabel,
 }) {
   // Handle subModes for consolidated practices
@@ -120,11 +121,57 @@ function PracticeMenu({
           )}
         </div>
       ) : ConfigComponent ? (
-        <ConfigComponent 
-          {...setters}
-          isLight={isLight}
-          selectedRitualId={selectedRitualId}
-        />
+        <>
+          {(practice?.id === "integration" || practice?.label === "Rituals") && (
+            <div
+              style={{
+                padding: "12px 14px",
+                marginBottom: "12px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              <button
+                type="button"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.9)",
+                  color: "#000",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+                onClick={() => (onQuickStart || onStart)?.()}
+              >
+                Quick Start
+              </button>
+
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 11,
+                  opacity: 0.6,
+                }}
+              >
+                Start your daily ritual
+              </div>
+              {!selectedRitualId && (
+                <div style={{ marginTop: 6, fontSize: 11, opacity: 0.6 }}>
+                  Select a ritual below
+                </div>
+              )}
+            </div>
+          )}
+          <ConfigComponent 
+            {...setters}
+            isLight={isLight}
+            selectedRitualId={selectedRitualId}
+          />
+        </>
       ) : (
         <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
           No additional configuration required

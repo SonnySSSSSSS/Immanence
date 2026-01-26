@@ -51,6 +51,7 @@ import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
+import { getRitualById } from "../data/bhaktiRituals.js";
 
 // Map string names to actual components (components already imported above)
 const CONFIG_COMPONENTS = {
@@ -63,6 +64,7 @@ const CONFIG_COMPONENTS = {
 };
 
 const DEV_FX_GALLERY_ENABLED = true;
+const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
 
 // Safe practice config lookup that resolves old IDs
 const getPracticeConfig = (id) => {
@@ -240,6 +242,26 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     // Audio will be started by executeStart via window.__tempoSyncStartAudio
     onStart(songSec);
   };
+  const handleQuickStartRitual = () => {
+    const ritualId = localStorage.getItem(DEFAULT_RITUAL_KEY);
+    if (!ritualId) return;
+
+    const ritual = getRitualById(ritualId);
+    if (!ritual) return;
+
+    // Prefer the same path the ritual grid uses
+    if (typeof setters?.onSelectRitual === "function") {
+      setters.onSelectRitual(ritual);
+      return;
+    }
+
+    // Fallback: set selection + start
+    if (typeof setters?.setSelectedRitualId === "function") {
+      setters.setSelectedRitualId(ritual.id);
+      handleBeginPractice();
+      return;
+    }
+  };
   const tempoSyncSlot = <TempoSyncPanel isPracticing={isRunning} />;
 
   return (
@@ -376,6 +398,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             durationTitleMarginBottom={menuDurationTitleMarginBottom}
             showStartButton={menuShowStartButton}
             onStart={handleBeginPractice}
+            onQuickStart={practiceId === "integration" ? handleQuickStartRitual : undefined}
             startButtonLabel={menuStartButtonLabel}
           />
         ))}
