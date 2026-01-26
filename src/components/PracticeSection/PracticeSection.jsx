@@ -690,8 +690,27 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [activePracticeSession]);
 
+  const resolveActualPracticeId = (baseId, subMode) => {
+    const practice = PRACTICE_REGISTRY[baseId];
+    if (!practice?.subModes || !subMode) return baseId;
+    const subModeConfig = practice.subModes[subMode];
+    const resolved = subModeConfig?.id || baseId;
+    if (import.meta.env.DEV && resolved !== baseId) {
+      console.log(`[routing] resolved ${baseId} → ${resolved}`);
+    }
+    return resolved;
+  };
+
   const executeStart = () => {
     if (!practiceId) return;
+
+    // Resolve submode to actual practice ID for routing
+    const actualId = resolveActualPracticeId(practiceId, activeMode);
+
+    // Update practiceId to resolved value so render path uses correct routing
+    if (actualId !== practiceId) {
+      setPracticeId(actualId);
+    }
 
     // savePreferences({
     //   practiceId,
@@ -699,7 +718,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     //   practiceParams
     // });
 
-    if (practiceId === "circuit") {
+    if (actualId === "circuit") {
       if (!circuitConfig || circuitConfig.exercises.length === 0) {
         return;
       }
@@ -712,11 +731,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
-    if (practiceId === "cognitive_vipassana") {
+    if (actualId === "cognitive_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
-      const practiceConfig = PRACTICE_REGISTRY[practiceId];
+      const practiceConfig = PRACTICE_REGISTRY[actualId];
       setIsRunning(true);
-      onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
+      onPracticingChange && onPracticingChange(true, actualId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
       setTapErrors([]);
       setLastErrorMs(null);
@@ -731,16 +750,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return; 
     }
 
-    const practiceConfig = PRACTICE_REGISTRY[practiceId];
+    const practiceConfig = PRACTICE_REGISTRY[actualId];
     setIsRunning(true);
-    onPracticingChange && onPracticingChange(true, practiceId, practiceConfig?.requiresFullscreen || false);
+    onPracticingChange && onPracticingChange(true, actualId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
     setTapErrors([]);
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
     setBreathCount(0);
 
-    const p = practiceId;
+    const p = actualId;
     let domain = 'breathwork';
     if (p === 'visualization' || p === 'cymatics') domain = 'visualization';
     else if (p.includes('vipassana')) domain = isCognitive ? 'focus' : 'body';
