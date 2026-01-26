@@ -41,9 +41,9 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
     subModes: {
-      insight: { id: "cognitive_vipassana", label: "Insight Meditation" },
-      bodyscan: { id: "somatic_vipassana", label: "Body Scan" },
-      feeling: { id: "feeling", label: "Feeling Meditation" }
+      insight: { id: "cognitive_vipassana", label: "Cognitive" },
+      bodyscan: { id: "somatic_vipassana", label: "Somatic" },
+      feeling: { id: "feeling", label: "Feeling" }
     },
     defaultSubMode: "insight",
   },
@@ -70,8 +70,8 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
     subModes: {
-      visualization: { id: "visualization", label: "Visualization", configComponent: "VisualizationConfig" },
-      photic: { id: "photic", label: "Photic Circles", configComponent: "PhoticControlPanel" }
+      visualization: { id: "visualization", label: "Visual", configComponent: "VisualizationConfig" },
+      photic: { id: "photic", label: "Photic", configComponent: "PhoticControlPanel" }
     },
     defaultSubMode: "visualization",
   },

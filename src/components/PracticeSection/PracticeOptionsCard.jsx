@@ -151,7 +151,7 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
           {/* Practice Title & Icon - or Title-Tabs for subMode practices */}
           {hasSubModes ? (
             // Title-tabs for practices with subModes (Awareness, Perception, Resonance)
-            <div className="flex items-center justify-center gap-4" style={{ marginTop: '20px', marginBottom: '24px' }}>
+            <div className="flex items-center justify-center gap-2" style={{ marginTop: '20px', marginBottom: '24px', flexWrap: 'nowrap', overflow: 'hidden' }}>
               {Object.entries(p.subModes).map(([modeKey, modeConfig], idx) => {
                 const isActive = activeMode === modeKey;
                 return (
@@ -164,17 +164,21 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                       className="practice-title-tab transition-all"
                       style={{
                         fontFamily: 'var(--font-display)',
-                        fontSize: '14px',
+                        fontSize: '11px',
                         fontWeight: 600,
-                        letterSpacing: '0.12em',
+                        letterSpacing: '0.10em',
                         textTransform: 'uppercase',
                         color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
                         background: 'transparent',
                         border: 'none',
                         borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
-                        paddingBottom: '4px',
+                        paddingBottom: '3px',
+                        paddingLeft: '2px',
+                        paddingRight: '2px',
                         cursor: 'pointer',
                         transition: 'all 300ms ease',
+                        whiteSpace: 'nowrap',
+                        flex: '0 0 auto',
                       }}
                       onMouseEnter={(e) => {
                         if (!isActive) {
@@ -202,10 +206,11 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
                       <span
                         style={{
                           fontFamily: 'var(--font-display)',
-                          fontSize: '14px',
+                          fontSize: '11px',
                           fontWeight: 600,
-                          color: 'rgba(212, 175, 55, 0.7)',
+                          color: 'rgba(212, 175, 55, 0.6)',
                           userSelect: 'none',
+                          margin: '0 2px',
                         }}
                       >
                         /
