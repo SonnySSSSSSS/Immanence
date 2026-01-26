@@ -640,14 +640,13 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               fontSize: "0.7rem",
               letterSpacing: "0.2em",
               textTransform: "uppercase",
-              color: 'var(--accent-secondary)',
               fontFamily: "var(--font-display)",
               fontWeight: "600",
               textShadow: '0 0 6px var(--accent-glow)',
               opacity: 0.8,
             }}
           >
-            PHASE {capacityPhaseNumber}/3
+            PHASE <span style={{ color: 'var(--accent-primary)' }}>{capacityPhaseNumber}</span><span style={{ color: '#FFD93D' }}>/3</span>
           </div>
           <div
             style={{
