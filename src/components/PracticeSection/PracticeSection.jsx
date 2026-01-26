@@ -707,6 +707,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Resolve submode to actual practice ID for routing
     const actualId = resolveActualPracticeId(practiceId, activeMode);
 
+    // DEV: Log routing visibility (shows selected vs resolved IDs at execution time)
+    if (import.meta.env.DEV) {
+      console.log(`[routing-execute] selected=${practiceId}, activeMode=${activeMode}, actual=${actualId}`);
+    }
+
     // Update practiceId to resolved value so render path uses correct routing
     if (actualId !== practiceId) {
       setPracticeId(actualId);
