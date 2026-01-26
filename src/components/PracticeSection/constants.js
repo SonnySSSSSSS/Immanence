@@ -4,7 +4,7 @@
 export const PRACTICE_REGISTRY = {
   breath: {
     id: "breath",
-    label: "Breath & Stillness",
+    label: "Foundation",
     labelLine1: "BREATH",
     labelLine2: "PRACTICES",
     icon: "✦",
@@ -13,7 +13,7 @@ export const PRACTICE_REGISTRY = {
   },
   integration: {
     id: "integration",
-    label: "Integration",
+    label: "Rituals (integration)",
     labelLine1: "INTEGRATION",
     labelLine2: "",
     icon: "◈",
@@ -43,13 +43,13 @@ export const PRACTICE_REGISTRY = {
     subModes: {
       insight: { id: "cognitive_vipassana", label: "Cognitive" },
       bodyscan: { id: "somatic_vipassana", label: "Somatic" },
-      feeling: { id: "feeling", label: "Feeling" }
+      feeling: { id: "feeling", label: "Emotion" }
     },
     defaultSubMode: "insight",
   },
   resonance: {
     id: "resonance",
-    label: "Resonance",
+    label: "Vibration",
     labelLine1: "RESONANCE",
     labelLine2: "",
     icon: "⌇",
@@ -63,15 +63,15 @@ export const PRACTICE_REGISTRY = {
   },
   perception: {
     id: "perception",
-    label: "Perception",
+    label: "Visual",
     labelLine1: "PERCEPTION",
     labelLine2: "",
     icon: "✧",
     supportsDuration: true,
     requiresFullscreen: false,
     subModes: {
-      visualization: { id: "visualization", label: "Visual", configComponent: "VisualizationConfig" },
-      photic: { id: "photic", label: "Photic", configComponent: "PhoticControlPanel" }
+      visualization: { id: "visualization", label: "Kasina", configComponent: "VisualizationConfig" },
+      photic: { id: "photic", label: "Photonic", configComponent: "PhoticControlPanel" }
     },
     defaultSubMode: "visualization",
   },

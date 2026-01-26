@@ -1,15 +1,26 @@
 // src/components/practice/CircuitTrainingSelector.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { PRACTICE_REGISTRY } from "../PracticeSection/constants.js";
 
-const DEFAULT_ITEMS = [
-  { id: "breath", label: "Breath & Stillness", rail: "rgba(52,211,153,0.95)" },
-  { id: "integration", label: "Integration", rail: "rgba(245,158,11,0.95)" },
-  { id: "circuit", label: "Circuit", rail: "rgba(168,85,247,0.95)" },
-  { id: "awareness", label: "Awareness", rail: "rgba(56,189,248,0.95)" },
-  { id: "resonance", label: "Resonance", rail: "rgba(245,158,11,0.95)" },
-  { id: "perception", label: "Perception", rail: "rgba(96,165,250,0.95)" },
-];
+// Build DEFAULT_ITEMS from registry to ensure labels stay synchronized
+const getRailColor = (id) => {
+  const colorMap = {
+    breath: "rgba(52,211,153,0.95)",
+    integration: "rgba(245,158,11,0.95)",
+    circuit: "rgba(168,85,247,0.95)",
+    awareness: "rgba(56,189,248,0.95)",
+    resonance: "rgba(245,158,11,0.95)",
+    perception: "rgba(96,165,250,0.95)",
+  };
+  return colorMap[id] || "rgba(255,255,255,0.5)";
+};
+
+const DEFAULT_ITEMS = ["breath", "integration", "circuit", "awareness", "resonance", "perception"].map((id) => ({
+  id,
+  label: PRACTICE_REGISTRY[id]?.label || id,
+  rail: getRailColor(id),
+}));
 
 export function CircuitTrainingSelector({
   items = DEFAULT_ITEMS,
