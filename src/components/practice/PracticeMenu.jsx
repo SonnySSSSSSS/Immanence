@@ -75,7 +75,7 @@ function PracticeMenu({
       {hasSubModes ? (
         <div>
           {/* Sub-mode Toggle - Title-as-tabs style */}
-          <div className="flex items-center justify-center gap-2" style={{ marginTop: '20px', marginBottom: '24px', flexWrap: 'nowrap', overflow: 'hidden' }}>
+          <div className="flex items-center justify-center gap-2" style={{ marginTop: '20px', marginBottom: '24px' }}>
             {Object.entries(practice.subModes).map(([modeKey, modeConfig], idx) => {
               const isActive = activeMode === modeKey;
               return (
