@@ -28,8 +28,83 @@ function BreathPracticeCard({
   // Sub-method for breath mode: expansion (sliders) vs traditional (presets)
   const [breathMethod, setBreathMethod] = useState("expansion");
 
+  // Focus / Explore progressive disclosure
+  const [mode, setMode] = useState("focus");
+  const isFocusMode = mode === "focus";
+
   // Determine tutorial ID based on current submode
   const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
+
+  // Wrapped start handler: reset mode to focus, then call onStart
+  const handleStart = () => {
+    setMode("focus");
+    onStart?.();
+  };
+
+  // Collapsed summary component (focus mode)
+  const CollapsedSummary = () => (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.03)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '12px',
+      padding: '16px',
+      marginBottom: '16px',
+    }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+        {/* Method */}
+        <div>
+          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Method</div>
+          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+            {breathSubmode === 'stillness' ? 'Stillness' : (breathMethod === 'expansion' ? 'Expansion' : 'Traditional')}
+          </div>
+        </div>
+        {/* Cycle */}
+        <div>
+          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Cycle</div>
+          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+            {pattern?.inhale ?? 4}–{pattern?.hold1 ?? 0}–{pattern?.exhale ?? 4}–{pattern?.hold2 ?? 0}
+          </div>
+        </div>
+        {/* Duration */}
+        <div>
+          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Duration</div>
+          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+            {duration} min
+          </div>
+        </div>
+      </div>
+      {/* Edit Button */}
+      <button
+        type="button"
+        onClick={() => setMode("explore")}
+        style={{
+          width: '100%',
+          padding: '8px 12px',
+          fontSize: '10px',
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          background: 'rgba(212, 175, 55, 0.12)',
+          border: '1px solid rgba(212, 175, 55, 0.3)',
+          borderRadius: '8px',
+          color: 'rgba(212, 175, 55, 0.9)',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-display)',
+          transition: 'all 200ms',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
+          e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
+          e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+        }}
+      >
+        Edit
+      </button>
+    </div>
+  );
 
   return (
     <div className="relative px-8 animate-in fade-in duration-300">
@@ -133,8 +208,49 @@ function BreathPracticeCard({
 
       {/* Dynamic Config Panel */}
       <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
+        {/* Focus Mode: Collapsed Summary */}
+        {isFocusMode && practiceId === 'breath' && (
+          <CollapsedSummary />
+        )}
+
+        {/* Explore Mode: Full Config UI */}
+        {!isFocusMode && practiceId === 'breath' && (
+          <div style={{ marginBottom: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setMode("focus")}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                fontSize: '10px',
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                background: 'rgba(212, 175, 55, 0.12)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                borderRadius: '8px',
+                color: 'rgba(212, 175, 55, 0.9)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-display)',
+                transition: 'all 200ms',
+                marginBottom: '12px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+              }}
+            >
+              Done
+            </button>
+          </div>
+        )}
+
         {/* Breath Mode Content */}
-        {breathSubmode === 'breath' && (
+        {breathSubmode === 'breath' && !isFocusMode && (
           <>
             {/* Expansion vs Traditional Toggle - first after header */}
             <div className="flex items-center justify-center gap-2" style={{ marginBottom: '16px' }}>
@@ -342,7 +458,7 @@ function BreathPracticeCard({
         )}
 
         {/* Stillness Mode Content */}
-        {breathSubmode === 'stillness' && (
+        {breathSubmode === 'stillness' && !isFocusMode && (
           <>
             {/* Waveform - visible in stillness mode */}
             <div
@@ -439,7 +555,7 @@ function BreathPracticeCard({
       </div>
 
       {/* Collapsible Tempo Sync Section (Breath Practice + Expansion Method Only) */}
-      {breathSubmode === 'breath' && breathMethod === 'expansion' && (
+      {breathSubmode === 'breath' && breathMethod === 'expansion' && !isFocusMode && (
         <div style={{ marginBottom: '24px' }}>
           <button
             onClick={onToggleTempoSync}
@@ -499,7 +615,7 @@ function BreathPracticeCard({
       )}
 
       {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
-      {supportsDuration && practiceId !== 'circuit' && (
+      {supportsDuration && practiceId !== 'circuit' && !(practiceId === 'breath' && isFocusMode) && (
         <div
           style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}
           data-tutorial={breathSubmode === 'stillness' ? 'stillness-options' : undefined}
@@ -519,7 +635,7 @@ function BreathPracticeCard({
       {!(practiceId === 'ritual') && (
         <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
           <button
-            onClick={onStart}
+            onClick={handleStart}
             className="group transition-all duration-300 relative overflow-hidden begin-button"
             style={{
               width: '100%',
