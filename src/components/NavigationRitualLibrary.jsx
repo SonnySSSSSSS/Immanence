@@ -5,6 +5,8 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { isRitualEmpty } from '../data/bhaktiRituals.js';
 
 const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
+const LAST_RITUAL_ID_KEY = "immanenceOS.rituals.lastRitualId";
+const LAST_RITUAL_AT_KEY = "immanenceOS.rituals.lastRitualAt";
 
 export function NavigationRitualLibrary({ onComplete, onNavigate }) {
     const [selectedRitual, setSelectedRitual] = useState(null);
@@ -23,10 +25,15 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
         setSelectedRitual(null);
     };
 
-    // Full completion: stop practice AND navigate to hub
-    const handleFullComplete = () => {
-        onComplete(); // This cleans up the PracticeSection state
-        if (onNavigate) onNavigate(null); // This returns to HomeHub
+    const handleRitualComplete = (ritual) => {
+        if (ritual?.id) {
+            localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
+            localStorage.setItem(LAST_RITUAL_ID_KEY, ritual.id);
+            localStorage.setItem(LAST_RITUAL_AT_KEY, String(Date.now()));
+        }
+        setSelectedRitual(null);
+        onComplete?.();
+        if (onNavigate) onNavigate(null);
     };
 
     // If ritual is selected, show RitualSession
@@ -34,7 +41,7 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
         return (
             <RitualSession
                 ritual={selectedRitual}
-                onComplete={handleFullComplete}
+                onComplete={handleRitualComplete}
                 onExit={handleReturnToDeck}
                 isLight={isLight}
             />

@@ -108,6 +108,14 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
         }
     };
 
+    const handleComplete = () => {
+        if (typeof onComplete === 'function') {
+            onComplete(ritual);
+            return;
+        }
+        onExit?.();
+    };
+
     // Common wrapper for all ritual surfaces - respects Hearth mode constraints
     const RitualSurface = ({ children }) => (
         <div 
@@ -176,7 +184,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                             <button 
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onExit();
+                                    onExit?.();
                                 }}
                                 className={`text-xs sm:text-sm transition-colors ${isLight ? 'text-amber-900/40 hover:text-amber-900/80' : 'text-white/40 hover:text-white'}`}
                             >
@@ -219,7 +227,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onComplete();
+                                handleComplete();
                             }}
                             className="mt-4 px-12 py-4 border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black transition-all rounded-full tracking-widest text-xs sm:text-base font-bold"
                         >
