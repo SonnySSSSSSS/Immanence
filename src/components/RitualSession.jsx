@@ -110,10 +110,9 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
 
     // Common wrapper for all ritual surfaces - respects Hearth mode constraints
     const RitualSurface = ({ children }) => (
-        <div 
-            className={`fixed inset-0 z-[200] flex items-center justify-center p-4 ${isLight ? 'bg-[#FDFBF5]/90 backdrop-blur-md' : 'bg-black/98'}`}
+        <div
+            className={`fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none ${isLight ? 'bg-[#FDFBF5]/90 backdrop-blur-md' : 'bg-black/98'}`}
             style={{ maxWidth: isHearthMode ? '430px' : '100%', margin: isHearthMode ? '0 auto' : undefined }}
-            onPointerDown={(e) => e.stopPropagation()}
         >
             <div 
                 className={`relative w-full flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
@@ -138,10 +137,9 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     // Render Intro
     if (sessionState === 'intro') {
         return (
-            <div 
-                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm transition-opacity duration-300"
+            <div
+                className="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none bg-black/90 backdrop-blur-sm transition-opacity duration-300"
                 style={{ maxWidth: isHearthMode ? '430px' : '100%', margin: isHearthMode ? '0 auto' : undefined }}
-                onPointerDown={(e) => e.stopPropagation()}
             >
                 <div 
                     className={`relative w-full max-w-lg flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
