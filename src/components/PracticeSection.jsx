@@ -836,6 +836,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const actualPracticeIdForVippa = getActualPracticeId(practiceId);
   const isCognitive = actualPracticeIdForVippa === 'cognitive_vipassana';
   const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
+  const isRitualPractice = practiceId === "integration"
+    || actualPracticeIdForVippa === "ritual"
+    || selectedPractice?.alias === "ritual";
   // Insight Meditation (Cognitive) = Sakshi, Body Scan (Somatic) = BodyScan
   const sensoryType = isCognitive ? 'sakshi' : 'bodyScan';
   const { vipassanaTheme, vipassanaElement } = practiceParams[vTarget];
@@ -1185,7 +1188,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Sound") subType = soundType;
     if (practice === "Visualization") subType = geometry;
     if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
-    if (practice === "Ritual") subType = activeRitual?.id;
+    if (isRitualPractice) subType = activeRitual?.id;
 
     const sessionPayload = {
       id,
@@ -1668,7 +1671,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
-    if (practice === "Ritual") {
+    if (isRitualPractice) {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
           <NavigationRitualLibrary onComplete={handleStop} onNavigate={onNavigate} />
