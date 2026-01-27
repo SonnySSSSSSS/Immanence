@@ -134,6 +134,22 @@ export const BHAKTI_RITUALS = [
     },
 ];
 
+export function isRitualEmpty(ritual) {
+    if (!ritual?.id) return true;
+    const steps = ritual.steps ?? ritual.prompts;
+    if (!Array.isArray(steps) || steps.length === 0) return true;
+    const hasContent = steps.some((step) => {
+        const hasText = Boolean(step?.text || step?.prompt || step?.instruction);
+        const hasDuration = step?.duration != null || step?.timing != null;
+        return hasText || hasDuration;
+    });
+    return !hasContent;
+}
+
+BHAKTI_RITUALS.forEach((ritual) => {
+    ritual.isActive = !isRitualEmpty(ritual);
+});
+
 // Get ritual by id
 export function getRitualById(ritualId) {
     return BHAKTI_RITUALS.find(r => r.id === ritualId) || BHAKTI_RITUALS[0];
