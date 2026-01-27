@@ -9,8 +9,13 @@ export function NavigationRitualLibrary({ onComplete, onNavigate, selectedRitual
 
     // Return to selection deck (ritual completed, return to menu)
     const handleReturnToDeck = () => {
+        console.log("[ritual] NavigationRitualLibrary handleReturnToDeck called");
         if (onRitualReturn) {
+            console.log("[ritual] calling onRitualReturn");
             onRitualReturn(); // Call parent to clear activeRitual state
+            console.log("[ritual] onRitualReturn completed");
+        } else {
+            console.warn("[ritual] onRitualReturn is undefined!");
         }
     };
 
