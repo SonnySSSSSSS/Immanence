@@ -1,6 +1,5 @@
 import React from 'react';
 import { getAllRituals } from '../data/rituals/index.js';
-import { isRitualEmpty } from '../data/bhaktiRituals.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
@@ -70,31 +69,17 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                     </div>
                 ) : (
                     rituals.map((ritual) => {
-                        const isActive = ritual?.isActive !== undefined ? ritual.isActive : !isRitualEmpty(ritual);
-                        const isDisabled = !isActive;
                         const isSelected = selectedRitualId === ritual.id;
 
                         return (
                             <button
                                 key={ritual.id}
-                                onClick={() => {
-                                    if (isDisabled) return;
-                                    onSelectRitual(ritual);
-                                }}
-                                onMouseEnter={() => {
-                                    if (isDisabled) return;
-                                    handleMouseEnter(ritual.id);
-                                }}
-                                onMouseLeave={() => {
-                                    if (isDisabled) return;
-                                    handleMouseLeave();
-                                }}
-                                disabled={isDisabled}
+                                onClick={() => onSelectRitual(ritual)}
+                                onMouseEnter={() => handleMouseEnter(ritual.id)}
+                                onMouseLeave={handleMouseLeave}
                                 className="rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
                                 style={{
                                     minWidth: 0, /* Prevents overflow in grid */
-                                    opacity: isDisabled ? 0.45 : 1,
-                                    cursor: isDisabled ? 'not-allowed' : 'pointer',
                                     background: isSelected
                                         ? (isLight 
                                             ? 'linear-gradient(180deg, rgba(160,120,60,0.15) 0%, rgba(255,255,255,0.8) 100%)'
@@ -149,22 +134,6 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                                 >
                                     {formatDuration(ritual.duration)}
                                 </div>
-
-                                {!isActive && (
-                                    <div
-                                        className="mt-2"
-                                        style={{
-                                            fontFamily: 'var(--font-display)',
-                                            fontSize: '8px',
-                                            letterSpacing: '0.08em',
-                                            textTransform: 'uppercase',
-                                            color: textColors.muted,
-                                            opacity: 0.7,
-                                        }}
-                                    >
-                                        Coming soon
-                                    </div>
-                                )}
                             </button>
                         );
                     })

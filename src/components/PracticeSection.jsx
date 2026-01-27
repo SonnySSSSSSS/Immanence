@@ -64,7 +64,6 @@ const CONFIG_COMPONENTS = {
 
 const DEV_FX_GALLERY_ENABLED = true;
 
-
 // Safe practice config lookup that resolves old IDs
 const getPracticeConfig = (id) => {
   const resolvedId = resolvePracticeId(id);
