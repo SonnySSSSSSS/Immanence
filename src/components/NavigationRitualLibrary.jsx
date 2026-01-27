@@ -2,20 +2,15 @@ import React, { useState } from 'react';
 import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
-import { isRitualEmpty } from '../data/bhaktiRituals.js';
 
 const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
-const LAST_RITUAL_ID_KEY = "immanenceOS.rituals.lastRitualId";
-const LAST_RITUAL_AT_KEY = "immanenceOS.rituals.lastRitualAt";
 
-export function NavigationRitualLibrary({ onComplete, onNavigate }) {
+export function NavigationRitualLibrary({ onComplete, onNavigate, onExit }) {
     const [selectedRitual, setSelectedRitual] = useState(null);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
     const handleSelectRitual = (ritual) => {
-        const isActive = ritual?.isActive !== undefined ? ritual.isActive : !isRitualEmpty(ritual);
-        if (!isActive) return;
         if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
         setSelectedRitual(ritual);
     };
@@ -25,15 +20,18 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
         setSelectedRitual(null);
     };
 
-    const handleRitualComplete = (ritual) => {
-        if (ritual?.id) {
-            localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
-            localStorage.setItem(LAST_RITUAL_ID_KEY, ritual.id);
-            localStorage.setItem(LAST_RITUAL_AT_KEY, String(Date.now()));
+    const handleExit = () => {
+        if (onExit) {
+            onExit();
+            return;
         }
-        setSelectedRitual(null);
-        onComplete?.();
-        if (onNavigate) onNavigate(null);
+        handleReturnToDeck();
+    };
+
+    // Full completion: stop practice AND navigate to hub
+    const handleFullComplete = () => {
+        onComplete(); // This cleans up the PracticeSection state
+        if (onNavigate) onNavigate(null); // This returns to HomeHub
     };
 
     // If ritual is selected, show RitualSession
@@ -41,8 +39,8 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
         return (
             <RitualSession
                 ritual={selectedRitual}
-                onComplete={handleRitualComplete}
-                onExit={handleReturnToDeck}
+                onComplete={handleFullComplete}
+                onExit={handleExit}
                 isLight={isLight}
             />
         );

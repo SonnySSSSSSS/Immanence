@@ -9,7 +9,6 @@ import { VisualizationConfig } from "../VisualizationConfig.jsx";
 import { CymaticsConfig } from "../CymaticsConfig.jsx";
 import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
-import { getRitualById } from "../../data/bhaktiRituals.js";
 
 // Map string names to actual components
 const CONFIG_COMPONENTS = {
@@ -51,13 +50,7 @@ function PracticeMenu({
   const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
   const activeMode = hasSubModes ? (setters.activeMode || practice.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
-  const defaultRitualId = typeof window !== "undefined"
-    ? localStorage.getItem("immanenceOS.rituals.defaultRitualId")
-    : null;
-  const defaultRitual = defaultRitualId ? getRitualById(defaultRitualId) : null;
-  const hasDefaultRitual = Boolean(
-    selectedRitualId || (defaultRitual && defaultRitual.isActive !== false)
-  );
+  const hasDefaultRitual = Boolean(selectedRitualId);
   
   // Resolve config components from string names
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
@@ -155,11 +148,7 @@ function PracticeMenu({
                   border: "none",
                   cursor: "pointer",
                 }}
-                onClick={() => {
-                  if (!hasDefaultRitual) return;
-                  onQuickStart?.();
-                }}
-                disabled={!hasDefaultRitual}
+                onClick={() => onQuickStart?.()}
               >
                 Quick Start
               </button>
@@ -173,7 +162,7 @@ function PracticeMenu({
               >
                 Start your daily ritual
               </div>
-              {!hasDefaultRitual && (
+              {!selectedRitualId && (
                 <div style={{ marginTop: 6, fontSize: 11, opacity: 0.6 }}>
                   Select a ritual below
                 </div>

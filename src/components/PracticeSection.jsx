@@ -259,7 +259,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     if (!ritualId) return;
 
     const ritual = getRitualById(ritualId);
-    if (!ritual || ritual?.isActive === false) return;
+    if (!ritual) return;
     if (ritual?.id) setDefaultRitualId(ritual.id);
 
     // Prefer the same path the ritual grid uses
@@ -1163,6 +1163,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     onBreathStateChange && onBreathStateChange(null);
 
     const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
+    if (isRitualPractice && exitType !== 'completed' && activeRitual?.id) {
+      localStorage.setItem(DEFAULT_RITUAL_KEY, activeRitual.id);
+    }
     const instrumentationData = endSession(exitType);
 
     const id =
@@ -1563,7 +1566,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleSelectRitual = (ritual) => {
-    if (ritual?.isActive === false) return;
     if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
     setActiveRitual(ritual);
     setCurrentStepIndex(0);
@@ -1582,19 +1584,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleRitualComplete = () => {
-    // Persist last-practiced ritual on successful completion
     if (activeRitual?.id) {
+      localStorage.setItem(DEFAULT_RITUAL_KEY, activeRitual.id);
       localStorage.setItem(LAST_RITUAL_ID_KEY, activeRitual.id);
       localStorage.setItem(LAST_RITUAL_AT_KEY, String(Date.now()));
     }
-
     handleStop();
-
-    // Navigate back to home after ritual completion
-    // (ritual doesn't show summary, so we reset to practice selection which shows home)
-    setTimeout(() => {
-      setPracticeId('breath'); // Reset to practice selection menu
-    }, 300);
   };
 
   const handleAccuracyTap = (errorMs) => {
@@ -1675,7 +1670,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (isRitualPractice) {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <NavigationRitualLibrary onComplete={handleStop} onNavigate={onNavigate} />
+          <NavigationRitualLibrary onComplete={handleRitualComplete} onExit={handleStop} />
         </section>
       );
     }
