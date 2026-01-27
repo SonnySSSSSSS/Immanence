@@ -56,11 +56,7 @@ const AVAILABLE_EXERCISES = [
     },
 ];
 
-const DURATION_OPTIONS = [3, 5, 7, 10, 12, 15, 20];
-
 export function CircuitConfig({ value, onChange, isLight = false }) {
-    // Per-exercise duration (user can change this)
-    const [exerciseDuration, setExerciseDuration] = useState(value?.exerciseDuration || 5);
     const [intervalBreakSec, setIntervalBreakSec] = useState(value?.intervalBreakSec || 10);
     const [pageIndex, setPageIndex] = useState(0);
 
@@ -83,20 +79,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
     // Notify parent of initial state on mount (fixes Circuit START bug)
     useEffect(() => {
         if (onChange && !value) {
-            onChange({ exercises: selectedExercises, exerciseDuration, intervalBreakSec });
+            onChange({ exercises: selectedExercises, intervalBreakSec });
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // Update all exercises when duration changes
-    const handleExerciseDurationChange = (newDuration) => {
-        setExerciseDuration(newDuration);
-        const updated = selectedExercises.map(e => ({
-            ...e,
-            duration: newDuration
-        }));
-        setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration: newDuration, intervalBreakSec });
-    };
 
     const MAX_EXERCISES = 6;
 
@@ -107,9 +92,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         }
 
         // Always add a new instance of the exercise (allow duplicates)
-        const updated = [...selectedExercises, { exercise, duration: exerciseDuration }];
+        const updated = [...selectedExercises, { exercise, duration: 5 }];
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
+        if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
     const handleDurationChange = (exerciseId, duration) => {
@@ -117,14 +102,14 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             e.exercise.id === exerciseId ? { ...e, duration } : e
         );
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
+        if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
     // Remove exercise by index (needed for duplicates)
     const handleRemoveExercise = (indexToRemove) => {
         const updated = selectedExercises.filter((_, idx) => idx !== indexToRemove);
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
+        if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
     const handleReorder = (fromIndex, toIndex) => {
@@ -132,7 +117,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         const [moved] = updated.splice(fromIndex, 1);
         updated.splice(toIndex, 0, moved);
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
+        if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
     // Compute total duration in seconds (internal representation)
@@ -166,7 +151,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         }
                     }
                 `}</style>
-                <div className="flex justify-between items-center">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 124px', gap: '12px', alignItems: 'end', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                     <div>
                         <div
                             className="text-xs mb-1 tracking-wider uppercase font-medium"
@@ -188,36 +173,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             {Math.floor(totalDurationMin)} <span className="text-lg" style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.5)' }}>min</span>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <div
-                            className="text-xs mb-1 tracking-wider uppercase font-medium"
-                            style={{
-                                fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
-                            }}
-                        >
-                            Per Exercise
-                        </div>
-                        <select
-                            value={exerciseDuration}
-                            onChange={(e) => handleExerciseDurationChange(parseInt(e.target.value))}
-                            className="text-lg font-bold rounded px-2 py-1 cursor-pointer"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                color: 'var(--accent-color)',
-                                border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
-                                letterSpacing: 'var(--tracking-wide)'
-                            }}
-                        >
-                            {DURATION_OPTIONS.map((dur) => (
-                                <option key={dur} value={dur} style={{ background: isLight ? 'var(--bg-card)' : '#1a1a2e', color: isLight ? 'var(--text-primary)' : '#fff' }}>
-                                    {dur} min
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="text-right">
+                    <div>
                         <div
                             className="text-xs mb-1 tracking-wider uppercase font-medium"
                             style={{
@@ -227,26 +183,32 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         >
                             Break Between
                         </div>
-                        <input
-                            type="number"
-                            min="1"
-                            max="60"
-                            value={intervalBreakSec}
-                            onChange={(e) => {
-                                const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                                setIntervalBreakSec(clamped);
-                                if (onChange) onChange({ exercises: selectedExercises, exerciseDuration, intervalBreakSec: clamped });
-                            }}
-                            className="text-lg font-bold rounded px-2 py-1 cursor-pointer w-16 text-center"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                color: 'var(--accent-color)',
-                                border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
-                                letterSpacing: 'var(--tracking-wide)'
-                            }}
-                        />
-                        <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)', marginTop: '4px' }}>sec</div>
+                        <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '6px', width: '124px', minWidth: '124px' }}>
+                            <input
+                                type="number"
+                                min="1"
+                                max="60"
+                                value={intervalBreakSec}
+                                onChange={(e) => {
+                                    const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                                    setIntervalBreakSec(clamped);
+                                    if (onChange) onChange({ exercises: selectedExercises, intervalBreakSec: clamped });
+                                }}
+                                className="text-lg font-bold rounded px-2 cursor-pointer text-center"
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                    color: 'var(--accent-color)',
+                                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                    letterSpacing: 'var(--tracking-wide)',
+                                    height: '32px',
+                                    lineHeight: '32px',
+                                    boxSizing: 'border-box',
+                                    width: '64px'
+                                }}
+                            />
+                            <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)', whiteSpace: 'nowrap' }}>sec</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -389,97 +351,102 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                             {selectedExercises.map((item, index) => (
                                 <div
                                     key={`${item.exercise.id}-${index}`}
-                                    className="p-3 rounded flex items-center gap-3"
+                                    className="p-3 rounded"
                                     style={{
                                         background: isLight ? 'rgba(60,50,35,0.03)' : 'rgba(255,255,255,0.04)',
                                         border: isLight ? '1px solid var(--light-border)' : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
                                         backdropFilter: 'blur(5px)',
+                                        display: 'grid',
+                                        gridTemplateColumns: '32px minmax(0, 1fr) 92px',
+                                        alignItems: 'center',
+                                        columnGap: '12px',
+                                        width: '100%',
+                                        overflow: 'hidden'
                                     }}
                                 >
-                                    {/* Energy Node Number */}
-                                    <div className="relative" style={{ width: '32px', height: '32px' }}>
-                                        <div
-                                            className="w-full h-full rounded-full flex items-center justify-center text-xs font-bold"
-                                            style={{
-                                                background: 'var(--accent-color)',
-                                                color: '#000',
-                                                boxShadow: '0 0 12px var(--accent-50), 0 0 24px var(--accent-30)',
-                                                border: '2px solid var(--accent-color)',
-                                                position: 'relative',
-                                                zIndex: 2
-                                            }}
-                                        >
-                                            {index + 1}
+                                    {/* Left Zone: Badge Only */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+                                        {/* Energy Node Number */}
+                                        <div className="relative" style={{ width: '32px', height: '32px', flexShrink: 0 }}>
+                                            <div
+                                                className="w-full h-full rounded-full flex items-center justify-center text-xs font-bold"
+                                                style={{
+                                                    background: 'var(--accent-color)',
+                                                    color: '#000',
+                                                    boxShadow: '0 0 12px var(--accent-50), 0 0 24px var(--accent-30)',
+                                                    border: '2px solid var(--accent-color)',
+                                                    position: 'relative',
+                                                    zIndex: 2
+                                                }}
+                                            >
+                                                {index + 1}
+                                            </div>
+                                            {/* Outer energy ring */}
+                                            <div
+                                                className="absolute inset-0 rounded-full"
+                                                style={{
+                                                    border: '1px solid var(--accent-40)',
+                                                    transform: 'scale(1.4)',
+                                                    opacity: 0.4,
+                                                    animation: 'energy-pulse 2s ease-in-out infinite',
+                                                    animationDelay: `${index * 0.2}s`
+                                                }}
+                                            />
                                         </div>
-                                        {/* Outer energy ring */}
-                                        <div
-                                            className="absolute inset-0 rounded-full"
-                                            style={{
-                                                border: '1px solid var(--accent-40)',
-                                                transform: 'scale(1.4)',
-                                                opacity: 0.4,
-                                                animation: 'energy-pulse 2s ease-in-out infinite',
-                                                animationDelay: `${index * 0.2}s`
-                                            }}
-                                        />
                                     </div>
 
-                                    {/* Exercise Icon */}
-                                    <div
-                                        className="text-2xl"
-                                        style={{
-                                            filter: `drop-shadow(0 0 6px ${item.exercise.glow})`,
-                                        }}
-                                    >
-                                        {item.exercise.icon}
-                                    </div>
-
-                                    {/* Exercise Name */}
-                                    <div className="flex-1">
+                                    {/* Middle Zone: Exercise Name */}
+                                    <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         <div
-                                            className="text-sm font-bold leading-tight"
+                                            className="font-bold leading-tight"
                                             style={{
                                                 color: isLight ? 'var(--text-primary)' : 'white',
                                                 fontFamily: 'var(--font-display)',
-                                                letterSpacing: '0.04em'
+                                                fontSize: '13px',
+                                                letterSpacing: '0.02em'
                                             }}
                                         >
                                             {item.exercise.name}
                                         </div>
                                     </div>
 
-                                    {/* Duration Input */}
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="60"
-                                        value={item.duration}
-                                        onChange={(e) => {
-                                            const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                                            const updated = selectedExercises.map((ex, idx) =>
-                                                idx === index ? { ...ex, duration: clamped } : ex
-                                            );
-                                            setSelectedExercises(updated);
-                                            if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
-                                        }}
-                                        className="w-12 text-center font-bold rounded px-1 py-0.5 cursor-pointer"
-                                        style={{
-                                            fontFamily: 'var(--font-body)',
-                                            fontSize: '13px',
-                                            background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                            color: 'var(--accent-color)',
-                                            border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
-                                        }}
-                                    />
-                                    <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'var(--accent-color)', opacity: 0.7 }}>min</div>
-
-                                    {/* Remove button */}
-                                    <button
-                                        onClick={() => handleRemoveExercise(index)}
-                                        className={`text-sm transition-colors ${isLight ? 'text-[#3D3425]/30 hover:text-[#3D3425]/70' : 'text-white/30 hover:text-white/70'}`}
-                                    >
-                                        ✕
-                                    </button>
+                                    {/* Right Zone: Duration Input + Remove Button */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', width: '92px', minWidth: '92px' }}>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="60"
+                                            value={item.duration}
+                                            onChange={(e) => {
+                                                const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                                                const updated = selectedExercises.map((ex, idx) =>
+                                                    idx === index ? { ...ex, duration: clamped } : ex
+                                                );
+                                                setSelectedExercises(updated);
+                                                if (onChange) onChange({ exercises: updated, intervalBreakSec });
+                                            }}
+                                            className="text-center font-bold rounded px-1 cursor-pointer"
+                                            style={{
+                                                fontFamily: 'var(--font-body)',
+                                                fontSize: '13px',
+                                                background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                                color: 'var(--accent-color)',
+                                                border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                                width: '52px',
+                                                height: '28px',
+                                                lineHeight: '28px',
+                                                boxSizing: 'border-box',
+                                                textAlign: 'center'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => handleRemoveExercise(index)}
+                                            className={`text-sm transition-colors ${isLight ? 'text-[#3D3425]/30 hover:text-[#3D3425]/70' : 'text-white/30 hover:text-white/70'}`}
+                                            style={{ flexShrink: 0 }}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

@@ -706,6 +706,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [circuitConfig, setCircuitConfig] = useState(null);
   const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
   const [circuitSavedPractice, setCircuitSavedPractice] = useState(null);
+  const [circuitValidationError, setCircuitValidationError] = useState(null);
   const [tapErrors, setTapErrors] = useState([]);
   const [lastErrorMs, setLastErrorMs] = useState(null);
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
@@ -1298,49 +1299,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   };
 
-  // Load curriculum day settings when active session changes
-  useEffect(() => {
-    if (!activePracticeSession) {
-      return;
-    }
-
-    const activeLeg = getActivePracticeLeg();
-
-    if (activeLeg) {
-      // Map legacy labels to IDs if necessary
-      const pid = Object.keys(PRACTICE_REGISTRY).find(k => PRACTICE_REGISTRY[k].label === activeLeg.practiceType) || "breath";
-      
-      setPracticeId(pid);
-
-      if (activeLeg.practiceConfig?.duration) {
-        setDuration(activeLeg.practiceConfig.duration);
-        setTimeLeft(activeLeg.practiceConfig.duration * 60);
+  // Declare executeStart before useEffect that calls it
+  const executeStart = useCallback(() => {
+    // Validate circuit for consecutive duplicate exercises
+    const validateCircuitExercises = (exercises) => {
+      if (!exercises || exercises.length === 0) {
+        return null;
       }
-
-      // If there's a breathPattern specified, update the params
-      if (activeLeg.practiceConfig?.breathPattern) {
-         updateParams('breath', { preset: activeLeg.practiceConfig.breathPattern });
-      }
-
-      if (activeLeg.practiceType === 'Circuit' && activeLeg.practiceConfig?.circuitId) {
-        const circuitDef = getCircuit?.(activeLeg.practiceConfig.circuitId);
-        if (circuitDef?.exercises?.length) {
-          const exercises = circuitDef.exercises.map((exercise) => ({
-            exercise,
-            duration: exercise.duration,
-          }));
-          setCircuitConfig({ exercises, exerciseDuration: null });
+      for (let i = 1; i < exercises.length; i++) {
+        if (exercises[i].exercise?.id === exercises[i - 1].exercise?.id) {
+          return "You can't run the same practice twice in a row. Insert a different practice between repeats.";
         }
       }
-
-      setIsRunning(true);
-      setTimeout(() => {
-        executeStart();
-      }, 100);
-    }
-  }, [activePracticeSession]);
-
-  const executeStart = () => {
+      return null;
+    };
     if (!practiceId) {
       return;
     }
@@ -1364,6 +1336,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (!circuitConfig || circuitConfig.exercises.length === 0) {
         return;
       }
+
+      // Validate circuit for consecutive duplicates
+      const validationError = validateCircuitExercises(circuitConfig.exercises);
+      if (validationError) {
+        setCircuitValidationError(validationError);
+        return;
+      }
+
+      setCircuitValidationError(null);
       setCircuitSavedPractice(practice);
       setActiveCircuitId('custom');
       setCircuitExerciseIndex(0);
@@ -1451,7 +1432,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  };
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, onPracticingChange, practice, activeRitual, isCognitive]);
+
+  // Clear validation error when circuit config changes (user edits circuit)
+  useEffect(() => {
+    if (circuitValidationError && practiceId === 'circuit') {
+      setCircuitValidationError(null);
+    }
+  }, [circuitConfig, practiceId, circuitValidationError]);
 
   const handleStart = (durationOverrideSec = null) => {
     // Get the actual practice ID to run (handles subModes)
@@ -2053,6 +2041,83 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Circuit Validation Error Modal */}
+      {circuitValidationError && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9998,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setCircuitValidationError(null)}
+        >
+          <div
+            style={{
+              background: 'rgba(20, 20, 30, 0.95)',
+              border: '1px solid rgba(200, 100, 100, 0.4)',
+              borderRadius: '12px',
+              padding: '32px',
+              maxWidth: '420px',
+              fontFamily: 'var(--font-body)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                marginBottom: '16px',
+                color: 'rgba(255, 100, 100, 0.9)',
+              }}
+            >
+              Circuit Configuration Error
+            </div>
+            <div
+              style={{
+                fontSize: '14px',
+                lineHeight: '1.6',
+                marginBottom: '24px',
+                color: 'rgba(255, 255, 255, 0.8)',
+              }}
+            >
+              {circuitValidationError}
+            </div>
+            <button
+              onClick={() => setCircuitValidationError(null)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(100, 150, 200, 0.3)',
+                border: '1px solid rgba(100, 150, 200, 0.5)',
+                borderRadius: '8px',
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(100, 150, 200, 0.5)';
+                e.target.style.boxShadow = '0 0 20px rgba(100, 150, 200, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(100, 150, 200, 0.3)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              Back to Circuit Config
+            </button>
+          </div>
         </div>
       )}
 

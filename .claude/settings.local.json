@@ -23,7 +23,8 @@
       "Bash(npm --version:*)",
       "Bash(node --version:*)",
       "Bash(node:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(git commit:*)"
     ]
   },
   "mcpServers": {
