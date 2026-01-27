@@ -1122,7 +1122,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Sound") subType = soundType;
     if (practice === "Visualization") subType = geometry;
     if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
-    if (practice === "Ritual") subType = activeRitual?.id;
+    if (practice === "Rituals") subType = activeRitual?.id;
 
     const sessionPayload = {
       id,
@@ -1541,7 +1541,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     let interval = null;
 
-    if (isRunning && practice !== "Ritual") {
+    if (isRunning && practice !== "Rituals") {
       if (timeLeft > 0) {
         interval = setInterval(() => {
           setTimeLeft((prev) => prev - 1);
@@ -1598,7 +1598,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
-    if (practice === "Ritual") {
+    if (practice === "Rituals") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
           <NavigationRitualLibrary onComplete={handleStop} onNavigate={onNavigate} />
