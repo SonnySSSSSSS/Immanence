@@ -216,13 +216,20 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
 
                         <button
                             onClick={(e) => {
+                                console.log("[RITUAL] COMPLETE clicked");
                                 e.stopPropagation();
                                 // Persist ritual completion data
                                 localStorage.setItem('immanenceOS.rituals.lastRitualId', ritual.id);
                                 localStorage.setItem('immanenceOS.rituals.lastRitualAt', new Date().toISOString());
-                                onComplete();
+                                console.log("[RITUAL] calling onComplete");
+                                if (onComplete) {
+                                    onComplete();
+                                    console.log("[RITUAL] onComplete executed");
+                                } else {
+                                    console.error("[RITUAL] onComplete is undefined!");
+                                }
                             }}
-                            className="mt-4 px-12 py-4 border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black transition-all rounded-full tracking-widest text-xs sm:text-base font-bold"
+                            className="mt-4 px-12 py-4 pointer-events-auto border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black transition-all rounded-full tracking-widest text-xs sm:text-base font-bold"
                         >
                             COMPLETE
                         </button>
