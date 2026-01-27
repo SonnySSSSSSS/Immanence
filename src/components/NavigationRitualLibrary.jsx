@@ -7,7 +7,6 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
     const [selectedRitual, setSelectedRitual] = useState(null);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-
     // Return to selection deck
     const handleReturnToDeck = () => {
         setSelectedRitual(null);
