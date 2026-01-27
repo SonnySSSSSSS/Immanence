@@ -3,10 +3,17 @@ import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
+const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
+
 export function NavigationRitualLibrary({ onComplete, onNavigate }) {
     const [selectedRitual, setSelectedRitual] = useState(null);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+
+    const handleSelectRitual = (ritual) => {
+        if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
+        setSelectedRitual(ritual);
+    };
 
     // Return to selection deck
     const handleReturnToDeck = () => {
@@ -59,7 +66,7 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
 
             {/* Selection Deck */}
             <RitualSelectionDeck
-                onSelectRitual={setSelectedRitual}
+                onSelectRitual={handleSelectRitual}
                 selectedRitualId={null}
             />
 

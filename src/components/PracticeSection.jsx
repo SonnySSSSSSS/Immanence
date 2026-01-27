@@ -1549,7 +1549,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleSelectRitual = (ritual) => {
-    localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
+    if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
     setActiveRitual(ritual);
     setCurrentStepIndex(0);
     const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
