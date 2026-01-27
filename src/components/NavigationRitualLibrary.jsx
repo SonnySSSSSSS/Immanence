@@ -3,17 +3,18 @@ import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function NavigationRitualLibrary({ onComplete, onNavigate }) {
-    const [selectedRitual, setSelectedRitual] = useState(null);
+export function NavigationRitualLibrary({ onComplete, onNavigate, selectedRitual, onSelectRitual, onRitualReturn }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
-    // Return to selection deck
+    // Return to selection deck (ritual completed, return to menu)
     const handleReturnToDeck = () => {
-        setSelectedRitual(null);
+        if (onRitualReturn) {
+            onRitualReturn(); // Call parent to clear activeRitual state
+        }
     };
 
-    // Full completion: stop practice AND navigate to hub
+    // Full completion: stop practice AND navigate to hub (user clicks "Return to Hub")
     const handleFullComplete = () => {
         onComplete(); // This cleans up the PracticeSection state
         if (onNavigate) onNavigate(null); // This returns to HomeHub
@@ -24,7 +25,7 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
         return (
             <RitualSession
                 ritual={selectedRitual}
-                onComplete={handleFullComplete}
+                onComplete={handleReturnToDeck}
                 onExit={handleReturnToDeck}
                 isLight={isLight}
             />
@@ -36,7 +37,7 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
         <div className="w-full max-w-2xl mx-auto px-4 py-8">
             {/* Header */}
             <div className="mb-8 text-center">
-                <h2 
+                <h2
                     className="text-2xl mb-2"
                     style={{
                         fontFamily: 'var(--font-display)',
@@ -59,8 +60,8 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
 
             {/* Selection Deck */}
             <RitualSelectionDeck
-                onSelectRitual={setSelectedRitual}
-                selectedRitualId={null}
+                onSelectRitual={onSelectRitual}
+                selectedRitualId={selectedRitual?.id}
             />
 
             {/* Return to Hub Button */}

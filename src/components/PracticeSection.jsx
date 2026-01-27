@@ -51,6 +51,7 @@ import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
+import { getRitualById } from "../data/bhaktiRituals.js";
 
 // Map string names to actual components (components already imported above)
 const CONFIG_COMPONENTS = {
@@ -171,7 +172,7 @@ function getRailColor(id) {
   return colors[id] || "rgba(255,255,255,0.65)";
 }
 
-function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark, onDisableBenchmark, breathSubmode, onBreathSubmodeChange }) {
+function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, onQuickStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce, onOpenTrajectory, isRunning, tempoSyncEnabled, tempoPhaseDuration, tempoBeatsPerPhase, onRunBenchmark, onDisableBenchmark, breathSubmode, onBreathSubmodeChange }) {
   const cardRef = useRef(null);
   const p = getPracticeConfig(practiceId);
   const practice = p?.label;
@@ -376,6 +377,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             durationTitleMarginBottom={menuDurationTitleMarginBottom}
             showStartButton={menuShowStartButton}
             onStart={handleBeginPractice}
+            onQuickStart={onQuickStart}
             startButtonLabel={menuStartButtonLabel}
           />
         ))}
@@ -1497,12 +1499,30 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleSelectRitual = (ritual) => {
+    // Persist default ritual on selection
+    localStorage.setItem('immanenceOS.rituals.defaultRitualId', ritual.id);
+
     setActiveRitual(ritual);
     setCurrentStepIndex(0);
     const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
     setDuration(Math.ceil(totalSeconds / 60));
     setTimeLeft(totalSeconds);
     handleStart();
+  };
+
+  const handleRitualReturn = () => {
+    // Ritual completed, return to selection deck (don't clear isRunning yet)
+    setActiveRitual(null);
+  };
+
+  const handleQuickStart = () => {
+    const defaultRitualId = localStorage.getItem('immanenceOS.rituals.defaultRitualId');
+    if (!defaultRitualId) return;
+
+    const ritual = getRitualById(defaultRitualId);
+    if (!ritual) return;
+
+    handleSelectRitual(ritual);
   };
 
   const handleNextStep = () => {
@@ -1601,7 +1621,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Rituals") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <NavigationRitualLibrary onComplete={handleStop} onNavigate={onNavigate} />
+          <NavigationRitualLibrary
+            onComplete={handleStop}
+            onNavigate={onNavigate}
+            selectedRitual={activeRitual}
+            onSelectRitual={handleSelectRitual}
+            onRitualReturn={handleRitualReturn}
+          />
         </section>
       );
     }
@@ -2043,11 +2069,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         />
 
       {/* Bottom Layer: Dynamic Options Card */}
-      <PracticeOptionsCard 
+      <PracticeOptionsCard
         practiceId={practiceId}
         duration={duration}
         onDurationChange={setDuration}
         onStart={handleStart}
+        onQuickStart={handleQuickStart}
         tokens={uiTokens}
         params={practiceParams}
         setters={configProps}

@@ -219,6 +219,9 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
+                                // Persist ritual completion data
+                                localStorage.setItem('immanenceOS.rituals.lastRitualId', ritual.id);
+                                localStorage.setItem('immanenceOS.rituals.lastRitualAt', new Date().toISOString());
                                 onComplete();
                             }}
                             className="mt-4 px-12 py-4 border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black transition-all rounded-full tracking-widest text-xs sm:text-base font-bold"

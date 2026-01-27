@@ -41,15 +41,21 @@ function PracticeMenu({
   durationTitleMarginBottom,
   showStartButton,
   onStart,
+  onQuickStart,
   startButtonLabel,
 }) {
   // Handle subModes for consolidated practices
   const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
   const activeMode = hasSubModes ? (setters.activeMode || practice.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
-  
+
   // Resolve config components from string names
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
+
+  // Quick Start for integration practice (rituals)
+  const isIntegration = practice?.id === 'integration';
+  const hasDefaultRitual = localStorage.getItem('immanenceOS.rituals.defaultRitualId') !== null;
+  const showQuickStart = isIntegration && hasDefaultRitual;
   return (
     <div 
       key={containerKey} 
@@ -132,16 +138,64 @@ function PracticeMenu({
       )}
     </div>
 
+    {/* Quick Start for Rituals (if default ritual is persisted) */}
+    {showQuickStart && onQuickStart && (
+      <div className="flex flex-col items-center" style={{ marginTop: '24px', marginBottom: '16px' }}>
+        <button
+          onClick={onQuickStart}
+          className="group transition-all duration-300 relative overflow-hidden begin-button"
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            fontFamily: 'var(--font-display)',
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            padding: '14px 40px',
+            borderRadius: '60px',
+            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.6), rgba(212, 175, 55, 0.3))',
+            color: 'rgba(255, 255, 255, 0.9)',
+            textShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
+            boxShadow: '0 0 30px rgba(212, 175, 55, 0.4)',
+            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            position: 'relative',
+            border: '1px solid rgba(212, 175, 55, 0.5)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 0 50px rgba(212, 175, 55, 0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(212, 175, 55, 0.4)';
+          }}
+        >
+          <span className="relative z-10">Quick Start</span>
+        </button>
+        <div style={{
+          marginTop: '8px',
+          fontFamily: 'var(--font-body)',
+          fontSize: '8px',
+          color: 'rgba(245, 230, 211, 0.4)',
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+        }}>
+          Continue from last ritual
+        </div>
+      </div>
+    )}
+
     {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
     {showDuration && (
       <div style={{ marginBottom: durationMarginBottom }}>
         <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: durationTitleMarginBottom, letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
           Sacred Duration (minutes)
         </div>
-        <SacredTimeSlider 
-          value={duration} 
-          onChange={onDurationChange} 
-          options={durationOptions} 
+        <SacredTimeSlider
+          value={duration}
+          onChange={onDurationChange}
+          options={durationOptions}
         />
       </div>
     )}
