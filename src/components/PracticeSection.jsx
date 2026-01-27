@@ -1512,9 +1512,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const handleRitualReturn = () => {
     // Ritual completed, return to selection deck (don't clear isRunning yet)
-    console.log("[ritual] PracticeSection handleRitualReturn called, clearing activeRitual");
     setActiveRitual(null);
-    console.log("[ritual] PracticeSection setActiveRitual(null) queued");
   };
 
   const handleQuickStart = () => {
