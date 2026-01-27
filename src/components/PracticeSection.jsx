@@ -23,6 +23,7 @@ import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { useCircuitManager } from '../state/circuitManager.js';
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
@@ -976,7 +977,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       clearInterval(circuitCountdownRef.current);
     }
 
-    setCountdownValue(10);
+    const activeSession = useCircuitManager.getState().activeSession;
+    const breakDuration = Math.max(1, Math.min(60, activeSession?.intervalBreakSec ?? 10));
+    setCountdownValue(breakDuration);
     circuitCountdownRef.current = setInterval(() => {
       setCountdownValue((prev) => {
         if (prev <= 1) {

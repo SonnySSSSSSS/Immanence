@@ -17,6 +17,7 @@ import { getDateKey } from '../utils/dateUtils';
  *     ...
  *   ],
  *   totalDuration: number (minutes),
+ *   intervalBreakSec: number (seconds between exercises, 1–60),
  *   createdAt: timestamp,
  * }
  */
@@ -54,6 +55,7 @@ export const useCircuitManager = create(
                 circuitId: string,
                 startTime: timestamp,
                 currentExerciseIndex: number,
+                intervalBreakSec: number,
                 exerciseStates: [
                     { exerciseId, startTime, duration, notes },
                     ...
@@ -68,9 +70,14 @@ export const useCircuitManager = create(
             /**
              * Create a new circuit template
              */
-            createCircuit: ({ name, description, exercises }) => {
+            createCircuit: ({ name, description, exercises, intervalBreakSec = 10 }) => {
                 const now = Date.now();
-                const totalDuration = exercises.reduce((sum, ex) => sum + (ex.duration || 0), 0);
+                // Compute total duration in seconds (internal representation)
+                const exerciseDurationsSec = exercises.reduce((sum, ex) => sum + ((ex.duration || 0) * 60), 0);
+                const breakTotalSec = exercises.length > 1 ? intervalBreakSec * (exercises.length - 1) : 0;
+                const totalDurationSec = exerciseDurationsSec + breakTotalSec;
+                // Store as minutes for consistency with display
+                const totalDuration = totalDurationSec / 60;
 
                 const circuit = {
                     id: crypto?.randomUUID?.() || `circuit_${now}`,
@@ -81,6 +88,7 @@ export const useCircuitManager = create(
                         id: ex.id || `ex_${idx}_${now}`
                     })),
                     totalDuration,
+                    intervalBreakSec,
                     createdAt: now,
                 };
 
@@ -138,6 +146,7 @@ export const useCircuitManager = create(
                     circuitId,
                     startTime: Date.now(),
                     currentExerciseIndex: 0,
+                    intervalBreakSec: circuit.intervalBreakSec || 10,
                     sessionMode,
                     exerciseStates: circuit.exercises.map(ex => ({
                         exerciseId: ex.id,

@@ -61,6 +61,7 @@ const DURATION_OPTIONS = [3, 5, 7, 10, 12, 15, 20];
 export function CircuitConfig({ value, onChange, isLight = false }) {
     // Per-exercise duration (user can change this)
     const [exerciseDuration, setExerciseDuration] = useState(value?.exerciseDuration || 5);
+    const [intervalBreakSec, setIntervalBreakSec] = useState(value?.intervalBreakSec || 10);
     const [pageIndex, setPageIndex] = useState(0);
 
     const EXERCISES_PER_PAGE = 2;
@@ -82,7 +83,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
     // Notify parent of initial state on mount (fixes Circuit START bug)
     useEffect(() => {
         if (onChange && !value) {
-            onChange({ exercises: selectedExercises, exerciseDuration });
+            onChange({ exercises: selectedExercises, exerciseDuration, intervalBreakSec });
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -94,7 +95,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             duration: newDuration
         }));
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration: newDuration });
+        if (onChange) onChange({ exercises: updated, exerciseDuration: newDuration, intervalBreakSec });
     };
 
     const MAX_EXERCISES = 6;
@@ -108,7 +109,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         // Always add a new instance of the exercise (allow duplicates)
         const updated = [...selectedExercises, { exercise, duration: exerciseDuration }];
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration });
+        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
     };
 
     const handleDurationChange = (exerciseId, duration) => {
@@ -116,14 +117,14 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             e.exercise.id === exerciseId ? { ...e, duration } : e
         );
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated });
+        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
     };
 
     // Remove exercise by index (needed for duplicates)
     const handleRemoveExercise = (indexToRemove) => {
         const updated = selectedExercises.filter((_, idx) => idx !== indexToRemove);
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated, exerciseDuration });
+        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
     };
 
     const handleReorder = (fromIndex, toIndex) => {
@@ -131,10 +132,15 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         const [moved] = updated.splice(fromIndex, 1);
         updated.splice(toIndex, 0, moved);
         setSelectedExercises(updated);
-        if (onChange) onChange({ exercises: updated });
+        if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
     };
 
-    const totalDuration = selectedExercises.reduce((sum, e) => sum + e.duration, 0);
+    // Compute total duration in seconds (internal representation)
+    const exerciseDurationsSec = selectedExercises.reduce((sum, e) => sum + (e.duration * 60), 0);
+    const breakTotalSec = selectedExercises.length > 1 ? intervalBreakSec * (selectedExercises.length - 1) : 0;
+    const totalDurationSec = exerciseDurationsSec + breakTotalSec;
+    // Format for display: convert back to minutes for hero display
+    const totalDurationMin = totalDurationSec / 60;
 
     return (
         <div className="space-y-6">
@@ -179,7 +185,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none'
                             }}
                         >
-                            {totalDuration} <span className="text-lg" style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.5)' }}>min</span>
+                            {Math.floor(totalDurationMin)} <span className="text-lg" style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.5)' }}>min</span>
                         </div>
                     </div>
                     <div className="text-right">
@@ -210,6 +216,37 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 </option>
                             ))}
                         </select>
+                    </div>
+                    <div className="text-right">
+                        <div
+                            className="text-xs mb-1 tracking-wider uppercase font-medium"
+                            style={{
+                                fontFamily: 'var(--font-body)',
+                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
+                            }}
+                        >
+                            Break Between
+                        </div>
+                        <input
+                            type="number"
+                            min="1"
+                            max="60"
+                            value={intervalBreakSec}
+                            onChange={(e) => {
+                                const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                                setIntervalBreakSec(clamped);
+                                if (onChange) onChange({ exercises: selectedExercises, exerciseDuration, intervalBreakSec: clamped });
+                            }}
+                            className="text-lg font-bold rounded px-2 py-1 cursor-pointer w-16 text-center"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                color: 'var(--accent-color)',
+                                border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                letterSpacing: 'var(--tracking-wide)'
+                            }}
+                        />
+                        <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)', marginTop: '4px' }}>sec</div>
                     </div>
                 </div>
             </div>
@@ -411,13 +448,30 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                         </div>
                                     </div>
 
-                                    {/* Duration */}
-                                    <div
-                                        className="text-sm font-bold"
-                                        style={{ fontFamily: 'var(--font-body)', color: 'var(--accent-color)', letterSpacing: '0.05em' }}
-                                    >
-                                        {item.duration}m
-                                    </div>
+                                    {/* Duration Input */}
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="60"
+                                        value={item.duration}
+                                        onChange={(e) => {
+                                            const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                                            const updated = selectedExercises.map((ex, idx) =>
+                                                idx === index ? { ...ex, duration: clamped } : ex
+                                            );
+                                            setSelectedExercises(updated);
+                                            if (onChange) onChange({ exercises: updated, exerciseDuration, intervalBreakSec });
+                                        }}
+                                        className="w-12 text-center font-bold rounded px-1 py-0.5 cursor-pointer"
+                                        style={{
+                                            fontFamily: 'var(--font-body)',
+                                            fontSize: '13px',
+                                            background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                            color: 'var(--accent-color)',
+                                            border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                        }}
+                                    />
+                                    <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'var(--accent-color)', opacity: 0.7 }}>min</div>
 
                                     {/* Remove button */}
                                     <button
