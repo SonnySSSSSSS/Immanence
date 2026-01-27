@@ -9,6 +9,7 @@ import { VisualizationConfig } from "../VisualizationConfig.jsx";
 import { CymaticsConfig } from "../CymaticsConfig.jsx";
 import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+import { getRitualById } from "../../data/bhaktiRituals.js";
 
 // Map string names to actual components
 const CONFIG_COMPONENTS = {
@@ -53,7 +54,10 @@ function PracticeMenu({
   const defaultRitualId = typeof window !== "undefined"
     ? localStorage.getItem("immanenceOS.rituals.defaultRitualId")
     : null;
-  const hasDefaultRitual = Boolean(selectedRitualId || defaultRitualId);
+  const defaultRitual = defaultRitualId ? getRitualById(defaultRitualId) : null;
+  const hasDefaultRitual = Boolean(
+    selectedRitualId || (defaultRitual && defaultRitual.isActive !== false)
+  );
   
   // Resolve config components from string names
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;

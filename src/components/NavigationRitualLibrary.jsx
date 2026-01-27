@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { isRitualEmpty } from '../data/bhaktiRituals.js';
 
 const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
 
@@ -11,6 +12,8 @@ export function NavigationRitualLibrary({ onComplete, onNavigate }) {
     const isLight = colorScheme === 'light';
 
     const handleSelectRitual = (ritual) => {
+        const isActive = ritual?.isActive !== undefined ? ritual.isActive : !isRitualEmpty(ritual);
+        if (!isActive) return;
         if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
         setSelectedRitual(ritual);
     };

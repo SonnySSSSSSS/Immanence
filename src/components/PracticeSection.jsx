@@ -259,7 +259,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     if (!ritualId) return;
 
     const ritual = getRitualById(ritualId);
-    if (!ritual) return;
+    if (!ritual || ritual?.isActive === false) return;
     if (ritual?.id) setDefaultRitualId(ritual.id);
 
     // Prefer the same path the ritual grid uses
@@ -1563,6 +1563,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleSelectRitual = (ritual) => {
+    if (ritual?.isActive === false) return;
     if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
     setActiveRitual(ritual);
     setCurrentStepIndex(0);
