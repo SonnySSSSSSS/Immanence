@@ -3,29 +3,14 @@ import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
-
-export function NavigationRitualLibrary({ onComplete, onNavigate, onExit }) {
+export function NavigationRitualLibrary({ onComplete, onNavigate }) {
     const [selectedRitual, setSelectedRitual] = useState(null);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
-    const handleSelectRitual = (ritual) => {
-        if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
-        setSelectedRitual(ritual);
-    };
-
     // Return to selection deck
     const handleReturnToDeck = () => {
         setSelectedRitual(null);
-    };
-
-    const handleExit = () => {
-        if (onExit) {
-            onExit();
-            return;
-        }
-        handleReturnToDeck();
     };
 
     // Full completion: stop practice AND navigate to hub
@@ -40,7 +25,7 @@ export function NavigationRitualLibrary({ onComplete, onNavigate, onExit }) {
             <RitualSession
                 ritual={selectedRitual}
                 onComplete={handleFullComplete}
-                onExit={handleExit}
+                onExit={handleReturnToDeck}
                 isLight={isLight}
             />
         );
@@ -74,7 +59,7 @@ export function NavigationRitualLibrary({ onComplete, onNavigate, onExit }) {
 
             {/* Selection Deck */}
             <RitualSelectionDeck
-                onSelectRitual={handleSelectRitual}
+                onSelectRitual={setSelectedRitual}
                 selectedRitualId={null}
             />
 

@@ -51,7 +51,6 @@ import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
-import { getRitualById } from "../data/bhaktiRituals.js";
 
 // Map string names to actual components (components already imported above)
 const CONFIG_COMPONENTS = {
@@ -64,9 +63,6 @@ const CONFIG_COMPONENTS = {
 };
 
 const DEV_FX_GALLERY_ENABLED = true;
-const DEFAULT_RITUAL_KEY = "immanenceOS.rituals.defaultRitualId";
-const LAST_RITUAL_ID_KEY = "immanenceOS.rituals.lastRitualId";
-const LAST_RITUAL_AT_KEY = "immanenceOS.rituals.lastRitualAt";
 
 // Safe practice config lookup that resolves old IDs
 const getPracticeConfig = (id) => {
@@ -185,11 +181,9 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
-  const [defaultRitualId, setDefaultRitualId] = useState(() => localStorage.getItem(DEFAULT_RITUAL_KEY));
   const label = p?.label;
   const pattern = setters?.pattern;
   const onPatternChange = setters?.setPattern;
-  const selectedRitualId = setters?.selectedRitualId;
   const durationOptions = DURATIONS;
   const supportsDuration = p?.supportsDuration;
   const onToggleTrajectory = () => setShowTrajectory(v => !v);
@@ -206,14 +200,6 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   useEffect(() => {
     setShowTrajectory(false);
   }, [practiceId]);
-
-  useEffect(() => {
-    setDefaultRitualId(localStorage.getItem(DEFAULT_RITUAL_KEY));
-  }, [isRunning]);
-
-  useEffect(() => {
-    if (selectedRitualId) setDefaultRitualId(selectedRitualId);
-  }, [selectedRitualId]);
 
   useEffect(() => {
     if (practiceId !== 'breath' && breathSubmode !== 'breath') {
@@ -254,52 +240,6 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     // Audio will be started by executeStart via window.__tempoSyncStartAudio
     onStart(songSec);
   };
-  const handleQuickStartRitual = () => {
-    const ritualId = localStorage.getItem(DEFAULT_RITUAL_KEY) || defaultRitualId;
-    if (!ritualId) return;
-
-    const ritual = getRitualById(ritualId);
-    if (!ritual) return;
-    if (ritual?.id) setDefaultRitualId(ritual.id);
-
-    // Prefer the same path the ritual grid uses
-    if (typeof setters?.onSelectRitual === "function") {
-      setters.onSelectRitual(ritual);
-      return;
-    }
-
-    // Fallback: set selection + start
-    if (typeof setters?.setSelectedRitualId === "function") {
-      setters.setSelectedRitualId(ritual.id);
-      handleBeginPractice();
-      return;
-    }
-  };
-
-  // Read and compute last-practiced ritual for integration practice
-  const lastRitualId = localStorage.getItem(LAST_RITUAL_ID_KEY);
-  const lastRitualAtMs = lastRitualId ? parseInt(localStorage.getItem(LAST_RITUAL_AT_KEY) || '0', 10) : 0;
-  const isLastRecent = lastRitualAtMs > 0 && (Date.now() - lastRitualAtMs) < (7 * 24 * 60 * 60 * 1000);
-  const lastRitual = isLastRecent && lastRitualId ? getRitualById(lastRitualId) : null;
-  const lastPracticedLabel = lastRitual ? (lastRitual.name || lastRitual.title || lastRitual.id) : null;
-
-  const handleLastPracticedStart = () => {
-    if (!lastRitual) return;
-
-    // Use the same path as Quick Start
-    if (typeof setters?.onSelectRitual === "function") {
-      setters.onSelectRitual(lastRitual);
-      return;
-    }
-
-    // Fallback: set selection + start
-    if (typeof setters?.setSelectedRitualId === "function") {
-      setters.setSelectedRitualId(lastRitual.id);
-      handleBeginPractice();
-      return;
-    }
-  };
-
   const tempoSyncSlot = <TempoSyncPanel isPracticing={isRunning} />;
 
   return (
@@ -427,7 +367,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             ConfigComponent={p.configComponent ? CONFIG_COMPONENTS[p.configComponent] : null}
             setters={setters}
             isLight={tokens.isLight}
-            selectedRitualId={selectedRitualId}
+            selectedRitualId={setters.selectedRitualId}
             showDuration={menuShowDuration}
             duration={duration}
             onDurationChange={onDurationChange}
@@ -436,9 +376,6 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             durationTitleMarginBottom={menuDurationTitleMarginBottom}
             showStartButton={menuShowStartButton}
             onStart={handleBeginPractice}
-            onQuickStart={practiceId === "integration" ? handleQuickStartRitual : undefined}
-            onLastPracticedStart={practiceId === "integration" && lastRitual ? handleLastPracticedStart : undefined}
-            lastPracticedLabel={practiceId === "integration" && lastRitual ? lastPracticedLabel : undefined}
             startButtonLabel={menuStartButtonLabel}
           />
         ))}
@@ -836,9 +773,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const actualPracticeIdForVippa = getActualPracticeId(practiceId);
   const isCognitive = actualPracticeIdForVippa === 'cognitive_vipassana';
   const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
-  const isRitualPractice = practiceId === "integration"
-    || actualPracticeIdForVippa === "ritual"
-    || selectedPractice?.alias === "ritual";
   // Insight Meditation (Cognitive) = Sakshi, Body Scan (Somatic) = BodyScan
   const sensoryType = isCognitive ? 'sakshi' : 'bodyScan';
   const { vipassanaTheme, vipassanaElement } = practiceParams[vTarget];
@@ -1163,9 +1097,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     onBreathStateChange && onBreathStateChange(null);
 
     const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
-    if (isRitualPractice && exitType !== 'completed' && activeRitual?.id) {
-      localStorage.setItem(DEFAULT_RITUAL_KEY, activeRitual.id);
-    }
     const instrumentationData = endSession(exitType);
 
     const id =
@@ -1191,7 +1122,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practice === "Sound") subType = soundType;
     if (practice === "Visualization") subType = geometry;
     if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
-    if (isRitualPractice) subType = activeRitual?.id;
+    if (practice === "Ritual") subType = activeRitual?.id;
 
     const sessionPayload = {
       id,
@@ -1566,7 +1497,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleSelectRitual = (ritual) => {
-    if (ritual?.id) localStorage.setItem(DEFAULT_RITUAL_KEY, ritual.id);
     setActiveRitual(ritual);
     setCurrentStepIndex(0);
     const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
@@ -1584,12 +1514,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleRitualComplete = () => {
-    if (activeRitual?.id) {
-      localStorage.setItem(DEFAULT_RITUAL_KEY, activeRitual.id);
-      localStorage.setItem(LAST_RITUAL_ID_KEY, activeRitual.id);
-      localStorage.setItem(LAST_RITUAL_AT_KEY, String(Date.now()));
-    }
     handleStop();
+
+    // Navigate back to home after ritual completion
+    // (ritual doesn't show summary, so we reset to practice selection which shows home)
+    setTimeout(() => {
+      setPracticeId('breath'); // Reset to practice selection menu
+    }, 300);
   };
 
   const handleAccuracyTap = (errorMs) => {
@@ -1667,10 +1598,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
-    if (isRitualPractice) {
+    if (practice === "Ritual") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
-          <NavigationRitualLibrary onComplete={handleRitualComplete} onExit={handleStop} />
+          <NavigationRitualLibrary onComplete={handleStop} onNavigate={onNavigate} />
         </section>
       );
     }

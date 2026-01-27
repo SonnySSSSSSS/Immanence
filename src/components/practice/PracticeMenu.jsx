@@ -41,16 +41,12 @@ function PracticeMenu({
   durationTitleMarginBottom,
   showStartButton,
   onStart,
-  onQuickStart,
-  onLastPracticedStart,
-  lastPracticedLabel,
   startButtonLabel,
 }) {
   // Handle subModes for consolidated practices
   const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
   const activeMode = hasSubModes ? (setters.activeMode || practice.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
-  const hasDefaultRitual = Boolean(selectedRitualId);
   
   // Resolve config components from string names
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
@@ -124,96 +120,11 @@ function PracticeMenu({
           )}
         </div>
       ) : ConfigComponent ? (
-        <>
-          {(practice?.id === "integration" || practice?.label === "Rituals") && (
-            <div
-              style={{
-                padding: "12px 14px",
-                marginBottom: "12px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-            >
-              <button
-                type="button"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.9)",
-                  color: "#000",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  border: "none",
-                  cursor: "pointer",
-                }}
-                onClick={() => onQuickStart?.()}
-              >
-                Quick Start
-              </button>
-
-              <div
-                style={{
-                  marginTop: 6,
-                  fontSize: 11,
-                  opacity: 0.6,
-                }}
-              >
-                Start your daily ritual
-              </div>
-              {!selectedRitualId && (
-                <div style={{ marginTop: 6, fontSize: 11, opacity: 0.6 }}>
-                  Select a ritual below
-                </div>
-              )}
-            </div>
-          )}
-          {(practice?.id === "integration" || practice?.label === "Rituals") && onLastPracticedStart && lastPracticedLabel && (
-            <div
-              style={{
-                padding: "12px 14px",
-                marginBottom: "12px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-            >
-              <button
-                type="button"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.9)",
-                  color: "#000",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  border: "none",
-                  cursor: "pointer",
-                }}
-                onClick={() => onLastPracticedStart?.()}
-              >
-                Last practiced: {lastPracticedLabel}
-              </button>
-
-              <div
-                style={{
-                  marginTop: 6,
-                  fontSize: 11,
-                  opacity: 0.6,
-                }}
-              >
-                Continue a recent ritual
-              </div>
-            </div>
-          )}
-          <ConfigComponent 
-            {...setters}
-            isLight={isLight}
-            selectedRitualId={selectedRitualId}
-          />
-        </>
+        <ConfigComponent 
+          {...setters}
+          isLight={isLight}
+          selectedRitualId={selectedRitualId}
+        />
       ) : (
         <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
           No additional configuration required
