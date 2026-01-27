@@ -185,9 +185,11 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
+  const [defaultRitualId, setDefaultRitualId] = useState(() => localStorage.getItem(DEFAULT_RITUAL_KEY));
   const label = p?.label;
   const pattern = setters?.pattern;
   const onPatternChange = setters?.setPattern;
+  const selectedRitualId = setters?.selectedRitualId;
   const durationOptions = DURATIONS;
   const supportsDuration = p?.supportsDuration;
   const onToggleTrajectory = () => setShowTrajectory(v => !v);
@@ -204,6 +206,14 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
   useEffect(() => {
     setShowTrajectory(false);
   }, [practiceId]);
+
+  useEffect(() => {
+    setDefaultRitualId(localStorage.getItem(DEFAULT_RITUAL_KEY));
+  }, [isRunning]);
+
+  useEffect(() => {
+    if (selectedRitualId) setDefaultRitualId(selectedRitualId);
+  }, [selectedRitualId]);
 
   useEffect(() => {
     if (practiceId !== 'breath' && breathSubmode !== 'breath') {
@@ -245,11 +255,12 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
     onStart(songSec);
   };
   const handleQuickStartRitual = () => {
-    const ritualId = localStorage.getItem(DEFAULT_RITUAL_KEY);
+    const ritualId = localStorage.getItem(DEFAULT_RITUAL_KEY) || defaultRitualId;
     if (!ritualId) return;
 
     const ritual = getRitualById(ritualId);
     if (!ritual) return;
+    if (ritual?.id) setDefaultRitualId(ritual.id);
 
     // Prefer the same path the ritual grid uses
     if (typeof setters?.onSelectRitual === "function") {
@@ -416,7 +427,7 @@ function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, 
             ConfigComponent={p.configComponent ? CONFIG_COMPONENTS[p.configComponent] : null}
             setters={setters}
             isLight={tokens.isLight}
-            selectedRitualId={setters.selectedRitualId}
+            selectedRitualId={selectedRitualId}
             showDuration={menuShowDuration}
             duration={duration}
             onDurationChange={onDurationChange}

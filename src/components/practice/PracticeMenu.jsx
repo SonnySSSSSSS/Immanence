@@ -147,7 +147,7 @@ function PracticeMenu({
                   border: "none",
                   cursor: "pointer",
                 }}
-                onClick={() => (onQuickStart || onStart)?.()}
+                onClick={() => onQuickStart?.()}
               >
                 Quick Start
               </button>
