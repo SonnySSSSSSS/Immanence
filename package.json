@@ -5,7 +5,7 @@
   "homepage": "https://SonnySSSSSSS.github.io/Immanence",
 
   "scripts": {
-    "dev": "node scripts/guard-dev.mjs && vite",
+    "dev": "node scripts/guard-dev.mjs && npx vite",
     "dev:clean": "powershell -ExecutionPolicy Bypass -File ./dev-reset.ps1 && npm run dev",
     "build": "vite build",
     "preview": "vite preview",

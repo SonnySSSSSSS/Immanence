@@ -111,6 +111,18 @@ export class IsochronicEngine {
     }
   }
 
+  setReverbSizePreset(preset) {
+    if (this._reverb && this._reverb.setSizePreset) {
+      this._reverb.setSizePreset(preset);
+    }
+  }
+
+  setReverbParams(params) {
+    if (this._reverb && this._reverb.setReverbParams) {
+      this._reverb.setReverbParams(params);
+    }
+  }
+
   // MVP behavior for pulseHz changes:
   // - short fade out
   // - cancel scheduled envelopes

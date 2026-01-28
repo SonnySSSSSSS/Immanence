@@ -36,6 +36,11 @@ const PER_PRACTICE_DEFAULTS = {
     volume: 0.5,
     binauralPresetId: 'Alpha - Flow 10Hz',
     isochronicPresetId: 'Deep Focus',
+    // Entrainment target (beat/pulse). UI calls this “Exact Frequency (Hz)”.
+    exactHz: 10,
+    // Advanced FX (Isochronic only). Stored as 0..1 wet values.
+    reverbWet: 0,
+    chorusWet: 0,
     carrierFrequency: 200,
   },
   visualization: {
@@ -160,7 +165,11 @@ export function loadPreferences() {
       practiceId: normalizedPracticeId,
       practiceParams: {
         ...DEFAULT_PREFERENCES.practiceParams,
-        ...(stored.practiceParams || {})
+        ...(stored.practiceParams || {}),
+        sound: {
+          ...DEFAULT_PREFERENCES.practiceParams.sound,
+          ...(stored.practiceParams?.sound || {}),
+        },
       }
     };
   } catch {

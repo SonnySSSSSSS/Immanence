@@ -23,11 +23,15 @@ export function createReverbRack(ctx, {
   const dryGain = ctx.createGain();
   const wetGain = ctx.createGain();
 
+  // Track current IR parameters so we can update later
+  let curSeconds = seconds;
+  let curDecay = decay;
+
   const preDelay = ctx.createDelay();
   preDelay.delayTime.value = clamp(preDelayMs / 1000, 0, 0.08);
 
   const convolver = ctx.createConvolver();
-  convolver.buffer = _makeImpulseResponse(ctx, seconds, decay);
+  convolver.buffer = _makeImpulseResponse(ctx, curSeconds, curDecay);
 
   // routing
   input.connect(dryGain);
@@ -41,7 +45,10 @@ export function createReverbRack(ctx, {
   // init mix
   const setWet = (value01) => {
     const w = clamp(Number(value01), 0, 1);
-    const d = 1 - w;
+
+    // Equal-power crossfade (prevents perceived loudness drop as wet increases)
+    const dry = Math.cos(w * Math.PI * 0.5);
+    const wet = Math.sin(w * Math.PI * 0.5);
 
     const t = ctx.currentTime;
     dryGain.gain.cancelScheduledValues(t);
@@ -51,17 +58,60 @@ export function createReverbRack(ctx, {
     wetGain.gain.setValueAtTime(wetGain.gain.value, t);
 
     // small ramp to avoid zipper noise
-    dryGain.gain.linearRampToValueAtTime(d, t + 0.05);
-    wetGain.gain.linearRampToValueAtTime(w, t + 0.05);
+    dryGain.gain.linearRampToValueAtTime(dry, t + 0.05);
+    wetGain.gain.linearRampToValueAtTime(wet, t + 0.05);
   };
 
   setWet(wet);
+
+  // Smoothly update IR without harsh clicks
+  const _applyIR = (sec, dec) => {
+    const s = clamp(Number(sec), 0.2, 6.0);
+    const d = clamp(Number(dec), 0.5, 10.0);
+    curSeconds = s;
+    curDecay = d;
+
+    const t = ctx.currentTime;
+    const prevWet = wetGain.gain.value;
+
+    // Quick fade-down of wet path
+    wetGain.gain.cancelScheduledValues(t);
+    wetGain.gain.setValueAtTime(prevWet, t);
+    wetGain.gain.linearRampToValueAtTime(0, t + 0.03);
+
+    // Swap IR just after fade-down
+    const swapAt = t + 0.035;
+    // Using setTimeout is unnecessary; assign immediately since audio param change is atomic.
+    convolver.buffer = _makeImpulseResponse(ctx, s, d);
+
+    // Fade wet back up to previous level
+    wetGain.gain.setValueAtTime(0, swapAt);
+    wetGain.gain.linearRampToValueAtTime(prevWet, swapAt + 0.05);
+  };
+
+  // Public API: preset sizes (S/M/L)
+  const setSizePreset = (preset) => {
+    const p = String(preset || "").toUpperCase();
+    let s = 1.1, d = 2.0; // S
+    if (p === "M") { s = 2.2; d = 3.0; }
+    else if (p === "L") { s = 3.6; d = 4.2; }
+    _applyIR(s, d);
+  };
+
+  // Public API: set explicit seconds/decay
+  const setReverbParams = ({ seconds: sec, decay: dec } = {}) => {
+    const s = sec != null ? sec : curSeconds;
+    const d = dec != null ? dec : curDecay;
+    _applyIR(s, d);
+  };
 
   return {
     input,
     output,
     convolver,
     setWet,
+    setSizePreset,
+    setReverbParams,
   };
 }
 
@@ -160,5 +210,32 @@ function _makeImpulseResponse(ctx, seconds, decay) {
     }
   }
 
+  _normalizeIR(buffer);
   return buffer;
+}
+
+function _normalizeIR(buffer) {
+  const ch0 = buffer.getChannelData(0);
+  const ch1 = buffer.getChannelData(1);
+
+  let sum0 = 0;
+  let sum1 = 0;
+
+  for (let i = 0; i < ch0.length; i++) {
+    const a = ch0[i];
+    const b = ch1[i];
+    sum0 += a * a;
+    sum1 += b * b;
+  }
+
+  const rms0 = Math.sqrt(sum0 / ch0.length) || 1;
+  const rms1 = Math.sqrt(sum1 / ch1.length) || 1;
+
+  const g0 = 1 / rms0;
+  const g1 = 1 / rms1;
+
+  for (let i = 0; i < ch0.length; i++) {
+    ch0[i] *= g0;
+    ch1[i] *= g1;
+  }
 }

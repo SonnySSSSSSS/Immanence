@@ -98,6 +98,7 @@ export function SoundConfig({
 
     const [reverbWet, setReverbWet] = React.useState(0);
     const [chorusWet, setChorusWet] = React.useState(0);
+    const [reverbSize, setReverbSize] = React.useState('M');
 
     // Monitor adjustment duration for acceleration (5+ seconds)
     React.useEffect(() => {
@@ -283,6 +284,7 @@ export function SoundConfig({
                             isAdjustingFrequency={isAdjustingFrequency}
                             reverbWet={reverbWet}
                             chorusWet={chorusWet}
+                            reverbSizePreset={reverbSize}
                         />
 
                         <div>
@@ -504,7 +506,31 @@ export function SoundConfig({
                             }}
                         >
                             <span>Volume</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{Math.round(volumeValue * 100)}%</span>
+                            <div className="flex items-center gap-2">
+                                <span style={{ color: 'var(--accent-color)' }}>{Math.round(volumeValue * 100)}%</span>
+                                <div className="flex gap-1">
+                                    {[
+                                        { label: 'Mute', v: 0 },
+                                        { label: '50', v: 0.5 },
+                                        { label: 'Max', v: 1 },
+                                    ].map(btn => (
+                                        <button
+                                            key={btn.label}
+                                            onClick={() => setVolumeFunc(btn.v)}
+                                            className="px-2 py-0.5 rounded-md"
+                                            style={{
+                                                border: `1px solid ${isLight ? 'var(--light-border)' : 'var(--accent-10)'}`,
+                                                color: textColors.secondary,
+                                                fontFamily: 'var(--font-display)',
+                                                fontSize: '9px',
+                                                fontWeight: 600,
+                                                letterSpacing: 'var(--tracking-wide)'
+                                            }}
+                                            title={`Set volume to ${btn.label}`}
+                                        >{btn.label}</button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                         <input
                             type="range"
@@ -623,6 +649,37 @@ export function SoundConfig({
                         className="w-full"
                         style={{ accentColor: "var(--accent-color)" }}
                     />
+                    <div className="mt-2 flex items-center justify-between">
+                        <div
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontSize: "8px",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                textTransform: "uppercase",
+                                color: textColors.muted,
+                            }}
+                        >
+                            Size
+                        </div>
+                        <div className="flex gap-1">
+                            {(["S","M","L"]).map(sz => (
+                                <button
+                                    key={sz}
+                                    onClick={() => setReverbSize(sz)}
+                                    className="px-2 py-1 rounded-md"
+                                    style={{
+                                        border: `1px solid ${reverbSize===sz? 'var(--accent-color)' : (isLight ? 'var(--light-border)' : 'var(--accent-10)')}`,
+                                        color: reverbSize===sz? 'var(--accent-color)' : textColors.secondary,
+                                        fontFamily: "var(--font-display)",
+                                        fontSize: "10px",
+                                        fontWeight: 600,
+                                        letterSpacing: "var(--tracking-wide)",
+                                    }}
+                                >{sz}</button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>

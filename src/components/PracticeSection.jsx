@@ -756,8 +756,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     volume: soundVolume, 
     binauralPresetId, 
     isochronicPresetId, 
-    carrierFrequency 
-  } = practiceParams.sound;
+    carrierFrequency,
+
+    // Isochronic advanced (persisted)
+    exactHz: isochronicExactHz,
+    reverbWet: isochronicReverbWet,
+    chorusWet: isochronicChorusWet,
+  } = practiceParams.sound || {};
   const { 
     geometry, 
     fadeInDuration, 
@@ -819,6 +824,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setBinauralPreset = (val) => updateParams('sound', { binauralPresetId: val?.name || val });
   const setIsochronicPreset = (val) => updateParams('sound', { isochronicPresetId: val?.name || val });
   const setCarrierFrequency = (val) => updateParams('sound', { carrierFrequency: val });
+  // Isochronic advanced setters
+  const setIsochronicExactHz = (val) => updateParams('sound', { exactHz: val });
+  const setIsochronicReverbWet = (val) => updateParams('sound', { reverbWet: val });
+  const setIsochronicChorusWet = (val) => updateParams('sound', { chorusWet: val });
   const setSensoryType = (val) => updateParams(vTarget, { sensoryType: val });
   const setVipassanaTheme = (val) => updateParams(vTarget, { vipassanaTheme: val });
   const setVipassanaElement = (val) => updateParams(vTarget, { vipassanaElement: val });
@@ -1962,11 +1971,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const activeMode = practiceParams[practiceId]?.activeMode;
   const configProps = {
     preset, pattern, soundType, soundVolume, binauralPreset, isochronicPreset, carrierFrequency,
+    isochronicExactHz, isochronicReverbWet, isochronicChorusWet,
     sensoryType, vipassanaTheme, vipassanaElement, geometry, fadeInDuration, displayDuration,
     fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
     activeMode,
     setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset, 
-    setCarrierFrequency, setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry, 
+    setCarrierFrequency, setIsochronicExactHz, setIsochronicReverbWet, setIsochronicChorusWet,
+    setSensoryType, setVipassanaTheme, setVipassanaElement, setGeometry, 
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
     setFrequencySet, setSelectedFrequency, setDriftEnabled,
     setActiveMode: (modeKey) => setActiveMode(practiceId, modeKey),

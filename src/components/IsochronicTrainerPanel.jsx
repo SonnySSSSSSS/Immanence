@@ -7,6 +7,7 @@ export function IsochronicTrainerPanel({
   isAdjustingFrequency = false,
   reverbWet = 0,
   chorusWet = 0,
+  reverbSizePreset = "M",
 }) {
   const {
     isReady,
@@ -17,6 +18,7 @@ export function IsochronicTrainerPanel({
     setMasterGain,
     setReverbWet,
     setChorusWet,
+    setReverbSizePreset,
   } = useIsochronicEngine();
 
   const volumeRef = useRef(volume);
@@ -56,6 +58,13 @@ export function IsochronicTrainerPanel({
       setChorusWet(chorusWet);
     }
   }, [chorusWet, setChorusWet]);
+
+  // Apply reverb size preset
+  useEffect(() => {
+    if (reverbSizePreset) {
+      setReverbSizePreset(reverbSizePreset);
+    }
+  }, [reverbSizePreset, setReverbSizePreset]);
 
   // Manage audio play/pause based on frequency adjustment
   useEffect(() => {

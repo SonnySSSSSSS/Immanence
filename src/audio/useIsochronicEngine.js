@@ -76,6 +76,16 @@ export function useIsochronicEngine() {
     engine.setChorusWet(value01);
   }, [ensureEngine]);
 
+  const setReverbSizePreset = useCallback((preset) => {
+    const engine = ensureEngine();
+    engine.setReverbSizePreset(preset);
+  }, [ensureEngine]);
+
+  const setReverbParams = useCallback((params) => {
+    const engine = ensureEngine();
+    engine.setReverbParams(params);
+  }, [ensureEngine]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -104,5 +114,7 @@ export function useIsochronicEngine() {
     setMasterGain,
     setReverbWet,
     setChorusWet,
+    setReverbSizePreset,
+    setReverbParams,
   };
 }
