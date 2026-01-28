@@ -500,6 +500,11 @@ getNextLeg: (dayNumber, offset = 1) => {
         {
             name: 'immanenceOS.curriculum',
             version: 3,
+            migrate: (persistedState, version) => {
+                // Migration logic for future version updates
+                // Currently at version 3, no migration needed
+                return persistedState;
+            },
         }
     )
 );

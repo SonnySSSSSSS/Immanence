@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -7,15 +7,54 @@ export function NavigationRitualLibrary({ onComplete, onNavigate, selectedRitual
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
+    // Diagnostic logging for props
+    useEffect(() => {
+        console.log("[RITUAL LIBRARY] Props check:");
+        console.log("  selectedRitual:", selectedRitual?.id || "null");
+        console.log("  onRitualReturn exists:", !!onRitualReturn);
+        console.log("  onComplete exists:", !!onComplete);
+    }, [selectedRitual, onRitualReturn, onComplete]);
+
     // Return to selection deck (ritual completed, return to menu)
     const handleReturnToDeck = () => {
-        console.log("[RITUAL] handleReturnToDeck called, onRitualReturn exists:", !!onRitualReturn);
-        if (onRitualReturn) {
-            console.log("[RITUAL] calling onRitualReturn from parent");
-            onRitualReturn(); // Call parent to clear activeRitual state
-            console.log("[RITUAL] onRitualReturn completed");
+        console.log("[RITUAL LIBRARY] handleReturnToDeck called");
+        console.log("[RITUAL LIBRARY] Current selectedRitual:", selectedRitual?.id || "null");
+        console.log("[RITUAL LIBRARY] onRitualReturn check:");
+        console.log("  - exists:", !!onRitualReturn);
+        console.log("  - type:", typeof onRitualReturn);
+        console.log("  - isFunction:", typeof onRitualReturn === 'function');
+
+        if (onRitualReturn && typeof onRitualReturn === 'function') {
+            console.log("[RITUAL LIBRARY] ✓ Calling onRitualReturn to clear activeRitual");
+            try {
+                // Call the parent callback to clear activeRitual state
+                onRitualReturn();
+                console.log("[RITUAL LIBRARY] ✓ onRitualReturn executed");
+
+                // Verify the state update will happen
+                console.log("[RITUAL LIBRARY] Ritual selection should now be cleared");
+            } catch (error) {
+                console.error("[RITUAL LIBRARY] ✗ Error in onRitualReturn:", error);
+                console.error("[RITUAL LIBRARY] Error details:", error.message);
+                console.error("[RITUAL LIBRARY] Stack:", error.stack);
+            }
         } else {
-            console.error("[RITUAL] onRitualReturn is undefined!");
+            console.error("[RITUAL LIBRARY] ✗ CRITICAL: onRitualReturn is not available!");
+            console.error("[RITUAL LIBRARY] onRitualReturn value:", onRitualReturn);
+            console.error("[RITUAL LIBRARY] onRitualReturn type:", typeof onRitualReturn);
+
+            // Fallback: try calling onComplete as backup to exit ritual practice entirely
+            if (onComplete && typeof onComplete === 'function') {
+                console.log("[RITUAL LIBRARY] ⚠ Falling back to onComplete to exit ritual mode");
+                try {
+                    onComplete();
+                    console.log("[RITUAL LIBRARY] ✓ onComplete fallback executed");
+                } catch (error) {
+                    console.error("[RITUAL LIBRARY] ✗ Fallback failed:", error);
+                }
+            } else {
+                console.error("[RITUAL LIBRARY] ✗ No fallback available - both callbacks missing");
+            }
         }
     };
 

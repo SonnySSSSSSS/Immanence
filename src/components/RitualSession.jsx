@@ -216,20 +216,47 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
 
                         <button
                             onClick={(e) => {
-                                console.log("[RITUAL] COMPLETE clicked");
+                                console.log("[RITUAL] COMPLETE button clicked at", new Date().toISOString());
+                                console.log("[RITUAL] sessionState:", sessionState);
+                                console.log("[RITUAL] ritual.id:", ritual.id);
                                 e.stopPropagation();
+                                e.preventDefault();
+
                                 // Persist ritual completion data
                                 localStorage.setItem('immanenceOS.rituals.lastRitualId', ritual.id);
                                 localStorage.setItem('immanenceOS.rituals.lastRitualAt', new Date().toISOString());
-                                console.log("[RITUAL] calling onComplete");
-                                if (onComplete) {
-                                    onComplete();
-                                    console.log("[RITUAL] onComplete executed");
+                                console.log("[RITUAL] ✓ Completion data saved to localStorage");
+
+                                // Validate callback exists
+                                console.log("[RITUAL] onComplete function check:");
+                                console.log("  - exists:", !!onComplete);
+                                console.log("  - type:", typeof onComplete);
+                                console.log("  - isFunction:", typeof onComplete === 'function');
+
+                                if (onComplete && typeof onComplete === 'function') {
+                                    console.log("[RITUAL] 🎯 Executing onComplete callback...");
+                                    try {
+                                        // Call the callback
+                                        const result = onComplete();
+                                        console.log("[RITUAL] ✓ onComplete executed successfully");
+                                        console.log("[RITUAL] Return value:", result);
+
+                                        // Add a small delay to ensure state updates propagate
+                                        setTimeout(() => {
+                                            console.log("[RITUAL] Checking if completion was processed...");
+                                        }, 100);
+                                    } catch (error) {
+                                        console.error("[RITUAL] ✗ Error executing onComplete:", error);
+                                        console.error("[RITUAL] Error message:", error.message);
+                                        console.error("[RITUAL] Stack trace:", error.stack);
+                                    }
                                 } else {
-                                    console.error("[RITUAL] onComplete is undefined!");
+                                    console.error("[RITUAL] ✗ CRITICAL: onComplete is not a valid function!");
+                                    console.error("[RITUAL] Received value:", onComplete);
+                                    console.error("[RITUAL] Type of value:", typeof onComplete);
                                 }
                             }}
-                            className="mt-4 px-12 py-4 pointer-events-auto border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black transition-all rounded-full tracking-widest text-xs sm:text-base font-bold"
+                            className="mt-4 px-12 py-4 pointer-events-auto border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-black active:scale-95 active:opacity-50 transition-all rounded-full tracking-widest text-xs sm:text-base font-bold cursor-pointer"
                         >
                             COMPLETE
                         </button>

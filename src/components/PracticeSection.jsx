@@ -571,10 +571,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     innerGlow: isLight ? getInnerGlowStyle(true) : innerGlowStyle,
   };
 
-  // Load preferences once on mount
-  const savedPrefs = React.useRef(loadPreferences()).current;
+  // Load preferences once on mount (use lazy initializer to avoid re-computation)
+  const [savedPrefs] = useState(() => loadPreferences());
   const initialPracticeId = savedPrefs.practiceId || 'breath';
-  console.log('[PracticeSection v3.17.28] savedPrefs.practiceId:', savedPrefs.practiceId, 'initialPracticeId:', initialPracticeId);
+  console.log('[PracticeSection v3.25.65] savedPrefs.practiceId:', savedPrefs.practiceId, 'initialPracticeId:', initialPracticeId);
   const lastSavedPrefsRef = useRef({
     practiceId: savedPrefs.practiceId,
     duration: savedPrefs.duration,
@@ -587,15 +587,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [duration, setDuration] = useState(savedPrefs.duration || 10);
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
 
-  // CURRICULUM INTEGRATION
-  const {
-    getActivePracticeDay,
-    getActivePracticeLeg,
-    activePracticeSession,
-    activePracticeLeg,
-    clearActivePracticeSession,
-    getCircuit,
-  } = useCurriculumStore();
+  // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
+  const getActivePracticeDay = useCurriculumStore(s => s.getActivePracticeDay);
+  const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
+  const activePracticeSession = useCurriculumStore(s => s.activePracticeSession);
+  const activePracticeLeg = useCurriculumStore(s => s.activePracticeLeg);
+  const clearActivePracticeSession = useCurriculumStore(s => s.clearActivePracticeSession);
+  const getCircuit = useCurriculumStore(s => s.getCircuit);
   
   // Handle curriculum auto-start and initialization
   useEffect(() => {
@@ -633,7 +631,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const practice = selectedPractice.label;
 
   const handleSelectPractice = useCallback((id) => {
-    console.log('[PracticeSection v3.17.28] handleSelectPractice called with id:', id);
+    console.log('[PracticeSection v3.25.65] handleSelectPractice called with id:', id);
     setPracticeId(id);
     // Save immediately with current state
     // savePreferences({
@@ -1453,10 +1451,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleStart = (durationOverrideSec = null) => {
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
-    
+
     // Special handling for Photic practice
     if (practiceId === "photic" || actualPracticeId === "photic") {
       onOpenPhotic?.();
+      return;
+    }
+
+    // Validate that a ritual is selected before starting a Ritual practice
+    if (practiceId === "integration" && !activeRitual) {
+      console.warn("[PracticeSection] Cannot start ritual practice - no ritual selected");
+      // Show alert to user
+      alert("Please select a ritual before beginning practice.");
       return;
     }
 
@@ -1511,10 +1517,35 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleRitualReturn = () => {
-    // Ritual completed, return to selection deck (don't clear isRunning yet)
-    console.log("[RITUAL] PracticeSection.handleRitualReturn called, clearing activeRitual");
+    console.log("[PRACTICE SECTION] handleRitualReturn called");
+    console.log("[PRACTICE SECTION] Current state:", {
+      activeRitual: activeRitual?.id || "null",
+      isRunning,
+      showSummary,
+      sessionSummary: sessionSummary ? "exists" : "null"
+    });
+
+    // CRITICAL FIX: Clear ALL state that gates the practice menu visibility
+    // The menu is hidden by: display: showSummaryModal || isRunning ? 'none' : 'flex'
+    // So we must clear both conditions
+    
+    console.log("[PRACTICE SECTION] Clearing all session state...");
+    
+    // 1. Clear summary state (in case something triggered it)
+    setShowSummary(false);
+    setSessionSummary(null);
+    
+    // 2. Exit session surface by setting isRunning = false
+    setIsRunning(false);
+    
+    // 3. Clear the ritual selection
     setActiveRitual(null);
-    console.log("[RITUAL] activeRitual state cleared");
+    setCurrentStepIndex(0);
+    
+    // 4. Notify parent that we're no longer practicing
+    onPracticingChange && onPracticingChange(false);
+
+    console.log("[PRACTICE SECTION] ✓ All state cleared - RitualSelectionDeck should now appear");
   };
 
   const handleQuickStart = () => {
