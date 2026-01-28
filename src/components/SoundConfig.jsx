@@ -3,6 +3,7 @@
 // Binaural beats, isochronic tones, mantras, nature sounds, silence
 import React from 'react';
 import { BinauralTrainerPanel } from './BinauralTrainerPanel.jsx';
+import { IsochronicTrainerPanel } from './IsochronicTrainerPanel';
 
 // Binaural beat frequency presets (difference frequency between L/R)
 export const BINAURAL_PRESETS = [
@@ -64,9 +65,14 @@ export function SoundConfig({
     carrierFrequency,
     setCarrierFrequency,
     volume,
+    soundVolume,
     setVolume,
+    setSoundVolume,
     isLight = false, // Accept isLight as prop from parent
 }) {
+    // Handle both prop name variants (volume/soundVolume, setVolume/setSoundVolume)
+    const volumeValue = volume ?? soundVolume ?? 0.75;
+    const setVolumeFunc = setVolume || setSoundVolume;
     // Light-mode-aware text colors
     const textColors = {
         primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.7)',
@@ -77,12 +83,466 @@ export function SoundConfig({
         description: isLight ? '#6B5E4A' : 'rgba(253,251,245,0.5)',
     };
 
+    // UI-level exact frequency (entrainment target) for Card 2
+    const [exactHz, setExactHz] = React.useState(() => {
+        if (soundType === 'Isochronic Tones') return isochronicPreset?.hz ?? 10;
+        if (soundType === 'Binaural Beats') return binauralPreset?.hz ?? 10;
+        return 10;
+    });
+
+    // Track if user is actively adjusting frequency slider
+    const [isAdjustingFrequency, setIsAdjustingFrequency] = React.useState(false);
+    const adjustStartTimeRef = React.useRef(null);
+    const [isAccelerated, setIsAccelerated] = React.useState(false);
+    const adjustTimerRef = React.useRef(null);
+
+    const [reverbWet, setReverbWet] = React.useState(0);
+    const [chorusWet, setChorusWet] = React.useState(0);
+
+    // Monitor adjustment duration for acceleration (5+ seconds)
+    React.useEffect(() => {
+        if (!isAdjustingFrequency) return;
+
+        adjustTimerRef.current = setInterval(() => {
+            if (adjustStartTimeRef.current) {
+                const elapsed = Date.now() - adjustStartTimeRef.current;
+                if (elapsed > 5000 && !isAccelerated) {
+                    setIsAccelerated(true);
+                }
+            }
+        }, 100);
+
+        return () => clearInterval(adjustTimerRef.current);
+    }, [isAdjustingFrequency, isAccelerated]);
+
+    // Debounced end of adjustment
+    React.useEffect(() => {
+        if (!isAdjustingFrequency) return;
+
+        const debounceTimer = setTimeout(() => {
+            setIsAdjustingFrequency(false);
+            adjustStartTimeRef.current = null;
+            setIsAccelerated(false);
+        }, 200);
+
+        return () => clearTimeout(debounceTimer);
+    }, [isAdjustingFrequency]);
+
+    // Sync exactHz when active sound type or presets change
+    React.useEffect(() => {
+        if (soundType === 'Isochronic Tones') {
+            setExactHz(isochronicPreset?.hz ?? 10);
+        } else if (soundType === 'Binaural Beats') {
+            setExactHz(binauralPreset?.hz ?? 10);
+        }
+    }, [soundType, isochronicPreset?.hz, binauralPreset?.hz]);
+
     return (
         <div className="sound-config space-y-6">
-            {/* Sound Type Selection */}
-            <div>
+
+            {/* CARD 1 — SOUNDSCAPE */}
+            <div
+                className="rounded-2xl p-4 space-y-4"
+                style={{
+                    border: `1px solid ${isLight ? "var(--light-border)" : "rgba(255,255,255,0.10)"}`,
+                }}
+            >
+                {/* Sound Type Selection */}
+                <div>
+                    <div
+                        className="mb-3"
+                        style={{
+                            fontFamily: "var(--font-display)",
+                            fontSize: "9px",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
+                            textTransform: "uppercase",
+                            color: textColors.muted,
+                            textAlign: "center"
+                        }}
+                    >
+                        Soundscape
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        {['Binaural Beats', 'Isochronic Tones', 'Mantra', 'Nature'].map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setSoundType(type)}
+                                className="rounded-xl px-3 py-2.5 text-center leading-tight min-h-[44px] whitespace-normal min-w-0"        
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "11px",
+                                    fontWeight: 500,
+                                    letterSpacing: "var(--tracking-wide)",
+                                    background: soundType === type ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)") : "transparent",                                                                                                                                          
+                                    border: `1px solid ${soundType === type ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
+                                    color: soundType === type ? "var(--accent-color)" : textColors.secondary,
+                                    boxShadow: soundType === type ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
+                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
+                                }}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* CARD 2 — FREQUENCY / CONTENT */}
+            <div
+                className="rounded-2xl p-4 space-y-4"
+                style={{
+                    border: `1px solid ${isLight ? "var(--light-border)" : "rgba(255,255,255,0.10)"}`,
+                }}
+            >
+                {/* Exact Frequency (Hz) */}
                 <div
-                    className="mb-3"
+                    className={`space-y-2 ${!(soundType === 'Binaural Beats' || soundType === 'Isochronic Tones') ? 'opacity-40 pointer-events-none' : ''}`}
+                >
+                    <div
+                        className="flex items-center justify-between"
+                        style={{
+                            fontFamily: "var(--font-display)",
+                            fontSize: "9px",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
+                            textTransform: "uppercase",
+                            color: textColors.muted,
+                        }}
+                    >
+                        <span>Exact Frequency</span>
+                        <span style={{ color: 'var(--accent-color)' }}>
+                            {Number.isFinite(exactHz) ? exactHz : '--'} Hz
+                        </span>
+                    </div>
+
+                    <input
+                        type="range"
+                        min="1"
+                        max="80"
+                        step={isAccelerated ? "2" : "0.5"}
+                        value={exactHz ?? 10}
+                        onChange={(e) => {
+                            if (!isAdjustingFrequency) {
+                                setIsAdjustingFrequency(true);
+                                adjustStartTimeRef.current = Date.now();
+                                setIsAccelerated(false);
+                            }
+                            const hz = Number(e.target.value);
+                            setExactHz(hz);
+                            if (soundType === 'Isochronic Tones') {
+                                setIsochronicPreset({
+                                    id: 'custom',
+                                    name: 'Custom',
+                                    hz,
+                                    description: 'Custom pulse frequency',
+                                    color: 'var(--accent-color)',
+                                });
+                            }
+                            if (soundType === 'Binaural Beats') {
+                                setBinauralPreset({
+                                    id: 'custom',
+                                    name: 'Custom',
+                                    hz,
+                                    description: 'Custom beat frequency',
+                                    color: 'var(--accent-color)',
+                                });
+                            }
+                        }}
+                        className="w-full"
+                        style={{
+                            accentColor: 'var(--accent-color)',
+                        }}
+                    />
+
+                    <div
+                        style={{
+                            fontFamily: "var(--font-body)",
+                            fontSize: "9px",
+                            textAlign: "center",
+                            color: textColors.ghost,
+                            fontStyle: "italic",
+                        }}
+                    >
+                        Adjusts entrainment target frequency
+                    </div>
+                </div>
+                {/* Binaural Beats Options */}
+                {soundType === 'Binaural Beats' && (
+                    <div className="animate-fade-in">
+                        <BinauralTrainerPanel isLight={isLight} deltaFOverride={exactHz} />
+                    </div>
+                )}
+
+                {/* Isochronic Tones Options */}
+                {soundType === 'Isochronic Tones' && (
+                    <div className="animate-fade-in space-y-4">
+                        <IsochronicTrainerPanel
+                            pulseHz={exactHz}
+                            volume={volumeValue}
+                            isAdjustingFrequency={isAdjustingFrequency}
+                            reverbWet={reverbWet}
+                            chorusWet={chorusWet}
+                        />
+
+                        <div>
+                            <div
+                                className="mb-3"
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "9px",
+                                    fontWeight: 600,
+                                    letterSpacing: "var(--tracking-mythic)",
+                                    textTransform: "uppercase",
+                                    color: textColors.secondary,
+                                    textAlign: "center"
+                                }}
+                            >
+                                Pulse Presets
+                            </div>
+
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                {ISOCHRONIC_PRESETS.map((preset) => (
+                                    <button
+                                        key={preset.id}
+                                        onClick={() => setIsochronicPreset(preset)}
+                                        className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
+                                        style={{
+                                            background: isochronicPreset?.id === preset.id
+                                                ? `linear-gradient(135deg, ${preset.color}20, transparent)`
+                                                : "transparent",
+                                            border: `1px solid ${isochronicPreset?.id === preset.id ? preset.color : "var(--accent-10)"}`,
+                                            boxShadow: isochronicPreset?.id === preset.id ? `0 0 15px ${preset.color}30` : "none",
+                                            transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, box-shadow 800ms ease',
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                fontFamily: "var(--font-display)",
+                                                fontSize: "11px",
+                                                fontWeight: 600,
+                                                color: isochronicPreset?.id === preset.id ? preset.color : textColors.primary,
+                                                textAlign: "center",
+                                                width: "100%",
+                                                lineHeight: 1.15,
+                                                whiteSpace: "normal",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                wordBreak: "break-word",
+                                                display: "block",
+                                            }}
+                                        >
+                                            {preset.name}
+                                        </span>
+                                        <span
+                                            style={{
+                                                fontFamily: "var(--font-body)",
+                                                fontSize: "8px",
+                                                color: textColors.faint,
+                                            }}
+                                        >
+                                            {preset.hz} Hz
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {isochronicPreset && (
+                                <p
+                                    className="mt-3 text-center"
+                                    style={{
+                                        fontFamily: "var(--font-body)",
+                                        fontSize: "10px",
+                                        fontStyle: "italic",
+                                        color: textColors.description,
+                                    }}
+                                >
+                                    {isochronicPreset.description}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Mantra Options */}
+                {soundType === 'Mantra' && (
+                    <div className="animate-fade-in">
+                        <div
+                            className="mb-3"
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontSize: "9px",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                textTransform: "uppercase",
+                                color: textColors.muted,
+                                textAlign: "center"
+                            }}
+                        >
+                            Sacred Sound
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {MANTRA_PRESETS.map((preset) => (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => setMantraPreset(preset)}
+                                    className="rounded-lg px-3 py-3 text-left"
+                                    style={{
+                                        background: mantraPreset?.id === preset.id
+                                            ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
+                                            : "transparent",
+                                        border: `1px solid ${mantraPreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
+                                        boxShadow: mantraPreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
+                                        transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontFamily: "var(--font-display)",
+                                            fontSize: "12px",
+                                            fontWeight: 600,
+                                            color: mantraPreset?.id === preset.id ? "var(--accent-color)" : textColors.primary,
+                                        }}
+                                    >
+                                        {preset.name}
+                                    </span>
+                                    <span
+                                        style={{
+                                            fontFamily: "var(--font-body)",
+                                            fontSize: "9px",
+                                            display: "block",
+                                            marginTop: "2px",
+                                            color: textColors.faint,
+                                            fontStyle: "italic",
+                                        }}
+                                    >
+                                        {preset.description}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Nature Sounds Options */}
+                {soundType === 'Nature' && (
+                    <div className="animate-fade-in">
+                        <div
+                            className="mb-3"
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontSize: "9px",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                textTransform: "uppercase",
+                                color: textColors.muted,
+                                textAlign: "center"
+                            }}
+                        >
+                            Natural Ambience
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {NATURE_PRESETS.map((preset) => (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => setNaturePreset(preset)}
+                                    className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
+                                    style={{
+                                        background: naturePreset?.id === preset.id
+                                            ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
+                                            : "transparent",
+                                        border: `1px solid ${naturePreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
+                                        boxShadow: naturePreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
+                                        transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontFamily: "var(--font-display)",
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                            color: naturePreset?.id === preset.id ? "var(--accent-color)" : textColors.primary,
+                                        }}
+                                    >
+                                        {preset.name}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Silence - just a note */}
+                {soundType === 'Silence' && (
+                    <div className="animate-fade-in text-center py-4">
+                        <p
+                            style={{
+                                fontFamily: "var(--font-body)",
+                                fontSize: "11px",
+                                fontStyle: "italic",
+                                color: textColors.description,
+                            }}
+                        >
+                            Practice in intentional silence.<br />
+                            No sound will be played.
+                        </p>
+                    </div>
+                )}
+
+                {/* Volume Slider (for all except Silence) */}
+                {soundType !== 'Silence' && (
+                    <div className="mt-4">
+                        <div
+                            className="mb-2 flex items-center justify-between"
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontSize: "8px",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                textTransform: "uppercase",
+                                color: textColors.muted,
+                            }}
+                        >
+                            <span>Volume</span>
+                            <span style={{ color: 'var(--accent-color)' }}>{Math.round(volumeValue * 100)}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={volumeValue}
+                            onChange={(e) => setVolumeFunc(Number(e.target.value))}
+                            className="w-full"
+                            style={{
+                                accentColor: 'var(--accent-color)',
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Info note */}
+                <div
+                    className="text-center pt-2"
+                    style={{
+                        fontFamily: "var(--font-body)",
+                        fontSize: "9px",
+                        color: textColors.ghost,
+                        fontStyle: "italic",
+                    }}
+                >
+                    Use headphones for binaural beats
+                </div>
+            </div>
+
+            {/* CARD 3 — ADVANCED */}
+            <div
+                className="rounded-2xl p-4 space-y-4"
+                style={{
+                    border: `1px solid ${isLight ? "var(--light-border)" : "rgba(255,255,255,0.10)"}`,
+                }}
+            >
+                <div
                     style={{
                         fontFamily: "var(--font-display)",
                         fontSize: "9px",
@@ -90,240 +550,14 @@ export function SoundConfig({
                         letterSpacing: "var(--tracking-mythic)",
                         textTransform: "uppercase",
                         color: textColors.muted,
-                        textAlign: "center"
+                        textAlign: "center",
                     }}
                 >
-                    Soundscape
+                    Advanced
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                    {['Binaural Beats', 'Isochronic Tones', 'Mantra', 'Nature'].map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setSoundType(type)}
-                            className="rounded-xl px-3 py-2.5 text-center leading-tight min-h-[44px] whitespace-normal min-w-0"
-                            style={{
-                                fontFamily: "var(--font-display)",
-                                fontSize: "11px",
-                                fontWeight: 500,
-                                letterSpacing: "var(--tracking-wide)",
-                                background: soundType === type ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)") : "transparent",
-                                border: `1px solid ${soundType === type ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
-                                color: soundType === type ? "var(--accent-color)" : textColors.secondary,
-                                boxShadow: soundType === type ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
-                                transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
-                            }}
-                        >
-                            {type}
-                        </button>
-                    ))}
-                </div>
-            </div>
 
-            {/* Binaural Beats Options */}
-            {soundType === 'Binaural Beats' && (
-                <div className="animate-fade-in">
-                    <BinauralTrainerPanel isLight={isLight} />
-                </div>
-            )}
-
-            {/* Isochronic Tones Options */}
-            {soundType === 'Isochronic Tones' && (
-                <div className="animate-fade-in">
-                    <div
-                        className="mb-3"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "9px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-mythic)",
-                            textTransform: "uppercase",
-                            color: textColors.secondary,
-                            textAlign: "center"
-                        }}
-                    >
-                        Pulse Frequency
-                    </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {ISOCHRONIC_PRESETS.map((preset) => (
-                            <button
-                                key={preset.id}
-                                onClick={() => setIsochronicPreset(preset)}
-                                className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
-                                style={{
-                                    background: isochronicPreset?.id === preset.id
-                                        ? `linear-gradient(135deg, ${preset.color}20, transparent)`
-                                        : "transparent",
-                                    border: `1px solid ${isochronicPreset?.id === preset.id ? preset.color : "var(--accent-10)"}`,
-                                    boxShadow: isochronicPreset?.id === preset.id ? `0 0 15px ${preset.color}30` : "none",
-                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, box-shadow 800ms ease',
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        fontFamily: "var(--font-display)",
-                                        fontSize: "11px",
-                                        fontWeight: 600,
-                                        color: isochronicPreset?.id === preset.id ? preset.color : textColors.primary,
-                                    }}
-                                >
-                                    {preset.name}
-                                </span>
-                                <span
-                                    style={{
-                                        fontFamily: "var(--font-body)",
-                                        fontSize: "8px",
-                                        color: textColors.faint,
-                                    }}
-                                >
-                                    {preset.hz} Hz
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                    {isochronicPreset && (
-                        <p
-                            className="mt-3 text-center"
-                            style={{
-                                fontFamily: "var(--font-body)",
-                                fontSize: "10px",
-                                fontStyle: "italic",
-                                color: textColors.description,
-                            }}
-                        >
-                            {isochronicPreset.description}
-                        </p>
-                    )}
-                </div>
-            )}
-
-            {/* Mantra Options */}
-            {soundType === 'Mantra' && (
-                <div className="animate-fade-in">
-                    <div
-                        className="mb-3"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "9px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-mythic)",
-                            textTransform: "uppercase",
-                            color: textColors.muted,
-                            textAlign: "center"
-                        }}
-                    >
-                        Sacred Sound
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        {MANTRA_PRESETS.map((preset) => (
-                            <button
-                                key={preset.id}
-                                onClick={() => setMantraPreset(preset)}
-                                className="rounded-lg px-3 py-3 text-left"
-                                style={{
-                                    background: mantraPreset?.id === preset.id
-                                        ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
-                                        : "transparent",
-                                    border: `1px solid ${mantraPreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
-                                    boxShadow: mantraPreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
-                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        fontFamily: "var(--font-display)",
-                                        fontSize: "12px",
-                                        fontWeight: 600,
-                                        color: mantraPreset?.id === preset.id ? "var(--accent-color)" : textColors.primary,
-                                    }}
-                                >
-                                    {preset.name}
-                                </span>
-                                <span
-                                    style={{
-                                        fontFamily: "var(--font-body)",
-                                        fontSize: "9px",
-                                        display: "block",
-                                        marginTop: "2px",
-                                        color: textColors.faint,
-                                        fontStyle: "italic",
-                                    }}
-                                >
-                                    {preset.description}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Nature Sounds Options */}
-            {soundType === 'Nature' && (
-                <div className="animate-fade-in">
-                    <div
-                        className="mb-3"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "9px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-mythic)",
-                            textTransform: "uppercase",
-                            color: textColors.muted,
-                            textAlign: "center"
-                        }}
-                    >
-                        Natural Ambience
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                        {NATURE_PRESETS.map((preset) => (
-                            <button
-                                key={preset.id}
-                                onClick={() => setNaturePreset(preset)}
-                                className="rounded-lg px-2 py-3 text-center flex flex-col items-center gap-1"
-                                style={{
-                                    background: naturePreset?.id === preset.id
-                                        ? (isLight ? "var(--accent-10)" : "rgba(255,255,255,0.05)")
-                                        : "transparent",
-                                    border: `1px solid ${naturePreset?.id === preset.id ? "var(--accent-color)" : (isLight ? "var(--light-border)" : "var(--accent-10)")}`,
-                                    boxShadow: naturePreset?.id === preset.id ? (isLight ? "0 2px 8px var(--light-shadow-tint)" : "0 0 15px var(--accent-10)") : "none",
-                                    transition: 'background 800ms cubic-bezier(0.4, 0, 0.2, 1), border-color 800ms ease-in-out, color 400ms ease, box-shadow 800ms ease',
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        fontFamily: "var(--font-display)",
-                                        fontSize: "11px",
-                                        fontWeight: 600,
-                                        color: naturePreset?.id === preset.id ? "var(--accent-color)" : textColors.primary,
-                                    }}
-                                >
-                                    {preset.name}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Silence - just a note */}
-            {soundType === 'Silence' && (
-                <div className="animate-fade-in text-center py-4">
-                    <p
-                        style={{
-                            fontFamily: "var(--font-body)",
-                            fontSize: "11px",
-                            fontStyle: "italic",
-                            color: textColors.description,
-                        }}
-                    >
-                        Practice in intentional silence.<br />
-                        No sound will be played.
-                    </p>
-                </div>
-            )}
-
-            {/* Volume Slider (for all except Silence) */}
-            {soundType !== 'Silence' && (
-                <div className="mt-4">
+                {/* Carrier Frequency (Binaural only) */}
+                <div className={`${soundType !== "Binaural Beats" ? "opacity-40 pointer-events-none" : ""}`}>
                     <div
                         className="mb-2 flex items-center justify-between"
                         style={{
@@ -335,35 +569,98 @@ export function SoundConfig({
                             color: textColors.muted,
                         }}
                     >
-                        <span>Volume</span>
-                        <span style={{ color: 'var(--accent-color)' }}>{Math.round(volume * 100)}%</span>
+                        <span>Carrier Frequency</span>
+                        <span style={{ color: "var(--accent-color)" }}>{Math.round(carrierFrequency)} Hz</span>
+                    </div>
+
+                    <input
+                        type="range"
+                        min="100"
+                        max="400"
+                        step="1"
+                        value={carrierFrequency}
+                        onChange={(e) => setCarrierFrequency(Number(e.target.value))}
+                        className="w-full"
+                        style={{ accentColor: "var(--accent-color)" }}
+                    />
+
+                    <div
+                        className="text-center pt-2"
+                        style={{
+                            fontFamily: "var(--font-body)",
+                            fontSize: "9px",
+                            color: textColors.ghost,
+                            fontStyle: "italic",
+                        }}
+                    >
+                        Carrier affects tone color (not entrainment Hz)
+                    </div>
+                </div>
+
+                {/* Effects placeholders (UI only, no engine yet) */}
+                <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>
+                    <div
+                        className="mb-2 flex items-center justify-between"
+                        style={{
+                            fontFamily: "var(--font-display)",
+                            fontSize: "8px",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
+                            textTransform: "uppercase",
+                            color: textColors.muted,
+                        }}
+                    >
+                        <span>Reverb</span>
+                        <span style={{ color: "var(--accent-color)" }}>{Math.round(reverbWet * 100)}%</span>
                     </div>
                     <input
                         type="range"
                         min="0"
-                        max="1"
-                        step="0.05"
-                        value={volume}
-                        onChange={(e) => setVolume(Number(e.target.value))}
+                        max="0.3"
+                        step="0.01"
+                        value={reverbWet}
+                        onChange={(e) => setReverbWet(Number(e.target.value))}
                         className="w-full"
-                        style={{
-                            accentColor: 'var(--accent-color)',
-                        }}
+                        style={{ accentColor: "var(--accent-color)" }}
                     />
                 </div>
-            )}
 
-            {/* Info note */}
+                <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>
+                    <div
+                        className="mb-2 flex items-center justify-between"
+                        style={{
+                            fontFamily: "var(--font-display)",
+                            fontSize: "8px",
+                            fontWeight: 600,
+                            letterSpacing: "var(--tracking-mythic)",
+                            textTransform: "uppercase",
+                            color: textColors.muted,
+                        }}
+                    >
+                        <span>Chorus</span>
+                        <span style={{ color: "var(--accent-color)" }}>{Math.round(chorusWet * 100)}%</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="0.2"
+                        step="0.01"
+                        value={chorusWet}
+                        onChange={(e) => setChorusWet(Number(e.target.value))}
+                        className="w-full"
+                        style={{ accentColor: "var(--accent-color)" }}
+                    />
+                </div>
+            </div>
+
+            {/* CARD 4 — DURATION (placeholder) */}
             <div
-                className="text-center pt-2"
+                className="rounded-2xl p-4 text-center text-xs opacity-50"
                 style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: "9px",
-                    color: textColors.ghost,
-                    fontStyle: "italic",
+                    border: `1px solid ${isLight ? "var(--light-border)" : "rgba(255,255,255,0.10)"}`,
                 }}
             >
-                Use headphones for binaural beats
+                Duration is configured at the practice level
             </div>
 
             <style>{`
