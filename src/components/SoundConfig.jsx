@@ -99,6 +99,7 @@ export function SoundConfig({
     const [reverbWet, setReverbWet] = React.useState(0);
     const [chorusWet, setChorusWet] = React.useState(0);
     const [reverbSize, setReverbSize] = React.useState('M');
+    const [showAdvanced, setShowAdvanced] = React.useState(false);
 
     // Monitor adjustment duration for acceleration (5+ seconds)
     React.useEffect(() => {
@@ -568,145 +569,169 @@ export function SoundConfig({
                     border: `1px solid ${isLight ? "var(--light-border)" : "rgba(255,255,255,0.10)"}`,
                 }}
             >
-                <div
+                <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="flex items-center gap-2 w-full py-2 transition-colors"
                     style={{
                         fontFamily: "var(--font-display)",
-                        fontSize: "9px",
+                        fontSize: "11px",
                         fontWeight: 600,
-                        letterSpacing: "var(--tracking-mythic)",
-                        textTransform: "uppercase",
-                        color: textColors.muted,
-                        textAlign: "center",
+                        letterSpacing: "var(--tracking-wide)",
+                        color: showAdvanced ? "var(--accent-color)" : textColors.secondary,
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        justifyContent: "flex-start",
                     }}
                 >
+                    <span style={{
+                        display: "inline-block",
+                        transition: "transform 0.2s ease",
+                        transform: showAdvanced ? "rotate(90deg)" : "rotate(0deg)",
+                    }}>
+                        ▸
+                    </span>
                     Advanced
-                </div>
+                </button>
 
-                {/* Carrier Frequency (Binaural only) */}
-                <div className={`${soundType !== "Binaural Beats" ? "opacity-40 pointer-events-none" : ""}`}>
-                    <div
-                        className="mb-2 flex items-center justify-between"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "8px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-mythic)",
-                            textTransform: "uppercase",
-                            color: textColors.muted,
-                        }}
-                    >
-                        <span>Carrier Frequency</span>
-                        <span style={{ color: "var(--accent-color)" }}>{Math.round(carrierFrequency)} Hz</span>
-                    </div>
+                {/* Collapsible Advanced Section */}
+                <div
+                    style={{
+                        maxHeight: showAdvanced ? "800px" : "0px",
+                        overflow: "hidden",
+                        transition: "max-height 0.3s ease-in-out, opacity 0.2s ease",
+                        opacity: showAdvanced ? 1 : 0,
+                    }}
+                >
+                    <div className="space-y-4 pt-2">
+                        {/* Carrier Frequency (Binaural only) */}
+                        <div className={`${soundType !== "Binaural Beats" ? "opacity-40 pointer-events-none" : ""}`}>
+                            <div
+                                className="mb-2 flex items-center justify-between"
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "8px",
+                                    fontWeight: 600,
+                                    letterSpacing: "var(--tracking-mythic)",
+                                    textTransform: "uppercase",
+                                    color: textColors.muted,
+                                }}
+                            >
+                                <span>Carrier Frequency</span>
+                                <span style={{ color: "var(--accent-color)" }}>{Math.round(carrierFrequency)} Hz</span>
+                            </div>
 
-                    <input
-                        type="range"
-                        min="100"
-                        max="400"
-                        step="1"
-                        value={carrierFrequency}
-                        onChange={(e) => setCarrierFrequency(Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: "var(--accent-color)" }}
-                    />
+                            <input
+                                type="range"
+                                min="100"
+                                max="400"
+                                step="1"
+                                value={carrierFrequency}
+                                onChange={(e) => setCarrierFrequency(Number(e.target.value))}
+                                className="w-full"
+                                style={{ accentColor: "var(--accent-color)" }}
+                            />
 
-                    <div
-                        className="text-center pt-2"
-                        style={{
-                            fontFamily: "var(--font-body)",
-                            fontSize: "9px",
-                            color: textColors.ghost,
-                            fontStyle: "italic",
-                        }}
-                    >
-                        Carrier affects tone color (not entrainment Hz)
-                    </div>
-                </div>
-
-                {/* Effects placeholders (UI only, no engine yet) */}
-                <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>
-                    <div
-                        className="mb-2 flex items-center justify-between"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "8px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-mythic)",
-                            textTransform: "uppercase",
-                            color: textColors.muted,
-                        }}
-                    >
-                        <span>Reverb</span>
-                        <span style={{ color: "var(--accent-color)" }}>{Math.round(reverbWet * 100)}%</span>
-                    </div>
-                    <input
-                        type="range"
-                        min="0"
-                        max="0.3"
-                        step="0.01"
-                        value={reverbWet}
-                        onChange={(e) => setReverbWet(Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: "var(--accent-color)" }}
-                    />
-                    <div className="mt-2 flex items-center justify-between">
-                        <div
-                            style={{
-                                fontFamily: "var(--font-display)",
-                                fontSize: "8px",
-                                fontWeight: 600,
-                                letterSpacing: "var(--tracking-mythic)",
-                                textTransform: "uppercase",
-                                color: textColors.muted,
-                            }}
-                        >
-                            Size
+                            <div
+                                className="text-center pt-2"
+                                style={{
+                                    fontFamily: "var(--font-body)",
+                                    fontSize: "9px",
+                                    color: textColors.ghost,
+                                    fontStyle: "italic",
+                                }}
+                            >
+                                Carrier affects tone color (not entrainment Hz)
+                            </div>
                         </div>
-                        <div className="flex gap-1">
-                            {(["S","M","L"]).map(sz => (
-                                <button
-                                    key={sz}
-                                    onClick={() => setReverbSize(sz)}
-                                    className="px-2 py-1 rounded-md"
+
+                        {/* Effects placeholders (UI only, no engine yet) */}
+                        <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>
+                            <div
+                                className="mb-2 flex items-center justify-between"
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "8px",
+                                    fontWeight: 600,
+                                    letterSpacing: "var(--tracking-mythic)",
+                                    textTransform: "uppercase",
+                                    color: textColors.muted,
+                                }}
+                            >
+                                <span>Reverb</span>
+                                <span style={{ color: "var(--accent-color)" }}>{Math.round(reverbWet * 100)}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="0.3"
+                                step="0.01"
+                                value={reverbWet}
+                                onChange={(e) => setReverbWet(Number(e.target.value))}
+                                className="w-full"
+                                style={{ accentColor: "var(--accent-color)" }}
+                            />
+                            <div className="mt-2 flex items-center justify-between">
+                                <div
                                     style={{
-                                        border: `1px solid ${reverbSize===sz? 'var(--accent-color)' : (isLight ? 'var(--light-border)' : 'var(--accent-10)')}`,
-                                        color: reverbSize===sz? 'var(--accent-color)' : textColors.secondary,
                                         fontFamily: "var(--font-display)",
-                                        fontSize: "10px",
+                                        fontSize: "8px",
                                         fontWeight: 600,
-                                        letterSpacing: "var(--tracking-wide)",
+                                        letterSpacing: "var(--tracking-mythic)",
+                                        textTransform: "uppercase",
+                                        color: textColors.muted,
                                     }}
-                                >{sz}</button>
-                            ))}
+                                >
+                                    Size
+                                </div>
+                                <div className="flex gap-1">
+                                    {(["S","M","L"]).map(sz => (
+                                        <button
+                                            key={sz}
+                                            onClick={() => setReverbSize(sz)}
+                                            className="px-2 py-1 rounded-md"
+                                            style={{
+                                                border: `1px solid ${reverbSize===sz? 'var(--accent-color)' : (isLight ? 'var(--light-border)' : 'var(--accent-10)')}`,
+                                                color: reverbSize===sz? 'var(--accent-color)' : textColors.secondary,
+                                                fontFamily: "var(--font-display)",
+                                                fontSize: "10px",
+                                                fontWeight: 600,
+                                                letterSpacing: "var(--tracking-wide)",
+                                            }}
+                                        >{sz}</button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>
+                            <div
+                                className="mb-2 flex items-center justify-between"
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontSize: "8px",
+                                    fontWeight: 600,
+                                    letterSpacing: "var(--tracking-mythic)",
+                                    textTransform: "uppercase",
+                                    color: textColors.muted,
+                                }}
+                            >
+                                <span>Chorus</span>
+                                <span style={{ color: "var(--accent-color)" }}>{Math.round(chorusWet * 100)}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="0.2"
+                                step="0.01"
+                                value={chorusWet}
+                                onChange={(e) => setChorusWet(Number(e.target.value))}
+                                className="w-full"
+                                style={{ accentColor: "var(--accent-color)" }}
+                            />
                         </div>
                     </div>
-                </div>
-
-                <div className={`${soundType !== "Isochronic Tones" ? "opacity-40 pointer-events-none" : ""}`}>
-                    <div
-                        className="mb-2 flex items-center justify-between"
-                        style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: "8px",
-                            fontWeight: 600,
-                            letterSpacing: "var(--tracking-mythic)",
-                            textTransform: "uppercase",
-                            color: textColors.muted,
-                        }}
-                    >
-                        <span>Chorus</span>
-                        <span style={{ color: "var(--accent-color)" }}>{Math.round(chorusWet * 100)}%</span>
-                    </div>
-                    <input
-                        type="range"
-                        min="0"
-                        max="0.2"
-                        step="0.01"
-                        value={chorusWet}
-                        onChange={(e) => setChorusWet(Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: "var(--accent-color)" }}
-                    />
                 </div>
             </div>
 

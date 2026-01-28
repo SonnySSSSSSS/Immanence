@@ -1,11 +1,12 @@
 // src/components/PhoticCirclesOverlay.jsx
 // Photic circles entrainment overlay
-// Two pulsing circles with RAF-based timing
+// Two pulsing circles with RAF-based timing (horizontal layout)
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PhoticControlPanel } from './PhoticControlPanel';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
+import { computePhoticLayout } from '../utils/photicLayout';
 
 export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
@@ -118,27 +119,27 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         }
     }, [photic.rateHz, photic.dutyCycle, photic.timingMode, photic.gapMs]);
 
-    // Drag state for adjusting spacing
+    // Drag state for adjusting spacing (horizontal layout, use X movement)
     const [isDragging, setIsDragging] = useState(false);
-    const dragStartY = useRef(0);
+    const dragStartX = useRef(0);
     const dragStartSpacing = useRef(0);
 
     // Handle pointer down - start potential drag
     const handlePointerDown = (e) => {
         if (isRunning) {
             setIsDragging(true);
-            dragStartY.current = e.clientY;
+            dragStartX.current = e.clientX;
             dragStartSpacing.current = photic.spacingPx || 160;
             e.preventDefault();
         }
     };
 
-    // Handle pointer move - adjust spacing
+    // Handle pointer move - adjust spacing (horizontal drag for horizontal layout)
     const handlePointerMove = (e) => {
         if (isDragging && isRunning) {
-            const deltaY = e.clientY - dragStartY.current;
+            const deltaX = e.clientX - dragStartX.current;
             // Scale: 1px drag = 1px spacing change
-            const newSpacing = Math.max(40, Math.min(800, dragStartSpacing.current + deltaY));
+            const newSpacing = Math.max(40, Math.min(800, dragStartSpacing.current + deltaX));
             useSettingsStore.getState().setPhoticSetting('spacingPx', newSpacing);
             e.preventDefault();
         }
@@ -147,9 +148,9 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     // Handle pointer up - end drag or exit if no drag occurred
     const handlePointerUp = (e) => {
         if (isRunning) {
-            const dragDistance = Math.abs(e.clientY - dragStartY.current);
+            const dragDistance = Math.abs(e.clientX - dragStartX.current);
             setIsDragging(false);
-            
+
             // If drag distance is small (< 10px), treat as tap to exit
             if (dragDistance < 10) {
                 setIsRunning(false);
@@ -168,6 +169,17 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         setIsRunning(false);
         onClose();
     };
+
+    // Compute layout for circles (full-screen overlay uses viewport dimensions)
+    const layout = computePhoticLayout({
+        containerWidth: window.innerWidth,
+        containerHeight: window.innerHeight,
+        radiusPx: photic.radiusPx || 120,
+        spacingPx: photic.spacingPx || 160,
+        blurPx: photic.blurPx || 20,
+        horizontalMargins: 80, // More margin for full-screen
+        verticalMargins: 80,
+    });
 
     if (!isOpen) return null;
 
@@ -190,7 +202,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: isRunning ? (isDragging ? 'ns-resize' : 'pointer') : 'default',
+                    cursor: isRunning ? (isDragging ? 'ew-resize' : 'pointer') : 'default',
                     overflow: 'hidden',
                 }}
             >
@@ -204,41 +216,41 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                         pointerEvents: 'none',
                     }}
                 >
-                    {/* Top Circle */}
+                    {/* Left Circle */}
                     <div
                         ref={leftCircleRef}
-                        className="photic-circle-top"
+                        className="photic-circle-left"
                         style={{
                             position: 'absolute',
-                            top: `calc(50% - ${(photic.spacingPx || 160) / 2}px)`,
-                            left: '50%',
+                            top: `${layout.leftCircleY}px`,
+                            left: `${layout.leftCircleX}px`,
                             transform: 'translate(-50%, -50%)',
-                            width: `${(photic.radiusPx || 120) * 2}px`,
-                            height: `${(photic.radiusPx || 120) * 2}px`,
+                            width: `${layout.scaledRadius * 2}px`,
+                            height: `${layout.scaledRadius * 2}px`,
                             borderRadius: '9999px',
                             backgroundColor: photic.colorLeft || '#FFFFFF',
                             opacity: 0,
-                            boxShadow: `0 0 ${photic.blurPx || 20}px ${ (photic.blurPx || 20) / 2}px ${photic.colorLeft || '#FFFFFF'}`,
+                            boxShadow: `0 0 ${layout.scaledBlur}px ${layout.scaledBlur / 2}px ${photic.colorLeft || '#FFFFFF'}`,
                             transition: 'none', // RAF handles timing
                             pointerEvents: 'none',
                         }}
                     />
 
-                    {/* Bottom Circle */}
+                    {/* Right Circle */}
                     <div
                         ref={rightCircleRef}
-                        className="photic-circle-bottom"
+                        className="photic-circle-right"
                         style={{
                             position: 'absolute',
-                            top: `calc(50% + ${(photic.spacingPx || 160) / 2}px)`,
-                            left: '50%',
+                            top: `${layout.rightCircleY}px`,
+                            left: `${layout.rightCircleX}px`,
                             transform: 'translate(-50%, -50%)',
-                            width: `${(photic.radiusPx || 120) * 2}px`,
-                            height: `${(photic.radiusPx || 120) * 2}px`,
+                            width: `${layout.scaledRadius * 2}px`,
+                            height: `${layout.scaledRadius * 2}px`,
                             borderRadius: '9999px',
                             backgroundColor: photic.colorRight || '#FFFFFF',
                             opacity: 0,
-                            boxShadow: `0 0 ${photic.blurPx || 20}px ${ (photic.blurPx || 20) / 2}px ${photic.colorRight || '#FFFFFF'}`,
+                            boxShadow: `0 0 ${layout.scaledBlur}px ${layout.scaledBlur / 2}px ${photic.colorRight || '#FFFFFF'}`,
                             transition: 'none', // RAF handles timing
                             pointerEvents: 'none',
                         }}

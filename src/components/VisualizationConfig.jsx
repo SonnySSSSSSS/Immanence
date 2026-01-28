@@ -26,91 +26,106 @@ export function VisualizationConfig({
     // Sacred/Spiritual symbols (SVG files)
     const RELIGIOUS_GEOMETRIES = ['mandala', 'sri-yantra', 'wheel-of-dharma', 'buddha', 'cross', 'yin-yang', 'zen-stones'];
     const DURATIONS = [5, 10, 15, 20];
+    const OPTIONS = [...BASIC_GEOMETRIES, ...RELIGIOUS_GEOMETRIES];
+    const RELIGIOUS_SVG_BY_KEY = {
+        mandala: '/visualization/mandala.svg',
+        'sri-yantra': '/visualization/sri-yantra.svg',
+        'wheel-of-dharma': '/visualization/wheel-of-dharma.svg',
+        buddha: '/visualization/the-great-buddha-of-kamakura.svg',
+        cross: '/visualization/cross-2.svg',
+        'yin-yang': '/visualization/yin-yang.svg',
+        'zen-stones': '/visualization/zen-stones.svg',
+    };
 
     const totalCycleDuration = fadeInDuration + displayDuration + fadeOutDuration + voidDuration;
+    const rawIndex = OPTIONS.indexOf(geometry);
+    const currentIndex = rawIndex >= 0 ? rawIndex : 0;
 
     // Local UI toggles
-    const [showAllSymbols, setShowAllSymbols] = useState(false);
     const [showPhaseEditor, setShowPhaseEditor] = useState(false);
 
     return (
         <div className="space-y-6">
             {/* Geometry Selector */}
             <div>
-                <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                >
-                    Shapes
-                </div>
-                <div className="grid grid-cols-2 gap-2 mb-4 min-w-0">
-                    {BASIC_GEOMETRIES.map((g) => (
-                        <button
-                            key={g}
-                            onClick={() => setGeometry(g)}
-                            className={`
-                w-full px-3 py-2 rounded-xl text-xs transition-all text-center min-h-[44px] leading-tight whitespace-normal min-w-0
-                ${geometry === g
-                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[var(--text-primary)]'
-                                    : 'border-[var(--accent-15)] text-[var(--text-secondary)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
-                                }
-              `}
-                            style={{
-                                border: geometry === g ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: 700,
-                                letterSpacing: '0.05em'
-                            }}
-                        >
-                            <span className="min-w-0 break-words whitespace-normal">{g.toUpperCase()}</span>
-                        </button>
-                    ))}
-                </div>
-
-                <div
-                    className="text-[10px] uppercase tracking-[0.25em] mb-3 text-[var(--accent-60)] font-bold mt-4"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                >
-                    Sacred Symbols
-                </div>
-                <div className="grid grid-cols-2 gap-2 min-w-0">
-                    {(showAllSymbols ? RELIGIOUS_GEOMETRIES : RELIGIOUS_GEOMETRIES.slice(0, 4)).map((g) => (
-                        <button
-                            key={g}
-                            onClick={() => setGeometry(g)}
-                            className={`
-                w-full px-3 py-2 rounded-xl text-xs transition-all text-center min-h-[44px] leading-tight whitespace-normal min-w-0
-                ${geometry === g
-                                    ? 'border-[var(--accent-40)] bg-[var(--accent-10)] text-[var(--text-primary)]'
-                                    : 'border-[var(--accent-15)] text-[var(--text-secondary)] hover:border-[var(--accent-25)] hover:bg-[var(--accent-10)]'
-                                }
-              `}
-                            style={{
-                                border: geometry === g ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: 600,
-                                letterSpacing: '0.02em',
-                            }}
-                        >
-                            <span className="min-w-0 break-words whitespace-normal">{g.replace(/-/g, ' ').toUpperCase()}</span>
-                        </button>
-                    ))}
-                </div>
-
-                {/* More/Less toggle */}
-                <div className="mt-2">
+                <div className="flex items-center justify-between gap-3 mb-3">
                     <button
-                        onClick={() => setShowAllSymbols(v => !v)}
-                        className="w-full px-3 py-2 rounded-xl text-xs transition-all text-center min-h-[40px] leading-tight whitespace-normal min-w-0"
+                        onClick={() => setGeometry(OPTIONS[(currentIndex - 1 + OPTIONS.length) % OPTIONS.length])}
+                        className="w-10 h-10 rounded-xl text-sm flex items-center justify-center"
                         style={{
                             border: '1px solid var(--accent-25)',
                             fontFamily: 'var(--font-display)',
                             fontWeight: 700,
-                            letterSpacing: '0.1em'
+                            letterSpacing: '0.05em'
                         }}
+                        aria-label="Previous geometry"
                     >
-                        {showAllSymbols ? 'LESS' : 'MORE'}
+                        ◀
                     </button>
+                    <div className="flex flex-col items-center min-w-0">
+                        <div
+                            className="text-[11px] uppercase tracking-[0.25em] text-[var(--accent-60)] font-bold text-center"
+                            style={{ fontFamily: 'var(--font-display)' }}
+                        >
+                            {geometry.replace(/-/g, ' ').toUpperCase()}
+                        </div>
+                        <div className="text-[9px] text-[var(--text-muted)] mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+                            {currentIndex + 1} / {OPTIONS.length}
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setGeometry(OPTIONS[(currentIndex + 1) % OPTIONS.length])}
+                        className="w-10 h-10 rounded-xl text-sm flex items-center justify-center"
+                        style={{
+                            border: '1px solid var(--accent-25)',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 700,
+                            letterSpacing: '0.05em'
+                        }}
+                        aria-label="Next geometry"
+                    >
+                        ▶
+                    </button>
+                </div>
+
+                <div
+                    className="rounded-xl flex items-center justify-center min-w-0"
+                    style={{
+                        border: '1px solid var(--accent-20)',
+                        background: 'var(--accent-10)',
+                        height: '104px'
+                    }}
+                >
+                    {RELIGIOUS_GEOMETRIES.includes(geometry) && RELIGIOUS_SVG_BY_KEY[geometry] ? (
+                        <img
+                            src={RELIGIOUS_SVG_BY_KEY[geometry]}
+                            alt={geometry}
+                            className="max-w-[220px] max-h-[96px]"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                            draggable={false}
+                        />
+                    ) : (
+                        <svg
+                            viewBox="0 0 100 100"
+                            width="100%"
+                            height="100%"
+                            className="max-w-[220px] max-h-[96px]"
+                            style={{ color: 'var(--text-primary)' }}
+                        >
+                            {BASIC_GEOMETRIES.includes(geometry) && geometry === 'circle' && (
+                                <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="3" />
+                            )}
+                            {BASIC_GEOMETRIES.includes(geometry) && geometry === 'square' && (
+                                <rect x="28" y="28" width="44" height="44" fill="none" stroke="currentColor" strokeWidth="3" />
+                            )}
+                            {BASIC_GEOMETRIES.includes(geometry) && geometry === 'triangle' && (
+                                <polygon points="50,22 78,76 22,76" fill="none" stroke="currentColor" strokeWidth="3" />
+                            )}
+                            {BASIC_GEOMETRIES.includes(geometry) && (geometry === 'enso' || geometry === 'ring') && (
+                                <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="4" />
+                            )}
+                        </svg>
+                    )}
                 </div>
             </div>
 

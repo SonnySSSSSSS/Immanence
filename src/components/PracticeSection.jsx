@@ -1443,7 +1443,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [circuitConfig, practiceId, circuitValidationError]);
 
-  const handleStart = (durationOverrideSec = null) => {
+  const handleStart = (durationOverrideSec = null, ritualOverride = null) => {
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
 
@@ -1453,8 +1453,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
+    const ritualForStart = ritualOverride ?? activeRitual;
+
     // Validate that a ritual is selected before starting a Ritual practice
-    if (practiceId === "integration" && !activeRitual) {
+    if (practiceId === "integration" && !ritualForStart) {
       console.warn("[PracticeSection] Cannot start ritual practice - no ritual selected");
       // Show alert to user
       alert("Please select a ritual before beginning practice.");
@@ -1508,7 +1510,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
     setDuration(Math.ceil(totalSeconds / 60));
     setTimeLeft(totalSeconds);
-    handleStart();
+    handleStart(null, ritual);
   };
 
   const handleRitualReturn = () => {

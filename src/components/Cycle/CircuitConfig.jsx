@@ -59,6 +59,7 @@ const AVAILABLE_EXERCISES = [
 export function CircuitConfig({ value, onChange, isLight = false }) {
     const [intervalBreakSec, setIntervalBreakSec] = useState(value?.intervalBreakSec || 10);
     const [pageIndex, setPageIndex] = useState(0);
+    const [circuitError, setCircuitError] = useState(null);
 
     const EXERCISES_PER_PAGE = 2;
     const totalPages = Math.ceil(AVAILABLE_EXERCISES.length / EXERCISES_PER_PAGE);
@@ -83,6 +84,12 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    useEffect(() => {
+        if (!circuitError) return undefined;
+        const timer = setTimeout(() => setCircuitError(null), 2000);
+        return () => clearTimeout(timer);
+    }, [circuitError]);
+
     const MAX_EXERCISES = 6;
 
     const handleToggleExercise = (exercise) => {
@@ -91,9 +98,17 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             return; // Can't add more
         }
 
+        const candidateType = exercise.type;
+        const prevType = selectedExercises[selectedExercises.length - 1]?.exercise?.type;
+        if (prevType && prevType === candidateType) {
+            setCircuitError('Same practice cannot be placed consecutively.');
+            return;
+        }
+
         // Always add a new instance of the exercise (allow duplicates)
         const updated = [...selectedExercises, { exercise, duration: 5 }];
         setSelectedExercises(updated);
+        setCircuitError(null);
         if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
@@ -102,6 +117,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             e.exercise.id === exerciseId ? { ...e, duration } : e
         );
         setSelectedExercises(updated);
+        setCircuitError(null);
         if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
@@ -109,6 +125,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
     const handleRemoveExercise = (indexToRemove) => {
         const updated = selectedExercises.filter((_, idx) => idx !== indexToRemove);
         setSelectedExercises(updated);
+        setCircuitError(null);
         if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
@@ -116,7 +133,18 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         const updated = [...selectedExercises];
         const [moved] = updated.splice(fromIndex, 1);
         updated.splice(toIndex, 0, moved);
+
+        for (let i = 1; i < updated.length; i++) {
+            const a = updated[i - 1]?.exercise?.type;
+            const b = updated[i]?.exercise?.type;
+            if (a && b && a === b) {
+                setCircuitError('Same practice cannot be placed consecutively.');
+                return;
+            }
+        }
+
         setSelectedExercises(updated);
+        setCircuitError(null);
         if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
@@ -340,6 +368,19 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
             {/* Circuit Sequence - Energy Pathway */}
             {selectedExercises.length > 0 && (
                 <div>
+                    {circuitError && (
+                        <div
+                            className="mb-3 px-3 py-2 rounded text-[11px] font-medium uppercase tracking-[0.15em]"
+                            style={{
+                                fontFamily: 'var(--font-body)',
+                                color: isLight ? '#7a2f2f' : 'rgba(255,255,255,0.9)',
+                                background: isLight ? 'rgba(255, 229, 229, 0.6)' : 'rgba(120, 20, 20, 0.4)',
+                                border: isLight ? '1px solid rgba(122, 47, 47, 0.2)' : '1px solid rgba(255, 80, 80, 0.3)'
+                            }}
+                        >
+                            {circuitError}
+                        </div>
+                    )}
                     <div
                         className="text-[10px] mb-3 uppercase tracking-[0.2em] font-bold"
                         style={{ fontFamily: 'var(--font-display)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)' }}
