@@ -2,9 +2,9 @@
 // Control panel for Photic Circles overlay
 // Sliders for rate, brightness, spacing, radius, blur
 // Color palette and link toggle
-import React from 'react';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
+import { PhoticPreview } from './PhoticPreview';
 
 // Color palette presets
 const COLOR_PRESETS = [
@@ -48,7 +48,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
         }
     };
 
-    const containerStyle = isEmbedded 
+    const containerStyle = isEmbedded
         ? {
             width: '100%',
             maxWidth: '540px',
@@ -127,144 +127,30 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                 </div>
             )}
 
-            <div className={`${isEmbedded ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4' : ''}`}>
-                {/* Rate Slider */}
-                <div className="mb-3">
+            <div className={`${isEmbedded ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4' : 'space-y-4'}`}>
+                {/* Group A: Protocol */}
+                <div
+                    className="rounded-xl p-4"
+                    data-guide-step="protocol"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                    }}
+                >
                     <div
-                        className="mb-2 flex items-center justify-between"
                         style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
+                            fontSize: '10px',
                             fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
+                            letterSpacing: 'var(--tracking-wide)',
                             textTransform: 'uppercase',
-                            color: textColors.muted,
+                            color: 'var(--accent-60)',
+                            marginBottom: '12px',
                         }}
                     >
-                        <span>Rate (Hz)</span>
-                        <span style={{ color: 'var(--accent-color)' }}>{photic.rateHz.toFixed(1)}</span>
+                        Protocol
                     </div>
-                    <input
-                        type="range"
-                        min="0.1"
-                        max="12"
-                        step="0.1"
-                        value={photic.rateHz}
-                        onChange={(e) => handleRateChange(Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: 'var(--accent-color)' }}
-                    />
-                    {/* Advanced input */}
-                    <div className="mt-1 flex items-center gap-2">
-                        <label
-                            htmlFor="advanced-rate"
-                            style={{
-                                fontFamily: 'var(--font-body)',
-                                fontSize: '9px',
-                                color: textColors.faint,
-                                fontStyle: 'italic',
-                            }}
-                        >
-                            (advanced)
-                        </label>
-                        <input
-                            id="advanced-rate"
-                            type="number"
-                            min="0.1"
-                            max="20"
-                            step="0.1"
-                            value={photic.rateHz}
-                            onChange={(e) => handleRateChange(Number(e.target.value))}
-                            style={{
-                                width: '60px',
-                                padding: '2px 6px',
-                                fontFamily: 'var(--font-body)',
-                                fontSize: '10px',
-                                color: textColors.primary,
-                                backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
-                                border: `1px solid ${isLight ? 'rgba(160, 120, 60, 0.2)' : 'rgba(255,255,255,0.1)'}`,
-                                borderRadius: '4px',
-                            }}
-                        />
-                    </div>
-                </div>
 
-                {/* Timing Mode Toggle */}
-                <div className="mb-3 flex items-center justify-between">
-                    <span
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
-                            textTransform: 'uppercase',
-                            color: textColors.muted,
-                        }}
-                    >
-                        Timing
-                    </span>
-                    <div className="grid grid-cols-2 gap-1">
-                        <button
-                            onClick={() => setPhoticSetting('timingMode', 'simultaneous')}
-                            className="whitespace-nowrap text-center min-w-0"
-                            style={{
-                                padding: '4px 10px',
-                                borderRadius: '6px',
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '9px',
-                                fontWeight: 600,
-                                backgroundColor: photic.timingMode === 'simultaneous'
-                                    ? 'var(--accent-color)'
-                                    : isLight
-                                    ? 'rgba(160, 120, 60, 0.1)'
-                                    : 'rgba(255,255,255,0.05)',
-                                color: photic.timingMode === 'simultaneous' ? '#000' : textColors.secondary,
-                                border: `1px solid ${
-                                    photic.timingMode === 'simultaneous'
-                                        ? 'transparent'
-                                        : isLight
-                                        ? 'rgba(160, 120, 60, 0.2)'
-                                        : 'rgba(255,255,255,0.1)'
-                                }`,
-                                cursor: 'pointer',
-                                transition: 'all 200ms ease',
-                            }}
-                        >
-                            Simultaneous
-                        </button>
-                        <button
-                            onClick={() => setPhoticSetting('timingMode', 'alternating')}
-                            className="whitespace-nowrap text-center min-w-0"
-                            style={{
-                                padding: '4px 10px',
-                                borderRadius: '6px',
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '9px',
-                                fontWeight: 600,
-                                backgroundColor: photic.timingMode === 'alternating'
-                                    ? 'var(--accent-color)'
-                                    : isLight
-                                    ? 'rgba(160, 120, 60, 0.1)'
-                                    : 'rgba(255,255,255,0.05)',
-                                color: photic.timingMode === 'alternating' ? '#000' : textColors.secondary,
-                                border: `1px solid ${
-                                    photic.timingMode === 'alternating'
-                                        ? 'transparent'
-                                        : isLight
-                                        ? 'rgba(160, 120, 60, 0.2)'
-                                        : 'rgba(255,255,255,0.1)'
-                                }`,
-                                cursor: 'pointer',
-                                transition: 'all 200ms ease',
-                            }}
-                        >
-                            Alternating
-                        </button>
-                    </div>
-                </div>
-
-                {/* Gap Slider - Only show in alternating mode */}
-                {photic.timingMode === 'alternating' && (
+                    {/* Rate Slider */}
                     <div className="mb-3">
                         <div
                             className="mb-2 flex items-center justify-between"
@@ -277,219 +163,401 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                 color: textColors.muted,
                             }}
                         >
-                            <span>Gap</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{photic.gapMs}ms</span>
+                            <span>Rate (Hz)</span>
+                            <span style={{ color: 'var(--accent-color)' }}>{photic.rateHz.toFixed(1)}</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0.1"
+                            max="12"
+                            step="0.1"
+                            value={photic.rateHz}
+                            onChange={(e) => handleRateChange(Number(e.target.value))}
+                            className="w-full"
+                            style={{ accentColor: 'var(--accent-color)' }}
+                        />
+                        {/* Advanced input */}
+                        <div className="mt-2 flex items-center gap-2">
+                            <label
+                                htmlFor="advanced-rate"
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    fontSize: '9px',
+                                    color: textColors.faint,
+                                    fontStyle: 'italic',
+                                }}
+                            >
+                                (advanced)
+                            </label>
+                            <input
+                                id="advanced-rate"
+                                type="number"
+                                min="0.1"
+                                max="20"
+                                step="0.1"
+                                value={photic.rateHz}
+                                onChange={(e) => handleRateChange(Number(e.target.value))}
+                                style={{
+                                    width: '60px',
+                                    padding: '4px 6px',
+                                    fontFamily: 'var(--font-body)',
+                                    fontSize: '10px',
+                                    color: textColors.primary,
+                                    backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
+                                    border: '1px solid var(--accent-20)',
+                                    borderRadius: '6px',
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Timing Mode Toggle */}
+                    <div className="mb-3">
+                        <span
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
+                                textTransform: 'uppercase',
+                                color: textColors.muted,
+                                display: 'block',
+                                marginBottom: '6px',
+                            }}
+                        >
+                            Timing
+                        </span>
+
+                        <div className="grid grid-cols-2 gap-2 w-full">
+                            <button
+                                onClick={() => setPhoticSetting('timingMode', 'simultaneous')}
+                                className="text-center text-xs px-3 py-2 rounded-lg transition-all"
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontWeight: 600,
+                                    backgroundColor:
+                                        photic.timingMode === 'simultaneous'
+                                            ? 'var(--accent-color)'
+                                            : 'transparent',
+                                    color: photic.timingMode === 'simultaneous' ? '#000' : 'var(--text-secondary)',
+                                    border: `1px solid ${
+                                        photic.timingMode === 'simultaneous'
+                                            ? 'var(--accent-color)'
+                                            : 'var(--accent-20)'
+                                    }`,
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                SIMUL
+                            </button>
+
+                            <button
+                                onClick={() => setPhoticSetting('timingMode', 'alternating')}
+                                className="text-center text-xs px-3 py-2 rounded-lg transition-all"
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontWeight: 600,
+                                    backgroundColor:
+                                        photic.timingMode === 'alternating'
+                                            ? 'var(--accent-color)'
+                                            : 'transparent',
+                                    color: photic.timingMode === 'alternating' ? '#000' : 'var(--text-secondary)',
+                                    border: `1px solid ${
+                                        photic.timingMode === 'alternating'
+                                            ? 'var(--accent-color)'
+                                            : 'var(--accent-20)'
+                                    }`,
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                ALT
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Gap Slider - Only show in alternating mode */}
+                    {photic.timingMode === 'alternating' && (
+                        <div className="mb-3">
+                            <div
+                                className="mb-2 flex items-center justify-between"
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '8px',
+                                    fontWeight: 600,
+                                    letterSpacing: 'var(--tracking-mythic)',
+                                    textTransform: 'uppercase',
+                                    color: textColors.muted,
+                                }}
+                            >
+                                <span>Gap</span>
+                                <span style={{ color: 'var(--accent-color)' }}>{photic.gapMs}ms</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="500"
+                                step="10"
+                                value={photic.gapMs}
+                                onChange={(e) => setPhoticSetting('gapMs', Number(e.target.value))}
+                                className="w-full"
+                                style={{ accentColor: 'var(--accent-color)' }}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Group B: Intensity */}
+                <div
+                    className="rounded-xl p-4"
+                    data-guide-step="intensity"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                    }}
+                >
+                    <div
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-wide)',
+                            textTransform: 'uppercase',
+                            color: 'var(--accent-60)',
+                            marginBottom: '12px',
+                        }}
+                    >
+                        Intensity
+                    </div>
+
+                    {/* Brightness Slider */}
+                    <div className="mb-3">
+                        <div
+                            className="mb-2 flex items-center justify-between"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
+                                textTransform: 'uppercase',
+                                color: textColors.muted,
+                            }}
+                        >
+                            <span>Brightness</span>
+                            <span style={{ color: 'var(--accent-color)' }}>
+                                {Math.round(photic.brightness * 100)}%
+                            </span>
                         </div>
                         <input
                             type="range"
                             min="0"
-                            max="500"
-                            step="10"
-                            value={photic.gapMs}
-                            onChange={(e) => setPhoticSetting('gapMs', Number(e.target.value))}
+                            max="1"
+                            step="0.05"
+                            value={photic.brightness}
+                            onChange={(e) => setPhoticSetting('brightness', Number(e.target.value))}
                             className="w-full"
                             style={{ accentColor: 'var(--accent-color)' }}
                         />
                     </div>
-                )}
 
-                {/* Brightness Slider */}
-                <div className="mb-3">
-                    <div
-                        className="mb-2 flex items-center justify-between"
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
-                            textTransform: 'uppercase',
-                            color: textColors.muted,
-                        }}
-                    >
-                        <span>Brightness</span>
-                        <span style={{ color: 'var(--accent-color)' }}>
-                            {Math.round(photic.brightness * 100)}%
-                        </span>
+                    {/* Glow/Blur Slider */}
+                    <div className="mb-3">
+                        <div
+                            className="mb-2 flex items-center justify-between"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
+                                textTransform: 'uppercase',
+                                color: textColors.muted,
+                            }}
+                        >
+                            <span>Glow</span>
+                            <span style={{ color: 'var(--accent-color)' }}>{photic.blurPx}px</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="80"
+                            step="5"
+                            value={photic.blurPx}
+                            onChange={(e) => setPhoticSetting('blurPx', Number(e.target.value))}
+                            className="w-full"
+                            style={{ accentColor: 'var(--accent-color)' }}
+                        />
                     </div>
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.05"
-                        value={photic.brightness}
-                        onChange={(e) => setPhoticSetting('brightness', Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: 'var(--accent-color)' }}
-                    />
                 </div>
 
-                {/* Spacing Slider */}
-                <div className="mb-3">
+                {/* Group C: Geometry */}
+                <div
+                    className="rounded-xl p-4"
+                    data-guide-step="geometry"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                    }}
+                >
                     <div
-                        className="mb-2 flex items-center justify-between"
                         style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
+                            fontSize: '10px',
                             fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
+                            letterSpacing: 'var(--tracking-wide)',
                             textTransform: 'uppercase',
-                            color: textColors.muted,
+                            color: 'var(--accent-60)',
+                            marginBottom: '12px',
                         }}
                     >
-                        <span>Spacing</span>
-                        <span style={{ color: 'var(--accent-color)' }}>{photic.spacingPx}px</span>
+                        Geometry
                     </div>
-                    <input
-                        type="range"
-                        min="40"
-                        max="800"
-                        step="10"
-                        value={photic.spacingPx}
-                        onChange={(e) => setPhoticSetting('spacingPx', Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: 'var(--accent-color)' }}
-                    />
+
+                    {/* Radius Slider */}
+                    <div className="mb-3">
+                        <div
+                            className="mb-2 flex items-center justify-between"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
+                                textTransform: 'uppercase',
+                                color: textColors.muted,
+                            }}
+                        >
+                            <span>Radius</span>
+                            <span style={{ color: 'var(--accent-color)' }}>{photic.radiusPx}px</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="40"
+                            max="240"
+                            step="10"
+                            value={photic.radiusPx}
+                            onChange={(e) => setPhoticSetting('radiusPx', Number(e.target.value))}
+                            className="w-full"
+                            style={{ accentColor: 'var(--accent-color)' }}
+                        />
+                    </div>
+
+                    {/* Spacing Slider */}
+                    <div className="mb-3">
+                        <div
+                            className="mb-2 flex items-center justify-between"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-mythic)',
+                                textTransform: 'uppercase',
+                                color: textColors.muted,
+                            }}
+                        >
+                            <span>Spacing</span>
+                            <span style={{ color: 'var(--accent-color)' }}>{photic.spacingPx}px</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="40"
+                            max="800"
+                            step="10"
+                            value={photic.spacingPx}
+                            onChange={(e) => setPhoticSetting('spacingPx', Number(e.target.value))}
+                            className="w-full"
+                            style={{ accentColor: 'var(--accent-color)' }}
+                        />
+                    </div>
                 </div>
 
-                {/* Radius Slider */}
-                <div className="mb-3">
+                {/* Group D: Color */}
+                <div
+                    className="rounded-xl p-4"
+                    data-guide-step="color"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                    }}
+                >
                     <div
-                        className="mb-2 flex items-center justify-between"
                         style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
+                            fontSize: '10px',
                             fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
+                            letterSpacing: 'var(--tracking-wide)',
                             textTransform: 'uppercase',
-                            color: textColors.muted,
-                        }}
-                    >
-                        <span>Radius</span>
-                        <span style={{ color: 'var(--accent-color)' }}>{photic.radiusPx}px</span>
-                    </div>
-                    <input
-                        type="range"
-                        min="40"
-                        max="240"
-                        step="10"
-                        value={photic.radiusPx}
-                        onChange={(e) => setPhoticSetting('radiusPx', Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: 'var(--accent-color)' }}
-                    />
-                </div>
-
-                {/* Blur Slider */}
-                <div className="mb-3">
-                    <div
-                        className="mb-2 flex items-center justify-between"
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
-                            textTransform: 'uppercase',
-                            color: textColors.muted,
-                        }}
-                    >
-                        <span>Glow</span>
-                        <span style={{ color: 'var(--accent-color)' }}>{photic.blurPx}px</span>
-                    </div>
-                    <input
-                        type="range"
-                        min="0"
-                        max="80"
-                        step="5"
-                        value={photic.blurPx}
-                        onChange={(e) => setPhoticSetting('blurPx', Number(e.target.value))}
-                        className="w-full"
-                        style={{ accentColor: 'var(--accent-color)' }}
-                    />
-                </div>
-
-                {/* Color Palette */}
-                <div className="mb-3">
-                    <div
-                        className="mb-3"
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '8px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-mythic)',
-                            textTransform: 'uppercase',
-                            color: textColors.muted,
-                            textAlign: 'center',
+                            color: 'var(--accent-60)',
+                            marginBottom: '12px',
                         }}
                     >
                         Color
                     </div>
-                    <div className="grid grid-cols-6 gap-2">
-                        {COLOR_PRESETS.map((preset) => (
-                            <button
-                                key={preset.id}
-                                onClick={() => handleColorChange(preset.color)}
-                                className="rounded-full aspect-square"
-                                style={{
-                                    backgroundColor: preset.color,
-                                    border: `2px solid ${
-                                        photic.colorLeft === preset.color
-                                            ? 'var(--accent-color)'
-                                            : 'transparent'
-                                    }`,
-                                    boxShadow:
-                                        photic.colorLeft === preset.color
-                                            ? '0 0 12px var(--accent-10)'
-                                            : 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 200ms ease',
-                                }}
-                                aria-label={preset.name}
-                            />
-                        ))}
-                    </div>
-                </div>
 
-                {/* Link Colors Toggle */}
-                <div className="mb-3 flex items-center justify-between">
-                    <span
+                    {/* Color Palette */}
+                    <div
+                        className="mb-4"
+                        data-guide-step="protocol"
                         style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '9px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-wide)',
-                            textTransform: 'uppercase',
-                            color: textColors.secondary,
+                            outline: '2px solid rgba(234,179,8,0.95)',
+                            boxShadow: '0 0 0 4px rgba(234,179,8,0.18)',
+                            borderRadius: '14px',
+                            padding: '10px 10px 6px 10px',
                         }}
                     >
-                        Link Colors
-                    </span>
-                    <button
-                        onClick={() => setPhoticSetting('linkColors', !photic.linkColors)}
-                        style={{
-                            padding: '4px 12px',
-                            borderRadius: '8px',
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '10px',
-                            fontWeight: 600,
-                            backgroundColor: photic.linkColors
-                                ? 'var(--accent-color)'
-                                : isLight
-                                ? 'rgba(160, 120, 60, 0.1)'
-                                : 'rgba(255,255,255,0.05)',
-                            color: photic.linkColors ? '#000' : textColors.secondary,
-                            border: `1px solid ${
-                                photic.linkColors
-                                    ? 'transparent'
-                                    : isLight
-                                    ? 'rgba(160, 120, 60, 0.2)'
-                                    : 'rgba(255,255,255,0.1)'
-                            }`,
-                            cursor: 'pointer',
-                            transition: 'all 200ms ease',
-                        }}
-                    >
-                        {photic.linkColors ? 'ON' : 'OFF'}
-                    </button>
+                        <div className="grid grid-cols-6 gap-2">
+                            {COLOR_PRESETS.map((preset) => (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => handleColorChange(preset.color)}
+                                    className="rounded-full aspect-square transition-all"
+                                    style={{
+                                        backgroundColor: preset.color,
+                                        border: `2px solid ${
+                                            photic.colorLeft === preset.color
+                                                ? 'var(--accent-color)'
+                                                : 'transparent'
+                                        }`,
+                                        boxShadow:
+                                            photic.colorLeft === preset.color
+                                                ? '0 0 12px var(--accent-10)'
+                                                : 'none',
+                                        cursor: 'pointer',
+                                    }}
+                                    aria-label={preset.name}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Link Colors Toggle */}
+                    <div className="flex items-center justify-between">
+                        <span
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                letterSpacing: 'var(--tracking-wide)',
+                                textTransform: 'uppercase',
+                                color: 'var(--text-secondary)',
+                            }}
+                        >
+                            Link Colors
+                        </span>
+                        <button
+                            onClick={() => setPhoticSetting('linkColors', !photic.linkColors)}
+                            className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                backgroundColor: photic.linkColors
+                                    ? 'var(--accent-color)'
+                                    : 'transparent',
+                                color: photic.linkColors ? '#000' : 'var(--text-secondary)',
+                                border: `1px solid ${
+                                    photic.linkColors
+                                        ? 'var(--accent-color)'
+                                        : 'var(--accent-20)'
+                                }`,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {photic.linkColors ? 'ON' : 'OFF'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -500,6 +568,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     style={{
                         width: '100%',
                         padding: '12px',
+                        marginTop: '16px',
                         marginBottom: '10px',
                         borderRadius: '12px',
                         fontFamily: 'var(--font-display)',
@@ -525,21 +594,13 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                 </button>
             )}
 
-            {/* Safety Notice */}
+            {/* Live Preview */}
             <div
-                className="text-center"
                 style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '8px',
-                    color: textColors.faint,
-                    fontStyle: 'italic',
-                    lineHeight: 1.4,
-                    marginTop: isEmbedded ? '20px' : '0'
+                    marginTop: isEmbedded ? '20px' : '16px',
                 }}
             >
-                {isRunning
-                    ? `Pulsing at ${photic.rateHz.toFixed(1)} Hz`
-                    : 'Adjust settings before starting'}
+                <PhoticPreview />
             </div>
         </div>
     );
