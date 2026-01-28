@@ -664,8 +664,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   // Shared UI states (non-practice specific)
-  const [chevronAngle, setChevronAngle] = useState(0);
-  const [haloPulse, setHaloPulse] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(duration * 60);
   
@@ -679,6 +677,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [breathSubmode, setBreathSubmode] = useState("breath");
   const { startMicroNote, pendingMicroNote } = useJournalStore();
+
+  const onPracticingChangeRef = useRef(onPracticingChange);
+  const onBreathStateChangeRef = useRef(onBreathStateChange);
+
+  useEffect(() => {
+    onPracticingChangeRef.current = onPracticingChange;
+  }, [onPracticingChange]);
+
+  useEffect(() => {
+    onBreathStateChangeRef.current = onBreathStateChange;
+  }, [onBreathStateChange]);
+
+  const notifyPracticingChange = useCallback((isPracticing, practiceId = null, requiresFullscreen = false) => {
+    onPracticingChangeRef.current?.(isPracticing, practiceId, requiresFullscreen);
+  }, []);
+
+  const notifyBreathStateChange = useCallback((next) => {
+    onBreathStateChangeRef.current?.(next);
+  }, []);
 
   const resolveTutorialPracticeId = useCallback((baseId) => {
     if (!baseId) return null;
@@ -696,8 +713,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     if (isRunning) return;
-    onPracticingChange?.(false, tutorialPracticeId ?? null, false);
-  }, [isRunning, tutorialPracticeId, onPracticingChange]);
+    notifyPracticingChange(false, tutorialPracticeId ?? null, false);
+  }, [isRunning, tutorialPracticeId, notifyPracticingChange]);
 
   // Practice session internals - MUST be declared before any useEffect that references them
   const [activeCircuitId, setActiveCircuitId] = useState(null);
@@ -878,28 +895,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
   }, []);
 
-  useEffect(() => {
-    let animationId;
-    const startTime = Date.now();
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-
-      const chevronPhase = (elapsed % 3000) / 3000;
-      const angle = Math.sin(chevronPhase * Math.PI * 2) * 8;
-      setChevronAngle(angle);
-
-      const haloPhase = (elapsed % 5000) / 5000;
-      const pulse = (Math.sin(haloPhase * Math.PI * 2) + 1) / 2;
-      setHaloPulse(pulse);
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animationId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationId);
-  }, []);
-
   // Auto-save preferences when they change (but not during active practice)
   useEffect(() => {
     if (!isRunning) {
@@ -964,7 +959,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setTimeLeft(exDuration * 60);
 
     setIsRunning(true);
-    onPracticingChange && onPracticingChange(true);
+    notifyPracticingChange(true);
     setSessionStartTime(performance.now());
     setTapErrors([]);
     setLastErrorMs(null);
@@ -1017,7 +1012,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleCircuitComplete = () => {
     clearActivePracticeSession();
     setIsRunning(false);
-    onPracticingChange && onPracticingChange(false);
+    notifyPracticingChange(false);
 
     logCircuitCompletionEvent('custom', circuitConfig.exercises);
 
@@ -1106,8 +1101,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Now clear the session
     clearActivePracticeSession();
     setIsRunning(false);
-    onPracticingChange && onPracticingChange(false);
-    onBreathStateChange && onBreathStateChange(null);
+    notifyPracticingChange(false);
+    notifyBreathStateChange(null);
 
     const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
     const instrumentationData = endSession(exitType);
@@ -1366,7 +1361,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
       setIsRunning(true);
-      onPracticingChange && onPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
+      notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
       setTapErrors([]);
       setLastErrorMs(null);
@@ -1383,7 +1378,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
     setIsRunning(true);
-    onPracticingChange && onPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
+    notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
     setTapErrors([]);
     setLastErrorMs(null);
@@ -1439,7 +1434,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, onPracticingChange, practice, activeRitual, isCognitive]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
@@ -1543,7 +1538,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setCurrentStepIndex(0);
     
     // 4. Notify parent that we're no longer practicing
-    onPracticingChange && onPracticingChange(false);
+    notifyPracticingChange(false);
 
     console.log("[PRACTICE SECTION] ✓ All state cleared - RitualSelectionDeck should now appear");
   };
@@ -1641,7 +1636,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     tempoBeatsPerPhase,
     tempoSessionActive,
     tempoSessionEffective,
-    onBreathStateChange,
+    onBreathStateChange: notifyBreathStateChange,
   });
 
   const theme = useTheme();
