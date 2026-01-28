@@ -86,8 +86,26 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
             overflowY: 'auto',
         };
 
+    // Standardized label row style - prevents text compression
+    const labelRowStyle = {
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '8px',
+        fontFamily: 'var(--font-display)',
+        fontSize: '8px',
+        fontWeight: 600,
+        letterSpacing: 'var(--tracking-wide)',
+        textTransform: 'uppercase',
+        color: textColors.muted,
+    };
+
     return (
-        <div className={`photic-control-panel ${isHearth ? 'hearth-mode' : 'sanctuary-mode'}`} style={containerStyle}>
+        <div 
+            className={`photic-control-panel ${isHearth ? 'hearth-mode' : 'sanctuary-mode'}`} 
+            style={containerStyle}
+        >
             {/* Header - Hidden if embedded */}
             {!isEmbedded && (
                 <div
@@ -152,19 +170,9 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
                     {/* Rate Slider */}
                     <div className="mb-3">
-                        <div
-                            className="mb-2 flex items-center justify-between"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-mythic)',
-                                textTransform: 'uppercase',
-                                color: textColors.muted,
-                            }}
-                        >
+                        <div style={labelRowStyle}>
                             <span>Rate (Hz)</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{photic.rateHz.toFixed(1)}</span>
+                            <span style={{ color: 'var(--accent-color)', whiteSpace: 'nowrap' }}>{photic.rateHz.toFixed(1)}</span>
                         </div>
                         <input
                             type="range"
@@ -177,17 +185,19 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             style={{ accentColor: 'var(--accent-color)' }}
                         />
                         {/* Advanced input */}
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2">
                             <label
                                 htmlFor="advanced-rate"
                                 style={{
                                     fontFamily: 'var(--font-body)',
-                                    fontSize: '9px',
+                                    fontSize: '8px',
                                     color: textColors.faint,
                                     fontStyle: 'italic',
+                                    display: 'block',
+                                    marginBottom: '4px',
                                 }}
                             >
-                                (advanced)
+                                advanced
                             </label>
                             <input
                                 id="advanced-rate"
@@ -198,10 +208,10 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                 value={photic.rateHz}
                                 onChange={(e) => handleRateChange(Number(e.target.value))}
                                 style={{
-                                    width: '60px',
-                                    padding: '4px 6px',
+                                    width: '100%',
+                                    padding: '5px 8px',
                                     fontFamily: 'var(--font-body)',
-                                    fontSize: '10px',
+                                    fontSize: '11px',
                                     color: textColors.primary,
                                     backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
                                     border: '1px solid var(--accent-20)',
@@ -231,10 +241,11 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                         <div className="grid grid-cols-2 gap-2 w-full">
                             <button
                                 onClick={() => setPhoticSetting('timingMode', 'simultaneous')}
-                                className="text-center text-xs px-3 py-2 rounded-lg transition-all"
+                                className="text-center text-xs px-2 py-2 rounded-lg transition-all overflow-hidden"
                                 style={{
                                     fontFamily: 'var(--font-display)',
                                     fontWeight: 600,
+                                    fontSize: '9px',
                                     backgroundColor:
                                         photic.timingMode === 'simultaneous'
                                             ? 'var(--accent-color)'
@@ -246,17 +257,19 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                             : 'var(--accent-20)'
                                     }`,
                                     cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
                                 }}
                             >
-                                SIMUL
+                                SIM
                             </button>
 
                             <button
                                 onClick={() => setPhoticSetting('timingMode', 'alternating')}
-                                className="text-center text-xs px-3 py-2 rounded-lg transition-all"
+                                className="text-center text-xs px-2 py-2 rounded-lg transition-all overflow-hidden"
                                 style={{
                                     fontFamily: 'var(--font-display)',
                                     fontWeight: 600,
+                                    fontSize: '9px',
                                     backgroundColor:
                                         photic.timingMode === 'alternating'
                                             ? 'var(--accent-color)'
@@ -268,6 +281,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                             : 'var(--accent-20)'
                                     }`,
                                     cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
                                 }}
                             >
                                 ALT
@@ -331,20 +345,33 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     {/* Brightness Slider */}
                     <div className="mb-3">
                         <div
-                            className="mb-2 flex items-center justify-between"
                             style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-mythic)',
-                                textTransform: 'uppercase',
-                                color: textColors.muted,
+                                marginBottom: '8px',
                             }}
                         >
-                            <span>Brightness</span>
-                            <span style={{ color: 'var(--accent-color)' }}>
+                            <div
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '8px',
+                                    fontWeight: 600,
+                                    letterSpacing: 'var(--tracking-wide)',
+                                    textTransform: 'uppercase',
+                                    color: textColors.muted,
+                                    marginBottom: '4px',
+                                }}
+                            >
+                                Brightness
+                            </div>
+                            <div
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '8px',
+                                    fontWeight: 600,
+                                    color: 'var(--accent-color)',
+                                }}
+                            >
                                 {Math.round(photic.brightness * 100)}%
-                            </span>
+                            </div>
                         </div>
                         <input
                             type="range"
@@ -361,18 +388,33 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     {/* Glow/Blur Slider */}
                     <div className="mb-3">
                         <div
-                            className="mb-2 flex items-center justify-between"
                             style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-mythic)',
-                                textTransform: 'uppercase',
-                                color: textColors.muted,
+                                marginBottom: '8px',
                             }}
                         >
-                            <span>Glow</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{photic.blurPx}px</span>
+                            <div
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '8px',
+                                    fontWeight: 600,
+                                    letterSpacing: 'var(--tracking-wide)',
+                                    textTransform: 'uppercase',
+                                    color: textColors.muted,
+                                    marginBottom: '4px',
+                                }}
+                            >
+                                Glow
+                            </div>
+                            <div
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '8px',
+                                    fontWeight: 600,
+                                    color: 'var(--accent-color)',
+                                }}
+                            >
+                                {photic.blurPx}px
+                            </div>
                         </div>
                         <input
                             type="range"
@@ -411,19 +453,9 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
                     {/* Radius Slider */}
                     <div className="mb-3">
-                        <div
-                            className="mb-2 flex items-center justify-between"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-mythic)',
-                                textTransform: 'uppercase',
-                                color: textColors.muted,
-                            }}
-                        >
+                        <div style={labelRowStyle}>
                             <span>Radius</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{photic.radiusPx}px</span>
+                            <span style={{ color: 'var(--accent-color)', whiteSpace: 'nowrap' }}>{photic.radiusPx}px</span>
                         </div>
                         <input
                             type="range"
@@ -439,19 +471,9 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
                     {/* Spacing Slider */}
                     <div className="mb-3">
-                        <div
-                            className="mb-2 flex items-center justify-between"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-mythic)',
-                                textTransform: 'uppercase',
-                                color: textColors.muted,
-                            }}
-                        >
+                        <div style={labelRowStyle}>
                             <span>Spacing</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{photic.spacingPx}px</span>
+                            <span style={{ color: 'var(--accent-color)', whiteSpace: 'nowrap' }}>{photic.spacingPx}px</span>
                         </div>
                         <input
                             type="range"
@@ -492,12 +514,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     <div
                         className="mb-4"
                         data-guide-step="protocol"
-                        style={{
-                            outline: '2px solid rgba(234,179,8,0.95)',
-                            boxShadow: '0 0 0 4px rgba(234,179,8,0.18)',
-                            borderRadius: '14px',
-                            padding: '10px 10px 6px 10px',
-                        }}
                     >
                         <div className="grid grid-cols-6 gap-2">
                             {COLOR_PRESETS.map((preset) => (
@@ -525,8 +541,8 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     </div>
 
                     {/* Link Colors Toggle */}
-                    <div className="flex items-center justify-between">
-                        <span
+                    <div>
+                        <div
                             style={{
                                 fontFamily: 'var(--font-display)',
                                 fontSize: '9px',
@@ -534,10 +550,11 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                 letterSpacing: 'var(--tracking-wide)',
                                 textTransform: 'uppercase',
                                 color: 'var(--text-secondary)',
+                                marginBottom: '8px',
                             }}
                         >
                             Link Colors
-                        </span>
+                        </div>
                         <button
                             onClick={() => setPhoticSetting('linkColors', !photic.linkColors)}
                             className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
