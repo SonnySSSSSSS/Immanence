@@ -202,6 +202,16 @@ function App() {
       ? resolvedPracticeTutorialId
       : 'page:practice';
   const headerTutorialId = (() => {
+    // Photonic (embedded or overlay) should always route to the photic beginner guide
+    if (
+      activeSection === 'practice' &&
+      (resolvedPracticeId === 'photic' || activePracticeId === 'photic')
+    ) {
+      return 'page:photic-beginner';
+    }
+
+    if (isPhoticOpen) return 'page:photic-beginner';
+
     if (!activeSection) return 'page:home';
     if (activeSection === 'practice') return practiceTutorialId;
     if (activeSection === 'wisdom') return 'page:wisdom';
@@ -381,7 +391,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.25.74
+                        v3.25.75
                     </div>
                   </div>
 

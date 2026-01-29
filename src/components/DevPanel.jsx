@@ -19,6 +19,7 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useCycleStore } from '../state/cycleStore';
 import { useApplicationStore } from '../state/applicationStore';
 import { useNavigationStore } from '../state/navigationStore';
+import { useTutorialStore } from '../state/tutorialStore';
 import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
@@ -536,6 +537,8 @@ export function DevPanel({
     const setButtonThemeDark = useSettingsStore(s => s.setButtonThemeDark);
     const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
     const setButtonThemeLight = useSettingsStore(s => s.setButtonThemeLight);
+    const photic = useSettingsStore(s => s.photic);
+    const setPhoticSetting = useSettingsStore(s => s.setPhoticSetting);
 
     // Color scheme detection
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -1213,6 +1216,36 @@ export function DevPanel({
                         onToggle={() => toggleSection('design')}
                         isLight={isLight}
                     >
+                        {/* Photonic Beginner Guide */}
+                        <div className="mb-3">
+                            <button
+                                onClick={() => {
+                                    if (photic.beginnerMode) {
+                                        setPhoticSetting('beginnerMode', false);
+                                        setPhoticSetting('activeGuideStep', null);
+                                    } else {
+                                        setPhoticSetting('beginnerMode', true);
+                                        setPhoticSetting('activeGuideStep', 'protocol');
+                                        useTutorialStore.getState().openTutorial('page:photic-beginner');
+                                    }
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '6px 10px',
+                                    fontSize: '11px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--accent-25)',
+                                    background: photic.beginnerMode ? 'var(--accent)' : 'transparent',
+                                    color: photic.beginnerMode ? '#000' : 'var(--text-muted)',
+                                    cursor: 'pointer',
+                                    fontFamily: 'var(--font-display)',
+                                    fontWeight: 600,
+                                    transition: 'all 200ms ease',
+                                }}
+                            >
+                                {photic.beginnerMode ? 'End Beginner Guide' : 'Start Beginner Guide'}
+                            </button>
+                        </div>
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}

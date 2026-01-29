@@ -12,7 +12,6 @@
  * @param {number} params.containerHeight - Measured container height in px
  * @param {number} params.radiusPx - Requested radius of each circle
  * @param {number} params.spacingPx - Requested distance between circle centers
- * @param {number} params.blurPx - Requested blur glow effect
  * @param {number} [params.horizontalMargins=40] - Horizontal padding (left/right)
  * @param {number} [params.verticalMargins=12] - Vertical padding (top/bottom)
  *
@@ -20,7 +19,6 @@
  *   - scale: proportional scale factor (0.05-1.0) for fit
  *   - scaledRadius: radius after scale (proportional)
  *   - scaledSpacing: spacing after scale (proportional)
- *   - scaledBlur: blur effect after scale
  *   - centerX: horizontal center of container
  *   - centerY: vertical center of container
  *   - leftCircleX: left circle center X position
@@ -35,7 +33,6 @@ export function computePhoticLayout({
     containerHeight,
     radiusPx,
     spacingPx,
-    blurPx,
     horizontalMargins = 40,
     verticalMargins = 12,
 }) {
@@ -45,7 +42,6 @@ export function computePhoticLayout({
             scale: 1.0,
             scaledRadius: radiusPx,
             scaledSpacing: spacingPx,
-            scaledBlur: Math.max(3, blurPx),
             centerX: 0,
             centerY: 0,
             leftCircleX: 0,
@@ -85,7 +81,6 @@ export function computePhoticLayout({
     // Apply proportional scale
     const scaledRadius = radiusPx * scale;
     const scaledSpacing = spacingPx * scale;
-    const scaledBlur = Math.max(3, blurPx * scale);
 
     // Maximum spacing at current scale
     const circlesDiameterWidth = 2 * scaledRadius;
@@ -102,7 +97,6 @@ export function computePhoticLayout({
         scale,
         scaledRadius,
         scaledSpacing,
-        scaledBlur,
         centerX,
         centerY,
         leftCircleX,

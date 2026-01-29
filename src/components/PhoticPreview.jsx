@@ -169,7 +169,6 @@ export function PhoticPreview() {
         containerHeight,
         radiusPx: photic.radiusPx,
         spacingPx: photic.spacingPx,
-        blurPx: photic.blurPx,
         horizontalMargins: 40,
         verticalMargins: 12,
     });
@@ -192,10 +191,6 @@ export function PhoticPreview() {
     const previewScaledSpacing = lerp(40, 200, spacingNorm);
     // No sCap constraint—radius and spacing are fully independent
     // Circles may overflow at extreme combos; that's intentional for a true preview
-
-    // Blur: map slider to visible range (3px to 24px)
-    const blurNorm = clamp01(photic.blurPx / 80);
-    const previewScaledBlur = 3 + blurNorm * 21;
 
     // Compute positions for horizontal layout (center-to-center ONLY)
     const previewCenterX = containerWidth / 2;
@@ -244,7 +239,7 @@ export function PhoticPreview() {
                         borderRadius: '9999px',
                         backgroundColor: photic.colorLeft || '#FFFFFF',
                         opacity: 0,
-                        boxShadow: `0 0 ${previewScaledBlur}px ${previewScaledBlur / 2}px ${photic.colorLeft || '#FFFFFF'}`,
+                        boxShadow: 'none',
                         transition: 'none',
                         pointerEvents: 'none',
                     }}
@@ -263,7 +258,7 @@ export function PhoticPreview() {
                         borderRadius: '9999px',
                         backgroundColor: photic.colorRight || '#FFFFFF',
                         opacity: 0,
-                        boxShadow: `0 0 ${previewScaledBlur}px ${previewScaledBlur / 2}px ${photic.colorRight || '#FFFFFF'}`,
+                        boxShadow: 'none',
                         transition: 'none',
                         pointerEvents: 'none',
                     }}
@@ -310,8 +305,7 @@ export function PhoticPreview() {
                         }}
                     >
                         <div>W:{containerWidth.toFixed(0)} H:{containerHeight} (avail:{availW.toFixed(0)}x{availH.toFixed(0)})</div>
-                        <div>raw input: r:{photic.radiusPx} s:{photic.spacingPx} b:{photic.blurPx}</div>
-                        <div>preview: r:{previewScaledRadius.toFixed(1)} s:{previewScaledSpacing.toFixed(1)} b:{previewScaledBlur.toFixed(1)}</div>
+                        <div>preview: r:{previewScaledRadius.toFixed(1)} s:{previewScaledSpacing.toFixed(1)}</div>
                         <div>L:{previewLeftCircleX.toFixed(0)}px R:{previewRightCircleX.toFixed(0)}px</div>
                     </div>
                 </>

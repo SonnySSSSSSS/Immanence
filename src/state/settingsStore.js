@@ -58,7 +58,6 @@ export const useSettingsStore = create(
                 brightness: 0.6,          // Max opacity (0.0-1.0)
                 spacingPx: 160,           // Center-to-center distance (40-800)
                 radiusPx: 120,            // Circle radius (40-240)
-                blurPx: 20,               // Glow blur radius (0-80, clamped to <= radiusPx)
 
                 // Colors
                 colorLeft: '#FFFFFF',     // Left circle color
@@ -116,10 +115,6 @@ export const useSettingsStore = create(
                     case 'radiusPx':
                         clampedValue = Math.max(40, Math.min(240, value));
                         break;
-                    case 'blurPx':
-                        // Clamp blur to radiusPx to prevent extreme glow
-                        clampedValue = Math.max(0, Math.min(80, Math.min(value, state.photic.radiusPx)));
-                        break;
                     case 'bgOpacity':
                         clampedValue = Math.max(0.7, Math.min(1.0, value));
                         break;
@@ -148,7 +143,6 @@ export const useSettingsStore = create(
                     brightness: 0.6,
                     spacingPx: 160,
                     radiusPx: 120,
-                    blurPx: 20,
                     colorLeft: '#FFFFFF',
                     colorRight: '#FFFFFF',
                     linkColors: true,
@@ -177,7 +171,6 @@ export const useSettingsStore = create(
                     brightness: 0.6,
                     spacingPx: 160,
                     radiusPx: 120,
-                    blurPx: 20,
                     colorLeft: '#FFFFFF',
                     colorRight: '#FFFFFF',
                     linkColors: true,

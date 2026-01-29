@@ -176,7 +176,6 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         containerHeight: window.innerHeight,
         radiusPx: photic.radiusPx || 120,
         spacingPx: photic.spacingPx || 160,
-        blurPx: photic.blurPx || 20,
         horizontalMargins: 80, // More margin for full-screen
         verticalMargins: 80,
     });
@@ -230,7 +229,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                             borderRadius: '9999px',
                             backgroundColor: photic.colorLeft || '#FFFFFF',
                             opacity: 0,
-                            boxShadow: `0 0 ${layout.scaledBlur}px ${layout.scaledBlur / 2}px ${photic.colorLeft || '#FFFFFF'}`,
+                            boxShadow: 'none',
                             transition: 'none', // RAF handles timing
                             pointerEvents: 'none',
                         }}
@@ -250,7 +249,7 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
                             borderRadius: '9999px',
                             backgroundColor: photic.colorRight || '#FFFFFF',
                             opacity: 0,
-                            boxShadow: `0 0 ${layout.scaledBlur}px ${layout.scaledBlur / 2}px ${photic.colorRight || '#FFFFFF'}`,
+                            boxShadow: 'none',
                             transition: 'none', // RAF handles timing
                             pointerEvents: 'none',
                         }}

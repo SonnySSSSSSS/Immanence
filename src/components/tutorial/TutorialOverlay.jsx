@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback, useLayoutEffect, useRef } from
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { useTutorialStore, isTutorialAdminMode } from '../../state/tutorialStore';
+import { useSettingsStore } from '../../state/settingsStore';
 import { TUTORIALS } from '../../tutorials/tutorialRegistry';
 
 const OVERRIDE_STORAGE_KEY = 'immanence.tutorial.overrides';
@@ -57,6 +58,27 @@ export const TutorialOverlay = () => {
   const [overrideReloadTrigger, setOverrideReloadTrigger] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const tooltipRef = useRef(null);
+
+  // Sync activeGuideStep to tutorial stepIndex for photic beginner guide
+  useEffect(() => {
+    if (tutorialId !== 'page:photic-beginner') return;
+
+    const settings = useSettingsStore.getState();
+
+    if (!isOpen) {
+      settings.setPhoticSetting('activeGuideStep', null);
+      settings.setPhoticSetting('beginnerMode', false);
+      return;
+    }
+
+    const stepToGuide = ['protocol', 'intensity', 'geometry', 'color'];
+    const nextGuide = stepToGuide[stepIndex];
+
+    if (nextGuide) {
+      settings.setPhoticSetting('activeGuideStep', nextGuide);
+      settings.setPhoticSetting('beginnerMode', true);
+    }
+  }, [isOpen, tutorialId, stepIndex]);
 
   // Inspect mode: allows devtools to click/select highlight/tooltip instead of scrim
   let inspectMode = false;

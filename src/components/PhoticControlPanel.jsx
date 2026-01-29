@@ -1,7 +1,8 @@
 // src/components/PhoticControlPanel.jsx
 // Control panel for Photic Circles overlay
-// Sliders for rate, brightness, spacing, radius, blur
+// Sliders for rate, brightness, spacing, and radius
 // Color palette and link toggle
+import { useState } from 'react';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { PhoticPreview } from './PhoticPreview';
@@ -24,6 +25,9 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
     const { photic, setPhoticSetting } = useSettingsStore();
 
+    // Track which color (left/right) the palette is currently editing when linkColors is OFF
+    const [colorTarget, setColorTarget] = useState('left');
+
     // Text colors (matching SoundConfig pattern)
     const textColors = {
         primary: isLight ? '#3D3425' : 'rgba(253,251,245,0.7)',
@@ -32,19 +36,20 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
         faint: isLight ? '#9A8D78' : 'rgba(253,251,245,0.4)',
     };
 
-    // Handle rate change with advanced input
+    // Handle rate change
     const handleRateChange = (value) => {
         setPhoticSetting('rateHz', value);
     };
 
-    // Handle color change (applies to both if linked)
+    // Handle color change (applies to both if linked, or selected side if unlinked)
     const handleColorChange = (color) => {
         if (photic.linkColors) {
             setPhoticSetting('colorLeft', color);
             setPhoticSetting('colorRight', color);
         } else {
-            // Only update left by default; user can set right separately
-            setPhoticSetting('colorLeft', color);
+            // When unlinked, update only the selected target (left or right)
+            const targetKey = colorTarget === 'left' ? 'colorLeft' : 'colorRight';
+            setPhoticSetting(targetKey, color);
         }
     };
 
@@ -86,19 +91,36 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
             overflowY: 'auto',
         };
 
-    // Standardized label row style - prevents text compression
-    const labelRowStyle = {
-        display: 'grid',
-        gridTemplateColumns: '1fr auto',
+    // Horizontal control row style (label, control, value)
+    const controlRowStyle = {
+        display: 'flex',
         alignItems: 'center',
         gap: '8px',
         marginBottom: '8px',
+        width: '100%',
+        minWidth: 0,
+    };
+
+    const controlLabelStyle = {
         fontFamily: 'var(--font-display)',
         fontSize: '8px',
         fontWeight: 600,
         letterSpacing: 'var(--tracking-wide)',
         textTransform: 'uppercase',
         color: textColors.muted,
+        minWidth: '60px',
+        flexShrink: 0,
+    };
+
+    const controlValueStyle = {
+        fontFamily: 'var(--font-display)',
+        fontSize: '8px',
+        fontWeight: 600,
+        color: 'var(--accent-color)',
+        minWidth: '48px',
+        textAlign: 'right',
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
     };
 
     return (
@@ -145,19 +167,20 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                 </div>
             )}
 
-            <div className={`${isEmbedded ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4' : 'space-y-4'}`}>
-                {/* Group A: Protocol */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* Signal Panel (merged Protocol + Intensity) */}
                 <div
-                    className="rounded-xl p-4"
+                    className={`rounded-xl p-3 border ${
+                        photic.beginnerMode && (photic.activeGuideStep === 'protocol' || photic.activeGuideStep === 'intensity')
+                            ? 'border-[var(--accent)] ring-2 ring-[var(--accent-35)]'
+                            : 'border-[var(--accent-25)]'
+                    }`}
                     data-guide-step="protocol"
-                    style={{
-                        border: '1px solid var(--accent-25)',
-                    }}
                 >
                     <div
                         style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '10px',
+                            fontSize: '9px',
                             fontWeight: 600,
                             letterSpacing: 'var(--tracking-wide)',
                             textTransform: 'uppercase',
@@ -165,83 +188,48 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             marginBottom: '12px',
                         }}
                     >
-                        Protocol
+                        Signal
                     </div>
 
-                    {/* Rate Slider */}
-                    <div className="mb-3">
-                        <div style={labelRowStyle}>
-                            <span>Rate (Hz)</span>
-                            <span style={{ color: 'var(--accent-color)', whiteSpace: 'nowrap' }}>{photic.rateHz.toFixed(1)}</span>
-                        </div>
+                    {/* Invisible anchor for intensity tutorial step */}
+                    <div
+                        data-guide-step="intensity"
+                        style={{
+                            position: 'absolute',
+                            width: 1,
+                            height: 1,
+                            overflow: 'hidden',
+                            pointerEvents: 'none',
+                            opacity: 0,
+                        }}
+                    />
+
+                    {/* Rate Slider - Horizontal */}
+                    <div style={controlRowStyle}>
+                        <label style={controlLabelStyle}>Rate</label>
                         <input
                             type="range"
                             min="0.1"
                             max="12"
                             step="0.1"
                             value={photic.rateHz}
-                            onChange={(e) => handleRateChange(Number(e.target.value))}
-                            className="w-full"
-                            style={{ accentColor: 'var(--accent-color)' }}
+                            onChange={(e) => {
+                                handleRateChange(Number(e.target.value));
+                            }}
+                            style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
-                        {/* Advanced input */}
-                        <div className="mt-2">
-                            <label
-                                htmlFor="advanced-rate"
-                                style={{
-                                    fontFamily: 'var(--font-body)',
-                                    fontSize: '8px',
-                                    color: textColors.faint,
-                                    fontStyle: 'italic',
-                                    display: 'block',
-                                    marginBottom: '4px',
-                                }}
-                            >
-                                advanced
-                            </label>
-                            <input
-                                id="advanced-rate"
-                                type="number"
-                                min="0.1"
-                                max="20"
-                                step="0.1"
-                                value={photic.rateHz}
-                                onChange={(e) => handleRateChange(Number(e.target.value))}
-                                style={{
-                                    width: '100%',
-                                    padding: '5px 8px',
-                                    fontFamily: 'var(--font-body)',
-                                    fontSize: '11px',
-                                    color: textColors.primary,
-                                    backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
-                                    border: '1px solid var(--accent-20)',
-                                    borderRadius: '6px',
-                                }}
-                            />
-                        </div>
+                        <div style={controlValueStyle}>{photic.rateHz.toFixed(1)} Hz</div>
                     </div>
 
-                    {/* Timing Mode Toggle */}
-                    <div className="mb-3">
-                        <span
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-mythic)',
-                                textTransform: 'uppercase',
-                                color: textColors.muted,
-                                display: 'block',
-                                marginBottom: '6px',
-                            }}
-                        >
-                            Timing
-                        </span>
-
-                        <div className="grid grid-cols-2 gap-2 w-full">
+                    {/* Timing Mode - Horizontal */}
+                    <div style={controlRowStyle}>
+                        <label style={controlLabelStyle}>Timing</label>
+                        <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
                             <button
-                                onClick={() => setPhoticSetting('timingMode', 'simultaneous')}
-                                className="text-center text-xs px-2 py-2 rounded-lg transition-all overflow-hidden"
+                                onClick={() => {
+                                    setPhoticSetting('timingMode', 'simultaneous');
+                                }}
+                                className="text-center text-xs px-2 py-1 rounded-lg transition-all overflow-hidden"
                                 style={{
                                     fontFamily: 'var(--font-display)',
                                     fontWeight: 600,
@@ -258,14 +246,17 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                     }`,
                                     cursor: 'pointer',
                                     whiteSpace: 'nowrap',
+                                    flex: 1,
                                 }}
                             >
                                 SIM
                             </button>
 
                             <button
-                                onClick={() => setPhoticSetting('timingMode', 'alternating')}
-                                className="text-center text-xs px-2 py-2 rounded-lg transition-all overflow-hidden"
+                                onClick={() => {
+                                    setPhoticSetting('timingMode', 'alternating');
+                                }}
+                                className="text-center text-xs px-2 py-1 rounded-lg transition-all overflow-hidden"
                                 style={{
                                     fontFamily: 'var(--font-display)',
                                     fontWeight: 600,
@@ -282,6 +273,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                     }`,
                                     cursor: 'pointer',
                                     whiteSpace: 'nowrap',
+                                    flex: 1,
                                 }}
                             >
                                 ALT
@@ -289,158 +281,37 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                         </div>
                     </div>
 
-                    {/* Gap Slider - Only show in alternating mode */}
-                    {photic.timingMode === 'alternating' && (
-                        <div className="mb-3">
-                            <div
-                                className="mb-2 flex items-center justify-between"
-                                style={{
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '8px',
-                                    fontWeight: 600,
-                                    letterSpacing: 'var(--tracking-mythic)',
-                                    textTransform: 'uppercase',
-                                    color: textColors.muted,
-                                }}
-                            >
-                                <span>Gap</span>
-                                <span style={{ color: 'var(--accent-color)' }}>{photic.gapMs}ms</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="500"
-                                step="10"
-                                value={photic.gapMs}
-                                onChange={(e) => setPhoticSetting('gapMs', Number(e.target.value))}
-                                className="w-full"
-                                style={{ accentColor: 'var(--accent-color)' }}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Group B: Intensity */}
-                <div
-                    className="rounded-xl p-4"
-                    data-guide-step="intensity"
-                    style={{
-                        border: '1px solid var(--accent-25)',
-                    }}
-                >
-                    <div
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '10px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-wide)',
-                            textTransform: 'uppercase',
-                            color: 'var(--accent-60)',
-                            marginBottom: '12px',
-                        }}
-                    >
-                        Intensity
-                    </div>
-
-                    {/* Brightness Slider */}
-                    <div className="mb-3">
-                        <div
-                            style={{
-                                marginBottom: '8px',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '8px',
-                                    fontWeight: 600,
-                                    letterSpacing: 'var(--tracking-wide)',
-                                    textTransform: 'uppercase',
-                                    color: textColors.muted,
-                                    marginBottom: '4px',
-                                }}
-                            >
-                                Brightness
-                            </div>
-                            <div
-                                style={{
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '8px',
-                                    fontWeight: 600,
-                                    color: 'var(--accent-color)',
-                                }}
-                            >
-                                {Math.round(photic.brightness * 100)}%
-                            </div>
-                        </div>
+                    {/* Brightness Slider - Horizontal */}
+                    <div style={controlRowStyle}>
+                        <label style={controlLabelStyle}>Bright</label>
                         <input
                             type="range"
                             min="0"
                             max="1"
                             step="0.05"
                             value={photic.brightness}
-                            onChange={(e) => setPhoticSetting('brightness', Number(e.target.value))}
-                            className="w-full"
-                            style={{ accentColor: 'var(--accent-color)' }}
-                        />
-                    </div>
-
-                    {/* Glow/Blur Slider */}
-                    <div className="mb-3">
-                        <div
-                            style={{
-                                marginBottom: '8px',
+                            onChange={(e) => {
+                                setPhoticSetting('brightness', Number(e.target.value));
                             }}
-                        >
-                            <div
-                                style={{
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '8px',
-                                    fontWeight: 600,
-                                    letterSpacing: 'var(--tracking-wide)',
-                                    textTransform: 'uppercase',
-                                    color: textColors.muted,
-                                    marginBottom: '4px',
-                                }}
-                            >
-                                Glow
-                            </div>
-                            <div
-                                style={{
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '8px',
-                                    fontWeight: 600,
-                                    color: 'var(--accent-color)',
-                                }}
-                            >
-                                {photic.blurPx}px
-                            </div>
-                        </div>
-                        <input
-                            type="range"
-                            min="0"
-                            max="80"
-                            step="5"
-                            value={photic.blurPx}
-                            onChange={(e) => setPhoticSetting('blurPx', Number(e.target.value))}
-                            className="w-full"
-                            style={{ accentColor: 'var(--accent-color)' }}
+                            style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
+                        <div style={controlValueStyle}>{Math.round(photic.brightness * 100)}%</div>
                     </div>
                 </div>
 
                 {/* Group C: Geometry */}
                 <div
-                    className="rounded-xl p-4"
+                    className={`rounded-xl p-3 border ${
+                        photic.beginnerMode && photic.activeGuideStep === 'geometry'
+                            ? 'border-[var(--accent)] ring-2 ring-[var(--accent-35)]'
+                            : 'border-[var(--accent-25)]'
+                    }`}
                     data-guide-step="geometry"
-                    style={{
-                        border: '1px solid var(--accent-25)',
-                    }}
                 >
                     <div
                         style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '10px',
+                            fontSize: '9px',
                             fontWeight: 600,
                             letterSpacing: 'var(--tracking-wide)',
                             textTransform: 'uppercase',
@@ -451,55 +322,54 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                         Geometry
                     </div>
 
-                    {/* Radius Slider */}
-                    <div className="mb-3">
-                        <div style={labelRowStyle}>
-                            <span>Radius</span>
-                            <span style={{ color: 'var(--accent-color)', whiteSpace: 'nowrap' }}>{photic.radiusPx}px</span>
-                        </div>
+                    {/* Radius Slider - Horizontal */}
+                    <div style={controlRowStyle}>
+                        <label style={controlLabelStyle}>Radius</label>
                         <input
                             type="range"
                             min="40"
                             max="240"
                             step="10"
                             value={photic.radiusPx}
-                            onChange={(e) => setPhoticSetting('radiusPx', Number(e.target.value))}
-                            className="w-full"
-                            style={{ accentColor: 'var(--accent-color)' }}
+                            onChange={(e) => {
+                                setPhoticSetting('radiusPx', Number(e.target.value));
+                            }}
+                            style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
+                        <div style={controlValueStyle}>{photic.radiusPx}px</div>
                     </div>
 
-                    {/* Spacing Slider */}
-                    <div className="mb-3">
-                        <div style={labelRowStyle}>
-                            <span>Spacing</span>
-                            <span style={{ color: 'var(--accent-color)', whiteSpace: 'nowrap' }}>{photic.spacingPx}px</span>
-                        </div>
+                    {/* Spacing Slider - Horizontal */}
+                    <div style={controlRowStyle}>
+                        <label style={controlLabelStyle}>Spacing</label>
                         <input
                             type="range"
                             min="40"
                             max="800"
                             step="10"
                             value={photic.spacingPx}
-                            onChange={(e) => setPhoticSetting('spacingPx', Number(e.target.value))}
-                            className="w-full"
-                            style={{ accentColor: 'var(--accent-color)' }}
+                            onChange={(e) => {
+                                setPhoticSetting('spacingPx', Number(e.target.value));
+                            }}
+                            style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
+                        <div style={controlValueStyle}>{photic.spacingPx}px</div>
                     </div>
                 </div>
 
                 {/* Group D: Color */}
                 <div
-                    className="rounded-xl p-4"
+                    className={`rounded-xl p-3 border ${
+                        photic.beginnerMode && photic.activeGuideStep === 'color'
+                            ? 'border-[var(--accent)] ring-2 ring-[var(--accent-35)]'
+                            : 'border-[var(--accent-25)]'
+                    }`}
                     data-guide-step="color"
-                    style={{
-                        border: '1px solid var(--accent-25)',
-                    }}
                 >
                     <div
                         style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '10px',
+                            fontSize: '9px',
                             fontWeight: 600,
                             letterSpacing: 'var(--tracking-wide)',
                             textTransform: 'uppercase',
@@ -510,26 +380,83 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                         Color
                     </div>
 
+                    {/* Color Target Toggle (only shown when linkColors is OFF) */}
+                    {!photic.linkColors && (
+                        <div style={{ marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                                <button
+                                    onClick={() => setColorTarget('left')}
+                                    className="text-center text-xs px-2 py-1 rounded-lg transition-all overflow-hidden flex-1"
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        fontWeight: 600,
+                                        fontSize: '9px',
+                                        backgroundColor:
+                                            colorTarget === 'left'
+                                                ? 'var(--accent-color)'
+                                                : 'transparent',
+                                        color: colorTarget === 'left' ? '#000' : 'var(--text-secondary)',
+                                        border: `1px solid ${
+                                            colorTarget === 'left'
+                                                ? 'var(--accent-color)'
+                                                : 'var(--accent-20)'
+                                        }`,
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    LEFT
+                                </button>
+
+                                <button
+                                    onClick={() => setColorTarget('right')}
+                                    className="text-center text-xs px-2 py-1 rounded-lg transition-all overflow-hidden flex-1"
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        fontWeight: 600,
+                                        fontSize: '9px',
+                                        backgroundColor:
+                                            colorTarget === 'right'
+                                                ? 'var(--accent-color)'
+                                                : 'transparent',
+                                        color: colorTarget === 'right' ? '#000' : 'var(--text-secondary)',
+                                        border: `1px solid ${
+                                            colorTarget === 'right'
+                                                ? 'var(--accent-color)'
+                                                : 'var(--accent-20)'
+                                        }`,
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    RIGHT
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Color Palette */}
                     <div
-                        className="mb-4"
+                        style={{ marginBottom: '8px' }}
                         data-guide-step="protocol"
                     >
                         <div className="grid grid-cols-6 gap-2">
                             {COLOR_PRESETS.map((preset) => (
                                 <button
                                     key={preset.id}
-                                    onClick={() => handleColorChange(preset.color)}
+                                    onClick={() => {
+                                        handleColorChange(preset.color);
+                                    }}
                                     className="rounded-full aspect-square transition-all"
                                     style={{
                                         backgroundColor: preset.color,
                                         border: `2px solid ${
-                                            photic.colorLeft === preset.color
+                                            (photic.linkColors || colorTarget === 'left' ? photic.colorLeft : photic.colorRight) === preset.color
                                                 ? 'var(--accent-color)'
                                                 : 'transparent'
                                         }`,
                                         boxShadow:
-                                            photic.colorLeft === preset.color
+                                            (photic.linkColors || colorTarget === 'left' ? photic.colorLeft : photic.colorRight) === preset.color
                                                 ? '0 0 12px var(--accent-10)'
                                                 : 'none',
                                         cursor: 'pointer',
@@ -540,24 +467,15 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                         </div>
                     </div>
 
-                    {/* Link Colors Toggle */}
-                    <div>
-                        <div
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '9px',
-                                fontWeight: 600,
-                                letterSpacing: 'var(--tracking-wide)',
-                                textTransform: 'uppercase',
-                                color: 'var(--text-secondary)',
-                                marginBottom: '8px',
-                            }}
-                        >
-                            Link Colors
-                        </div>
+                    {/* Link Colors Toggle - Horizontal */}
+                    <div style={controlRowStyle}>
+                        <label style={controlLabelStyle}>Link</label>
+                        <div style={{ flex: 1 }} />
                         <button
-                            onClick={() => setPhoticSetting('linkColors', !photic.linkColors)}
-                            className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+                            onClick={() => {
+                                setPhoticSetting('linkColors', !photic.linkColors);
+                            }}
+                            className="px-2 py-1 rounded-lg text-xs font-semibold transition-all"
                             style={{
                                 fontFamily: 'var(--font-display)',
                                 backgroundColor: photic.linkColors
@@ -570,6 +488,8 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                         : 'var(--accent-20)'
                                 }`,
                                 cursor: 'pointer',
+                                minWidth: '48px',
+                                textAlign: 'center',
                             }}
                         >
                             {photic.linkColors ? 'ON' : 'OFF'}

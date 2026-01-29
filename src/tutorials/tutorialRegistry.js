@@ -105,6 +105,36 @@ export const TUTORIALS = {
     ],
   },
 
+  "page:photic-beginner": {
+    title: "Photonic Beginner Guide",
+    steps: [
+      {
+        title: "Protocol",
+        body: "Set the pulse rate and timing style. If alternating, adjust the gap until it feels comfortable.",
+        target: '[data-guide-step="protocol"]',
+        placement: "right",
+      },
+      {
+        title: "Intensity",
+        body: "Set brightness to a comfortable level. Add glow only if it helps stability without strain.",
+        target: '[data-guide-step="intensity"]',
+        placement: "right",
+      },
+      {
+        title: "Geometry",
+        body: "Set radius and spacing so both circles are clear and balanced in your visual field.",
+        target: '[data-guide-step="geometry"]',
+        placement: "right",
+      },
+      {
+        title: "Color",
+        body: "Choose a comfortable color. Link colors if you want symmetry. When satisfied, exit Beginner Mode.",
+        target: '[data-guide-step="color"]',
+        placement: "right",
+      },
+    ],
+  },
+
   "practice:breath": {
     title: "Breath Practice",
     steps: [
