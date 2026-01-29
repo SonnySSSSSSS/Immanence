@@ -181,6 +181,14 @@ export const useSettingsStore = create(
         {
             name: SETTINGS_PERSIST_KEY,
             version: 1,
+            onRehydrateStorage: () => (state) => {
+                // Clear tutorial-only guide state that should not survive refresh
+                // Guard: only call if state and setPhoticSetting are available
+                if (state && typeof state.setPhoticSetting === 'function') {
+                    state.setPhoticSetting('beginnerMode', false);
+                    state.setPhoticSetting('activeGuideStep', null);
+                }
+            },
         }
     )
 );

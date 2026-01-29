@@ -33,31 +33,26 @@ import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
 function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
-  // Special case: Awareness (Insight Meditation) renders PracticeSection directly (no avatar wrapper)
-  const isInsightMeditation = isPracticing && (currentPracticeId === 'awareness' || currentPracticeId === 'cognitive_vipassana');
-  if (isInsightMeditation) {
-    return <PracticeSection 
-      onPracticingChange={onPracticingChange} 
-      section={section} 
-      isPracticing={isPracticing} 
-      currentPracticeId={currentPracticeId} 
-      onStageChange={onStageChange} 
-      currentStage={currentStage}
-      previewPath={previewPath}
-      previewShowCore={previewShowCore}
-      previewAttention={previewAttention}
-      showFxGallery={showFxGallery}
-      onNavigate={onNavigate} 
-      onOpenHardwareGuide={onOpenHardwareGuide}
-      onRitualComplete={onRitualComplete} 
-      onOpenPhotic={onOpenPhotic}
-    />;
-  }
-
+  // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
+  // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
+  // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
+  // so wrapper divs don't affect its fullscreen rendering. Keeping consistent tree structure prevents
+  // the unmount/remount bug that was resetting sessions.
+  
   return (
     <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       <div className="w-full relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
-        {section === "practice" && <PracticeSection onPracticingChange={onPracticingChange} onBreathStateChange={onBreathStateChange} avatarPath={previewPath} showCore={previewShowCore} showFxGallery={showFxGallery} onNavigate={onNavigate} onOpenPhotic={onOpenPhotic} />}
+        {section === "practice" && (
+          <PracticeSection 
+            onPracticingChange={onPracticingChange} 
+            onBreathStateChange={onBreathStateChange}
+            avatarPath={previewPath} 
+            showCore={previewShowCore}
+            showFxGallery={showFxGallery} 
+            onNavigate={onNavigate} 
+            onOpenPhotic={onOpenPhotic}
+          />
+        )}
 
         {section === "wisdom" && (
           <Suspense fallback={
@@ -391,7 +386,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        v3.25.75
+                        v3.25.78
                     </div>
                   </div>
 

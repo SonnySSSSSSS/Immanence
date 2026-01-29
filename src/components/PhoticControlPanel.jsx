@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
+import { useTutorialStore } from '../state/tutorialStore';
 import { PhoticPreview } from './PhoticPreview';
 
 // Color palette presets
@@ -24,6 +25,10 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
     const isHearth = displayMode === 'hearth';
 
     const { photic, setPhoticSetting } = useSettingsStore();
+    const { isOpen: tutorialIsOpen, tutorialId } = useTutorialStore();
+
+    // Highlight should only show if the photic tutorial is actually open
+    const tutorialIsPhoticOpen = tutorialIsOpen && tutorialId === 'page:photic-beginner';
 
     // Track which color (left/right) the palette is currently editing when linkColors is OFF
     const [colorTarget, setColorTarget] = useState('left');
@@ -170,11 +175,13 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {/* Signal Panel (merged Protocol + Intensity) */}
                 <div
-                    className={`rounded-xl p-3 border ${
-                        photic.beginnerMode && (photic.activeGuideStep === 'protocol' || photic.activeGuideStep === 'intensity')
-                            ? 'border-[var(--accent)] ring-2 ring-[var(--accent-35)]'
-                            : 'border-[var(--accent-25)]'
-                    }`}
+                    className="rounded-xl p-3"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                        boxShadow: tutorialIsPhoticOpen && (photic.activeGuideStep === 'protocol' || photic.activeGuideStep === 'intensity')
+                            ? '0 0 0 2px var(--accent-color)'
+                            : 'none',
+                    }}
                     data-guide-step="protocol"
                 >
                     <div
@@ -301,11 +308,13 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
                 {/* Group C: Geometry */}
                 <div
-                    className={`rounded-xl p-3 border ${
-                        photic.beginnerMode && photic.activeGuideStep === 'geometry'
-                            ? 'border-[var(--accent)] ring-2 ring-[var(--accent-35)]'
-                            : 'border-[var(--accent-25)]'
-                    }`}
+                    className="rounded-xl p-3"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                        boxShadow: tutorialIsPhoticOpen && photic.activeGuideStep === 'geometry'
+                            ? '0 0 0 2px var(--accent-color)'
+                            : 'none',
+                    }}
                     data-guide-step="geometry"
                 >
                     <div
@@ -359,11 +368,13 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
                 {/* Group D: Color */}
                 <div
-                    className={`rounded-xl p-3 border ${
-                        photic.beginnerMode && photic.activeGuideStep === 'color'
-                            ? 'border-[var(--accent)] ring-2 ring-[var(--accent-35)]'
-                            : 'border-[var(--accent-25)]'
-                    }`}
+                    className="rounded-xl p-3"
+                    style={{
+                        border: '1px solid var(--accent-25)',
+                        boxShadow: tutorialIsPhoticOpen && photic.activeGuideStep === 'color'
+                            ? '0 0 0 2px var(--accent-color)'
+                            : 'none',
+                    }}
                     data-guide-step="color"
                 >
                     <div

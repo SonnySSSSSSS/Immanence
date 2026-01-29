@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from 'react-dom';
 import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
+import { SensorySession } from "./SensorySession.jsx";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
-import { SensorySession } from "./SensorySession.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
 import { VipassanaVariantSelector } from "./vipassana/VipassanaVariantSelector.jsx";
 import { NavigationRitualLibrary } from "./NavigationRitualLibrary.jsx";
@@ -574,7 +574,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Load preferences once on mount (use lazy initializer to avoid re-computation)
   const [savedPrefs] = useState(() => loadPreferences());
   const initialPracticeId = savedPrefs.practiceId || 'breath';
-  console.log('[PracticeSection v3.25.65] savedPrefs.practiceId:', savedPrefs.practiceId, 'initialPracticeId:', initialPracticeId);
   const lastSavedPrefsRef = useRef({
     practiceId: savedPrefs.practiceId,
     duration: savedPrefs.duration,
@@ -595,20 +594,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const clearActivePracticeSession = useCurriculumStore(s => s.clearActivePracticeSession);
   const getCircuit = useCurriculumStore(s => s.getCircuit);
   
-  // Handle curriculum auto-start and initialization
-  useEffect(() => {
-    if (activePracticeSession) {
-      const activeLeg = getActivePracticeLeg();
-      if (activeLeg) {
-        const pid = Object.keys(PRACTICE_REGISTRY).find(k => PRACTICE_REGISTRY[k].label === activeLeg.practiceType);
-        if (pid) {
-          setPracticeId(pid);
-          setHasExpandedOnce(true); // Bypass animation for auto-starts
-        }
-      }
-    }
-  }, []);
-
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
 
@@ -631,7 +616,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const practice = selectedPractice.label;
 
   const handleSelectPractice = useCallback((id) => {
-    console.log('[PracticeSection v3.25.65] handleSelectPractice called with id:', id);
     setPracticeId(id);
     // Save immediately with current state
     // savePreferences({
@@ -669,6 +653,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   
   // When running a practice, get the actual practice ID (accounting for subModes)
   const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
+
+  // CANONICAL RENDER PRACTICE ID: Use this for ALL render-path decisions
+  const renderPracticeId = isRunning ? actualRunningPracticeId : practiceId;
+
+  // RENDER-SPECIFIC: Derive from renderPracticeId for render-path decisions
+  const renderPracticeConfig = getPracticeConfig(renderPracticeId) || PRACTICE_REGISTRY.breath;
+  const renderPractice = renderPracticeConfig.label;
+
+  // Handle curriculum auto-start and initialization (with guards to prevent override during practice)
+  useEffect(() => {
+    if (isRunning) return;
+    if (!activePracticeSession) return;
+    const activeLeg = getActivePracticeLeg();
+    if (!activeLeg) return;
+
+    const pid = Object.keys(PRACTICE_REGISTRY).find(k => PRACTICE_REGISTRY[k].label === activeLeg.practiceType);
+    if (!pid || pid === practiceId) return;
+
+    console.error(`[CURRICULUM EFFECT] Resetting from ${practiceId} to ${pid}`);
+    console.trace(`Stack trace - curriculum resetting practiceId to ${pid}`);
+    setPracticeId(pid);
+    setHasExpandedOnce(true); // Bypass animation for auto-starts
+  }, [activePracticeSession, isRunning, practiceId, getActivePracticeLeg]);
 
   const [isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -932,8 +939,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const setupCircuitExercise = (exerciseItem) => {
     const { exercise, duration: exDuration } = exerciseItem;
+    console.error(`[CIRCUIT SETUP] Setting up exercise: ${exercise.practiceType}`);
 
     if (exercise.practiceType === 'Breath & Stillness') {
+      console.trace(`[CIRCUIT] Setting practiceId to 'breath' for ${exercise.practiceType}`);
       setPracticeId('breath');
       if (exercise.preset) {
         const presetKey = Object.keys(BREATH_PRESETS).find(
@@ -945,8 +954,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }
       }
     } else if (exercise.practiceType === 'Cognitive Vipassana') {
+      console.trace(`[CIRCUIT] Setting practiceId to 'awareness' for ${exercise.practiceType}`);
       setPracticeId('awareness');
     } else if (exercise.practiceType === 'Somatic Vipassana') {
+      console.trace(`[CIRCUIT] Setting practiceId to 'awareness' for ${exercise.practiceType}`);
       setPracticeId('awareness');
       if (exercise.sensoryType) {
         setSensoryType(exercise.sensoryType);
@@ -1648,7 +1659,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
-    if (practice === "Rituals") {
+    if (renderPractice === "Rituals") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
           <NavigationRitualLibrary
@@ -1662,14 +1673,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    // Resolve actual practice ID for showing correct vipassana variant
-    const actualId = getActualPracticeId(practiceId);
-    if (actualId === "cognitive_vipassana" || actualId === "somatic_vipassana") {
+    // Render vipassana portal when renderPracticeId is cognitive vipassana (thought labeling)
+    // Somatic vipassana uses inline SensorySession component (mobile-friendly)
+    if (renderPracticeId === "cognitive_vipassana") {
       return createPortal(
         <InsightMeditationPortal 
           onExit={activeCircuitId ? handleCircuitComplete : handleStop}
         />,
         document.body
+      );
+    }
+    
+    // Somatic vipassana - use inline SensorySession (body scan with guided prompts)
+    if (renderPracticeId === "somatic_vipassana") {
+      return (
+        <section className="w-full h-full min-h-[400px] flex flex-col items-center justify-center overflow-visible pb-8">
+          <SensorySession
+            sensoryType={sensoryType}
+            duration={duration}
+            onStop={activeCircuitId ? handleCircuitComplete : handleStop}
+            onTimeUpdate={(remaining) => setTimeLeft(remaining)}
+            isLight={isLight}
+          />
+        </section>
       );
     }
 
@@ -1851,14 +1877,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 </div>
               )}
             </div>
-          ) : practiceId === "somatic_vipassana" ? (
-            <SensorySession
-              sensoryType={sensoryType}
-              duration={duration}
-              onStop={handleExerciseComplete}
-              onTimeUpdate={(remaining) => setTimeLeft(remaining)}
-              isLight={isLight}
-            />
           ) : (
             <div className="flex flex-col items-center justify-center animate-fade-in-up">
               <div

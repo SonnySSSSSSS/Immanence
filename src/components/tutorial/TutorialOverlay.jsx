@@ -58,25 +58,30 @@ export const TutorialOverlay = () => {
   const [overrideReloadTrigger, setOverrideReloadTrigger] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const tooltipRef = useRef(null);
+  const wasPhoticOpenRef = useRef(false);
 
   // Sync activeGuideStep to tutorial stepIndex for photic beginner guide
+  // Track when photic tutorial closes to ensure highlights don't stick
   useEffect(() => {
-    if (tutorialId !== 'page:photic-beginner') return;
-
     const settings = useSettingsStore.getState();
 
-    if (!isOpen) {
+    // Check if photic tutorial is currently open
+    const isPhoticOpen = isOpen && tutorialId === 'page:photic-beginner';
+
+    if (isPhoticOpen) {
+      wasPhoticOpenRef.current = true;
+      // Sync guide step to tutorial step
+      const stepToGuide = ['protocol', 'intensity', 'geometry', 'color'];
+      const nextGuide = stepToGuide[stepIndex];
+      if (nextGuide) {
+        settings.setPhoticSetting('activeGuideStep', nextGuide);
+        settings.setPhoticSetting('beginnerMode', true);
+      }
+    } else if (wasPhoticOpenRef.current) {
+      // Cleanup: photic tutorial was open but now is closed
       settings.setPhoticSetting('activeGuideStep', null);
       settings.setPhoticSetting('beginnerMode', false);
-      return;
-    }
-
-    const stepToGuide = ['protocol', 'intensity', 'geometry', 'color'];
-    const nextGuide = stepToGuide[stepIndex];
-
-    if (nextGuide) {
-      settings.setPhoticSetting('activeGuideStep', nextGuide);
-      settings.setPhoticSetting('beginnerMode', true);
+      wasPhoticOpenRef.current = false;
     }
   }, [isOpen, tutorialId, stepIndex]);
 
