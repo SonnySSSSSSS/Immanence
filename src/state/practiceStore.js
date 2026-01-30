@@ -26,10 +26,12 @@ const PER_PRACTICE_DEFAULTS = {
     variant: 'thought-labeling',
     vipassanaTheme: "dawnSky",
     vipassanaElement: "bird",
-    sensoryType: 'bodyScan'
+    sensoryType: 'bodyScan',
+    scanType: 'full'
   },
   somatic_vipassana: {
-    sensoryType: 'bodyScan'
+    sensoryType: 'bodyScan',
+    scanType: 'full'
   },
   sound: {
     soundType: "Binaural",

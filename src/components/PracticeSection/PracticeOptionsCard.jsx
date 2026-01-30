@@ -10,6 +10,8 @@ import { VisualizationConfig } from "../VisualizationConfig.jsx";
 import { CymaticsConfig } from "../CymaticsConfig.jsx";
 import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+import { SensoryConfig } from "../SensoryConfig.jsx";
+import { BodyScanConfig } from "../BodyScanConfig.jsx";
 import { TraditionalBreathRatios } from "./TraditionalBreathRatios.jsx";
 
 // v3.25.22-breath-modes
@@ -21,6 +23,8 @@ const CONFIG_COMPONENTS = {
   CymaticsConfig,
   RitualSelectionDeck,
   PhoticControlPanel,
+  SensoryConfig,
+  BodyScanConfig,
 };
 
 export function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {

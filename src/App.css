@@ -210,7 +210,7 @@
 .PracticePanelShell {
   position: relative;
   overflow: hidden;
-  background-image: url("/bg/practice-breath-mandala.png");
+  background-image: url("./bg/practice-breath-mandala.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -602,4 +602,14 @@ div.fixed.z-\[100000\] {
   transform: none !important;
   animation: none !important;
   transition-property: none !important;
+}
+
+/* Hide scrollbar for region rail cards (regionRailRow class) */
+.regionRailRow {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.regionRailRow::-webkit-scrollbar {
+  display: none;
 }

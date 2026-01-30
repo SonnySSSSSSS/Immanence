@@ -41,8 +41,8 @@ export const PRACTICE_REGISTRY = {
     supportsDuration: true,
     requiresFullscreen: false,
     subModes: {
-      insight: { id: "cognitive_vipassana", label: "Cognitive" },
-      bodyscan: { id: "somatic_vipassana", label: "Somatic" },
+      insight: { id: "cognitive_vipassana", label: "Cognitive", configComponent: "SensoryConfig" },
+      bodyscan: { id: "somatic_vipassana", label: "Somatic", configComponent: "BodyScanConfig" },
       feeling: { id: "feeling", label: "Emotion" }
     },
     defaultSubMode: "insight",

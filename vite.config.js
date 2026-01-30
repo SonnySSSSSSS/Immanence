@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   // In dev we must use base "/" because the Vite dev server already serves at root.
   // If we also set base to "/Immanence/" in dev, some asset and script URLs are
   // generated with a double base (e.g. "/Immanence/src/main.jsx"). Those requests

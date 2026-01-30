@@ -9,6 +9,8 @@ import { VisualizationConfig } from "../VisualizationConfig.jsx";
 import { CymaticsConfig } from "../CymaticsConfig.jsx";
 import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
+import { SensoryConfig } from "../SensoryConfig.jsx";
+import { BodyScanConfig } from "../BodyScanConfig.jsx";
 
 // Map string names to actual components
 const CONFIG_COMPONENTS = {
@@ -18,6 +20,8 @@ const CONFIG_COMPONENTS = {
   CymaticsConfig,
   RitualSelectionDeck,
   PhoticControlPanel,
+  SensoryConfig,
+  BodyScanConfig,
 };
 
 function PracticeMenu({
