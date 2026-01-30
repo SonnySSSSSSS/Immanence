@@ -54,6 +54,11 @@ import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
 import { getRitualById } from "../data/bhaktiRituals.js";
 
+// Import EmotionConfig
+import { EmotionConfig } from './EmotionConfig.jsx';
+import { getEmotionClosingLine, getEmotionLabel } from '../data/emotionPractices.js';
+import { useProgressStore } from '../state/progressStore.js';
+
 // Map string names to actual components (components already imported above)
 const CONFIG_COMPONENTS = {
   CircuitConfig,
@@ -62,6 +67,7 @@ const CONFIG_COMPONENTS = {
   CymaticsConfig,
   RitualSelectionDeck,
   PhoticControlPanel,
+  EmotionConfig,
 };
 
 const DEV_FX_GALLERY_ENABLED = true;
@@ -618,11 +624,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleSelectPractice = useCallback((id) => {
     setPracticeId(id);
     // Save immediately with current state
-    // savePreferences({
-    //   practiceId: id,
-    //   duration,
-    //   practiceParams,
-    // });
+    savePreferences({
+      practiceId: id,
+      duration,
+      practiceParams,
+    });
     lastSavedPrefsRef.current = {
       practiceId: id,
       duration,
@@ -793,12 +799,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     voidDuration, 
     audioEnabled 
   } = practiceParams.visualization;
-  const { 
-    frequencySet, 
-    selectedFrequencyIndex, 
+  const {
+    frequencySet,
+    selectedFrequencyIndex,
     driftEnabled,
-    audioEnabled: cymaticsAudioEnabled 
+    audioEnabled: cymaticsAudioEnabled
   } = practiceParams.cymatics;
+
+  // Emotion params
+  const { mode: emotionMode = 'discomfort', promptMode: emotionPromptMode = 'minimal' } = practiceParams.feeling || {};
 
   // Vipassana params correspond to specific visualization types
   const actualPracticeIdForVippa = getActualPracticeId(practiceId);
@@ -866,6 +875,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     updateParams('cymatics', { selectedFrequencyIndex: idx !== -1 ? idx : 4 });
   };
   const setDriftEnabled = (val) => updateParams('cymatics', { driftEnabled: val });
+  const setEmotionMode = (val) => updateParams('feeling', { mode: val });
+  const setEmotionPromptMode = (val) => updateParams('feeling', { promptMode: val });
 
   // Generic setter for consolidated practices with subModes (awareness, resonance, perception)
   const setActiveMode = (practiceId, modeKey) => updateParams(practiceId, { activeMode: modeKey });
@@ -911,11 +922,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         prev.duration !== duration ||
         prev.practiceParams !== practiceParams;
       if (hasChanged) {
-        // savePreferences({
-        //   practiceId,
-        //   duration,
-        //   practiceParams
-        // });
+        savePreferences({
+          practiceId,
+          duration,
+          practiceParams
+        });
         lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
       }
     }
@@ -1119,6 +1130,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
     const instrumentationData = endSession(exitType);
 
+    // Calculate actual duration early for completion classification (Fix 2 & 3)
+    const planedDurationSeconds = duration * 60;
+    const actualDurationSeconds = instrumentationData?.duration_ms
+      ? Math.floor(instrumentationData.duration_ms / 1000)
+      : 0;
+
     const id =
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
@@ -1167,19 +1184,28 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       const activePath = useNavigationStore.getState().activePath;
       const activePathId = activePath?.activePathId || activePath?.pathId || null;
       const actualPracticeId = getActualPracticeId(practiceId);
-      const completion = exitType === 'completed' ? 'completed' : 'abandoned';
-      const practiceMode = practiceParams?.activeMode || (practiceId === 'breath' ? breathSubmode : null);
+
+      // Determine completion based on actual duration vs planned duration (Fix 3)
+      let completion = 'abandoned';
+      if (actualDurationSeconds >= planedDurationSeconds) {
+        completion = 'completed';
+      }
+
+      // For emotion practice (feeling), use emotionMode; for others use activeMode or breathSubmode
+      let practiceMode = practiceParams?.activeMode || (practiceId === 'breath' ? breathSubmode : null);
+      if (actualPracticeId === 'feeling') {
+        practiceMode = emotionMode;
+      }
 
       const endedAtIso = new Date().toISOString();
-      const startedAtIso = new Date(Date.now() - (instrumentationData.duration_ms || 0)).toISOString();
-      const exitTypeString = exitType ?? 'abandoned';
+      const startedAtIso = new Date(Date.now() - (instrumentationData?.duration_ms || 0)).toISOString();
       const actualDurationMinutes = duration;
       const actualDomain = domain;
 
       recordedSession = recordPracticeSession({
         domain: actualDomain,
         duration: actualDurationMinutes,
-        exitType: exitTypeString,
+        exitType: completion,
 
         practiceId: actualPracticeId ?? practiceId,
         practiceMode: practiceMode ?? null,
@@ -1197,8 +1223,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setActiveRitual(null);
     setCurrentStepIndex(0);
 
-    // Use instrumentation duration (in milliseconds) for accurate session length
-    const actualDurationSeconds = Math.floor(instrumentationData.duration_ms / 1000);
     const shouldJournal = practice !== 'Ritual' && actualDurationSeconds >= 30;
 
     // Reset timeLeft for next session
@@ -1273,10 +1297,31 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
     }
 
-    // Show summary if session was long enough
-    if (shouldJournal) {
+    // For emotion practice, always show summary. For others, show if >= 30 seconds
+    const actualPracticeIdCheck = getActualPracticeId(practiceId);
+    const isEmotionPractice = actualPracticeIdCheck === 'feeling';
+    const shouldShowSummary = isEmotionPractice || shouldJournal;
+
+    if (shouldShowSummary) {
+      // For emotion practice, calculate completion count and get closing line
+      let emotionClosingLine = null;
+      let emotionCompletionCount = null;
+      if (isEmotionPractice) {
+        const { sessionsV2 } = useProgressStore.getState();
+        const allSessions = sessionsV2 || [];
+        emotionCompletionCount = allSessions.filter(s =>
+          s.practiceId === 'feeling' &&
+          s.practiceMode === emotionMode &&
+          s.completion === 'completed'
+        ).length;
+        emotionClosingLine = getEmotionClosingLine(emotionMode);
+      }
+
+      // For emotion practice, use the emotion label instead of practice name
+      const summaryPracticeLabel = isEmotionPractice ? getEmotionLabel(emotionMode) : practice;
+
       setSessionSummary({
-        practice,
+        practice: summaryPracticeLabel,
         duration: Math.round((actualDurationSeconds / 60) * 10) / 10,
         tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
         breathCount,
@@ -1286,6 +1331,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         legNumber: currentLegNumber,
         totalLegs: totalLegsForDay,
         dailyStats: dailyStatsInfo,
+        practiceMode: isEmotionPractice ? emotionMode : null,
+        closingLine: emotionClosingLine,
+        emotionCompletionCount: emotionCompletionCount,
       });
       setShowSummary(true);
 
@@ -1694,6 +1742,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             duration={duration}
             onStop={activeCircuitId ? handleCircuitComplete : handleStop}
             onTimeUpdate={(remaining) => setTimeLeft(remaining)}
+            scanType={scanType}
+            onScanTypeChange={setScanType}
+            isLight={isLight}
+          />
+        </section>
+      );
+    }
+
+    // Emotion practice - use SensorySession with emotion mode and prompt style
+    if (renderPracticeId === "feeling") {
+      return (
+        <section className="w-full h-full min-h-[400px] flex flex-col items-center justify-center overflow-visible pb-8">
+          <SensorySession
+            sensoryType="emotion"
+            duration={duration}
+            onStop={activeCircuitId ? handleCircuitComplete : handleStop}
+            onTimeUpdate={(remaining) => setTimeLeft(remaining)}
+            emotionMode={emotionMode}
+            emotionPromptMode={emotionPromptMode}
             isLight={isLight}
           />
         </section>
@@ -2021,15 +2088,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     isochronicExactHz, isochronicReverbWet, isochronicChorusWet,
     sensoryType, vipassanaTheme, vipassanaElement, scanType, geometry, fadeInDuration, displayDuration,
     fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
+    mode: emotionMode, promptMode: emotionPromptMode,
     activeMode,
-    setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset, 
+    setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset,
     setCarrierFrequency, setIsochronicExactHz, setIsochronicReverbWet, setIsochronicChorusWet,
-    setSensoryType, setVipassanaTheme, setVipassanaElement, setScanType, setGeometry, 
+    setSensoryType, setVipassanaTheme, setVipassanaElement, setScanType, setGeometry,
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,
     setFrequencySet, setSelectedFrequency, setDriftEnabled,
+    setMode: setEmotionMode, setPromptMode: setEmotionPromptMode,
     setActiveMode: (modeKey) => setActiveMode(practiceId, modeKey),
-    onToggleRunning: handleStart, 
-    onSelectRitual: handleSelectRitual, 
+    onToggleRunning: handleStart,
+    onSelectRitual: handleSelectRitual,
     selectedRitualId: activeRitual?.id,
     isEmbedded: true
   };
