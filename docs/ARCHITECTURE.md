@@ -6,6 +6,49 @@
 - Primary surfaces: **HomeHub** (dashboard), **NavigationSection** (path/program selection), **PracticeSection** (practice runner + configuration), **WisdomSection** (library), plus modal overlays for onboarding and dev tools.
 - Display framing uses `displayModeStore` for **sanctuary** vs **hearth** widths and **dark** vs **light** color schemes. App container targets `maxWidth: 820px` (sanctuary) or `430px` (hearth).
 
+## App-Wide State Domains (Zustand Slices)
+
+The app is organized into four primary state domains, each owned by dedicated Zustand stores with explicit source-of-truth and derived relationships:
+
+### **1. Practice Domain** (`practice`, `configuration`, `session runtime`)
+- **Stores owning practice state**:
+  - `practiceStore` (local storage key `immanence_practice_prefs_v2`): Persisted user preferences per practice (preset, pattern, frequency, mode settings)
+  - `tempoSyncStore`: Real-time music-synced breathing state (BPM, lock status, multiplier, confidence)
+  - `useBreathSessionState` (hook): In-memory session runtime (phase progress, timings, loop state)
+  - `usePracticeSessionInstrumentation` (hook): Real-time practice instrumentation (exit type, duration tracking, user actions)
+- **Source of truth**: `practiceStore` for preferences (persisted); in-memory hooks for active session state (ephemeral)
+- **Derived**: Session summaries, cycle registration, mandala syncs computed from `progressStore.sessionsV2` after recording
+
+### **2. Navigation & Path Domain** (`navigation`, `program selection`, `consistency`)
+- **Stores owning navigation state**:
+  - `navigationStore` (key `immanence_navigation_state`): Active path, selected path ID, quiz unlocks, foundation video flag, last activity timestamp
+  - `cycleStore` (key `immanence_cycle_state`): Current cycle metadata, checkpoints, consistency tracking, cycle progression
+  - `curriculumStore` (key `immanence_curriculum`): Onboarding completion, active curriculum, day/leg completions, active practice session pointers
+- **Source of truth**: Navigation store holds the current run state; curriculum store gates progression; cycle store tracks consistency
+- **Derived**: Program badges (cycle status), path recommendations (history-based), unlock flags based on activity
+
+### **3. Progress & Tracking Domain** (`history`, `stats`, `streak`, `vacation`)
+- **Stores owning progress state**:
+  - `progressStore` (key `immanence_progress`): Authoritative `sessionsV2` (normalized session records), `honorLogs` (honor practices), `streak`, `vacation`, `benchmarks`, `goals`
+  - `journalStore` (key `immanence_journal`): Post-session journal entries paired with session IDs
+  - `wisdomStore`, `videoStore`: Domain-specific reading/watch history
+- **Source of truth**: `progressStore.sessionsV2` is the canonical session spine; `honorLogs` for non-practice contributions; `journalStore` for narrative context
+- **Derived**: Streak calculations, weekly patterns, trajectory forecasts, domain stats (computed from spine on read)
+
+### **4. Tutorial & Onboarding Domain** (`guidance`, `help`, `flow state`)
+- **Stores owning tutorial state**:
+  - `tutorialStore` (key `immanence.tutorial`): Current tutorial ID, step index, completion flags per tutorial
+  - `curriculumStore` (partial): Onboarding gates (should show welcome, completions, thought catalog)
+- **Source of truth**: Tutorial store holds current tutorial state; curriculum gates initial onboarding
+- **Derived**: Tutorial visibility (based on section, practice type), step positioning, admin override state
+
+### **5. Display & Settings Domain** (`viewport`, `theme`, `preferences`)
+- **Stores owning display state**:
+  - `displayModeStore` (key `immanence_display_mode`): Mode (sanctuary/hearth), viewport mode, color scheme, stage asset style
+  - `settingsStore` (key `immanence_settings`): Display preferences, LLM model, volume, avatar naming, photic circles config
+- **Source of truth**: Display mode for layout decisions; settings for user preferences
+- **Derived**: Responsive breakpoints, stage colors (based on lunar phase + mode)
+
 ## Routing
 
 - **Section switcher**: `App.jsx` owns `activeSection` (`null` = HomeHub, `practice`, `navigation`, `wisdom`, `application`). Default view comes from `localStorage` (`immanenceOS.defaultView`), with a first-run `WelcomeScreen` gate and curriculum onboarding/completion gates from `curriculumStore`.
@@ -17,31 +60,154 @@
 - **Tracking Archive deep links**: `SessionHistoryView` accepts `initialTab` and `initialReportDomain`; use `src/components/tracking/archiveLinkConstants.js` for stable tab/domain keys.
 - **Stage/path preview state**: `App` holds `previewStage`, `previewPath`, `previewAttention`, and `previewShowCore`, updating them via `onStageChange` callbacks from avatars and propagating to `ThemeProvider` + `StageTitle`.
 
+## Context Definitions (Menu Context vs. Running Context)
+
+Two critical context layers govern practice and navigation behavior:
+
+### **Menu Context** (Configuration/Selection Phase)
+- **Active in**: Practice selector, navigation path selector, ritual library, config panels
+- **What it owns**: User preferences, selected practice type, active submode, duration, practice-specific config (breath preset, sound frequency, etc.)
+- **Storage**: `practiceStore.practiceParams` (persisted per practice), `navigationStore.selectedPathId`, component local state for transient UI choices
+- **Lifecycle**: Lives until user clicks "Begin Practice" or changes practice type
+- **Example**: User in `PracticeSection` toggles between "Breath & Stillness" and "Sound", adjusts breath pattern in config panel. Menu context holds `{ practiceId: 'breath', preset: 'Box', pattern: {...} }`. If they switch to Sound without starting, context changes to `{ practiceId: 'resonance', practiceMode: 'sound', soundType: 'Binaural' }`.
+
+### **Running Context** (Active Session Phase)
+- **Active in**: Practice session actively running (timer ticking, visual/audio active)
+- **What it owns**: Current phase/cycle progress, elapsed time, pause/resume state, user interruptions (click "Done" early, timeout, etc.), session instrumentation (exit type)
+- **Storage**: In-memory hooks (`useBreathSessionState`, `usePracticeSessionInstrumentation`), RAF loops for timers
+- **Lifecycle**: Created when practice starts; destroyed on completion, abandonment, or section switch
+- **Snapshot saved on exit**: `recordPracticeSession` captures menu context as `configSnapshot` + running state as `instrumentation`/`completion`
+- **Example**: User runs Breath & Stillness for 10 minutes. Running context tracks phase progress (inhale 4s → hold 4s → exhale 4s → hold 4s, repeat). At minute 8, user clicks "Done" early; running context exit type becomes `'completed'` (intentional exit); session records with duration 8 min, exit type, and breath config snapshot.
+
+### **Context Continuity on Return**
+- **After session completes**: Menu context is restored from `practiceStore` (user's last saved preferences) OR from `curriculumStore` if an active leg is loaded
+- **After modal closes**: If user opens tutorial or settings, menu context is suspended but not cleared; upon close, user returns to same practice/config state
+- **Path/practice switching**: Switching practice type clears running context but preserves menu context of the previous practice in `practiceStore`
+
+## Defaults & Fallbacks (Explicit Statement)
+
+### **Practice Defaults**
+- **Primary fallback**: Breath & Stillness (`practiceId: 'breath'`)
+- **When applied**:
+  - App startup if no prior practice was used (`practiceStore` empty)
+  - After currency/program completion if no practice selected
+  - User clicks "Quick Start" without previous context
+- **Breath-specific defaults** (from `practiceStore.PER_PRACTICE_DEFAULTS.breath`):
+  - Preset: `'Box'` (4-4-4-4 pattern)
+  - Pattern: `{ inhale: 4, hold1: 4, exhale: 4, hold2: 4 }` (seconds)
+  - Duration: 10 minutes
+
+### **Navigation Defaults**
+- **Primary fallback**: HomeHub (`activeSection: null`)
+- **When applied**: App startup, user clicks home button, section unmounts without explicit navigation
+- **Path selection defaults**:
+  - If user has no `activePath`: static path grid displays with program cards (Foundation Cycle, Thought Detachment) prepended
+  - If user completes a path: `navigationStore.activePath` clears; next view shows static grid
+  - If no `selectedPathId`: first path in grid is highlighted (visual only, not auto-selected)
+
+### **Curriculum Defaults**
+- **Onboarding gate** (first-run):
+  - If `curriculumStore.onboardingComplete === false`: `WelcomeScreen` blocks all sections
+  - After welcome: Thought Detachment or Foundation Cycle modal opens (depends on user choice)
+- **Active curriculum fallback**:
+  - If no curriculum in progress: HomeHub shows "Start curriculum" option
+  - If curriculum abandoned: streak frozen, next start re-initializes curriculum
+
+### **Display Mode Defaults**
+- **Width mode**: Sanctuary (820px) on desktop; Hearth (430px) on mobile (<= 640px viewport)
+- **Color scheme**: Dark mode (canonical, performant, reduced eye strain)
+  - Light mode opt-in via `displayModeStore.colorScheme: 'light'` (used by dev tools for testing)
+- **Stage asset style**: Animated orb (light mode) vs. sigil (dark mode)
+
+### **Session Duration Defaults**
+- **Global default**: 10 minutes (`DURATIONS.default`)
+- **Min duration for cycle registration**: 10 minutes (`cycleMinDuration`)
+- **Min duration for stats**: any duration > 0 minutes (all sessions record)
+
+### **Fallback Chain (Error Recovery)**
+When a store read returns `null` or `undefined`:
+1. Check in-memory cache (e.g., `useBreathSessionState` memoized state)
+2. Check `practiceStore.loadPreferences()` (restores from localStorage)
+3. Apply `DEFAULT_PREFERENCES` (hardcoded defaults)
+4. If practice type unknown: apply `practiceId: 'breath'` fallback
+
+### **Persistence Fallback**
+If localStorage write fails (quota exceeded, privacy mode):
+- In-memory session state continues (user can still practice and get stats for current run)
+- On reload, all session data is lost (graceful degradation)
+- User sees no error; app continues (localStorage writes are fire-and-forget)
+
+## Source of Truth vs. Derived State (Reference Matrix)
+
+| **Data Type** | **Source of Truth** | **Derivers** | **Fallback** |
+|---|---|---|---|
+| **Practice preferences** | `practiceStore` (localStorage) | `PracticeSection` (reader), sessions on save | `DEFAULT_PREFERENCES` |
+| **Active session state** | In-memory hooks (`useBreathSessionState`) | Active timer loop, RAF updates | None (ephemeral) |
+| **Session records** | `progressStore.sessionsV2` (localStorage) | `recordPracticeSession` (writer), read by stats | Legacy `sessions` array |
+| **Honor logs** | `progressStore.honorLogs` (localStorage) | `recordHonorPractice`, read by stats | Empty array |
+| **Streak data** | `progressStore.streak` (localStorage) | Computed from sessions on read via `getStreakInfo` | `{ lastPracticeDate: null, longest: 0 }` |
+| **Active path/curriculum** | `navigationStore.activePath` (localStorage) + `curriculumStore` (localStorage) | `beginPath`, `completeWeek`, `abandonPath` | `null` / static path grid |
+| **Cycle progress** | `cycleStore.currentCycle` (localStorage) | `startCycle`, `logPracticeDay`, `stopCycle` | `null` |
+| **Onboarding state** | `curriculumStore.onboardingComplete` (localStorage) | `completeOnboarding`, gates `WelcomeScreen` | `false` (show on first run) |
+| **Display mode** | `displayModeStore.mode` (localStorage) | Viewport listener, user toggles | Detect from viewport |
+| **Tutorial state** | `tutorialStore` (localStorage) | `openTutorial`, `nextStep`, `closeTutorial` | `{ tutorialId: null, stepIndex: 0 }` |
+| **Weekly pattern** | Derived from `progressStore.sessionsV2` | `getWeeklyPattern` selector (computed on read) | Empty pattern |
+| **Trajectory forecast** | Derived from sessions + time-series | `getTrajectory` selector (computed on read) | Linear interpolation |
+| **Mandala aggregates** | Derived from `progressStore` | `syncFromProgressStore` (re-computed on write) | Recompute on demand |
+| **Stage colors** | Derived from `lunarStore.stage` + `displayModeStore.colorScheme` | Theme context + stage presets | Neutral (Seedling) |
+
 ## Stores (ownership, key actions, wiring)
 
 - **progressStore** (`src/state/progressStore.js`)
-  - Owns: `sessions`, `honorLogs`, `streak`, `vacation`, `practiceHistory`, `benchmarks`, `consistencyMetrics`, `goals`, display preference.
-  - Actions: `recordSession`, `logHonorPractice`, display preference setters. Selectors: `getStreakInfo`, `getDomainStats`, `getWeeklyPattern`, `getHonorStatus`, `getSessionsWithJournal`, `getPrimaryDomain`.
-  - Writers: `PracticeSection` (via `recordPracticeSession`), `circuitIntegration` (via `recordPracticeSession`), DevPanel mock loaders.
+  - Owns: `sessions` (legacy v1 array), `sessionsV2` (authoritative v2 normalized sessions), `honorLogs`, `streak`, `vacation`, `practiceHistory`, `benchmarks`, `consistencyMetrics`, `goals`, display preference.
+  - Actions: `recordSessionV2` (primary writer for normalized sessions), `recordSession` (legacy, do not use), `logHonorPractice`, display preference setters. Selectors: `getStreakInfo`, `getDomainStats`, `getWeeklyPattern`, `getHonorStatus`, `getSessionsWithJournal`, `getPrimaryDomain`.
+  - Writers: `recordPracticeSession` (via `recordSessionV2`), `circuitIntegration` (via `recordSessionV2`), DevPanel mock loaders.
   - Readers: `HomeHub` (streak/domain stats/weekly pattern), `TrackingHub`, `DishonorBadge`, `CompactStatsCard`, `TrajectoryCard`, `DevPanel`, `SessionHistoryView`.
+  - **V2 Session Schema** (authoritative, persisted in `sessionsV2`):
+    - `id`: unique session identifier
+    - `startedAt`: ISO 8601 timestamp of session start
+    - `endedAt`: ISO 8601 timestamp of session end
+    - `durationSec`: duration in seconds (normalized from various input formats)
+    - `practiceId`: consolidated practice ID (e.g., `breath`, `awareness`, `resonance`, `perception`, `feeling`, `integration`, `circuit`)
+    - `practiceMode`: submode for umbrella practices (e.g., `vipassana`/`sound`/`cymatics`/`visualization`/`photic`/`feeling` under umbrella domains)
+    - `configSnapshot`: object containing practice-specific settings at recording time (e.g., `{ preset: 'Box', pattern: {...} }` for breath, `{ soundType, frequency }` for sound)
+    - `completion`: `'completed'`|`'abandoned'`|`'partial'` (completion status of session)
+    - `metadata`: arbitrary session metadata (instrumentation, notes, custom context)
+    - `pathContext`: object with `{ activePathId, runId, dayIndex, weekIndex }` linking to navigation path state at recording time
+  - **V1→V2 Migration** (automatic): `loadPreferences()` and on-read helpers map legacy IDs/labels via `LEGACY_MAP` to consolidated umbrella IDs; `sessionsV2` is authoritative, with legacy `sessions` as fallback.
 - **Centralized Session Recording: recordPracticeSession**
-  - Purpose: single authoritative entry point for session completion writes.
-  - Why: eliminates duplicate write paths and keeps instrumentation, mandala sync, and cycle gating consistent.
   - Location: `src/services/sessionRecorder.js`
-  - Function: `recordPracticeSession(payload, options)`
-  - What it does (order):
-    - Normalize instrumentation (`exit_type`).
-    - Persist session to `progressStore` (unless `persistSession=false`).
-    - Optionally log cycle/practiceHistory (`cycleEnabled` + `cycleMinDuration`, or `cyclePracticeData`).
-    - Trigger downstream syncs (mandala) exactly once.
-  - Options:
-    - `persistSession`
-    - `cycleEnabled`
-    - `cycleMinDuration`
-    - `cyclePracticeData`
-  - Examples:
-    - Normal practice completion: `recordPracticeSession({ domain, duration, metadata, instrumentation, exitType }, { cycleEnabled: true, cycleMinDuration: 10 })`
-    - Circuit/ritual completion (cycle only): `recordPracticeSession({ /* payload describing the event */ }, { persistSession: false, cycleEnabled: true, cycleMinDuration: 0, cyclePracticeData: { type, duration, ... } })`
+  - Purpose: single authoritative entry point for session completion writes; normalizes input formats and manages downstream syncs (mandala, cycle gating) without duplication.
+  - Why: eliminates duplicate write paths, keeps instrumentation/cycle consistency, manages exit type normalization and path context resolution.
+  - Function signature: `recordPracticeSession(payload = {}, options = {})`
+  - **Payload fields** (incoming from practice runner):
+    - `domain`: practice domain string (resolved to umbrella ID for v2)
+    - `duration`: minutes (converted to `durationSec`)
+    - `metadata`: arbitrary session metadata object
+    - `instrumentation`: object with `{ exit_type, duration_ms, ... }` tracking user action type (click "Done", timeout, etc.)
+    - `exitType`: string `'completed'|'abandoned'` (overrides/supplements `instrumentation.exit_type`)
+    - `practiceId`: consolidated practice ID (e.g., `'breath'`, `'awareness'`, `'feeling'`)
+    - `practiceMode`: submode within umbrella (e.g., `'vipassana'` under `'awareness'`, `'cymatics'` under `'resonance'`)
+    - `configSnapshot`: object capturing practice settings at record time (e.g., `{ preset, pattern }` for breath; `{ soundType, frequency }` for sound; `{ mode, promptMode, intent }` for feeling)
+    - `completion`: explicit completion status override (`'completed'|'abandoned'|'partial'`)
+    - `activePathId`, `dayIndex`: path context (optional; resolved from `navigationStore.activePath` if not provided)
+    - `startedAt`, `endedAt`: ISO timestamps (endedAt defaults to now; startedAt computed from durationSec + endedAt if not provided)
+    - `durationSec`: raw duration in seconds (takes precedence if provided)
+  - **Options** (control recorder behavior):
+    - `persistSession`: boolean (default `true`); whether to write to `progressStore.sessionsV2`
+    - `syncMandala`: boolean (default `true`); whether to trigger mandala store sync
+    - `cycleEnabled`: boolean (default `false`); whether to check cycle gating
+    - `cycleMinDuration`: number (default 10); minimum minutes before cycle registration
+    - `cyclePracticeData`: object (optional); alternative practice metadata for cycle-only logging (e.g., ritual/circuit completion without a session record)
+  - **Execution order**:
+    1. Normalize instrumentation (`exit_type` field) from exitType + existing instrumentation
+    2. If `persistSession=true`: normalize/resolve all fields (duration, timestamps, path context, completion status) and persist to `progressStore.recordSessionV2()`
+    3. If `cycleEnabled=true`: check if `durationSec >= cycleMinDuration * 60`; if so, call `logPractice(cycleType, duration, metadata)` from `cycleManager.js`
+    4. If `syncMandala=true`: trigger `syncFromProgressStore()` exactly once at end of recorder execution
+  - **Examples**:
+    - Normal practice completion: `recordPracticeSession({ domain: 'breathwork', duration: 12, metadata: {...}, instrumentation: { exit_type: 'user_clicked_done' }, practiceId: 'breath', practiceMode: undefined, configSnapshot: { preset: 'Box', pattern: {...} }, exitType: 'completed' }, { cycleEnabled: true, cycleMinDuration: 10 })`
+    - Circuit/ritual completion (cycle only, no session): `recordPracticeSession({ /* metadata describing circuit event */ }, { persistSession: false, cycleEnabled: true, cycleMinDuration: 0, cyclePracticeData: { type: 'circuit', duration: 20 } })`
+    - Feeling/Emotion practice: `recordPracticeSession({ domain: 'focus', duration: 8, practiceId: 'feeling', practiceMode: 'discomfort', configSnapshot: { mode: 'discomfort', intent: 'compassion', promptText: '...' }, exitType: 'completed' }, { cycleEnabled: true })`
 - **Stored vs Derived Tracking Data**
   - Stored (authoritative): `progressStore` session history, `curriculumStore` progress, `journalStore` entries, and domain stores (`wisdomStore`, `videoStore`, etc.) for their respective domains.
   - Derived (computed): trajectory, weekly timing offsets, mandala aggregates, lunar stage metrics, attention weekly features.
@@ -87,9 +253,16 @@
   - Owns: ritual run state (`id`, `startTime`, `currentStep`, `status`, `stepData`, `photoUrl`, `selectedMemory`).
   - Actions: `startRitual/advanceStep/goToStep/recordStepData/setPhotoUrl/setSelectedMemory/resetRitual/completeRitual`.
   - Used by legacy `RitualPortal` flow (not wired into current practice selection) to coordinate guided multi-step ritual + `logRitualResult` service call.
-- **practiceStore helpers** (`src/state/practiceStore.js`)
-  - Owns: persisted practice preferences and historical sessions via localStorage utilities (`loadPreferences/savePreferences/addSession`).
-  - Used by `PracticeSection` (loading/saving defaults) and `RitualPortal` (breath pattern seed).
+- **practiceStore** (`src/state/practiceStore.js`)
+  - Owns: persisted practice preferences and session history via localStorage.
+  - State: `GLOBAL_DEFAULTS` (default practice ID, default duration), `PER_PRACTICE_DEFAULTS` (per-practice config like preset, pattern, settings), `LEGACY_MAP` (migration from old labels/IDs to consolidated umbrella IDs).
+  - Actions: `loadPreferences()` (applies LEGACY_MAP to normalize stored IDs), `savePreferences()`, `loadSessions()`, `addSession()`.
+  - **Key Variables**:
+    - **Consolidated umbrella practice IDs**: `breath`, `integration`, `circuit`, `awareness`, `resonance`, `perception`, `feeling` (replace older granular IDs like `insight`, `bodyscan`, `visualization`, `cymatics`, `photic`).
+    - **Per-practice parameter defaults** example for `sound`: `{ soundType, volume, binauralPresetId, isochronicPresetId, exactHz, reverbWet, chorusWet, carrierFrequency }`.
+    - **Per-practice parameter defaults for feeling** (Emotion practice): `{ mode: 'discomfort'|'tension'|'joy', promptMode: 'minimal'|'rich', intent: 'compassion'|..., promptText }`.
+    - **LEGACY_MAP entries** map old labels ("Breath & Stillness", "Insight Meditation", etc.) and old IDs ("insight", "bodyscan", etc.) to consolidated umbrella IDs for seamless migration on load.
+  - Used by `PracticeSection` (loading/saving defaults and practice-specific config) and legacy `RitualPortal` (breath pattern seed).
 - **Other supporting stores**: `lunarStore` (stage progression used by HomeHub), `pathStore` (attention instrumentation fed by progressStore + wisdomStore), `videoStore` (video playback state), `sigilStore`, `mandalaStore`, `applicationStore/attentionStore/historyStore` (used inside Application/Tracking surfaces). These are read-only for this document unless wiring above references them.
 
 ## Static Data vs. Dynamic State
@@ -97,12 +270,14 @@
 - **Program & path definitions**: `src/data/navigationData.js` exposes path catalog and `getAllPaths()`; combines with program cards declared in `PathSelectionGrid`.
 - **Ritual definitions**: `src/data/rituals/index.js` (registry + `RITUAL_CATEGORIES`), with category files under `src/data/rituals/*`. Thought Detachment ritual is assembled ad-hoc inside `ThoughtDetachmentOnboarding`.
 - **Curriculum**: `src/data/ritualFoundation14.js` drives the 14-day ritual foundation program consumed by `curriculumStore`.
-- **Practice catalogs**: `ringFXPresets`, `vipassanaThemes`, `practiceFamily`, `practice presets` files under `src/data` and `src/utils/frequencyLibrary.js` feed selectors in `PracticeSection`.
+- **Practice catalogs**: `ringFXPresets`, `vipassanaThemes`, `practiceFamily`, `emotionPractices`, practice presets files under `src/data` and `src/utils/frequencyLibrary.js` feed selectors in `PracticeSection`.
+  - **practiceFamily.js** — Pure mapping from practice metadata → attentional family (SETTLE, SCAN, RELATE, INQUIRE). Priority: sensoryType (e.g., `bodyScan` → SCAN, `bhakti` → RELATE) > ritualCategory (e.g., `grounding` → SETTLE) > domain (e.g., `breathwork` → SETTLE). Domains `yoga` and `wisdom` are omitted (span multiple families); must resolve via sensoryType/ritualCategory.
+  - **emotionPractices.js** — Feeling/Emotion practice metadata including modes (`discomfort`, `tension`, `joy`), prompt text, and closing lines. Used by EmotionConfig UI and session recording for feeling-specific summary context.
 - **Wisdom content**: `treatise.generated.js` + `treatiseParts.js` (chapters/parts), `wisdomRecommendations.js`, `videoData.js` power `WisdomSection` tabs.
 
 ## Component boundaries (runners vs. selectors vs. legacy)
 
-- **Runners**: `RitualSession` (full-screen ritual playback/timer), `PracticeSection` session renderer, `CircuitTrainer` (via CircuitConfig/execution), `VipassanaVariantSelector` start gate for cognitive vipassana, `PhoticCirclesOverlay` (photic entrainment).
+- **Runners**: `RitualSession` (full-screen ritual playback/timer), `PracticeSection` session renderer, `CircuitTrainer` (via CircuitConfig/execution), `VipassanaVariantSelector` start gate for cognitive vipassana, `PhoticCirclesOverlay` (photic entrainment), `EmotionConfig` (Feeling/Emotion practice runner).
 - **Selectors/Decks**: `RitualSelectionDeck` (ritual grid), `PracticeSelectionModal`, `PathSelectionGrid`, `NavigationSelectionModal`, `WisdomSelectionModal`.
 - **Portals/Legacy**: `RitualPortal` uses `ritualStore` + static assets; only referenced by legacy practice components (`PracticeSection_REPAIR/GRAVEYARD`) and not invoked by current `PracticeSection` UI.
 
@@ -134,6 +309,19 @@
 5. **Stop pulse**: Click "Stop" → `isRunning = false` → RAF loop exits, circles freeze at current opacity.
 6. **Close overlay**: Click "Close" → `isOpen = false` → overlay unmounts, settings persist.
 
+### Feeling/Emotion Practice → Configure → Run session → Record with metadata
+
+1. **Entry point**: User selects "Feeling" practice type in `PracticeSection`.
+2. **Configure**: `EmotionConfig` presents mode selector (`discomfort`|`tension`|`joy`), prompt mode (`minimal`|`rich`), intent selector, and optional custom prompt text. Config persists to `practiceStore.practiceParams.feeling`.
+3. **Run session**: Click "Begin Practice" → timer starts, prompt displays on-screen (based on chosen mode/promptMode), user engages with prompt until duration expires or user clicks "Done".
+4. **Completion write**: `PracticeSection.handleStop` calls `recordPracticeSession` with:
+   - `practiceId: 'feeling'`
+   - `practiceMode: 'feeling'` (no submode variants)
+   - `configSnapshot: { mode, promptMode, intent, promptText }` (captures user-selected feeling context)
+   - `exitType: 'completed'|'abandoned'`
+5. **Closing context**: If `curriculumStore` has active leg, `curriculumStore.logLegCompletion` is called with closing line fetched from `getEmotionClosingLine(mode)` for post-session narrative context.
+6. **Stats update**: `progressStore.recordSessionV2` creates V2 session entry; `cycleManager` registers practice if duration ≥ 10 minutes; mandala syncs on completion.
+
 ## Wiring Index
 
 - **HomeHub** (`src/components/HomeHub.jsx`)
@@ -146,12 +334,26 @@
   - Inputs: `navigationStore` (`selectedPathId`, `activePath`), `cycleStore.currentCycle`, `curriculumStore.onboardingComplete`, `displayModeStore.colorScheme`.
   - Outputs: `setSelectedPath`, `beginPath/completeWeek` via subcomponents, modal toggles; program cards open `CycleChoiceModal` or `ThoughtDetachmentOnboarding`.
   - Navigation next: optional scroll to path grid on recommendation; no direct section switch (except Application prompt in `ApplicationSection`).
-- **PracticeSection** (`src/components/PracticeSection/PracticeSection.jsx`)
+- **PracticeSection** (`src/components/PracticeSection/PracticeSection.jsx` + `src/components/PracticeSection.jsx`)
   - Role: orchestration layer for the practice lifecycle and session state; coordinates UI components while retaining ownership of state, effects, and side effects.
-  - Primary components: practice pickers (`PracticeSelector`, `SacredTimeSlider`, `PracticeOptionsCard`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`, `TempoSyncPanel` (Breath & Stillness only).
-  - Inputs: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences, `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state; `tempoSyncStore` selectors (`enabled`, `getPhaseDuration()`, `beatsPerPhase`) passed to `PracticeOptionsCard`.
-  - Outputs: `recordPracticeSession`, `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar; `tempoSyncStore` updates via `useTempoDetection` hook (BPM detection, lock/unlock, multiplier changes).
-  - Navigation next: none directly; ritual deck "Return to Hub" triggers `handleStop`, home navigation handled by global header button.
+  - **Practice Registry** (`src/components/PracticeSection/constants.js`): 
+    - `PRACTICE_REGISTRY`: maps consolidated practice IDs to metadata (label, icon, description, config component, subModes)
+    - `PRACTICE_IDS`: all practice identifiers (`breath`, `integration`, `circuit`, `awareness`, `resonance`, `perception`, `feeling`)
+    - `GRID_PRACTICE_IDS`: subset available in primary selector grid
+    - `OLD_TO_NEW_PRACTICE_MAP`: legacy ID/label → consolidated ID mapping
+    - `resolvePracticeId()`: normalizes old IDs to new consolidated IDs
+  - **Consolidated Umbrella Practice IDs**:
+    - `breath`: "Breath & Stillness" (breathwork singular)
+    - `integration`: "Ritual" (rituals, ceremonies, guided practices)
+    - `circuit`: "Circuit" (circuit training, drills)
+    - `awareness`: "Awareness" (vipassana, body scan, insight meditation) → subModes: `vipassana`|`sound`|`cymatics`|`visualization`|`photic`|`feeling` **[DEFERRED: refactoring in progress]**
+    - `resonance`: "Resonance" (sound, binaural, isochronic) → subModes: `sound` (active), `cymatics`
+    - `perception`: "Perception" (visualization, photic, visual entrainment) → subModes: `visualization`, `photic`
+    - `feeling`: "Feeling" (emotion/feeling practices) → no subModes, single runner
+  - **Primary components**: practice pickers (`PracticeSelector`, `SacredTimeSlider`, `PracticeOptionsCard`), configs (`BreathConfig`, `SensoryConfig`, `VipassanaVariantSelector`, `SoundConfig`, `VisualizationConfig`, `CymaticsConfig`, `CircuitConfig`, `EmotionConfig`), runners (`BreathingRing`, `VipassanaVisual`, `SensorySession`, `VisualizationCanvas`, `CymaticsVisualization`, `NavigationRitualLibrary`, `PhoticCirclesOverlay`), `SessionSummaryModal`, `PostSessionJournal`, `TempoSyncPanel` (Breath & Stillness only).
+  - **Inputs**: props (`onPracticingChange`, `onBreathStateChange`), `practiceStore` preferences (loaded via `loadPreferences()`, normalized via LEGACY_MAP), `curriculumStore` active sessions/legs, `displayModeStore.colorScheme`, `useSessionInstrumentation` hook state; `tempoSyncStore` selectors (`enabled`, `getPhaseDuration()`, `beatsPerPhase`) passed to `PracticeOptionsCard`.
+  - **Outputs**: `recordPracticeSession` (via `sessionRecorder.js`), `curriculumStore.logLegCompletion`, `logCircuitCompletion`, `onPracticingChange` callbacks, `onBreathStateChange` updates for avatar; `tempoSyncStore` updates via `useTempoDetection` hook (BPM detection, lock/unlock, multiplier changes).
+  - **Navigation next**: none directly; ritual deck "Return to Hub" triggers `handleStop`, home navigation handled by global header button.
   - **Photic entry**: "Photic" button opens `PhoticCirclesOverlay` (component state `isOpen`).
   - **Tempo Sync integration:** "🎵 Tempo Sync" collapsible section in `PracticeOptionsCard` for Breath & Stillness practice; renders `TempoSyncPanel` with file upload (FileUploadDrawer), BPM display, lock button, multiplier selector, and collapsed playback/beats/manual entry accordions. Breathing ring respects `tempoPhaseDuration` when `tempoSyncEnabled` is true.
 
