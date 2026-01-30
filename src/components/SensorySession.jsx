@@ -1,7 +1,7 @@
 // src/components/SensorySession.jsx
 // Main container for all sensory meditation practices
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { PromptDisplay } from './PromptDisplay.jsx';
 import { SakshiVisual } from './SakshiVisual.jsx';
 import { BodyScanVisual } from './BodyScanVisual.jsx';
@@ -59,7 +59,8 @@ export function SensorySession({
     const availableRituals = sensoryType === 'bhakti' ? getAllRituals() : [];
 
     // Get all prompts for current practice/mode (Legacy/Standard Sensory)
-    const getAllPrompts = () => {
+    // Memoized to prevent unnecessary re-renders and ensure stable references
+    const allPrompts = useMemo(() => {
         switch (sensoryType) {
             case 'sakshi':
                 return SAKSHI_PROMPTS;
@@ -70,9 +71,7 @@ export function SensorySession({
             default:
                 return [];
         }
-    };
-
-    const allPrompts = getAllPrompts();
+    }, [sensoryType, selectedScanId, emotionMode, emotionPromptMode]);
 
     // Auto-advance timer with even distribution
     const timeoutRef = useRef(null);
@@ -149,10 +148,11 @@ export function SensorySession({
     }, [duration, allPrompts, sensoryType, onStop, stepIndex, stepRemainingSec]);
 
     // Handle session completion (fire onStop once, outside of render)
+    // Pass { completed: true } to signal natural completion vs manual stop
     useEffect(() => {
         if (sessionComplete && !onStopCalledRef.current && onStop) {
             onStopCalledRef.current = true;
-            onStop();
+            onStop({ completed: true });
         }
     }, [sessionComplete, onStop]);
 
@@ -161,20 +161,37 @@ export function SensorySession({
         if (sensoryType === 'bhakti') return;
 
         // Use devPromptIndex for auto-advance (even when not in dev preview)
-        if (allPrompts[devPromptIndex]) {
+        if (allPrompts.length > 0 && allPrompts[devPromptIndex]) {
             const prompt = allPrompts[devPromptIndex];
             // Handle both string prompts (emotion) and object prompts (bodyScan, sakshi)
+            const promptText = typeof prompt === 'string' ? prompt : prompt.text;
+            setCurrentPrompt(promptText);
+        } else if (allPrompts.length > 0 && devPromptIndex >= allPrompts.length) {
+            // Index out of bounds after mode change, reset to first prompt
+            const prompt = allPrompts[0];
             const promptText = typeof prompt === 'string' ? prompt : prompt.text;
             setCurrentPrompt(promptText);
         }
     }, [devPromptIndex, sensoryType, allPrompts]);
 
-    // Reset when practice/mode/scan changes
+    // Report session remaining time to parent component
+    useEffect(() => {
+        if (onTimeUpdate) {
+            onTimeUpdate(sessionRemainingSec);
+        }
+    }, [sessionRemainingSec, onTimeUpdate]);
+
+    // Reset when practice/mode/scan changes (including emotion mode changes)
     useEffect(() => {
         setDevPromptIndex(0);
+        setStepIndex(0);
+        setStepRemainingSec(0);
+        setSessionRemainingSec(duration * 60);
+        setSessionComplete(false);
+        onStopCalledRef.current = false;
         setElapsedSeconds(0);
         startTimeRef.current = performance.now();
-    }, [sensoryType, mode, selectedScanId]);
+    }, [sensoryType, mode, selectedScanId, emotionMode, emotionPromptMode, duration]);
 
     // Sync local scan selection with external scanType changes
     useEffect(() => {

@@ -195,19 +195,22 @@ export const EMOTION_PRACTICES = {
 
 // Helper to get prompts for an emotion mode
 export const getEmotionPrompts = (mode, promptMode = 'minimal') => {
-  const practice = EMOTION_PRACTICES[mode];
+  const effectiveMode = mode || 'discomfort'; // Default to discomfort if mode is undefined
+  const practice = EMOTION_PRACTICES[effectiveMode];
   if (!practice) return [];
   return practice.prompts[promptMode] || practice.prompts.minimal;
 };
 
 // Helper to get closing line for an emotion mode
 export const getEmotionClosingLine = (mode) => {
-  const practice = EMOTION_PRACTICES[mode];
+  const effectiveMode = mode || 'discomfort';
+  const practice = EMOTION_PRACTICES[effectiveMode];
   return practice ? practice.closingLine : 'You completed your practice.';
 };
 
 // Helper to get label for an emotion mode
 export const getEmotionLabel = (mode) => {
-  const practice = EMOTION_PRACTICES[mode];
+  const effectiveMode = mode || 'discomfort';
+  const practice = EMOTION_PRACTICES[effectiveMode];
   return practice ? practice.label : 'Emotion';
 };

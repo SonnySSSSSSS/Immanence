@@ -192,5 +192,5 @@ export function recordPracticeSession(payload = {}, options = {}) {
         logPractice(practiceData);
     }
 
-    return recordedSession;
+    return persistSession ? normalizedSession : null;
 }

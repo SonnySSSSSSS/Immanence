@@ -1101,7 +1101,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return `${m}:${s.toString().padStart(2, "0")} `;
   };
 
-  const handleStop = () => {
+  const handleStop = (options = {}) => {
+    // options.completed = true means the session timer naturally reached 0
+    // If not provided (manual stop), we check timeLeft
+    const wasNaturalCompletion = options.completed === true;
+    
     // Capture curriculum context BEFORE clearing
     const savedActivePracticeSession = activePracticeSession;
     const activeSessionDayNumber = typeof savedActivePracticeSession === 'object'
@@ -1127,14 +1131,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     notifyPracticingChange(false);
     notifyBreathStateChange(null);
 
-    const exitType = timeLeft <= 0 ? 'completed' : 'abandoned';
+    // Use passed completion status if available (from SensorySession timer),
+    // otherwise fall back to checking timeLeft (may be stale due to React batching)
+    const exitType = wasNaturalCompletion ? 'completed' : (timeLeft <= 0 ? 'completed' : 'abandoned');
     const instrumentationData = endSession(exitType);
 
-    // Calculate actual duration early for completion classification (Fix 2 & 3)
+    // Calculate actual duration
+    // If wasNaturalCompletion, the full planned duration elapsed (don't trust stale timeLeft)
+    // Otherwise, use timer-based calculation
     const planedDurationSeconds = duration * 60;
-    const actualDurationSeconds = instrumentationData?.duration_ms
+    const timerBasedDurationSeconds = wasNaturalCompletion 
+      ? planedDurationSeconds  // Full duration when naturally completed
+      : planedDurationSeconds - timeLeft; // How much time elapsed before manual stop
+    const instrumentationDurationSeconds = instrumentationData?.duration_ms
       ? Math.floor(instrumentationData.duration_ms / 1000)
       : 0;
+    // Use the larger of the two (timer is more accurate for completion, instrumentation for analytics)
+    const actualDurationSeconds = Math.max(timerBasedDurationSeconds, instrumentationDurationSeconds);
 
     const id =
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -1185,11 +1198,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       const activePathId = activePath?.activePathId || activePath?.pathId || null;
       const actualPracticeId = getActualPracticeId(practiceId);
 
-      // Determine completion based on actual duration vs planned duration (Fix 3)
-      let completion = 'abandoned';
-      if (actualDurationSeconds >= planedDurationSeconds) {
-        completion = 'completed';
-      }
+      // Use exitType (timer-based) as the source of truth for completion status
+      // exitType is 'completed' when timeLeft <= 0, which means the session ran to completion
+      const completion = exitType;
 
       // For emotion practice (feeling), use emotionMode; for others use activeMode or breathSubmode
       let practiceMode = practiceParams?.activeMode || (practiceId === 'breath' ? breathSubmode : null);
@@ -1309,6 +1320,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (isEmotionPractice) {
         const { sessionsV2 } = useProgressStore.getState();
         const allSessions = sessionsV2 || [];
+        // Use the emotionMode captured at function start (it was used for recording)
+        // This is the same value that was assigned to practiceMode in the try block
         emotionCompletionCount = allSessions.filter(s =>
           s.practiceId === 'feeling' &&
           s.practiceMode === emotionMode &&
