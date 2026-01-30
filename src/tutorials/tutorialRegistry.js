@@ -164,4 +164,184 @@ export const TUTORIALS = {
       },
     ],
   },
+
+  "practice:circuit": {
+    title: "Circuit Mode",
+    steps: [
+      {
+        title: "Circuit exercises",
+        body: "Design a multi-practice circuit combining different meditation techniques in sequence.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+      {
+        title: "Exercise duration",
+        body: "Set the duration for each exercise in your circuit.",
+        target: '[data-tutorial="circuit-duration"]',
+        placement: "left",
+      },
+    ],
+  },
+
+  "practice:integration": {
+    title: "Ritual Integration",
+    steps: [
+      {
+        title: "Select a ritual",
+        body: "Choose from guided ritual practices designed to integrate awareness into daily life.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+      {
+        title: "Follow the steps",
+        body: "Each ritual has structured steps with timed segments for reflection and integration.",
+        target: '[data-tutorial="ritual-steps"]',
+        placement: "left",
+      },
+    ],
+  },
+
+  "practice:awareness": {
+    title: "Awareness Practice",
+    steps: [
+      {
+        title: "Awareness modes",
+        body: "Choose from cognitive observation, somatic body scanning, or emotional awareness practice.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+      {
+        title: "Observation technique",
+        body: "Select your awareness observation method: insight meditation, body scan, or feeling practice.",
+        target: '[data-tutorial="awareness-mode-selector"]',
+        placement: "left",
+      },
+    ],
+  },
+
+  "practice:cognitive_vipassana": {
+    title: "Insight Meditation",
+    steps: [
+      {
+        title: "Cognitive observation",
+        body: "Practice neutral observation of thoughts and mental patterns without judgment.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+    ],
+  },
+
+  "practice:somatic_vipassana": {
+    title: "Body Scan",
+    steps: [
+      {
+        title: "Somatic awareness",
+        body: "Progressively scan and observe physical sensations throughout your body.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+    ],
+  },
+
+  "practice:feeling": {
+    title: "Emotional Awareness",
+    steps: [
+      {
+        title: "Emotional practice",
+        body: "Cultivate awareness and capacity for the full range of emotional experience.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+    ],
+  },
+
+  "practice:resonance": {
+    title: "Resonance & Vibration",
+    steps: [
+      {
+        title: "Sound modes",
+        body: "Choose from solfeggio frequencies, cymatics visualization, or binaural beats.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+      {
+        title: "Adjust parameters",
+        body: "Fine-tune frequency, intensity, and session duration to your preference.",
+        target: '[data-tutorial="resonance-config"]',
+        placement: "left",
+      },
+    ],
+  },
+
+  "practice:sound": {
+    title: "Sound Bath",
+    steps: [
+      {
+        title: "Solfeggio frequencies",
+        body: "Experience healing frequencies from 100-500Hz for relaxation and alignment.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+    ],
+  },
+
+  "practice:cymatics": {
+    title: "Cymatics Visualization",
+    steps: [
+      {
+        title: "Visual harmonics",
+        body: "Watch sacred geometric patterns respond to sound frequencies in real-time.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+    ],
+  },
+
+  "practice:perception": {
+    title: "Perception & Vision",
+    steps: [
+      {
+        title: "Visual practices",
+        body: "Choose from sacred geometry visualization, photonic flicker, or visual exploration.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+      {
+        title: "Configure visuals",
+        body: "Adjust visual parameters like speed, color, and intensity.",
+        target: '[data-tutorial="perception-config"]',
+        placement: "left",
+      },
+    ],
+  },
+
+  "practice:visualization": {
+    title: "Sacred Geometry",
+    steps: [
+      {
+        title: "Geometric forms",
+        body: "Meditate on sacred geometric patterns: Flower of Life, Sri Yantra, and more.",
+        target: '[data-tutorial="practice-selector"]',
+        placement: "bottom",
+      },
+    ],
+  },
+
+  "practice:photic": {
+    title: "Photonic Practice",
+    steps: [
+      {
+        title: "Light frequency",
+        body: "Adjust pulse rate and flicker pattern for visual entrainment.",
+        target: '[data-tutorial="photic-controls"]',
+        placement: "left",
+      },
+      {
+        title: "Intensity & color",
+        body: "Set brightness and color to a comfortable level for your practice.",
+        target: '[data-tutorial="photic-intensity"]',
+        placement: "left",
+      },
+    ],
+  },
 };

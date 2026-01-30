@@ -178,20 +178,27 @@ function App() {
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
+  const [selectedPracticeId, setSelectedPracticeId] = useState(null);
   const [isFullscreenExperience, setIsFullscreenExperience] = useState(false);
 
-  const handlePracticingChange = (val, pid = null, requiresFullscreen = false) => {
+  const handlePracticingChange = (val, pid = null, requiresFullscreen = false, selectedId = null) => {
     setIsPracticing(val);
     if (pid) setActivePracticeId(pid);
     else if (!val) setActivePracticeId(null);
+    if (selectedId) setSelectedPracticeId(selectedId);
     // Set fullscreen experience based on practice metadata
     setIsFullscreenExperience(val && requiresFullscreen);
   };
-  const resolvedPracticeId =
+  const runningPracticeId =
     typeof activePracticeId === "string" && activePracticeId.length > 0
       ? activePracticeId
       : null;
-  const resolvedPracticeTutorialId = resolvedPracticeId ? `practice:${resolvedPracticeId}` : null;
+  const menuPracticeId =
+    typeof selectedPracticeId === "string" && selectedPracticeId.length > 0
+      ? selectedPracticeId
+      : null;
+  const effectivePracticeId = runningPracticeId || menuPracticeId;
+  const resolvedPracticeTutorialId = effectivePracticeId ? `practice:${effectivePracticeId}` : null;
   const practiceTutorialId =
     resolvedPracticeTutorialId && TUTORIALS[resolvedPracticeTutorialId]
       ? resolvedPracticeTutorialId
@@ -200,7 +207,7 @@ function App() {
     // Photonic (embedded or overlay) should always route to the photic beginner guide
     if (
       activeSection === 'practice' &&
-      (resolvedPracticeId === 'photic' || activePracticeId === 'photic')
+      (effectivePracticeId === 'photic' || activePracticeId === 'photic')
     ) {
       return 'page:photic-beginner';
     }

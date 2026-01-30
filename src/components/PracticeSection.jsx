@@ -634,7 +634,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       duration,
       practiceParams,
     };
-  }, [duration, practiceParams]);
+    // Notify parent of menu selection (for tutorial context)
+    onPracticingChange(false, null, false, id);
+  }, [duration, practiceParams, onPracticingChange]);
 
   const updateParams = (pid, updates) => {
     setPracticeParams(prev => ({
