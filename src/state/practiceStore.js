@@ -75,6 +75,8 @@ const PER_PRACTICE_DEFAULTS = {
     activeMode: "visualization"
   },
   feeling: {
+    mode: 'discomfort',
+    promptMode: 'minimal',
     intent: 'compassion',
     promptText: 'Hold the feeling; when it fades, return.',
   },
@@ -171,6 +173,10 @@ export function loadPreferences() {
         sound: {
           ...DEFAULT_PREFERENCES.practiceParams.sound,
           ...(stored.practiceParams?.sound || {}),
+        },
+        feeling: {
+          ...DEFAULT_PREFERENCES.practiceParams.feeling,
+          ...(stored.practiceParams?.feeling || {}),
         },
       }
     };

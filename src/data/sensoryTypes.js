@@ -26,6 +26,14 @@ export const SENSORY_TYPES = {
         pathContribution: 'Dhyana',
         promptInterval: 90, // sparse prompts
     },
+    emotion: {
+        id: 'emotion',
+        label: 'Emotion',
+        description: 'Meeting your feelings with openness',
+        icon: '💝',
+        pathContribution: 'Prana',
+        promptInterval: 45,
+    },
 };
 
 // Array format for UI selectors

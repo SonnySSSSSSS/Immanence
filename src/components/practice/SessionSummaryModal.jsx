@@ -199,6 +199,42 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
             )}
           </div>
 
+          {/* Emotion Closing Line (if emotion practice) */}
+          {summary.closingLine && (
+            <div
+              className="rounded-lg p-4 mb-6"
+              style={{
+                background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)',
+                border: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid rgba(255,255,255,0.1)',
+                fontFamily: 'var(--font-body)',
+                fontSize: '12px',
+                fontStyle: 'italic',
+                color: isLight ? 'rgba(60,50,35,0.7)' : 'rgba(253,251,245,0.7)',
+                textAlign: 'center',
+                lineHeight: '1.6',
+              }}
+            >
+              "{summary.closingLine}"
+            </div>
+          )}
+
+          {/* Emotion Completion Count (if emotion practice) */}
+          {summary.emotionCompletionCount !== null && summary.emotionCompletionCount !== undefined && (
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+                color: isLight ? 'rgba(60,50,35,0.6)' : 'rgba(253,251,245,0.6)',
+                textAlign: 'center',
+                marginBottom: '20px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Completed {summary.emotionCompletionCount} {summary.emotionCompletionCount === 1 ? 'time' : 'times'}
+            </div>
+          )}
+
           {/* Focus Rating (if from curriculum) */}
           {isFromCurriculum && (
             <div style={{ marginBottom: '20px' }}>

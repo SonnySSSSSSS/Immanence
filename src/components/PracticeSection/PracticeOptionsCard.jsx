@@ -12,6 +12,7 @@ import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
 import { SensoryConfig } from "../SensoryConfig.jsx";
 import { BodyScanConfig } from "../BodyScanConfig.jsx";
+import { EmotionConfig } from "../EmotionConfig.jsx";
 import { TraditionalBreathRatios } from "./TraditionalBreathRatios.jsx";
 
 // v3.25.22-breath-modes
@@ -25,6 +26,7 @@ const CONFIG_COMPONENTS = {
   PhoticControlPanel,
   SensoryConfig,
   BodyScanConfig,
+  EmotionConfig,
 };
 
 export function PracticeOptionsCard({ practiceId, duration, onDurationChange, onStart, tokens, setters, hasExpandedOnce, setHasExpandedOnce }) {

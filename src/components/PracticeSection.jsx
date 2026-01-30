@@ -1382,11 +1382,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
 
-    // savePreferences({
-    //   practiceId,
-    //   duration,
-    //   practiceParams
-    // });
+    savePreferences({
+      practiceId,
+      duration,
+      practiceParams
+    });
     lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
 
     const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;

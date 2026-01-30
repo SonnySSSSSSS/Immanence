@@ -11,6 +11,7 @@ import { RitualSelectionDeck } from "../RitualSelectionDeck.jsx";
 import { PhoticControlPanel } from "../PhoticControlPanel.jsx";
 import { SensoryConfig } from "../SensoryConfig.jsx";
 import { BodyScanConfig } from "../BodyScanConfig.jsx";
+import { EmotionConfig } from "../EmotionConfig.jsx";
 
 // Map string names to actual components
 const CONFIG_COMPONENTS = {
@@ -22,6 +23,7 @@ const CONFIG_COMPONENTS = {
   PhoticControlPanel,
   SensoryConfig,
   BodyScanConfig,
+  EmotionConfig,
 };
 
 function PracticeMenu({

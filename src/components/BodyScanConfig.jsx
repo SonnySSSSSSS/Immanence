@@ -12,34 +12,38 @@ const REGION_RAILS = [
     {
         id: 'upper',
         label: 'UPPER',
-        subtitle: 'Head & Crown',
-        icon: '👁️',
+        tooltip: 'Head & Crown',
+        icon: '✨',
         wallpaper: AWARENESS_ASSETS.upper,
         scanIds: ['head'],
+        chakraColor: 'rgba(147, 112, 219, 0.5)',
     },
     {
         id: 'middle',
         label: 'MIDDLE',
-        subtitle: 'Heart & Hands',
+        tooltip: 'Heart & Solar',
         icon: '💛',
         wallpaper: AWARENESS_ASSETS.middle,
-        scanIds: ['heart', 'hands'],
+        scanIds: ['chest', 'hands'],
+        chakraColor: 'rgba(255, 165, 0, 0.5)',
     },
     {
         id: 'lower',
         label: 'LOWER',
-        subtitle: 'Root & Feet',
+        tooltip: 'Lower Body',
         icon: '🔻',
         wallpaper: AWARENESS_ASSETS.lower,
-        scanIds: ['root', 'feet'],
+        scanIds: ['hips', 'feet'],
+        chakraColor: 'rgba(220, 20, 60, 0.5)',
     },
     {
         id: 'full',
         label: 'FULL',
-        subtitle: 'Complete Integration',
+        tooltip: 'Full Body',
         icon: '⚡',
         wallpaper: AWARENESS_ASSETS.full,
         scanIds: ['full', 'nadis'],
+        chakraColor: 'rgba(212, 175, 55, 0.5)',
     },
 ];
 
@@ -62,7 +66,7 @@ export function BodyScanConfig({
 
     // Active rail state
     const allScans = getAllBodyScans();
-    const [activeRailId, setActiveRailId] = useState('upper');
+    const [activeRailId, setActiveRailId] = useState('full');
     
     // Get scans for active rail
     const activeRail = REGION_RAILS.find(r => r.id === activeRailId);
@@ -197,17 +201,41 @@ export function BodyScanConfig({
             <div style={{ position: 'relative', marginBottom: '20px' }}>
                 {/* Region rail (docked) */}
                 <div
+                    data-testid="region-rail"
+                    onWheel={(e) => {
+                        // allow trackpad/mouse wheel to scroll the rail horizontally
+                        const el = e.currentTarget;
+                        if (!el) return;
+                        const hasOverflow = el.scrollWidth > el.clientWidth;
+                        if (!hasOverflow) return;
+
+                        // If user is wheel-scrolling vertically, translate to horizontal
+                        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                            e.preventDefault();
+                            el.scrollLeft += e.deltaY;
+                        }
+                    }}
                     style={{
                         width: '100%',
+                        maxWidth: '100%',
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
                         display: 'flex',
-                        justifyContent: 'center',
+                        justifyContent: 'flex-start',
                         gap: '10px',
+                        padding: '4px 8px',
                         marginTop: '10px',
                         marginBottom: '12px',
                         pointerEvents: 'auto',
-                        zIndex: 5,
+                        zIndex: 20,
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
                     }}
                 >
+                    <style>{`
+                        [data-testid="region-rail"]::-webkit-scrollbar { display: none; }
+                    `}</style>
                     {REGION_RAILS.map((rail) => {
                         const isActive = activeRailId === rail.id;
                         return (
@@ -224,34 +252,28 @@ export function BodyScanConfig({
                                 }}
                                 style={{
                                     height: '44px',
-                                    minWidth: '84px',
-                                    padding: '0 10px',
+                                    minWidth: '44px',
+                                    padding: '0',
                                     borderRadius: '14px',
-                                    background: 'rgba(10,12,14,.35)',
-                                    border: isActive ? '1.5px solid rgba(212,175,55,.65)' : '1px solid rgba(212,175,55,.18)',
+                                    background: isActive ? rail.chakraColor : 'rgba(10,12,14,.35)',
+                                    border: isActive ? `2px solid ${rail.chakraColor}` : '1px solid rgba(212,175,55,.18)',
                                     backdropFilter: 'blur(6px)',
                                     cursor: 'pointer',
                                     transition: 'all 200ms ease-out',
-                                    boxShadow: isActive ? '0 0 18px rgba(212,175,55,.22)' : 'none',
+                                    boxShadow: isActive 
+                                        ? `0 0 24px ${rail.chakraColor}, 0 0 12px ${rail.chakraColor}`
+                                        : 'none',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '8px',
                                     color: 'rgba(255,255,255,0.92)',
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap',
                                 }}
-                                title={rail.label}
+                                title={rail.tooltip}
                             >
-                                <span style={{ fontSize: '16px', lineHeight: '1' }}>{rail.icon}</span>
-                                <span
-                                    style={{
-                                        fontSize: '12px',
-                                        letterSpacing: '0.14em',
-                                        textTransform: 'uppercase',
-                                        opacity: isActive ? 1 : 0.88,
-                                    }}
-                                >
-                                    {rail.label}
-                                </span>
+                                <span style={{ fontSize: '18px', lineHeight: '1' }}>{rail.icon}</span>
                             </button>
                         );
                     })}
@@ -296,15 +318,15 @@ export function BodyScanConfig({
                                     overflow: 'hidden',
                                     position: 'relative',
                                     boxShadow: isActive
-                                        ? '0 0 0 2px rgba(212,175,55,.45), 0 8px 26px rgba(0,0,0,.35)'
+                                        ? `0 0 0 1.5px ${rail.chakraColor}, 0 0 12px ${rail.chakraColor}, 0 12px 32px rgba(0,0,0,.4)`
                                         : '0 10px 26px rgba(0,0,0,.25)',
-                                    filter: isActive ? 'saturate(1) brightness(1)' : 'saturate(.9) brightness(.9)',
+                                    filter: isActive ? 'saturate(1.1) brightness(1.05)' : 'saturate(.9) brightness(.9)',
                                     border: 'none',
                                     padding: 0,
                                     cursor: 'pointer',
                                 }}
                             >
-                                {/* Background wallpaper */}
+                                {/* Background wallpaper - show region-specific image */}
                                 <div
                                     className="absolute inset-0"
                                     style={{
@@ -318,62 +340,23 @@ export function BodyScanConfig({
                                 <div
                                     className="absolute inset-0"
                                     style={{
-                                        background: 'linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.65) 100%)',
+                                        background: isActive
+                                            ? `linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.45) 55%, ${rail.chakraColor} 100%)`
+                                            : 'linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.65) 100%)',
                                     }}
                                 />
 
-                                {/* Inner frame (subtle on non-active, gold on active) */}
+                                {/* Inner frame (chakra colored on active) */}
                                 <div
                                     className="absolute inset-0 pointer-events-none"
                                     style={{
                                         boxShadow: `
                                             inset 0 0 0 1px rgba(255,255,255,.10)
-                                            ${isActive ? ', inset 0 0 0 2px rgba(212,175,55,.18)' : ''}
+                                            ${isActive ? `, inset 0 0 0 3px ${rail.chakraColor}, inset 0 0 16px ${rail.chakraColor}` : ''}
                                         `,
                                         borderRadius: '18px',
                                     }}
                                 />
-
-                                {/* Label content */}
-                                <div
-                                    className="absolute inset-0 flex flex-col items-center justify-center text-center"
-                                    style={{
-                                        padding: '18px 16px',
-                                        overflow: 'hidden',
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            fontFamily: 'var(--font-display)',
-                                            fontSize: '22px',
-                                            fontWeight: 700,
-                                            letterSpacing: '0.16em',
-                                            textTransform: 'uppercase',
-                                            textShadow: '0 2px 12px rgba(0,0,0,.65)',
-                                            color: 'rgba(255,255,255,0.98)',
-                                            lineHeight: '1.1',
-                                            marginBottom: '4px',
-                                        }}
-                                    >
-                                        {rail.label}
-                                    </div>
-                                    <div
-                                        style={{
-                                            fontFamily: 'var(--font-display)',
-                                            fontSize: '12px',
-                                            letterSpacing: '0.08em',
-                                            textTransform: 'uppercase',
-                                            color: 'rgba(255,255,255,0.85)',
-                                            opacity: 0.85,
-                                            lineHeight: '1.2',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        {rail.subtitle}
-                                    </div>
-                                </div>
                             </button>
                         );
                     })}
@@ -405,12 +388,13 @@ export function BodyScanConfig({
                                 width: isActive ? '16px' : '6px',
                                 height: '6px',
                                 borderRadius: '999px',
-                                background: isActive ? 'rgba(212,175,55,.9)' : 'rgba(212,175,55,.35)',
+                                background: isActive ? rail.chakraColor : 'rgba(212,175,55,.35)',
                                 transition: 'all 200ms ease-out',
                                 cursor: 'pointer',
-                                border: 'none',
+                                border: isActive ? `2px solid ${rail.chakraColor}` : 'none',
                                 padding: 0,
                                 opacity: isActive ? 1 : 0.6,
+                                boxShadow: isActive ? `0 0 8px ${rail.chakraColor}` : 'none',
                             }}
                             aria-label={`Jump to ${rail.label}`}
                         />
