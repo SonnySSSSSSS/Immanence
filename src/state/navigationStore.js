@@ -254,7 +254,7 @@ export const useNavigationStore = create(
              */
             logScheduleAdherenceStart: ({ actualStartTime = Date.now(), pathId = null } = {}) => {
                 const state = get();
-                const activePathId = pathId || state.activePath?.pathId;
+                const activePathId = pathId || state.activePath?.activePathId;
                 if (!activePathId) return null;
 
                 const slots = state.getScheduleSlots ? state.getScheduleSlots() : [];

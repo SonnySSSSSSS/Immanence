@@ -33,7 +33,7 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
     };
 
     const handleBegin = () => {
-        if (scheduleTimes.length === 0) {
+        if (!path.simple && scheduleTimes.length === 0) {
             setScheduleRequired(true);
             return;
         }

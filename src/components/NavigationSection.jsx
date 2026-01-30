@@ -13,7 +13,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
 
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide }) {
-  const { activePath } = useNavigationStore();
+  const { activePath, beginPath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
@@ -218,6 +218,10 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             ) : (
               <PathOverviewPanel
                 path={overlayPath}
+                onBegin={(pathId) => {
+                  beginPath(pathId);
+                  closeOverlay();
+                }}
                 onClose={closeOverlay}
               />
             )}
