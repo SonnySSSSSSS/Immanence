@@ -71,11 +71,15 @@ export default function ParallaxForest({
   skySrc = "/visualization/awareness/parallax_forest_00001_.png",
   treesSrc = "/visualization/awareness/parallax_forest_00002_.png",
   foliageSrc = "/visualization/awareness/parallax_forest_00003_.png",
+  imgHeightPx = 520,
   className = "",
   style = {},
 }) {
   return (
-    <div className={`pf-root ${className}`} style={style}>
+    <div
+      className={`pf-root ${className}`}
+      style={{ ...style, ["--pf-imgH"]: `${imgHeightPx}px` }}
+    >
       {/* Slowest (exact 60s requirement) */}
       <ParallaxLayer src={skySrc} secondsPerLoop={60} className="pf-sky" />
 
@@ -87,11 +91,12 @@ export default function ParallaxForest({
         src={foliageSrc}
         secondsPerLoop={25}
         className="pf-foliage"
-        yTranslate="30%"
+        yTranslate="140px"
       />
 
       <style>{`
         .pf-root{
+          --pf-imgH: 520px;
           position: relative;
           width: 100%;
           height: 100%;
@@ -108,25 +113,30 @@ export default function ParallaxForest({
         .pf-track{
           position: absolute;
           left: 0;
-          top: 0;
-          height: 100%;
+          top: auto;
+          bottom: 0;
           display: flex;
           flex-direction: row;
-          align-items: stretch;
+          align-items: flex-end;
           animation-name: pfScroll;
           animation-timing-function: linear;
           animation-iteration-count: infinite;
           will-change: transform;
         }
 
-        /* Each image fills the scene height; width auto scales => we measure rendered width */
         .pf-img{
-          height: 100%;
-          width: auto;
-          flex: 0 0 auto;
-          image-rendering: auto;
+          height: var(--pf-imgH) !important;
+          width: auto !important;
+          flex: 0 0 auto !important;
+
+          /* defend against global resets */
+          max-width: none !important;
+          max-height: none !important;
+          object-fit: none !important;
+
           user-select: none;
           pointer-events: none;
+          display: block;
         }
 
         @keyframes pfScroll{
