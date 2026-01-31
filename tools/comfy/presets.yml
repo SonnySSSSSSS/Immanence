@@ -1,0 +1,58 @@
+# ComfyUI Model Preset Configuration
+# Defines reusable model configurations with all critical settings
+
+presets:
+  # Z-Image Base Model (high quality, slower)
+  # Requires explicit CLIP loader due to checkpoint structure
+  z-image-base:
+    checkpoint: z_image_bf16.safetensors
+    clip:
+      name: qwen_3_4b.safetensors
+      type: lumina2  # Critical: must match z-image architecture
+    sampler:
+      name: euler
+      scheduler: normal
+      steps: 25
+      cfg: 7.5
+    latent:
+      width: 1024
+      height: 512
+      batch_size: 1
+    output:
+      format: webp
+      quality: 90
+    timeout:
+      job: 600  # Seconds - base model needs longer processing time
+      polling_interval: 2  # Seconds between status checks
+
+  # Z-Image Turbo Model (fast, good quality)
+  # Uses all-in-one checkpoint with integrated CLIP
+  z-image-turbo:
+    checkpoint: z-image-turbo-bf16-aio.safetensors
+    clip:
+      name: qwen_3_4b.safetensors
+      type: lumina2
+    sampler:
+      name: euler_ancestral
+      scheduler: simple
+      steps: 9
+      cfg: 1.0
+    latent:
+      width: 1024
+      height: 512
+      batch_size: 1
+    output:
+      format: webp
+      quality: 90
+    timeout:
+      job: 180  # Seconds - turbo is much faster
+      polling_interval: 1
+
+# Default negative prompt applied to all generations unless overridden
+default_negative_prompt: "blurry, low quality, distorted, artifacts, watermark, text, signature"
+
+# MCP Proxy configuration
+mcp:
+  endpoint: http://localhost:5050/prompt
+  comfyui_backend: http://127.0.0.1:8188  # Underlying ComfyUI server
+  submit_timeout: 30  # Seconds - proxy timeout for initial submission

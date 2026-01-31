@@ -7,6 +7,7 @@ Usage: python comfyui_client.py --prompt "mystical avatar" --output avatars/test
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 import time
 import argparse
 from pathlib import Path
@@ -22,6 +23,44 @@ def check_comfyui_running():
     except:
         return False
 
+def load_workflow(workflow_file="comfyui_workflow.json"):
+    """Load workflow JSON and convert from UI format to API format if needed"""
+    if not Path(workflow_file).exists():
+        print(f"Workflow file not found: {workflow_file}")
+        return None
+    with open(workflow_file) as f:
+        ui_wf = json.load(f)
+    
+    # If it's UI format (has "nodes" array), convert to API format (dict with node IDs as keys)
+    if isinstance(ui_wf.get("nodes"), list):
+        api_wf = {}
+        for node in ui_wf["nodes"]:
+            node_id = str(node["id"])
+            
+            # Build inputs dict from node's inputs by looking up links
+            inputs = {}
+            for input_item in node.get("inputs", []):
+                input_name = input_item.get("name")
+                if input_item.get("link") is not None:
+                    link_id = input_item["link"]
+                    # Find which link this is and get source node
+                    for link in ui_wf.get("links", []):
+                        if link[0] == link_id:
+                            # link format: [id, from_node, from_slot, to_node, to_slot, type]
+                            from_node, from_slot = link[1], link[2]
+                            inputs[input_name] = [from_node, from_slot]
+                            break
+            
+            api_node = {
+                "class_type": node.get("type"),
+                "inputs": inputs,
+                "widgets_values": node.get("widgets_values", [])
+            }
+            api_wf[node_id] = api_node
+        return api_wf
+    
+    return ui_wf
+
 def queue_prompt(workflow):
     """Submit a workflow to ComfyUI"""
     prompt_id = str(uuid.uuid4())
@@ -31,9 +70,10 @@ def queue_prompt(workflow):
     
     try:
         response = urllib.request.urlopen(req)
-        return json.loads(response.read())
+        result = json.loads(response.read())
+        return result.get("prompt_id", prompt_id)
     except urllib.error.URLError as e:
-        print(f"Error queuing prompt: {e}")
+        print(f"❌ Error queuing prompt: {e}")
         return None
 
 def get_history(prompt_id):
@@ -76,126 +116,129 @@ def wait_for_completion(prompt_id, timeout=300):
     
     raise TimeoutError(f"Generation timed out after {timeout} seconds")
 
-def convert_ui_to_api_workflow(ui_workflow):
-    """Convert UI workflow format to API format"""
-    api_workflow = {}
+def apply_overrides(workflow, overrides):
+    """Apply parameter overrides to workflow nodes"""
+    if not overrides:
+        return workflow
     
-    for node in ui_workflow.get("nodes", []):
-        node_id = str(node["id"])
-        api_workflow[node_id] = {
-            "class_type": node["type"],
-            "inputs": {}
-        }
-        
-        # Add widget values as inputs
-        if "widgets_values" in node:
-            # Get list of inputs that have widget configurations
-            # NOTE: This conversion is heuristic. UI format has more values than API format expects.
-            input_names = [inp["name"] for inp in node.get("inputs", []) if "widget" in inp]
-            
-            # Filter out known UI-only sidecar values from widgets_values
-            # e.g., "randomize", "fixed", "increment" following a seed
-            filtered_values = []
-            for i, val in enumerate(node["widgets_values"]):
-                # Simple heuristic: if the current value is a known UI sidecar string 
-                # following a numeric value, it's likely a control, not a functional input.
-                if i > 0 and isinstance(val, str) and val in ["randomize", "fixed", "increment", "decrement"]:
-                    continue
-                filtered_values.append(val)
-                
-            for i, value in enumerate(filtered_values):
-                if i < len(input_names):
-                    api_workflow[node_id]["inputs"][input_names[i]] = value
-        
-        # Add linked inputs
-        for inp in node.get("inputs", []):
-            if inp.get("link") is not None:
-                link_id = inp["link"]
-                for link in ui_workflow.get("links", []):
-                    if link[0] == link_id:
-                        source_node_id = str(link[1])
-                        source_output_index = link[2]
-                        api_workflow[node_id]["inputs"][inp["name"]] = [source_node_id, source_output_index]
+    # Update node 5 (EmptyLatentImage) for width/height/batch_size
+    if "width" in overrides or "height" in overrides or "batch_size" in overrides:
+        if "5" in workflow:
+            w = overrides.get("width", workflow["5"]["widgets_values"][0])
+            h = overrides.get("height", workflow["5"]["widgets_values"][1])
+            b = overrides.get("batch_size", workflow["5"]["widgets_values"][2])
+            workflow["5"]["widgets_values"] = [w, h, b]
     
-    return api_workflow
+    # Update node 3 (KSampler) for seed, steps, cfg, sampler, scheduler, denoise
+    if any(k in overrides for k in ["seed", "steps", "cfg", "sampler", "scheduler", "denoise"]):
+        if "3" in workflow:
+            seed = overrides.get("seed", workflow["3"]["widgets_values"][0])
+            steps = overrides.get("steps", workflow["3"]["widgets_values"][2])
+            cfg = overrides.get("cfg", workflow["3"]["widgets_values"][3])
+            sampler = overrides.get("sampler", workflow["3"]["widgets_values"][4])
+            scheduler = overrides.get("scheduler", workflow["3"]["widgets_values"][5])
+            denoise = overrides.get("denoise", workflow["3"]["widgets_values"][6])
+            workflow["3"]["widgets_values"] = [seed, "fixed", steps, cfg, sampler, scheduler, denoise]
+    
+    return workflow
 
-def generate_image(positive_prompt, negative_prompt=None, workflow_file=None, output_path=None):
-    """Main function to generate an image using ComfyUI"""
+def generate_image(positive_prompt, negative_prompt=None, workflow_file=None, output_path=None, overrides=None):
+    """Main generation function"""
     
     if not check_comfyui_running():
-        print("❌ ComfyUI is not running!")
-        print(f"Please start ComfyUI first (usually at {COMFYUI_URL})")
+        print("ComfyUI is not running on 127.0.0.1:8188")
         return False
     
-    print("✅ ComfyUI is running")
+    print("ComfyUI is running")
     
-    if workflow_file is None:
+    if not workflow_file:
         workflow_file = "comfyui_workflow.json"
     
-    print(f"📄 Loading workflow from {workflow_file}")
-    
-    with open(workflow_file, 'r', encoding='utf-8') as f:
-        ui_workflow = json.load(f)
-    
-    api_workflow = convert_ui_to_api_workflow(ui_workflow)
-    
-    print(f"🎨 Positive prompt: {positive_prompt}")
-    if negative_prompt:
-        print(f"🚫 Negative prompt: {negative_prompt}")
-    
-    # Update text encode nodes
-    positive_set = False
-    negative_set = False
-    for node_id, node in api_workflow.items():
-        if node["class_type"] == "CLIPTextEncode":
-            if not positive_set:
-                node["inputs"]["text"] = positive_prompt
-                positive_set = True
-            elif negative_prompt and not negative_set:
-                node["inputs"]["text"] = negative_prompt
-                negative_set = True
-    
-    print("📤 Submitting to ComfyUI...")
-    result = queue_prompt(api_workflow)
-    
-    if not result:
-        print("❌ Failed to queue prompt")
+    print(f"Loading workflow from {workflow_file}")
+    workflow = load_workflow(workflow_file)
+    if not workflow:
         return False
     
-    prompt_id = result.get("prompt_id")
-    print(f"⏳ Generating image (ID: {prompt_id})...")
+    # Update prompts in workflow (nodes 6=positive, 7=negative)
+    if "6" in workflow:
+        workflow["6"]["widgets_values"] = [positive_prompt]
+        print(f"Positive prompt: {positive_prompt[:80]}...")
+    
+    if "7" in workflow:
+        neg = negative_prompt or "text, watermark"
+        workflow["7"]["widgets_values"] = [neg]
+        print(f"Negative prompt: {neg[:80]}...")
+    
+    if "9" in workflow and output_path:
+        filename = Path(output_path).stem
+        workflow["9"]["widgets_values"] = [filename]
+    
+    # Apply parameter overrides
+    workflow = apply_overrides(workflow, overrides)
+    
+    print("Submitting to ComfyUI...")
+    prompt_id = queue_prompt(workflow)
+    if not prompt_id:
+        return False
+    
+    print(f"Generating image (ID: {prompt_id})...")
     
     try:
         image_data = wait_for_completion(prompt_id)
-        print("✅ Generation complete!")
+        print("Generation complete!")
         
-        if output_path is None:
-            output_path = f"generated_{prompt_id}.png"
+        if output_path:
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "wb") as f:
+                f.write(image_data)
+            print(f"Saved to: {output_path}")
         
-        with open(output_path, 'wb') as f:
-            f.write(image_data)
-        
-        print(f"💾 Saved to: {output_path}")
         return True
-        
     except TimeoutError as e:
-        print(f"❌ {e}")
+        print(f"{e}")
         return False
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate images using ComfyUI")
-    parser.add_argument("--prompt", "-p", required=True, help="Positive prompt")
-    parser.add_argument("--negative", "-n", help="Negative prompt")
-    parser.add_argument("--workflow", "-w", help="Path to workflow JSON file")
-    parser.add_argument("--output", "-o", help="Output path")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--prompt", required=True, help="Positive prompt")
+    parser.add_argument("--negative", help="Negative prompt")
+    parser.add_argument("--output", required=True, help="Output file path")
+    parser.add_argument("--workflow", default="comfyui_workflow.json", help="Workflow JSON file")
+    parser.add_argument("--seed", type=int, help="Seed value")
+    parser.add_argument("--steps", type=int, help="Number of steps")
+    parser.add_argument("--cfg", type=float, help="CFG scale")
+    parser.add_argument("--sampler", help="Sampler name")
+    parser.add_argument("--scheduler", help="Scheduler name")
+    parser.add_argument("--denoise", type=float, help="Denoise value")
+    parser.add_argument("--width", type=int, help="Image width")
+    parser.add_argument("--height", type=int, help="Image height")
     
     args = parser.parse_args()
     
+    overrides = {}
+    if args.seed is not None:
+        overrides["seed"] = args.seed
+    if args.steps is not None:
+        overrides["steps"] = args.steps
+    if args.cfg is not None:
+        overrides["cfg"] = args.cfg
+    if args.sampler:
+        overrides["sampler"] = args.sampler
+    if args.scheduler:
+        overrides["scheduler"] = args.scheduler
+    if args.denoise is not None:
+        overrides["denoise"] = args.denoise
+    if args.width is not None:
+        overrides["width"] = args.width
+    if args.height is not None:
+        overrides["height"] = args.height
+    
     success = generate_image(
-        positive_prompt=args.prompt,
-        negative_prompt=args.negative,
-        workflow_file=args.workflow,
-        output_path=args.output
+        args.prompt,
+        args.negative,
+        args.workflow,
+        args.output,
+        overrides if overrides else None
     )
     
     exit(0 if success else 1)

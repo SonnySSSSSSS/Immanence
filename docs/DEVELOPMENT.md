@@ -69,6 +69,49 @@ Expected port: `http://localhost:5173/`. If Vite starts on `5174`, another proce
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
 | `npm run deploy` | Deploy to GitHub Pages |
+| `npm run gen:assets` | Generate Sakshi scene assets (if configured) |
+
+---
+
+## Generating Assets with ComfyUI
+
+Generate parallax scene layers and other assets without writing scripts.
+
+### Quick Start
+
+```bash
+# Single layer
+node tools/comfy-cli forest midground
+
+# All layers of a scene
+node tools/comfy-cli forest --model turbo
+
+# All scenes
+node tools/comfy-cli --all
+```
+
+### Setup
+
+```bash
+cd tools/comfy-cli
+npm install
+cd ../..
+```
+
+### Requirements
+
+- ComfyUI running at `http://127.0.0.1:8188`
+- Z-Image models installed (BF16 or FP8)
+- Qwen text encoder: `qwen_3_4b.safetensors`
+
+### Learn More
+
+See [ComfyUI CLI Guide](COMFYUI_CLI.md) for:
+- Full command reference
+- Model presets and performance
+- Troubleshooting
+- Integration with npm scripts
+- MCP server setup for Claude Code
 
 ---
 

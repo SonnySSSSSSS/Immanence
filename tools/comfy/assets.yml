@@ -1,0 +1,35 @@
+# Asset Registry - Reusable Image Generation Specifications
+# Defines what to generate without creating one-off scripts
+
+# Forest Scene Layers: 2D side-scrolling parallax stack (1024×512)
+# CRITICAL: Seamless horizontal tiling, no transparency between layers, no perspective depth
+forest_layers:
+  forest:
+    far_background:
+      prompt: "Flat 2D side-scrolling forest far background layer. Soft sky gradient with pale morning light. Very distant, low-contrast rolling hills or faint treeline silhouettes. Atmospheric perspective, desaturated greens and blues. No sharp edges, no foreground trees. Calm, painterly style. Horizontally seamless for infinite scrolling. Designed to sit behind all other layers."
+      negative_prompt: "people, animals, movement, text, dramatic lighting, depth-of-field, volumetric effects, camera perspective distortion, realism, photorealistic, hard silhouettes, sharp edges, foreground trees"
+      output_path: public/scenes/forest/background/forest_far_background.webp
+      seed: null
+      preset: z-image-turbo
+
+    background_forest_mass:
+      prompt: "Flat 2D side-scrolling background forest layer. Abstracted tree masses and soft canopy shapes. Trees are grouped into overlapping clusters, not individual trunks. Some light gaps and atmospheric spacing allowed. Muted green palette with haze and depth softness. No sharp edges, no strong silhouettes. Horizontally seamless. Designed to sit behind the midground forest wall."
+      negative_prompt: "people, animals, movement, text, dramatic lighting, depth-of-field, volumetric effects, camera perspective distortion, realism, photorealistic, clear trunks, hard silhouettes, sharp edges"
+      output_path: public/scenes/forest/background/forest_background_mass.webp
+      seed: null
+      preset: z-image-turbo
+
+    midground_forest_wall:
+      prompt: "Flat 2D side-scrolling midground forest layer forming a continuous foliage wall. Dense overlapping tree canopies spanning the entire width with no gaps. Trees overlap heavily; individual trees are not clearly separable. No visible sky or background between canopies. Trunks are partially obscured or implied, not emphasized. Foliage forms a solid, horizontally continuous band. Soft painterly style, calm muted greens. Horizontally seamless for infinite scrolling. Designed to completely occlude all background layers."
+      negative_prompt: "people, animals, movement, text, dramatic lighting, depth-of-field, volumetric effects, camera perspective distortion, realism, photorealistic, visible sky gaps, holes, separated trees"
+      output_path: public/scenes/forest/midground/forest_midground_wall.webp
+      seed: null
+      preset: z-image-turbo
+
+    foreground_foliage:
+      prompt: "Flat 2D side-scrolling foreground foliage layer. Dense overlapping bushes, leaves, tall grass, and low branches. Forms a continuous silhouette band across the entire width. No gaps or openings; nothing visible behind this layer. Irregular organic shapes extending upward. Slightly darker and higher contrast than midground foliage. Painterly, soft-edged style. Horizontally seamless. Designed to sit in front of the avatar and partially occlude it."
+      negative_prompt: "people, animals, movement, text, dramatic lighting, depth-of-field, volumetric effects, camera perspective distortion, realism, photorealistic, visible background gaps, holes"
+      output_path: public/scenes/forest/foreground/forest_foreground_foliage.webp
+      seed: null
+      preset: z-image-turbo
+
