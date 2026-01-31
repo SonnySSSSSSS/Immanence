@@ -71,14 +71,14 @@ export default function ParallaxForest({
   skySrc = "/visualization/awareness/parallax_forest_00001_.png",
   treesSrc = "/visualization/awareness/parallax_forest_00002_.png",
   foliageSrc = "/visualization/awareness/parallax_forest_00003_.png",
-  imgHeightPx = 520,
+  imgHeight = "120%",
   className = "",
   style = {},
 }) {
   return (
     <div
       className={`pf-root ${className}`}
-      style={{ ...style, ["--pf-imgH"]: `${imgHeightPx}px` }}
+      style={{ ...style, ["--pf-imgH"]: imgHeight }}
     >
       {/* Slowest (exact 60s requirement) */}
       <ParallaxLayer src={skySrc} secondsPerLoop={60} className="pf-sky" />
@@ -96,7 +96,7 @@ export default function ParallaxForest({
 
       <style>{`
         .pf-root{
-          --pf-imgH: 520px;
+          --pf-imgH: 120%;
           position: relative;
           width: 100%;
           height: 100%;
@@ -115,6 +115,7 @@ export default function ParallaxForest({
           left: 0;
           top: auto;
           bottom: 0;
+          height: 100%;
           display: flex;
           flex-direction: row;
           align-items: flex-end;

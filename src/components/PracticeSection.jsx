@@ -816,8 +816,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const actualPracticeIdForVippa = getActualPracticeId(practiceId);
   const isCognitive = actualPracticeIdForVippa === 'cognitive_vipassana';
   const vTarget = isCognitive ? 'cognitive_vipassana' : 'somatic_vipassana';
-  // Insight Meditation (Cognitive) = Sakshi, Body Scan (Somatic) = BodyScan
-  const sensoryType = isCognitive ? 'sakshi' : 'bodyScan';
+  // Insight Meditation (Cognitive) defaults to Sakshi, Somatic defaults to Body Scan
+  const sensoryType = practiceParams?.[vTarget]?.sensoryType || (isCognitive ? 'sakshi' : 'bodyScan');
   const { vipassanaTheme, vipassanaElement, scanType = 'full' } = practiceParams[vTarget];
 
   // Derived variant for VipassanaVisual
@@ -1741,6 +1741,64 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Render vipassana portal when renderPracticeId is cognitive vipassana (thought labeling)
     // Somatic vipassana uses inline SensorySession component (mobile-friendly)
     if (renderPracticeId === "cognitive_vipassana") {
+      if (sensoryType === "sakshi") {
+        const sakshiButtonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
+        const sakshiButtonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
+        return (
+          <section className="relative w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-10">
+            <div
+              className="relative"
+              style={{
+                width: 'min(92vw, 420px)',
+                aspectRatio: '3 / 4',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-20)',
+                background: isLight ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.25)',
+                boxShadow: isLight ? '0 12px 36px rgba(0,0,0,0.12)' : '0 20px 60px rgba(0,0,0,0.65)',
+              }}
+            >
+              <div className="absolute inset-0 pointer-events-none z-0">
+                <ParallaxForest imgHeight="120%" />
+              </div>
+              <div className="relative z-[1] flex items-start justify-center w-full pt-3">
+                <div
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.85)",
+                    textShadow: '0 2px 16px rgba(0,0,0,0.6)',
+                  }}
+                >
+                  Sakshi (Forest)
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-[2] mt-8">
+              <SessionControls
+                isBreathPractice={false}
+                breathingPatternText={breathingPatternText}
+                showFeedback={false}
+                lastSignedErrorMs={lastSignedErrorMs}
+                feedbackColor="var(--accent-primary)"
+                feedbackShadow="none"
+                feedbackText=""
+                onStop={handleStop}
+                buttonBg={sakshiButtonBg}
+                radialGlow=""
+                buttonShadow={sakshiButtonShadow}
+                timeLeftText={timeLeftText}
+                showBreathCount={false}
+                breathCount={breathCount}
+              />
+            </div>
+          </section>
+        );
+      }
       return createPortal(
         <InsightMeditationPortal 
           onExit={activeCircuitId ? handleCircuitComplete : handleStop}
@@ -2268,53 +2326,55 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         className="practice-section-container w-full flex flex-col items-center justify-start"
         style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning ? 'none' : 'flex' }}
       >
-        <PracticeHeader
-          isSanctuary={isSanctuary}
+        <div className="relative z-[1] w-full flex flex-col items-center justify-start">
+          <PracticeHeader
+            isSanctuary={isSanctuary}
+            practiceId={practiceId}
+            onSelectPractice={handleSelectPractice}
+            selector={(
+              <PracticeSelector
+                selectedId={practiceId}
+                onSelect={handleSelectPractice}
+                tokens={uiTokens}
+              />
+            )}
+          />
+
+        {/* Bottom Layer: Dynamic Options Card */}
+        <PracticeOptionsCard
           practiceId={practiceId}
-          onSelectPractice={handleSelectPractice}
-          selector={(
-            <PracticeSelector
-              selectedId={practiceId}
-              onSelect={handleSelectPractice}
-              tokens={uiTokens}
-            />
-          )}
+          duration={duration}
+          onDurationChange={setDuration}
+          onStart={handleStart}
+          onQuickStart={handleQuickStart}
+          tokens={uiTokens}
+          params={practiceParams}
+          setters={configProps}
+          hasExpandedOnce={hasExpandedOnce}
+          setHasExpandedOnce={setHasExpandedOnce}
+          onOpenTrajectory={openTrajectoryReport}
+          isRunning={isRunning}
+          tempoSyncEnabled={tempoSyncEnabled}
+          tempoPhaseDuration={tempoPhaseDuration}
+          tempoBeatsPerPhase={tempoBeatsPerPhase}
+          onRunBenchmark={handleRunBenchmark}
+          onDisableBenchmark={() => setShowBreathBenchmark(false)}
+          breathSubmode={breathSubmode}
+          onBreathSubmodeChange={setBreathSubmode}
         />
 
-      {/* Bottom Layer: Dynamic Options Card */}
-      <PracticeOptionsCard
-        practiceId={practiceId}
-        duration={duration}
-        onDurationChange={setDuration}
-        onStart={handleStart}
-        onQuickStart={handleQuickStart}
-        tokens={uiTokens}
-        params={practiceParams}
-        setters={configProps}
-        hasExpandedOnce={hasExpandedOnce}
-        setHasExpandedOnce={setHasExpandedOnce}
-        onOpenTrajectory={openTrajectoryReport}
-        isRunning={isRunning}
-        tempoSyncEnabled={tempoSyncEnabled}
-        tempoPhaseDuration={tempoPhaseDuration}
-        tempoBeatsPerPhase={tempoBeatsPerPhase}
-        onRunBenchmark={handleRunBenchmark}
-        onDisableBenchmark={() => setShowBreathBenchmark(false)}
-        breathSubmode={breathSubmode}
-        onBreathSubmodeChange={setBreathSubmode}
-      />
-
-      <style>{`
-        .practiceMenuHeader .tutorialButtonWrap { display: none !important; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }
-        @keyframes countdown-pulse {
-          0% { transform: scale(0.8); opacity: 0; }
-          50% { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
+        <style>{`
+          .practiceMenuHeader .tutorialButtonWrap { display: none !important; }
+          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: ${isLight ? 'rgba(60,50,35,0.1)' : 'rgba(255,255,255,0.1)'}; border-radius: 2px; }
+          @keyframes countdown-pulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
+        </div>
       </PracticeSectionShell>
       
       {/* Evening Feedback Modal */}
