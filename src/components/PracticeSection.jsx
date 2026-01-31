@@ -1759,7 +1759,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               }}
             >
               <div className="absolute inset-0 pointer-events-none z-0">
-                <ParallaxForest imgHeight="120%" />
+                <ParallaxForest />
               </div>
               <div className="relative z-[1] flex items-start justify-center w-full pt-3">
                 <div
