@@ -357,6 +357,61 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           ────────────────────────────────────────────────────────────────────── */}
       <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
 
+        {/* EXPLORE MODES - Navigation Buttons */}
+        <div
+          className="w-full mb-4 transition-all duration-700 flex flex-col items-center"
+          style={{
+            maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
+            margin: '0 auto',
+            padding: '0 16px',
+          }}
+        >
+          <div
+            className="text-[11px] font-black uppercase tracking-[0.3em] text-center mb-5 opacity-40 transition-colors duration-500"
+            style={{
+              color: isLight ? 'var(--light-text-secondary)' : 'var(--text-accent-muted)',
+              textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            Explore Modes
+          </div>
+
+          {/* Horizontal Row - Simple circular buttons - MATCHES CARD WIDTH + CENTERED */}
+          <div
+            className="flex flex-row justify-center items-center w-full"
+            style={{
+              maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              gap: isSanctuary ? '24px' : '10px',
+            }}
+          >
+            <SimpleModeButton
+              title="Practice"
+              onClick={() => onSelectSection("practice")}
+              icon="practice"
+            />
+            <SimpleModeButton
+              title="Wisdom"
+              onClick={() => onSelectSection("wisdom")}
+              gradient="linear-gradient(135deg, #B4E6D4 0%, #7FD4B8 100%)"
+              icon="wisdom"
+            />
+            <SimpleModeButton
+              title="Application"
+              onClick={() => onSelectSection("application")}
+              gradient="linear-gradient(135deg, #FFD97D 0%, #FFB85C 100%)"
+              icon="application"
+            />
+            <SimpleModeButton
+              title="Navigation"
+              onClick={() => onSelectSection("navigation")}
+              gradient="linear-gradient(135deg, #E5C4FF 0%, #B88FD9 100%)"
+              icon="navigation"
+            />
+          </div>
+        </div>
+
 {/* DAILY PRACTICE CARD (Curriculum) */}
 <div className="w-full">
   {(() => {
@@ -514,60 +569,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           })(),
           document.body
         )}
-        <div
-          className="w-full mt-2 transition-all duration-700 flex flex-col items-center"
-          style={{
-            maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
-            margin: '0 auto',
-            padding: '0 16px',
-          }}
-        >
-          <div
-            className="text-[11px] font-black uppercase tracking-[0.3em] text-center mb-5 opacity-40 transition-colors duration-500"
-            style={{
-              color: isLight ? 'var(--light-text-secondary)' : 'var(--text-accent-muted)',
-              textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            Explore Modes
-          </div>
-
-          {/* Horizontal Row - Simple circular buttons - MATCHES CARD WIDTH + CENTERED */}
-          <div
-            className="flex flex-row justify-center items-center w-full"
-            style={{
-              maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              gap: isSanctuary ? '24px' : '10px',
-            }}
-          >
-            <SimpleModeButton
-              title="Practice"
-              onClick={() => onSelectSection("practice")}
-              icon="practice"
-            />
-            <SimpleModeButton
-              title="Wisdom"
-              onClick={() => onSelectSection("wisdom")}
-              gradient="linear-gradient(135deg, #B4E6D4 0%, #7FD4B8 100%)"
-              icon="wisdom"
-            />
-            <SimpleModeButton
-              title="Application"
-              onClick={() => onSelectSection("application")}
-              gradient="linear-gradient(135deg, #FFD97D 0%, #FFB85C 100%)"
-              icon="application"
-            />
-            <SimpleModeButton
-              title="Navigation"
-              onClick={() => onSelectSection("navigation")}
-              gradient="linear-gradient(135deg, #E5C4FF 0%, #B88FD9 100%)"
-              icon="navigation"
-            />
-          </div>
-        </div>
-
 
       </div>
       {/* Session History Overlay - Placed at root for visibility */}

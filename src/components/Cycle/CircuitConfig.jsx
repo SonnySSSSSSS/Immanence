@@ -6,37 +6,63 @@ import { motion, AnimatePresence } from 'framer-motion';
 const AVAILABLE_EXERCISES = [
     {
         id: 'breath',
-        name: 'Breath Training',
+        name: 'Breath',
         type: 'breath',
-        icon: '🌬️',
+        icon: '✦',
         practiceType: 'Breath & Stillness',
         preset: 'box',
         glow: 'rgba(147, 197, 253, 0.4)', // Blue glow
     },
     {
         id: 'cognitive',
-        name: 'Insight Meditation',
+        name: 'Cognitive',
         type: 'focus',
-        icon: '🔥',
+        icon: '👁',
         practiceType: 'Insight Meditation',
+        sensoryType: 'cognitive_vipassana',
         glow: 'rgba(251, 146, 60, 0.4)', // Orange glow
     },
     {
         id: 'somatic',
-        name: 'Body Scan',
+        name: 'Somatic',
         type: 'body',
         icon: '✨',
         practiceType: 'Body Scan',
-        sensoryType: 'bodyScan',
+        sensoryType: 'somatic_vipassana',
         glow: 'rgba(196, 181, 253, 0.4)', // Purple glow
     },
     {
-        id: 'visualization',
-        name: 'Visualization',
+        id: 'emotion',
+        name: 'Emotion',
         type: 'focus',
-        icon: '🔮',
+        icon: '💚',
+        practiceType: 'Feeling Meditation',
+        sensoryType: 'feeling',
+        glow: 'rgba(134, 239, 172, 0.4)', // Green glow
+    },
+    {
+        id: 'kasina',
+        name: 'Kasina',
+        type: 'focus',
+        icon: '✧',
         practiceType: 'Visualization',
         glow: 'rgba(167, 139, 250, 0.4)', // Deep purple
+    },
+    {
+        id: 'photic',
+        name: 'Photonic',
+        type: 'focus',
+        icon: '◉',
+        practiceType: 'Photic',
+        glow: 'rgba(216, 180, 254, 0.4)', // Fuchsia
+    },
+    {
+        id: 'sound',
+        name: 'Sound',
+        type: 'body',
+        icon: '⌇',
+        practiceType: 'Sound',
+        glow: 'rgba(192, 132, 252, 0.4)', // Violet
     },
     {
         id: 'cymatics',
@@ -45,14 +71,6 @@ const AVAILABLE_EXERCISES = [
         icon: '〰️',
         practiceType: 'Cymatics',
         glow: 'rgba(129, 140, 248, 0.4)', // Indigo
-    },
-    {
-        id: 'sound',
-        name: 'Sound Bath',
-        type: 'body',
-        icon: '🎵',
-        practiceType: 'Sound',
-        glow: 'rgba(192, 132, 252, 0.4)', // Violet
     },
 ];
 
@@ -152,8 +170,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
     const exerciseDurationsSec = selectedExercises.reduce((sum, e) => sum + (e.duration * 60), 0);
     const breakTotalSec = selectedExercises.length > 1 ? intervalBreakSec * (selectedExercises.length - 1) : 0;
     const totalDurationSec = exerciseDurationsSec + breakTotalSec;
-    // Format for display: convert back to minutes for hero display
-    const totalDurationMin = totalDurationSec / 60;
+    // Format for display: convert to minutes and seconds
+    const displayMinutes = Math.floor(totalDurationSec / 60);
+    const displaySeconds = totalDurationSec % 60;
 
     return (
         <div className="space-y-6">
@@ -179,63 +198,105 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         }
                     }
                 `}</style>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 124px', gap: '12px', alignItems: 'end', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-                    <div>
-                        <div
-                            className="text-xs mb-1 tracking-wider uppercase font-medium"
-                            style={{
-                                fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
-                            }}
-                        >
-                            Total Circuit
-                        </div>
-                        <div
-                            className="text-3xl font-bold tracking-wide"
-                            style={{
-                                color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
-                                fontFamily: 'var(--font-display)',
-                                animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none'
-                            }}
-                        >
-                            {Math.floor(totalDurationMin)} <span className="text-lg" style={{ fontFamily: 'var(--font-body)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.5)' }}>min</span>
-                        </div>
+                <div>
+                    {/* Header Label */}
+                    <div
+                        className="text-xs mb-3 tracking-wider uppercase font-medium"
+                        style={{
+                            fontFamily: 'var(--font-body)',
+                            color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
+                        }}
+                    >
+                        Total Circuit
                     </div>
-                    <div>
-                        <div
-                            className="text-xs mb-1 tracking-wider uppercase font-medium"
-                            style={{
-                                fontFamily: 'var(--font-body)',
-                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
-                            }}
-                        >
-                            Break Between
-                        </div>
-                        <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '6px', width: '124px', minWidth: '124px' }}>
-                            <input
-                                type="number"
-                                min="1"
-                                max="60"
-                                value={intervalBreakSec}
-                                onChange={(e) => {
-                                    const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                                    setIntervalBreakSec(clamped);
-                                    if (onChange) onChange({ exercises: selectedExercises, intervalBreakSec: clamped });
-                                }}
-                                className="text-lg font-bold rounded px-2 cursor-pointer text-center"
+                    {/* Values Row */}
+                    <div style={{ display: 'flex', alignItems: 'end', gap: '20px' }}>
+                        {/* Minutes */}
+                        <div style={{ flex: '0 0 auto' }}>
+                            <div
+                                className="text-xs mb-1 tracking-wider uppercase font-medium"
                                 style={{
-                                    fontFamily: 'var(--font-display)',
-                                    background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                                    color: 'var(--accent-color)',
-                                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
-                                    letterSpacing: 'var(--tracking-wide)',
-                                    height: '32px',
-                                    lineHeight: '32px',
-                                    boxSizing: 'border-box',
-                                    width: '64px'
+                                    fontFamily: 'var(--font-body)',
+                                    color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
+                                    fontSize: '10px',
                                 }}
-                            />
-                            <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)', whiteSpace: 'nowrap' }}>sec</div>
+                            >
+                                Minutes
+                            </div>
+                            <div
+                                className="text-3xl font-bold tracking-wide"
+                                style={{
+                                    color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
+                                    fontFamily: 'var(--font-display)',
+                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                    lineHeight: '1',
+                                }}
+                            >
+                                {displayMinutes}
+                            </div>
+                        </div>
+                        {/* Seconds */}
+                        <div style={{ flex: '0 0 auto' }}>
+                            <div
+                                className="text-xs mb-1 tracking-wider uppercase font-medium"
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
+                                    fontSize: '10px',
+                                }}
+                            >
+                                Seconds
+                            </div>
+                            <div
+                                className="text-3xl font-bold tracking-wide"
+                                style={{
+                                    color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
+                                    fontFamily: 'var(--font-display)',
+                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                    lineHeight: '1',
+                                }}
+                            >
+                                {displaySeconds}
+                            </div>
+                        </div>
+                        {/* Break Between */}
+                        <div style={{ flex: '0 0 auto' }}>
+                            <div
+                                className="text-xs mb-1 tracking-wider uppercase font-medium"
+                                style={{
+                                    fontFamily: 'var(--font-body)',
+                                    color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
+                                    fontSize: '10px',
+                                }}
+                            >
+                                Break Between
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="60"
+                                    value={intervalBreakSec}
+                                    onChange={(e) => {
+                                        const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                                        setIntervalBreakSec(clamped);
+                                        if (onChange) onChange({ exercises: selectedExercises, intervalBreakSec: clamped });
+                                    }}
+                                    className="text-lg font-bold rounded px-2 cursor-pointer text-center"
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
+                                        color: 'var(--accent-color)',
+                                        border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
+                                        letterSpacing: 'var(--tracking-wide)',
+                                        height: '32px',
+                                        lineHeight: '32px',
+                                        boxSizing: 'border-box',
+                                        width: '64px'
+                                    }}
+                                />
+                                <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)', whiteSpace: 'nowrap' }}>sec</div>
+                            </div>
                         </div>
                     </div>
                 </div>

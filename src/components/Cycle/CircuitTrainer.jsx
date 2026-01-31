@@ -21,11 +21,18 @@ export function CircuitTrainer({ onSelectCircuit }) {
     const handleStartCustomCircuit = () => {
         if (!customCircuitConfig || customCircuitConfig.exercises.length === 0) return;
 
+        // Calculate total duration including breaks
+        const exerciseDuration = customCircuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0);
+        const breakDuration = customCircuitConfig.exercises.length > 1 
+            ? (customCircuitConfig.intervalBreakSec / 60) * (customCircuitConfig.exercises.length - 1)
+            : 0;
+        const totalWithBreaks = exerciseDuration + breakDuration;
+
         const customCircuit = {
             id: 'custom_circuit',
             name: 'Custom Circuit',
             description: 'Your personalized training sequence',
-            totalDuration: customCircuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0),
+            totalDuration: totalWithBreaks,
             exercises: customCircuitConfig.exercises.map((item) => ({
                 type: item.exercise.type,
                 name: item.exercise.name,
