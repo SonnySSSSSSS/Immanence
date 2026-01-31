@@ -8,6 +8,8 @@ function ParallaxLayer({
   className = "",
   style = {},
   yTranslate = "0%", // e.g. "30%" to push down (clip bottom)
+  heightPx = null,
+  layerAnchor = "bottom",
   opacity = 1,
 }) {
   const imgRef = useRef(null);
@@ -45,13 +47,15 @@ function ParallaxLayer({
 
   const animStyle = useMemo(() => {
     const duration = `${secondsPerLoop}s`;
+    const heightStyle = heightPx ? { ["--pf-imgH"]: `${heightPx}px` } : {};
     return {
       ...style,
+      ...heightStyle,
       opacity,
       ["--loopW"]: `${loopW}px`,
       ["--dur"]: duration,
     };
-  }, [loopW, secondsPerLoop, style, opacity]);
+  }, [loopW, secondsPerLoop, style, opacity, heightPx]);
 
   return (
     <div
@@ -63,6 +67,9 @@ function ParallaxLayer({
         className="pf-track"
         style={{
           animationDuration: loopW > 0 ? `var(--dur)` : "0s",
+          top: layerAnchor === "top" ? 0 : "auto",
+          bottom: layerAnchor === "top" ? "auto" : 0,
+          alignItems: layerAnchor === "top" ? "flex-start" : "flex-end",
         }}
       >
         <img ref={imgRef} className="pf-img" src={src} alt="" draggable={false} onLoad={measure} />
@@ -80,7 +87,9 @@ export default function ParallaxForest({
   style = {},
 }) {
   const rootRef = useRef(null);
-  const [imgPx, setImgPx] = useState(0);
+  const [layerHeights, setLayerHeights] = useState({ sky: 0, trees: 0, foliage: 0 });
+
+  const clamp = useCallback((value, min, max) => Math.max(min, Math.min(max, value)), []);
 
   const recomputeImgPx = useCallback(() => {
     const root = rootRef.current;
@@ -88,9 +97,20 @@ export default function ParallaxForest({
     const sceneH = root.getBoundingClientRect().height;
     if (!sceneH) return;
 
-    const px = Math.max(720, Math.min(900, Math.round(sceneH * 1.3)));
-    setImgPx((prev) => (Math.abs(prev - px) > 0.5 ? px : prev));
-  }, []);
+    const next = {
+      sky: clamp(Math.round(sceneH * 1.05), 520, 740),
+      trees: clamp(Math.round(sceneH * 0.6), 300, 430),
+      foliage: clamp(Math.round(sceneH * 0.34), 180, 260),
+    };
+
+    setLayerHeights((prev) => {
+      const changed =
+        Math.abs(prev.sky - next.sky) > 0.5 ||
+        Math.abs(prev.trees - next.trees) > 0.5 ||
+        Math.abs(prev.foliage - next.foliage) > 0.5;
+      return changed ? next : prev;
+    });
+  }, [clamp]);
 
   useLayoutEffect(() => {
     // Two rAFs reduces "0px" reads during first paint on some devices.
@@ -123,21 +143,37 @@ export default function ParallaxForest({
   return (
     <div
       className={`pf-root ${className}`}
-      style={{ ...style, ["--pf-imgH"]: imgPx ? `${imgPx}px` : "780px" }}
+      style={{ ...style, ["--pf-imgH"]: "780px" }}
       ref={rootRef}
     >
-      {/* Slowest (exact 60s requirement) */}
-      <ParallaxLayer src={skySrc} secondsPerLoop={60} className="pf-sky" />
+      {/* Slowest - sky backdrop behind everything */}
+      <ParallaxLayer
+        src={skySrc}
+        secondsPerLoop={60}
+        className="pf-sky"
+        layerAnchor="top"
+        heightPx={layerHeights.sky}
+        yTranslate="0px"
+      />
 
-      {/* Medium */}
-      <ParallaxLayer src={treesSrc} secondsPerLoop={40} className="pf-trees" />
+      {/* Medium - trees in middle, top overlaps sky, bottom overlapped by foliage */}
+      <ParallaxLayer
+        src={treesSrc}
+        secondsPerLoop={40}
+        className="pf-trees"
+        layerAnchor="bottom"
+        heightPx={layerHeights.trees}
+        yTranslate="18%"
+      />
 
-      {/* Fastest + pushed down so bottom clips */}
+      {/* Fastest - foliage at front, overlaps bottom of trees */}
       <ParallaxLayer
         src={foliageSrc}
         secondsPerLoop={25}
         className="pf-foliage"
-        yTranslate="140px"
+        layerAnchor="bottom"
+        heightPx={layerHeights.foliage}
+        yTranslate="8%"
       />
 
       <style>{`
