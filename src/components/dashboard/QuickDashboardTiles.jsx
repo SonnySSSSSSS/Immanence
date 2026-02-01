@@ -236,7 +236,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
         unit: id === 'minutes_total' ? 'min' : '',
     }));
 
-    // HubCard variant: infographic card with glass container
+    // HubCard variant: infographic card with wallpaper background
     if (variant === 'hubCard') {
         return (
             <div
@@ -244,17 +244,12 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     position: 'relative',
                     marginBottom: '8px',
                     borderRadius: '24px',
-                    backgroundColor: isLight
+                    background: isLight
                         ? '#faf6ee'
                         : 'rgb(20, 15, 25)',
-                    backgroundImage: isLight
-                        ? 'none'
-                        : `linear-gradient(rgba(20, 15, 25, 0.4), rgba(20, 15, 25, 0.4)), url('/Immanence/assets/card_bg_seedling_nebula.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    border: `1px solid ${isLight
-                        ? 'rgba(160, 120, 60, 0.15)'
-                        : 'var(--accent-20)'}`,
+                    border: isLight
+                        ? '1px solid rgba(160, 120, 60, 0.15)'
+                        : '1px solid var(--accent-20)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
@@ -262,6 +257,23 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     padding: '12px',
                 }}
             >
+                {/* Wallpaper background layer */}
+                {!isLight && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            backgroundImage: `url(/Immanence/assets/card_bg_seedling_nebula.png)`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            zIndex: 0,
+                            pointerEvents: 'none',
+                        }}
+                    />
+                )}
+
+                {/* Content layer */}
+                <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: '8px', borderBottom: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.15)' : 'rgba(255, 255, 255, 0.08)'}` }}>
                     <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
@@ -301,6 +313,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         View Details
                     </button>
                 )}
+                </div>
             </div>
         );
     }
