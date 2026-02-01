@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
 
 // Parallax layer that loops seamlessly by rendering 2 copies side-by-side.
 // We measure the rendered width of ONE image, then animate translating the track by that width.
@@ -66,7 +67,10 @@ function ParallaxLayer({
       <div
         className="pf-track"
         style={{
+          animationName: 'pfScroll',
           animationDuration: loopW > 0 ? `var(--dur)` : "0s",
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite',
           top: layerAnchor === "top" ? 0 : "auto",
           bottom: layerAnchor === "top" ? "auto" : 0,
           alignItems: layerAnchor === "top" ? "flex-start" : "flex-end",
@@ -80,12 +84,20 @@ function ParallaxLayer({
 }
 
 export default function ParallaxForest({
-  skySrc = "/visualization/awareness/parallax_forest_00001_.png",
-  treesSrc = "/visualization/awareness/parallax_forest_00002_.png",
-  foliageSrc = "/visualization/awareness/parallax_forest_00003_.png",
+  skySrc,
+  treesSrc,
+  foliageSrc,
   className = "",
   style = {},
 }) {
+  const { selectedScene } = useAwarenessSceneStore();
+  const baseUrl = import.meta.env.BASE_URL;
+
+  // Construct image paths based on selected scene
+  const finalSkySrc = skySrc || `${baseUrl}scenes/${selectedScene}/layers/${selectedScene}_sky.webp`;
+  const finalTreesSrc = treesSrc || `${baseUrl}scenes/${selectedScene}/layers/${selectedScene}_trees_mid.webp`;
+  const finalFoliageSrc = foliageSrc || `${baseUrl}scenes/${selectedScene}/layers/${selectedScene}_bushes_fg.webp`;
+
   const rootRef = useRef(null);
   const [layerHeights, setLayerHeights] = useState({ sky: 0, trees: 0, foliage: 0 });
 
@@ -97,10 +109,11 @@ export default function ParallaxForest({
     const sceneH = root.getBoundingClientRect().height;
     if (!sceneH) return;
 
+    // Layer heights: sky fills full height and beyond, trees and foliage sized to their natural proportions
     const next = {
-      sky: clamp(Math.round(sceneH * 1.05), 520, 740),
-      trees: clamp(Math.round(sceneH * 0.6), 300, 430),
-      foliage: clamp(Math.round(sceneH * 0.34), 180, 260),
+      sky: clamp(Math.round(sceneH * 1.6), 600, 1200),
+      trees: clamp(Math.round(sceneH * 0.5), 260, 440),
+      foliage: clamp(Math.round(sceneH * 0.25), 140, 220),
     };
 
     setLayerHeights((prev) => {
@@ -146,34 +159,44 @@ export default function ParallaxForest({
       style={{ ...style, ["--pf-imgH"]: "780px" }}
       ref={rootRef}
     >
-      {/* Slowest - sky backdrop behind everything */}
+      {/* Sky - anchored at very top of container, slowest */}
       <ParallaxLayer
-        src={skySrc}
-        secondsPerLoop={60}
+        src={finalSkySrc}
+        secondsPerLoop={120}
         className="pf-sky"
         layerAnchor="top"
         heightPx={layerHeights.sky}
-        yTranslate="0px"
+        yTranslate="0"
       />
 
-      {/* Medium - trees in middle, top overlaps sky, bottom overlapped by foliage */}
+      {/* Trees - sits above foliage, positioned for balance */}
       <ParallaxLayer
-        src={treesSrc}
-        secondsPerLoop={40}
+        src={finalTreesSrc}
+        secondsPerLoop={80}
         className="pf-trees"
         layerAnchor="bottom"
         heightPx={layerHeights.trees}
-        yTranslate="18%"
+        yTranslate="-10%"
       />
 
-      {/* Fastest - foliage at front, overlaps bottom of trees */}
+      {/* Avatar (fixed in window, does not parallax-scroll). Must render BEFORE foliage so foliage overlays it. */}
+      <div className="pf-avatar" aria-hidden="true">
+        <img
+          className="pf-avatarImg"
+          src="/awareness/avatar/avatar_blocky_neutral.svg"
+          alt=""
+          draggable={false}
+        />
+      </div>
+
+      {/* Foliage/grass - sits at very bottom, fastest */}
       <ParallaxLayer
-        src={foliageSrc}
-        secondsPerLoop={25}
+        src={finalFoliageSrc}
+        secondsPerLoop={50}
         className="pf-foliage"
         layerAnchor="bottom"
         heightPx={layerHeights.foliage}
-        yTranslate="8%"
+        yTranslate="0"
       />
 
       <style>{`
@@ -190,6 +213,7 @@ export default function ParallaxForest({
           position: absolute;
           inset: 0;
           will-change: transform;
+          overflow: hidden;
         }
 
         .pf-track{
@@ -201,9 +225,6 @@ export default function ParallaxForest({
           display: flex;
           flex-direction: row;
           align-items: flex-end;
-          animation-name: pfScroll;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
           will-change: transform;
         }
 
@@ -227,10 +248,33 @@ export default function ParallaxForest({
           to   { transform: translate3d(calc(-1 * var(--loopW)), 0, 0); }
         }
 
-        /* Optional: minor depth tinting if you want */
-        .pf-sky{ opacity: 1; }
-        .pf-trees{ opacity: 1; }
-        .pf-foliage{ opacity: 1; }
+        .pf-sky{ z-index: 0; }
+        .pf-trees{ z-index: 1; }
+        .pf-avatar{ z-index: 2; }
+        .pf-foliage{ z-index: 3; }
+
+        .pf-avatar{
+          position: absolute;
+          left: 22%;
+          bottom: 6%;
+          transform: translateX(-50%);
+          pointer-events: none;
+          will-change: transform;
+          animation: pfBob 4.5s ease-in-out infinite;
+        }
+
+        .pf-avatarImg{
+          height: clamp(92px, 14vh, 140px);
+          width: auto;
+          user-select: none;
+          pointer-events: none;
+        }
+
+        @keyframes pfBob{
+          0%   { transform: translateX(-50%) translateY(0); }
+          50%  { transform: translateX(-50%) translateY(-10px); }
+          100% { transform: translateX(-50%) translateY(0); }
+        }
       `}</style>
     </div>
   );

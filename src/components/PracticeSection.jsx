@@ -51,6 +51,8 @@ import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import ParallaxForest from "./ParallaxForest.jsx";
+import { SakshiVisual } from "./SakshiVisual.jsx";
+import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
 import { recordPracticeSession } from "../services/sessionRecorder.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId } from "./PracticeSection/constants.js";
 import { getRitualById } from "../data/bhaktiRituals.js";
@@ -564,6 +566,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const tempoSessionCap = useTempoSyncSessionStore(s => s.segmentCap);
   const tempoSessionEffective = useTempoSyncSessionStore(s => s.effectivePhaseDurations);
   const songDurationSec = useTempoAudioStore(s => s.songDurationSec);
+
+  // Sakshi practice version and scene selection
+  const { sakshiVersion } = useAwarenessSceneStore();
 
   // Theme Tokens for unified styling across components
   const uiTokens = {
@@ -1744,6 +1749,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (sensoryType === "sakshi") {
         const sakshiButtonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
         const sakshiButtonShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';
+        const sakshiTitle = sakshiVersion === 1 ? 'Sakshi (Forest)' : 'Sakshi (Reflection)';
         return (
           <section className="relative w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-10">
             <div
@@ -1759,7 +1765,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               }}
             >
               <div className="absolute inset-0 pointer-events-none z-0">
-                <ParallaxForest />
+                {sakshiVersion === 1 ? <ParallaxForest /> : <SakshiVisual />}
               </div>
               <div className="relative z-[1] flex items-start justify-center w-full pt-3">
                 <div
@@ -1773,7 +1779,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     textShadow: '0 2px 16px rgba(0,0,0,0.6)',
                   }}
                 >
-                  Sakshi (Forest)
+                  {sakshiTitle}
                 </div>
               </div>
             </div>

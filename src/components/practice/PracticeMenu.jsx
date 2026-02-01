@@ -120,10 +120,11 @@ function PracticeMenu({
 
           {/* Render the Config for the active sub-mode */}
           {ActiveSubModeConfig ? (
-            <ActiveSubModeConfig 
+            <ActiveSubModeConfig
               {...setters}
               isLight={isLight}
               selectedRitualId={selectedRitualId}
+              onStart={onStart}
             />
           ) : (
             <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>

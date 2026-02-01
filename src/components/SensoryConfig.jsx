@@ -1,113 +1,247 @@
 // src/components/SensoryConfig.jsx
-// Configuration panel for Sensory practice mode
-// Fluid slider for Body Scan vs Sakshi
+// Cognitive Submode Menu - Awareness Practice Configuration
+// Displays Sakshi I & II practice cards with scene selector
 import React from 'react';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { useAwarenessSceneStore } from '../state/awarenessSceneStore.js';
 
-// Sensory practice types
 export const SENSORY_TYPES = [
     { id: 'bodyScan', label: 'Body Scan', description: 'Progressive body awareness' },
     { id: 'sakshi', label: 'Sakshi', description: 'Witness consciousness' },
+];
+
+// Awareness scene options - paths will be prefixed with BASE_URL at runtime
+const AWARENESS_SCENES = [
+    { id: 'forest', label: 'Forest', imagePath: 'awareness/scenes/forest.webp' },
+    { id: 'street', label: 'Street', imagePath: 'awareness/scenes/street.webp' },
+    { id: 'room', label: 'Room', imagePath: 'awareness/scenes/room.webp' },
+    { id: 'beach', label: 'Beach', imagePath: 'awareness/scenes/beach.webp' },
+    { id: 'mountain', label: 'Mountain', imagePath: 'awareness/scenes/mountain.webp' },
 ];
 
 export function SensoryConfig({
     sensoryType,
     setSensoryType,
     isLight = false,
+    onStart = null,
 }) {
-    const theme = useTheme();
-    const isSakshi = sensoryType === 'sakshi';
+    const { selectedScene, setSelectedScene, sakshiVersion, setSakshiVersion } = useAwarenessSceneStore();
+    const baseUrl = import.meta.env.BASE_URL;
 
     return (
-        <div className="sensory-config mb-6">
-            <div
-                className="mb-3"
-                style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "9px",
-                    fontWeight: 600,
-                    letterSpacing: "var(--tracking-mythic)",
-                    textTransform: "uppercase",
-                    color: "var(--text-muted)",
-                    textAlign: "center"
-                }}
-            >
-                Sensory Focus
-            </div>
-
-            {/* Fluid Slider */}
-            <div
-                className="relative rounded-full p-1 transition-all duration-300"
-                style={{
-                    background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.3)',
-                    border: `1px solid ${isLight ? 'var(--light-border)' : 'var(--accent-10)'}`,
-                }}
-            >
-                {/* Sliding indicator with surface tension fill */}
-                <div
-                    className="absolute top-1 bottom-1 rounded-full"
+        <div className="sensory-config space-y-6">
+            {/* Sakshi Practice Cards */}
+            <div className="space-y-3">
+                {/* Sakshi I - Witnessing Presence */}
+                <button
+                    onClick={() => setSakshiVersion(1)}
+                    className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-lg text-left w-full"
                     style={{
-                        left: isSakshi ? '50%' : '0.25rem',
-                        right: isSakshi ? '0.25rem' : '50%',
-                        background: isLight
-                            ? 'linear-gradient(135deg, var(--accent-color) 0%, var(--accent-secondary) 100%)'
-                            : 'var(--accent-color)',
-                        boxShadow: isLight
-                            ? 'inset 1px 1px 0 rgba(255,255,255,0.4), 0 1px 4px var(--light-shadow-tint)'
-                            : '0 0 15px var(--accent-10)',
-                        opacity: 1,
-                        // Surface tension filling - ink soaking into paper
-                        transition: 'left 1200ms cubic-bezier(0.19, 1, 0.22, 1), right 1200ms cubic-bezier(0.19, 1, 0.22, 1), background 1200ms ease-in-out',
+                        background: 'linear-gradient(135deg, rgba(20, 40, 45, 0.8) 0%, rgba(15, 35, 40, 0.9) 100%)',
+                        borderColor: sakshiVersion === 1 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.3)',
+                        borderWidth: sakshiVersion === 1 ? '2px' : '1px',
+                        minHeight: '180px',
+                        display: 'flex',
+                        alignItems: 'stretch',
+                        boxShadow: sakshiVersion === 1 ? '0 0 20px rgba(100, 200, 150, 0.4)' : 'none',
+                        padding: 0,
                     }}
-                />
+                >
+                    {/* Background image */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundImage: `url(${baseUrl}awareness/scenes/forest.webp)`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            opacity: 0.25,
+                            zIndex: 0,
+                        }}
+                    />
 
-                {/* Buttons */}
-                <div className="relative z-10 grid grid-cols-2 gap-0">
-                    {SENSORY_TYPES.map((type) => {
-                        const isActive = sensoryType === type.id;
-                        return (
-                            <button
-                                key={type.id}
-                                onClick={() => setSensoryType(type.id)}
-                                className="rounded-full px-4 py-3 transition-all duration-300 text-center flex flex-col items-center gap-1"
+                    {/* Content overlay */}
+                    <div
+                        className="relative z-10 p-6 flex flex-col justify-between flex-1"
+                        style={{
+                            background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, transparent 100%)',
+                        }}
+                    >
+                        <div>
+                            <h3
                                 style={{
-                                    fontFamily: "var(--font-display)",
-                                    fontSize: "11px",
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '16px',
                                     fontWeight: 600,
-                                    letterSpacing: "var(--tracking-wide)",
-                                    background: 'transparent',
+                                    color: '#D4AF37',
+                                    letterSpacing: '1px',
+                                    marginBottom: '4px',
                                 }}
                             >
-                                <span
-                                    className="transition-all duration-500"
-                                    style={{
-                                        color: isActive
-                                            ? (isLight ? 'var(--light-bg-base)' : '#050508')
-                                            : 'var(--text-secondary)',
-                                        fontWeight: isActive ? 600 : 500,
-                                        // Inactive state recedes without implying inferiority
-                                        opacity: isActive ? 1 : (isLight ? 0.65 : 0.5),
-                                    }}
-                                >
-                                    {type.label}
-                                </span>
-                                <span
-                                    className="transition-all duration-500"
-                                    style={{
-                                        fontSize: "8px",
-                                        color: isActive
-                                            ? (isLight ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)')
-                                            : 'var(--text-muted)',
-                                        opacity: isActive ? 1 : 0.5,
-                                    }}
-                                >
-                                    {type.description}
-                                </span>
-                            </button>
-                        );
-                    })}
+                                SAKSHI I
+                            </h3>
+                            <h4
+                                style={{
+                                    fontFamily: 'var(--font-serif)',
+                                    fontSize: '18px',
+                                    color: '#E8DCC8',
+                                    fontWeight: 400,
+                                    marginBottom: '8px',
+                                }}
+                            >
+                                Witnessing Presence
+                            </h4>
+                            <p
+                                style={{
+                                    fontFamily: 'var(--font-serif)',
+                                    fontSize: '12px',
+                                    color: 'rgba(232, 220, 200, 0.8)',
+                                    lineHeight: '1.5',
+                                }}
+                            >
+                                Observe the self as it moves through life.
+                                <br />
+                                Thoughts arise. Thoughts dissolve.
+                                <br />
+                                Nothing is kept.
+                            </p>
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: 'rgba(232, 220, 200, 0.7)',
+                                fontSize: '10px',
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: '0.5px',
+                            }}
+                        >
+                            <span>👁️</span>
+                            <span>NO RECORDING</span>
+                        </div>
+                    </div>
+                </button>
+
+                {/* Sakshi II - Noticing & Labeling (blank placeholder) */}
+                <button
+                    onClick={() => setSakshiVersion(2)}
+                    className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer text-left w-full"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(20, 40, 45, 0.4) 0%, rgba(15, 35, 40, 0.5) 100%)',
+                        borderColor: sakshiVersion === 2 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.15)',
+                        borderWidth: sakshiVersion === 2 ? '2px' : '1px',
+                        minHeight: '140px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: sakshiVersion === 2 ? 1 : 0.6,
+                        boxShadow: sakshiVersion === 2 ? '0 0 20px rgba(100, 200, 150, 0.4)' : 'none',
+                        padding: 0,
+                    }}
+                >
+                    <div
+                        style={{
+                            textAlign: 'center',
+                            color: 'rgba(232, 220, 200, 0.4)',
+                            fontFamily: 'var(--font-serif)',
+                            fontSize: '14px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '11px',
+                                letterSpacing: '1px',
+                                marginBottom: '6px',
+                                color: 'rgba(212, 175, 55, 0.3)',
+                            }}
+                        >
+                            SAKSHI II
+                        </div>
+                        <div>Coming Soon</div>
+                    </div>
+                </button>
+            </div>
+
+            {/* Scene Selector */}
+            <div className="space-y-3">
+                <div
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '9px',
+                        fontWeight: 600,
+                        letterSpacing: 'var(--tracking-mythic)',
+                        textTransform: 'uppercase',
+                        color: 'var(--text-muted)',
+                        textAlign: 'center',
+                    }}
+                >
+                    Scene
+                </div>
+
+                {/* Scene thumbnails grid */}
+                <div className="grid grid-cols-3 gap-3">
+                    {AWARENESS_SCENES.map((scene) => (
+                        <button
+                            key={scene.id}
+                            onClick={() => setSelectedScene(scene.id)}
+                            className="relative group rounded-lg overflow-hidden transition-all duration-300"
+                            style={{
+                                aspectRatio: '4/3',
+                                border: selectedScene === scene.id ? '2px solid #64C896' : '1px solid rgba(100, 200, 150, 0.2)',
+                                borderRadius: '8px',
+                                background: 'rgba(0, 0, 0, 0.3)',
+                                padding: 0,
+                                cursor: 'pointer',
+                                transform: selectedScene === scene.id ? 'scale(1.05)' : 'scale(1)',
+                                boxShadow: selectedScene === scene.id ? '0 0 12px rgba(100, 200, 150, 0.4)' : 'none',
+                            }}
+                        >
+                            {/* Background image */}
+                            <img
+                                src={baseUrl + scene.imagePath}
+                                alt={scene.label}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    transition: 'opacity 300ms',
+                                }}
+                            />
+                        </button>
+                    ))}
                 </div>
             </div>
+
+            {/* Begin Witnessing Button */}
+            <button
+                onClick={onStart}
+                className="w-full rounded-full py-3 font-display font-semibold tracking-wide uppercase transition-all duration-300"
+                style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '13px',
+                    letterSpacing: '1px',
+                    background: 'linear-gradient(135deg, rgba(100, 200, 150, 0.8) 0%, rgba(80, 180, 120, 0.9) 100%)',
+                    color: '#0F0F10',
+                    border: '1px solid rgba(100, 200, 150, 0.5)',
+                    boxShadow: '0 0 20px rgba(100, 200, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                    cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                    e.target.style.boxShadow = '0 0 30px rgba(100, 200, 150, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+                    e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.boxShadow = '0 0 20px rgba(100, 200, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+                    e.target.style.transform = 'translateY(0)';
+                }}
+            >
+                Begin Witnessing
+            </button>
         </div>
     );
 }

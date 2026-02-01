@@ -26,7 +26,7 @@ const PER_PRACTICE_DEFAULTS = {
     variant: 'thought-labeling',
     vipassanaTheme: "dawnSky",
     vipassanaElement: "bird",
-    sensoryType: 'bodyScan',
+    sensoryType: 'sakshi',
     scanType: 'full'
   },
   somatic_vipassana: {
