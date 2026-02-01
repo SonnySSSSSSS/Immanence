@@ -977,3 +977,78 @@ Default rules:
 - No session modifications from dashboard
 - Aggregators are pure reducers (no side effects)
 - Moon orbit overlay
+
+## Dashboard Detail Expansion (Phase 9B) — Modal Breakdowns & Hub Variant
+
+**Objective**: Extend dashboard with a detail modal showing completion and adherence breakdowns, and provide a compact 4-KPI hub variant for the tracking section.
+
+### Architecture
+
+**Data Flow**: `progressStore.sessionsV2` → `selectSessions()` → `aggregators` → `getDashboardDetail()` → `HomeHub` → `<DashboardDetailModal />`
+
+**Key Principle**: Same read-only pure reporting architecture as Phase 9A, extended with modal component for expanded detail view.
+
+### Modal Contract
+
+The detail modal displays three sections derived from `getDashboardDetail()`:
+
+#### **Completion Breakdown**
+
+| Metric | Source | Definition |
+|--------|--------|------------|
+| Completed | `aggCompletionBreakdown()` | Count of sessions with `completion === 'completed'` |
+| Abandoned | `aggCompletionBreakdown()` | Count of sessions with `completion === 'abandoned'` |
+| Partial | `aggCompletionBreakdown()` | Count of sessions with `completion === 'partial'` or legacy `early_exit`/`earlyExit` |
+| Completion Rate | `aggQualitySignals()` | `(completed / (completed + abandoned + partial)) * 100` |
+
+#### **Schedule Adherence**
+
+| Metric | Source | Definition |
+|--------|--------|------------|
+| On-Time | `aggScheduleAdherence()` | Count of sessions with `scheduleMatched.status === 'green'` |
+| Late | `aggScheduleAdherence()` | Count of sessions with `scheduleMatched.status === 'red'` |
+| Total Matched | `aggScheduleAdherence()` | Count of sessions with `scheduleMatched !== null` |
+| Adherence Percent | `aggScheduleAdherence()` | `(greenCount / (greenCount + redCount)) * 100` |
+
+#### **Weekly Activity**
+
+Inherited from Phase 9A; heatmap of session count and total minutes per day of week (7-day aggregation).
+
+### Hub Variant (4-KPI Compact)
+
+The tracking section of HomeHub renders a compact dashboard variant:
+
+- **Grid Layout**: 2×2 KPI tiles (omits `minutes_total` for space efficiency)
+- **KPIs Displayed**: `sessions_total`, `days_active`, `completion_rate`, `on_time_rate`
+- **Range**: `'90d'` (deeper insight than top dashboard's 30d)
+- **Details Button**: Opens modal to show full breakdown
+- **Size**: ~50% of previous CompactStatsCard height
+
+### Scope & Range Policy
+
+**Hub-specific ranges**:
+
+- **Top dashboard** (Phase 9A): `'30d'` (quick snapshot)
+- **Hub variant** (Phase 9B): `'90d'` (longer-term trends for detailed analysis)
+- **scope**: Same as Phase 9A (`'runId'` if active, else `'lifetime'`)
+- **includeHonor**: `true`
+
+### Components
+
+**Pure UI layer**:
+
+- `src/components/dashboard/DashboardDetailModal.jsx`: Two-column modal showing completion and adherence breakdowns with light/dark mode support
+- `src/components/dashboard/QuickDashboardTiles.jsx`: Extended with `variant='hub'` and `onOpenDetails` callback
+- `src/components/HomeHub.jsx`: Wires modal state and detail computation
+
+**Reporting layer** (pure functions, no mutations):
+
+- `src/reporting/dashboardProjection.js::getDashboardDetail()`: Composes aggregators to return `{ completionBreakdown, scheduleAdherence, weeklyActivity }`
+- Existing aggregators: `aggCompletionBreakdown()`, `aggScheduleAdherence()`, `aggQualitySignals()`, `getWeeklyActivityHeatmap()`
+
+### No Mutations
+
+- Modal is read-only; no session modifications
+- Hub variant is presentational
+- Detail data computed fresh on each render (90d window)
+- No state mutations during modal open/close
