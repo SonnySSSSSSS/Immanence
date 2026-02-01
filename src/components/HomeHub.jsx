@@ -471,7 +471,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
             return (
               <QuickDashboardTiles
-                variant="hub"
+                variant="hubCard"
                 tiles={hubTiles}
                 onOpenDetails={() => setIsDashboardModalOpen(true)}
               />
