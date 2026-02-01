@@ -22,12 +22,15 @@ import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
+import { QuickDashboardTiles } from "./dashboard/QuickDashboardTiles.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
 import { useUiStore } from "../state/uiStore.js";
+import { getQuickDashboardTiles } from "../reporting/dashboardProjection.js";
+import { getHomeDashboardPolicy } from "../reporting/tilePolicy.js";
 import { useTutorialStore } from "../state/tutorialStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
@@ -411,6 +414,26 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             />
           </div>
         </div>
+
+{/* QUICK DASHBOARD TILES (Summary metrics) */}
+<div className="w-full">
+  {(() => {
+    // Determine dashboard policy based on active run
+    const policy = getHomeDashboardPolicy({
+      activeRunId: activePath?.runId,
+    });
+
+    // Fetch tiles using policy
+    const tiles = getQuickDashboardTiles({
+      scope: policy.scope,
+      range: policy.range,
+      includeHonor: policy.includeHonor,
+      activeRunId: policy.activeRunId,
+    });
+
+    return <QuickDashboardTiles tiles={tiles} />;
+  })()}
+</div>
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
 <div className="w-full">
