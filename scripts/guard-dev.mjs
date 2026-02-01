@@ -80,7 +80,12 @@ function currentWorktreeMustExist(repoRoot) {
     if (line.startsWith("worktree ")) paths.push(line.slice("worktree ".length));
   }
   const normalized = paths.map((p) => p.replace(/\\/g, "/"));
-  const isInWorktree = normalized.some((p) => cwd === p || cwd.startsWith(p + "/"));
+  // Case-insensitive comparison for Windows paths
+  const cwdLower = cwd.toLowerCase();
+  const isInWorktree = normalized.some((p) => {
+    const pLower = p.toLowerCase();
+    return cwdLower === pLower || cwdLower.startsWith(pLower + "/");
+  });
   if (!isInWorktree) {
     fail(
       `Current directory is not a registered git worktree.\n` +
