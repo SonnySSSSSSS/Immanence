@@ -23,13 +23,14 @@ import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from 
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { QuickDashboardTiles } from "./dashboard/QuickDashboardTiles.jsx";
+import { DashboardDetailModal } from "./dashboard/DashboardDetailModal.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
 import { useUiStore } from "../state/uiStore.js";
-import { getQuickDashboardTiles } from "../reporting/dashboardProjection.js";
+import { getQuickDashboardTiles, getDashboardDetail } from "../reporting/dashboardProjection.js";
 import { getHomeDashboardPolicy } from "../reporting/tilePolicy.js";
 import { useTutorialStore } from "../state/tutorialStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
@@ -161,6 +162,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [showHistory, setShowHistory] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
 
+  // Dashboard detail modal state
+  const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
+
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-[580px]';
 
@@ -277,6 +281,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
 
+  // Compute dashboard detail for modal (90d range)
+  const hubPolicy = getHomeDashboardPolicy({
+    activeRunId: activePath?.runId,
+  });
+  const dashboardDetail = getDashboardDetail({
+    scope: hubPolicy.scope,
+    range: '90d',
+    includeHonor: hubPolicy.includeHonor,
+    activeRunId: hubPolicy.activeRunId,
+  });
+
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx globally */}
@@ -342,6 +357,13 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       <HonorLogModal
         isOpen={showHonorModal}
         onClose={() => setShowHonorModal(false)}
+      />
+
+      {/* Dashboard Detail Modal */}
+      <DashboardDetailModal
+        isOpen={isDashboardModalOpen}
+        onClose={() => setIsDashboardModalOpen(false)}
+        detail={dashboardDetail}
       />
 
       {activeLauncher?.id === 'thought-detachment-onboarding' && launcherContext && (
@@ -456,17 +478,25 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   />
 </div>
 
-        {/* TRACKING HUB - Swipeable Stats Cards */}
+        {/* TRACKING HUB - Dashboard Hub Variant */}
         <div className="w-full">
-          <HubCardSwiper cards={[
-            <CompactStatsCard
-              key="breathwork"
-              domain="breathwork"
-              streakInfo={streakInfo}
-              onOpenArchive={() => openArchive(ARCHIVE_TABS.ALL)}
-              onOpenReports={(domain) => openArchive(ARCHIVE_TABS.REPORTS, domain)}
-            />,
-          ]} />
+          {(() => {
+            // Fetch hub variant tiles with 90d range
+            const hubTiles = getQuickDashboardTiles({
+              scope: hubPolicy.scope,
+              range: '90d',
+              includeHonor: hubPolicy.includeHonor,
+              activeRunId: hubPolicy.activeRunId,
+            });
+
+            return (
+              <QuickDashboardTiles
+                variant="hub"
+                tiles={hubTiles}
+                onOpenDetails={() => setIsDashboardModalOpen(true)}
+              />
+            );
+          })()}
         </div>
 
 

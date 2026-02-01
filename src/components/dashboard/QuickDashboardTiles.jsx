@@ -85,12 +85,14 @@ function DashboardTile({ tile, isLight }) {
 }
 
 /**
- * QuickDashboardTiles — Read-only dashboard summary (5 tiles)
+ * QuickDashboardTiles — Read-only dashboard summary
  * @param {Object} props
  * @param {Object} props.tiles - Tiles object from getQuickDashboardTiles()
  *                                 Shape: { minutes_total, sessions_total, days_active, completion_rate, on_time_rate }
+ * @param {string} props.variant - 'default' (5 tiles) or 'hub' (4 KPI compact card)
+ * @param {Function} props.onOpenDetails - Optional callback when details button clicked (hub variant only)
  */
-export function QuickDashboardTiles({ tiles = {} }) {
+export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
@@ -98,7 +100,7 @@ export function QuickDashboardTiles({ tiles = {} }) {
         return null;
     }
 
-    // Define tile labels and ordering by ID
+    // Define tile labels
     const tileLabels = {
         minutes_total: 'Total Minutes',
         sessions_total: 'Sessions',
@@ -107,8 +109,10 @@ export function QuickDashboardTiles({ tiles = {} }) {
         on_time_rate: 'On-Time Rate',
     };
 
-    // Canonical tile order
-    const tileOrder = ['minutes_total', 'sessions_total', 'days_active', 'completion_rate', 'on_time_rate'];
+    // Tile order based on variant
+    const tileOrder = variant === 'hub'
+        ? ['sessions_total', 'days_active', 'completion_rate', 'on_time_rate']
+        : ['minutes_total', 'sessions_total', 'days_active', 'completion_rate', 'on_time_rate'];
 
     // Build ordered tiles with labels from tiles object
     const orderedTiles = tileOrder.map(id => ({
@@ -118,6 +122,71 @@ export function QuickDashboardTiles({ tiles = {} }) {
         unit: id === 'minutes_total' ? 'min' : '',
     }));
 
+    // Hub variant: compact 4-KPI card with details button
+    if (variant === 'hub') {
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '8px',
+                    marginBottom: '8px',
+                }}
+            >
+                {/* 4-tile compact grid */}
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '8px',
+                    }}
+                >
+                    {orderedTiles.map(tile => (
+                        <DashboardTile key={tile.id} tile={tile} isLight={isLight} />
+                    ))}
+                </div>
+
+                {/* Details button */}
+                {onOpenDetails && (
+                    <button
+                        onClick={onOpenDetails}
+                        style={{
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            border: 'none',
+                            borderRadius: '4px',
+                            background: isLight
+                                ? 'rgba(100, 80, 60, 0.2)'
+                                : 'rgba(255, 255, 255, 0.1)',
+                            color: isLight
+                                ? 'rgba(45, 35, 25, 0.8)'
+                                : 'rgba(255, 255, 255, 0.7)',
+                            cursor: 'pointer',
+                            transition: 'all 150ms ease-out',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.background = isLight
+                                ? 'rgba(100, 80, 60, 0.3)'
+                                : 'rgba(255, 255, 255, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.background = isLight
+                                ? 'rgba(100, 80, 60, 0.2)'
+                                : 'rgba(255, 255, 255, 0.1)';
+                        }}
+                    >
+                        View Details
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    // Default variant: 5-tile horizontal layout
     return (
         <div
             style={{
