@@ -12,7 +12,6 @@ import { calculatePathProbabilities, getDominantPath, determinePathState } from 
 import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
-import { useTrackingStore } from '../state/trackingStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { useCurriculumStore } from '../state/curriculumStore';
@@ -1449,7 +1448,6 @@ function AttentionPathSection({ expanded, onToggle, armed, handleDestructive, is
 
 function TrackingHubSection({ expanded, onToggle, isLight = false }) {
     const { sessions } = useProgressStore();
-    const trackingSessions = useTrackingStore(s => s.sessions);
     const [selectedPattern, setSelectedPattern] = useState('dedicated');
 
     const injectMockData = (patternKey) => {
@@ -1556,21 +1554,19 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
             });
         }
 
-        // Inject into trackingStore
-        useTrackingStore.setState({ sessions: mockSessions });
+        // Inject into progressStore (not trackingStore - which is dev-only)
+        useProgressStore.setState({ sessions: mockSessions });
         console.log(`✅ Injected ${mockSessions.length} trajectory sessions (${config.label}) over ${weeksToGenerate} weeks`);
     };
 
     const clearTrajectoryData = () => {
-        const realSessions = trackingSessions.filter(s => !s.metadata?.mock);
-        useTrackingStore.setState({ sessions: realSessions });
+        const realSessions = sessions.filter(s => !s.metadata?.mock);
+        useProgressStore.setState({ sessions: realSessions });
         console.log('🗑️ Cleared trajectory mock data');
     };
 
     const mockSessionCount = sessions.filter(s => s.metadata?.mock).length;
     const totalSessionCount = sessions.length;
-    const trajectoryMockCount = trackingSessions.filter(s => s.metadata?.mock).length;
-    const trajectoryTotalCount = trackingSessions.length;
 
     return (
         <Section

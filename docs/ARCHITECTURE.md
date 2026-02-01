@@ -277,6 +277,46 @@ This section documents deprecated APIs and their removal conditions. All removal
 - Phase 7: Sessions recorded before Phase 7 retain `scheduleMatched = null`; rail falls back to computed matching with identical semantics
 - Future removal: If `navigationStore.scheduleSlots` removed, ensure all existing data migrated and active paths have no references
 
+## Store Independence (Single Source of Truth)
+
+### Critical Rule: No Two-Way Sync Between Stores
+
+Production tracking follows a **strict one-way data flow** to prevent synchronization errors and maintain immutability:
+
+| Store | Purpose | Authority | Sync Direction | Allowed Operations |
+|---|---|---|---|---|
+| **progressStore** | Authoritative session spine | ✅ YES (immutable) | N/A | Write sessions, honor logs, streaks; read-only by all other stores |
+| **attentionStore** | Weekly feature aggregation | NO | ← READ progressStore | Compute weekly features; trigger re-aggregation on session write |
+| **mandalaStore** | Stage/accuracy derivation | NO | ← READ progressStore | Sync derived metrics; trigger on session write |
+| **trackingStore** | Dev-only precision meter mocks | NO (dev-only) | Isolated | Inject mock `devModeOverride` for `PrecisionMeterDevPanel` testing only |
+| **Other stores** | Various purposes | NO | ← READ progressStore where needed | Read-only access to sessions for secondary computations |
+
+### trackingStore Scope (Dev-Only)
+
+`trackingStore` exists **SOLELY** to inject mock data for testing the precision meter component in DevPanel:
+
+```javascript
+devModeOverride: null,           // Array of 7-day mock timing offsets
+setDevModeOverride(mockData),    // Inject mock data
+clearDevModeOverride(),          // Reset to empty
+getWeeklyTimingOffsets(),        // Return mock if active; else []
+```
+
+**Restrictions:**
+- ❌ DO NOT record sessions to `trackingStore`
+- ❌ DO NOT sync data between `trackingStore` and `progressStore`
+- ❌ DO NOT store production data in `trackingStore`
+- ❌ DO NOT compute stats in `trackingStore`
+- ✅ DO use `trackingStore` for testing precision meter mock injection (DevPanel only)
+
+### Consequence of Store Independence
+
+- ✅ **No sync bugs**: Each store controls its own data; no conflicts possible
+- ✅ **Immutable sources**: productionStore data never mutated by derived stores
+- ✅ **Clear ownership**: Each store has explicit responsibility; no ambiguity
+- ✅ **Testability**: Dev-only stores isolated from production data flow
+- ✅ **Debugging**: Track data changes through explicit one-way flow only
+
 ## Source of Truth vs. Derived State (Reference Matrix)
 
 | **Data Type** | **Source of Truth** | **Derivers** | **Fallback** |
