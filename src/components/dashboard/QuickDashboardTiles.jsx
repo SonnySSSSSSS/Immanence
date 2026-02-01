@@ -241,26 +241,36 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
         return (
             <div
                 style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                    padding: '12px',
                     marginBottom: '8px',
-                    borderRadius: '12px',
+                    borderRadius: '24px',
                     background: isLight
-                        ? 'rgba(255, 250, 240, 0.6)'
-                        : 'rgba(20, 25, 30, 0.6)',
+                        ? '#faf6ee'
+                        : 'rgb(20, 15, 25)',
                     border: `1px solid ${isLight
-                        ? 'rgba(200, 160, 100, 0.2)'
-                        : 'rgba(255, 255, 255, 0.1)'}`,
-                    backdropFilter: 'blur(12px)',
-                    boxShadow: `0 8px 24px ${isLight
-                        ? 'rgba(0, 0, 0, 0.1)'
-                        : 'rgba(0, 0, 0, 0.3)'}`,
+                        ? 'rgba(160, 120, 60, 0.15)'
+                        : 'var(--accent-20)'}`,
+                    overflow: 'hidden',
                 }}
             >
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: '8px', borderBottom: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.15)' : 'rgba(255, 255, 255, 0.08)'}` }}>
+                {/* Inner glass blur layer */}
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        padding: '12px',
+                        background: isLight
+                            ? 'rgba(250, 246, 238, 0.72)'
+                            : 'rgba(20, 15, 25, 0.78)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        borderLeft: `1px solid ${isLight
+                            ? 'rgba(160, 120, 60, 0.1)'
+                            : 'var(--accent-15)'}`,
+                    }}
+                >
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: '8px', borderBottom: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.15)' : 'rgba(255, 255, 255, 0.08)'}` }}>
                     <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
                         Progress Overview
                     </div>
@@ -319,6 +329,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         View Details
                     </button>
                 )}
+                </div>
             </div>
         );
     }
