@@ -1,5 +1,7 @@
 // src/data/pilotTestProgram.js
 
+import { MATCH_POLICY } from './curriculumMatching.js';
+
 export const EVENING_TEST_CIRCUIT = {
     id: 'evening-test-circuit',
     name: 'Evening Test Circuit',
@@ -45,6 +47,9 @@ const buildPilotDays = (totalDays = 14) => {
                     legNumber: 1,
                     label: 'Morning Breath',
                     practiceType: 'Breath & Stillness',
+                    categoryId: 'breathwork',
+                    matchPolicy: MATCH_POLICY.ANY_IN_CATEGORY,
+                    required: true,
                     practiceConfig: { breathPattern: 'box', duration: 7 },
                     description: 'Pranayama/Breath',
                     focusArea: 'breath',
@@ -53,6 +58,9 @@ const buildPilotDays = (totalDays = 14) => {
                     legNumber: 2,
                     label: 'Evening Circuit',
                     practiceType: 'Circuit',
+                    categoryId: 'circuit_training',
+                    matchPolicy: MATCH_POLICY.ANY_IN_CATEGORY,
+                    required: true,
                     practiceConfig: { circuitId: 'evening-test-circuit', duration: 15 },
                     description: 'Breath / Visualization / Feeling Meditation',
                     focusArea: 'integration',

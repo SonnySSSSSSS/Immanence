@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { useAuthUser, getDisplayName } from "../state/useAuthUser";
+import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 
 /**
  * THEME CONFIGURATION
@@ -444,7 +445,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             </div>
                                         )}
 
-                                        <div className="mt-4 space-y-2">
+                                        {/* Precision Rail Infographic */}
+                                        <div className="mt-6 pt-4 border-t" style={{ borderColor: isLight ? 'rgba(180, 140, 60, 0.15)' : 'rgba(255, 255, 255, 0.05)' }}>
+                                            <CurriculumPrecisionRail />
+                                        </div>
+
+                                        <div className="mt-6 space-y-2">
                                             {times.map((time, idx) => {
                                                 const isDone = idx < completedCount;
                                                 const isNext = idx === nextIndex;

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { useCurriculumStore } from '../state/curriculumStore.js';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { treatiseChapters } from '../data/treatise.generated.js';
@@ -11,7 +12,8 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
     const isLight = colorScheme === 'light';
 
     if (!path) return null;
-    const { beginPath, scheduleSlots, setScheduleSlots } = useNavigationStore();
+    const { beginPath } = useNavigationStore();
+    const { practiceTimeSlots, setPracticeTimeSlots } = useCurriculumStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleRequired, setScheduleRequired] = useState(false);
 
@@ -25,11 +27,11 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
         );
     };
 
-    const scheduleTimes = (scheduleSlots || []).map(slot => slot.time).filter(Boolean);
+    const scheduleTimes = (practiceTimeSlots || []).filter(Boolean);
 
     const handleScheduleChange = (nextTimes) => {
         setScheduleRequired(false);
-        setScheduleSlots(nextTimes.map((time, index) => ({ slotId: index + 1, time })));
+        setPracticeTimeSlots(nextTimes);
     };
 
     const handleBegin = () => {

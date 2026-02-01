@@ -56,9 +56,8 @@ export const useNavigationStore = create(
                 const startedAt = new Date().toISOString();
                 const durationDays = getPathDurationDays(pathId);
                 const endsAt = computeEndsAt(startedAt, durationDays);
-                const selectedTimes = (get().scheduleSlots || [])
-                    .map(slot => slot.time)
-                    .filter(Boolean);
+                // Read schedule from canonical curriculum store
+                const selectedTimes = useCurriculumStore.getState().getPracticeTimeSlots() || [];
 
                 set({
                     activePath: {
@@ -208,23 +207,26 @@ export const useNavigationStore = create(
 
             /**
              * Set daily schedule slots (1..3)
+             * REDIRECTS to curriculumStore as canonical source
+             * Kept for UI compatibility but internally delegates to curriculum store
              */
             setScheduleSlots: (slots = []) => {
-                const normalized = slots
+                // Extract times from slot objects
+                const times = slots
                     .filter(slot => slot && slot.time)
-                    .map((slot, index) => ({
-                        slotId: slot.slotId || index + 1,
-                        time: slot.time
-                    }))
+                    .map(slot => slot.time)
                     .slice(0, 3);
 
+                // Write to canonical curriculum store
+                useCurriculumStore.getState().setPracticeTimeSlots(times);
+
+                // Update activePath.schedule.selectedTimes for consistency
                 set((state) => ({
-                    scheduleSlots: normalized,
                     activePath: state.activePath ? {
                         ...state.activePath,
                         schedule: {
                             ...(state.activePath.schedule || {}),
-                            selectedTimes: normalized.map(slot => slot.time),
+                            selectedTimes: times,
                             timezone: state.activePath.schedule?.timezone || getTimezone(),
                         }
                     } : state.activePath
@@ -232,21 +234,14 @@ export const useNavigationStore = create(
             },
 
             /**
-             * Get schedule slots (fallback to curriculum onboarding slots)
+             * Get schedule slots (reads from canonical curriculum store)
              */
             getScheduleSlots: () => {
-                const state = get();
-                if (state.scheduleSlots && state.scheduleSlots.length > 0) {
-                    return state.scheduleSlots;
-                }
-                const curriculumSlots = useCurriculumStore.getState().practiceTimeSlots || [];
-                return curriculumSlots
-                    .filter(Boolean)
-                    .slice(0, 3)
-                    .map((time, index) => ({
-                        slotId: index + 1,
-                        time
-                    }));
+                const curriculumTimes = useCurriculumStore.getState().getPracticeTimeSlots() || [];
+                return curriculumTimes.map((time, index) => ({
+                    slotId: index + 1,
+                    time
+                }));
             },
 
             /**
@@ -568,7 +563,7 @@ export const useNavigationStore = create(
                 if (state?.selectedPathId) {
                     state.selectedPathId = null;
                 }
-                
+
                 // Ensure no legacy fields in activePath after rehydration
                 if (state?.activePath) {
                     const legacyKeys = ['pathId', 'startDate', 'currentWeek', 'completedWeeks'];
@@ -577,6 +572,21 @@ export const useNavigationStore = create(
                             delete state.activePath[key];
                         }
                     });
+                }
+
+                // One-time migration: nav schedule → curriculum store (canonical)
+                // If curriculum store is empty but nav has schedule, copy it over
+                const curriculumState = useCurriculumStore.getState();
+                const curriculumTimes = curriculumState.practiceTimeSlots || [];
+                if (curriculumTimes.length === 0 && state?.scheduleSlots && state.scheduleSlots.length > 0) {
+                    // Copy scheduleSlots from navigation store to curriculum store
+                    const times = state.scheduleSlots.map(slot => slot.time).filter(Boolean);
+                    if (times.length > 0) {
+                        curriculumState.setPracticeTimeSlots(times);
+                    }
+                } else if (curriculumTimes.length === 0 && state?.activePath?.schedule?.selectedTimes && state.activePath.schedule.selectedTimes.length > 0) {
+                    // Fallback: copy from activePath.schedule.selectedTimes if it exists
+                    curriculumState.setPracticeTimeSlots(state.activePath.schedule.selectedTimes);
                 }
             }
         }

@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
 import { EVENING_TEST_CIRCUIT } from '../data/pilotTestProgram.js';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
+import { getCurriculumPrecisionRail } from '../services/infographics/curriculumRail.js';
 
 export const FOUNDATION_CIRCUIT = {
     id: 'intro_circuit',
@@ -61,6 +62,10 @@ export const useCurriculumStore = create(
             activePracticeStartedAt: null,
             lastSessionFailed: false,
 
+            // PRECISION RAIL CONFIGURATION
+            precisionMode: 'curriculum', // 'curriculum' or 'advanced' (if 'advanced', all days are GRAY)
+            offDaysOfWeek: [0], // 0=Sunday..6=Saturday; days in this list render GRAY (no measurement required)
+
             // LEGACY STATE
             paths: {
                 breath: { name: 'Breath Path', description: 'Pranayama and breath regulation', exercises: [] },
@@ -92,6 +97,27 @@ export const useCurriculumStore = create(
                     onboardingDismissed: true,
                     onboardingDismissedAt: new Date().toISOString(),
                 });
+            },
+
+            /**
+             * Set practice time slots (canonical schedule authoring point)
+             * Normalizes input: filters falsy, converts to "HH:mm", limits to 3 slots
+             */
+            setPracticeTimeSlots: (times = []) => {
+                const normalized = Array.isArray(times)
+                    ? times
+                        .filter(t => typeof t === 'string' && t.trim().length > 0)
+                        .map(t => t.trim())
+                        .slice(0, 3)
+                    : [];
+                set({ practiceTimeSlots: normalized });
+            },
+
+            /**
+             * Get practice time slots (canonical schedule read point)
+             */
+            getPracticeTimeSlots: () => {
+                return (get().practiceTimeSlots || []).slice(); // Return copy to prevent mutation
             },
 
             shouldShowOnboarding: () => {
@@ -495,6 +521,26 @@ getNextLeg: (dayNumber, offset = 1) => {
                     challenges: ['distraction'],
                     notes: 'Dev test',
                 });
+            },
+
+            // PRECISION RAIL ACTIONS
+            setPrecisionMode: (mode) => {
+                if (mode === 'curriculum' || mode === 'advanced') {
+                    set({ precisionMode: mode });
+                }
+            },
+
+            setOffDaysOfWeek: (days = []) => {
+                const normalized = Array.isArray(days)
+                    ? days.filter(d => typeof d === 'number' && d >= 0 && d <= 6)
+                    : [];
+                set({ offDaysOfWeek: normalized });
+            },
+
+            getPrecisionRailWindow: (windowDays = 14) => {
+                // Wrapper around getCurriculumPrecisionRail service
+                // Computes 14-day (or custom window) rolling precision rail
+                return getCurriculumPrecisionRail({ windowDays });
             },
         }),
         {

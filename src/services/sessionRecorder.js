@@ -1,8 +1,11 @@
 // Centralized session recording pipeline for practice completion.
 import { useProgressStore } from '../state/progressStore';
 import { useNavigationStore } from '../state/navigationStore.js';
+import { useCurriculumStore } from '../state/curriculumStore.js';
 import { syncFromProgressStore } from '../state/mandalaStore';
 import { logPractice } from './cycleManager';
+import { resolveCategoryIdFromSessionV2 } from './infographics/sessionCategory.js';
+import { MATCH_POLICY } from '../data/curriculumMatching.js';
 
 // DEV-only regression guard: prevent legacy writer reintroduction
 if (import.meta.env.DEV) {
@@ -67,6 +70,160 @@ const buildPathContext = ({ activePath, activePathId, endedAt }) => {
         weekIndex,
     };
 };
+
+/**
+ * Parse "HH:mm" time string to minutes since midnight
+ * MUST MATCH curriculumRail.js implementation
+ */
+function parseTimeToMinutes(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string') return null;
+    const parts = timeStr.split(':');
+    if (parts.length !== 2) return null;
+    const h = Number(parts[0]);
+    const m = Number(parts[1]);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+    return h * 60 + m;
+}
+
+/**
+ * Extract hour and minute from ISO timestamp in local timezone
+ * MUST MATCH curriculumRail.js implementation
+ */
+function getLocalMinutesFromISO(isoTime) {
+    if (!isoTime) return null;
+    const date = new Date(isoTime);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.getHours() * 60 + date.getMinutes();
+}
+
+/**
+ * Compute time delta: actual - scheduled (in minutes)
+ * Positive = late, negative = early
+ * MUST MATCH curriculumRail.js implementation
+ */
+function computeDeltaMinutes(actualMinutes, scheduledMinutes) {
+    return actualMinutes - scheduledMinutes;
+}
+
+/**
+ * Determine status based on time delta
+ * GREEN: |delta| <= 15
+ * RED: 15 < |delta| <= 60
+ * null (does not count): |delta| > 60
+ * MUST MATCH curriculumRail.js implementation
+ */
+function getDeltaStatus(deltaMinutes) {
+    const absDelta = Math.abs(deltaMinutes);
+    if (absDelta <= 15) return 'green';
+    if (absDelta <= 60) return 'red';
+    return null;
+}
+
+/**
+ * Compute curriculum day number for a given date
+ * MUST MATCH curriculumRail.js implementation
+ */
+function getCurriculumDayNumber(date, curriculumStartDate) {
+    if (!curriculumStartDate) return null;
+    const start = new Date(curriculumStartDate);
+    start.setHours(0, 0, 0, 0);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    const daysDiff = Math.floor((target - start) / (1000 * 60 * 60 * 24));
+    if (daysDiff < 0) return null;
+    return daysDiff + 1;
+}
+
+
+/**
+ * Compute deterministic scheduleMatched snapshot for a session
+ * Snapshots are persisted at record time so rail can use them without recomputing
+ * Returns null if session does not satisfy any curriculum leg requirement
+ */
+function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode }) {
+    if (!startedAtISO) return null;
+
+    const curriculumStore = useCurriculumStore.getState();
+    const progressStore = useProgressStore.getState();
+
+    // Gate: check early conditions that make precision rail unavailable
+    if (curriculumStore.precisionMode === 'advanced') return null;
+    if (progressStore.vacation?.active === true) return null;
+    if (!curriculumStore.curriculumStartDate) return null;
+
+    // Compute curriculum day number
+    const curriculumDayNumber = getCurriculumDayNumber(new Date(startedAtISO), curriculumStore.curriculumStartDate);
+
+    if (!curriculumDayNumber) return null;
+
+    // Get curriculum day definition
+    const dayDef = curriculumStore.getCurriculumDay(curriculumDayNumber);
+    if (!dayDef) return null;
+
+    // Extract required legs
+    const requiredLegs = (dayDef.legs || []).filter(leg => leg.required === true);
+    if (requiredLegs.length === 0) return null;
+
+    // Resolve session category
+    const sessionCategory = resolveCategoryIdFromSessionV2({ practiceId, practiceMode });
+    if (!sessionCategory) return null;
+
+    // Try to match to a leg
+    let bestMatch = null;
+    let bestAbsDelta = Infinity;
+
+    for (const leg of requiredLegs) {
+        // Check scheduled time exists
+        const timeIndex = leg.legNumber - 1;
+        const scheduledTime = curriculumStore.practiceTimeSlots?.[timeIndex];
+        const scheduledMinutes = scheduledTime ? parseTimeToMinutes(scheduledTime) : null;
+
+        if (scheduledMinutes === null) continue; // No valid time slot
+
+        // Check category/matchPolicy match
+        if (leg.categoryId !== sessionCategory) continue;
+        if (leg.matchPolicy === MATCH_POLICY.EXACT_PRACTICE) {
+            if (!leg.practiceId || practiceId !== leg.practiceId) continue;
+        }
+
+        // Compute time delta
+        const actualMinutes = getLocalMinutesFromISO(startedAtISO);
+        if (actualMinutes === null) continue;
+
+        const deltaMin = computeDeltaMinutes(actualMinutes, scheduledMinutes);
+        const absDelta = Math.abs(deltaMin);
+
+        // Outside acceptable range (>60 min)
+        if (absDelta > 60) continue;
+
+        // Pick best match (closest time, or lower legNumber on tie)
+        if (absDelta < bestAbsDelta) {
+            bestAbsDelta = absDelta;
+            bestMatch = {
+                legNumber: leg.legNumber,
+                categoryId: leg.categoryId,
+                matchPolicy: leg.matchPolicy,
+                scheduledTime,
+                deltaMinutes: deltaMin,
+                status: getDeltaStatus(deltaMin),
+                matchedAt: startedAtISO,
+            };
+        }
+    }
+
+    // DEV-only safety checks
+    if (import.meta.env.DEV && bestMatch) {
+        if (Math.abs(bestMatch.deltaMinutes) > 60) {
+            console.error('[computeScheduleMatchedSnapshot] BUG: deltaMinutes exceeds 60', bestMatch);
+        }
+        if (!bestMatch.status) {
+            console.error('[computeScheduleMatchedSnapshot] BUG: missing status', bestMatch);
+        }
+    }
+
+    return bestMatch;
+}
 
 /**
  * Record a completed practice session through the centralized pipeline.
@@ -154,6 +311,12 @@ export function recordPracticeSession(payload = {}, options = {}) {
             dayIndex: dayIndex ?? normalizedPathContext.dayIndex,
             weekIndex: normalizedPathContext.weekIndex,
         },
+        // Phase 7: deterministic scheduleMatched snapshot (computed at record time)
+        scheduleMatched: normalizedStartedAt ? computeScheduleMatchedSnapshot({
+            startedAtISO: normalizedStartedAt,
+            practiceId,
+            practiceMode,
+        }) : null,
     };
 
     // DEV-ONLY: Guard against missing runId when activePath exists
