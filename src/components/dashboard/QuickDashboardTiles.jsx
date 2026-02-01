@@ -244,10 +244,12 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     position: 'relative',
                     marginBottom: '8px',
                     borderRadius: '24px',
-                    background: isLight
+                    backgroundColor: isLight
                         ? '#faf6ee'
                         : 'rgb(20, 15, 25)',
-                    backgroundImage: `url('/Immanence/assets/card_bg_seedling_nebula.png')`,
+                    backgroundImage: isLight
+                        ? 'none'
+                        : `linear-gradient(rgba(20, 15, 25, 0.4), rgba(20, 15, 25, 0.4)), url('/Immanence/assets/card_bg_seedling_nebula.png')`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     border: `1px solid ${isLight
