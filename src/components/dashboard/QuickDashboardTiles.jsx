@@ -241,6 +241,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
         return (
             <div
                 style={{
+                    position: 'relative',
                     marginBottom: '8px',
                     borderRadius: '24px',
                     background: isLight
@@ -252,7 +253,20 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     overflow: 'hidden',
                 }}
             >
-                {/* Inner glass blur layer */}
+                {/* Wallpaper layer (z=0) */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `url('/Immanence/assets/card_bg_seedling_nebula.png')`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: 0.55,
+                        zIndex: 0,
+                    }}
+                />
+
+                {/* Inner glass blur layer (z=10) */}
                 <div
                     style={{
                         display: 'flex',
@@ -261,12 +275,14 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         padding: '12px',
                         background: isLight
                             ? 'rgba(250, 246, 238, 0.72)'
-                            : 'rgba(20, 15, 25, 0.78)',
+                            : 'rgba(20, 15, 25, 0.72)',
                         backdropFilter: 'blur(16px)',
                         WebkitBackdropFilter: 'blur(16px)',
                         borderLeft: `1px solid ${isLight
                             ? 'rgba(160, 120, 60, 0.1)'
                             : 'var(--accent-15)'}`,
+                        position: 'relative',
+                        zIndex: 10,
                     }}
                 >
                     {/* Header */}
@@ -293,37 +309,16 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     <RateRingModule value={tiles.on_time_rate ?? null} label="On-Time" isLight={isLight} />
                 </div>
 
-                {/* Details button */}
+                {/* Details button - matches START SETUP styling */}
                 {onOpenDetails && (
                     <button
                         onClick={onOpenDetails}
+                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
                         style={{
-                            padding: '8px 12px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                            border: 'none',
-                            borderRadius: '6px',
-                            background: isLight
-                                ? 'rgba(100, 80, 60, 0.15)'
-                                : 'rgba(255, 255, 255, 0.08)',
-                            color: isLight
-                                ? 'rgba(45, 35, 25, 0.8)'
-                                : 'rgba(255, 255, 255, 0.7)',
-                            cursor: 'pointer',
-                            transition: 'all 150ms ease-out',
+                            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                            color: '#fff',
+                            boxShadow: '0 3px 10px var(--accent-30)',
                             width: '100%',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.background = isLight
-                                ? 'rgba(100, 80, 60, 0.25)'
-                                : 'rgba(255, 255, 255, 0.12)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.background = isLight
-                                ? 'rgba(100, 80, 60, 0.15)'
-                                : 'rgba(255, 255, 255, 0.08)';
                         }}
                     >
                         View Details
