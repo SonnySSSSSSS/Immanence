@@ -2,6 +2,12 @@
 // Compute 14-day rolling window precision rail for curriculum infographic
 // WITH category/matchPolicy matching requirement
 //
+// ARCHITECTURAL NOTE: This file implements precision rail semantics defined in
+// docs/ARCHITECTURE.md § "Curriculum Precision Rail System" and enforces rules
+// from "Non-Negotiable Invariants" (time thresholds, category matching, day status
+// logic). Do not change matching semantics, time delta thresholds, or day state
+// computations without updating architecture.md and reviewing all callers.
+//
 // PHASE 7: Session Snapshots
 // Each recorded session includes a deterministic scheduleMatched snapshot
 // computed at record time (in sessionRecorder.js). The rail prefers snapshots

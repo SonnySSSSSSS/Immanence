@@ -19,13 +19,91 @@ The app is organized into four primary state domains, each owned by dedicated Zu
 - **Source of truth**: `practiceStore` for preferences (persisted); in-memory hooks for active session state (ephemeral)
 - **Derived**: Session summaries, cycle registration, mandala syncs computed from `progressStore.sessionsV2` after recording
 
-### **2. Navigation & Path Domain** (`navigation`, `program selection`, `consistency`)
+### **2. Navigation & Path Domain** (`navigation`, `program selection`, `consistency`, `curriculum`)
 - **Stores owning navigation state**:
   - `navigationStore` (key `immanence_navigation_state`): Active path, selected path ID, quiz unlocks, foundation video flag, last activity timestamp
   - `cycleStore` (key `immanence_cycle_state`): Current cycle metadata, checkpoints, consistency tracking, cycle progression
-  - `curriculumStore` (key `immanence_curriculum`): Onboarding completion, active curriculum, day/leg completions, active practice session pointers
-- **Source of truth**: Navigation store holds the current run state; curriculum store gates progression; cycle store tracks consistency
-- **Derived**: Program badges (cycle status), path recommendations (history-based), unlock flags based on activity
+  - `curriculumStore` (key `immanence_curriculum`): Onboarding completion, active curriculum, day/leg completions, active practice session pointers, **schedule (practiceTimeSlots)**, **precision configuration (precisionMode, offDaysOfWeek)**
+- **Source of truth**: Navigation store holds the current run state; curriculum store gates progression and holds canonical schedule; cycle store tracks consistency
+- **Derived**: Program badges (cycle status), path recommendations (history-based), unlock flags based on activity; precision rail (14-day rolling window with category/time adherence)
+- **Note**: `navigationStore.scheduleSlots` is deprecated; use `curriculumStore.practiceTimeSlots` (canonical) instead (Phase 6 unification)
+
+### **2a. Curriculum Precision Rail System** (Schedule adherence tracking & visualization)
+
+**Objective**: Provide a deterministic, category-aware 14-day rolling window visualization of practice schedule adherence, with immutable snapshots computed at session record time.
+
+#### **Canonical Sources**
+- **Schedule**: `curriculumStore.practiceTimeSlots` (array of up to 3 "HH:mm" strings, normalized at write time)
+- **Curriculum days**: `curriculumStore.getCurriculumDay(dayNumber)` (each day contains required legs with categoryId, matchPolicy, practiceId)
+- **Session truth**: `progressStore.sessionsV2[]` (normalized session records with immutable `scheduleMatched` snapshot)
+- **Precision rail computation**: `src/services/infographics/curriculumRail.js::getCurriculumPrecisionRail()` (pure function, no side effects)
+- **UI infographic**: `src/components/infographics/CurriculumPrecisionRail.jsx` (read-only, mounted in DailyPracticeCard)
+
+#### **Precision Semantics (Non-Negotiable)**
+
+Each day in the 14-day window is assigned one of four states based on session adherence to curriculum legs:
+
+| State | Meaning | Condition |
+|-------|---------|-----------|
+| **GRAY** | Not measured | Vacation active, advanced mode enabled, off-day, or before curriculum start |
+| **BLANK** | Incomplete | At least one required leg has no matching session (status = null) |
+| **GREEN** | All on-time | All required legs matched with |deltaMinutes| ≤ 15 |
+| **RED** | Some late | All required legs matched but at least one has 15 < \|deltaMinutes\| ≤ 60 |
+
+**Key invariant**: A session matching result depends on:
+1. **Category match**: session.categoryId must equal leg.categoryId (resolved via `resolveCategoryIdFromSessionV2`)
+2. **Time adherence**: |deltaMinutes| where deltaMinutes = session.startedAt local time - scheduled time in leg
+   - ≤ 15 min → GREEN
+   - 15–60 min → RED
+   - > 60 min → OUTSIDE (does not count; treated as unmatched)
+3. **Match policy**: if leg.matchPolicy = EXACT_PRACTICE, session.practiceId must match leg.practiceId
+4. **One session per leg**: Greedy matching; once a session is used for a leg, it is not reused (prevents double-counting)
+
+#### **Deterministic Snapshots (Phase 7)**
+
+At session record time (in `sessionRecorder.js`), a `scheduleMatched` snapshot is computed and persisted:
+
+```javascript
+scheduleMatched: {
+  legNumber: number,              // 1-based leg in curriculum day
+  categoryId: string,             // e.g., 'breathwork', 'awareness', 'visualization'
+  matchPolicy: string,            // 'exact_practice' | 'any_in_category'
+  scheduledTime: 'HH:mm',        // Expected time for this leg
+  deltaMinutes: number,           // Signed delta (negative = early, positive = late)
+  status: 'green' | 'red',        // Classification; null if unmatched
+  matchedAt: ISO string,          // Audit trail (when snapshot was created)
+}
+```
+
+**Determinism rule**: Once recorded, `scheduleMatched` is **never** recomputed or mutated. The rail uses this snapshot as the source of truth (fast-path); only sessions without snapshots (pre-Phase-7 data) fall back to computed matching.
+
+**Backward compatibility**: Sessions recorded before Phase 7 have `scheduleMatched = null` and are matched using the fallback computed logic in curriculumRail.js. They produce identical results but require recomputation on every render.
+
+#### **Rail Computation Flow**
+
+1. **Get 14-day window**: Construct array of dates from `(today - 13 days)` to `today` in local timezone
+2. **For each day**:
+   - Determine day status (GRAY/BLANK/GREEN/RED) based on:
+     - Vacation + off-day check → GRAY
+     - Curriculum day existence check → GRAY if not found
+     - Required legs extraction (only `leg.required === true`)
+     - Session matching (prefer `scheduleMatched` snapshot; fallback to computed)
+     - Day status determination:
+       - Any leg unmatched → BLANK
+       - All matched, any RED → RED
+       - All matched, all GREEN → GREEN
+3. **Return rail**: Array of 14 objects with day status + satisfiedSlots details (used by UI)
+
+#### **UI Representation**
+
+The precision rail is visualized as a **14-cell grid** (oldest on left, newest on right):
+- GRAY cells: dim, low opacity (no measurement required)
+- BLANK cells: transparent with subtle border (incomplete)
+- GREEN cells: bright green with ✓ symbol (success)
+- RED cells: bright red with ! symbol (late but counted)
+- Hover tooltip: Shows date, day status, and leg-level details (legNumber, categoryId, time, delta, status)
+
+Mounted in: `src/components/DailyPracticeCard.jsx` (below progress meter)
 
 ### **3. Progress & Tracking Domain** (`history`, `stats`, `streak`, `vacation`)
 - **Stores owning progress state**:
@@ -137,6 +215,68 @@ If localStorage write fails (quota exceeded, privacy mode):
 - On reload, all session data is lost (graceful degradation)
 - User sees no error; app continues (localStorage writes are fire-and-forget)
 
+## Non-Negotiable Invariants (Semantic Guardrails)
+
+These invariants protect the precision rail system and broader state consistency. They **must never be violated** by future changes without explicit architectural review and documentation update.
+
+### **Session Completion & Counting**
+- **Partial completion ≠ full completion**: A session with `completion: 'partial'` is recorded and tracked but does **not** count toward cycle consistency or precision rail completion
+- **Only completed sessions count**: Abandoned sessions are recorded for history but ignored in streak/cycle logic
+- **One session per leg maximum**: Greedy matching prevents a single session from satisfying multiple legs (enforced by `usedSessionIds` tracking)
+
+### **Time Adherence Boundaries**
+- **GREEN threshold**: |deltaMinutes| ≤ 15 (includes 0-15 early or late)
+- **RED threshold**: 15 < |deltaMinutes| ≤ 60 (includes edge 16-60)
+- **OUTSIDE threshold**: |deltaMinutes| > 60 (not counted; session does not satisfy leg)
+- **No rounding**: Time deltas are computed to the minute; 61 minutes is OUTSIDE, not RED
+
+### **Category & Policy Enforcement**
+- **Category must match**: session.categoryId (resolved via `resolveCategoryIdFromSessionV2`) must equal leg.categoryId, with no wildcard or pattern matching
+- **EXACT_PRACTICE is strict**: If leg.matchPolicy = EXACT_PRACTICE and leg.practiceId is set, session.practiceId must equal it exactly (no prefix/suffix matching)
+- **ANY_IN_CATEGORY is permissive**: If leg.matchPolicy = ANY_IN_CATEGORY, any session with matching categoryId satisfies the leg regardless of practiceId
+
+### **Day Status Logic**
+- **GRAY gates everything**: Days in GRAY (vacation, off-day, advanced mode, before curriculum start) are never BLANK/GREEN/RED; no measurement occurs
+- **BLANK takes precedence**: Any unmatched leg makes the day BLANK, even if other legs are GREEN
+- **RED takes precedence over GREEN**: All legs matched is required; if any RED, day is RED (not green mixed with red)
+- **No GRAY downgrade**: A day computed as BLANK/GREEN/RED never becomes GRAY after the fact (immutability)
+
+### **Snapshot Determinism**
+- **Snapshots are immutable**: Once `scheduleMatched` is computed at record time, it is never recomputed or mutated
+- **Snapshot gates fallback**: If a session has a snapshot, computed matching is skipped (no double-evaluation)
+- **Fallback is conservative**: Sessions without snapshots use the same matching rules as snapshot computation to ensure consistency
+- **No snapshot mutation on data change**: If schedule or curriculum changes after session record, the snapshot does not update (uses historical truth)
+
+### **Schedule & Curriculum Consistency**
+- **One canonical schedule**: `curriculumStore.practiceTimeSlots` is the only source; `navigationStore.scheduleSlots` is deprecated read-only
+- **Three-slot maximum**: `practiceTimeSlots` contains at most 3 "HH:mm" strings; excess is silently truncated at write time
+- **No inter-day mixing**: A session on day N cannot satisfy a leg from day N+1 or N-1; must be same calendar day (local timezone)
+- **Curriculum days are immutable after definition**: Curriculum day legs do not change mid-run; if curriculum is updated, active run retains original leg definitions
+
+### **Off-Days & Vacation**
+- **Off-days do not weaken cycles**: An off-day (e.g., Sunday) does not extend cycle deadline or forgive missed days
+- **Vacation suspends precision, not recording**: Sessions during vacation are recorded and visible in history but do not contribute to precision rail (GRAY)
+- **Vacation is boolean**: No partial vacation or time-windowed vacation; either `progressStore.vacation.active` is true or false
+
+### **Advanced Mode**
+- **Advanced mode disables precision entirely**: When `curriculumStore.precisionMode = 'advanced'`, all days render GRAY and no snapshots are computed
+- **Advanced mode is explicit**: No automatic switching; only toggled via direct action (future UI or DevPanel)
+
+## Deprecation Ledger
+
+This section documents deprecated APIs and their removal conditions. All removals must include data migration.
+
+| **Deprecated Item** | **Deprecation Phase** | **Reason** | **Replacement** | **Removal Condition** |
+|---|---|---|---|---|
+| `navigationStore.scheduleSlots` | Phase 6 | Schedule duplication; navigationStore should not own curriculum data | `curriculumStore.practiceTimeSlots` | After one release + data migration verification |
+| `navigationStore.activePath.schedule.selectedTimes` | Phase 6 | Duplicate schedule source; path-level schedule redundant with curriculum | `curriculumStore.practiceTimeSlots` via `getPracticeTimeSlots()` | After one release; migration in `onRehydrateStorage` |
+| Computed-only rail matching (no snapshots) | Phase 7 | Performance + consistency; snapshots provide immutable audit trail | `sessionRecorder.js::computeScheduleMatchedSnapshot()` | Automatic fallback; no removal needed (backward compatible) |
+
+**Data migration strategy**:
+- Phase 6: `navigationStore.onRehydrateStorage()` copies legacy `scheduleSlots` → `curriculumStore.practiceTimeSlots` on first hydration
+- Phase 7: Sessions recorded before Phase 7 retain `scheduleMatched = null`; rail falls back to computed matching with identical semantics
+- Future removal: If `navigationStore.scheduleSlots` removed, ensure all existing data migrated and active paths have no references
+
 ## Source of Truth vs. Derived State (Reference Matrix)
 
 | **Data Type** | **Source of Truth** | **Derivers** | **Fallback** |
@@ -199,9 +339,22 @@ If localStorage write fails (quota exceeded, privacy mode):
     - `cycleEnabled`: boolean (default `false`); whether to check cycle gating
     - `cycleMinDuration`: number (default 10); minimum minutes before cycle registration
     - `cyclePracticeData`: object (optional); alternative practice metadata for cycle-only logging (e.g., ritual/circuit completion without a session record)
+  - **Phase 7 Enhancement (Snapshot)**: Deterministic `scheduleMatched` snapshot computed at record time
+    - If `startedAt` is valid and curriculum/precision rail is available:
+      - Resolve session category via `resolveCategoryIdFromSessionV2({ practiceId, practiceMode })`
+      - Find curriculum day for session date
+      - Match session to required legs by category + time adherence (|deltaMinutes| ≤ 60)
+      - Capture best match (closest time) as immutable snapshot object
+      - If no match: snapshot is `null` (treated as unmatched by rail)
+    - Snapshot structure: `{ legNumber, categoryId, matchPolicy, scheduledTime, deltaMinutes, status, matchedAt }`
+    - Snapshot is never recomputed or mutated after record; persisted in `sessionsV2`
+    - Rail prefers snapshot when present (fast-path); falls back to computed matching for pre-Phase-7 sessions
   - **Execution order**:
     1. Normalize instrumentation (`exit_type` field) from exitType + existing instrumentation
-    2. If `persistSession=true`: normalize/resolve all fields (duration, timestamps, path context, completion status) and persist to `progressStore.recordSessionV2()`
+    2. If `persistSession=true`:
+       - Normalize/resolve all fields (duration, timestamps, path context, completion status)
+       - **Compute `scheduleMatched` snapshot** (Phase 7)
+       - Persist to `progressStore.recordSessionV2()`
     3. If `cycleEnabled=true`: check if `durationSec >= cycleMinDuration * 60`; if so, call `logPractice(cycleType, duration, metadata)` from `cycleManager.js`
     4. If `syncMandala=true`: trigger `syncFromProgressStore()` exactly once at end of recorder execution
   - **Examples**:

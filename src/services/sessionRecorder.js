@@ -1,4 +1,9 @@
 // Centralized session recording pipeline for practice completion.
+// ARCHITECTURAL NOTE: Session snapshots (computeScheduleMatchedSnapshot) implement
+// precision rail matching rules from docs/ARCHITECTURE.md § "Curriculum Precision Rail"
+// and § "Non-Negotiable Invariants". Time thresholds (GREEN ≤15, RED ≤60),
+// category/matchPolicy enforcement, and snapshot determinism must not be changed
+// without updating architecture.md and reviewing curriculumRail.js § "Phase 7".
 import { useProgressStore } from '../state/progressStore';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
