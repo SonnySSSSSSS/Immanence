@@ -437,26 +437,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           </div>
         </div>
 
-{/* QUICK DASHBOARD TILES (Summary metrics) */}
-<div className="w-full">
-  {(() => {
-    // Determine dashboard policy based on active run
-    const policy = getHomeDashboardPolicy({
-      activeRunId: activePath?.runId,
-    });
-
-    // Fetch tiles using policy
-    const tiles = getQuickDashboardTiles({
-      scope: policy.scope,
-      range: policy.range,
-      includeHonor: policy.includeHonor,
-      activeRunId: policy.activeRunId,
-    });
-
-    return <QuickDashboardTiles tiles={tiles} />;
-  })()}
-</div>
-
 {/* DAILY PRACTICE CARD (Curriculum) */}
 <div className="w-full">
   {(() => {
