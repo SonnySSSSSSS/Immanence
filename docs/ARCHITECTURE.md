@@ -908,4 +908,72 @@ Preserves existing sigil-based rendering:
 - Whirlpool conic gradient background
 - Cyan/teal outer halo
 - Separation ring and inner shadow
+
+---
+
+## Dashboard Tiles (Phase 9A) — Home Overview Metrics
+
+**Objective**: Render 5 key performance metrics on the HomeHub dashboard without UI mutations, purely derived from reporting layer.
+
+### Architecture
+
+**Data Flow**: `progressStore.sessionsV2` → `selectSessions()` → `aggregators` → `getQuickDashboardTiles()` → `HomeHub` → `<QuickDashboardTiles />`
+
+**Key Principle**: UI layer is read-only; all data transformations happen in pure reporting functions.
+
+### Tile Contract
+
+| Tile ID | Label | Definition | Range | Display Format |
+|---------|-------|------------|-------|-----------------|
+| `minutes_total` | Total Minutes | Sum of all `durationSec` in scope, divided by 60 | 0–∞ | Integer, "min" unit |
+| `sessions_total` | Sessions | Count of all sessions in scope | 0–∞ | Integer |
+| `days_active` | Active Days | Count of unique calendar days with ≥1 session | 0–∞ | Integer |
+| `completion_rate` | Completion Rate | `completed / (completed + abandoned + partial) * 100` | 0–100 | Percent integer |
+| `on_time_rate` | On-Time Rate | `green / (green + red) * 100` (from `scheduleMatched`); null if no denominator | 0–100 or null | Percent integer or "—" |
+
+### Completion Status Vocabulary
+
+Sessions normalized by `aggCompletionBreakdown()` to canonical statuses:
+
+- **completed**: Session finished as planned
+- **abandoned**: Session terminated early without full completion
+- **partial**: Session completed but under threshold, or exit type unclear
+- **Note**: Legacy tokens `"early_exit"`, `"earlyExit"` automatically normalized to `"partial"`
+
+### On-Time Rate Semantics
+
+- Uses `session.scheduleMatched` snapshot (computed at record time in `sessionRecorder.js`)
+- **GREEN**: |deltaMinutes| ≤ 15 (within 15 min of scheduled time)
+- **RED**: 15 < |deltaMinutes| ≤ 60 (late but within grace window)
+- **null** denominator → tile shows "—" (no adherence data available)
+
+### Scope & Range Policy
+
+**Policy file**: `src/reporting/tilePolicy.js::getHomeDashboardPolicy()`
+
+Default rules:
+
+- **scope**: `'runId'` if `activePath.runId` exists, else `'lifetime'`
+- **range**: `'30d'` (fixed for home dashboard)
+- **includeHonor**: `true` (comprehensive view)
+
+### Components
+
+**Pure UI layer**:
+
+- `src/components/dashboard/QuickDashboardTiles.jsx`: Renders 5-tile layout with styling
+- `src/components/HomeHub.jsx`: Wires tiles using `getQuickDashboardTiles()` and policy
+
+**Reporting layer** (pure functions):
+
+- `src/reporting/selectSessions.js`: Filter sessions by scope/range
+- `src/reporting/aggregators.js`: Reduce to metrics (minutes, counts, adherence)
+- `src/reporting/dashboardProjection.js`: Compose `getQuickDashboardTiles()`
+- `src/reporting/tilePolicy.js`: Determine policy inputs from navigation state
+
+### No Mutations
+
+- Tiles read-only; no UI state management
+- No session modifications from dashboard
+- Aggregators are pure reducers (no side effects)
 - Moon orbit overlay
