@@ -1201,10 +1201,21 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p === 'ritual') domain = 'ritual';
       else if (p === 'sound') domain = 'sound';
       else if (p.includes('feeling')) domain = 'focus';
+      else if (p.includes('cognitive') || p.includes('insight')) domain = 'focus';
 
       const activePath = useNavigationStore.getState().activePath;
       const activePathId = activePath?.activePathId || activePath?.pathId || null;
       const actualPracticeId = getActualPracticeId(practiceId);
+
+      if (import.meta.env.DEV) {
+        console.log('[PracticeSection] recordPracticeSession about to run', {
+          practiceId,
+          actualPracticeId,
+          sensoryType,
+          sakshiVersion,
+          exitType: completion,
+        });
+      }
 
       // Use exitType (timer-based) as the source of truth for completion status
       // exitType is 'completed' when timeLeft <= 0, which means the session ran to completion
@@ -1230,6 +1241,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         practiceMode: practiceMode ?? null,
         configSnapshot: {
           breathSubmode: breathSubmode ?? null,
+          sakshiVersion: actualPracticeId === 'cognitive_vipassana' ? sakshiVersion : null,
         },
 
         startedAt: startedAtIso,
@@ -1319,12 +1331,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // For emotion practice, always show summary. For others, show if >= 30 seconds
     const actualPracticeIdCheck = getActualPracticeId(practiceId);
     const isEmotionPractice = actualPracticeIdCheck === 'feeling';
+    const isCognitiveVipassana = actualPracticeIdCheck === 'cognitive_vipassana';
     const shouldShowSummary = isEmotionPractice || shouldJournal;
 
     if (shouldShowSummary) {
       // For emotion practice, calculate completion count and get closing line
       let emotionClosingLine = null;
       let emotionCompletionCount = null;
+      let sakshiCompletionCount = null;
       if (isEmotionPractice) {
         const { sessionsV2 } = useProgressStore.getState();
         const allSessions = sessionsV2 || [];
@@ -1337,13 +1351,32 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         ).length;
         emotionClosingLine = getEmotionClosingLine(emotionMode);
       }
+      const sakshiVersionRecorded = recordedSession?.configSnapshot?.sakshiVersion ?? sakshiVersion;
+
+      if (isCognitiveVipassana) {
+        const { sessionsV2 } = useProgressStore.getState();
+        const allSessions = sessionsV2 || [];
+        sakshiCompletionCount = allSessions.filter(s =>
+          s.practiceId === 'cognitive_vipassana' &&
+          s.completion === 'completed' &&
+          (s.configSnapshot?.sakshiVersion ?? null) === sakshiVersionRecorded
+        ).length;
+      }
 
       // For emotion practice, use the emotion label instead of practice name
-      const summaryPracticeLabel = isEmotionPractice ? getEmotionLabel(emotionMode) : practice;
+      const summaryPracticeLabel = isEmotionPractice
+        ? getEmotionLabel(emotionMode)
+        : (isCognitiveVipassana
+          ? (sakshiVersionRecorded === 1 ? 'Sakshi I' : 'Sakshi II')
+          : practice);
+
+      const recordedDurationMinutes = recordedSession?.durationSec
+        ? Math.round((recordedSession.durationSec / 60) * 10) / 10
+        : Math.round((actualDurationSeconds / 60) * 10) / 10;
 
       setSessionSummary({
         practice: summaryPracticeLabel,
-        duration: Math.round((actualDurationSeconds / 60) * 10) / 10,
+        duration: recordedDurationMinutes,
         tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
         breathCount,
         exitType,
@@ -1355,6 +1388,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         practiceMode: isEmotionPractice ? emotionMode : null,
         closingLine: emotionClosingLine,
         emotionCompletionCount: emotionCompletionCount,
+        sakshiCompletionCount: sakshiCompletionCount,
+        sessionRecord: recordedSession,
       });
       setShowSummary(true);
 
@@ -1681,7 +1716,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         if (activeCircuitId && circuitConfig) {
           advanceCircuitExercise();
         } else {
-          handleStop();
+          handleStop({ completed: true });
         }
       }
     }

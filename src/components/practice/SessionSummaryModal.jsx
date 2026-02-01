@@ -31,6 +31,12 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
   const isLight = colorScheme === 'light';
   const [focusRating, setFocusRating] = React.useState(null);
 
+  React.useEffect(() => {
+    if (import.meta.env.DEV && summary) {
+      console.log('[SessionSummaryModal] summary payload', summary);
+    }
+  }, [summary]);
+
   if (!summary) return null;
 
   const suggestions = PRACTICE_SUGGESTIONS[summary.practice] || ["Breath & Stillness", "Visualization"];
@@ -232,6 +238,23 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
               }}
             >
               Completed {summary.emotionCompletionCount} {summary.emotionCompletionCount === 1 ? 'time' : 'times'}
+            </div>
+          )}
+
+          {/* Sakshi Completion Count (if awareness/cognitive vipassana) */}
+          {summary.sakshiCompletionCount !== null && summary.sakshiCompletionCount !== undefined && (
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+                color: isLight ? 'rgba(60,50,35,0.6)' : 'rgba(253,251,245,0.6)',
+                textAlign: 'center',
+                marginBottom: '20px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Sakshi completed {summary.sakshiCompletionCount} {summary.sakshiCompletionCount === 1 ? 'time' : 'times'}
             </div>
           )}
 

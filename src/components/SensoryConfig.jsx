@@ -271,31 +271,6 @@ export function SensoryConfig({
                 </div>
             </div>
 
-            {/* Begin Witnessing Button */}
-            <button
-                onClick={onStart}
-                className="w-full rounded-full py-3 font-display font-semibold tracking-wide uppercase transition-all duration-300"
-                style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '13px',
-                    letterSpacing: '1px',
-                    background: 'linear-gradient(135deg, rgba(100, 200, 150, 0.8) 0%, rgba(80, 180, 120, 0.9) 100%)',
-                    color: '#0F0F10',
-                    border: '1px solid rgba(100, 200, 150, 0.5)',
-                    boxShadow: '0 0 20px rgba(100, 200, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                    cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => {
-                    e.target.style.boxShadow = '0 0 30px rgba(100, 200, 150, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
-                    e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                    e.target.style.boxShadow = '0 0 20px rgba(100, 200, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-                    e.target.style.transform = 'translateY(0)';
-                }}
-            >
-                Begin Witnessing
-            </button>
         </div>
     );
 }

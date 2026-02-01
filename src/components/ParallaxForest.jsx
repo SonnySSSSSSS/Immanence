@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
 
 // Parallax layer that loops seamlessly by rendering 2 copies side-by-side.
 // We measure the rendered width of ONE image, then animate translating the track by that width.
@@ -19,14 +18,21 @@ function ParallaxLayer({
   const measure = () => {
     const el = imgRef.current;
     if (!el) return;
-    const w = el.getBoundingClientRect().width;
+    let w = el.getBoundingClientRect().width;
+    if (!w || w < 1) {
+      const nw = el.naturalWidth || 0;
+      const nh = el.naturalHeight || 0;
+      const h = el.getBoundingClientRect().height || (typeof heightPx === "number" ? heightPx : 0);
+      if (nw && nh && h) w = (nw / nh) * h;
+      else if (nw) w = nw;
+    }
     if (w) setLoopW((prev) => (Math.abs(w - prev) > 0.5 ? w : prev));
   };
 
   useLayoutEffect(() => {
     measure();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, heightPx]);
 
   useEffect(() => {
     const onResize = () => measure();
@@ -45,6 +51,11 @@ function ParallaxLayer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
+
+  useEffect(() => {
+    measure();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heightPx]);
 
   const animStyle = useMemo(() => {
     const duration = `${secondsPerLoop}s`;
@@ -77,26 +88,19 @@ function ParallaxLayer({
         }}
       >
         <img ref={imgRef} className="pf-img" src={src} alt="" draggable={false} onLoad={measure} />
-        <img className="pf-img" src={src} alt="" draggable={false} />
+        <img className="pf-img" src={src} alt="" draggable={false} onLoad={measure} />
       </div>
     </div>
   );
 }
 
 export default function ParallaxForest({
-  skySrc,
-  treesSrc,
-  foliageSrc,
+  skySrc = "/awareness/parallax_forest_00001_.png",
+  treesSrc = "/awareness/parallax_forest_00002_.png",
+  foliageSrc = "/awareness/parallax_forest_00003_.png",
   className = "",
   style = {},
 }) {
-  const { selectedScene } = useAwarenessSceneStore();
-  const baseUrl = import.meta.env.BASE_URL;
-
-  // Construct image paths based on selected scene
-  const finalSkySrc = skySrc || `${baseUrl}scenes/${selectedScene}/layers/${selectedScene}_sky.webp`;
-  const finalTreesSrc = treesSrc || `${baseUrl}scenes/${selectedScene}/layers/${selectedScene}_trees_mid.webp`;
-  const finalFoliageSrc = foliageSrc || `${baseUrl}scenes/${selectedScene}/layers/${selectedScene}_bushes_fg.webp`;
 
   const rootRef = useRef(null);
   const [layerHeights, setLayerHeights] = useState({ sky: 0, trees: 0, foliage: 0 });
@@ -161,7 +165,7 @@ export default function ParallaxForest({
     >
       {/* Sky - anchored at very top of container, slowest */}
       <ParallaxLayer
-        src={finalSkySrc}
+        src={skySrc}
         secondsPerLoop={120}
         className="pf-sky"
         layerAnchor="top"
@@ -171,7 +175,7 @@ export default function ParallaxForest({
 
       {/* Trees - sits above foliage, positioned for balance */}
       <ParallaxLayer
-        src={finalTreesSrc}
+        src={treesSrc}
         secondsPerLoop={80}
         className="pf-trees"
         layerAnchor="bottom"
@@ -191,7 +195,7 @@ export default function ParallaxForest({
 
       {/* Foliage/grass - sits at very bottom, fastest */}
       <ParallaxLayer
-        src={finalFoliageSrc}
+        src={foliageSrc}
         secondsPerLoop={50}
         className="pf-foliage"
         layerAnchor="bottom"
@@ -226,6 +230,7 @@ export default function ParallaxForest({
           flex-direction: row;
           align-items: flex-end;
           will-change: transform;
+          animation: pfScroll var(--dur) linear infinite !important;
         }
 
         .pf-img{
@@ -256,7 +261,7 @@ export default function ParallaxForest({
         .pf-avatar{
           position: absolute;
           left: 22%;
-          bottom: 6%;
+          bottom: calc(6% + 30px);
           transform: translateX(-50%);
           pointer-events: none;
           will-change: transform;
