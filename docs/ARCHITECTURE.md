@@ -1052,3 +1052,58 @@ The tracking section of HomeHub renders a compact dashboard variant:
 - Hub variant is presentational
 - Detail data computed fresh on each render (90d window)
 - No state mutations during modal open/close
+
+## Hub Card with Infographics (Phase 9B Visual) — SVG-based Dashboard
+
+**Objective**: Replace plain tile layout with rich SVG infographics that convey data through visual form, maintaining glass aesthetic.
+
+### Variant: `hubCard`
+
+Replaces the simpler `hub` variant with pure SVG/CSS infographics for each KPI.
+
+### Infographic Modules
+
+#### **1. Sessions Module**
+- **Visual**: Horizontal progress bar (rounded, filled)
+- **Soft cap**: 60 sessions (presentational, no semantic meaning)
+- **Fill calculation**: `clamp(sessions_total / 60, 0, 1)`
+- **Display**: Large number + bar + label "SESSIONS"
+
+#### **2. Active Days Module**
+- **Visual**: 14-dot strip (circles, 2-week visual representation)
+- **Fill**: `min(days_active, 14)` — dots filled left-to-right
+- **Semantic note**: No per-day distribution data, so count-based encoding is honest (shows magnitude without implying daily pattern)
+- **Display**: Large number + dot strip + label "ACTIVE DAYS"
+
+#### **3. Completion Rate Module**
+- **Visual**: Donut/ring chart using SVG stroke-dasharray
+- **Calculation**: `circumference = 2πr`, `dashLength = (rate / 100) * circumference`
+- **Rendering**: Filled arc from -90° (top)
+- **Display**: Center percentage + ring + label "COMPLETION"
+- **Null-safe**: If no data, shows empty ring + "—"
+
+#### **4. On-Time Rate Module**
+- **Visual**: Same donut style as completion
+- **Null-safe**: Shows "—" + dim ring if `on_time_rate` is null
+- **Display**: Center percentage + ring + label "ON-TIME"
+
+### Card Container
+
+- **Glass aesthetic**: Matches HomeHub aesthetic (translucent, blur, subtle border, shadow)
+- **Header**: "PROGRESS OVERVIEW" (left) + "90 DAYS" (right)
+- **Layout**: 2×2 grid of modules, centered
+- **Spacing**: ~16px gap between modules
+- **Details button**: Full-width below grid, "VIEW DETAILS" affordance
+- **Size**: Approximately 50% height of prior CompactStatsCard
+- **Light/dark mode**: Full color scheme support throughout
+
+### Data Source
+
+- `getQuickDashboardTiles({ scope: ..., range: '90d', ... })`
+- Returns: `{ sessions_total, days_active, completion_rate, on_time_rate }`
+- No new aggregation logic required
+
+### No New Aggregators
+
+- Uses existing `getQuickDashboardTiles()` output
+- Visual presentation only; no transformations to data shape
