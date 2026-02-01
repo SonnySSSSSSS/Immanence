@@ -126,43 +126,97 @@ export function SensoryConfig({
                     </div>
                 </button>
 
-                {/* Sakshi II - Noticing & Labeling (blank placeholder) */}
+                {/* Sakshi II - Noticing & Labeling (Reflection/Control Panel) */}
                 <button
                     onClick={() => setSakshiVersion(2)}
-                    className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer text-left w-full"
+                    className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-lg text-left w-full"
                     style={{
-                        background: 'linear-gradient(135deg, rgba(20, 40, 45, 0.4) 0%, rgba(15, 35, 40, 0.5) 100%)',
-                        borderColor: sakshiVersion === 2 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.15)',
+                        background: 'linear-gradient(135deg, rgba(20, 40, 45, 0.8) 0%, rgba(15, 35, 40, 0.9) 100%)',
+                        borderColor: sakshiVersion === 2 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.3)',
                         borderWidth: sakshiVersion === 2 ? '2px' : '1px',
-                        minHeight: '140px',
+                        minHeight: '180px',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        opacity: sakshiVersion === 2 ? 1 : 0.6,
+                        alignItems: 'stretch',
                         boxShadow: sakshiVersion === 2 ? '0 0 20px rgba(100, 200, 150, 0.4)' : 'none',
                         padding: 0,
                     }}
                 >
+                    {/* Background image */}
                     <div
                         style={{
-                            textAlign: 'center',
-                            color: 'rgba(232, 220, 200, 0.4)',
-                            fontFamily: 'var(--font-serif)',
-                            fontSize: '14px',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundImage: `url(${baseUrl}awareness/menu/sakshi_ii_menu.webp)`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            opacity: 0.25,
+                            zIndex: 0,
+                        }}
+                    />
+
+                    {/* Content overlay */}
+                    <div
+                        className="relative z-10 p-6 flex flex-col justify-between flex-1"
+                        style={{
+                            background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, transparent 100%)',
                         }}
                     >
+                        <div>
+                            <h3
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: '16px',
+                                    fontWeight: 600,
+                                    color: '#D4AF37',
+                                    letterSpacing: '1px',
+                                    marginBottom: '4px',
+                                }}
+                            >
+                                SAKSHI II
+                            </h3>
+                            <h4
+                                style={{
+                                    fontFamily: 'var(--font-serif)',
+                                    fontSize: '18px',
+                                    color: '#E8DCC8',
+                                    fontWeight: 400,
+                                    marginBottom: '8px',
+                                }}
+                            >
+                                Noticing & Labeling
+                            </h4>
+                            <p
+                                style={{
+                                    fontFamily: 'var(--font-serif)',
+                                    fontSize: '12px',
+                                    color: 'rgba(232, 220, 200, 0.8)',
+                                    lineHeight: '1.5',
+                                }}
+                            >
+                                Watch the mind through a reflective lens.
+                                <br />
+                                Label each thought with clarity.
+                                <br />
+                                Return to silence.
+                            </p>
+                        </div>
                         <div
                             style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: 'rgba(232, 220, 200, 0.7)',
+                                fontSize: '10px',
                                 fontFamily: 'var(--font-display)',
-                                fontSize: '11px',
-                                letterSpacing: '1px',
-                                marginBottom: '6px',
-                                color: 'rgba(212, 175, 55, 0.3)',
+                                letterSpacing: '0.5px',
                             }}
                         >
-                            SAKSHI II
+                            <span>🪞</span>
+                            <span>OBSERVATION</span>
                         </div>
-                        <div>Coming Soon</div>
                     </div>
                 </button>
             </div>
