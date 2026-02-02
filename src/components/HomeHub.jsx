@@ -488,7 +488,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
         <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
           {/* clip wrapper to prevent next-page bleed */}
-          <div className="w-full overflow-x-hidden overflow-y-visible">
+          <div className="w-full overflow-hidden">
             <div
               ref={homeSwipeRailRef}
               className="flex w-full gap-0 overflow-x-auto no-scrollbar"
@@ -496,7 +496,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
                 scrollBehavior: 'smooth',
-                overflowY: 'visible',
+                overflowY: 'hidden',
                 overscrollBehaviorX: 'contain',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
