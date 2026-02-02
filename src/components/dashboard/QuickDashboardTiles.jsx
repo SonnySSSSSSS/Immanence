@@ -97,12 +97,12 @@ function SessionsModule({ value, isLight, isSanctuary = false }) {
     const fillColor = isLight ? 'rgba(100, 80, 60, 0.8)' : 'rgba(76, 175, 80, 0.8)';
 
     const readabilityStyle = isSanctuary && !isLight ? {
-        background: 'rgba(0, 0, 0, 0.35)',
+        background: 'rgba(0, 0, 0, 0.24)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
         borderRadius: '12px',
-        padding: '8px 10px',
+        padding: '6px 8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -134,12 +134,12 @@ function ActiveDaysModule({ value, isLight, isSanctuary = false }) {
     const dotSpacing = 8;
 
     const readabilityStyle = isSanctuary && !isLight ? {
-        background: 'rgba(0, 0, 0, 0.35)',
+        background: 'rgba(0, 0, 0, 0.24)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
         borderRadius: '12px',
-        padding: '8px 10px',
+        padding: '6px 8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -330,21 +330,14 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                 <div
                     style={{
                         position: 'relative',
-                        borderRadius: '22px',
-                        background: isLight
-                            ? '#faf6ee'
-                            : isSanctuary ? 'rgba(10, 12, 16, 0.42)' : 'transparent',
-                        border: isLight
-                            ? '1px solid rgba(160, 120, 60, 0.15)'
-                            : isSanctuary ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid var(--accent-20)',
-                        backdropFilter: isSanctuary && !isLight ? 'blur(10px)' : 'none',
-                        WebkitBackdropFilter: isSanctuary && !isLight ? 'blur(10px)' : 'none',
-                        boxShadow: isSanctuary && !isLight ? '0 8px 24px rgba(0, 0, 0, 0.35)' : 'none',
+                        borderRadius: '24px',
+                        background: isLight ? '#faf6ee' : 'rgb(20, 15, 25)',
+                        border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '12px',
-                        padding: isSanctuary && !isLight ? '10px' : '12px',
+                        padding: '12px',
                     }}
                 >
                 {/* Content layer */}
