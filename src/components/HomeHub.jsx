@@ -96,6 +96,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [frameRect, setFrameRect] = useState(null);
   const homeSwipeRailRef = useRef(null);
   const [homeSwipePage, setHomeSwipePage] = useState(0);
+  const homeSwipePracticeRef = useRef(null);
+  const homeSwipeProgressRef = useRef(null);
+  const [homeSwipeHeight, setHomeSwipeHeight] = useState(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -118,18 +121,30 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       return Math.max(1, el.clientWidth - pl - pr);
     };
 
-    const updateIndex = () => {
+    const updateMetrics = () => {
       const w = getPageWidth();
       const idx = Math.max(0, Math.min(1, Math.round(el.scrollLeft / w)));
       setHomeSwipePage(idx);
+
+      const activeNode = idx === 0 ? homeSwipePracticeRef.current : homeSwipeProgressRef.current;
+      if (activeNode) {
+        const h = Math.round(activeNode.getBoundingClientRect().height);
+        if (Number.isFinite(h) && h > 0) setHomeSwipeHeight(h);
+      }
     };
 
-    updateIndex();
-    el.addEventListener('scroll', updateIndex, { passive: true });
-    window.addEventListener('resize', updateIndex);
+    const ro = new ResizeObserver(() => updateMetrics());
+
+    if (homeSwipePracticeRef.current) ro.observe(homeSwipePracticeRef.current);
+    if (homeSwipeProgressRef.current) ro.observe(homeSwipeProgressRef.current);
+
+    updateMetrics();
+    el.addEventListener('scroll', updateMetrics, { passive: true });
+    window.addEventListener('resize', updateMetrics);
     return () => {
-      el.removeEventListener('scroll', updateIndex);
-      window.removeEventListener('resize', updateIndex);
+      ro.disconnect();
+      el.removeEventListener('scroll', updateMetrics);
+      window.removeEventListener('resize', updateMetrics);
     };
   }, []);
 
@@ -488,10 +503,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
         <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
           {/* clip wrapper to prevent next-page bleed */}
-          <div className="w-full overflow-hidden">
+          <div
+            className="w-full overflow-hidden"
+            style={{
+              height: homeSwipeHeight ? `${homeSwipeHeight}px` : 'auto',
+              transition: 'height 280ms ease',
+              willChange: 'height',
+            }}
+          >
             <div
               ref={homeSwipeRailRef}
-              className="flex w-full gap-0 overflow-x-auto no-scrollbar"
+              className="flex w-full items-start gap-0 overflow-x-auto no-scrollbar"
               style={{
                 scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
@@ -506,6 +528,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 className="shrink-0 basis-full w-full"
                 style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
               >
+              <div ref={homeSwipePracticeRef} className="w-full">
               {(() => {
                 console.log('[HomeHub] active run', {
                   runId: activePath?.runId,
@@ -523,12 +546,14 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 onStartSetup={() => onSelectSection('navigation')}
                 isTutorialTarget={isDailyCardTutorialTarget}
               />
+              </div>
               </section>
 
               <section
                 className="shrink-0 basis-full w-full"
                 style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
               >
+              <div ref={homeSwipeProgressRef} className="w-full">
               {(() => {
                 // Fetch hub variant tiles with 90d range
                 const hubTiles = getQuickDashboardTiles({
@@ -547,6 +572,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                   />
                 );
               })()}
+              </div>
               </section>
             </div>
           </div>
