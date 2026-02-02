@@ -29,6 +29,15 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
 
+  // Debug overlay state
+  const [debugMetrics, setDebugMetrics] = useState({
+    containerW: 0,
+    containerH: 0,
+    imgW: 0,
+    imgH: 0,
+    dpr: window.devicePixelRatio,
+  });
+
   const stageLower = (stage || 'flame').toLowerCase();
   const vignetteColor = isLight
     ? (STAGE_VIGNETTE_LIGHT[stageLower] ?? 'rgba(180, 155, 110, 0.12)')
@@ -53,6 +62,36 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
     window.addEventListener('dev-cloud-change', handleCloudChange);
     return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
   }, []);
+
+  // Debug: Measure container and img dimensions on mode change
+  useEffect(() => {
+    const measureDimensions = () => {
+      const wallpaperImg = document.querySelector('[alt="wallpaper"]');
+      if (!wallpaperImg && !isLight) {
+        // Not found yet, try again
+        setTimeout(measureDimensions, 100);
+        return;
+      }
+      if (wallpaperImg) {
+        const rect = wallpaperImg.getBoundingClientRect();
+        setDebugMetrics({
+          containerW: Math.round(rect.width),
+          containerH: Math.round(rect.height),
+          imgW: Math.round(wallpaperImg.naturalWidth || wallpaperImg.width),
+          imgH: Math.round(wallpaperImg.naturalHeight || wallpaperImg.height),
+          dpr: window.devicePixelRatio,
+        });
+      }
+    };
+
+    // Measure on load and after render
+    const timer = setTimeout(measureDimensions, 100);
+    window.addEventListener('resize', measureDimensions);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measureDimensions);
+    };
+  }, [isSanctuary, isLight]);
 
   // Stage-based watercolor aurora asset
   const auroraAsset = `aurora_${stageLower}.png`;
@@ -183,26 +222,30 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
   // Dark mode: Original cosmic nebula design with blended top/bottom layers
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      {/* SANCTUARY_PROBE - visible only in Sanctuary mode for verification */}
-      {isSanctuary && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '60px',
-            left: '10px',
-            zIndex: 9999,
-            padding: '4px 8px',
-            background: 'rgba(76, 175, 80, 0.9)',
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            borderRadius: '4px',
-            pointerEvents: 'none',
-          }}
-        >
-          SANCTUARY_PROBE
-        </div>
-      )}
+      {/* DEBUG OVERLAY - Wallpaper dimension audit */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '60px',
+          left: '10px',
+          zIndex: 9999,
+          padding: '6px 10px',
+          background: 'rgba(0, 0, 0, 0.85)',
+          color: 'rgba(76, 175, 80, 0.9)',
+          fontSize: '9px',
+          fontFamily: 'monospace',
+          lineHeight: '1.4',
+          borderRadius: '4px',
+          pointerEvents: 'none',
+          border: '1px solid rgba(76, 175, 80, 0.6)',
+        }}
+      >
+        <div>MODE: {isSanctuary ? 'SANCTUARY' : 'HEARTH'}</div>
+        <div>CONTAINER: {debugMetrics.containerW}×{debugMetrics.containerH}px</div>
+        <div>IMG NATURAL: {debugMetrics.imgW}×{debugMetrics.imgH}px</div>
+        <div>DPR: {debugMetrics.dpr}</div>
+        <div>objectFit: cover</div>
+      </div>
 
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
@@ -211,18 +254,35 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
 
       {/* Single wallpaper layer - uses bottom stage-specific image */}
       {showBottomLayer && (
-        <img
-          src={bottomSrc}
-          alt="wallpaper"
-          className="absolute inset-0 w-full h-full"
+        <div
           style={{
-            objectFit: 'cover',
-            objectPosition: 'center bottom',
-            opacity: 0.9,
-            pointerEvents: 'none',
+            position: 'absolute',
+            inset: 0,
+            overflow: 'hidden',
           }}
-          onError={() => setBottomSrc(fallbackBottomUrl)}
-        />
+        >
+          <img
+            src={bottomSrc}
+            alt="wallpaper"
+            style={{
+              // Fixed-pixel approach: lock image to intrinsic size, center/crop with overflow
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center bottom',
+              opacity: 0.9,
+              pointerEvents: 'none',
+              // Hardening attributes
+              imageRendering: 'auto',
+              display: 'block',
+            }}
+            draggable={false}
+            decoding="async"
+            loading="eager"
+            onError={() => setBottomSrc(fallbackBottomUrl)}
+          />
+        </div>
       )}
 
 
