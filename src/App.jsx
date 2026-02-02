@@ -327,6 +327,9 @@ function App() {
           }}
         />
 
+        {/* Full-viewport Background (wallpaper fills entire screen) */}
+        <Background stage={previewStage} showBottomLayer={showBackgroundBottomLayer} />
+
         <PhoticCirclesOverlay
           isOpen={isPhoticOpen}
           onClose={() => setIsPhoticOpen(false)}
@@ -353,7 +356,6 @@ function App() {
             overflowY: 'visible',
           }}
         >
-<Background stage={previewStage} showBottomLayer={showBackgroundBottomLayer} />
 
           <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible'>
             {/* Fixed Dark Header Bar */}

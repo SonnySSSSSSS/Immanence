@@ -204,18 +204,15 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
             src={bottomSrc}
             alt="wallpaper"
             style={{
-              // FIXED-PIXEL APPROACH: Lock image dimensions to prevent resampling
-              // Asset is 2560×1440; scale down to 1920×1080 (1.33:1 ratio)
-              // This keeps image at constant pixel scale across all viewport widths
-              // Parent overflow: hidden crops visible portion based on container
+              // Full-viewport wallpaper with responsive sizing
+              // Background now fills entire viewport (not constrained to app container)
+              // This allows proper wallpaper behavior without resampling issues
               position: 'absolute',
-              width: '1920px',
-              height: '1080px',
-              left: '50%',
-              top: '0',
-              transform: 'translateX(-50%)',
-              // NO objectFit - we're using fixed dimensions
-              // This is critical: objectFit: cover was causing resampling
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center bottom',
               opacity: 0.9,
               pointerEvents: 'none',
               // Hardening attributes
