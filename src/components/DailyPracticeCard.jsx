@@ -724,11 +724,107 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     />
 
                     {/* 2. LEFT BLOOM FADE: image blooms into parchment */}
-                    <div className="absolute inset-0 pointer-events-none" style={{ 
-                        background: isLight 
-                            ? 'linear-gradient(to right, rgba(250, 246, 238, 0) 0%, rgba(250, 246, 238, 0.3) 30%, rgba(250, 246, 238, 0.9) 100%)' 
-                            : 'linear-gradient(to right, rgba(20, 15, 25, 0) 0%, rgba(20, 15, 25, 0.45) 40%, rgba(20, 15, 25, 0.95) 100%)' 
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                        background: isLight
+                            ? 'linear-gradient(to right, rgba(250, 246, 238, 0) 0%, rgba(250, 246, 238, 0.3) 30%, rgba(250, 246, 238, 0.9) 100%)'
+                            : 'linear-gradient(to right, rgba(20, 15, 25, 0) 0%, rgba(20, 15, 25, 0.45) 40%, rgba(20, 15, 25, 0.95) 100%)'
                     }} />
+
+                    {/* 2.5 LEFT PANE STATS OVERLAY - Completion and Path metrics */}
+                    <div
+                        className="absolute pointer-events-none"
+                        style={{
+                            inset: '12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            zIndex: 5,
+                        }}
+                    >
+                        {/* Top-left: Completion stat */}
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                        }}>
+                            <div style={{
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253, 251, 245, 0.5)',
+                                fontFamily: 'var(--font-ui)',
+                            }}>
+                                COMPLETION
+                            </div>
+                            <div style={{
+                                fontSize: '16px',
+                                fontWeight: 700,
+                                color: isLight ? '#3c3020' : '#fdfbf5',
+                                fontFamily: 'var(--font-display)',
+                            }}>
+                                {completedLegs}/{legs.length}
+                            </div>
+                            {/* Progress bar */}
+                            <div style={{
+                                width: '100%',
+                                height: '4px',
+                                background: isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '2px',
+                                overflow: 'hidden',
+                            }}>
+                                <div style={{
+                                    height: '100%',
+                                    width: `${(completedLegs / legs.length) * 100}%`,
+                                    background: 'var(--accent-color)',
+                                    borderRadius: '2px',
+                                    transition: 'width 0.4s ease-out',
+                                }} />
+                            </div>
+                        </div>
+
+                        {/* Bottom-left: Path stat */}
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                        }}>
+                            <div style={{
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253, 251, 245, 0.5)',
+                                fontFamily: 'var(--font-ui)',
+                            }}>
+                                PATH
+                            </div>
+                            <div style={{
+                                fontSize: '16px',
+                                fontWeight: 700,
+                                color: isLight ? '#3c3020' : '#fdfbf5',
+                                fontFamily: 'var(--font-display)',
+                            }}>
+                                {progress.rate}%
+                            </div>
+                            {/* Progress bar */}
+                            <div style={{
+                                width: '100%',
+                                height: '4px',
+                                background: isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '2px',
+                                overflow: 'hidden',
+                            }}>
+                                <div style={{
+                                    height: '100%',
+                                    width: `${progress.rate}%`,
+                                    background: 'var(--accent-color)',
+                                    borderRadius: '2px',
+                                    transition: 'width 0.4s ease-out',
+                                }} />
+                            </div>
+                        </div>
+                    </div>
 
                     {/* 3. CONTENT PANEL (Owns the readable layout) */}
                     <div 
@@ -753,7 +849,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             )}
 
                             {/* Scrollable Container */}
-                            <div className="p-6 sm:p-7 relative z-10">
+                            <div className="px-6 sm:px-7 pt-6 sm:pt-7 pb-4 relative z-10">
                                 {/* Decorative corner embellishments */}
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
@@ -895,53 +991,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     })}
                                 </div>
 
-                                {/* Footer */}
-                                <div className="flex items-center justify-between mt-6 pt-4" style={{
-                                    borderTop: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-10)',
-                                }}>
-                                    {/* Completion Status */}
-                                    <div className="flex items-center gap-2">
-                                        {isComplete ? (
-                                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
-                                                <span>✨</span>
-                                                Day Complete
-                                            </div>
-                                        ) : (
-                                            <div style={{
-                                                fontSize: '9px',
-                                                fontWeight: 600,
-                                                letterSpacing: '0.05em',
-                                                color: config.textSub,
-                                            }}>
-                                                {completedLegs}/{legs.length} complete
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Rate + View Path */}
-                                    <div className="flex items-center gap-3">
-                                        <div 
-                                            className="text-[16px] font-black tabular-nums" 
-                                            style={{ 
-                                                color: 'var(--accent-color)',
-                                                textShadow: isLight ? 'none' : '0 0 10px var(--accent-30)'
-                                            }}
-                                        >
-                                            {progress.rate}%
-                                        </div>
-                                        <button 
-                                            data-tutorial="home-curriculum-card"
-                                            onClick={() => {
-                                                console.log('[DailyPracticeCard] Path button clicked, calling onViewCurriculum');
-                                                onViewCurriculum();
-                                            }}
-                                            className="text-[8px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-all font-display"
-                                            style={{ color: config.textMain }}
-                                        >
-                                            Path →
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
