@@ -16,6 +16,9 @@ import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.
  * THEME CONFIGURATION
  * Synchronized with CompactStatsCard for "Ancient Relic" aesthetic
  */
+const CARD_SHADOW_SOFT_LIGHT = '0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06)';
+const CARD_SHADOW_SOFT_DARK = '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)';
+
 const THEME_CONFIG = {
     light: {
         accent: 'rgba(139, 159, 136, 0.85)',
@@ -24,7 +27,7 @@ const THEME_CONFIG = {
         bgAsset: 'ancient_relic_focus.png',
         canvasGrain: 'canvas_grain.png',
         border: 'rgba(139, 115, 85, 0.25)',
-        shadow: '0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 0 1px rgba(180, 140, 60, 0.3)'
+        shadow: CARD_SHADOW_SOFT_LIGHT
     },
     dark: {
         accent: 'var(--accent-color)',
@@ -32,7 +35,7 @@ const THEME_CONFIG = {
         textSub: 'rgba(253, 251, 245, 0.5)',
         bgAsset: 'card_bg_comet_{stage}.png',  // Placeholder, will be replaced below
         border: 'var(--accent-20)',
-        shadow: '0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+        shadow: CARD_SHADOW_SOFT_DARK
     }
 };
 
@@ -408,9 +411,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         border: isLight
                             ? `2px solid ${primaryHex}40`
                             : `2px solid ${primaryHex}60`,
-                        boxShadow: isLight
-                            ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
-                            : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`
+                        boxShadow: isLight ? CARD_SHADOW_SOFT_LIGHT : CARD_SHADOW_SOFT_DARK
                     }}
                 >
                     <div
@@ -798,9 +799,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     border: isLight
                         ? `2px solid ${primaryHex}40`
                         : `2px solid ${primaryHex}60`,
-                    boxShadow: isLight
-                        ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
-                        : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`
+                    boxShadow: isLight ? CARD_SHADOW_SOFT_LIGHT : CARD_SHADOW_SOFT_DARK
                 }}
             >
                 {/* MIDDLE: Container */}

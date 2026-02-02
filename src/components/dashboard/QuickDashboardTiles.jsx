@@ -278,6 +278,8 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
 export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null, isSanctuary = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const cardShadowSoftLight = '0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06)';
+    const cardShadowSoftDark = '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)';
 
     if (!tiles || Object.keys(tiles).length === 0) {
         return null;
@@ -320,9 +322,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     border: isLight
                         ? `2px solid ${primaryHex}40`
                         : `2px solid ${primaryHex}60`,
-                    boxShadow: isLight
-                        ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
-                        : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`,
+                    boxShadow: isLight ? cardShadowSoftLight : cardShadowSoftDark,
                     overflow: 'hidden',
                 }}
             >
