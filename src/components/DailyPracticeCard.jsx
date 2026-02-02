@@ -65,6 +65,97 @@ function getWeekForDay(path, dayIndex) {
 }
 
 /**
+ * Reusable glass bar widget for left-pane stats
+ * Compact horizontal bar with label, value, and progress indicator
+ */
+function LeftPaneStatBar({ label, valueText, progressRatio, isLight }) {
+    const glassBackground = isLight
+        ? 'rgba(250, 246, 238, 0.28)'
+        : 'rgba(10, 10, 12, 0.35)';
+
+    const glassBorder = isLight
+        ? '1px solid rgba(160, 120, 60, 0.15)'
+        : '1px solid rgba(120, 255, 180, 0.18)';
+
+    const labelColor = isLight
+        ? 'rgba(60, 50, 35, 0.6)'
+        : 'rgba(253, 251, 245, 0.5)';
+
+    const valueColor = isLight ? '#3c3020' : '#fdfbf5';
+
+    const trackColor = isLight
+        ? 'rgba(60, 50, 35, 0.15)'
+        : 'rgba(255, 255, 255, 0.14)';
+
+    return (
+        <div
+            style={{
+                width: 'min(160px, 42vw)',
+                padding: '10px',
+                background: glassBackground,
+                border: glassBorder,
+                borderRadius: '10px',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+            }}
+        >
+            {/* Label */}
+            <div
+                style={{
+                    fontSize: '8px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: labelColor,
+                    fontFamily: 'var(--font-ui)',
+                }}
+            >
+                {label}
+            </div>
+
+            {/* Value */}
+            <div
+                style={{
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: valueColor,
+                    fontFamily: 'var(--font-display)',
+                    lineHeight: '1.2',
+                }}
+            >
+                {valueText}
+            </div>
+
+            {/* Progress bar track */}
+            <div
+                style={{
+                    width: '100%',
+                    height: '4px',
+                    background: trackColor,
+                    borderRadius: '2px',
+                    overflow: 'hidden',
+                }}
+            >
+                {/* Progress bar fill */}
+                <div
+                    style={{
+                        height: '100%',
+                        width: `${Math.max(0, Math.min(1, progressRatio)) * 100}%`,
+                        background: 'var(--accent-color)',
+                        borderRadius: '2px',
+                        transition: 'width 0.4s ease-out',
+                        boxShadow: isLight ? 'none' : '0 0 6px var(--accent-50)',
+                    }}
+                />
+            </div>
+        </div>
+    );
+}
+
+/**
  * Normalize a list to match slot count
  * Pads by repeating the last element if necessary
  */
@@ -741,89 +832,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             zIndex: 5,
                         }}
                     >
-                        {/* Top-left: Completion stat */}
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '6px',
-                        }}>
-                            <div style={{
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.08em',
-                                color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253, 251, 245, 0.5)',
-                                fontFamily: 'var(--font-ui)',
-                            }}>
-                                COMPLETION
-                            </div>
-                            <div style={{
-                                fontSize: '16px',
-                                fontWeight: 700,
-                                color: isLight ? '#3c3020' : '#fdfbf5',
-                                fontFamily: 'var(--font-display)',
-                            }}>
-                                {completedLegs}/{legs.length}
-                            </div>
-                            {/* Progress bar */}
-                            <div style={{
-                                width: '100%',
-                                height: '4px',
-                                background: isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '2px',
-                                overflow: 'hidden',
-                            }}>
-                                <div style={{
-                                    height: '100%',
-                                    width: `${(completedLegs / legs.length) * 100}%`,
-                                    background: 'var(--accent-color)',
-                                    borderRadius: '2px',
-                                    transition: 'width 0.4s ease-out',
-                                }} />
-                            </div>
-                        </div>
+                        {/* Top-left: Completion stat bar */}
+                        <LeftPaneStatBar
+                            label="COMPLETION"
+                            valueText={`${completedLegs}/${legs.length}`}
+                            progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
+                            isLight={isLight}
+                        />
 
-                        {/* Bottom-left: Path stat */}
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '6px',
-                        }}>
-                            <div style={{
-                                fontSize: '8px',
-                                fontWeight: 600,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.08em',
-                                color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253, 251, 245, 0.5)',
-                                fontFamily: 'var(--font-ui)',
-                            }}>
-                                PATH
-                            </div>
-                            <div style={{
-                                fontSize: '16px',
-                                fontWeight: 700,
-                                color: isLight ? '#3c3020' : '#fdfbf5',
-                                fontFamily: 'var(--font-display)',
-                            }}>
-                                {progress.rate}%
-                            </div>
-                            {/* Progress bar */}
-                            <div style={{
-                                width: '100%',
-                                height: '4px',
-                                background: isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '2px',
-                                overflow: 'hidden',
-                            }}>
-                                <div style={{
-                                    height: '100%',
-                                    width: `${progress.rate}%`,
-                                    background: 'var(--accent-color)',
-                                    borderRadius: '2px',
-                                    transition: 'width 0.4s ease-out',
-                                }} />
-                            </div>
-                        </div>
+                        {/* Bottom-left: Path stat bar */}
+                        <LeftPaneStatBar
+                            label="PATH"
+                            valueText={`${progress.rate}%`}
+                            progressRatio={progress.rate / 100}
+                            isLight={isLight}
+                        />
                     </div>
 
                     {/* 3. CONTENT PANEL (Owns the readable layout) */}
