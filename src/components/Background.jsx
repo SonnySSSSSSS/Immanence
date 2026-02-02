@@ -2,49 +2,8 @@
 // Stage-specific cosmic backgrounds with colored vignettes
 // Light mode: Unified stacking (Parchment -> Clouds -> Aurora -> Textures)
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDisplayModeStore } from "../state/displayModeStore";
-
-// Blend configuration for seamless top/bottom layer merging
-const BLEND_CONFIG = {
-  topFadeStart: 50,
-  topFadeEnd: 70,
-  bottomFadeStart: 30,
-  bottomFadeEnd: 50,
-};
-
-// Utility to generate webkit-prefixed mask styles for both layers
-function getMaskStyles(config) {
-  const topGradient = `linear-gradient(to bottom, black 0%, black ${config.topFadeStart}%, transparent ${config.topFadeEnd}%)`;
-  const bottomGradient = `linear-gradient(to bottom, transparent 0%, transparent ${config.bottomFadeStart}%, black ${config.bottomFadeEnd}%, black 100%)`;
-  
-  return {
-    topMask: {
-      maskImage: topGradient,
-      WebkitMaskImage: topGradient,
-    },
-    bottomMask: {
-      maskImage: bottomGradient,
-      WebkitMaskImage: bottomGradient,
-    },
-  };
-}
-
-// Shared layer geometry to ensure identical positioning (phase-lock requirement)
-const SHARED_LAYER_STYLE = {
-  backgroundRepeat: 'no-repeat',
-  mixBlendMode: 'lighten',
-};
-
-// Top layer specific sizing
-const TOP_LAYER_STYLE = {
-  backgroundSize: 'auto 100%',  // Height fills screen, width scales proportionally
-};
-
-// Bottom layer specific sizing - reframed to show rune as hero subject
-const BOTTOM_LAYER_STYLE = {
-  backgroundSize: 'auto 120%',  // Scale to keep rune in view
-};
 
 // Vignette edge colors for each stage
 const STAGE_VIGNETTE_COLOR = {
@@ -251,35 +210,21 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
       {/* GRAVEYARD: Top wallpaper layer removed - only using bottom layer */}
 
       {/* Single wallpaper layer - uses bottom stage-specific image */}
-      <div
-        className="absolute inset-0"
-        style={{
-          animation: 'bgDrift 60s ease-in-out infinite',
-        }}
-      >
-        {/* Bottom: Stage-specific bottom layer - cover for Sanctuary, auto 120% for Hearth */}
-        {showBottomLayer && (
-        <div
-          className="absolute inset-0"
+      {showBottomLayer && (
+        <img
+          src={bottomSrc}
+          alt="wallpaper"
+          className="absolute inset-0 w-full h-full"
           style={{
-            backgroundImage: `url(${bottomSrc})`,
-            backgroundSize: isSanctuary ? 'cover' : 'auto 120%',
-            backgroundPosition: 'center bottom',
+            objectFit: 'cover',
+            objectPosition: 'center bottom',
             opacity: 0.9,
-            ...SHARED_LAYER_STYLE,
+            pointerEvents: 'none',
           }}
           onError={() => setBottomSrc(fallbackBottomUrl)}
         />
-        )}
-      </div>
+      )}
 
-      {/* CSS for background animation */}
-      <style>{`
-        @keyframes bgDrift {
-          0%, 100% { background-position: center; }
-          50% { background-position: calc(50% + 30px) center; }
-        }
-      `}</style>
 
       {/* Stage-colored vignette - adds tinted edges */}
       <div
