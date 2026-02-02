@@ -490,6 +490,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 variant="hubCard"
                 tiles={hubTiles}
                 onOpenDetails={() => setIsDashboardModalOpen(true)}
+                isSanctuary={isSanctuary}
               />
             );
           })()}

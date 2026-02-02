@@ -89,16 +89,28 @@ function DashboardTile({ tile, isLight }) {
 /**
  * Sessions infographic: horizontal bar + number
  */
-function SessionsModule({ value, isLight }) {
+function SessionsModule({ value, isLight, isSanctuary = false }) {
     const cap = 60;
     const fill = Math.min(value / cap, 1);
     const barHeight = 6;
     const barColor = isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.2)';
     const fillColor = isLight ? 'rgba(100, 80, 60, 0.8)' : 'rgba(76, 175, 80, 0.8)';
 
+    const readabilityStyle = isSanctuary && !isLight ? {
+        background: 'rgba(0, 0, 0, 0.35)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        borderRadius: '12px',
+        padding: '8px 10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    } : {};
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+            <div style={{ fontSize: '20px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', ...readabilityStyle }}>
                 {Math.round(value)}
             </div>
             <svg width="100%" height="12" viewBox="0 0 100 12" style={{ overflow: 'visible' }}>
@@ -115,15 +127,27 @@ function SessionsModule({ value, isLight }) {
 /**
  * Active Days infographic: dot strip (14 dots) + number
  */
-function ActiveDaysModule({ value, isLight }) {
+function ActiveDaysModule({ value, isLight, isSanctuary = false }) {
     const dotCount = 14;
     const filled = Math.min(value, dotCount);
     const dotRadius = 3;
     const dotSpacing = 8;
 
+    const readabilityStyle = isSanctuary && !isLight ? {
+        background: 'rgba(0, 0, 0, 0.35)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        borderRadius: '12px',
+        padding: '8px 10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    } : {};
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+            <div style={{ fontSize: '20px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', ...readabilityStyle }}>
                 {Math.round(value)}
             </div>
             <svg width="100%" height="10" viewBox={`0 0 ${dotCount * dotSpacing} 10`} style={{ overflow: 'visible' }}>
@@ -149,7 +173,7 @@ function ActiveDaysModule({ value, isLight }) {
 /**
  * Donut ring infographic for rates (completion/on-time)
  */
-function RateRingModule({ value, label, isLight }) {
+function RateRingModule({ value, label, isLight, isSanctuary = false }) {
     const r = 20;
     const circumference = 2 * Math.PI * r;
     const progress = value === null ? 0 : Math.max(0, Math.min(value / 100, 1));
@@ -162,6 +186,49 @@ function RateRingModule({ value, label, isLight }) {
 
     const displayValue = value === null ? '—' : `${Math.round(value)}%`;
 
+    // Sanctuary mode: put percent inside circle, keep label below
+    if (isSanctuary && !isLight) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="60" height="60" viewBox="0 0 60 60" style={{ overflow: 'visible', position: 'absolute' }}>
+                        {/* Background ring */}
+                        <circle
+                            cx="30"
+                            cy="30"
+                            r={r}
+                            fill="none"
+                            stroke={ringColor}
+                            strokeWidth="4"
+                        />
+                        {/* Progress ring */}
+                        {value !== null && (
+                            <circle
+                                cx="30"
+                                cy="30"
+                                r={r}
+                                fill="none"
+                                stroke={fillColor}
+                                strokeWidth="4"
+                                strokeDasharray={`${dashLength} ${circumference}`}
+                                strokeLinecap="round"
+                                transform="rotate(-90 30 30)"
+                            />
+                        )}
+                    </svg>
+                    {/* Percent overlay inside circle */}
+                    <div style={{ position: 'relative', zIndex: 1, fontSize: '16px', fontWeight: '700', color: 'rgba(255, 255, 255, 0.95)', textAlign: 'center' }}>
+                        {displayValue}
+                    </div>
+                </div>
+                <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255, 255, 255, 0.5)' }}>
+                    {label}
+                </div>
+            </div>
+        );
+    }
+
+    // Hearth mode / Light mode: keep percent below circle
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
             <svg width="60" height="60" viewBox="0 0 60 60" style={{ overflow: 'visible' }}>
@@ -206,8 +273,9 @@ function RateRingModule({ value, label, isLight }) {
  *                                 Shape: { minutes_total, sessions_total, days_active, completion_rate, on_time_rate }
  * @param {string} props.variant - 'default' (5 tiles), 'hub' (4 KPI compact), or 'hubCard' (infographic card)
  * @param {Function} props.onOpenDetails - Optional callback when details button clicked (hub variants only)
+ * @param {boolean} props.isSanctuary - Sanctuary mode flag for layout adjustments
  */
-export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null }) {
+export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null, isSanctuary = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
@@ -265,15 +333,18 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         borderRadius: '22px',
                         background: isLight
                             ? '#faf6ee'
-                            : 'transparent',
+                            : isSanctuary ? 'rgba(10, 12, 16, 0.42)' : 'transparent',
                         border: isLight
                             ? '1px solid rgba(160, 120, 60, 0.15)'
-                            : '1px solid var(--accent-20)',
+                            : isSanctuary ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid var(--accent-20)',
+                        backdropFilter: isSanctuary && !isLight ? 'blur(10px)' : 'none',
+                        WebkitBackdropFilter: isSanctuary && !isLight ? 'blur(10px)' : 'none',
+                        boxShadow: isSanctuary && !isLight ? '0 8px 24px rgba(0, 0, 0, 0.35)' : 'none',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '12px',
-                        padding: '12px',
+                        padding: isSanctuary && !isLight ? '10px' : '12px',
                     }}
                 >
                 {/* Content layer */}
@@ -296,10 +367,10 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         gap: '16px',
                     }}
                 >
-                    <SessionsModule value={tiles.sessions_total || 0} isLight={isLight} />
-                    <ActiveDaysModule value={tiles.days_active || 0} isLight={isLight} />
-                    <RateRingModule value={tiles.completion_rate ?? null} label="Completion" isLight={isLight} />
-                    <RateRingModule value={tiles.on_time_rate ?? null} label="On-Time" isLight={isLight} />
+                    <SessionsModule value={tiles.sessions_total || 0} isLight={isLight} isSanctuary={isSanctuary} />
+                    <ActiveDaysModule value={tiles.days_active || 0} isLight={isLight} isSanctuary={isSanctuary} />
+                    <RateRingModule value={tiles.completion_rate ?? null} label="Completion" isLight={isLight} isSanctuary={isSanctuary} />
+                    <RateRingModule value={tiles.on_time_rate ?? null} label="On-Time" isLight={isLight} isSanctuary={isSanctuary} />
                 </div>
 
                 {/* Details button - matches START SETUP styling */}
