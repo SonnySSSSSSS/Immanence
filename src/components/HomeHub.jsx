@@ -94,6 +94,8 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [launcherContext, setLauncherContext] = useState(null);
   const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
   const [frameRect, setFrameRect] = useState(null);
+  const homeSwipeRailRef = useRef(null);
+  const [homeSwipePage, setHomeSwipePage] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -104,6 +106,42 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       setHasPersistedCurriculumData(true);
     }
   }, []);
+
+  useEffect(() => {
+    const el = homeSwipeRailRef.current;
+    if (!el) return;
+
+    const getPageWidth = () => {
+      const cs = window.getComputedStyle(el);
+      const pl = Number.parseFloat(cs.paddingLeft) || 0;
+      const pr = Number.parseFloat(cs.paddingRight) || 0;
+      return Math.max(1, el.clientWidth - pl - pr);
+    };
+
+    const updateIndex = () => {
+      const w = getPageWidth();
+      const idx = Math.max(0, Math.min(1, Math.round(el.scrollLeft / w)));
+      setHomeSwipePage(idx);
+    };
+
+    updateIndex();
+    el.addEventListener('scroll', updateIndex, { passive: true });
+    window.addEventListener('resize', updateIndex);
+    return () => {
+      el.removeEventListener('scroll', updateIndex);
+      window.removeEventListener('resize', updateIndex);
+    };
+  }, []);
+
+  const scrollHomeSwipeTo = (index) => {
+    const el = homeSwipeRailRef.current;
+    if (!el) return;
+    const cs = window.getComputedStyle(el);
+    const pl = Number.parseFloat(cs.paddingLeft) || 0;
+    const pr = Number.parseFloat(cs.paddingRight) || 0;
+    const w = Math.max(1, el.clientWidth - pl - pr);
+    el.scrollTo({ left: index * w, behavior: 'smooth' });
+  };
 
   useLayoutEffect(() => {
     const update = (tag = "update") => {
@@ -447,53 +485,91 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           </div>
         </div>
 
-{/* DAILY PRACTICE CARD (Curriculum) */}
-<div
-  className="w-full"
-  style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}
->
-  {(() => {
-    console.log('[HomeHub] active run', {
-      runId: activePath?.runId,
-      activePathId: activePath?.activePathId,
-    });
-    return null;
-  })()}
-  <DailyPracticeCard
-    onStartPractice={handleStartPractice}
-    onViewCurriculum={openCurriculumHub}
-    onNavigate={onSelectSection}
-    hasPersistedCurriculumData={hasPersistedCurriculumData}
-    onboardingComplete={curriculumOnboardingComplete}
-    practiceTimeSlots={practiceTimeSlots}
-    onStartSetup={() => onSelectSection('navigation')}
-    isTutorialTarget={isDailyCardTutorialTarget}
-  />
-</div>
-
-        {/* TRACKING HUB - Dashboard Hub Variant */}
-        <div
-          className="w-full"
-          style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}
-        >
-          {(() => {
-            // Fetch hub variant tiles with 90d range
-            const hubTiles = getQuickDashboardTiles({
-              scope: hubPolicy.scope,
-              range: '90d',
-              includeHonor: hubPolicy.includeHonor,
-              activeRunId: hubPolicy.activeRunId,
-            });
-
-            return (
-              <QuickDashboardTiles
-                variant="hubCard"
-                tiles={hubTiles}
-                onOpenDetails={() => setIsDashboardModalOpen(true)}
-                isSanctuary={isSanctuary}
+        {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
+        <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
+          {/* clip wrapper to prevent next-page bleed */}
+          <div className="w-full overflow-x-hidden overflow-y-visible">
+            <div
+              ref={homeSwipeRailRef}
+              className="flex w-full gap-0 overflow-x-auto no-scrollbar"
+              style={{
+                scrollSnapType: 'x mandatory',
+                WebkitOverflowScrolling: 'touch',
+                scrollBehavior: 'smooth',
+                overflowY: 'visible',
+                overscrollBehaviorX: 'contain',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
+            >
+              <section
+                className="shrink-0 basis-full w-full"
+                style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+              >
+              {(() => {
+                console.log('[HomeHub] active run', {
+                  runId: activePath?.runId,
+                  activePathId: activePath?.activePathId,
+                });
+                return null;
+              })()}
+              <DailyPracticeCard
+                onStartPractice={handleStartPractice}
+                onViewCurriculum={openCurriculumHub}
+                onNavigate={onSelectSection}
+                hasPersistedCurriculumData={hasPersistedCurriculumData}
+                onboardingComplete={curriculumOnboardingComplete}
+                practiceTimeSlots={practiceTimeSlots}
+                onStartSetup={() => onSelectSection('navigation')}
+                isTutorialTarget={isDailyCardTutorialTarget}
               />
-            );
-          })()}
+              </section>
+
+              <section
+                className="shrink-0 basis-full w-full"
+                style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+              >
+              {(() => {
+                // Fetch hub variant tiles with 90d range
+                const hubTiles = getQuickDashboardTiles({
+                  scope: hubPolicy.scope,
+                  range: '90d',
+                  includeHonor: hubPolicy.includeHonor,
+                  activeRunId: hubPolicy.activeRunId,
+                });
+
+                return (
+                  <QuickDashboardTiles
+                    variant="hubCard"
+                    tiles={hubTiles}
+                    onOpenDetails={() => setIsDashboardModalOpen(true)}
+                    isSanctuary={isSanctuary}
+                  />
+                );
+              })()}
+              </section>
+            </div>
+          </div>
+
+          {/* Page indicator */}
+          <div className="flex items-center justify-center gap-2 pt-1">
+            {[0, 1].map((idx) => (
+              <button
+                key={idx}
+                type="button"
+                aria-label={idx === 0 ? "Show Today's Practice" : 'Show Progress Overview'}
+                onClick={() => scrollHomeSwipeTo(idx)}
+                className="w-2.5 h-2.5 rounded-full transition-all"
+                style={{
+                  background:
+                    homeSwipePage === idx ? 'rgba(80, 255, 160, 0.85)' : 'rgba(255, 255, 255, 0.18)',
+                  boxShadow: homeSwipePage === idx ? '0 0 12px rgba(80, 255, 160, 0.22)' : 'none',
+                  border: homeSwipePage === idx ? '1px solid rgba(120, 255, 180, 0.25)' : '1px solid rgba(255,255,255,0.10)',
+                  transform: homeSwipePage === idx ? 'scale(1.05)' : 'scale(1.0)',
+                }}
+              />
+            ))}
+          </div>
         </div>
 
 
