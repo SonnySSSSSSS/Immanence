@@ -314,8 +314,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         ref={cardRef}
                         className="w-full relative overflow-hidden rounded-[24px]"
                         style={{
-                            background: isLight ? '#faf6ee' : 'rgb(20, 15, 25)',
+                            background: isLight ? '#faf6ee' : 'rgba(0, 0, 0, 0.82)',
                             border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
+                            backdropFilter: isLight ? 'none' : 'blur(12px)',
+                            WebkitBackdropFilter: isLight ? 'none' : 'blur(12px)',
                         }}
                     >
                         <div
@@ -703,8 +705,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     ref={cardRef}
                     className="w-full relative overflow-hidden rounded-[24px]"
                     style={{
-                        background: isLight ? '#faf6ee' : 'rgb(20, 15, 25)',
+                        background: isLight ? '#faf6ee' : 'rgba(0, 0, 0, 0.82)',
                         border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
+                        backdropFilter: isLight ? 'none' : 'blur(12px)',
+                        WebkitBackdropFilter: isLight ? 'none' : 'blur(12px)',
                     }}
                 >
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
