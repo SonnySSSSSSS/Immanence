@@ -204,17 +204,18 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
             src={bottomSrc}
             alt="wallpaper"
             style={{
-              // FIXED-PIXEL APPROACH: Lock image to 1920px wide at all times
-              // This prevents resampling when container size changes (Sanctuary ↔ Hearth)
-              // Image stays at constant pixel scale; only visible portion changes via crop
+              // FIXED-PIXEL APPROACH: Lock image dimensions to prevent resampling
+              // Asset is 2560×1440; scale down to 1920×1080 (1.33:1 ratio)
+              // This keeps image at constant pixel scale across all viewport widths
+              // Parent overflow: hidden crops visible portion based on container
               position: 'absolute',
               width: '1920px',
-              height: 'auto',
+              height: '1080px',
               left: '50%',
               top: '0',
               transform: 'translateX(-50%)',
-              objectFit: 'cover',
-              objectPosition: 'center bottom',
+              // NO objectFit - we're using fixed dimensions
+              // This is critical: objectFit: cover was causing resampling
               opacity: 0.9,
               pointerEvents: 'none',
               // Hardening attributes
