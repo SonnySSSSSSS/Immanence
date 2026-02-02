@@ -40,6 +40,18 @@ import { TUTORIALS } from "../tutorials/tutorialRegistry.js";
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
 
+// Sanctuary mode unified width rail (leaves margin within 820px app container)
+const SANCTUARY_MODULE_MAX_WIDTH = '740px';
+
+// Unified Sanctuary rail style - ensures all three sections share identical left/right edges
+const SANCTUARY_RAIL_STYLE = {
+  width: '100%',
+  maxWidth: '740px',
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  position: 'relative',
+};
+
 
 function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false }) {
   // Real data from stores
@@ -384,9 +396,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
         {/* EXPLORE MODES - Navigation Buttons */}
         <div
-          className="w-full mb-4 transition-all duration-700 flex flex-col items-center"
-          style={{
-            maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
+          className="w-full mb-4 transition-all duration-700"
+          style={isSanctuary ? SANCTUARY_RAIL_STYLE : {
+            maxWidth: 'min(430px, 94vw)',
             margin: '0 auto',
             padding: '0 16px',
           }}
@@ -401,14 +413,12 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             Explore Modes
           </div>
 
-          {/* Horizontal Row - Simple circular buttons - MATCHES CARD WIDTH + CENTERED */}
+          {/* Horizontal Row - Simple circular buttons - DISTRIBUTES ACROSS RAIL */}
           <div
-            className="flex flex-row justify-center items-center w-full"
+            className="flex flex-row items-center w-full"
             style={{
-              maxWidth: isSanctuary ? '100%' : 'min(430px, 94vw)',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              gap: isSanctuary ? '24px' : '10px',
+              justifyContent: isSanctuary ? 'space-around' : 'center',
+              gap: isSanctuary ? '0' : '10px',
             }}
           >
             <SimpleModeButton
@@ -438,7 +448,10 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         </div>
 
 {/* DAILY PRACTICE CARD (Curriculum) */}
-<div className="w-full">
+<div
+  className="w-full"
+  style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}
+>
   {(() => {
     console.log('[HomeHub] active run', {
       runId: activePath?.runId,
@@ -459,7 +472,10 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 </div>
 
         {/* TRACKING HUB - Dashboard Hub Variant */}
-        <div className="w-full">
+        <div
+          className="w-full"
+          style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}
+        >
           {(() => {
             // Fetch hub variant tiles with 90d range
             const hubTiles = getQuickDashboardTiles({

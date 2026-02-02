@@ -276,21 +276,6 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         padding: '12px',
                     }}
                 >
-                    {/* Wallpaper background layer */}
-                    {!isLight && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/card_bg_seedling_nebula.png)`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                zIndex: 0,
-                                pointerEvents: 'none',
-                            }}
-                        />
-                    )}
-
                 {/* Content layer */}
                 <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {/* Header */}

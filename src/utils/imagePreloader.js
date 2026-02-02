@@ -41,12 +41,19 @@ export const CRITICAL_IMAGES = [
  * These can load in background after initial render
  */
 export const SECONDARY_IMAGES = [
-    // Stage backgrounds
+    // Stage backgrounds (top layers)
     'bg/bg-seedling.png',
     'bg/bg-ember.png',
     'bg/bg-flame.png',
     'bg/bg-beacon.png',
     'bg/bg-stellar.png',
+
+    // Stage backgrounds (bottom layers for blending)
+    'bg/bg-seedling-bottom.png',
+    'bg/bg-ember-bottom.png',
+    'bg/bg-flame-bottom.png',
+    'bg/bg-beacon-bottom.png',
+    'bg/bg-stellar-bottom.png',
 
     // Practice backgrounds
     'bg/practice-breath-mandala.png',

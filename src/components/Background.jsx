@@ -5,6 +5,47 @@
 import React, { useState, useEffect } from "react";
 import { useDisplayModeStore } from "../state/displayModeStore";
 
+// Blend configuration for seamless top/bottom layer merging
+const BLEND_CONFIG = {
+  topFadeStart: 50,
+  topFadeEnd: 70,
+  bottomFadeStart: 30,
+  bottomFadeEnd: 50,
+};
+
+// Utility to generate webkit-prefixed mask styles for both layers
+function getMaskStyles(config) {
+  const topGradient = `linear-gradient(to bottom, black 0%, black ${config.topFadeStart}%, transparent ${config.topFadeEnd}%)`;
+  const bottomGradient = `linear-gradient(to bottom, transparent 0%, transparent ${config.bottomFadeStart}%, black ${config.bottomFadeEnd}%, black 100%)`;
+  
+  return {
+    topMask: {
+      maskImage: topGradient,
+      WebkitMaskImage: topGradient,
+    },
+    bottomMask: {
+      maskImage: bottomGradient,
+      WebkitMaskImage: bottomGradient,
+    },
+  };
+}
+
+// Shared layer geometry to ensure identical positioning (phase-lock requirement)
+const SHARED_LAYER_STYLE = {
+  backgroundRepeat: 'no-repeat',
+  mixBlendMode: 'lighten',
+};
+
+// Top layer specific sizing
+const TOP_LAYER_STYLE = {
+  backgroundSize: 'auto 100%',  // Height fills screen, width scales proportionally
+};
+
+// Bottom layer specific sizing - reframed to show rune as hero subject
+const BOTTOM_LAYER_STYLE = {
+  backgroundSize: 'auto 120%',  // Scale to keep rune in view
+};
+
 // Vignette edge colors for each stage
 const STAGE_VIGNETTE_COLOR = {
   seedling: 'rgba(92, 64, 51, 0.34)',    // Earth brown
@@ -23,9 +64,11 @@ const STAGE_VIGNETTE_LIGHT = {
   stellar: 'rgba(160, 150, 180, 0.10)',
 };
 
-export function Background({ stage = 'flame' }) {
+export function Background({ stage = 'flame', showBottomLayer = true }) {
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+  const displayMode = useDisplayModeStore((s) => s.mode);
   const isLight = colorScheme === 'light';
+  const isSanctuary = displayMode === 'sanctuary';
 
   const stageLower = (stage || 'flame').toLowerCase();
   const vignetteColor = isLight
@@ -34,6 +77,16 @@ export function Background({ stage = 'flame' }) {
 
   // Cloud background state (synced with DevPanel)
   const [cloudBackground, setCloudBackground] = useState('cloudier');
+
+  // Bottom layer state with fallback handling
+  const stageBottomUrl = `${import.meta.env.BASE_URL}bg/bg-${stageLower}-bottom.png`;
+  const fallbackBottomUrl = `${import.meta.env.BASE_URL}bg/bg-seedling.png`;
+  const [bottomSrc, setBottomSrc] = useState(stageBottomUrl);
+
+  // Reset bottom src when stage changes
+  useEffect(() => {
+    setBottomSrc(stageBottomUrl);
+  }, [stageBottomUrl]);
 
   useEffect(() => {
     // Listen for DevPanel cloud background changes
@@ -45,8 +98,9 @@ export function Background({ stage = 'flame' }) {
   // Stage-based watercolor aurora asset
   const auroraAsset = `aurora_${stageLower}.png`;
 
-  // Use stage-specific background image (only in dark mode)
-  const backgroundImage = `${import.meta.env.BASE_URL}bg/bg-${stageLower}.png`;
+  // GRAVEYARD: Top wallpaper removed - only using bottom layer now
+  // const backgroundImage = `${import.meta.env.BASE_URL}bg/bg-${stageLower}.png`;
+  // const masks = getMaskStyles(BLEND_CONFIG);
 
   // Light mode: warm cream with subtle texture
   if (isLight) {
@@ -167,43 +221,57 @@ export function Background({ stage = 'flame' }) {
     );
   }
 
-  // Dark mode: Original cosmic nebula design
+  // Dark mode: Original cosmic nebula design with blended top/bottom layers
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      {/* SANCTUARY_PROBE - visible only in Sanctuary mode for verification */}
+      {isSanctuary && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '60px',
+            left: '10px',
+            zIndex: 9999,
+            padding: '4px 8px',
+            background: 'rgba(76, 175, 80, 0.9)',
+            color: 'white',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            borderRadius: '4px',
+            pointerEvents: 'none',
+          }}
+        >
+          SANCTUARY_PROBE
+        </div>
+      )}
+
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
 
-      {/* Top: Stage-specific cosmic background - masked to top 65% with fade */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'auto 100%',  // Height fills screen, width scales proportionally
-          backgroundPosition: 'center top',  // Anchor at top center
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.9,
-          mixBlendMode: 'lighten',
-          animation: 'bgDrift 60s ease-in-out infinite',
-          maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 80%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 80%)',
-        }}
-      />
+      {/* GRAVEYARD: Top wallpaper layer removed - only using bottom layer */}
 
-      {/* Bottom: Seedling wallpaper - masked to bottom 25% with fade */}
+      {/* Single wallpaper layer - uses bottom stage-specific image */}
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `url(${import.meta.env.BASE_URL}bg/bg-seedling.png)`,
-          backgroundSize: 'cover',  // Cover to handle resized image
-          backgroundPosition: 'center bottom',  // Anchor at bottom center
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.85,
-          mixBlendMode: 'lighten',
           animation: 'bgDrift 60s ease-in-out infinite',
-          maskImage: 'linear-gradient(to bottom, transparent 0%, transparent 70%, black 92%, black 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, transparent 70%, black 92%, black 100%)',
         }}
-      />
+      >
+        {/* Bottom: Stage-specific bottom layer - cover for Sanctuary, auto 120% for Hearth */}
+        {showBottomLayer && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${bottomSrc})`,
+            backgroundSize: isSanctuary ? 'cover' : 'auto 120%',
+            backgroundPosition: 'center bottom',
+            opacity: 0.9,
+            ...SHARED_LAYER_STYLE,
+          }}
+          onError={() => setBottomSrc(fallbackBottomUrl)}
+        />
+        )}
+      </div>
 
       {/* CSS for background animation */}
       <style>{`
@@ -212,21 +280,6 @@ export function Background({ stage = 'flame' }) {
           50% { background-position: calc(50% + 30px) center; }
         }
       `}</style>
-
-      {/* Gradient fade overlay - blends top image to bottom image mid-screen */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `linear-gradient(to bottom,
-            transparent 0%,
-            transparent 15%,
-            rgba(10,10,18,0.2) 35%,
-            rgba(10,10,18,0.5) 50%,
-            rgba(10,10,18,0.3) 65%,
-            transparent 100%
-          )`,
-        }}
-      />
 
       {/* Stage-colored vignette - adds tinted edges */}
       <div

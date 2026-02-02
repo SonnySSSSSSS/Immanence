@@ -561,8 +561,31 @@ export function DevPanel({
     // Armed state for destructive actions
     const [armed, setArmed] = useState(null);
 
+    // Background layer visibility state
+    const [showBgTop, setShowBgTop] = useState(true);
+    const [showBgBottom, setShowBgBottom] = useState(true);
+
     // Slider state
     const [sliderProgress, setSliderProgress] = useState(lunarProgress);
+
+    // Listen for background layer changes from App
+    useEffect(() => {
+        const handleTopChange = (e) => {
+            setShowBgTop(e.detail);
+            console.log('DevPanel: Top layer toggled to', e.detail);
+        };
+        const handleBottomChange = (e) => {
+            setShowBgBottom(e.detail);
+            console.log('DevPanel: Bottom layer toggled to', e.detail);
+        };
+        // Listen on capture to catch events from other instances
+        window.addEventListener('dev-background-top', handleTopChange, true);
+        window.addEventListener('dev-background-bottom', handleBottomChange, true);
+        return () => {
+            window.removeEventListener('dev-background-top', handleTopChange, true);
+            window.removeEventListener('dev-background-bottom', handleBottomChange, true);
+        };
+    }, []);
 
     // Sync slider with store
     useEffect(() => {
@@ -785,6 +808,32 @@ export function DevPanel({
                                         {cloud === 'light_clouds' ? 'LIGHT' : cloud.toUpperCase()}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Avatar Version Toggle */}
+                        {/* Hide Cards Toggle (for wallpaper viewing) */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(100, 60, 140, 0.9)' : '#a78bfa' }}>Hide Cards</label>
+                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                                <button
+                                    onClick={() => {
+                                        const event = new CustomEvent('dev-hide-cards', { detail: false });
+                                        window.dispatchEvent(event);
+                                    }}
+                                    className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
+                                >
+                                    OFF
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const event = new CustomEvent('dev-hide-cards', { detail: true });
+                                        window.dispatchEvent(event);
+                                    }}
+                                    className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
+                                >
+                                    ON
+                                </button>
                             </div>
                         </div>
 
@@ -1683,6 +1732,9 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
         console.log('🗑️ Cleared trajectory mock data');
     };
 
+    const trajectorySessions = sessions.filter(s => s.metadata?.trajectoryPattern);
+    const trajectoryTotalCount = trajectorySessions.length;
+    const trajectoryMockCount = trajectorySessions.filter(s => s.metadata?.mock).length;
     const mockSessionCount = sessions.filter(s => s.metadata?.mock).length;
     const totalSessionCount = sessions.length;
 

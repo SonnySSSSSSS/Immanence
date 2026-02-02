@@ -11,7 +11,6 @@ const ApplicationSection = lazy(() => import("./components/ApplicationSection.js
 import { NavigationSection } from "./components/NavigationSection.jsx";
 import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.jsx";
 import { Background } from "./components/Background.jsx";
-import { IndrasNet } from "./components/IndrasNet.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
@@ -32,7 +31,7 @@ import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
-function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic }) {
+function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
   // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
@@ -42,7 +41,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
   return (
     <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
       <div className="w-full relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
-        {section === "practice" && (
+        {section === "practice" && !hideCards && (
           <PracticeSection 
             onPracticingChange={onPracticingChange} 
             onBreathStateChange={onBreathStateChange}
@@ -54,7 +53,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
           />
         )}
 
-        {section === "wisdom" && (
+        {section === "wisdom" && !hideCards && (
           <Suspense fallback={
             <div className="flex items-center justify-center p-12">
               <div className="text-white/50 font-bold text-sm tracking-wide" style={{ fontFamily: 'var(--font-ui)' }}>Loading Wisdom...</div>
@@ -64,7 +63,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
           </Suspense>
         )}
 
-        {section === "application" && (
+        {section === "application" && !hideCards && (
           <Suspense fallback={
             <div className="flex items-center justify-center p-12">
               <div className="text-white/50 font-bold text-sm tracking-wide" style={{ fontFamily: 'var(--font-ui)' }}>Loading Application...</div>
@@ -74,7 +73,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
           </Suspense>
         )}
 
-        {section === "navigation" && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} />}
+        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} />}
       </div>
     </div>
   );
@@ -129,6 +128,10 @@ function App() {
   const showFxGallery = true; // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
   const [showSettings, setShowSettings] = useState(false); // Settings panel
+  const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
+  // GRAVEYARD: Top layer removed
+  // const [showBackgroundTopLayer, setShowBackgroundTopLayer] = useState(true);
+  const [showBackgroundBottomLayer, setShowBackgroundBottomLayer] = useState(true); // Dev: toggle bottom wallpaper layer
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
@@ -143,6 +146,31 @@ function App() {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
   }, [isHub]);
+
+  // Listen for dev panel events (hide cards for wallpaper viewing)
+  useEffect(() => {
+    const handleHideCards = (e) => {
+      console.log('App: hideCards event received, detail:', e.detail);
+      setHideCards(e.detail);
+    };
+    // GRAVEYARD: Top layer removed
+    // const handleTopLayer = (e) => {
+    //   console.log('App: background-top event received, detail:', e.detail);
+    //   setShowBackgroundTopLayer(e.detail);
+    // };
+    const handleBottomLayer = (e) => {
+      console.log('App: background-bottom event received, detail:', e.detail);
+      setShowBackgroundBottomLayer(e.detail);
+    };
+    window.addEventListener('dev-hide-cards', handleHideCards);
+    // window.addEventListener('dev-background-top', handleTopLayer);
+    window.addEventListener('dev-background-bottom', handleBottomLayer);
+    return () => {
+      window.removeEventListener('dev-hide-cards', handleHideCards);
+      // window.removeEventListener('dev-background-top', handleTopLayer);
+      window.removeEventListener('dev-background-bottom', handleBottomLayer);
+    };
+  }, []);
 
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
@@ -325,7 +353,7 @@ function App() {
             overflowY: 'visible',
           }}
         >
-          <Background stage={previewStage} />
+<Background stage={previewStage} showBottomLayer={showBackgroundBottomLayer} />
 
           <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible'>
             {/* Fixed Dark Header Bar */}
@@ -393,7 +421,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                         v3.26.48
+                         v3.26.71
                     </div>
                   </div>
 
@@ -422,19 +450,21 @@ function App() {
             >
               {isHub ? (
                 <div key="hub" className="section-enter">
-                  <HomeHub
-                    onSelectSection={setActiveSection}
-                    onStageChange={(hsl, stageName) => {
-                      setAvatarStage(stageName);
-                      setPreviewStage(stageName);
-                    }}
-                    isPracticing={isPracticing}
-                    currentStage={previewStage}
-                    previewPath={previewPath}
-                    previewShowCore={previewShowCore}
-                    previewAttention={previewAttention}
-                    onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
-                  />
+                  {!hideCards && (
+                    <HomeHub
+                      onSelectSection={setActiveSection}
+                      onStageChange={(hsl, stageName) => {
+                        setAvatarStage(stageName);
+                        setPreviewStage(stageName);
+                      }}
+                      isPracticing={isPracticing}
+                      currentStage={previewStage}
+                      previewPath={previewPath}
+                      previewShowCore={previewShowCore}
+                      previewAttention={previewAttention}
+                      onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
+                    />
+                  )}
                 </div>
               ) : (
                 <SectionView
@@ -458,6 +488,7 @@ function App() {
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                   onRitualComplete={() => setActiveSection(null)}
                   onOpenPhotic={() => setIsPhoticOpen(true)}
+                  hideCards={hideCards}
                 />
               )}
             </div>
@@ -469,9 +500,6 @@ function App() {
           />
 
           <InstallPrompt />
-
-          {/* Indra's Net - animated web at bottom (hidden during practice sessions) */}
-          <IndrasNet stage={previewStage} isPracticing={isPracticing} isLight={isLight} displayMode={displayMode} currentPracticeId={activePracticeId} />
 
           {/* Tutorial overlay system */}
           <TutorialOverlay />
