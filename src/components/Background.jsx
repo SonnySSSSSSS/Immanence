@@ -184,47 +184,26 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
 
   // Dark mode: Original cosmic nebula design with blended top/bottom layers
   return (
-    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
 
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
 
       {/* GRAVEYARD: Top wallpaper layer removed - only using bottom layer */}
 
-      {/* Single wallpaper layer - fixed-pixel approach to prevent resampling */}
+      {/* Single wallpaper layer - native 1080x1920 portrait sizing */}
       {showBottomLayer && (
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            overflow: 'hidden',
+            backgroundImage: `url(${bottomSrc})`,
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center bottom',
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.9,
           }}
-        >
-          <img
-            src={bottomSrc}
-            alt="wallpaper"
-            style={{
-              // Full-viewport wallpaper with responsive sizing
-              // Background now fills entire viewport (not constrained to app container)
-              // This allows proper wallpaper behavior without resampling issues
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center bottom',
-              opacity: 0.9,
-              pointerEvents: 'none',
-              // Hardening attributes
-              imageRendering: 'auto',
-              display: 'block',
-            }}
-            draggable={false}
-            decoding="async"
-            loading="eager"
-            onError={() => setBottomSrc(fallbackBottomUrl)}
-          />
-        </div>
+        />
       )}
 
 

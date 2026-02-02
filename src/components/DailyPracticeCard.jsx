@@ -65,89 +65,101 @@ function getWeekForDay(path, dayIndex) {
 }
 
 /**
- * Reusable glass bar widget for left-pane stats
- * Compact horizontal bar with label, value, and progress indicator
+ * Compact progress rail for left-pane stats
+ * Slim, glass-morphism-lite widget that integrates into the wallpaper strip
  */
-function LeftPaneStatBar({ label, valueText, progressRatio, isLight }) {
-    const glassBackground = isLight
-        ? 'rgba(250, 246, 238, 0.28)'
-        : 'rgba(10, 10, 12, 0.35)';
+function StatRail({ label, valueText, progressRatio, isLight }) {
+    const ratio = Math.max(0, Math.min(1, Number.isFinite(progressRatio) ? progressRatio : 0));
 
-    const glassBorder = isLight
-        ? '1px solid rgba(160, 120, 60, 0.15)'
-        : '1px solid rgba(120, 255, 180, 0.18)';
+    const railBackground = isLight ? 'rgba(250, 246, 238, 0.18)' : 'rgba(10, 12, 16, 0.18)';
+    const railBorder = isLight ? '1px solid rgba(160, 120, 60, 0.10)' : '1px solid rgba(120, 255, 180, 0.14)';
 
     const labelColor = isLight
-        ? 'rgba(60, 50, 35, 0.6)'
-        : 'rgba(253, 251, 245, 0.5)';
+        ? 'rgba(60, 50, 35, 0.65)'
+        : 'rgba(253, 251, 245, 0.65)';
 
-    const valueColor = isLight ? '#3c3020' : '#fdfbf5';
+    const valueColor = isLight
+        ? 'rgba(35, 20, 10, 0.90)'
+        : 'rgba(253, 251, 245, 0.90)';
 
     const trackColor = isLight
-        ? 'rgba(60, 50, 35, 0.15)'
-        : 'rgba(255, 255, 255, 0.14)';
+        ? 'rgba(60, 50, 35, 0.16)'
+        : 'rgba(255, 255, 255, 0.12)';
+
+    const fillColor = isLight
+        ? 'rgba(139, 159, 136, 0.75)'
+        : 'rgba(80, 255, 160, 0.75)';
 
     return (
         <div
+            className="w-full"
             style={{
-                width: 'min(160px, 42vw)',
-                padding: '10px',
-                background: glassBackground,
-                border: glassBorder,
-                borderRadius: '10px',
+                width: '100%',
+                padding: '10px 10px 9px',
+                background: railBackground,
+                border: railBorder,
+                borderRadius: '9px',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '6px',
+                gap: '8px',
             }}
         >
-            {/* Label */}
             <div
                 style={{
-                    fontSize: '8px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: labelColor,
-                    fontFamily: 'var(--font-ui)',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    minWidth: 0,
                 }}
             >
-                {label}
+                <div
+                    style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.14em',
+                        color: labelColor,
+                        fontFamily: 'var(--font-ui)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}
+                >
+                    {label}
+                </div>
+                <div
+                    style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: valueColor,
+                        fontFamily: 'var(--font-display)',
+                        lineHeight: '1.1',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {valueText}
+                </div>
             </div>
 
-            {/* Value */}
-            <div
-                style={{
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    color: valueColor,
-                    fontFamily: 'var(--font-display)',
-                    lineHeight: '1.2',
-                }}
-            >
-                {valueText}
-            </div>
-
-            {/* Progress bar track */}
             <div
                 style={{
                     width: '100%',
-                    height: '4px',
+                    height: '6px',
                     background: trackColor,
-                    borderRadius: '2px',
+                    borderRadius: '999px',
                     overflow: 'hidden',
                 }}
             >
-                {/* Progress bar fill */}
                 <div
                     style={{
                         height: '100%',
-                        width: `${Math.max(0, Math.min(1, progressRatio)) * 100}%`,
-                        background: 'var(--accent-color)',
-                        borderRadius: '2px',
+                        width: `${ratio * 100}%`,
+                        background: fillColor,
+                        borderRadius: '999px',
                         transition: 'width 0.4s ease-out',
-                        boxShadow: isLight ? 'none' : '0 0 6px var(--accent-50)',
                     }}
                 />
             </div>
@@ -821,37 +833,55 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             : 'linear-gradient(to right, rgba(20, 15, 25, 0) 0%, rgba(20, 15, 25, 0.45) 40%, rgba(20, 15, 25, 0.95) 100%)'
                     }} />
 
-                    {/* 2.5 LEFT PANE STATS OVERLAY - Completion and Path metrics */}
+                    {/* 2.5 LEFT STRIP INSTRUMENTATION - rails anchored top/bottom */}
                     <div
-                        className="absolute pointer-events-none"
+                        className="absolute"
                         style={{
-                            inset: '12px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
+                            top: 0,
+                            left: 0,
+                            bottom: 0,
+                            right: 'clamp(320px, 70%, 380px)',
                             zIndex: 5,
+                            pointerEvents: 'none',
                         }}
                     >
-                        {/* Top-left: Completion stat bar */}
-                        <LeftPaneStatBar
-                            label="COMPLETION"
-                            valueText={`${completedLegs}/${legs.length}`}
-                            progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
-                            isLight={isLight}
-                        />
+                        {/* Left wallpaper strip container (relative) */}
+                        <div className="w-full h-full relative">
+                            {/* Overlay container */}
+                            <div
+                                className="absolute flex flex-col pointer-events-none"
+                                style={{
+                                    top: '12px',
+                                    left: '12px',
+                                    right: '12px',
+                                    bottom: '12px',
+                                    justifyContent: 'flex-start',
+                                    gap: '12px',
+                                }}
+                            >
+                                <StatRail
+                                    label="COMPLETION"
+                                    valueText={`${completedLegs}/${legs.length}`}
+                                    progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
+                                    isLight={isLight}
+                                />
 
-                        {/* Bottom-left: Path stat bar */}
-                        <LeftPaneStatBar
-                            label="PATH"
-                            valueText={`${progress.rate}%`}
-                            progressRatio={progress.rate / 100}
-                            isLight={isLight}
-                        />
+                                {/* Spacer to keep PATH rail off the bottom corner */}
+                                <div style={{ flex: 1, minHeight: '56px', maxHeight: '160px' }} />
+
+                                <StatRail
+                                    label="PATH"
+                                    valueText={`${progress.rate}%`}
+                                    progressRatio={progress.rate / 100}
+                                    isLight={isLight}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* 3. CONTENT PANEL (Owns the readable layout) */}
                     <div 
-                        className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] min-h-[460px] max-h-[600px] overflow-hidden flex flex-col"
+                        className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
                         style={{
                             background: isLight ? 'rgba(250, 246, 238, 0.72)' : 'rgba(20, 15, 25, 0.78)',
                             backdropFilter: 'blur(16px)',
