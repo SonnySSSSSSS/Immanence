@@ -173,39 +173,57 @@ export function Background({ stage = 'flame' }) {
       {/* Deep dark base - almost black with slight blue tint */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#08080c]" />
 
-      {/* Stage-specific cosmic background - Height-based sizing, anchored at bottom */}
+      {/* Top: Stage-specific cosmic background - masked to top 65% with fade */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: 'auto 100%',  // Height fills screen, width scales proportionally
-          backgroundPosition: 'center bottom',  // Anchor particles at bottom center
+          backgroundPosition: 'center top',  // Anchor at top center
           backgroundRepeat: 'no-repeat',
           opacity: 0.9,
           mixBlendMode: 'lighten',
           animation: 'bgDrift 60s ease-in-out infinite',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 80%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 80%)',
+        }}
+      />
+
+      {/* Bottom: Seedling wallpaper - masked to bottom 25% with fade */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${import.meta.env.BASE_URL}bg/bg-seedling.png)`,
+          backgroundSize: 'cover',  // Cover to handle resized image
+          backgroundPosition: 'center bottom',  // Anchor at bottom center
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.85,
+          mixBlendMode: 'lighten',
+          animation: 'bgDrift 60s ease-in-out infinite',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, transparent 70%, black 92%, black 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, transparent 70%, black 92%, black 100%)',
         }}
       />
 
       {/* CSS for background animation */}
       <style>{`
         @keyframes bgDrift {
-          0%, 100% { background-position: center bottom; }
-          50% { background-position: calc(50% + 30px) bottom; }
+          0%, 100% { background-position: center; }
+          50% { background-position: calc(50% + 30px) center; }
         }
       `}</style>
 
-      {/* Vertical fade - nebula dissolves into solid dark by ~40% */}
+      {/* Gradient fade overlay - blends top image to bottom image mid-screen */}
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(to bottom, 
-            transparent 0%, 
-            transparent 20%, 
-            rgba(10,10,18,0.4) 35%, 
-            rgba(10,10,18,0.85) 50%, 
-            #0a0a12 65%, 
-            #0a0a12 100%
+          background: `linear-gradient(to bottom,
+            transparent 0%,
+            transparent 15%,
+            rgba(10,10,18,0.2) 35%,
+            rgba(10,10,18,0.5) 50%,
+            rgba(10,10,18,0.3) 65%,
+            transparent 100%
           )`,
         }}
       />

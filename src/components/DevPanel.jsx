@@ -22,6 +22,7 @@ import { useTutorialStore } from '../state/tutorialStore';
 import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
+import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
@@ -1140,6 +1141,123 @@ export function DevPanel({
                         isLight={isLight}
                     >
                         <LLMTestPanel />
+                    </Section>
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* REPORTING LAYER TEST SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="Reporting Layer (Dashboard Queries)"
+                        expanded={expandedSections.reporting || false}
+                        onToggle={() => toggleSection('reporting')}
+                        isLight={isLight}
+                    >
+                        <div className="text-[10px] text-white/50 mb-3">Pure reporting queries for dashboard metrics</div>
+
+                        {/* Test lifetime scope */}
+                        <div className="mb-4 bg-white/5 rounded-lg p-3">
+                            <div className="text-xs text-white/80 font-mono mb-2">lifetime scope:</div>
+                            {(() => {
+                                try {
+                                    const tiles = getQuickDashboardTiles({ scope: 'lifetime', range: '365d' });
+                                    return (
+                                        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Minutes: <span className="text-emerald-300">{tiles.minutes}</span>
+                                            </div>
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Sessions: <span className="text-emerald-300">{tiles.sessionCount}</span>
+                                            </div>
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Days: <span className="text-emerald-300">{tiles.activeDays}</span>
+                                            </div>
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Complete: <span className="text-emerald-300">{tiles.completionRate}%</span>
+                                            </div>
+                                        </div>
+                                    );
+                                } catch (e) {
+                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
+                                }
+                            })()}
+                        </div>
+
+                        {/* Test runId scope */}
+                        <div className="mb-4 bg-white/5 rounded-lg p-3">
+                            <div className="text-xs text-white/80 font-mono mb-2">runId scope (active path):</div>
+                            {(() => {
+                                try {
+                                    const tiles = getQuickDashboardTiles({ scope: 'runId', range: 'all' });
+                                    return (
+                                        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Minutes: <span className="text-sky-300">{tiles.minutes}</span>
+                                            </div>
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Sessions: <span className="text-sky-300">{tiles.sessionCount}</span>
+                                            </div>
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Days: <span className="text-sky-300">{tiles.activeDays}</span>
+                                            </div>
+                                            <div className="bg-white/5 p-1.5 rounded">
+                                                Complete: <span className="text-sky-300">{tiles.completionRate}%</span>
+                                            </div>
+                                        </div>
+                                    );
+                                } catch (e) {
+                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
+                                }
+                            })()}
+                        </div>
+
+                        {/* Practice breakdown */}
+                        <div className="bg-white/5 rounded-lg p-3 mb-4">
+                            <div className="text-xs text-white/80 font-mono mb-2">Practice breakdown (lifetime):</div>
+                            {(() => {
+                                try {
+                                    const breakdown = getCurriculumPracticeBreakdown({ scope: 'lifetime', range: '365d' });
+                                    if (breakdown.length === 0) {
+                                        return <div className="text-white/40 text-[10px]">No sessions recorded</div>;
+                                    }
+                                    return (
+                                        <div className="space-y-1">
+                                            {breakdown.map(item => (
+                                                <div key={item.familyKey} className="flex justify-between text-[10px] text-white/70 font-mono">
+                                                    <span>{item.label}:</span>
+                                                    <span className="text-white/90">{item.minutes}m ({item.count} sessions, {item.percent}%)</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                } catch (e) {
+                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
+                                }
+                            })()}
+                        </div>
+
+                        {/* Breathwork detail metrics */}
+                        <div className="bg-white/5 rounded-lg p-3">
+                            <div className="text-xs text-white/80 font-mono mb-2">Breathwork detail (lifetime):</div>
+                            {(() => {
+                                try {
+                                    const detail = getPracticeDetailMetrics({ scope: 'lifetime', range: '365d', practiceFamily: 'breathwork' });
+                                    if (!detail || detail.sessionCount === 0) {
+                                        return <div className="text-white/40 text-[10px]">No breathwork sessions</div>;
+                                    }
+                                    return (
+                                        <div className="space-y-1 text-[10px] text-white/70 font-mono">
+                                            <div>Minutes: <span className="text-white/90">{detail.totalMinutes}m</span></div>
+                                            <div>Sessions: <span className="text-white/90">{detail.sessionCount}</span></div>
+                                            <div>Avg Duration: <span className="text-white/90">{detail.avgDurationMin}m</span></div>
+                                            <div>Completion: <span className="text-white/90">{detail.completionRate}%</span></div>
+                                            <div>On-time: <span className="text-white/90">{detail.adherencePercent}%</span></div>
+                                        </div>
+                                    );
+                                } catch (e) {
+                                    return <div className="text-red-300 text-[10px]">Error: {e.message}</div>;
+                                }
+                            })()}
+                        </div>
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}

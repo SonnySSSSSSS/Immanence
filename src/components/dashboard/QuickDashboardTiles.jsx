@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
+import { useTheme } from '../../context/ThemeContext.jsx';
 
 /**
  * Render a single dashboard tile
@@ -237,6 +238,10 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
     }));
 
     // HubCard variant: infographic card with wallpaper background
+    // Get theme for accent color (matches DailyPracticeCard border styling)
+    const theme = useTheme();
+    const primaryHex = theme?.accent?.primary || '#4ade80';
+
     if (variant === 'hubCard') {
         return (
             <div
@@ -244,33 +249,47 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     position: 'relative',
                     marginBottom: '8px',
                     borderRadius: '24px',
-                    background: isLight
-                        ? '#faf6ee'
-                        : 'rgb(20, 15, 25)',
                     border: isLight
-                        ? '1px solid rgba(160, 120, 60, 0.15)'
-                        : '1px solid var(--accent-20)',
+                        ? `2px solid ${primaryHex}40`
+                        : `2px solid ${primaryHex}60`,
+                    boxShadow: isLight
+                        ? `0 10px 30px rgba(80, 50, 20, 0.25), 0 20px 60px rgba(60, 40, 15, 0.2), 0 0 20px ${primaryHex}20`
+                        : `0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px ${primaryHex}30`,
                     overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                    padding: '12px',
                 }}
             >
-                {/* Wallpaper background layer */}
-                {!isLight && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundImage: `url(/Immanence/assets/card_bg_seedling_nebula.png)`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            zIndex: 0,
-                            pointerEvents: 'none',
-                        }}
-                    />
-                )}
+                {/* Inner container with background */}
+                <div
+                    style={{
+                        position: 'relative',
+                        borderRadius: '22px',
+                        background: isLight
+                            ? '#faf6ee'
+                            : 'transparent',
+                        border: isLight
+                            ? '1px solid rgba(160, 120, 60, 0.15)'
+                            : '1px solid var(--accent-20)',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        padding: '12px',
+                    }}
+                >
+                    {/* Wallpaper background layer */}
+                    {!isLight && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/card_bg_seedling_nebula.png)`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                zIndex: 0,
+                                pointerEvents: 'none',
+                            }}
+                        />
+                    )}
 
                 {/* Content layer */}
                 <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -313,6 +332,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         View Details
                     </button>
                 )}
+                </div>
                 </div>
             </div>
         );
