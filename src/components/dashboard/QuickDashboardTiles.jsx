@@ -331,10 +331,10 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                     style={{
                         position: 'relative',
                         borderRadius: '24px',
-                        background: isLight ? '#faf6ee' : 'rgba(0, 0, 0, 0.78)',
+                        background: isLight ? '#faf6ee' : `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.73)`,
                         border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
-                        backdropFilter: isLight ? 'none' : 'blur(12px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(12px)',
+                        backdropFilter: isLight ? 'none' : 'blur(14px)',
+                        WebkitBackdropFilter: isLight ? 'none' : 'blur(14px)',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',

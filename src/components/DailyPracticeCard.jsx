@@ -314,10 +314,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         ref={cardRef}
                         className="w-full relative overflow-hidden rounded-[24px]"
                         style={{
-                            background: isLight ? '#faf6ee' : 'rgba(0, 0, 0, 0.82)',
+                            background: isLight ? '#faf6ee' : `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.78)`,
                             border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
-                            backdropFilter: isLight ? 'none' : 'blur(12px)',
-                            WebkitBackdropFilter: isLight ? 'none' : 'blur(12px)',
+                            backdropFilter: isLight ? 'none' : 'blur(14px)',
+                            WebkitBackdropFilter: isLight ? 'none' : 'blur(14px)',
                         }}
                     >
                         <div
@@ -705,10 +705,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     ref={cardRef}
                     className="w-full relative overflow-hidden rounded-[24px]"
                     style={{
-                        background: isLight ? '#faf6ee' : 'rgba(0, 0, 0, 0.82)',
+                        background: isLight ? '#faf6ee' : `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.78)`,
                         border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
-                        backdropFilter: isLight ? 'none' : 'blur(12px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(12px)',
+                        backdropFilter: isLight ? 'none' : 'blur(14px)',
+                        WebkitBackdropFilter: isLight ? 'none' : 'blur(14px)',
                     }}
                 >
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
