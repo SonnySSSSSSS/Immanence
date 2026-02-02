@@ -16,9 +16,6 @@ import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.
  * THEME CONFIGURATION
  * Synchronized with CompactStatsCard for "Ancient Relic" aesthetic
  */
-const CARD_SHADOW_SOFT_LIGHT = '0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06)';
-const CARD_SHADOW_SOFT_DARK = '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)';
-
 const THEME_CONFIG = {
     light: {
         accent: 'rgba(139, 159, 136, 0.85)',
@@ -27,7 +24,7 @@ const THEME_CONFIG = {
         bgAsset: 'ancient_relic_focus.png',
         canvasGrain: 'canvas_grain.png',
         border: 'rgba(139, 115, 85, 0.25)',
-        shadow: CARD_SHADOW_SOFT_LIGHT
+        shadow: '0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06)'
     },
     dark: {
         accent: 'var(--accent-color)',
@@ -35,7 +32,7 @@ const THEME_CONFIG = {
         textSub: 'rgba(253, 251, 245, 0.5)',
         bgAsset: 'card_bg_comet_{stage}.png',  // Placeholder, will be replaced below
         border: 'var(--accent-20)',
-        shadow: CARD_SHADOW_SOFT_DARK
+        shadow: '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)'
     }
 };
 
@@ -405,25 +402,28 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 }}
             >
                 <div
-                    className="w-full relative"
+                    className="w-full relative glassCardShadowWrap"
                     style={{
                         borderRadius: '24px',
-                        border: isLight
-                            ? `2px solid ${primaryHex}40`
-                            : `2px solid ${primaryHex}60`,
-                        boxShadow: isLight ? CARD_SHADOW_SOFT_LIGHT : CARD_SHADOW_SOFT_DARK
+                        '--glass-radius': '24px',
+                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
+                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
+                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
                     }}
                 >
                     <div
                         ref={cardRef}
-                        className="w-full relative overflow-hidden rounded-[24px]"
+                        className="w-full relative glassCardShell"
                         style={{
-                            background: isLight ? '#faf6ee' : `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.78)`,
-                            border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
-                            backdropFilter: isLight ? 'none' : 'blur(14px)',
-                            WebkitBackdropFilter: isLight ? 'none' : 'blur(14px)',
+                            background: 'transparent',
+                            '--glass-radius': '24px',
+                            '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                            '--glass-blur': isLight ? '0px' : '16px',
+                            '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
+                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
                         }}
                     >
+                        <div className="glassCardContent">
                         <div
                             className="absolute inset-0 pointer-events-none"
                             style={{
@@ -640,6 +640,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 )}
                             </div>
                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -658,13 +659,24 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
         return (
             <div
-                className="w-full relative p-8 text-center rounded-[24px] overflow-hidden"
+                className="w-full glassCardShadowWrap"
                 style={{
-                    background: isLight ? '#f5efe5' : 'rgb(10, 10, 15)',
-                    border: `1px solid ${config.border}`,
-                    boxShadow: config.shadow,
+                    '--glass-radius': '24px',
+                    '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
+                    '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
+                    '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
                 }}
             >
+                <div
+                    className="w-full relative glassCardShell"
+                    style={{
+                        '--glass-radius': '24px',
+                        '--glass-bg': isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
+                        '--glass-blur': isLight ? '0px' : '16px',
+                        '--glass-stroke': isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(95, 255, 170, 0.20)',
+                        '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                    }}
+                >
                 {/* Relic/Cosmic Background Wallpaper */}
                 <div
                     className="absolute inset-0 pointer-events-none"
@@ -690,7 +702,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     />
                 )}
 
-                <div className="relative z-10">
+                <div className="glassCardContent relative z-10 p-8 text-center">
                     <div className="text-4xl mb-4">🏆</div>
                     <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-display)' }}>
                         Curriculum Complete!
@@ -747,6 +759,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
         );
     }
@@ -793,26 +806,29 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         >
             {/* OUTER: Frame with Shadow */}
             <div
-                className="w-full relative"
+                className="w-full relative glassCardShadowWrap"
                 style={{
                     borderRadius: '24px',
-                    border: isLight
-                        ? `2px solid ${primaryHex}40`
-                        : `2px solid ${primaryHex}60`,
-                    boxShadow: isLight ? CARD_SHADOW_SOFT_LIGHT : CARD_SHADOW_SOFT_DARK
+                    '--glass-radius': '24px',
+                    '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
+                    '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
+                    '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
                 }}
             >
                 {/* MIDDLE: Container */}
                 <div
                     ref={cardRef}
-                    className="w-full relative overflow-hidden rounded-[24px]"
+                    className="w-full relative glassCardShell"
                     style={{
-                        background: isLight ? '#faf6ee' : `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.78)`,
-                        border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
-                        backdropFilter: isLight ? 'none' : 'blur(14px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(14px)',
+                        background: 'transparent',
+                        '--glass-radius': '24px',
+                        '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                        '--glass-blur': isLight ? '0px' : '16px',
+                        '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
+                        '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
                     }}
                 >
+                    <div className="glassCardContent">
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
                     <div
                         className="absolute inset-0 pointer-events-none"
@@ -1045,6 +1061,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>

@@ -278,8 +278,6 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
 export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null, isSanctuary = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const cardShadowSoftLight = '0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06)';
-    const cardShadowSoftDark = '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)';
 
     if (!tiles || Object.keys(tiles).length === 0) {
         return null;
@@ -315,35 +313,38 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
     if (variant === 'hubCard') {
         return (
             <div
+                className="glassCardShadowWrap"
                 style={{
                     position: 'relative',
                     marginBottom: '8px',
                     borderRadius: '24px',
-                    border: isLight
-                        ? `2px solid ${primaryHex}40`
-                        : `2px solid ${primaryHex}60`,
-                    boxShadow: isLight ? cardShadowSoftLight : cardShadowSoftDark,
-                    overflow: 'hidden',
+                    '--glass-radius': '24px',
+                    '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.12)' : '0 18px 40px rgba(0,0,0,0.28)',
+                    '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.08)' : '0 6px 14px rgba(0,0,0,0.18)',
+                    '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
                 }}
             >
-                {/* Inner container with background */}
                 <div
+                    className="glassCardShell"
                     style={{
                         position: 'relative',
                         borderRadius: '24px',
-                        background: isLight ? '#faf6ee' : `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.73)`,
-                        border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-20)',
-                        backdropFilter: isLight ? 'none' : 'blur(14px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(14px)',
-                        overflow: 'hidden',
+                        background: 'transparent',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '12px',
                         padding: '12px',
+                        '--glass-radius': '24px',
+                        '--glass-bg': isLight
+                            ? '#faf6ee'
+                            : 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.73)',
+                        '--glass-blur': isLight ? '0px' : '16px',
+                        '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
+                        '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
                     }}
                 >
                 {/* Content layer */}
-                <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="glassCardContent" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: '8px', borderBottom: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.15)' : 'rgba(255, 255, 255, 0.08)'}` }}>
                     <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>

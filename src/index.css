@@ -52,3 +52,48 @@ body::-webkit-scrollbar {
   height: 0;
 }
 
+/* Glass card primitives (shadow wrapper + crisp shell)
+   - Blur applies behind content only (pseudo-element)
+   - Shadow lives on outer wrapper (drop-shadow) for smoother rounded edges
+*/
+.glassCardShadowWrap {
+  border-radius: var(--glass-radius, 24px);
+  filter:
+    drop-shadow(var(--glass-shadow-1, 0 18px 40px rgba(0, 0, 0, 0.28)))
+    drop-shadow(var(--glass-shadow-2, 0 6px 14px rgba(0, 0, 0, 0.18)))
+    drop-shadow(var(--glass-shadow-aura, 0 0 0 rgba(0, 0, 0, 0)));
+}
+
+.glassCardShell {
+  position: relative;
+  border-radius: var(--glass-radius, 24px);
+  overflow: hidden;
+}
+
+.glassCardShell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glass-radius, 24px);
+  background: var(--glass-bg, rgba(10, 12, 16, 0.58));
+  backdrop-filter: blur(var(--glass-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px));
+  z-index: 0;
+}
+
+.glassCardShell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glass-radius, 24px);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow:
+    inset 0 0 0 1px var(--glass-stroke, rgba(95, 255, 170, 0.22)),
+    0 0 0 1px var(--glass-outline, rgba(25, 30, 35, 0.45));
+}
+
+.glassCardContent {
+  position: relative;
+  z-index: 1;
+}
