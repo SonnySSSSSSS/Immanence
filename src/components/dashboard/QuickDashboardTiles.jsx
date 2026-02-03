@@ -278,6 +278,7 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
 export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null, isSanctuary = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
     if (!tiles || Object.keys(tiles).length === 0) {
         return null;
@@ -313,38 +314,54 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
     if (variant === 'hubCard') {
         return (
             <div
-                className="glassCardShadowWrap"
+                className={isFirefox ? '' : 'glassCardShadowWrap'}
                 style={{
                     position: 'relative',
                     marginBottom: '8px',
                     borderRadius: '24px',
-                    '--glass-radius': '24px',
-                    '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.12)' : '0 18px 40px rgba(0,0,0,0.28)',
-                    '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.08)' : '0 6px 14px rgba(0,0,0,0.18)',
-                    '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
+                    ...(isFirefox ? {
+                        boxShadow: isLight
+                            ? '0 14px 34px rgba(0,0,0,0.12), 0 6px 14px rgba(0,0,0,0.08)'
+                            : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)',
+                    } : {
+                        '--glass-radius': '24px',
+                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.12)' : '0 18px 40px rgba(0,0,0,0.28)',
+                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.08)' : '0 6px 14px rgba(0,0,0,0.18)',
+                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
+                    }),
                 }}
             >
                 <div
-                    className="glassCardShell"
+                    className={isFirefox ? 'relative overflow-hidden' : 'glassCardShell'}
                     style={{
                         position: 'relative',
                         borderRadius: '24px',
-                        background: 'transparent',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '12px',
                         padding: '12px',
-                        '--glass-radius': '24px',
-                        '--glass-bg': isLight
-                            ? '#faf6ee'
-                            : 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.73)',
-                        '--glass-blur': isLight ? '0px' : '16px',
-                        '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
-                        '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                        ...(isFirefox ? {
+                            background: isLight
+                                ? '#faf6ee'
+                                : 'rgba(0, 0, 0, 0.73)',
+                            boxShadow: `
+                                inset 0 0 0 1px ${isLight ? `${primaryHex}30` : `${primaryHex}40`},
+                                0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
+                            `.trim().replace(/\\s+/g, ' '),
+                        } : {
+                            background: 'transparent',
+                            '--glass-radius': '24px',
+                            '--glass-bg': isLight
+                                ? '#faf6ee'
+                                : 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 55%), rgba(0, 0, 0, 0.73)',
+                            '--glass-blur': isLight ? '0px' : '16px',
+                            '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
+                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                        }),
                     }}
                 >
                 {/* Content layer */}
-                <div className="glassCardContent" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="glassCardContent" style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: '8px', borderBottom: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.15)' : 'rgba(255, 255, 255, 0.08)'}` }}>
                     <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
