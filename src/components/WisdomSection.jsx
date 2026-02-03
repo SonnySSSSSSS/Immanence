@@ -12,6 +12,7 @@ import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
+import { useUiStore } from "../state/uiStore.js";
 
 const TABS = [
   "Recommendations",
@@ -33,6 +34,7 @@ function ChapterModal({
   isBookmarked,
   allChapters,
   onNavigate,
+  timeBudgetMin,
 }) {
   const { mode: displayMode } = useDisplayModeStore();
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -40,6 +42,9 @@ function ChapterModal({
   const contentRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
   const mouseTimeoutRef = useRef(null);
+  const readStartRef = useRef(null);
+  const scrollProgressRef = useRef(0);
+  const { recordReadingSession, markSectionCompleted } = useWisdomStore();
 
   const currentIndex = allChapters.findIndex((ch) => ch.id === chapter?.id);
   const hasPrev = currentIndex > 0;
@@ -54,7 +59,14 @@ function ChapterModal({
       if (!contentRef.current) return;
       const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
       const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
-      setScrollProgress(Math.min(100, Math.max(0, progress)));
+      const clamped = Math.min(100, Math.max(0, progress));
+      scrollProgressRef.current = clamped;
+      setScrollProgress(clamped);
+
+      // Mark chapter as completed when user reaches the bottom zone.
+      if (chapter && clamped >= 85) {
+        markSectionCompleted?.(chapter.id, { source: 'scroll', scrollDepth: clamped / 100 });
+      }
 
       // Enter reading mode on scroll
       setIsReadingMode(true);
@@ -85,6 +97,29 @@ function ChapterModal({
       };
     }
   }, [isOpen, chapter]);
+
+  // Reading session lifecycle: record time spent and last scroll depth on close/unmount.
+  useEffect(() => {
+    if (!isOpen || !chapter) return;
+    readStartRef.current = performance.now();
+    scrollProgressRef.current = scrollProgressRef.current || 0;
+
+    return () => {
+      const startedAt = readStartRef.current;
+      readStartRef.current = null;
+      if (!chapter?.id || !startedAt) return;
+
+      const seconds = Math.max(0, Math.round((performance.now() - startedAt) / 1000));
+      if (seconds < 3) return; // ignore accidental opens
+
+      const scrollDepth = Math.max(0, Math.min(1, (scrollProgressRef.current || 0) / 100));
+      recordReadingSession?.({ sectionId: chapter.id, timeSpent: seconds, scrollDepth });
+
+      if (scrollDepth >= 0.85) {
+        markSectionCompleted?.(chapter.id, { source: 'read', scrollDepth });
+      }
+    };
+  }, [isOpen, chapter?.id, recordReadingSession, markSectionCompleted]);
 
   // Mouse movement detection for reading mode
   useEffect(() => {
@@ -262,6 +297,14 @@ function ChapterModal({
             >
               {sanitizedSubtitle}
             </p>
+          )}
+          {typeof timeBudgetMin === 'number' && (
+            <div
+              className="mt-3 text-[10px] uppercase tracking-[0.24em]"
+              style={{ color: "rgba(253,251,245,0.55)", fontFamily: "var(--font-ui)" }}
+            >
+              Suggested time: {timeBudgetMin} min
+            </div>
           )}
           {/* Refined divider - 60% width, thinner, centered */}
           <div
@@ -950,9 +993,14 @@ export function WisdomSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [modalChapter, setModalChapter] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalTimeBudgetMin, setModalTimeBudgetMin] = useState(null);
   const [wisdomModalOpen, setWisdomModalOpen] = useState(false);
+  const [initialVideoId, setInitialVideoId] = useState(null);
+  const [initialVideoBudgetMin, setInitialVideoBudgetMin] = useState(null);
   const { bookmarks, addBookmark, removeBookmark } = useWisdomStore();
   const bookmarkedIds = bookmarks.map((b) => b.sectionId);
+  const contentLaunchContext = useUiStore(s => s.contentLaunchContext);
+  const clearContentLaunchContext = useUiStore(s => s.clearContentLaunchContext);
 
   // Theme configuration
   const THEME_CONFIG = isLight ? {
@@ -984,12 +1032,34 @@ export function WisdomSection() {
     }
   };
 
-  const openChapterModal = (chapter) => {
+  const openChapterModal = (chapter, opts = {}) => {
     setModalChapter(chapter);
+    setModalTimeBudgetMin(typeof opts.durationMin === 'number' ? opts.durationMin : null);
     setModalOpen(true);
   };
 
   const getChapterById = (id) => treatiseChapters.find((ch) => ch.id === id);
+
+  // Consume content launch context (from paths/curriculum/navigation recommendations).
+  useEffect(() => {
+    if (!contentLaunchContext) return;
+
+    try {
+      if (contentLaunchContext.target === 'chapter' && contentLaunchContext.chapterId) {
+        const ch = getChapterById(contentLaunchContext.chapterId);
+        if (ch) {
+          setActiveTab('Treatise');
+          openChapterModal(ch, { durationMin: contentLaunchContext.durationMin });
+        }
+      } else if (contentLaunchContext.target === 'video' && contentLaunchContext.videoId) {
+        setActiveTab('Videos');
+        setInitialVideoId(contentLaunchContext.videoId);
+        setInitialVideoBudgetMin(typeof contentLaunchContext.durationMin === 'number' ? contentLaunchContext.durationMin : null);
+      }
+    } finally {
+      clearContentLaunchContext?.();
+    }
+  }, [contentLaunchContext, clearContentLaunchContext]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // RECOMMENDATIONS VIEW - "The Compass" Radial Navigation
@@ -1654,7 +1724,12 @@ export function WisdomSection() {
   // ─────────────────────────────────────────────────────────────────────────
   // VIDEOS VIEW - Now uses VideoLibrary component
   // ─────────────────────────────────────────────────────────────────────────
-  const renderVideosView = () => <VideoLibrary />;
+  const renderVideosView = () => (
+    <VideoLibrary
+      initialVideoId={initialVideoId}
+      initialVideoBudgetMin={initialVideoBudgetMin}
+    />
+  );
 
   // ─────────────────────────────────────────────────────────────────────────
   // MAIN RENDER
@@ -1664,11 +1739,18 @@ export function WisdomSection() {
       <ChapterModal
         chapter={modalChapter}
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setModalTimeBudgetMin(null);
+        }}
         onBookmark={toggleBookmark}
         isBookmarked={modalChapter && bookmarkedIds.includes(modalChapter.id)}
         allChapters={treatiseChapters}
-        onNavigate={(ch) => setModalChapter(ch)}
+        onNavigate={(ch) => {
+          setModalChapter(ch);
+          setModalTimeBudgetMin(null);
+        }}
+        timeBudgetMin={modalTimeBudgetMin}
       />
 
       <div data-tutorial="wisdom-root" className="w-full max-w-5xl mx-auto">

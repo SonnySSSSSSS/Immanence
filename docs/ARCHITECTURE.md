@@ -8,16 +8,130 @@
 
 ## App-Wide State Domains (Zustand Slices)
 
-The app is organized into four primary state domains, each owned by dedicated Zustand stores with explicit source-of-truth and derived relationships:
+The app is organized into four primary state domains, plus a small transient UI orchestration store (`uiStore`) used for cross-section deep links and one-shot launch overrides.
+Each domain is owned by dedicated Zustand stores with explicit source-of-truth and derived relationships:
+
+### **0. UI Orchestration Domain** (`launch contexts`, `deep links`, `transient overrides`)
+- **Store**: `uiStore` (`src/state/uiStore.js`) — in-memory only (not persisted)
+- **Owns**:
+  - `practiceLaunchContext`: one-shot overrides when launching a practice from paths/schedule/recommendations (practice ID, duration, param patch, path metadata)
+  - `contentLaunchContext`: one-shot deep links into Wisdom content (treatise chapter/video + optional time budget)
+- **Consumption pattern**: reader components consume and immediately clear the context (`PracticeSection`, `WisdomSection`).
+- **Invariant**: contexts must not silently overwrite persisted preferences unless explicitly allowed (see `persistPreferences` on `practiceLaunchContext`).
+- **Important**: `uiStore` is *intent only*. It is not the storage for lock state. Locking/overrides are applied by `sessionOverrideStore` (below) when `PracticeSection` consumes a launch context.
 
 ### **1. Practice Domain** (`practice`, `configuration`, `session runtime`)
 - **Stores owning practice state**:
   - `practiceStore` (local storage key `immanence_practice_prefs_v2`): Persisted user preferences per practice (preset, pattern, frequency, mode settings)
+  - `sessionOverrideStore` (ephemeral): Session-scoped overrides + lock paths for curriculum/path-launched sessions (prevents global defaults from being polluted)
   - `tempoSyncStore`: Real-time music-synced breathing state (BPM, lock status, multiplier, confidence)
   - `useBreathSessionState` (hook): In-memory session runtime (phase progress, timings, loop state)
   - `usePracticeSessionInstrumentation` (hook): Real-time practice instrumentation (exit type, duration tracking, user actions)
 - **Source of truth**: `practiceStore` for preferences (persisted); in-memory hooks for active session state (ephemeral)
 - **Derived**: Session summaries, cycle registration, mandala syncs computed from `progressStore.sessionsV2` after recording
+
+#### **Session Overrides & Locks (Curriculum Launch Discipline)**
+
+Path/curriculum launches must be able to:
+1. Start a practice with specific parameters (ex: Breath preset, Photic colors, Vipassana theme)
+2. Optionally **lock** those parameters so the curriculum card session cannot be “user-modified”
+3. Avoid writing overrides into persisted user defaults (`practiceStore` / `settingsStore`)
+
+Implementation:
+- **Launch intent**: set `uiStore.practiceLaunchContext` from HomeHub / DailyPracticeCard.
+- **Constraint application**: `PracticeSection` consumes the context, applies overrides + locks into `sessionOverrideStore`, then clears the launch context.
+- **Lock enforcement**:
+  - `PracticeSection.updateParams()` filters out changes to locked `practiceParams.*` keys.
+  - Global-risk settings (ex: photic) are routed through session overrides rather than `settingsStore` writes.
+- **Default policy**: for `source: "dailySchedule"` launches, if no explicit locks are provided, the session is locked by default (`practiceParams`, `settings`, `tempoSync`, `awarenessScene`). Manual practice selection clears locks.
+- **Effective settings**: components that use global defaults (notably photic and breath sound) must read `base + sessionOverride` via `src/hooks/useEffectiveSettings.js`.
+
+#### **Practice Settings Registry** (Override/Lock Targets)
+
+This table enumerates all *current* practice-tunable variables in the repo and where they live today.
+It exists to support **path-driven practice launches** (curriculum card) that may apply **session-scoped overrides** and **locks** without polluting free-practice settings.
+
+**Key**:
+- **Key Path** uses a dotted path relative to its store root (example: `practiceParams.breath.pattern.inhale`).
+- **Persisted?** indicates whether the value survives reloads by default.
+- **Lockable?** indicates whether it is a reasonable candidate for “locked by path” behavior (only for curriculum-launched sessions).
+- Some rows are marked **global-risk**: path overrides should not mutate them directly because they are global defaults shared with free practice.
+
+| Practice Surface | Key Path | Store / Source Of Truth | Persisted? | Lockable? | Notes |
+|---|---|---|---|---|---|
+| **All Practices (menu defaults)** | `practiceId` | `practiceStore` (`src/state/practiceStore.js`) | Yes | Yes | Last-selected practice menu category (umbrella ID like `breath`, `awareness`, `perception`). |
+| **All Practices (menu defaults)** | `duration` | `practiceStore` | Yes | Yes | Default duration used when user launches a practice manually. Curriculum launch can override via `uiStore.practiceLaunchContext.durationMin`. |
+| **All Practices (launch overrides)** | `practiceLaunchContext.*` | `uiStore` (`src/state/uiStore.js`) | No | N/A | One-shot launch context: `{ practiceId, durationMin, practiceParamsPatch, practiceConfig, pathContext, persistPreferences }`. Consumed + cleared by `PracticeSection`. |
+| **All Practices (session constraints)** | `overrides.*`, `locks[]` | `sessionOverrideStore` (`src/state/sessionOverrideStore.js`) | No | N/A | Ephemeral session overrides + lock paths applied when `PracticeSection` consumes `practiceLaunchContext`. |
+| **Breath (Foundation)** | `practiceParams.breath.preset` | `practiceStore.practiceParams` | Yes | Yes | Preset key (UI). May be `null` when manually editing phase sliders. |
+| **Breath (Foundation)** | `practiceParams.breath.pattern.inhale` | `practiceStore.practiceParams` | Yes | Yes | Phase duration seconds. |
+| **Breath (Foundation)** | `practiceParams.breath.pattern.hold1` | `practiceStore.practiceParams` | Yes | Yes | Phase duration seconds. |
+| **Breath (Foundation)** | `practiceParams.breath.pattern.exhale` | `practiceStore.practiceParams` | Yes | Yes | Phase duration seconds. |
+| **Breath (Foundation)** | `practiceParams.breath.pattern.hold2` | `practiceStore.practiceParams` | Yes | Yes | Phase duration seconds. |
+| **Breath (Foundation)** | `breathSoundEnabled` | `settingsStore` (`src/state/settingsStore.js`) | Yes | Yes | Breath tone toggle. Not per-practice today. Consider session override (do not mutate user default for path sessions). |
+| **Breath (Foundation)** | `benchmark.benchmark.*` | `breathBenchmarkStore` (`src/state/breathBenchmarkStore.js`) | Yes | Usually | User’s max capacity used for progressive scaling (`useBreathSessionState`). Paths may want to require benchmark first, but should not override benchmark values. |
+| **Breath (Tempo Sync)** | `enabled` | `tempoSyncStore` (`src/state/tempoSyncStore.js`) | Yes | Yes | When enabled, breath timing quantizes to BPM. Consider session override + lock for path-driven sessions. |
+| **Breath (Tempo Sync)** | `bpm` | `tempoSyncStore` | Yes | Yes | |
+| **Breath (Tempo Sync)** | `beatsPerPhase` | `tempoSyncStore` | Yes | Yes | |
+| **Breath (Tempo Sync)** | `breathMultiplier` | `tempoSyncStore` | Yes | Yes | |
+| **Breath (Tempo Sync)** | `isLocked` | `tempoSyncStore` | Yes | Yes | Lock state for UI dials (tempo panel). |
+| **Breath (FX)** | `currentFxPreset` | `PracticeSection` local state | No | Yes | Ring FX selection is ephemeral (`ringFXPresets`). If paths need deterministic FX, promote to session override key (do not persist unless user selects it). |
+| **Integration (Rituals)** | `practiceParams.ritual.activeRitualId` | `practiceStore.practiceParams` | Yes | Yes | Drives which ritual is selected by default. |
+| **Circuit** | `practiceParams.circuit.activeCircuitId` | `practiceStore.practiceParams` | Yes | Yes | Exists in defaults; circuit execution primarily uses `circuitManager` + `curriculumStore.getCircuit`. Treat as legacy unless fully wired. |
+| **Circuit** | `circuits[]` | `circuitManager` (`src/state/circuitManager.js`) | Yes | Yes | Circuit library (user-created templates). Paths may reference a circuit by ID. |
+| **Circuit** | `activeSession.*` | `circuitManager` | Yes | N/A | Runtime state for an in-progress circuit. Not a lock target. |
+| **Awareness (umbrella)** | `practiceParams.awareness.activeMode` | `practiceStore.practiceParams` | Yes | Yes | Submode selector: `insight` (cognitive), `bodyscan` (somatic), `feeling` (emotion). |
+| **Awareness → Cognitive (Vipassana)** | `practiceParams.cognitive_vipassana.sensoryType` | `practiceStore.practiceParams` | Yes | Yes | Often `'sakshi'`; used in instrumentation + session content selection. |
+| **Awareness → Cognitive (Vipassana)** | `practiceParams.cognitive_vipassana.vipassanaTheme` | `practiceStore.practiceParams` | Yes | Yes | Visual theme ID (see `src/data/vipassanaThemes.js`). |
+| **Awareness → Cognitive (Vipassana)** | `practiceParams.cognitive_vipassana.vipassanaElement` | `practiceStore.practiceParams` | Yes | Yes | Thought element style ID (bird/leaf/cloud/lantern). |
+| **Awareness → Cognitive (Vipassana)** | `practiceParams.cognitive_vipassana.scanType` | `practiceStore.practiceParams` | Yes | Yes | Present; currently more relevant for body scans. |
+| **Awareness → Cognitive (Vipassana)** | `selectedScene` | `awarenessSceneStore` (`src/state/awarenessSceneStore.js`) | Yes | Yes | Scene wallpaper selection used by Sakshi visuals. Consider session override if paths want deterministic scenes. |
+| **Awareness → Cognitive (Vipassana)** | `sakshiVersion` | `awarenessSceneStore` | Yes | Yes | Sakshi rendering version (1 scenic, 2 panel). |
+| **Awareness → Somatic (Body Scan)** | `practiceParams.somatic_vipassana.sensoryType` | `practiceStore.practiceParams` | Yes | Yes | Defaults to `'bodyScan'`. |
+| **Awareness → Somatic (Body Scan)** | `practiceParams.somatic_vipassana.scanType` | `practiceStore.practiceParams` | Yes | Yes | `'full'`, `'head'`, `'hands'`, `'chest'`, `'feet'`, etc. |
+| **Awareness → Emotion (Feeling)** | `practiceParams.feeling.mode` | `practiceStore.practiceParams` | Yes | Yes | Emotion focus (discomfort, fear, pleasure, etc.). |
+| **Awareness → Emotion (Feeling)** | `practiceParams.feeling.promptMode` | `practiceStore.practiceParams` | Yes | Yes | Prompt style (`minimal`/`guided`). |
+| **Awareness → Emotion (Feeling)** | `practiceParams.feeling.intent` | `practiceStore.practiceParams` | Yes | Yes | Present in defaults; not fully surfaced. Useful future path hook. |
+| **Awareness → Emotion (Feeling)** | `practiceParams.feeling.promptText` | `practiceStore.practiceParams` | Yes | Yes | Present in defaults; not fully surfaced. Useful future path hook. |
+| **Resonance (umbrella)** | `practiceParams.resonance.activeMode` | `practiceStore.practiceParams` | Yes | Yes | Submode selector: `aural` (sound) or `cymatics`. |
+| **Resonance → Sound** | `practiceParams.sound.soundType` | `practiceStore.practiceParams` | Yes | Yes | `'Binaural'` vs UI labels (`'Binaural Beats'`, `'Isochronic Tones'`, etc.) are normalized in UI glue. |
+| **Resonance → Sound** | `practiceParams.sound.volume` | `practiceStore.practiceParams` | Yes | Yes | Global volume for sound practice. |
+| **Resonance → Sound** | `practiceParams.sound.binauralPresetId` | `practiceStore.practiceParams` | Yes | Yes | Currently stored as preset `name` (not stable ID). Consider migrating to stable IDs. |
+| **Resonance → Sound** | `practiceParams.sound.isochronicPresetId` | `practiceStore.practiceParams` | Yes | Yes | Currently stored as preset `name` (not stable ID). Consider migrating to stable IDs. |
+| **Resonance → Sound** | `practiceParams.sound.exactHz` | `practiceStore.practiceParams` | Yes | Yes | Entrainment target. Ensure UI reads/writes from this key (avoid local-only state drift). |
+| **Resonance → Sound** | `practiceParams.sound.carrierFrequency` | `practiceStore.practiceParams` | Yes | Yes | Isochronic carrier frequency. |
+| **Resonance → Sound** | `practiceParams.sound.reverbWet` | `practiceStore.practiceParams` | Yes | Yes | Advanced FX wet (0..1). Ensure UI is fully wired (avoid local-only state drift). |
+| **Resonance → Sound** | `practiceParams.sound.chorusWet` | `practiceStore.practiceParams` | Yes | Yes | Advanced FX wet (0..1). Ensure UI is fully wired (avoid local-only state drift). |
+| **Resonance → Sound** | `practiceParams.sound.mantraPresetId` | (not yet implemented) | N/A | Yes | `SoundConfig` supports mantra/nature selection props, but persistence keys are not currently modeled in `practiceParams.sound`. |
+| **Resonance → Sound** | `practiceParams.sound.naturePresetId` | (not yet implemented) | N/A | Yes | See note above. |
+| **Resonance → Cymatics** | `practiceParams.cymatics.frequencySet` | `practiceStore.practiceParams` | Yes | Yes | E.g. `solfeggio`. |
+| **Resonance → Cymatics** | `practiceParams.cymatics.selectedFrequencyIndex` | `practiceStore.practiceParams` | Yes | Yes | Index into `SOLFEGGIO_SET`. |
+| **Resonance → Cymatics** | `practiceParams.cymatics.driftEnabled` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Resonance → Cymatics** | `practiceParams.cymatics.audioEnabled` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Resonance → Cymatics** | `practiceParams.cymatics.fadeInDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Resonance → Cymatics** | `practiceParams.cymatics.displayDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Resonance → Cymatics** | `practiceParams.cymatics.fadeOutDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Resonance → Cymatics** | `practiceParams.cymatics.voidDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Perception (umbrella)** | `practiceParams.perception.activeMode` | `practiceStore.practiceParams` | Yes | Yes | Submode selector: `visualization` or `photic`. |
+| **Perception → Visualization (Kasina)** | `practiceParams.visualization.geometry` | `practiceStore.practiceParams` | Yes | Yes | Geometry renderer selection. |
+| **Perception → Visualization (Kasina)** | `practiceParams.visualization.fadeInDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Perception → Visualization (Kasina)** | `practiceParams.visualization.displayDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Perception → Visualization (Kasina)** | `practiceParams.visualization.fadeOutDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Perception → Visualization (Kasina)** | `practiceParams.visualization.voidDuration` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Perception → Visualization (Kasina)** | `practiceParams.visualization.audioEnabled` | `practiceStore.practiceParams` | Yes | Yes | |
+| **Perception → Photic (global-risk)** | `photic.rateHz` | `settingsStore` | Yes | Yes | **Global-risk**: path-driven overrides should be applied as session overrides; do not mutate user defaults for curriculum sessions. |
+| **Perception → Photic (global-risk)** | `photic.dutyCycle` | `settingsStore` | Yes | Yes | **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.timingMode` | `settingsStore` | Yes | Yes | `simultaneous` / `alternating`. **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.gapMs` | `settingsStore` | Yes | Yes | **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.brightness` | `settingsStore` | Yes | Yes | **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.spacingPx` | `settingsStore` | Yes | Yes | **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.radiusPx` | `settingsStore` | Yes | Yes | **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.colorLeft` | `settingsStore` | Yes | Yes | **Global-risk**. Supports weekday-specific path overrides (future). |
+| **Perception → Photic (global-risk)** | `photic.colorRight` | `settingsStore` | Yes | Yes | **Global-risk**. Supports weekday-specific path overrides (future). |
+| **Perception → Photic (global-risk)** | `photic.linkColors` | `settingsStore` | Yes | Yes | **Global-risk**. |
+| **Perception → Photic (global-risk)** | `photic.bgOpacity` | `settingsStore` | Yes | Yes | **Global-risk**. |
+
+**Implementation note (required for future paths)**: for any row marked **global-risk**, path-driven launches must use a *session override layer* (effective config = user defaults + overrides) rather than mutating the persisted store. This prevents path-driven settings (example: weekday photic colors) from leaking into free practice.
 
 ### **2. Navigation & Path Domain** (`navigation`, `program selection`, `consistency`, `curriculum`)
 - **Stores owning navigation state**:
@@ -148,6 +262,18 @@ Two critical context layers govern practice and navigation behavior:
 - **Storage**: `practiceStore.practiceParams` (persisted per practice), `navigationStore.selectedPathId`, component local state for transient UI choices
 - **Lifecycle**: Lives until user clicks "Begin Practice" or changes practice type
 - **Example**: User in `PracticeSection` toggles between "Breath & Stillness" and "Sound", adjusts breath pattern in config panel. Menu context holds `{ practiceId: 'breath', preset: 'Box', pattern: {...} }`. If they switch to Sound without starting, context changes to `{ practiceId: 'resonance', practiceMode: 'sound', soundType: 'Binaural' }`.
+
+### **Launch Context** (One-Shot Cross-Section Intent)
+- **Active in**: Any UI surface that wants to launch another surface with specific parameters (paths → practice, curriculum → practice, paths → wisdom chapter/video).
+- **Storage**: `uiStore` (`practiceLaunchContext`, `contentLaunchContext`) — transient, in-memory only.
+- **Lifecycle**: Written by the source surface, consumed by the destination surface, then cleared immediately.
+- **Practice launch shape**: `{ source, practiceId, durationMin, practiceParamsPatch?, overrides?, locks?, practiceConfig?, pathContext?, persistPreferences? }`.
+  - `practiceParamsPatch` is legacy/back-compat; prefer `overrides.practiceParams`.
+  - `overrides` is session-scoped and may include global-risk settings (example: `overrides.settings.photic`).
+  - `locks` defines which keys are immutable for curriculum-launched sessions; if omitted for `source: "dailySchedule"`, `PracticeSection` applies default locks via `sessionOverrideStore`.
+  - **Key invariant**: when `persistPreferences === false`, the launch must not overwrite `practiceStore` saved preferences (it is a contextual recommendation, not a user choice).
+- **Content launch shape**: `{ target: 'chapter'|'video', chapterId?|videoId?, durationMin? }`.
+- **Example**: User clicks a path’s “Morning Breath (7m)” slot → `uiStore.practiceLaunchContext` sets duration + preset, `PracticeSection` consumes it, runs the session, and restores user prefs afterward.
 
 ### **Running Context** (Active Session Phase)
 - **Active in**: Practice session actively running (timer ticking, visual/audio active)
@@ -438,10 +564,14 @@ getWeeklyTimingOffsets(),        // Return mock if active; else []
   - Actions: setters for each preference category, `resetSettings`, `setPhoticSetting`, `resetPhoticSettings`.
   - Readers: All components needing theme/display/audio preferences; `PhoticCirclesOverlay` for photic settings.
   - **Photic Settings**: Persisted configuration for Photic Circles overlay (rate, brightness, spacing, radius, colors, blur). UI state (`isOpen`, `isRunning`) kept in component state, not persisted.
+- **uiStore** (`src/state/uiStore.js`)
+  - Owns (transient, not persisted): `practiceLaunchContext`, `contentLaunchContext`.
+  - Writers: `HomeHub`/`DailyPracticeCard` (practice launch), `NavigationSection`/`PathOverviewPanel`/`ActivePathState` (chapter/video deep links), future curriculum content links.
+  - Readers: `PracticeSection` (consume practice context), `WisdomSection`/`VideoLibrary` (consume content context).
 - **wisdomStore** (`src/state/wisdomStore.js`)
-  - Owns: reading sessions, bookmarks, quiz unlocks, flashcard state, recommendation history.
-  - Actions: `recordReadingSession`, `addBookmark/removeBookmark`, quiz + flashcard helpers.
-  - Readers/Writers: `WisdomSection` (Treatise reading/bookmarks, recommendations), `VideoLibrary` uses treatise/video data but not the store.
+  - Owns: reading sessions, bookmarks, **completedSections** (chapter completion map), quiz unlocks, flashcard state, recommendation history.
+  - Actions: `recordReadingSession`, `markSectionCompleted`, `addBookmark/removeBookmark`, quiz + flashcard helpers.
+  - Readers/Writers: `WisdomSection` (Treatise reading/bookmarks/recommendations; completion inferred from scroll depth + time spent), domain stats surfaces and reports.
 - **ritualStore** (`src/state/ritualStore.js`)
   - Owns: ritual run state (`id`, `startTime`, `currentStep`, `status`, `stepData`, `photoUrl`, `selectedMemory`).
   - Actions: `startRitual/advanceStep/goToStep/recordStepData/setPhotoUrl/setSelectedMemory/resetRitual/completeRitual`.
@@ -574,9 +704,9 @@ getWeeklyTimingOffsets(),        // Return mock if active; else []
 
 - **WisdomSection** (`src/components/WisdomSection.jsx`)
   - Primary components: tabbed Recommendations/Treatise/Bookmarks/Videos/Self-Knowledge, `WisdomSelectionModal`, `VideoLibrary`, `SelfKnowledgeView`.
-  - Inputs: static treatise/wisdom/video data, `wisdomStore` bookmarks/reading sessions, `localStorage` scroll positions.
-  - Outputs: `wisdomStore.recordReadingSession`, `addBookmark/removeBookmark`; records treatise progress to `localStorage`.
-  - Navigation next: none; section-local tab switches only.
+  - Inputs: static treatise/wisdom/video data, `wisdomStore` bookmarks/reading sessions/completions, `localStorage` scroll positions, optional `uiStore.contentLaunchContext` (deep link intent).
+  - Outputs: `wisdomStore.recordReadingSession`, `wisdomStore.markSectionCompleted`, `addBookmark/removeBookmark`; records treatise progress to `localStorage`.
+  - Navigation next: section-local tab switches only, but can *consume* cross-section deep links (paths/curriculum → open specific chapter/video).
 - **Modals**
   - Global: `WelcomeScreen`, `CurriculumOnboarding`, `CurriculumCompletionReport`, `DevPanel` (tweaks display mode/stage previews), `AvatarPreview`, `SigilTracker`, `HardwareGuide`, `InstallPrompt`.
   - Practice-specific: `PracticeSelectionModal`, `VipassanaVariantSelector`, `SessionSummaryModal`, `PostSessionJournal`, `NavigationSelectionModal`, `ThoughtDetachmentOnboarding`, `CycleChoiceModal`, `PhoticCirclesOverlay`.

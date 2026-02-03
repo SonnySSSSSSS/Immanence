@@ -298,10 +298,20 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       // Store practice launch context in zustand store (transient, not persisted)
       useUiStore.getState().setPracticeLaunchContext({
         source: "dailySchedule",
-        activePathId: leg.pathContext?.activePathId,
-        slotTime: leg.pathContext?.slotTime,
-        slotIndex: leg.pathContext?.slotIndex,
         practiceId: leg.practiceId,
+        durationMin: Number.isFinite(Number(leg.durationMin)) ? Number(leg.durationMin) : undefined,
+        practiceParamsPatch: leg.practiceParamsPatch || undefined,
+        overrides: leg.overrides || undefined,
+        locks: leg.locks || undefined,
+        practiceConfig: leg.practiceConfig || undefined,
+        pathContext: {
+          activePathId: leg.pathContext?.activePathId,
+          slotTime: leg.pathContext?.slotTime,
+          slotIndex: leg.pathContext?.slotIndex,
+          dayIndex: leg.pathContext?.dayIndex,
+          weekIndex: leg.pathContext?.weekIndex,
+        },
+        persistPreferences: false,
       });
       onSelectSection('practice');
       return;

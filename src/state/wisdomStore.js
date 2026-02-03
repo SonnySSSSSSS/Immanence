@@ -20,6 +20,14 @@ export const useWisdomStore = create(
             lastReadSection: null,
             totalReadingTime: 0, // seconds
 
+            /**
+             * Completed sections (chapters) by sectionId
+             * {
+             *   [sectionId]: { completedAt: ISO string, scrollDepth: 0-1, source?: string }
+             * }
+             */
+            completedSections: {},
+
             // ========================================
             // QUIZ STATE (for future quiz system)
             // ========================================
@@ -81,6 +89,26 @@ export const useWisdomStore = create(
                 }
 
                 return newSession;
+            },
+
+            /**
+             * Mark a section as completed (idempotent)
+             */
+            markSectionCompleted: (sectionId, meta = {}) => {
+                if (!sectionId) return;
+                const state = get();
+                if (state.completedSections?.[sectionId]) return;
+
+                set({
+                    completedSections: {
+                        ...(state.completedSections || {}),
+                        [sectionId]: {
+                            completedAt: new Date().toISOString(),
+                            scrollDepth: Math.max(0, Math.min(1, Number(meta.scrollDepth ?? 1))),
+                            source: meta.source || 'read',
+                        }
+                    }
+                });
             },
 
             /**
@@ -246,9 +274,26 @@ export const useWisdomStore = create(
                     totalSessions: sessions.length,
                     totalMinutes: Math.round(totalTime / 60),
                     sectionsVisited: uniqueSections.size,
+                    sectionsCompleted: Object.keys(state.completedSections || {}).length,
                     bySection,
                     lastRead: state.lastReadSection
                 };
+            },
+
+            /**
+             * Check if section is completed
+             */
+            isSectionCompleted: (sectionId) => {
+                const state = get();
+                return state.completedSections?.[sectionId] != null;
+            },
+
+            /**
+             * Get completed section ids (for reports)
+             */
+            getCompletedSectionIds: () => {
+                const state = get();
+                return Object.keys(state.completedSections || {});
             },
 
             /**

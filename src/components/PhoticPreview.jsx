@@ -2,14 +2,14 @@
 // Live preview of photic circles effect for control panel
 // Reuses the same RAF-based timing/rendering logic as PhoticCirclesOverlay
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useSettingsStore } from '../state/settingsStore';
+import { useEffectivePhotic } from '../hooks/useEffectiveSettings';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { computePhoticLayout } from '../utils/photicLayout';
 
 export function PhoticPreview() {
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const { photic } = useSettingsStore();
+    const photic = useEffectivePhotic();
 
     // Refs for RAF loop and DOM manipulation
     const rafRef = useRef(null);

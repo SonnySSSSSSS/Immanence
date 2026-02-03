@@ -23,7 +23,8 @@ import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
 import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
-import { useCircuitManager } from '../state/circuitManager.js';
+import { useUiStore } from "../state/uiStore.js";
+import { useSessionOverrideStore } from "../state/sessionOverrideStore.js";
 import { SacredTimeSlider } from "./SacredTimeSlider.jsx";
 import { SessionSummaryModal } from "./practice/SessionSummaryModal.jsx";
 import { plateauMaterial, innerGlowStyle, getCardMaterial, getInnerGlowStyle } from "../styles/cardMaterial.js";
@@ -608,6 +609,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
+  const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
+  const clearPracticeLaunchContext = useUiStore(s => s.clearPracticeLaunchContext);
+  const applyLaunchConstraints = useSessionOverrideStore(s => s.applyLaunchConstraints);
+  const clearLaunchConstraints = useSessionOverrideStore(s => s.clearLaunchConstraints);
+  const isLocked = useSessionOverrideStore(s => s.isLocked);
+
+  // When we enter PracticeSection from a recommendation/schedule, we should NOT overwrite user prefs.
+  const suppressPrefSaveRef = useRef(false);
+
+  const mergePracticeParamsPatch = useCallback((patch) => {
+    if (!patch || typeof patch !== 'object') return;
+    setPracticeParams((prev) => {
+      const next = { ...(prev || {}) };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          next[k] = { ...(next[k] || {}), ...v };
+        } else {
+          next[k] = v;
+        }
+      }
+      return next;
+    });
+  }, []);
 
   const openTrajectoryReport = useCallback(() => {
     const detail = { tab: ARCHIVE_TABS.REPORTS, reportDomain: REPORT_DOMAINS.PRACTICE };
@@ -628,6 +652,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const practice = selectedPractice.label;
 
   const handleSelectPractice = useCallback((id) => {
+    suppressPrefSaveRef.current = false;
+    clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
     setPracticeId(id);
     // Save immediately with current state
     savePreferences({
@@ -642,14 +668,43 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
     // Notify parent of menu selection (for tutorial context)
     onPracticingChange(false, null, false, id);
-  }, [duration, practiceParams, onPracticingChange]);
+  }, [duration, practiceParams, onPracticingChange, clearLaunchConstraints]);
 
-  const updateParams = (pid, updates) => {
-    setPracticeParams(prev => ({
-      ...prev,
-      [pid]: { ...prev[pid], ...updates }
-    }));
-  };
+  const updateParams = useCallback((pid, updates) => {
+    if (!pid || !updates || typeof updates !== 'object') return;
+
+    // Enforce session locks by filtering out locked keys (and sub-keys for nested objects).
+    setPracticeParams((prev) => {
+      const next = { ...(prev || {}) };
+      const prevBucket = (next[pid] && typeof next[pid] === 'object') ? next[pid] : {};
+      const bucketNext = { ...prevBucket };
+
+      for (const [k, v] of Object.entries(updates)) {
+        const basePath = `practiceParams.${pid}.${k}`;
+        if (isLocked?.(basePath)) {
+          continue;
+        }
+
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          // Filter nested keys if they are individually locked.
+          const nestedNext = { ...(bucketNext[k] && typeof bucketNext[k] === 'object' ? bucketNext[k] : {}) };
+          let changed = false;
+          for (const [nk, nv] of Object.entries(v)) {
+            const nestedPath = `${basePath}.${nk}`;
+            if (isLocked?.(nestedPath)) continue;
+            nestedNext[nk] = nv;
+            changed = true;
+          }
+          if (changed) bucketNext[k] = nestedNext;
+        } else {
+          bucketNext[k] = v;
+        }
+      }
+
+      next[pid] = bucketNext;
+      return next;
+    });
+  }, [isLocked]);
 
   // Get the actual practice ID to run, accounting for subModes in consolidated practices
   const getActualPracticeId = (baseId) => {
@@ -683,13 +738,126 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!activeLeg) return;
 
     const pid = Object.keys(PRACTICE_REGISTRY).find(k => PRACTICE_REGISTRY[k].label === activeLeg.practiceType);
-    if (!pid || pid === practiceId) return;
+    if (pid && pid !== practiceId) {
+      console.error(`[CURRICULUM EFFECT] Resetting from ${practiceId} to ${pid}`);
+      console.trace(`Stack trace - curriculum resetting practiceId to ${pid}`);
+      setPracticeId(pid);
+      setHasExpandedOnce(true); // Bypass animation for auto-starts
+    }
 
-    console.error(`[CURRICULUM EFFECT] Resetting from ${practiceId} to ${pid}`);
-    console.trace(`Stack trace - curriculum resetting practiceId to ${pid}`);
-    setPracticeId(pid);
-    setHasExpandedOnce(true); // Bypass animation for auto-starts
-  }, [activePracticeSession, isRunning, practiceId, getActivePracticeLeg]);
+    // Apply curriculum leg duration (minutes) to the practice timer.
+    const nextDurationMinRaw = activeLeg?.practiceConfig?.duration;
+    const nextDurationMin = Number(nextDurationMinRaw);
+    if (Number.isFinite(nextDurationMin) && nextDurationMin > 0 && nextDurationMin !== duration) {
+      setDuration(nextDurationMin);
+    }
+  }, [activePracticeSession, isRunning, practiceId, duration, getActivePracticeLeg]);
+
+  // Apply launch context (from paths / navigation recommendations / schedule tiles).
+  useEffect(() => {
+    if (isRunning) return;
+    if (!practiceLaunchContext) return;
+
+    const ctx = practiceLaunchContext;
+    suppressPrefSaveRef.current = ctx.persistPreferences === false;
+
+    // Apply session overrides + locks (ephemeral). This prevents global defaults (e.g. photic) from being mutated.
+    // Locking is only intended for curriculum-card launches ("dailySchedule").
+    if (ctx.source) {
+      const normalizedOverrides = ctx.overrides && typeof ctx.overrides === 'object' ? ctx.overrides : null;
+
+      // Backward compat: treat practiceParamsPatch as overrides.practiceParams.
+      const practiceParamsOverride =
+        (normalizedOverrides?.practiceParams && typeof normalizedOverrides.practiceParams === 'object')
+          ? normalizedOverrides.practiceParams
+          : (ctx.practiceParamsPatch && typeof ctx.practiceParamsPatch === 'object' ? ctx.practiceParamsPatch : null);
+
+      const mergedOverrides = {
+        ...(normalizedOverrides || {}),
+        ...(practiceParamsOverride ? { practiceParams: practiceParamsOverride } : {}),
+      };
+
+      // If locks aren't explicitly provided, infer locks from overridden practiceParams keys for dailySchedule.
+      const inferredLocks = (() => {
+        if (ctx.locks) return ctx.locks;
+        if (ctx.source === 'dailySchedule') {
+          // Curriculum card sessions are immutable by default: lock practice params + global settings overlays.
+          // Caller can pass explicit ctx.locks to soften this if desired.
+          return ['practiceParams', 'settings', 'tempoSync', 'awarenessScene'];
+        }
+        if (!practiceParamsOverride) return null;
+        const out = [];
+        for (const [bucketKey, bucketVal] of Object.entries(practiceParamsOverride)) {
+          if (!bucketVal || typeof bucketVal !== 'object') continue;
+          for (const k of Object.keys(bucketVal)) {
+            out.push(`practiceParams.${bucketKey}.${k}`);
+          }
+        }
+        return out.length ? out : null;
+      })();
+
+      applyLaunchConstraints?.({
+        source: ctx.source,
+        overrides: Object.keys(mergedOverrides).length ? mergedOverrides : null,
+        locks: inferredLocks,
+      });
+    } else {
+      clearLaunchConstraints?.();
+    }
+
+    if (ctx.practiceId && ctx.practiceId !== practiceId) {
+      setPracticeId(ctx.practiceId);
+      setHasExpandedOnce(true);
+    } else if (ctx.practiceId) {
+      setHasExpandedOnce(true);
+    }
+
+    const nextDurationMin = Number(ctx.durationMin);
+    if (Number.isFinite(nextDurationMin) && nextDurationMin > 0 && nextDurationMin !== duration) {
+      setDuration(nextDurationMin);
+    }
+
+    // Apply practice param overrides.
+    if (ctx.overrides?.practiceParams && typeof ctx.overrides.practiceParams === 'object') {
+      mergePracticeParamsPatch(ctx.overrides.practiceParams);
+    } else if (ctx.practiceParamsPatch) {
+      mergePracticeParamsPatch(ctx.practiceParamsPatch);
+    }
+
+    // Best-effort mapping for common config fields.
+    if (ctx.practiceId === 'breath') {
+      const breathPattern = ctx.practiceConfig?.breathPattern;
+      if (breathPattern && typeof breathPattern === 'string') {
+        mergePracticeParamsPatch({ breath: { preset: breathPattern.toLowerCase() } });
+      }
+    }
+
+    // Handle circuit practice from curriculum (load circuit definition by ID)
+    if (ctx.practiceId === 'circuit' && ctx.practiceConfig?.circuitId) {
+      const circuitDef = getCircuit(ctx.practiceConfig.circuitId);
+      if (circuitDef && circuitDef.exercises && circuitDef.exercises.length > 0) {
+        // Transform circuit definition into the format expected by PracticeSection
+        const circuitExercises = circuitDef.exercises.map((ex) => ({
+          exercise: {
+            id: ex.type || ex.id,
+            name: ex.name,
+            type: ex.type,
+            practiceType: ex.practiceType,
+            preset: ex.preset,
+            sensoryType: ex.sensoryType,
+          },
+          duration: ex.duration,
+        }));
+        setCircuitConfig({
+          exercises: circuitExercises,
+          intervalBreakSec: circuitDef.intervalBreakSec ?? 10,
+        });
+        setActiveCircuitId(ctx.practiceConfig.circuitId);
+      }
+    }
+
+    clearPracticeLaunchContext?.();
+  }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit]);
 
   const [isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -837,11 +1005,27 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setPreset = (val) => updateParams('breath', { preset: val });
   const setPattern = (val) => {
     if (typeof val === 'function') {
-      // Handle updater function
-      setPracticeParams(prev => ({
-        ...prev,
-        breath: { ...prev.breath, pattern: val(prev.breath.pattern) }
-      }));
+      // Handle updater function (must respect locks; do not bypass updateParams).
+      setPracticeParams((prev) => {
+        const basePath = 'practiceParams.breath.pattern';
+        if (isLocked?.(basePath)) return prev;
+
+        const prevBreath = prev?.breath || {};
+        const prevPattern = prevBreath?.pattern || {};
+        const computed = val(prevPattern);
+        if (!computed || typeof computed !== 'object' || Array.isArray(computed)) return prev;
+
+        const nextPattern = { ...prevPattern };
+        for (const [k, v] of Object.entries(computed)) {
+          if (isLocked?.(`${basePath}.${k}`)) continue;
+          nextPattern[k] = v;
+        }
+
+        return {
+          ...prev,
+          breath: { ...prevBreath, pattern: nextPattern },
+        };
+      });
     } else {
       // Handle direct value
       updateParams('breath', { pattern: val });
@@ -919,12 +1103,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (st.hasSong && st.isPlaying) st.stop("practice-unmount");
       // End tempo sync session on unmount
       useTempoSyncSessionStore.getState().endSession();
+      // Clear any session-scoped overrides/locks to prevent leakage across mounts.
+      useSessionOverrideStore.getState().clearLaunchConstraints?.();
     };
   }, []);
 
   // Auto-save preferences when they change (but not during active practice)
   useEffect(() => {
-    if (!isRunning) {
+    // Don't persist curriculum/pilot overrides into user preferences.
+    if (!isRunning && !activePracticeSession && !suppressPrefSaveRef.current) {
       const prev = lastSavedPrefsRef.current;
       const hasChanged = prev.practiceId !== practiceId ||
         prev.duration !== duration ||
@@ -938,7 +1125,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
       }
     }
-  }, [practiceId, duration, practiceParams, isRunning]);
+  }, [practiceId, duration, practiceParams, isRunning, activePracticeSession]);
 
   useEffect(() => {
     if (preset && BREATH_PRESETS[preset]) {
@@ -1011,8 +1198,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       clearInterval(circuitCountdownRef.current);
     }
 
-    const activeSession = useCircuitManager.getState().activeSession;
-    const breakDuration = Math.max(1, Math.min(60, activeSession?.intervalBreakSec ?? 10));
+    // Read intervalBreakSec from local circuitConfig state instead of circuit manager
+    const breakDuration = Math.max(1, Math.min(60, circuitConfig?.intervalBreakSec ?? 10));
     setCountdownValue(breakDuration);
     circuitCountdownRef.current = setInterval(() => {
       setCountdownValue((prev) => {
@@ -1041,6 +1228,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const handleCircuitComplete = () => {
+    // Capture curriculum context BEFORE clearing (same pattern as handleStop)
+    const savedActivePracticeSession = activePracticeSession;
+    const activeSessionDayNumber = typeof savedActivePracticeSession === 'object'
+      ? savedActivePracticeSession?.dayNumber
+      : savedActivePracticeSession;
+    const activeSessionLegNumberRaw = typeof savedActivePracticeSession === 'object'
+      ? savedActivePracticeSession?.legNumber
+      : null;
+    const activeSessionLegNumber = Number(activeSessionLegNumberRaw);
+    const wasFromCurriculum = !!activeSessionDayNumber;
+
     clearActivePracticeSession();
     setIsRunning(false);
     notifyPracticingChange(false);
@@ -1048,6 +1246,30 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     logCircuitCompletionEvent('custom', circuitConfig.exercises);
 
     const totalDuration = circuitConfig.exercises.reduce((sum, e) => sum + e.duration, 0);
+
+    // Log leg completion if from curriculum
+    if (wasFromCurriculum) {
+      const {
+        logLegCompletion,
+        getDayLegsWithStatus,
+        getCurriculumDay,
+      } = useCurriculumStore.getState();
+      const curriculumDay = getCurriculumDay(activeSessionDayNumber);
+
+      if (curriculumDay) {
+        const completedLegs = getDayLegsWithStatus(activeSessionDayNumber).filter(leg => leg.completed);
+        const currentLegNumber = Number.isFinite(activeSessionLegNumber) && activeSessionLegNumber > 0
+          ? activeSessionLegNumber
+          : (completedLegs.length + 1);
+
+        logLegCompletion(activeSessionDayNumber, currentLegNumber, {
+          duration: totalDuration,
+          focusRating: null,
+          challenges: [],
+          notes: '',
+        });
+      }
+    }
 
     let recordedSession = null;
     try {
@@ -1119,6 +1341,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const activeSessionDayNumber = typeof savedActivePracticeSession === 'object'
       ? savedActivePracticeSession?.dayNumber
       : savedActivePracticeSession;
+    const activeSessionLegNumberRaw = typeof savedActivePracticeSession === 'object'
+      ? savedActivePracticeSession?.legNumber
+      : null;
+    const activeSessionLegNumber = Number(activeSessionLegNumberRaw);
     const isCircuitSession = activeCircuitId && circuitConfig;
 
     // If this is a circuit session, delegate to circuit handler
@@ -1228,13 +1454,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
 
       const endedAtIso = new Date().toISOString();
-      const startedAtIso = new Date(Date.now() - (instrumentationData?.duration_ms || 0)).toISOString();
-      const actualDurationMinutes = duration;
+      const actualDurationMinutes = Math.round((actualDurationSeconds / 60) * 10) / 10;
       const actualDomain = domain;
 
       recordedSession = recordPracticeSession({
         domain: actualDomain,
         duration: actualDurationMinutes,
+        durationSec: actualDurationSeconds,
         exitType: completion,
 
         practiceId: actualPracticeId ?? practiceId,
@@ -1244,7 +1470,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           sakshiVersion: actualPracticeId === 'cognitive_vipassana' ? sakshiVersion : null,
         },
 
-        startedAt: startedAtIso,
         endedAt: endedAtIso,
       });
     } catch (e) {
@@ -1273,12 +1498,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         getCurriculumDay,
         practiceTimeSlots
       } = useCurriculumStore.getState();
-      const curriculumDay = getActivePracticeDay();
+      const curriculumDay = getCurriculumDay(activeSessionDayNumber);
 
       if (curriculumDay) {
         // Find which leg was just completed
         const completedLegs = getDayLegsWithStatus(activeSessionDayNumber).filter(leg => leg.completed);
-        currentLegNumber = completedLegs.length + 1; // Next leg to complete
+        currentLegNumber = Number.isFinite(activeSessionLegNumber) && activeSessionLegNumber > 0
+          ? activeSessionLegNumber
+          : (completedLegs.length + 1);
         totalLegsForDay = curriculumDay.legs ? curriculumDay.legs.length : 1;
 
         // Log this leg as complete
@@ -1438,12 +1665,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
 
-    savePreferences({
-      practiceId,
-      duration,
-      practiceParams
-    });
-    lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
+    // Persist preferences only for manual starts (not curriculum/schedule recommendations).
+    if (!activePracticeSession && !suppressPrefSaveRef.current) {
+      savePreferences({
+        practiceId,
+        duration,
+        practiceParams
+      });
+      lastSavedPrefsRef.current = { practiceId, duration, practiceParams };
+    }
 
     const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
     if (logScheduleAdherenceStart) {
@@ -1550,7 +1780,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
@@ -1746,14 +1976,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     duration,
     breathCount,
     hasBenchmark,
-    calculateTotalCycles,
-    getPatternForCycle,
+    benchmark,
     tempoSyncEnabled,
     tempoSyncBpm,
     tempoPhaseDuration,
     tempoBeatsPerPhase,
     tempoSessionActive,
     tempoSessionEffective,
+    sessionStartTime,
     onBreathStateChange: notifyBreathStateChange,
   });
 
@@ -1985,7 +2215,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
           ) : actualRunningPracticeId === "breath" ? (
-          <div className="flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
+          <div className="w-screen flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
               <BreathingRing
                 breathPattern={breathingPatternForRing}
                 onTap={handleAccuracyTap}
@@ -1994,69 +2224,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 pathId={avatarPath}
                 fxPreset={currentFxPreset}
                 totalSessionDurationSec={duration}
+                timeLeftText={timeLeftText}
               />
 
               {/* Tempo Sync Session Panel - 3-phase cap schedule display */}
               {tempoSessionActive && (
                 <div style={{ width: '100%', maxWidth: '320px', marginTop: '8px' }}>
                   <TempoSyncSessionPanel />
-                </div>
-              )}
-
-              {showFxGallery && (
-                <div
-                  className="flex items-center gap-3 mt-4 px-4 py-2 rounded-full"
-                  style={{
-                    background: isLight ? 'var(--light-bg-surface)' : 'rgba(0,0,0,0.5)',
-                    border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-20)',
-                  }}
-                >
-                  <button
-                    onClick={handlePrevFx}
-                    className="transition-colors px-2 py-1"
-                    style={{ 
-                      fontFamily: 'var(--font-display)', 
-                      fontWeight: 600, 
-                      fontSize: '16px',
-                      color: isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = isLight ? '#3D3425' : 'white'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'}
-                  >
-                    ◀
-                  </button>
-                  <div
-                    className="text-center min-w-[200px]"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      letterSpacing: 'var(--tracking-wide)',
-                      color: 'var(--accent-color)',
-                    }}
-                  >
-                    <div style={{ color: 'var(--text-muted)', fontSize: '8px', marginBottom: '2px' }}>
-                      {currentFxPreset?.category}
-                    </div>
-                    <div>{currentFxPreset?.name}</div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '8px', marginTop: '2px' }}>
-                      {currentFxIndex + 1} / {ringFXPresets.length}
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleNextFx}
-                    className="transition-colors px-2 py-1"
-                    style={{ 
-                      fontFamily: 'var(--font-display)', 
-                      fontWeight: 600, 
-                      fontSize: '16px',
-                      color: isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = isLight ? '#3D3425' : 'white'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = isLight ? 'rgba(90,77,60,0.6)' : 'rgba(255,255,255,0.6)'}
-                  >
-                    ▶
-                  </button>
                 </div>
               )}
             </div>
@@ -2109,7 +2283,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         </div>
 
         <SessionControls
-          isBreathPractice={isBreathPractice}
+          // Breath pattern + timer are rendered inside the BreathingRing plates.
+          isBreathPractice={false}
           breathingPatternText={breathingPatternText}
           showFeedback={showFeedback}
           lastSignedErrorMs={lastSignedErrorMs}
@@ -2124,6 +2299,68 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           showBreathCount={showBreathCount}
           breathCount={breathCount}
         />
+
+        {/* FX Selector (dev tool) sits at the bottom under the Stop button */}
+        {showFxGallery && isBreathPractice && (
+          <div
+            className="flex items-center gap-3 mt-6 px-4 py-2 rounded-full"
+            style={{
+              background: isLight ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.5)',
+              border: isLight ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
+            <button
+              onClick={handlePrevFx}
+              className="transition-colors px-2 py-1"
+              style={{ 
+                fontFamily: 'var(--font-display)', 
+                fontWeight: 600, 
+                fontSize: '16px',
+                color: 'rgba(255,255,255,0.65)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
+              title="Previous FX"
+            >
+              ◀
+            </button>
+            <div
+              className="text-center min-w-[200px]"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '11px',
+                fontWeight: 600,
+                letterSpacing: 'var(--tracking-wide)',
+                color: 'var(--accent-color)',
+              }}
+            >
+              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '8px', marginBottom: '2px' }}>
+                {currentFxPreset?.category}
+              </div>
+              <div>{currentFxPreset?.name}</div>
+              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '8px', marginTop: '2px' }}>
+                {currentFxIndex + 1} / {ringFXPresets.length}
+              </div>
+            </div>
+            <button
+              onClick={handleNextFx}
+              className="transition-colors px-2 py-1"
+              style={{ 
+                fontFamily: 'var(--font-display)', 
+                fontWeight: 600, 
+                fontSize: '16px',
+                color: 'rgba(255,255,255,0.65)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
+              title="Next FX"
+            >
+              ▶
+            </button>
+          </div>
+        )}
 
         <style>{`
           @keyframes fade-in-up {

@@ -11,7 +11,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 // ═══════════════════════════════════════════════════════════════════════════
 // VIDEO HEARTH - The active video player (fixed aspect ratio, centered)
 // ═══════════════════════════════════════════════════════════════════════════
-function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear, isLight }) {
+function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear, isLight, recommendedBudgetMin }) {
     const videoRef = useRef(null);
     const { updateProgress, markCompleted } = useVideoStore();
 
@@ -132,7 +132,9 @@ function VideoHearth({ video, isPlaying, setIsPlaying, isTransitioning, onClear,
                         className="text-[11px] text-neutral-500 font-medium"
                         style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
                     >
-                        {video.duration} • {video.description}
+                        {video.duration}
+                        {typeof recommendedBudgetMin === 'number' ? ` • Suggested ${recommendedBudgetMin}m` : ''}
+                        {video.description ? ` • ${video.description}` : ''}
                     </div>
                 </div>
             )}
@@ -380,7 +382,7 @@ function AshFadeBoundary() {
 // ═══════════════════════════════════════════════════════════════════════════
 // VIDEO LIBRARY - Main component (the Hearth)
 // ═══════════════════════════════════════════════════════════════════════════
-export function VideoLibrary() {
+export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = null }) {
     // Theme context
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -389,6 +391,7 @@ export function VideoLibrary() {
     const [activeVideo, setActiveVideo] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [recommendedBudgetMin, setRecommendedBudgetMin] = useState(null);
 
     // Group videos by category (meaningful bands only)
     const featuredVideos = VIDEOS.filter(v => v.isFeatured);
@@ -408,10 +411,25 @@ export function VideoLibrary() {
         setTimeout(() => {
             setActiveVideo(video);
             setIsPlaying(false);
+            setRecommendedBudgetMin(
+                video?.id && video.id === initialVideoId && typeof initialVideoBudgetMin === 'number'
+                    ? initialVideoBudgetMin
+                    : null
+            );
             // Dissolve in
             setIsTransitioning(false);
         }, 300);
     };
+
+    // Allow other surfaces (paths/curriculum) to deep-link into a specific video.
+    useEffect(() => {
+        if (!initialVideoId) return;
+        const v = VIDEOS.find(x => x.id === initialVideoId);
+        if (v) {
+            setRecommendedBudgetMin(typeof initialVideoBudgetMin === 'number' ? initialVideoBudgetMin : null);
+            tendFire(v);
+        }
+    }, [initialVideoId, initialVideoBudgetMin]);
 
     // Clear video and return to idle embers
     const clearVideo = () => {
@@ -425,6 +443,7 @@ export function VideoLibrary() {
             setActiveVideo(null);
             setIsPlaying(false);
             setIsTransitioning(false);
+            setRecommendedBudgetMin(null);
         }, 300);
     };
 
@@ -446,6 +465,7 @@ export function VideoLibrary() {
                 isTransitioning={isTransitioning}
                 onClear={clearVideo}
                 isLight={isLight}
+                recommendedBudgetMin={recommendedBudgetMin}
             />
 
             {/* THE OFFERINGS - Horizontal bands */}

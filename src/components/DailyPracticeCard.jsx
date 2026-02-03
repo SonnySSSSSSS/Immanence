@@ -11,6 +11,7 @@ import { getPathById } from '../data/navigationData.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
+import { getProgramDefinition } from '../data/programRegistry.js';
 
 /**
  * THEME CONFIGURATION
@@ -65,64 +66,89 @@ function getWeekForDay(path, dayIndex) {
 }
 
 /**
- * Compact progress rail for left-pane stats
- * Slim, glass-morphism-lite widget that integrates into the wallpaper strip
+ * Vertical meter for left-pane progression
+ * Two stacked meters (Completion + Path) live in the wallpaper strip.
  */
-function StatRail({ label, valueText, progressRatio, isLight }) {
+function VerticalMeter({ label, valueText, progressRatio, isLight }) {
     const ratio = Math.max(0, Math.min(1, Number.isFinite(progressRatio) ? progressRatio : 0));
 
-    const railBackground = isLight ? 'rgba(250, 246, 238, 0.18)' : 'rgba(10, 12, 16, 0.18)';
-    const railBorder = isLight ? '1px solid rgba(160, 120, 60, 0.10)' : '1px solid rgba(120, 255, 180, 0.14)';
-
-    const labelColor = isLight
-        ? 'rgba(60, 50, 35, 0.65)'
-        : 'rgba(253, 251, 245, 0.65)';
-
-    const valueColor = isLight
-        ? 'rgba(35, 20, 10, 0.90)'
-        : 'rgba(253, 251, 245, 0.90)';
-
-    const trackColor = isLight
-        ? 'rgba(60, 50, 35, 0.16)'
-        : 'rgba(255, 255, 255, 0.12)';
-
-    const fillColor = isLight
-        ? 'rgba(139, 159, 136, 0.75)'
-        : 'rgba(80, 255, 160, 0.75)';
+    const meterBackground = isLight ? 'rgba(250, 246, 238, 0.20)' : 'rgba(10, 12, 16, 0.22)';
+    const meterBorder = isLight ? '1px solid rgba(160, 120, 60, 0.12)' : '1px solid rgba(120, 255, 180, 0.16)';
+    const labelColor = isLight ? 'rgba(60, 50, 35, 0.62)' : 'rgba(253, 251, 245, 0.55)';
+    const valueColor = isLight ? 'rgba(35, 20, 10, 0.92)' : 'rgba(253, 251, 245, 0.92)';
+    const trackColor = isLight ? 'rgba(60, 50, 35, 0.14)' : 'rgba(255, 255, 255, 0.10)';
+    const fillColor = isLight ? 'rgba(139, 159, 136, 0.85)' : 'rgba(80, 255, 160, 0.85)';
 
     return (
-        <div
-            className="w-full"
-            style={{
-                width: '100%',
-                padding: '10px 10px 9px',
-                background: railBackground,
-                border: railBorder,
-                borderRadius: '9px',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-            }}
-        >
+        <div style={{ width: '100%', height: '100%' }}>
             <div
                 style={{
+                    width: '100%',
+                    height: '100%',
+                    padding: '10px 10px 9px',
+                    background: meterBackground,
+                    border: meterBorder,
+                    borderRadius: '14px',
                     display: 'flex',
-                    alignItems: 'baseline',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    minWidth: 0,
+                    flexDirection: 'column',
+                    gap: '10px',
+                    boxShadow: isLight
+                        ? '0 10px 24px rgba(0, 0, 0, 0.08)'
+                        : '0 14px 30px rgba(0, 0, 0, 0.32)',
                 }}
+                aria-label={`${label}: ${valueText}`}
             >
                 <div
                     style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
+                        width: '100%',
+                        padding: '7px 8px 6px',
+                        borderRadius: '10px',
+                        background: isLight ? 'rgba(255, 255, 255, 0.55)' : 'rgba(0, 0, 0, 0.22)',
+                        border: isLight ? '1px solid rgba(0, 0, 0, 0.06)' : '1px solid rgba(255, 255, 255, 0.10)',
+                        textAlign: 'center',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        color: valueColor,
+                        lineHeight: 1,
+                    }}
+                >
+                    {valueText}
+                </div>
+
+                <div
+                    style={{
+                        position: 'relative',
+                        width: '100%',
+                        flex: 1,
+                        borderRadius: '12px',
+                        background: trackColor,
+                        overflow: 'hidden',
+                    }}
+                >
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: `${ratio * 100}%`,
+                            background: fillColor,
+                            boxShadow: isLight ? 'inset 0 0 0 1px rgba(0,0,0,0.02)' : 'inset 0 0 0 1px rgba(255,255,255,0.04)',
+                            transition: 'height 420ms ease-out',
+                        }}
+                    />
+                </div>
+
+                <div
+                    style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
                         textTransform: 'uppercase',
                         letterSpacing: '0.14em',
-                        color: labelColor,
                         fontFamily: 'var(--font-ui)',
+                        color: labelColor,
+                        textAlign: 'center',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -130,38 +156,6 @@ function StatRail({ label, valueText, progressRatio, isLight }) {
                 >
                     {label}
                 </div>
-                <div
-                    style={{
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: valueColor,
-                        fontFamily: 'var(--font-display)',
-                        lineHeight: '1.1',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    {valueText}
-                </div>
-            </div>
-
-            <div
-                style={{
-                    width: '100%',
-                    height: '6px',
-                    background: trackColor,
-                    borderRadius: '999px',
-                    overflow: 'hidden',
-                }}
-            >
-                <div
-                    style={{
-                        height: '100%',
-                        width: `${ratio * 100}%`,
-                        background: fillColor,
-                        borderRadius: '999px',
-                        transition: 'width 0.4s ease-out',
-                    }}
-                />
             </div>
         </div>
     );
@@ -207,6 +201,80 @@ function resolvePracticeIdFromEntry(entry) {
         return resolvePracticeIdFromType(entry);
     }
     
+    return null;
+}
+
+function extractDurationMinFromString(s) {
+    if (typeof s !== 'string') return null;
+    const m = s.match(/(\d+)\s*min/i);
+    if (!m) return null;
+    const n = Number(m[1]);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function extractBreathPresetKeyFromString(s) {
+    if (typeof s !== 'string') return null;
+    const lower = s.toLowerCase();
+    if (lower.includes('box')) return 'box';
+    if (lower.includes('resonance')) return 'resonance';
+    return null;
+}
+
+function resolvePracticeLaunchFromEntry(entry) {
+    if (!entry) return null;
+
+    if (typeof entry === 'object') {
+        const practiceId = entry.practiceId || (entry.type ? resolvePracticeIdFromType(entry.type) : null);
+        if (!practiceId) return null;
+
+        const durationMin = Number.isFinite(Number(entry.duration)) ? Number(entry.duration) : null;
+
+        const practiceConfig = {};
+        if (entry.pattern) practiceConfig.breathPattern = String(entry.pattern).toLowerCase();
+        if (entry.breathPattern) practiceConfig.breathPattern = String(entry.breathPattern).toLowerCase();
+        if (entry.variant) practiceConfig.variant = entry.variant;
+        if (entry.circuitId) practiceConfig.circuitId = entry.circuitId;
+
+        const practiceParamsPatch =
+            entry.practiceParamsPatch && typeof entry.practiceParamsPatch === 'object'
+                ? { ...entry.practiceParamsPatch }
+                : {};
+
+        // Backward-compat convenience: allow shorthand breathPattern/pattern to map into breath preset.
+        if (practiceId === 'breath' && practiceConfig.breathPattern) {
+            practiceParamsPatch.breath = {
+                ...(practiceParamsPatch.breath || {}),
+                preset: practiceConfig.breathPattern,
+            };
+        }
+
+        return {
+            practiceId,
+            durationMin: durationMin ?? undefined,
+            practiceConfig: Object.keys(practiceConfig).length ? practiceConfig : undefined,
+            practiceParamsPatch: Object.keys(practiceParamsPatch).length ? practiceParamsPatch : undefined,
+            overrides: entry.overrides || undefined,
+            locks: entry.locks || undefined,
+        };
+    }
+
+    if (typeof entry === 'string') {
+        const practiceId = resolvePracticeIdFromEntry(entry);
+        if (!practiceId) return null;
+
+        const durationMin = extractDurationMinFromString(entry);
+        const presetKey = practiceId === 'breath' ? extractBreathPresetKeyFromString(entry) : null;
+
+        const practiceParamsPatch = {};
+        if (presetKey) practiceParamsPatch.breath = { preset: presetKey };
+
+        return {
+            practiceId,
+            durationMin: durationMin ?? undefined,
+            practiceParamsPatch: Object.keys(practiceParamsPatch).length ? practiceParamsPatch : undefined,
+        };
+    }
+
     return null;
 }
 
@@ -261,18 +329,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
     const missState = useMemo(() => computeMissState(), [computeMissState, sessionsV2.length]);
 
-    // Canonical practice IDs for each slot (from week-specific practices, fallback to path-level)
-    const slotPracticeIds = useMemo(() => {
+    // Canonical practice launches for each slot (practiceId + duration + params)
+    const slotLaunches = useMemo(() => {
         if (!activePathObj || !metrics.dayIndex || times.length === 0) return [];
-        
+
         const week = getWeekForDay(activePathObj, metrics.dayIndex);
-        
-        // Prefer week-specific practices; fallback to path-level practices
-        const weekPractices = Array.isArray(week?.practices) ? week.practices : null;
+
+        // Prefer structured practices, but many week.practices entries are descriptive strings.
+        const weekPracticesRaw = Array.isArray(week?.practices) ? week.practices : null;
+        const weekPracticesStructured = weekPracticesRaw && weekPracticesRaw.some(p => typeof p === 'object')
+            ? weekPracticesRaw
+            : null;
         const fallbackPractices = Array.isArray(activePathObj?.practices) ? activePathObj.practices : null;
-        
-        const raw = normalizeListForSlots(weekPractices ?? fallbackPractices ?? [], times.length);
-        return raw.map(resolvePracticeIdFromEntry);
+
+        const raw = normalizeListForSlots(weekPracticesStructured ?? fallbackPractices ?? weekPracticesRaw ?? [], times.length);
+        return raw.map(resolvePracticeLaunchFromEntry);
     }, [activePathObj, metrics.dayIndex, times.length]);
 
     // Practice names for each slot (based on current week)
@@ -303,6 +374,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
+    const [missedLegWarning, setMissedLegWarning] = useState(null);
 
     const theme = useTheme();
     const currentStage = theme?.stage || 'Flame';
@@ -596,11 +668,16 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         </div>
                                                         <button
                                                             onClick={() => {
-                                                                const practiceId = slotPracticeIds[idx];
+                                                                const slot = slotLaunches[idx];
+                                                                const practiceId = slot?.practiceId;
+                                                                const durationMin = slot?.durationMin;
+                                                                const practiceParamsPatch = slot?.practiceParamsPatch;
+                                                                const practiceConfig = slot?.practiceConfig;
                                                                 console.log("[DailyPracticeCard] START slot", { 
                                                                     slotTime: time, 
                                                                     slotIndex: idx,
                                                                     practiceId,
+                                                                    durationMin,
                                                                     activePathId: activePath?.activePathId,
                                                                     dayIndex: metrics.dayIndex,
                                                                     weekIndex: Math.ceil(metrics.dayIndex / 7)
@@ -613,6 +690,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 
                                                                 onStartPractice?.({ 
                                                                     practiceId, 
+                                                                    durationMin,
+                                                                    practiceParamsPatch,
+                                                                    overrides: slot?.overrides,
+                                                                    locks: slot?.locks,
+                                                                    practiceConfig,
                                                                     pathContext: { 
                                                                         activePathId: activePath?.activePathId, 
                                                                         slotTime: time, 
@@ -622,13 +704,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                     }
                                                                 });
                                                             }}
-                                                            disabled={!isNext || !slotPracticeIds[idx]}
+                                                            disabled={!isNext || !slotLaunches[idx]?.practiceId}
                                                             className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                                                                isNext && slotPracticeIds[idx]
+                                                                isNext && slotLaunches[idx]?.practiceId
                                                                     ? 'btn-primary hover:scale-105 cursor-pointer' 
                                                                     : 'btn-muted opacity-50 cursor-not-allowed'
                                                             }`}
-                                                            style={isNext && slotPracticeIds[idx] ? {
+                                                            style={isNext && slotLaunches[idx]?.practiceId ? {
                                                                 background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
                                                                 color: '#fff',
                                                                 boxShadow: '0 3px 10px var(--accent-30)',
@@ -667,6 +749,76 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const progress = getProgress();
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
+
+    // Use *days* for "DAY X OF Y" (not total legs/sessions).
+    // Priority: program duration (when curriculum is active) > path duration > fallback
+    const totalDaysDisplay = (() => {
+        // If there's an active curriculum program, prioritize its duration
+        const program = getProgramDefinition(activeCurriculumId);
+        const programDays = program?.curriculum?.duration;
+        if (typeof programDays === 'number' && programDays > 0) return programDays;
+
+        // Fall back to counting days array in program
+        const fallbackDays = (program?.curriculum?.days && Array.isArray(program.curriculum.days))
+            ? program.curriculum.days.length
+            : null;
+        if (typeof fallbackDays === 'number' && fallbackDays > 0) return fallbackDays;
+
+        // If no program duration, use path duration
+        const pathDays = activePathObj?.tracking?.durationDays
+            ?? (typeof activePathObj?.duration === 'number' ? activePathObj.duration * 7 : null);
+        if (typeof pathDays === 'number' && pathDays > 0) return pathDays;
+
+        return 14;
+    })();
+
+    const dayIndexDisplay = activePathObj ? (metrics?.dayIndex || 1) : dayNumber;
+
+    const nowMinutes = (() => {
+        const d = new Date();
+        return d.getHours() * 60 + d.getMinutes();
+    })();
+
+    const parseTimeToMinutes = (timeStr) => {
+        if (!timeStr || typeof timeStr !== 'string') return null;
+        const parts = timeStr.split(':');
+        if (parts.length !== 2) return null;
+        const h = Number(parts[0]);
+        const m = Number(parts[1]);
+        if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+        if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+        return h * 60 + m;
+    };
+
+    const resolveLegTimeStr = (leg) => {
+        if (!leg) return null;
+        if (typeof leg.time === 'string') return leg.time.substring(0, 5);
+        if (leg.time && typeof leg.time === 'object' && leg.time.time) return String(leg.time.time).substring(0, 5);
+        return null;
+    };
+
+    /**
+     * Check if a practice leg has expired (window passed).
+     * On Day 1 of a path (after begin or reset), legs never expire - fresh start.
+     */
+    const isLegExpired = (leg) => {
+        // On Day 1, no legs are expired (fresh start)
+        if (metrics.dayIndex === 1) return false;
+
+        const t = resolveLegTimeStr(leg);
+        const scheduledMin = parseTimeToMinutes(t);
+        if (scheduledMin == null) return false;
+        return (nowMinutes - scheduledMin) > 60;
+    };
+
+    const isLegTooEarly = (leg) => {
+        const t = resolveLegTimeStr(leg);
+        const scheduledMin = parseTimeToMinutes(t);
+        if (scheduledMin == null) return false;
+        // Allow starting up to 60 minutes early. Earlier than that remains locked.
+        // NOTE: Starting early still records a non-zero schedule delta (and will be penalized by precision rules if outside the GREEN window).
+        return nowMinutes < (scheduledMin - 60);
+    };
 
     if (dayNumber > 14 || progress.completed >= progress.total) {
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
@@ -860,10 +1012,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                const practiceId = slotPracticeIds[idx];
+                                                const slot = slotLaunches[idx];
+                                                const practiceId = slot?.practiceId;
+                                                const durationMin = slot?.durationMin;
+                                                const practiceParamsPatch = slot?.practiceParamsPatch;
+                                                const practiceConfig = slot?.practiceConfig;
                                                 if (!practiceId) return;
                                                 onStartPractice?.({
                                                     practiceId,
+                                                    durationMin,
+                                                    practiceParamsPatch,
+                                                    overrides: slot?.overrides,
+                                                    locks: slot?.locks,
+                                                    practiceConfig,
                                                     pathContext: {
                                                         activePathId: activePath?.activePathId,
                                                         slotTime: time,
@@ -873,20 +1034,20 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     },
                                                 });
                                             }}
-                                            disabled={!isNext || !slotPracticeIds[idx]}
+                                            disabled={!isNext || !slotLaunches[idx]?.practiceId}
                                             style={{
                                                 padding: '6px 12px',
                                                 borderRadius: '999px',
                                                 border: 'none',
-                                                background: isNext && slotPracticeIds[idx]
+                                                background: isNext && slotLaunches[idx]?.practiceId
                                                     ? 'linear-gradient(135deg, var(--accent-color), var(--accent-70))'
                                                     : (isLight ? 'rgba(160, 120, 60, 0.12)' : 'rgba(255,255,255,0.08)'),
-                                                color: isNext && slotPracticeIds[idx] ? '#fff' : (isLight ? '#6b5b45' : '#cfc8bc'),
+                                                color: isNext && slotLaunches[idx]?.practiceId ? '#fff' : (isLight ? '#6b5b45' : '#cfc8bc'),
                                                 fontSize: 11,
                                                 fontWeight: 700,
                                                 letterSpacing: '0.08em',
                                                 textTransform: 'uppercase',
-                                                cursor: isNext && slotPracticeIds[idx] ? 'pointer' : 'not-allowed',
+                                                cursor: isNext && slotLaunches[idx]?.practiceId ? 'pointer' : 'not-allowed',
                                             }}
                                         >
                                             {isDone ? 'Done' : isNext ? 'Start' : 'Locked'}
@@ -920,10 +1081,26 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         );
     }
 
-    const handleStartLeg = (leg) => {
+    const handleStartLeg = (leg, evt) => {
         // Clear any pilot session failure flag on restart
         if (lastSessionFailed) {
             clearLastSessionFailed();
+        }
+        setMissedLegWarning(null);
+
+        const expired = isLegExpired(leg);
+        const tooEarly = isLegTooEarly(leg);
+
+        // Outside the allowed +/- 60 minute window: require hidden Shift override (dev-only).
+        // Do not mention Shift in the UI; just surface a neutral message.
+        if ((expired || tooEarly) && !evt?.shiftKey) {
+            const t = resolveLegTimeStr(leg);
+            setMissedLegWarning({
+                legNumber: leg?.legNumber || null,
+                time: t,
+                kind: tooEarly ? 'early' : 'late',
+            });
+            return;
         }
         
         // Inject pilot metadata based on the leg being launched (not curriculum id)
@@ -1031,7 +1208,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     >
                         {/* Left wallpaper strip container (relative) */}
                         <div className="w-full h-full relative">
-                            {/* Overlay container */}
                             <div
                                 className="absolute flex flex-col pointer-events-none"
                                 style={{
@@ -1040,25 +1216,29 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     right: '12px',
                                     bottom: '12px',
                                     justifyContent: 'flex-start',
+                                    alignItems: 'center',
                                     gap: '12px',
                                 }}
                             >
-                                <StatRail
-                                    label="COMPLETION"
-                                    valueText={`${completedLegs}/${legs.length}`}
-                                    progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
-                                    isLight={isLight}
-                                />
+                                <div style={{ width: '72px', height: 'clamp(120px, 18vh, 170px)' }}>
+                                    <VerticalMeter
+                                        label="COMPLETION"
+                                        valueText={`${completedLegs}/${legs.length}`}
+                                        progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
+                                        isLight={isLight}
+                                    />
+                                </div>
 
-                                {/* Spacer to keep PATH rail off the bottom corner */}
-                                <div style={{ flex: 1, minHeight: '56px', maxHeight: '160px' }} />
+                                <div style={{ flex: 1, minHeight: '24px' }} />
 
-                                <StatRail
-                                    label="PATH"
-                                    valueText={`${progress.rate}%`}
-                                    progressRatio={progress.rate / 100}
-                                    isLight={isLight}
-                                />
+                                <div style={{ width: '72px', height: 'clamp(120px, 18vh, 170px)' }}>
+                                    <VerticalMeter
+                                        label="PATH"
+                                        valueText={`${progress.rate}%`}
+                                        progressRatio={progress.rate / 100}
+                                        isLight={isLight}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1089,12 +1269,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             )}
 
                             {/* Scrollable Container */}
-                            <div className="px-6 sm:px-7 pt-6 sm:pt-7 pb-4 relative z-10">
+                            <div className="px-6 sm:px-7 pt-5 sm:pt-6 pb-4 relative z-10">
                                 {/* Decorative corner embellishments */}
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
                                 {/* Header */}
-                                <div className="flex items-center justify-between gap-3 mb-4">
+                                <div className="flex items-center justify-between gap-3 mb-3">
                                     <div>
                                         <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                             Today's Practice
@@ -1103,14 +1283,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                             {todaysPractice.title || `Day ${dayNumber}`}
                                         </div>
-                                        <div className="text-[10px] uppercase tracking-widest opacity-60 mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
-                                            {todaysPractice.subtitle || 'Curriculum'}
-                                        </div>
                                     </div>
 
                                     <div className="flex flex-col items-end gap-1">
                                         <div className="text-xs font-bold" style={{ color: isLight ? config.accent : 'var(--accent-color)' }}>
-                                            {completedLegs}/{legs.length} Complete
+                                            DAY {dayIndexDisplay} OF {totalDaysDisplay}
                                         </div>
                                         {streak > 1 && (
                                             <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: isLight ? 'rgba(255, 200, 0, 0.12)' : 'rgba(255, 200, 0, 0.1)', border: isLight ? '1px solid rgba(255, 200, 0, 0.3)' : '1px solid rgba(255, 200, 0, 0.3)', color: isLight ? '#8b6b2c' : 'var(--accent-color)' }}>
@@ -1122,9 +1299,30 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                 {/* Legs List */}
                                 <div className="space-y-3">
+                                    {missedLegWarning && (
+                                        <div
+                                            className="rounded-xl border px-4 py-3"
+                                            style={{
+                                                borderColor: isLight ? 'rgba(220, 90, 60, 0.28)' : 'rgba(255, 160, 120, 0.28)',
+                                                background: isLight ? 'rgba(220, 90, 60, 0.06)' : 'rgba(255, 160, 120, 0.06)',
+                                                color: isLight ? 'rgba(60, 50, 35, 0.85)' : 'rgba(253,251,245,0.85)',
+                                                fontFamily: 'var(--font-body)',
+                                                fontSize: 12,
+                                            }}
+                                        >
+                                            {missedLegWarning.kind === 'early'
+                                                ? `This session is not available yet${missedLegWarning.time ? ` (${missedLegWarning.time})` : ''}.`
+                                                : `This session window has passed${missedLegWarning.time ? ` (${missedLegWarning.time})` : ''}.`
+                                            }
+                                        </div>
+                                    )}
                                     {legs.map((leg, index) => {
-                                        const isNextLeg = !leg.completed && legs.slice(0, index).every(l => l.completed);
-                                        const isLockedLeg = !leg.completed && !isNextLeg;
+                                        const expired = !leg.completed && isLegExpired(leg);
+                                        const isNextCandidate = !leg.completed && legs.slice(0, index).every(l => l.completed || isLegExpired(l));
+                                        const tooEarly = isNextCandidate && !leg.completed && isLegTooEarly(leg);
+                                        const isSoftLocked = expired || tooEarly; // requires hidden Shift override (dev-only)
+                                        const isActionable = isNextCandidate && !isSoftLocked;
+                                        const isLockedLeg = !leg.completed && !isNextCandidate; // sequencing lock only
                                         return (
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
@@ -1137,7 +1335,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     boxShadow: isLight
                                                         ? '0 6px 18px rgba(120, 90, 60, 0.1)'
                                                         : '0 10px 30px rgba(0,0,0,0.45)',
-                                                    opacity: isLockedLeg ? 0.5 : 1,
+                                                    opacity: isLockedLeg ? 0.5 : (expired ? 0.75 : 1),
                                                 }}
                                             >
                                                 {/* Leg Number / Status */}
@@ -1149,7 +1347,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                             : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
                                                         color: leg.completed ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
                                                         boxShadow: leg.completed ? '0 6px 20px var(--accent-25)' : 'none',
-                                                        transform: isNextLeg ? 'scale(1.05)' : 'scale(1)',
+                                                        transform: isActionable ? 'scale(1.05)' : 'scale(1)',
                                                     }}
                                                 >
                                                     {leg.completed ? '✓' : leg.legNumber}
@@ -1182,36 +1380,41 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 {/* Action */}
                                                 {!leg.completed ? (
                                                     <div className="flex flex-col items-end gap-1">
-                                                        {isNextLeg && lastSessionFailed && (
+                                                        {isActionable && lastSessionFailed && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#dc2626' : '#ff6b6b' }}>
                                                                 ⚠ Incomplete
                                                             </div>
                                                         )}
-                                                        {isNextLeg && !lastSessionFailed && (
+                                                        {expired && (
+                                                            <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b7b63' : 'rgba(253,251,245,0.55)' }}>
+                                                                Window Passed
+                                                            </div>
+                                                        )}
+                                                        {isActionable && !lastSessionFailed && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b6b2c' : 'var(--accent-50)' }}>
                                                                 Next Up
                                                             </div>
                                                         )}
                                                         <button
-                                                            onClick={() => handleStartLeg(leg)}
+                                                            onClick={(e) => handleStartLeg(leg, e)}
                                                             disabled={isLockedLeg}
                                                             className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                             style={{
-                                                                background: isLockedLeg
+                                                                background: (isLockedLeg || isSoftLocked)
                                                                     ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
                                                                     : 'var(--accent-color)',
-                                                                color: isLockedLeg ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
-                                                                boxShadow: isLockedLeg ? 'none' : '0 3px 10px var(--accent-30)',
+                                                                color: (isLockedLeg || isSoftLocked) ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
+                                                                boxShadow: (isLockedLeg || isSoftLocked) ? 'none' : '0 3px 10px var(--accent-30)',
                                                                 cursor: isLockedLeg ? 'not-allowed' : 'pointer',
-                                                                ...(isNextLeg && !lastSessionFailed && {
+                                                                ...(isActionable && !lastSessionFailed && {
                                                                     boxShadow: '0 8px 20px var(--accent-30)',
                                                                 }),
-                                                                ...(!isLockedLeg && {
+                                                                ...(!isLockedLeg && !isSoftLocked && {
                                                                     background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
                                                                 })
                                                             }}
                                                         >
-                                                            {lastSessionFailed && isNextLeg ? 'Restart' : 'Start'}
+                                                            {expired ? 'Missed' : (tooEarly ? 'Not Yet' : (lastSessionFailed && isActionable ? 'Restart' : (isActionable ? 'Start' : 'Locked')))}
                                                         </button>
                                                     </div>
                                                 ) : (

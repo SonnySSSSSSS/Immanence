@@ -13,10 +13,13 @@ import { PathParticles } from "./PathParticles.jsx";
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5, totalSessionDurationSec = null }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5, totalSessionDurationSec = null, timeLeftText = null }) {
   const lockedPatternRef = useRef(null);
   const pendingPatternRef = useRef(null);
   const incomingPatternRef = useRef(breathPattern);
+
+  // State to track the currently displayed pattern (triggers re-render when pattern changes)
+  const [displayedPattern, setDisplayedPattern] = useState(breathPattern || { inhale: 4, holdTop: 4, exhale: 4, holdBottom: 2 });
 
   const patternKey = (pattern) => ([
     pattern?.inhale ?? 0,
@@ -31,6 +34,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     if (!lockedPatternRef.current && breathPattern) {
       lockedPatternRef.current = breathPattern;
       incomingPatternRef.current = breathPattern;
+      setDisplayedPattern(breathPattern);
     }
   }, []); // Empty deps: runs ONLY on mount
 
@@ -42,6 +46,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     if (!lockedPatternRef.current) {
       // If locked not yet set (shouldn't happen due to mount effect above)
       lockedPatternRef.current = incoming;
+      setDisplayedPattern(incoming);
       return;
     }
 
@@ -53,15 +58,20 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     }
   }, [breathPattern]);
 
-  // Use locked pattern if available, otherwise incoming pattern
-  // After first frame, locked pattern is always set (see animation loop)
-  const effectivePattern = lockedPatternRef.current || incomingPatternRef.current || {};
+  // Use displayed pattern state for rendering (triggers re-render when pattern changes)
   const {
     inhale = 4,
     holdTop = 4,
     exhale = 4,
     holdBottom = 2,
-  } = effectivePattern;
+  } = displayedPattern || {};
+
+  const formatSec = (v) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "0";
+    return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10).replace(/\\.0$/, "");
+  };
+  const patternText = `${formatSec(inhale)}-${formatSec(holdTop)}-${formatSec(exhale)}-${formatSec(holdBottom)}s`;
 
   // Total cycle duration - derived from the effective (locked or initial) pattern
   // This is used for phase boundary calculations
@@ -136,7 +146,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
                      currentPhase;
   useBreathSoundEngine({
     phase: soundPhase,
-    pattern: effectivePattern,
+    pattern: displayedPattern,
     isRunning: !!startTime,
     _progress: progress,
   });
@@ -280,10 +290,25 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         cycleStartTimeRef.current = now;
         if (pendingPatternRef.current) {
           lockedPatternRef.current = pendingPatternRef.current;
+          const newPattern = pendingPatternRef.current;
           pendingPatternRef.current = null;
+
+          // Update displayed pattern state to trigger re-render with new timing
+          setDisplayedPattern(newPattern);
+
+          // Recalculate cycleMs with the NEW pattern
+          const newCycleTotal = (newPattern.inhale || 0)
+            + (newPattern.holdTop || 0)
+            + (newPattern.exhale || 0)
+            + (newPattern.holdBottom || 0);
+          const newCycleMs = Math.max(newCycleTotal, 0.001) * 1000;
+
+          // After reset, recalculate t for the new cycle with NEW duration
+          t = (now - cycleStartTimeRef.current) / newCycleMs;
+        } else {
+          // No pattern change, use existing cycleMs
+          t = (now - cycleStartTimeRef.current) / cycleMs;
         }
-        // After reset, recalculate t for the new cycle (should be near 0)
-        t = (now - cycleStartTimeRef.current) / cycleMs;
       }
 
       setProgress(t);
@@ -408,7 +433,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     <div
       className="w-full flex flex-col items-center cursor-pointer gap-6"
       onClick={handleRingClick}
-      style={{ userSelect: "none", overflow: "visible" }}
+      style={{ userSelect: "none", overflow: "visible", position: "relative" }}
     >
 
       {/* Image-based Enso - authentic brush stroke (OUTSIDE SVG to avoid overlay) */}
@@ -465,18 +490,53 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         </div>
       )}
 
-      {/* SVG Ring + Phase Indicator + Particles Container - relative context for absolute positioning */}
+      {/* ONE STAGE PLATE: ring + center text + phase/capacity + timer live inside a single plate */}
       <div
         style={{
+          width: "100vw",
+          margin: 0,
+          padding: "28px 14px 18px",
+          borderRadius: 0,
+          background: "rgba(0,0,0,0.52)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "0 22px 60px rgba(0,0,0,0.55)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
           position: "relative",
-          width: "320px",
-          height: "320px",
+          overflow: "hidden",
+          // Target mobile portrait; let it grow on tall screens (e.g. 1080x1920) without pushing the Stop button off smaller viewports.
+          minHeight: "clamp(520px, 62vh, 980px)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          margin: "0 auto"
         }}
       >
+        {/* Soft vignette for focus */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 42%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.22) 55%, rgba(0,0,0,0.38) 100%)",
+            opacity: 1,
+          }}
+        />
+
+        {/* Ring stage */}
+        <div
+          className="relative z-10"
+          style={{
+            position: "relative",
+            width: "320px",
+            height: "320px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "6px",
+          }}
+        >
+
         {/* Main breathing ring with EVENT HORIZON GLOW */}
         <svg
           viewBox="-50 -50 300 300"
@@ -564,8 +624,10 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            zIndex: 10,
+            zIndex: 30,
             pointerEvents: "none",
+            padding: "0px",
+            borderRadius: 0,
           }}
         >
         <div
@@ -577,7 +639,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             fontFamily: "var(--font-display)",
             fontWeight: "700",
             letterSpacing: "var(--tracking-mythic)",
-            textShadow: '0 0 10px var(--accent-glow)'
+            textShadow: '0 0 18px rgba(0,0,0,0.85), 0 0 12px var(--accent-glow)',
           }}
         >
           {progress < tInhale
@@ -596,7 +658,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             fontFamily: "var(--font-mono, monospace)",
             color: 'var(--accent-primary)',
             marginTop: "4px",
-            textShadow: '0 0 8px var(--accent-glow)',
+            textShadow: '0 0 18px rgba(0,0,0,0.85), 0 0 12px var(--accent-glow)',
             opacity: 0.9,
           }}
         >
@@ -620,50 +682,64 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           })()}
         </div>
 
-      </div>
-      </div>
-
-      {/* Capacity phase display - below circle */}
-      {totalSessionDurationSec && (
-        <div
-          style={{
-            marginTop: "12px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "4px",
-            pointerEvents: "none",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "0.7rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              fontFamily: "var(--font-display)",
-              fontWeight: "600",
-              textShadow: '0 0 6px var(--accent-glow)',
-              opacity: 0.8,
-            }}
-          >
-            PHASE <span style={{ color: 'var(--accent-primary)' }}>{capacityPhaseNumber}</span><span style={{ color: '#FFD93D' }}>/3</span>
-          </div>
-          <div
-            style={{
-              fontSize: "0.85rem",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: 'var(--accent-secondary)',
-              fontFamily: "var(--font-display)",
-              fontWeight: "600",
-              textShadow: '0 0 6px var(--accent-glow)',
-              opacity: 0.75,
-            }}
-          >
-            CAPACITY: {capacityPhaseLabel}
-          </div>
         </div>
-      )}
+        </div>
+
+        {/* Bottom info group (inside same plate) */}
+        {totalSessionDurationSec && (
+          <div
+            className="relative z-10"
+            style={{
+              marginTop: "18px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "10px",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
+                fontSize: "0.72rem",
+                letterSpacing: "0.24em",
+                textTransform: "uppercase",
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                color: "rgba(255,255,255,0.70)",
+                textShadow: "0 2px 10px rgba(0,0,0,0.55)",
+              }}
+            >
+              <span>
+                PHASE <span style={{ color: "var(--accent-primary)" }}>{capacityPhaseNumber}</span><span style={{ color: "#FFD93D" }}>/3</span>
+              </span>
+              <span style={{ opacity: 0.45 }}>|</span>
+              <span>
+                CAPACITY: <span style={{ color: "var(--accent-secondary)" }}>{capacityPhaseLabel}</span>
+              </span>
+            </div>
+
+            {/* Breathing pattern (seconds) moved out of the circle for a cleaner focus */}
+            <div
+              style={{
+                fontSize: "0.72rem",
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.74)",
+                textShadow: "0 2px 12px rgba(0,0,0,0.65)",
+                opacity: 0.95,
+              }}
+            >
+              {patternText}
+            </div>
+          </div>
+        )}
+      </div>
 
       <style>{`
         @keyframes fadeOutEcho {

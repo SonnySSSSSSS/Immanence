@@ -6,10 +6,12 @@ import { useCurriculumStore } from '../state/curriculumStore.js';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { treatiseChapters } from '../data/treatise.generated.js';
+import { useUiStore } from '../state/uiStore.js';
 
-export function PathOverviewPanel({ path, onBegin, onClose }) {
+export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
 
     if (!path) return null;
     const { beginPath } = useNavigationStore();
@@ -46,6 +48,30 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
         }
     };
 
+    const launchChapter = (chapterId, durationMin) => {
+        if (!chapterId) return;
+        setContentLaunchContext?.({
+            source: 'path',
+            target: 'chapter',
+            chapterId,
+            durationMin: typeof durationMin === 'number' ? durationMin : undefined,
+        });
+        onClose?.();
+        onNavigate?.('wisdom');
+    };
+
+    const launchVideo = (videoId, durationMin) => {
+        if (!videoId) return;
+        setContentLaunchContext?.({
+            source: 'path',
+            target: 'video',
+            videoId,
+            durationMin: typeof durationMin === 'number' ? durationMin : undefined,
+        });
+        onClose?.();
+        onNavigate?.('wisdom');
+    };
+
     // Helper to get chapter title from ID
     const getChapterTitle = (chapterId) => {
         const chapter = treatiseChapters.find(ch => ch.id === chapterId);
@@ -58,6 +84,30 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
             .split(' ')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
+    };
+
+    const normalizeChapterEntry = (entry) => {
+        if (!entry) return null;
+        if (typeof entry === 'string') return { chapterId: entry, durationMin: undefined };
+        if (typeof entry === 'object') {
+            const chapterId = entry.chapterId || entry.id || entry.sectionId || null;
+            const durationMinRaw = entry.durationMin ?? entry.minutes ?? entry.min ?? undefined;
+            const durationMin = typeof durationMinRaw === 'number' ? durationMinRaw : undefined;
+            return chapterId ? { chapterId, durationMin } : null;
+        }
+        return null;
+    };
+
+    const normalizeVideoEntry = (entry) => {
+        if (!entry) return null;
+        if (typeof entry === 'string') return { videoId: entry, durationMin: undefined };
+        if (typeof entry === 'object') {
+            const videoId = entry.videoId || entry.id || null;
+            const durationMinRaw = entry.durationMin ?? entry.minutes ?? entry.min ?? undefined;
+            const durationMin = typeof durationMinRaw === 'number' ? durationMinRaw : undefined;
+            return videoId ? { videoId, durationMin } : null;
+        }
+        return null;
     };
 
     return (
@@ -164,12 +214,24 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
                         Wisdom
                     </h3>
                     <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
-                        {path.chapters.map((chapterId, idx) => (
-                            <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
-                                <span className="text-[var(--accent-50)]">•</span>
-                                {getChapterTitle(chapterId)}
-                            </li>
-                        ))}
+                        {path.chapters
+                            .map(normalizeChapterEntry)
+                            .filter(Boolean)
+                            .map(({ chapterId, durationMin }, idx) => (
+                                <li key={`${chapterId}-${idx}`} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
+                                    <span className="text-[var(--accent-50)]">•</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => launchChapter(chapterId, durationMin)}
+                                        className="text-left hover:underline"
+                                        style={{ color: 'inherit' }}
+                                        title="Open in Wisdom"
+                                    >
+                                        {getChapterTitle(chapterId)}
+                                        {typeof durationMin === 'number' ? ` · ${durationMin}m` : ''}
+                                    </button>
+                                </li>
+                            ))}
                     </ul>
                 </div>
             )}
@@ -313,12 +375,51 @@ export function PathOverviewPanel({ path, onBegin, onClose }) {
                                                 <div>
                                                     <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-40)' }}>Reading</div>
                                                     <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
-                                                        {week.reading.map((chapterId, idx) => (
-                                                            <li key={idx} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
-                                                                <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.4)' : 'var(--accent-40)' }} className="mt-0.5">•</span>
-                                                                <span>{getChapterTitle(chapterId)}</span>
-                                                            </li>
-                                                        ))}
+                                                        {week.reading
+                                                            .map(normalizeChapterEntry)
+                                                            .filter(Boolean)
+                                                            .map(({ chapterId, durationMin }, idx) => (
+                                                                <li key={`${chapterId}-${idx}`} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                                                                    <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.4)' : 'var(--accent-40)' }} className="mt-0.5">•</span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => launchChapter(chapterId, durationMin)}
+                                                                        className="text-left hover:underline"
+                                                                        style={{ color: 'inherit' }}
+                                                                        title="Open in Wisdom"
+                                                                    >
+                                                                        {getChapterTitle(chapterId)}
+                                                                        {typeof durationMin === 'number' ? ` · ${durationMin}m` : ''}
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {/* Videos */}
+                                            {week.videos && week.videos.length > 0 && (
+                                                <div>
+                                                    <div className="text-[10px] uppercase tracking-wider mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-40)' }}>Videos</div>
+                                                    <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
+                                                        {week.videos
+                                                            .map(normalizeVideoEntry)
+                                                            .filter(Boolean)
+                                                            .map(({ videoId, durationMin }, idx) => (
+                                                                <li key={`${videoId}-${idx}`} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                                                                    <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.4)' : 'var(--accent-40)' }} className="mt-0.5">•</span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => launchVideo(videoId, durationMin)}
+                                                                        className="text-left hover:underline"
+                                                                        style={{ color: 'inherit' }}
+                                                                        title="Open in Videos"
+                                                                    >
+                                                                        {videoId}
+                                                                        {typeof durationMin === 'number' ? ` · ${durationMin}m` : ''}
+                                                                    </button>
+                                                                </li>
+                                                            ))}
                                                     </ul>
                                                 </div>
                                             )}

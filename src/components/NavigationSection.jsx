@@ -151,7 +151,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
 
             {/* Active Path Display - shows current path progress inline */}
             {activePath && (
-              <div className="mt-8">
+                <div className="mt-8">
                 {/* Active Path Header */}
                 <div
                   className="text-[9px] uppercase tracking-[0.24em] mb-3"
@@ -159,7 +159,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
                 >
                   Active Path
                 </div>
-                <ActivePathState />
+                <ActivePathState onNavigate={onNavigate} />
                 <NavigationPathReport />
               </div>
             )}
@@ -204,7 +204,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             {/* If this is the user's active path, show progress; else show overview to begin */}
             {activePath?.activePathId === overlayPathId ? (
               <div className="p-4">
-                <ActivePathState />
+                <ActivePathState onNavigate={onNavigate} />
                 <button
                   onClick={closeOverlay}
                   className="mt-4 w-full py-3 rounded-full border transition-colors text-center"
@@ -224,6 +224,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
                   closeOverlay();
                 }}
                 onClose={closeOverlay}
+                onNavigate={onNavigate}
               />
             )}
           </div>

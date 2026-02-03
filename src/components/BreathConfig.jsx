@@ -5,6 +5,8 @@ import React, { useState } from 'react';
 import { BreathBenchmark } from './BreathBenchmark.jsx';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { useSettingsStore } from '../state/settingsStore.js';
+import { useEffectiveBreathSoundEnabled } from '../hooks/useEffectiveSettings.js';
+import { useSessionOverrideStore } from '../state/sessionOverrideStore.js';
 
 // Breathing pattern presets
 export const BREATH_PRESETS = {
@@ -28,8 +30,21 @@ export function BreathConfig({
     const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
     const needsRebenchmark = useBreathBenchmarkStore(s => s.needsRebenchmark());
     const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
-    const breathSoundEnabled = useSettingsStore(s => s.breathSoundEnabled);
-    const setBreathSoundEnabled = useSettingsStore(s => s.setBreathSoundEnabled);
+    const breathSoundEnabled = useEffectiveBreathSoundEnabled();
+    const setBreathSoundEnabledBase = useSettingsStore(s => s.setBreathSoundEnabled);
+    const sessionOverrideActive = useSessionOverrideStore((s) => s.active);
+    const setOverride = useSessionOverrideStore((s) => s.setOverride);
+    const isLocked = useSessionOverrideStore((s) => s.isLocked);
+
+    const setBreathSoundEnabled = (next) => {
+        const lockPath = 'settings.breathSoundEnabled';
+        if (isLocked(lockPath)) return;
+        if (sessionOverrideActive) {
+            setOverride(lockPath, !!next);
+            return;
+        }
+        setBreathSoundEnabledBase(!!next);
+    };
 
     const handlePatternChange = (key, value) => {
         setPattern((prev) => ({

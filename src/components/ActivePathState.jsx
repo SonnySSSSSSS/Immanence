@@ -3,11 +3,14 @@ import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { useUiStore } from '../state/uiStore.js';
+import { treatiseChapters } from '../data/treatise.generated.js';
 
-export function ActivePathState() {
+export function ActivePathState({ onNavigate }) {
     const { activePath, completeWeek, abandonPath, restartPath, isWeekCompleted } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
     const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
@@ -20,6 +23,58 @@ export function ActivePathState() {
     const currentWeek = Object.keys(activePath.weekCompletionDates || {}).length + 1;
     const currentWeekData = path.weeks.find(w => w.number === currentWeek);
     const isPathComplete = currentWeek > path.duration;
+
+    const getChapterTitle = (chapterId) => {
+        const chapter = treatiseChapters.find(ch => ch.id === chapterId);
+        if (chapter) return chapter.title;
+        return String(chapterId || '').replace(/-/g, ' ');
+    };
+
+    const normalizeChapterEntry = (entry) => {
+        if (!entry) return null;
+        if (typeof entry === 'string') return { chapterId: entry, durationMin: undefined };
+        if (typeof entry === 'object') {
+            const chapterId = entry.chapterId || entry.id || entry.sectionId || null;
+            const durationMinRaw = entry.durationMin ?? entry.minutes ?? entry.min ?? undefined;
+            const durationMin = typeof durationMinRaw === 'number' ? durationMinRaw : undefined;
+            return chapterId ? { chapterId, durationMin } : null;
+        }
+        return null;
+    };
+
+    const normalizeVideoEntry = (entry) => {
+        if (!entry) return null;
+        if (typeof entry === 'string') return { videoId: entry, durationMin: undefined };
+        if (typeof entry === 'object') {
+            const videoId = entry.videoId || entry.id || null;
+            const durationMinRaw = entry.durationMin ?? entry.minutes ?? entry.min ?? undefined;
+            const durationMin = typeof durationMinRaw === 'number' ? durationMinRaw : undefined;
+            return videoId ? { videoId, durationMin } : null;
+        }
+        return null;
+    };
+
+    const launchChapter = (chapterId, durationMin) => {
+        if (!chapterId) return;
+        setContentLaunchContext?.({
+            source: 'activePath',
+            target: 'chapter',
+            chapterId,
+            durationMin: typeof durationMin === 'number' ? durationMin : undefined,
+        });
+        onNavigate?.('wisdom');
+    };
+
+    const launchVideo = (videoId, durationMin) => {
+        if (!videoId) return;
+        setContentLaunchContext?.({
+            source: 'activePath',
+            target: 'video',
+            videoId,
+            durationMin: typeof durationMin === 'number' ? durationMin : undefined,
+        });
+        onNavigate?.('wisdom');
+    };
 
     const handleCompleteWeek = () => {
         if (currentWeek <= path.duration) {
@@ -207,12 +262,51 @@ export function ActivePathState() {
                             <div>
                                 <div className="text-xs uppercase tracking-wider mb-1" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-60)' }}>Reading</div>
                                 <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}>
-                                    {currentWeekData.reading.map((chapterId, idx) => (
-                                        <li key={idx} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(253,251,245,0.8)' }}>
+                                    {currentWeekData.reading
+                                        .map(normalizeChapterEntry)
+                                        .filter(Boolean)
+                                        .map(({ chapterId, durationMin }, idx) => (
+                                        <li key={`${chapterId}-${idx}`} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(253,251,245,0.8)' }}>
                                             <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.7)' : 'var(--accent-50)' }} className="mt-0.5">•</span>
-                                            <span>{chapterId}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => launchChapter(chapterId, durationMin)}
+                                                className="text-left hover:underline"
+                                                style={{ color: 'inherit' }}
+                                                title="Open in Wisdom"
+                                            >
+                                                {getChapterTitle(chapterId)}
+                                                {typeof durationMin === 'number' ? ` · ${durationMin}m` : ''}
+                                            </button>
                                         </li>
                                     ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Videos */}
+                        {currentWeekData.videos?.length > 0 && (
+                            <div>
+                                <div className="text-xs uppercase tracking-wider mb-1" style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-60)' }}>Videos</div>
+                                <ul className="space-y-1" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.01em' }}>
+                                    {currentWeekData.videos
+                                        .map(normalizeVideoEntry)
+                                        .filter(Boolean)
+                                        .map(({ videoId, durationMin }, idx) => (
+                                            <li key={`${videoId}-${idx}`} className="text-sm flex items-start gap-2" style={{ color: isLight ? 'rgba(90, 77, 60, 0.8)' : 'rgba(253,251,245,0.8)' }}>
+                                                <span style={{ color: isLight ? 'rgba(180, 140, 90, 0.7)' : 'var(--accent-50)' }} className="mt-0.5">•</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => launchVideo(videoId, durationMin)}
+                                                    className="text-left hover:underline"
+                                                    style={{ color: 'inherit' }}
+                                                    title="Open in Videos"
+                                                >
+                                                    {videoId}
+                                                    {typeof durationMin === 'number' ? ` · ${durationMin}m` : ''}
+                                                </button>
+                                            </li>
+                                        ))}
                                 </ul>
                             </div>
                         )}

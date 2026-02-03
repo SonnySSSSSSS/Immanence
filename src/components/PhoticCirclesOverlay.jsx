@@ -4,14 +4,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PhoticControlPanel } from './PhoticControlPanel';
-import { useSettingsStore } from '../state/settingsStore';
+import { useEffectivePhotic } from '../hooks/useEffectiveSettings';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { computePhoticLayout } from '../utils/photicLayout';
 
 export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const { photic } = useSettingsStore();
+    const photic = useEffectivePhotic();
 
     // Component state (not persisted)
     // Initialize to autoStart value to prevent flash of control panel

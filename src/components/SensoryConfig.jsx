@@ -4,6 +4,7 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useAwarenessSceneStore } from '../state/awarenessSceneStore.js';
+import { useSessionOverrideStore } from '../state/sessionOverrideStore.js';
 
 export const SENSORY_TYPES = [
     { id: 'bodyScan', label: 'Body Scan', description: 'Progressive body awareness' },
@@ -25,7 +26,40 @@ export function SensoryConfig({
     isLight = false,
     onStart = null,
 }) {
-    const { selectedScene, setSelectedScene, sakshiVersion, setSakshiVersion } = useAwarenessSceneStore();
+    const selectedSceneBase = useAwarenessSceneStore((s) => s.selectedScene);
+    const setSelectedSceneBase = useAwarenessSceneStore((s) => s.setSelectedScene);
+    const sakshiVersionBase = useAwarenessSceneStore((s) => s.sakshiVersion);
+    const setSakshiVersionBase = useAwarenessSceneStore((s) => s.setSakshiVersion);
+
+    const sessionOverrideActive = useSessionOverrideStore((s) => s.active);
+    const setOverride = useSessionOverrideStore((s) => s.setOverride);
+    const isLocked = useSessionOverrideStore((s) => s.isLocked);
+
+    const selectedSceneOverride = useSessionOverrideStore((s) => s.overrides?.awarenessScene?.selectedScene);
+    const sakshiVersionOverride = useSessionOverrideStore((s) => s.overrides?.awarenessScene?.sakshiVersion);
+
+    const selectedScene = selectedSceneOverride ?? selectedSceneBase;
+    const sakshiVersion = sakshiVersionOverride ?? sakshiVersionBase;
+
+    const setSelectedScene = (scene) => {
+        const lockPath = 'awarenessScene.selectedScene';
+        if (isLocked(lockPath)) return;
+        if (sessionOverrideActive) {
+            setOverride(lockPath, scene);
+            return;
+        }
+        setSelectedSceneBase(scene);
+    };
+
+    const setSakshiVersion = (version) => {
+        const lockPath = 'awarenessScene.sakshiVersion';
+        if (isLocked(lockPath)) return;
+        if (sessionOverrideActive) {
+            setOverride(lockPath, version);
+            return;
+        }
+        setSakshiVersionBase(version);
+    };
     const baseUrl = import.meta.env.BASE_URL;
 
     return (

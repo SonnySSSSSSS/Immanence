@@ -7,6 +7,8 @@ import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { PhoticPreview } from './PhoticPreview';
+import { useEffectivePhotic } from '../hooks/useEffectiveSettings';
+import { useSessionOverrideStore } from '../state/sessionOverrideStore';
 
 // Color palette presets
 const COLOR_PRESETS = [
@@ -24,8 +26,22 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
     const isLight = colorScheme === 'light';
     const isHearth = displayMode === 'hearth';
 
-    const { photic, setPhoticSetting } = useSettingsStore();
+    const photic = useEffectivePhotic();
+    const setPhoticSettingBase = useSettingsStore((s) => s.setPhoticSetting);
+    const sessionOverrideActive = useSessionOverrideStore((s) => s.active);
+    const setOverride = useSessionOverrideStore((s) => s.setOverride);
+    const isLocked = useSessionOverrideStore((s) => s.isLocked);
     const { isOpen: tutorialIsOpen, tutorialId } = useTutorialStore();
+
+    const setPhoticSetting = (key, value) => {
+        const lockPath = `settings.photic.${key}`;
+        if (isLocked(lockPath)) return;
+        if (sessionOverrideActive) {
+            setOverride(lockPath, value);
+            return;
+        }
+        setPhoticSettingBase(key, value);
+    };
 
     // Highlight should only show if the photic tutorial is actually open
     const tutorialIsPhoticOpen = tutorialIsOpen && tutorialId === 'page:photic-beginner';

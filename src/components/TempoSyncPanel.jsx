@@ -4,6 +4,7 @@ import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { useTempoDetection } from '../hooks/useTempoDetection.js';
 import { FileUploadDrawer } from './FileUploadDrawer.jsx';
 import { useTempoAudioStore } from '../state/tempoAudioStore.js';
+import { useSessionOverrideStore } from '../state/sessionOverrideStore.js';
 
 export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -22,6 +23,8 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const enabledRef = useRef(false);
   const isInitializedRef = useRef(false);
   const getAudioElementRef = useRef(null);
+
+  const lockedBySession = useSessionOverrideStore((s) => s.isLocked('tempoSync'));
 
   // Store selectors
   const enabled = useTempoSyncStore(s => s.enabled);
@@ -379,7 +382,29 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
   const playbackStatusLabel = playbackState === 'paused' ? 'Paused' : playbackState === 'ended' ? 'Ended' : 'Idle';
 
   return (
-    <div style={{ marginTop: '16px' }} data-tutorial="tempo-sync-panel">
+    <div
+      style={{
+        marginTop: '16px',
+        pointerEvents: lockedBySession ? 'none' : 'auto',
+        opacity: lockedBySession ? 0.55 : 1,
+        filter: lockedBySession ? 'grayscale(0.15)' : 'none',
+      }}
+      data-tutorial="tempo-sync-panel"
+    >
+      {lockedBySession && (
+        <div
+          style={{
+            marginBottom: '10px',
+            fontSize: '10px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            textAlign: 'center',
+          }}
+        >
+          Locked by curriculum
+        </div>
+      )}
       {/* Enable/Disable Toggle */}
       <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>

@@ -24,15 +24,21 @@ export function SessionControls({
           className="mb-4"
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: "13px",
-            fontWeight: 600,
-            letterSpacing: "0.1em",
+            fontSize: "12px",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
             textTransform: "uppercase",
-            color: "var(--accent-color)",
-            textShadow: "0 0 8px var(--accent-30)",
+            color: "rgba(255,255,255,0.92)",
+            textShadow: "0 2px 12px rgba(0,0,0,0.55)",
+            padding: "8px 12px",
+            borderRadius: "999px",
+            background: "rgba(0,0,0,0.42)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
           }}
         >
-          {breathingPatternText}
+          Pattern {breathingPatternText}
         </div>
       )}
 
@@ -94,19 +100,21 @@ export function SessionControls({
         />
       </button>
 
-      <div
-        className="mt-5"
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "12px",
-          fontWeight: 600,
-          letterSpacing: "var(--tracking-mythic)",
-          textTransform: "uppercase",
-          color: "var(--text-primary)",
-        }}
-      >
-        {timeLeftText}
-      </div>
+      {timeLeftText && (
+        <div
+          className="mt-5"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "12px",
+            fontWeight: 600,
+            letterSpacing: "var(--tracking-mythic)",
+            textTransform: "uppercase",
+            color: "var(--text-primary)",
+          }}
+        >
+          {timeLeftText}
+        </div>
+      )}
 
       {showBreathCount && (
         <div
