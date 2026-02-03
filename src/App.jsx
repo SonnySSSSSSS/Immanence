@@ -135,6 +135,7 @@ function App() {
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
+  const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
   // Screen Wake Lock when in Vigilance Mode
   useWakeLock(isMinimized);
@@ -347,6 +348,7 @@ function App() {
             boxShadow: 'none',
             overflowX: 'hidden',
             overflowY: 'visible',
+            zIndex: 1,
           } : {
             // Hearth: Phone width (430px)
             width: '100%',
@@ -354,19 +356,22 @@ function App() {
             boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
             overflowX: 'hidden',
             overflowY: 'visible',
+            zIndex: 1,
           }}
         >
 
-          <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible'>
+          <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible' style={isFirefox ? { transform: 'translateZ(0)' } : undefined}>
             {/* Fixed Dark Header Bar */}
             <header
               className="sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500"
               style={{
-                background: isLight
-                  ? 'linear-gradient(180deg, rgba(200,185,165,0.1) 0%, rgba(210,195,175,0.05) 60%, transparent 100%)'
-                  : 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
+                background: isFirefox
+                  ? (isLight ? 'rgba(200,185,165,0.95)' : 'rgba(10,10,15,0.95)')
+                  : (isLight
+                    ? 'linear-gradient(180deg, rgba(200,185,165,0.1) 0%, rgba(210,195,175,0.05) 60%, transparent 100%)'
+                    : 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.2) 100%)'),
+                backdropFilter: isFirefox ? 'none' : 'blur(8px)',
+                WebkitBackdropFilter: isFirefox ? 'none' : 'blur(8px)',
                 borderBottom: isLight
                   ? '1px solid rgba(140,120,90,0.15)'
                   : '1px solid rgba(255,255,255,0.05)',
@@ -423,7 +428,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                         v3.26.73
+                      v3.26.81
                     </div>
                   </div>
 

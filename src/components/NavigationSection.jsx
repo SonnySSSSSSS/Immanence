@@ -1,5 +1,6 @@
 // src/components/NavigationSection.jsx
 import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { PathSelectionGrid } from './PathSelectionGrid.jsx';
 import { PathOverviewPanel } from './PathOverviewPanel.jsx';
@@ -169,12 +170,14 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
       {/* Path Overlay Modal - adapts to hearth/sanctuary */}
       {/* Uses LOCAL state (overlayPathId) so it NEVER auto-opens from persisted store */}
       {/* Shows ActivePathState if clicking on already-active path, else PathOverviewPanel */}
-      {overlayPathId && (
+      {overlayPathId && createPortal((
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 overflow-y-auto"
           style={{
             background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(8px)',
+            padding: '16px',
+            WebkitOverflowScrolling: 'touch',
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -184,13 +187,11 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         >
           {/* Hearth: max 430px; Sanctuary: max 760px - both centered */}
           <div
-            className="overflow-y-auto"
             style={{
               width: '100%',
               maxWidth: isHearth ? '430px' : '760px',
-              maxHeight: '90vh',
               borderRadius: '28px',
-              margin: '16px',
+              margin: '16px auto',
               background: isLight
                 ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)'
                 : 'linear-gradient(180deg, rgba(26, 15, 28, 0.99) 0%, rgba(21, 11, 22, 1) 100%)',
@@ -227,7 +228,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
             )}
           </div>
         </div>
-      )}
+      ), document.body)}
 
       {/* Navigation Selection Modal */}
       <NavigationSelectionModal

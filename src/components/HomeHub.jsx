@@ -61,6 +61,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const displayMode = useDisplayModeStore(s => s.viewportMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
+  const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
   const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
   const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
@@ -502,80 +503,73 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
         {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
         <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
-          {/* clip wrapper to prevent next-page bleed */}
           <div
             className="w-full overflow-hidden"
             style={{
-              height: homeSwipeHeight ? `${homeSwipeHeight}px` : 'auto',
+              height: homeSwipeHeight ? `${Math.max(homeSwipeHeight, 200)}px` : 'auto',
+              minHeight: '200px',
               transition: 'height 280ms ease',
               willChange: 'height',
             }}
           >
-            <div
-              ref={homeSwipeRailRef}
-              className="flex w-full items-start gap-0 overflow-x-auto no-scrollbar"
-              style={{
-                scrollSnapType: 'x mandatory',
-                WebkitOverflowScrolling: 'touch',
-                scrollBehavior: 'smooth',
-                overflowY: 'hidden',
-                overscrollBehaviorX: 'contain',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-              }}
-            >
-              <section
-                className="shrink-0 basis-full w-full"
-                style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+              <div
+                ref={homeSwipeRailRef}
+                className="flex w-full items-start gap-0 overflow-x-auto no-scrollbar"
+                style={{
+                  scrollSnapType: 'x mandatory',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollBehavior: 'smooth',
+                  overflowY: 'hidden',
+                  overscrollBehaviorX: 'contain',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
               >
-              <div ref={homeSwipePracticeRef} className="w-full">
-              {(() => {
-                console.log('[HomeHub] active run', {
-                  runId: activePath?.runId,
-                  activePathId: activePath?.activePathId,
-                });
-                return null;
-              })()}
-              <DailyPracticeCard
-                onStartPractice={handleStartPractice}
-                onViewCurriculum={openCurriculumHub}
-                onNavigate={onSelectSection}
-                hasPersistedCurriculumData={hasPersistedCurriculumData}
-                onboardingComplete={curriculumOnboardingComplete}
-                practiceTimeSlots={practiceTimeSlots}
-                onStartSetup={() => onSelectSection('navigation')}
-                isTutorialTarget={isDailyCardTutorialTarget}
-              />
-              </div>
-              </section>
+                <section
+                  className="shrink-0 basis-full w-full"
+                  style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+                >
+                <div ref={homeSwipePracticeRef} className="w-full">
+                <DailyPracticeCard
+                  onStartPractice={handleStartPractice}
+                  onViewCurriculum={openCurriculumHub}
+                  onNavigate={onSelectSection}
+                  hasPersistedCurriculumData={hasPersistedCurriculumData}
+                  onboardingComplete={curriculumOnboardingComplete}
+                  practiceTimeSlots={practiceTimeSlots}
+                  onStartSetup={() => onSelectSection('navigation')}
+                  isTutorialTarget={isDailyCardTutorialTarget}
+                />
+                </div>
+                </section>
 
-              <section
-                className="shrink-0 basis-full w-full"
-                style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-              >
-              <div ref={homeSwipeProgressRef} className="w-full">
-              {(() => {
-                // Fetch hub variant tiles with 90d range
-                const hubTiles = getQuickDashboardTiles({
-                  scope: hubPolicy.scope,
-                  range: '90d',
-                  includeHonor: hubPolicy.includeHonor,
-                  activeRunId: hubPolicy.activeRunId,
-                });
+                <section
+                  className="shrink-0 basis-full w-full"
+                  style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+                >
+                <div ref={homeSwipeProgressRef} className="w-full">
+                {(() => {
+                  // Fetch hub variant tiles with 90d range
+                  const hubTiles = getQuickDashboardTiles({
+                    scope: hubPolicy.scope,
+                    range: '90d',
+                    includeHonor: hubPolicy.includeHonor,
+                    activeRunId: hubPolicy.activeRunId,
+                  });
 
-                return (
-                  <QuickDashboardTiles
-                    variant="hubCard"
-                    tiles={hubTiles}
-                    onOpenDetails={() => setIsDashboardModalOpen(true)}
-                    isSanctuary={isSanctuary}
-                  />
-                );
-              })()}
+                  return (
+                    <QuickDashboardTiles
+                      variant="hubCard"
+                      tiles={hubTiles}
+                      onOpenDetails={() => setIsDashboardModalOpen(true)}
+                      isSanctuary={isSanctuary}
+                    />
+                  );
+                })()}
+                </div>
+                </section>
               </div>
-              </section>
             </div>
-          </div>
 
           {/* Page indicator */}
           <div className="flex items-center justify-center gap-2 pt-1">

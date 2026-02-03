@@ -216,6 +216,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const isLight = colorScheme === 'light';
     const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
+    
+    // Firefox detection
+    const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
     // Navigation path fallback
     const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
@@ -226,12 +229,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();
     const sessionsV2 = useProgressStore(s => s.sessionsV2 || []);
-    
-    console.log('[DailyPracticeCard] scope check', {
-        runId: activePath?.runId,
-        activePathId: activePath?.activePathId,
-        sessions: sessionsV2.slice(-3),
-    });
     
     const todaySessions = useMemo(() => 
         sessionsV2.filter(
@@ -387,9 +384,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const user = useAuthUser();
     const displayName = getDisplayName(user);
 
-
     if (needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
+
         return (
             <div
                 className="w-full relative transition-all duration-700 ease-in-out"
@@ -402,25 +399,40 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 }}
             >
                 <div
-                    className="w-full relative glassCardShadowWrap"
+                    className={isFirefox ? "w-full relative" : "w-full relative glassCardShadowWrap"}
                     style={{
                         borderRadius: '24px',
-                        '--glass-radius': '24px',
-                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
-                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
-                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
+                        ...(isFirefox ? {
+                            boxShadow: isLight
+                                ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
+                                : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95, 255, 170, 0.08)',
+                        } : {
+                            '--glass-radius': '24px',
+                            '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
+                            '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
+                            '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
+                        }),
                     }}
                 >
                     <div
                         ref={cardRef}
-                        className="w-full relative glassCardShell"
+                        className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
                         style={{
-                            background: 'transparent',
-                            '--glass-radius': '24px',
-                            '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                            '--glass-blur': isLight ? '0px' : '16px',
-                            '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
-                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                            ...(isFirefox ? {
+                                borderRadius: '24px',
+                                background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                                boxShadow: `
+                                    inset 0 0 0 1px ${isLight ? `${primaryHex}30` : `${primaryHex}40`},
+                                    0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
+                                `.trim().replace(/\\s+/g, ' '),
+                            } : {
+                                background: 'transparent',
+                                '--glass-radius': '24px',
+                                '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                                '--glass-blur': isLight ? '0px' : '16px',
+                                '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
+                                '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                            }),
                         }}
                     >
                         <div className="glassCardContent">
@@ -442,12 +454,14 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         }} />
 
                         <div 
-                            className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] min-h-[460px] max-h-[600px] overflow-hidden flex flex-col"
+                            className="relative z-10 w-full min-h-[460px] flex flex-col"
                             style={{
-                                background: isLight ? 'rgba(250, 246, 238, 0.72)' : 'rgba(20, 15, 25, 0.78)',
-                                backdropFilter: 'blur(16px)',
-                                WebkitBackdropFilter: 'blur(16px)',
-                                borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
+                                background: isFirefox
+                                    ? (isLight ? '#faf6ee' : '#14121a')
+                                    : (isLight ? 'rgba(250, 246, 238, 0.85)' : 'rgba(20, 15, 25, 0.85)'),
+                                backdropFilter: isFirefox ? 'none' : 'blur(16px)',
+                                WebkitBackdropFilter: isFirefox ? 'none' : 'blur(16px)',
+                                color: isLight ? '#3c3020' : '#fdfbf5',
                             }}
                         >
                             {isLight && (
@@ -654,27 +668,43 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
 
-
     if (dayNumber > 14 || progress.completed >= progress.total) {
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
+
         return (
             <div
-                className="w-full glassCardShadowWrap"
+                className={isFirefox ? "w-full" : "w-full glassCardShadowWrap"}
                 style={{
-                    '--glass-radius': '24px',
-                    '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
-                    '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
-                    '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
+                    borderRadius: '24px',
+                    ...(isFirefox ? {
+                        boxShadow: isLight
+                            ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
+                            : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)',
+                    } : {
+                        '--glass-radius': '24px',
+                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
+                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
+                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
+                    }),
                 }}
             >
                 <div
-                    className="w-full relative glassCardShell"
+                    className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
                     style={{
-                        '--glass-radius': '24px',
-                        '--glass-bg': isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
-                        '--glass-blur': isLight ? '0px' : '16px',
-                        '--glass-stroke': isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(95, 255, 170, 0.20)',
-                        '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                        ...(isFirefox ? {
+                            borderRadius: '24px',
+                            background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
+                            boxShadow: `
+                                inset 0 0 0 1px ${isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(95, 255, 170, 0.20)'},
+                                0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
+                            `.trim().replace(/\\s+/g, ' '),
+                        } : {
+                            '--glass-radius': '24px',
+                            '--glass-bg': isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
+                            '--glass-blur': isLight ? '0px' : '16px',
+                            '--glass-stroke': isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(95, 255, 170, 0.20)',
+                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                        }),
                     }}
                 >
                 {/* Relic/Cosmic Background Wallpaper */}
@@ -764,7 +794,131 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         );
     }
 
-    if (!todaysPractice) return null;
+    if (!todaysPractice) {
+        return (
+            <div
+                data-tutorial="home-daily-card"
+                className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
+                style={{
+                    ...(isSanctuary ? {} : {
+                        maxWidth: '430px',
+                        margin: '0 auto',
+                    }),
+                    ...(isSanctuary && { width: '100%' }),
+                }}
+            >
+                <div
+                    className="w-full"
+                    style={{
+                        borderRadius: '24px',
+                        padding: '20px',
+                        background: isLight ? '#f5efe5' : '#14121a',
+                        border: isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid rgba(255,255,255,0.12)',
+                        boxShadow: isLight
+                            ? '0 14px 34px rgba(0,0,0,0.10)'
+                            : '0 18px 40px rgba(0,0,0,0.28)',
+                        color: isLight ? '#3c3020' : '#fdfbf5',
+                    }}
+                >
+                    <div style={{ fontSize: 10, letterSpacing: '0.32em', textTransform: 'uppercase', opacity: 0.7 }}>
+                        Today&apos;s Practice
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
+                    <div style={{ fontSize: 14, marginTop: 8, opacity: 0.75 }}>
+                        Practice data isn&apos;t available in this browser yet.
+                    </div>
+
+                    {activePathObj && times.length > 0 ? (
+                        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {times.map((time, idx) => {
+                                const isDone = idx < completedCount;
+                                const isNext = idx === nextIndex;
+                                return (
+                                    <div
+                                        key={`${time}-${idx}`}
+                                        style={{
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            background: isLight ? 'rgba(160, 120, 60, 0.06)' : 'rgba(255,255,255,0.05)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: 12,
+                                            opacity: isDone ? 0.6 : 1,
+                                        }}
+                                    >
+                                        <div style={{ minWidth: 0 }}>
+                                            <div style={{ fontSize: 13, fontWeight: 600 }}>
+                                                {time}
+                                            </div>
+                                            {practiceLabels[idx] && (
+                                                <div style={{ fontSize: 11, opacity: 0.6 }}>
+                                                    {practiceLabels[idx]}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const practiceId = slotPracticeIds[idx];
+                                                if (!practiceId) return;
+                                                onStartPractice?.({
+                                                    practiceId,
+                                                    pathContext: {
+                                                        activePathId: activePath?.activePathId,
+                                                        slotTime: time,
+                                                        slotIndex: idx,
+                                                        dayIndex: metrics.dayIndex,
+                                                        weekIndex: Math.ceil(metrics.dayIndex / 7),
+                                                    },
+                                                });
+                                            }}
+                                            disabled={!isNext || !slotPracticeIds[idx]}
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '999px',
+                                                border: 'none',
+                                                background: isNext && slotPracticeIds[idx]
+                                                    ? 'linear-gradient(135deg, var(--accent-color), var(--accent-70))'
+                                                    : (isLight ? 'rgba(160, 120, 60, 0.12)' : 'rgba(255,255,255,0.08)'),
+                                                color: isNext && slotPracticeIds[idx] ? '#fff' : (isLight ? '#6b5b45' : '#cfc8bc'),
+                                                fontSize: 11,
+                                                fontWeight: 700,
+                                                letterSpacing: '0.08em',
+                                                textTransform: 'uppercase',
+                                                cursor: isNext && slotPracticeIds[idx] ? 'pointer' : 'not-allowed',
+                                            }}
+                                        >
+                                            {isDone ? 'Done' : isNext ? 'Start' : 'Locked'}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => onStartSetup?.()}
+                            style={{
+                                marginTop: 16,
+                                padding: '8px 14px',
+                                borderRadius: '999px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                color: '#fff',
+                                fontSize: 11,
+                                fontWeight: 700,
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase',
+                            }}
+                        >
+                            Start Setup
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     const handleStartLeg = (leg) => {
         // Clear any pilot session failure flag on restart
@@ -793,39 +947,54 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const completedLegs = legs.filter(l => l.completed).length;
 
     return (
-        <div
-            data-tutorial="home-daily-card"
-            className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
-            style={{
-                ...(isSanctuary ? {} : {
-                    maxWidth: '430px',
-                    margin: '0 auto',
-                }),
-                ...(isSanctuary && { width: '100%' }),
-            }}
-        >
+            <div
+                data-tutorial="home-daily-card"
+                className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
+                style={{
+                    ...(isSanctuary ? {} : {
+                        maxWidth: '430px',
+                        margin: '0 auto',
+                    }),
+                    ...(isSanctuary && { width: '100%' }),
+                }}
+            >
             {/* OUTER: Frame with Shadow */}
             <div
-                className="w-full relative glassCardShadowWrap"
+                className={isFirefox ? "w-full relative" : "w-full relative glassCardShadowWrap"}
                 style={{
                     borderRadius: '24px',
-                    '--glass-radius': '24px',
-                    '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
-                    '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
-                    '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
+                    ...(isFirefox ? {
+                        boxShadow: isLight
+                            ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
+                            : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`,
+                    } : {
+                        '--glass-radius': '24px',
+                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
+                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
+                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
+                    }),
                 }}
             >
                 {/* MIDDLE: Container */}
                 <div
                     ref={cardRef}
-                    className="w-full relative glassCardShell"
+                    className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
                     style={{
-                        background: 'transparent',
-                        '--glass-radius': '24px',
-                        '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                        '--glass-blur': isLight ? '0px' : '16px',
-                        '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
-                        '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                        ...(isFirefox ? {
+                            borderRadius: '24px',
+                            background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                            boxShadow: `
+                                inset 0 0 0 1px ${isLight ? `${primaryHex}30` : `${primaryHex}40`},
+                                0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
+                            `.trim().replace(/\\s+/g, ' '),
+                        } : {
+                            background: 'transparent',
+                            '--glass-radius': '24px',
+                            '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                            '--glass-blur': isLight ? '0px' : '16px',
+                            '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
+                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
+                        }),
                     }}
                 >
                     <div className="glassCardContent">
@@ -898,10 +1067,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     <div 
                         className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
                         style={{
-                            background: isLight ? 'rgba(250, 246, 238, 0.72)' : 'rgba(20, 15, 25, 0.78)',
-                            backdropFilter: 'blur(16px)',
-                            WebkitBackdropFilter: 'blur(16px)',
+                            background: isFirefox 
+                                ? (isLight ? '#faf6ee' : '#14121a')
+                                : (isLight ? 'rgba(250, 246, 238, 0.95)' : 'rgba(20, 15, 25, 0.95)'),
+                            backdropFilter: isFirefox ? 'none' : 'blur(16px)',
+                            WebkitBackdropFilter: isFirefox ? 'none' : 'blur(16px)',
                             borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
+                            color: isLight ? '#3c3020' : '#fdfbf5',
                         }}
                     >
                             {/* Panel texture scrim */}
