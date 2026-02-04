@@ -12,14 +12,19 @@ import { StageTitle } from './StageTitle.jsx';
 import { NavigationSelectionModal } from './NavigationSelectionModal.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
+import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
+import { useAvatarV3State } from '../state/avatarV3Store.js';
 
-export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide }) {
+export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide, isPracticing = false }) {
   const { activePath, beginPath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
   const isHearth = displayMode === 'hearth';
+  const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
+  const effectiveStage = avatarStage || currentStage;
+  const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
   const [navModalOpen, setNavModalOpen] = useState(false);
@@ -58,6 +63,17 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
         paddingBottom: isSanctuary ? '48px' : '32px',
       }}
     >
+      <div className="flex items-center justify-center" style={{ paddingTop: isSanctuary ? '12px' : '4px' }}>
+        <AvatarV3
+          stage={normalizedStage}
+          modeWeights={modeWeights}
+          isPracticing={isPracticing}
+          lastStageChange={lastStageChange}
+          lastModeChange={lastModeChange}
+          lastSessionComplete={lastSessionComplete}
+          size={isSanctuary ? 'sanctuary' : 'hearth'}
+        />
+      </div>
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
       {!activePath && (
         <div

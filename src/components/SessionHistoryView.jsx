@@ -21,6 +21,11 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal.jsx';
 import { ExportArchiveButton } from './ExportArchiveButton.jsx';
 import { getDateKey } from '../utils/dateUtils';
 import { ReportsPanel } from './tracking/reports/index.js';
+import {
+    PracticeDashboardHeader,
+    NavigationDashboardHeader,
+    ApplicationDashboardHeader
+} from './tracking/infographics/index.js';
 
 export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -1082,22 +1087,11 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                             )}
 
                             {activeTab === 'practice' && (
-                                <div style={summaryCardStyle}>
-                                    <div style={summaryRowStyle}>
-                                        <div><strong>{practiceSummary.totalSessions}</strong> sessions</div>
-                                        <div><strong>{formatMinutes(practiceSummary.totalMinutes)}</strong> total time</div>
-                                        <div>Avg breath accuracy: {practiceSummary.avgAccuracy === null ? '-' : `${Math.round(practiceSummary.avgAccuracy * 100)}%`}</div>
-                                    </div>
-                                    {practiceSummary.domainRows.length > 0 && (
-                                        <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                            {practiceSummary.domainRows.map(row => (
-                                                <div key={row.domain}>
-                                                    {row.domain}: {row.count} - {formatMinutes(row.totalMinutes)}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <PracticeDashboardHeader
+                                    practiceSummary={practiceSummary}
+                                    trajectory={trajectory8}
+                                    isLight={isLight}
+                                />
                             )}
 
                             {activeTab === 'circuits' && (
@@ -1133,74 +1127,20 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                             )}
 
                             {activeTab === 'navigation' && (
-                                <div style={summaryCardStyle}>
-                                    {navigationSummary.activePath ? (
-                                        <div style={summaryRowStyle}>
-                                            <div><strong>Active path:</strong> {navigationSummary.activePath.activePathId}</div>
-                                            <div><strong>Paths completed:</strong> 0</div>
-                                            <div><strong>Weeks completed:</strong> {Object.keys(navigationSummary.activePath.weekCompletionDates || {}).length}</div>
-                                            <div><strong>Current week:</strong> {Object.keys(navigationSummary.activePath.weekCompletionDates || {}).length + 1}</div>
-                                        </div>
-                                    ) : (
-                                        <div style={{ fontSize: '12px', opacity: 0.7 }}>No active path selected.</div>
-                                    )}
-                                    <div style={{ marginTop: '8px', ...summaryRowStyle }}>
-                                        <div><strong>Unlocked sections:</strong> {navigationSummary.unlockedCount}</div>
-                                        <div><strong>Foundation watched:</strong> {navigationSummary.hasFoundation ? 'Yes' : 'No'}</div>
-                                        <div><strong>Path assessment:</strong> {navigationSummary.pathAssessment || '-'}</div>
-                                    </div>
-                                    <div style={{ marginTop: '12px', fontSize: '11px', opacity: 0.8 }}>
-                                        <div style={{ fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
-                                            Schedule adherence
-                                        </div>
-                                        {scheduleSlots.length === 0 ? (
-                                            <div style={{ opacity: 0.6 }}>
-                                                No schedule slots defined.
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <div style={{ ...summaryRowStyle, marginBottom: '8px' }}>
-                                                    <div><strong>7d:</strong> {adherenceSummary7 ? `${adherenceSummary7.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary7?.avgAbsDeltaMinutes)}</div>
-                                                    <div><strong>30d:</strong> {adherenceSummary30 ? `${adherenceSummary30.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary30?.avgAbsDeltaMinutes)}</div>
-                                                    <div><strong>90d:</strong> {adherenceSummary90 ? `${adherenceSummary90.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary90?.avgAbsDeltaMinutes)}</div>
-                                                </div>
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', opacity: 0.7 }}>
-                                                    {scheduleSlots.map(slot => {
-                                                        const slotSummary = adherenceSummary7?.bySlot?.[slot.slotId] || null;
-                                                        return (
-                                                            <div key={slot.slotId}>
-                                                                Slot {slot.slotId} ({slot.time}): {slotSummary ? `${slotSummary.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(slotSummary?.avgAbsDeltaMinutes)}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                <NavigationDashboardHeader
+                                    navigationSummary={navigationSummary}
+                                    adherenceSummary7={adherenceSummary7}
+                                    adherenceSummary30={adherenceSummary30}
+                                    scheduleSlots={scheduleSlots}
+                                    isLight={isLight}
+                                />
                             )}
 
                             {activeTab === 'application' && (
-                                <div style={summaryCardStyle}>
-                                    <div style={summaryRowStyle}>
-                                        <div><strong>{applicationSummary.totalLogs}</strong> logs</div>
-                                        <div><strong>{applicationSummary.recent7.total}</strong> logs (7d)</div>
-                                        <div><strong>{applicationSummary.recent30.total}</strong> logs (30d)</div>
-                                        <div>Responded differently: {applicationSummary.recent30.respondedDifferentlyPercent}%</div>
-                                    </div>
-                                    <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                        {Object.entries(modeStats || {}).map(([mode, stats]) => (
-                                            <div key={mode}>
-                                                {mode}: {stats?.count || 0}
-                                            </div>
-                                        ))}
-                                        <div>Mode sessions: {applicationSummary.modeSessionsCount}</div>
-                                        <div>Chains completed: {applicationSummary.chainCount}</div>
-                                        {applicationSummary.patternStats && (
-                                            <div>Chain completion: {Math.round((applicationSummary.patternStats.completionRatio || 0) * 100)}%</div>
-                                        )}
-                                    </div>
-                                </div>
+                                <ApplicationDashboardHeader
+                                    applicationSummary={applicationSummary}
+                                    isLight={isLight}
+                                />
                             )}
 
                             {activeTab === 'reports' ? (

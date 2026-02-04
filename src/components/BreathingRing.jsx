@@ -9,7 +9,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { EnsoStroke } from "./EnsoStroke";
 import { useTheme } from "../context/ThemeContext";
-import { PathParticles } from "./PathParticles.jsx";
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 
@@ -589,28 +588,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               transform: 'translate(-50%, -50%)'
             }}
           >
-            <PathParticles
-              pathId={pathId}
-              fxPreset={fxPreset}
-              intensity={(() => {
-                // Base breath intensity from scale
-                const breathIntensity = scale === maxScale ? 1 : (scale - minScale) / (maxScale - minScale);
-                // Blend breath intensity with practice energy (60% breath, 40% practice energy)
-                return breathIntensity * 0.6 + practiceEnergy * 0.4;
-              })()}
-              ringScale={scale}
-              ringRadius={85.33}  /* Actual SVG ring radius: r=80 in viewBox 300, scaled to 320px = 80/300*320 */
-              phase={
-                progress < tInhale ? 'inhale' :
-                  progress < tHoldTop ? 'hold' :
-                    progress < tExhale ? 'exhale' :
-                      'rest'
-              }
-              size={400}
-              accentColor={theme.accent.particleColor || primary}
-              isActive={true}
-              isLight={isLight}
-            />
+            {/* PathParticles removed - will be rebuilt with avatar revamp */}
           </div>
         )}
 

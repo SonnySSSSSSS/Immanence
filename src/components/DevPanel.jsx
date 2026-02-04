@@ -4,12 +4,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useLunarStore } from '../state/lunarStore';
-import { usePathStore, PATH_NAMES, PATH_SYMBOLS } from '../state/pathStore';
-import { useAttentionStore } from '../state/attentionStore';
 import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
-import * as devHelpers from '../utils/devHelpers';
-import { calculatePathProbabilities, getDominantPath, determinePathState } from '../utils/attentionPathScoring';
-import { generateMockWeeklyData, getProfileKeys, getProfileMetadata } from '../utils/mockAttentionData';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
@@ -500,15 +495,7 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
 
 export function DevPanel({
     isOpen,
-    onClose,
-    avatarStage = 'flame',
-    setAvatarStage,
-    avatarPath = 'Prana',
-    setAvatarPath,
-    showCore = false,
-    setShowCore,
-    avatarAttention = 'vigilance',
-    setAvatarAttention
+    onClose
 }) {
     // Early return BEFORE any hooks to avoid hook count mismatch
     if (!isOpen) return null;
@@ -521,18 +508,11 @@ export function DevPanel({
     const sparkleMode = useLunarStore(s => s.sparkleMode);
     const cycleSparkleMode = useLunarStore(s => s.cycleSparkleMode);
 
-    // Path store state
-    const currentPath = usePathStore(s => s.currentPath);
-    const pathStatus = usePathStore(s => s.pathStatus);
-    const pendingCeremony = usePathStore(s => s.pendingCeremony);
-
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
     const lightModeRingType = useSettingsStore(s => s.lightModeRingType);
     const setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
-    const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
-    const setUseNewAvatars = useSettingsStore(s => s.setUseNewAvatars);
     const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
     const setButtonThemeDark = useSettingsStore(s => s.setButtonThemeDark);
     const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
@@ -545,6 +525,11 @@ export function DevPanel({
     const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
     const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
+
+    // Avatar stage for wallpaper (simplified until avatar system rebuilt)
+    const [avatarStage, setAvatarStage] = useState('Flame');
+    const [gyroX, setGyroX] = useState(0);
+    const [gyroY, setGyroY] = useState(0);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -596,9 +581,6 @@ export function DevPanel({
     const [inspectorOpen, setInspectorOpen] = useState(false);
     const [storeSnapshot, setStoreSnapshot] = useState(null);
 
-    // Gyro simulation state
-    const [gyroX, setGyroX] = useState(0);
-    const [gyroY, setGyroY] = useState(0);
     const isTutorialAdminOn = localStorage.getItem("immanence.tutorial.admin") === "1";
 
     // Toggle section
@@ -683,20 +665,30 @@ export function DevPanel({
                 <div className="p-4 space-y-4">
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* AVATAR SECTION */}
+                    {/* AVATAR STAGE (WALLPAPER CONTROL) */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
-                        title="Avatar Preview"
+                        title="Avatar Stage (Wallpaper)"
                         expanded={expandedSections.avatar}
                         onToggle={() => toggleSection('avatar')}
                         isLight={isLight}
                     >
+                        <div className="text-xs text-white/50 mb-3">
+                            Stage controls wallpaper only. Full avatar system coming soon.
+                        </div>
+
                         {/* Stage selector */}
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-3 mb-4">
                             <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Stage</label>
                             <select
                                 value={avatarStage}
-                                onChange={(e) => setAvatarStage(e.target.value)}
+                                onChange={(e) => {
+                                    setAvatarStage(e.target.value);
+                                    // Dispatch event for wallpaper change
+                                    window.dispatchEvent(new CustomEvent('dev-avatar-stage', { 
+                                        detail: { stage: e.target.value } 
+                                    }));
+                                }}
                                 className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
                                 style={{
                                     background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
@@ -711,157 +703,6 @@ export function DevPanel({
                             </select>
                         </div>
 
-                        {/* Path selector */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Path</label>
-                            <select
-                                value={avatarPath}
-                                onChange={(e) => setAvatarPath(e.target.value)}
-                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
-                                style={{
-                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
-                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
-                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
-                                    colorScheme: isLight ? 'light' : 'dark'
-                                }}
-                            >
-                                {PATH_OPTIONS.map(p => (
-                                    <option key={p} value={p}>{p}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Attention selector */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Attention</label>
-                            <select
-                                value={avatarAttention}
-                                onChange={(e) => setAvatarAttention(e.target.value)}
-                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
-                                style={{
-                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
-                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
-                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
-                                    colorScheme: isLight ? 'light' : 'dark'
-                                }}
-                            >
-                                <option value="none">None (Stage/Path only)</option>
-                                <option value="vigilance">Vigilance</option>
-                                <option value="sahaja">Sahaja</option>
-                                <option value="ekagrata">Ekagrata</option>
-                            </select>
-                        </div>
-
-                        {/* Show Core toggle */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(255, 255, 255, 0.5)' }}>Show Core</label>
-                            <button
-                                onClick={() => setShowCore(!showCore)}
-                                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${showCore
-                                    ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50'
-                                    : 'bg-white/5 text-white/50 border border-white/10'
-                                    }`}
-                            >
-                                {showCore ? 'ON' : 'OFF'}
-                            </button>
-                        </div>
-
-                        {/* Light Mode Ring Toggle */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 120, 140, 0.9)' : '#22d3ee' }}>Ring Type</label>
-                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
-                                <button
-                                    onClick={() => setLightModeRingType('astrolabe')}
-                                    className={`px-2 py-1 rounded text-[10px] transition-all ${lightModeRingType === 'astrolabe'
-                                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                                        : 'text-white/40 hover:text-white/60'
-                                        }`}
-                                >
-                                    ASTROLABE
-                                </button>
-                                <button
-                                    onClick={() => setLightModeRingType('rune')}
-                                    className={`px-2 py-1 rounded text-[10px] transition-all ${lightModeRingType === 'rune'
-                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                        : 'text-white/40 hover:text-white/60'
-                                        }`}
-                                >
-                                    RUNE
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Cloud Background Toggle (Light Mode) */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(60, 140, 100, 0.9)' : '#34d399' }}>Cloud BG</label>
-                            <div className="flex bg-white/5 rounded-lg p-1 gap-1 flex-wrap">
-                                {['none', 'light_clouds', 'cloudier', 'cloudiest'].map(cloud => (
-                                    <button
-                                        key={cloud}
-                                        onClick={() => {
-                                            // This will need to be wired to HomeHub state via props
-                                            const event = new CustomEvent('dev-cloud-change', { detail: cloud });
-                                            window.dispatchEvent(event);
-                                        }}
-                                        className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
-                                    >
-                                        {cloud === 'light_clouds' ? 'LIGHT' : cloud.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Avatar Version Toggle */}
-                        {/* Hide Cards Toggle (for wallpaper viewing) */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(100, 60, 140, 0.9)' : '#a78bfa' }}>Hide Cards</label>
-                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
-                                <button
-                                    onClick={() => {
-                                        const event = new CustomEvent('dev-hide-cards', { detail: false });
-                                        window.dispatchEvent(event);
-                                    }}
-                                    className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
-                                >
-                                    OFF
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const event = new CustomEvent('dev-hide-cards', { detail: true });
-                                        window.dispatchEvent(event);
-                                    }}
-                                    className="px-2 py-1 rounded text-[10px] transition-all text-white/40 hover:text-white/60 hover:bg-white/10"
-                                >
-                                    ON
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Avatar Version Toggle */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 60, 100, 0.9)' : '#ec4899' }}>Avatar Set</label>
-                            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
-                                <button
-                                    onClick={() => setUseNewAvatars(false)}
-                                    className={`px-2 py-1 rounded text-[10px] transition-all ${!useNewAvatars
-                                        ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30'
-                                        : 'text-white/40 hover:text-white/60'
-                                        }`}
-                                >
-                                    OLD
-                                </button>
-                                <button
-                                    onClick={() => setUseNewAvatars(true)}
-                                    className={`px-2 py-1 rounded text-[10px] transition-all ${useNewAvatars
-                                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                                        : 'text-white/40 hover:text-white/60'
-                                        }`}
-                                >
-                                    NEW
-                                </button>
-                            </div>
-                        </div>
-
                         {/* Stage Asset Style Toggle */}
                         <div className="flex items-center gap-3 mb-4">
                             <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Title Set</label>
@@ -870,10 +711,11 @@ export function DevPanel({
                                     <button
                                         key={styleSet}
                                         onClick={() => setStageAssetStyle(styleSet)}
-                                        className={`w-7 h-7 flex items-center justify-center rounded text-[10px] font-bold transition-all ${stageAssetStyle === styleSet
-                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
-                                            }`}
+                                        className={`w-7 h-7 flex items-center justify-center rounded text-[10px] font-bold transition-all ${
+                                            stageAssetStyle === styleSet
+                                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                                : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                                        }`}
                                     >
                                         {styleSet}
                                     </button>
@@ -1101,63 +943,7 @@ export function DevPanel({
                         isLight={isLight}
                     />
 
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* PATH CEREMONY SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="Path Ceremony"
-                        expanded={expandedSections.path}
-                        onToggle={() => toggleSection('path')}
-                        isLight={isLight}
-                    >
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                            <div className="bg-white/5 rounded-lg px-3 py-2">
-                                <div className="text-white/40">Current Path</div>
-                                <div className="text-white/90">{currentPath || 'None'}</div>
-                            </div>
-                            <div className="bg-white/5 rounded-lg px-3 py-2">
-                                <div className="text-white/40">Status</div>
-                                <div className="text-white/90">{pathStatus}</div>
-                            </div>
-                        </div>
-
-                        {/* Pending ceremony indicator */}
-                        {pendingCeremony && (
-                            <div className="bg-amber-500/20 border border-amber-500/40 rounded-lg px-3 py-2 mb-4 text-xs text-amber-300">
-                                Ceremony pending: {pendingCeremony.type} → {pendingCeremony.path}
-                            </div>
-                        )}
-
-                        {/* Ceremony triggers */}
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                            <DevButton onClick={() => devHelpers.triggerPathEmergence('Prana')}>Trigger Emergence</DevButton>
-                            <DevButton onClick={() => devHelpers.triggerPathShift('Prana', 'Dhyana')}>Trigger Shift</DevButton>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                            <DevButton onClick={() => devHelpers.clearCeremony()}>Clear Ceremony</DevButton>
-                            <DevButton onClick={() => devHelpers.setPath('Prana')}>Set Path: Prana</DevButton>
-                        </div>
-
-                        {/* Reset path (destructive) */}
-                        <DestructiveButton
-                            label="Reset Path Data"
-                            armed={armed === 'path'}
-                            onArm={() => handleDestructive('path', () => usePathStore.getState()._devReset())}
-                        />
-                    </Section>
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* ATTENTION PATH SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <AttentionPathSection
-                        expanded={expandedSections.attention}
-                        onToggle={() => toggleSection('attention')}
-                        armed={armed}
-                        handleDestructive={handleDestructive}
-                        isLight={isLight}
-                    />
+                    {/* Path Ceremony and Attention Path sections removed - legacy systems */}
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* TRACKINGHUB SECTION */}
@@ -1474,144 +1260,7 @@ export function DevPanel({
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function AttentionPathSection({ expanded, onToggle, armed, handleDestructive, isLight = false }) {
-    const weeklyFeatures = useAttentionStore(s => s.weeklyFeatures);
-    const windows = useAttentionStore(s => s.windows);
-    const getValidWeekCount = useAttentionStore(s => s.getValidWeekCount);
-    const aggregateCurrentWeek = useAttentionStore(s => s.aggregateCurrentWeek);
-    const _devAggregateAll = useAttentionStore(s => s._devAggregateAll);
-    const _devReset = useAttentionStore(s => s._devReset);
-
-    const [mockProfile, setMockProfile] = useState('stable_ekagrata');
-    const [mockResult, setMockResult] = useState(null);
-
-    const validWeekCount = getValidWeekCount(12);
-    const featureVector = windows.mid || windows.short;
-
-    // Calculate current path state
-    let pathState = null;
-    if (featureVector) {
-        pathState = determinePathState(featureVector, validWeekCount);
-    }
-
-    // Run mock profile test
-    const runMockTest = () => {
-        const mockData = generateMockWeeklyData(mockProfile, 8, 0.2);
-        const lastWeek = mockData[mockData.length - 1];
-        const probs = calculatePathProbabilities(lastWeek);
-        const dominant = getDominantPath(probs);
-        const metadata = getProfileMetadata(mockProfile);
-        setMockResult({
-            profile: metadata,
-            probabilities: probs,
-            dominant,
-            expected: metadata?.expectedPath,
-            pass: dominant.path?.includes(metadata?.expectedPath) || dominant.status === metadata?.expectedPath,
-        });
-    };
-
-    return (
-        <Section
-            title="Attention Path (Ekagrata/Sahaja/Vigilance)"
-            expanded={expanded}
-            onToggle={onToggle}
-            isLight={isLight}
-        >
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                <div className="bg-white/5 rounded-lg px-3 py-2">
-                    <div className="text-white/40">Valid Weeks</div>
-                    <div className="text-white/90 font-mono">{validWeekCount}/12</div>
-                </div>
-                <div className="bg-white/5 rounded-lg px-3 py-2">
-                    <div className="text-white/40">State</div>
-                    <div className="text-white/90">{pathState?.state || 'No Data'}</div>
-                </div>
-                <div className="bg-white/5 rounded-lg px-3 py-2 col-span-2">
-                    <div className="text-white/40">Attention Path</div>
-                    <div className="text-white/90 font-medium">
-                        {pathState?.path || 'None'}
-                        {pathState?.probability && <span className="text-white/50 ml-2">({(pathState.probability * 100).toFixed(0)}%)</span>}
-                    </div>
-                </div>
-            </div>
-
-            {/* Probability Bars */}
-            {pathState?.probabilities && (
-                <div className="mb-4">
-                    <div className="text-xs text-white/50 mb-2">Path Probabilities</div>
-                    {['Ekagrata', 'Sahaja', 'Vigilance'].map(path => {
-                        const prob = pathState.probabilities[path] || 0;
-                        return (
-                            <div key={path} className="flex items-center gap-2 mb-1.5">
-                                <span className="text-xs text-white/60 w-16">{path}</span>
-                                <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full transition-all"
-                                        style={{
-                                            width: `${prob * 100}%`,
-                                            background: path === 'Ekagrata' ? '#a78bfa'
-                                                : path === 'Sahaja' ? '#34d399'
-                                                    : '#fbbf24',
-                                        }}
-                                    />
-                                </div>
-                                <span className="text-xs text-white/50 w-10 text-right font-mono">
-                                    {(prob * 100).toFixed(0)}%
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Actions */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-                <DevButton onClick={() => aggregateCurrentWeek()}>Aggregate Now</DevButton>
-                <DevButton onClick={() => _devAggregateAll()}>Aggregate All</DevButton>
-            </div>
-
-            {/* Mock Profile Testing */}
-            <div className="border-t border-white/10 pt-3 mt-2">
-                <div className="text-xs text-white/50 mb-2">Mock Profile Test</div>
-                <div className="flex gap-2 mb-2">
-                    <select
-                        value={mockProfile}
-                        onChange={(e) => setMockProfile(e.target.value)}
-                        className="flex-1 bg-[#1a1a24] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white/90"
-                        style={{ colorScheme: 'dark' }}
-                    >
-                        {getProfileKeys().map(key => (
-                            <option key={key} value={key}>{getProfileMetadata(key)?.name || key}</option>
-                        ))}
-                    </select>
-                    <DevButton onClick={runMockTest}>Test</DevButton>
-                </div>
-
-                {mockResult && (
-                    <div className={`text-xs p-2 rounded-lg ${mockResult.pass ? 'bg-green-500/20 border border-green-500/40' : 'bg-red-500/20 border border-red-500/40'}`}>
-                        <div className="flex justify-between mb-1">
-                            <span className="text-white/70">Expected: {mockResult.expected}</span>
-                            <span className="text-white/70">Got: {mockResult.dominant.path || mockResult.dominant.status}</span>
-                        </div>
-                        <div className="text-white/50">
-                            {mockResult.pass ? '✓ PASS' : '✗ FAIL'}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Reset */}
-            <div className="mt-3">
-                <DestructiveButton
-                    label="Reset Attention Data"
-                    armed={armed === 'attention'}
-                    onArm={() => handleDestructive('attention', _devReset)}
-                />
-            </div>
-        </Section>
-    );
-}
+// AttentionPathSection removed - legacy system
 
 function TrackingHubSection({ expanded, onToggle, isLight = false }) {
     const { sessions } = useProgressStore();

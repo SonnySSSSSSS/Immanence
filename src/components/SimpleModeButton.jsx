@@ -77,6 +77,8 @@ export function SimpleModeButton({ title, onClick, icon }) {
                     boxShadow: isLight
                         ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
                         : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`,
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => {
@@ -100,6 +102,15 @@ export function SimpleModeButton({ title, onClick, icon }) {
                         className="absolute inset-0 rounded-full"
                         style={{
                             background: 'radial-gradient(circle, transparent 20%, rgba(0,0,0,0.3) 70%)',
+                        }}
+                    />
+                )}
+                {/* Light overlay for glassmorphism (light mode only) */}
+                {isLight && (
+                    <div
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                            background: 'radial-gradient(circle, transparent 30%, rgba(255,255,255,0.15) 70%)',
                         }}
                     />
                 )}

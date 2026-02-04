@@ -1,5 +1,6 @@
 import React from 'react';
-import { LineChart } from './Charts.jsx';
+import { AreaLineChart } from '../infographics/index.js';
+import { DOMAIN_COLORS } from '../infographics/tokens.js';
 import { ReportSection } from './ReportSection.jsx';
 
 export function ApplicationAwarenessReport({ data, deltaLine, milestones, chartWidth }) {
@@ -14,7 +15,7 @@ export function ApplicationAwarenessReport({ data, deltaLine, milestones, chartW
     const series = [
         {
             label: 'Logs',
-            color: '#f97316',
+            color: DOMAIN_COLORS.application,
             data: data.buckets.map((bucket) => ({ label: bucket.label, value: bucket.count }))
         }
     ];
@@ -22,7 +23,7 @@ export function ApplicationAwarenessReport({ data, deltaLine, milestones, chartW
     return (
         <ReportSection
             title="Application Awareness Flow"
-            infographic={<LineChart series={series} width={chartWidth} />}
+            infographic={<AreaLineChart series={series} width={chartWidth || 420} height={120} showArea={true} />}
             interpretation={interpretation}
             suggestion={suggestion}
             deltaLine={deltaLine}

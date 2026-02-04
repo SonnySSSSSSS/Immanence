@@ -6,6 +6,7 @@ import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
+import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
 const SCHEDULE_MATCH_RADIUS_MIN = 90;
@@ -53,11 +54,17 @@ export const useNavigationStore = create(
             // Begin a new path
             beginPath: (pathId) => {
                 const runId = crypto?.randomUUID?.() || String(Date.now());
-                const startedAt = new Date().toISOString();
+                // Align Day 1 to the selected first slot time:
+                // if the first slot window has already passed today, Day 1 begins tomorrow.
+                const selectedTimes = useCurriculumStore.getState().getPracticeTimeSlots() || [];
+                const startedAtDate = computeScheduleAnchorStartAt({
+                    now: new Date(),
+                    firstSlotTime: selectedTimes[0],
+                });
+                const startedAt = startedAtDate.toISOString();
                 const durationDays = getPathDurationDays(pathId);
                 const endsAt = computeEndsAt(startedAt, durationDays);
                 // Read schedule from canonical curriculum store
-                const selectedTimes = useCurriculumStore.getState().getPracticeTimeSlots() || [];
 
                 set({
                     activePath: {
@@ -507,7 +514,12 @@ export const useNavigationStore = create(
                 console.log('[restartPath] NEW RUN', runId);
                 const pathId = state.activePath.activePathId;
                 const durationDays = getPathDurationDays(pathId);
-                const startedAt = new Date().toISOString();
+                const selectedTimes = state.activePath.schedule?.selectedTimes || [];
+                const startedAtDate = computeScheduleAnchorStartAt({
+                    now: new Date(),
+                    firstSlotTime: selectedTimes[0],
+                });
+                const startedAt = startedAtDate.toISOString();
                 const endsAt = computeEndsAt(startedAt, durationDays);
 
                 set({

@@ -18,6 +18,8 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
+import { getLocalDateKey } from '../utils/dateUtils.js';
+import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TIME SLOT OPTIONS
@@ -267,6 +269,11 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
 }
 
 function StepConfirm({ onComplete, onBack, selectedTimes, isLight }) {
+    const now = new Date();
+    const firstSlotTime = selectedTimes?.[0] || null;
+    const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
+    const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey(now);
+
     return (
         <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <h2
@@ -281,7 +288,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, isLight }) {
 
             <div className="space-y-4">
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    Your 14-day curriculum starts today.
+                    Your 14-day curriculum starts {startsTomorrow ? 'tomorrow' : 'today'}.
                 </p>
 
                 {selectedTimes.length > 0 && (

@@ -1,5 +1,5 @@
 // src/components/DailyPracticeCard.jsx
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useTransition } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -8,7 +8,8 @@ import { METRIC_LABELS } from "../constants/metricsLabels";
 import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
-import { getLocalDateKey } from '../utils/dateUtils.js';
+import { addDaysToDateKey, getLocalDateKey } from '../utils/dateUtils.js';
+import { getStartWindowState, localDateTimeFromDateKeyAndTime } from '../utils/scheduleUtils.js';
 import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition } from '../data/programRegistry.js';
@@ -69,7 +70,7 @@ function getWeekForDay(path, dayIndex) {
  * Vertical meter for left-pane progression
  * Two stacked meters (Completion + Path) live in the wallpaper strip.
  */
-function VerticalMeter({ label, valueText, progressRatio, isLight }) {
+function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarColor }) {
     const ratio = Math.max(0, Math.min(1, Number.isFinite(progressRatio) ? progressRatio : 0));
 
     const meterBackground = isLight ? 'rgba(250, 246, 238, 0.20)' : 'rgba(10, 12, 16, 0.22)';
@@ -77,7 +78,7 @@ function VerticalMeter({ label, valueText, progressRatio, isLight }) {
     const labelColor = isLight ? 'rgba(60, 50, 35, 0.62)' : 'rgba(253, 251, 245, 0.55)';
     const valueColor = isLight ? 'rgba(35, 20, 10, 0.92)' : 'rgba(253, 251, 245, 0.92)';
     const trackColor = isLight ? 'rgba(60, 50, 35, 0.14)' : 'rgba(255, 255, 255, 0.10)';
-    const fillColor = isLight ? 'rgba(139, 159, 136, 0.85)' : 'rgba(80, 255, 160, 0.85)';
+    const fillColor = progressBarColor;
 
     return (
         <div style={{ width: '100%', height: '100%' }}>
@@ -85,37 +86,19 @@ function VerticalMeter({ label, valueText, progressRatio, isLight }) {
                 style={{
                     width: '100%',
                     height: '100%',
-                    padding: '10px 10px 9px',
+                    padding: '8px 8px 7px',
                     background: meterBackground,
                     border: meterBorder,
                     borderRadius: '14px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    gap: '8px',
                     boxShadow: isLight
                         ? '0 10px 24px rgba(0, 0, 0, 0.08)'
                         : '0 14px 30px rgba(0, 0, 0, 0.32)',
                 }}
                 aria-label={`${label}: ${valueText}`}
             >
-                <div
-                    style={{
-                        width: '100%',
-                        padding: '7px 8px 6px',
-                        borderRadius: '10px',
-                        background: isLight ? 'rgba(255, 255, 255, 0.55)' : 'rgba(0, 0, 0, 0.22)',
-                        border: isLight ? '1px solid rgba(0, 0, 0, 0.06)' : '1px solid rgba(255, 255, 255, 0.10)',
-                        textAlign: 'center',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        letterSpacing: '0.04em',
-                        color: valueColor,
-                        lineHeight: 1,
-                    }}
-                >
-                    {valueText}
-                </div>
-
                 <div
                     style={{
                         position: 'relative',
@@ -138,11 +121,39 @@ function VerticalMeter({ label, valueText, progressRatio, isLight }) {
                             transition: 'height 420ms ease-out',
                         }}
                     />
+
+                    <div
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            pointerEvents: 'none',
+                        }}
+                    >
+                        <div
+                            style={{
+                                padding: '4px 7px',
+                                borderRadius: '10px',
+                                background: isLight ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.35)',
+                                border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.12)',
+                                fontFamily: 'var(--font-display)',
+                                fontWeight: 800,
+                                fontSize: 12,
+                                lineHeight: 1,
+                                color: valueColor,
+                                textShadow: isLight ? 'none' : '0 1px 2px rgba(0,0,0,0.55)',
+                            }}
+                        >
+                            {valueText}
+                        </div>
+                    </div>
                 </div>
 
                 <div
                     style={{
-                        fontSize: '10px',
+                        fontSize: '9px',
                         fontWeight: 700,
                         textTransform: 'uppercase',
                         letterSpacing: '0.14em',
@@ -380,6 +391,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const currentStage = theme?.stage || 'Flame';
     const stageLower = currentStage.toLowerCase();
     const primaryHex = theme?.accent?.primary || '#4ade80';
+    const progressBarColor = theme?.ui?.progressBar || '#4ade80';
 
     const {
         onboardingComplete: storeOnboardingComplete,
@@ -390,6 +402,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         getProgress,
         getStreak,
         getDayLegsWithStatus,
+        curriculumStartDate,
         setActivePracticeSession,
         _devReset,
         practiceTimeSlots: storePracticeTimeSlots,
@@ -773,44 +786,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     })();
 
     const dayIndexDisplay = activePathObj ? (metrics?.dayIndex || 1) : dayNumber;
-
-    const nowMinutes = (() => {
-        const d = new Date();
-        return d.getHours() * 60 + d.getMinutes();
+    const dayProgressRatio = (() => {
+        const n = Number(dayIndexDisplay);
+        const d = Number(totalDaysDisplay);
+        if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return 0;
+        return Math.max(0, Math.min(1, n / d));
     })();
 
-    const parseTimeToMinutes = (timeStr) => {
-        if (!timeStr || typeof timeStr !== 'string') return null;
-        const parts = timeStr.split(':');
-        if (parts.length !== 2) return null;
-        const h = Number(parts[0]);
-        const m = Number(parts[1]);
-        if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
-        if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-        return h * 60 + m;
-    };
+    const curriculumStartKey = (() => {
+        if (!curriculumStartDate) return getLocalDateKey();
+        const d = new Date(curriculumStartDate);
+        if (Number.isNaN(d.getTime())) return getLocalDateKey();
+        return getLocalDateKey(d);
+    })();
 
-    /**
-     * Calculate signed time delta from now to scheduled time.
-     * Accounts for day boundaries by normalizing to nearest occurrence.
-     *
-     * @param {number} scheduledMin - Scheduled time in minutes (0-1439)
-     * @param {number} nowMinutes - Current time in minutes (0-1439)
-     * @returns {number} Signed delta in minutes, range [-720, +720]
-     *                   Positive = future, Negative = past
-     */
-    const calculateTimeDelta = (scheduledMin, nowMinutes) => {
-        let delta = scheduledMin - nowMinutes;
-
-        // Normalize to shortest path (±12 hours)
-        if (delta > 720) {
-            delta -= 1440; // Yesterday's occurrence
-        } else if (delta < -720) {
-            delta += 1440; // Tomorrow's occurrence
-        }
-
-        return delta;
-    };
+    const practiceDayKey = addDaysToDateKey(curriculumStartKey, Math.max(0, (dayNumber || 1) - 1)) || getLocalDateKey();
 
     const resolveLegTimeStr = (leg) => {
         if (!leg) return null;
@@ -821,36 +811,23 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     /**
      * Check if a practice leg has expired (window passed).
-     * On Day 1 of a path (after begin or reset), legs never expire - fresh start.
      */
     const isLegExpired = (leg) => {
-        // On Day 1, no legs are expired (fresh start)
-        if (metrics.dayIndex === 1) return false;
-
         const t = resolveLegTimeStr(leg);
-        const scheduledMin = parseTimeToMinutes(t);
-        if (scheduledMin == null) return false;
+        if (!t) return false;
 
-        // Calculate signed time delta accounting for day boundaries
-        const delta = calculateTimeDelta(scheduledMin, nowMinutes);
-
-        // Expired if more than 60 minutes in the past
-        return delta < -60;
+        const scheduledAt = localDateTimeFromDateKeyAndTime(practiceDayKey, t);
+        const { expired } = getStartWindowState({ now: new Date(), scheduledAt });
+        return expired;
     };
 
     const isLegTooEarly = (leg) => {
         const t = resolveLegTimeStr(leg);
-        const scheduledMin = parseTimeToMinutes(t);
-        if (scheduledMin == null) return false;
+        if (!t) return false;
 
-        // Calculate signed time delta accounting for day boundaries
-        const delta = calculateTimeDelta(scheduledMin, nowMinutes);
-
-        // Too early if more than 60 minutes in the future
-        // Allow starting up to 60 minutes early. Earlier than that remains locked.
-        // NOTE: Starting early still records a non-zero schedule delta
-        // (and will be penalized by precision rules if outside the GREEN window).
-        return delta > 60;
+        const scheduledAt = localDateTimeFromDateKeyAndTime(practiceDayKey, t);
+        const { tooEarly } = getStartWindowState({ now: new Date(), scheduledAt });
+        return tooEarly;
     };
 
     if (dayNumber > 14 || progress.completed >= progress.total) {
@@ -1115,6 +1092,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     }
 
     const handleStartLeg = (leg, evt) => {
+        // DEV: Shift-click bypasses time window restrictions
+        const isDevForceStart = evt?.shiftKey === true;
+
         // Clear any pilot session failure flag on restart
         if (lastSessionFailed) {
             clearLastSessionFailed();
@@ -1124,9 +1104,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const expired = isLegExpired(leg);
         const tooEarly = isLegTooEarly(leg);
 
-        // Outside the allowed +/- 60 minute window: require hidden Shift override (dev-only).
-        // Do not mention Shift in the UI; just surface a neutral message.
-        if ((expired || tooEarly) && !evt?.shiftKey) {
+        // Outside the allowed +/- 60 minute window: block start UNLESS shift-click bypass
+        if (!isDevForceStart && (expired || tooEarly)) {
             const t = resolveLegTimeStr(leg);
             setMissedLegWarning({
                 legNumber: leg?.legNumber || null,
@@ -1134,6 +1113,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 kind: tooEarly ? 'early' : 'late',
             });
             return;
+        }
+
+        if (isDevForceStart) {
+            console.log('[DEV] Force-starting session via shift-click (bypassing time window):', { dayNumber, legNumber: leg.legNumber, leg });
         }
         
         // Inject pilot metadata based on the leg being launched (not curriculum id)
@@ -1153,6 +1136,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         setActivePracticeSession(dayNumber, leg.legNumber, metadata);
         onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId, metadata });
     };
+
+    const [isPending, startTransition] = useTransition();
 
     const completedLegs = legs.filter(l => l.completed).length;
 
@@ -1253,24 +1238,24 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     gap: '12px',
                                 }}
                             >
-                                <div style={{ width: '72px', height: 'clamp(120px, 18vh, 170px)' }}>
+                                <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
                                     <VerticalMeter
                                         label="COMPLETION"
                                         valueText={`${completedLegs}/${legs.length}`}
                                         progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
                                         isLight={isLight}
+                                        progressBarColor={progressBarColor}
                                     />
                                 </div>
 
-                                <div style={{ flex: 1, minHeight: '24px' }} />
-
-                                <div style={{ width: '72px', height: 'clamp(120px, 18vh, 170px)' }}>
-                                    <VerticalMeter
-                                        label="PATH"
-                                        valueText={`${progress.rate}%`}
-                                        progressRatio={progress.rate / 100}
-                                        isLight={isLight}
-                                    />
+                                <div style={{ width: '72px', flex: 3, minHeight: '140px' }}>
+                                      <VerticalMeter
+                                          label="DAY"
+                                          valueText={`${dayIndexDisplay}/${totalDaysDisplay}`}
+                                          progressRatio={dayProgressRatio}
+                                          isLight={isLight}
+                                          progressBarColor={progressBarColor}
+                                      />
                                 </div>
                             </div>
                         </div>
@@ -1302,25 +1287,22 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             )}
 
                             {/* Scrollable Container */}
-                            <div className="px-6 sm:px-7 pt-5 sm:pt-6 pb-4 relative z-10">
+                            <div className="px-6 sm:px-7 pt-4 sm:pt-5 pb-4 relative z-10">
                                 {/* Decorative corner embellishments */}
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
                                 {/* Header */}
-                                <div className="flex items-center justify-between gap-3 mb-3">
+                                <div className="flex items-start justify-between gap-3 mb-2">
                                     <div>
                                         <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                             Today's Practice
                                         </div>
-                                        <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
-                                        <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
-                                            {todaysPractice.title || `Day ${dayNumber}`}
-                                        </div>
+                                        <div style={{ fontSize: 11, opacity: 0.85 }}>Hello, {displayName}</div>
                                     </div>
 
                                     <div className="flex flex-col items-end gap-1">
-                                        <div className="text-xs font-bold" style={{ color: isLight ? config.accent : 'var(--accent-color)' }}>
-                                            DAY {dayIndexDisplay} OF {totalDaysDisplay}
+                                        <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                            {todaysPractice.title || `Day ${dayNumber}`}
                                         </div>
                                         {streak > 1 && (
                                             <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: isLight ? 'rgba(255, 200, 0, 0.12)' : 'rgba(255, 200, 0, 0.1)', border: isLight ? '1px solid rgba(255, 200, 0, 0.3)' : '1px solid rgba(255, 200, 0, 0.3)', color: isLight ? '#8b6b2c' : 'var(--accent-color)' }}>
@@ -1356,6 +1338,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         const isSoftLocked = expired || tooEarly; // requires hidden Shift override (dev-only)
                                         const isActionable = isNextCandidate && !isSoftLocked;
                                         const isLockedLeg = !leg.completed && !isNextCandidate; // sequencing lock only
+                                        const legTimeStr = resolveLegTimeStr(leg);
                                         return (
                                             <div
                                                 key={`${dayNumber}-${leg.legNumber}`}
@@ -1368,7 +1351,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     boxShadow: isLight
                                                         ? '0 6px 18px rgba(120, 90, 60, 0.1)'
                                                         : '0 10px 30px rgba(0,0,0,0.45)',
-                                                    opacity: isLockedLeg ? 0.5 : (expired ? 0.75 : 1),
+                                                    opacity: isLockedLeg ? 0.5 : ((expired || tooEarly) ? 0.75 : 1),
                                                 }}
                                             >
                                                 {/* Leg Number / Status */}
@@ -1392,13 +1375,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         <div className="text-sm font-bold leading-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                                             {leg.label || leg.practiceType}
                                                         </div>
-                                                        {leg.time && (
-                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
-                                                                {typeof leg.time === 'string' 
-                                                                    ? leg.time.substring(0, 5) 
-                                                                    : (leg.time.time ? String(leg.time.time).substring(0, 5) : String(leg.time).substring(0, 5))}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                     <div className="text-[11px] opacity-70 leading-snug mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
                                                         {leg.description || 'Guided practice'}
@@ -1413,6 +1389,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 {/* Action */}
                                                 {!leg.completed ? (
                                                     <div className="flex flex-col items-end gap-1">
+                                                        {legTimeStr && (
+                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                                {legTimeStr}
+                                                            </div>
+                                                        )}
                                                         {isActionable && lastSessionFailed && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#dc2626' : '#ff6b6b' }}>
                                                                 ⚠ Incomplete
@@ -1428,38 +1409,58 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 Next Up
                                                             </div>
                                                         )}
-                                                        <button
-                                                            onClick={(e) => handleStartLeg(leg, e)}
-                                                            disabled={isLockedLeg}
-                                                            className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
-                                                            style={{
-                                                                background: (isLockedLeg || isSoftLocked)
-                                                                    ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
-                                                                    : 'var(--accent-color)',
-                                                                color: (isLockedLeg || isSoftLocked) ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
-                                                                boxShadow: (isLockedLeg || isSoftLocked) ? 'none' : '0 3px 10px var(--accent-30)',
-                                                                cursor: isLockedLeg ? 'not-allowed' : 'pointer',
-                                                                ...(isActionable && !lastSessionFailed && {
-                                                                    boxShadow: '0 8px 20px var(--accent-30)',
-                                                                }),
-                                                                ...(!isLockedLeg && !isSoftLocked && {
-                                                                    background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                                                                })
-                                                            }}
-                                                        >
-                                                            {expired ? 'Missed' : (tooEarly ? 'Not Yet' : (lastSessionFailed && isActionable ? 'Restart' : (isActionable ? 'Start' : 'Locked')))}
-                                                        </button>
+                                                        {/* Wrapper catches shift-click even when button disabled */}
+                                                        <div onClick={(e) => {
+                                                            if (e.shiftKey) {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                startTransition(() => handleStartLeg(leg, e));
+                                                            }
+                                                        }}>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    if (!e.shiftKey) {
+                                                                        handleStartLeg(leg, e);
+                                                                    }
+                                                                }}
+                                                                disabled={isLockedLeg || isSoftLocked}
+                                                                className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                style={{
+                                                                    background: (isLockedLeg || isSoftLocked)
+                                                                        ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
+                                                                        : 'var(--accent-color)',
+                                                                    color: (isLockedLeg || isSoftLocked) ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
+                                                                    boxShadow: (isLockedLeg || isSoftLocked) ? 'none' : '0 3px 10px var(--accent-30)',
+                                                                    cursor: (isLockedLeg || isSoftLocked) ? 'not-allowed' : 'pointer',
+                                                                    ...(isActionable && !lastSessionFailed && {
+                                                                        boxShadow: '0 8px 20px var(--accent-30)',
+                                                                    }),
+                                                                    ...(!isLockedLeg && !isSoftLocked && {
+                                                                        background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                                    }),
+                                                                    pointerEvents: (isLockedLeg || isSoftLocked) ? 'none' : 'auto',
+                                                                }}
+                                                            >
+                                                                {expired ? 'Missed' : (tooEarly ? 'Not Yet' : (lastSessionFailed && isActionable ? 'Restart' : (isActionable ? 'Start' : 'Locked')))}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <div style={{
-                                                        fontSize: '9px',
-                                                        fontFamily: 'var(--font-display)',
-                                                        fontWeight: 600,
-                                                        color: 'var(--accent-color)',
-                                                        opacity: 0.8,
-                                                        flexShrink: 0,
-                                                    }}>
-                                                        Done
+                                                    <div className="flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
+                                                        {legTimeStr && (
+                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                                {legTimeStr}
+                                                            </div>
+                                                        )}
+                                                        <div style={{
+                                                            fontSize: '9px',
+                                                            fontFamily: 'var(--font-display)',
+                                                            fontWeight: 600,
+                                                            color: 'var(--accent-color)',
+                                                            opacity: 0.8,
+                                                        }}>
+                                                            Done
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

@@ -89,6 +89,39 @@ export const PRACTICE_UI_WIDTH = {
 
 export const labelToPracticeId = (label) => {
   if (!label) return 'breath';
+
+  // Already a canonical practice id
+  if (PRACTICE_REGISTRY[label]) return label;
+
+  // Curriculum/practice-history legacy labels + old ids
+  const aliasMap = {
+    // Legacy "practiceType" labels used by curriculum legs / circuits
+    'Breath & Stillness': 'breath',
+    Ritual: 'integration',
+    Circuit: 'circuit',
+    'Insight Meditation': 'awareness',
+    'Body Scan': 'awareness',
+    Sound: 'resonance',
+    Visualization: 'perception',
+    Cymatics: 'resonance',
+    Photic: 'perception',
+
+    // Old internal ids / variants
+    ritual: 'integration',
+    insight: 'awareness',
+    bodyscan: 'awareness',
+    cognitive_vipassana: 'awareness',
+    somatic_vipassana: 'awareness',
+    feeling: 'awareness',
+    sound: 'resonance',
+    visualization: 'perception',
+    cymatics: 'resonance',
+    photic: 'perception',
+  };
+
+  const aliased = aliasMap[label];
+  if (aliased) return aliased;
+
   const match = PRACTICE_IDS.find((id) => PRACTICE_REGISTRY[id].label === label);
   return match || 'breath';
 };

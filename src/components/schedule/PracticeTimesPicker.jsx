@@ -1,6 +1,8 @@
 // src/components/schedule/PracticeTimesPicker.jsx
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
+import { getLocalDateKey } from '../../utils/dateUtils.js';
+import { computeScheduleAnchorStartAt } from '../../utils/scheduleUtils.js';
 
 const DEFAULT_TIME_OPTIONS = [
     '05:00',
@@ -38,6 +40,12 @@ export function PracticeTimesPicker({
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const selectedTimes = Array.isArray(value) ? value : [];
+
+    const firstSlotTime = selectedTimes[0] || null;
+    const startAt = firstSlotTime
+        ? computeScheduleAnchorStartAt({ now: new Date(), firstSlotTime })
+        : null;
+    const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey();
 
     const toggleTime = (timeValue) => {
         if (selectedTimes.includes(timeValue)) {
@@ -90,6 +98,22 @@ export function PracticeTimesPicker({
                 <p className="text-[13px]" style={{ color: 'var(--accent-color)' }}>
                     Selected: {selectedTimes.map((t) => formatTimeLabel(t)).join(', ')}
                 </p>
+            )}
+
+            {startsTomorrow && (
+                <div
+                    className="rounded-xl border px-4 py-3 text-[12px] leading-relaxed"
+                    style={{
+                        borderColor: isLight ? 'rgba(220, 90, 60, 0.28)' : 'rgba(255, 160, 120, 0.28)',
+                        background: isLight ? 'rgba(220, 90, 60, 0.06)' : 'rgba(255, 160, 120, 0.06)',
+                        color: isLight ? 'rgba(60, 50, 35, 0.85)' : 'rgba(253,251,245,0.85)',
+                        fontFamily: 'var(--font-body)',
+                    }}
+                >
+                    {firstSlotTime
+                        ? `This time has already passed today. Your first practice will begin tomorrow at ${formatTimeLabel(firstSlotTime)}.`
+                        : 'This time has already passed today. Your first practice will begin tomorrow.'}
+                </div>
             )}
         </div>
     );

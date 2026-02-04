@@ -1,12 +1,13 @@
 import React from 'react';
-import { LineChart } from './Charts.jsx';
+import { AreaLineChart } from '../infographics/index.js';
+import { DOMAIN_COLORS } from '../infographics/tokens.js';
 import { ReportSection } from './ReportSection.jsx';
 
 export function PracticeEvolutionReport({ data, deltaLine, milestones, bucketLabel, chartWidth }) {
     const series = [
         {
             label: 'Minutes',
-            color: '#2563eb',
+            color: DOMAIN_COLORS.practice,
             data: data.buckets.map((bucket) => ({ label: bucket.label, value: bucket.minutes }))
         }
     ];
@@ -14,7 +15,7 @@ export function PracticeEvolutionReport({ data, deltaLine, milestones, bucketLab
     if (data.hasAccuracy) {
         series.push({
             label: 'Accuracy',
-            color: '#16a34a',
+            color: '#10b981',
             data: data.buckets.map((bucket) => ({ label: bucket.label, value: bucket.accuracy }))
         });
     }
@@ -30,7 +31,7 @@ export function PracticeEvolutionReport({ data, deltaLine, milestones, bucketLab
     return (
         <ReportSection
             title="Practice Evolution Timeline"
-            infographic={<LineChart series={series} width={chartWidth} />}
+            infographic={<AreaLineChart series={series} width={chartWidth || 420} height={120} showArea={true} />}
             interpretation={interpretation}
             suggestion={suggestion}
             deltaLine={deltaLine}

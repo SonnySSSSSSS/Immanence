@@ -73,7 +73,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
           </Suspense>
         )}
 
-        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} />}
+        {section === "navigation" && !hideCards && <NavigationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} onOpenHardwareGuide={onOpenHardwareGuide} isPracticing={isPracticing} />}
       </div>
     </div>
   );
@@ -163,13 +163,21 @@ function App() {
       console.log('App: background-bottom event received, detail:', e.detail);
       setShowBackgroundBottomLayer(e.detail);
     };
+    const handleAvatarStage = (e) => {
+      console.log('App: dev-avatar-stage event received, detail:', e.detail);
+      const stageName = e.detail.stage;
+      setAvatarStage(stageName);
+      setPreviewStage(stageName);
+    };
     window.addEventListener('dev-hide-cards', handleHideCards);
     // window.addEventListener('dev-background-top', handleTopLayer);
     window.addEventListener('dev-background-bottom', handleBottomLayer);
+    window.addEventListener('dev-avatar-stage', handleAvatarStage);
     return () => {
       window.removeEventListener('dev-hide-cards', handleHideCards);
       // window.removeEventListener('dev-background-top', handleTopLayer);
       window.removeEventListener('dev-background-bottom', handleBottomLayer);
+      window.removeEventListener('dev-avatar-stage', handleAvatarStage);
     };
   }, []);
 
@@ -428,7 +436,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      v3.26.93
+                      v3.27.11
                     </div>
                   </div>
 

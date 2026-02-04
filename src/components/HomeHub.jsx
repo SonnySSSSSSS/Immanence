@@ -23,19 +23,20 @@ import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from 
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { QuickDashboardTiles } from "./dashboard/QuickDashboardTiles.jsx";
-import { DashboardDetailModal } from "./dashboard/DashboardDetailModal.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
 import { useNavigationStore } from "../state/navigationStore.js";
 import { useUiStore } from "../state/uiStore.js";
-import { getQuickDashboardTiles, getDashboardDetail } from "../reporting/dashboardProjection.js";
+import { getQuickDashboardTiles } from "../reporting/dashboardProjection.js";
 import { getHomeDashboardPolicy } from "../reporting/tilePolicy.js";
 import { useTutorialStore } from "../state/tutorialStore.js";
 import { getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 import { TUTORIALS } from "../tutorials/tutorialRegistry.js";
+import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
+import { useAvatarV3State } from "../state/avatarV3Store.js";
 
 // Available paths that match image filenames
 const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
@@ -57,11 +58,14 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
+  const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.viewportMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
+  const effectiveStage = avatarStage || currentStage;
+  const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
 
   const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
   const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
@@ -73,7 +77,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   // Curriculum state
   const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
   const curriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
-  const navigationScheduleSlots = useNavigationStore(s => s.getScheduleSlots?.() || []);
+  // Use canonical getter to avoid stale scheduleSlots (called outside subscription to prevent infinite loops)
+  const navigationScheduleSlots = React.useMemo(() => {
+    const getScheduleSlots = useNavigationStore.getState().getScheduleSlots;
+    return typeof getScheduleSlots === 'function' ? getScheduleSlots() : [];
+  }, [curriculumPracticeTimeSlots]); // Depend on curriculum state to stay in sync
   const activePath = useNavigationStore(s => s.activePath);
   const currentPathId = activePath?.activePathId ?? activePath?.pathId ?? null;
   const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
@@ -230,9 +238,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const [showHistory, setShowHistory] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
 
-  // Dashboard detail modal state
-  const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
-
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-[580px]';
 
@@ -359,15 +364,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
 
-  // Compute dashboard detail for modal (90d range)
+  // Compute dashboard policy for tiles
   const hubPolicy = getHomeDashboardPolicy({
     activeRunId: activePath?.runId,
-  });
-  const dashboardDetail = getDashboardDetail({
-    scope: hubPolicy.scope,
-    range: '90d',
-    includeHonor: hubPolicy.includeHonor,
-    activeRunId: hubPolicy.activeRunId,
   });
 
   return (
@@ -415,11 +414,23 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
             }}
           />
 
+          <div className="relative z-10 flex items-center justify-center">
+            <AvatarV3
+              stage={normalizedStage}
+              modeWeights={modeWeights}
+              isPracticing={isPracticing}
+              lastStageChange={lastStageChange}
+              lastModeChange={lastModeChange}
+              lastSessionComplete={lastSessionComplete}
+              size={isSanctuary ? 'sanctuary' : 'hearth'}
+            />
+          </div>
+
         </div>
 
         {/* STATUS & CONTROL INSTRUMENT - Agency | Continuity (No StageTitle - moved to top) */}
         <HubStagePanel
-          stage={currentStage}
+          stage={effectiveStage}
           path={previewPath}
           showCore={previewShowCore}
           attention={previewAttention}
@@ -435,13 +446,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
       <HonorLogModal
         isOpen={showHonorModal}
         onClose={() => setShowHonorModal(false)}
-      />
-
-      {/* Dashboard Detail Modal */}
-      <DashboardDetailModal
-        isOpen={isDashboardModalOpen}
-        onClose={() => setIsDashboardModalOpen(false)}
-        detail={dashboardDetail}
       />
 
       {activeLauncher?.id === 'thought-detachment-onboarding' && launcherContext && (
@@ -573,7 +577,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                     <QuickDashboardTiles
                       variant="hubCard"
                       tiles={hubTiles}
-                      onOpenDetails={() => setIsDashboardModalOpen(true)}
+                      onOpenDetails={() => openArchive(ARCHIVE_TABS.REPORTS)}
                       isSanctuary={isSanctuary}
                     />
                   );

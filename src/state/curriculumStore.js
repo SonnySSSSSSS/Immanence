@@ -5,6 +5,7 @@ import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
 import { EVENING_TEST_CIRCUIT } from '../data/pilotTestProgram.js';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { getCurriculumPrecisionRail } from '../services/infographics/curriculumRail.js';
+import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
 
 export const FOUNDATION_CIRCUIT = {
     id: 'intro_circuit',
@@ -77,7 +78,12 @@ export const useCurriculumStore = create(
 
             // ONBOARDING ACTIONS
             completeOnboarding: (timeSlots = [], thoughts = []) => {
-                const now = new Date().toISOString();
+                const nowDate = new Date();
+                const startAt = computeScheduleAnchorStartAt({
+                    now: nowDate,
+                    firstSlotTime: Array.isArray(timeSlots) ? timeSlots[0] : null,
+                });
+                const now = nowDate.toISOString();
                 set({
                     onboardingComplete: true,
                     onboardingDismissed: false,
@@ -88,7 +94,7 @@ export const useCurriculumStore = create(
                         weight: t.weight || 0, // 0 = normal, 1 = priority
                         createdAt: now,
                     })),
-                    curriculumStartDate: now,
+                    curriculumStartDate: startAt.toISOString(),
                 });
             },
 

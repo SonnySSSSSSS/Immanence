@@ -40,7 +40,7 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
 
   // Bottom layer state with fallback handling
   const stageBottomUrl = `${import.meta.env.BASE_URL}bg/bg-${stageLower}-bottom.png`;
-  const fallbackBottomUrl = `${import.meta.env.BASE_URL}bg/bg-seedling.png`;
+  const fallbackBottomUrl = `${import.meta.env.BASE_URL}bg/bg-seedling-bottom.png`;
   const [bottomSrc, setBottomSrc] = useState(stageBottomUrl);
 
   // Reset bottom src when stage changes
