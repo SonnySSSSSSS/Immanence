@@ -790,6 +790,28 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return h * 60 + m;
     };
 
+    /**
+     * Calculate signed time delta from now to scheduled time.
+     * Accounts for day boundaries by normalizing to nearest occurrence.
+     *
+     * @param {number} scheduledMin - Scheduled time in minutes (0-1439)
+     * @param {number} nowMinutes - Current time in minutes (0-1439)
+     * @returns {number} Signed delta in minutes, range [-720, +720]
+     *                   Positive = future, Negative = past
+     */
+    const calculateTimeDelta = (scheduledMin, nowMinutes) => {
+        let delta = scheduledMin - nowMinutes;
+
+        // Normalize to shortest path (±12 hours)
+        if (delta > 720) {
+            delta -= 1440; // Yesterday's occurrence
+        } else if (delta < -720) {
+            delta += 1440; // Tomorrow's occurrence
+        }
+
+        return delta;
+    };
+
     const resolveLegTimeStr = (leg) => {
         if (!leg) return null;
         if (typeof leg.time === 'string') return leg.time.substring(0, 5);
@@ -808,16 +830,27 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const t = resolveLegTimeStr(leg);
         const scheduledMin = parseTimeToMinutes(t);
         if (scheduledMin == null) return false;
-        return (nowMinutes - scheduledMin) > 60;
+
+        // Calculate signed time delta accounting for day boundaries
+        const delta = calculateTimeDelta(scheduledMin, nowMinutes);
+
+        // Expired if more than 60 minutes in the past
+        return delta < -60;
     };
 
     const isLegTooEarly = (leg) => {
         const t = resolveLegTimeStr(leg);
         const scheduledMin = parseTimeToMinutes(t);
         if (scheduledMin == null) return false;
+
+        // Calculate signed time delta accounting for day boundaries
+        const delta = calculateTimeDelta(scheduledMin, nowMinutes);
+
+        // Too early if more than 60 minutes in the future
         // Allow starting up to 60 minutes early. Earlier than that remains locked.
-        // NOTE: Starting early still records a non-zero schedule delta (and will be penalized by precision rules if outside the GREEN window).
-        return nowMinutes < (scheduledMin - 60);
+        // NOTE: Starting early still records a non-zero schedule delta
+        // (and will be penalized by precision rules if outside the GREEN window).
+        return delta > 60;
     };
 
     if (dayNumber > 14 || progress.completed >= progress.total) {

@@ -13,7 +13,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const isLight = colorScheme === 'light';
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
 
-    if (!path) return null;
     const { beginPath } = useNavigationStore();
     const { practiceTimeSlots, setPracticeTimeSlots } = useCurriculumStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);

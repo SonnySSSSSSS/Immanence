@@ -73,7 +73,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   // Curriculum state
   const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
   const curriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
-  const navigationScheduleSlots = useNavigationStore(s => s.scheduleSlots);
+  const navigationScheduleSlots = useNavigationStore(s => s.getScheduleSlots?.() || []);
   const activePath = useNavigationStore(s => s.activePath);
   const currentPathId = activePath?.activePathId ?? activePath?.pathId ?? null;
   const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
@@ -114,6 +114,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   useEffect(() => {
     const el = homeSwipeRailRef.current;
     if (!el) return;
+    if (typeof ResizeObserver === 'undefined') return;
 
     const getPageWidth = () => {
       const cs = window.getComputedStyle(el);
@@ -208,10 +209,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     requestAnimationFrame(() => update("rAF"));
     const timer = setTimeout(() => update("timeout-150"), 150);
 
-    window.addEventListener("resize", () => update("resize"));
+    const onResize = () => update("resize");
+    window.addEventListener("resize", onResize);
 
     return () => {
-      window.removeEventListener("resize", () => update("resize"));
+      window.removeEventListener("resize", onResize);
       clearTimeout(timer);
     };
   }, []);

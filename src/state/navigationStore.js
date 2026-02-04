@@ -52,7 +52,7 @@ export const useNavigationStore = create(
 
             // Begin a new path
             beginPath: (pathId) => {
-                const runId = crypto.randomUUID();
+                const runId = crypto?.randomUUID?.() || String(Date.now());
                 const startedAt = new Date().toISOString();
                 const durationDays = getPathDurationDays(pathId);
                 const endsAt = computeEndsAt(startedAt, durationDays);
