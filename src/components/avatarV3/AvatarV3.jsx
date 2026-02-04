@@ -109,6 +109,8 @@ export function AvatarV3({
       >
         <ModeBlendField modeWeights={normalizedWeights} />
         <div className="avatar-v3__layer avatar-v3__core-bed" />
+        {/* Stage-colored inner glow - radiates light from avatar center */}
+        <div className="avatar-v3__layer avatar-v3__core-glow" />
         <StageCore
           stage={stageTransition.to || stage}
           previousStage={stageTransition.from}

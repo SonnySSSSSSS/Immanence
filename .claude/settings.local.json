@@ -26,7 +26,13 @@
       "Bash(npm run lint)",
       "Bash(git commit:*)",
       "Bash(cd:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(timeout 5 tail:*)",
+      "Bash(if [ -d \"scripts\" ])",
+      "Bash(then echo \"exists\")",
+      "Bash(else echo \"not exists\")",
+      "Bash(fi)",
+      "Bash(npm run extract-colors:*)"
     ]
   },
   "mcpServers": {

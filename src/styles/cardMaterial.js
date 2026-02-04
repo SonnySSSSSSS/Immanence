@@ -89,7 +89,12 @@ export const innerGlowStyle = {
   position: 'absolute',
   inset: 0,
   pointerEvents: 'none',
-  background: `radial-gradient(ellipse 80% 30% at 50% 0%, var(--accent-glow)10 0%, transparent 60%)`,
+  background: `radial-gradient(
+    ellipse 90% 40% at 50% 0%,
+    var(--accent-glow)18 0%,
+    var(--accent-glow)08 35%,
+    transparent 70%
+  )`,
   borderRadius: 'inherit',
 };
 
@@ -138,7 +143,12 @@ export const innerGlowStyleLight = {
   position: 'absolute',
   inset: 0,
   pointerEvents: 'none',
-  background: `radial-gradient(ellipse 80% 30% at 50% 0%, rgba(255, 255, 255, 0.3) 0%, transparent 60%)`,
+  background: `radial-gradient(
+    ellipse 90% 40% at 50% 0%,
+    var(--accent-glow)12 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    transparent 70%
+  )`,
   borderRadius: 'inherit',
 };
 

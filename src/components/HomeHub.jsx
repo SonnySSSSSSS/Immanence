@@ -387,11 +387,18 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: isSanctuary ? 'min(120%, 900px)' : 'min(100%, 600px)',
-              height: isSanctuary ? 'min(120%, 700px)' : 'min(100%, 600px)',
-              background: 'radial-gradient(circle, var(--accent-glow) 0%, var(--accent-glow)25 15%, var(--accent-glow)08 40%, transparent 70%)',
-              filter: isSanctuary ? 'blur(100px)' : 'blur(80px)',
-              opacity: isSanctuary ? 0.2 : 0.15,
+              width: isSanctuary ? 'min(105%, 750px)' : 'min(90%, 525px)',
+              height: isSanctuary ? 'min(105%, 600px)' : 'min(90%, 525px)',
+              background: 'radial-gradient(circle, ' +
+                'var(--accent-glow) 0%, ' +
+                'var(--accent-glow)40 12%, ' +
+                'var(--accent-glow)18 35%, ' +
+                'var(--accent-glow)05 55%, ' +
+                'transparent 75%)',
+              filter: isSanctuary ? 'blur(90px)' : 'blur(75px)',
+              opacity: isLight
+                ? (isSanctuary ? 0.12 : 0.10)
+                : (isSanctuary ? 0.35 : 0.28),
               pointerEvents: 'none',
               zIndex: 0,
             }}

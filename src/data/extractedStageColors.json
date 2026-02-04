@@ -1,0 +1,57 @@
+{
+  "seedling": {
+    "primary": "#71706d",
+    "secondary": "#c2c2c1",
+    "accent": "#71706d",
+    "muted": "#232322",
+    "highlight": "#a4a3a1",
+    "source": "bg/bg-seedling-bottom.png",
+    "extractedAt": "2026-02-04T16:03:52.489Z",
+    "contrastRatio": "3.97",
+    "wcagAA": false
+  },
+  "ember": {
+    "primary": "#e5ab51",
+    "secondary": "#4de4aa",
+    "accent": "#e5ab51",
+    "muted": "#895b14",
+    "highlight": "#f2d6aa",
+    "source": "bg/bg-ember-bottom.png",
+    "extractedAt": "2026-02-04T16:03:52.533Z",
+    "contrastRatio": "9.63",
+    "wcagAA": true
+  },
+  "flame": {
+    "primary": "#23a64e",
+    "secondary": "#5126a9",
+    "accent": "#23a64e",
+    "muted": "#092813",
+    "highlight": "#55db81",
+    "source": "bg/bg-flame-bottom.png",
+    "extractedAt": "2026-02-04T16:03:52.577Z",
+    "contrastRatio": "6.25",
+    "wcagAA": true
+  },
+  "beacon": {
+    "primary": "#96335e",
+    "secondary": "#659d36",
+    "accent": "#96335e",
+    "muted": "#240c17",
+    "highlight": "#cb6591",
+    "source": "bg/bg-beacon-bottom.png",
+    "extractedAt": "2026-02-04T16:03:52.615Z",
+    "contrastRatio": "2.77",
+    "wcagAA": false
+  },
+  "stellar": {
+    "primary": "#783780",
+    "secondary": "#7f7a38",
+    "accent": "#783780",
+    "muted": "#140915",
+    "highlight": "#b162bb",
+    "source": "bg/bg-stellar-bottom.png",
+    "extractedAt": "2026-02-04T16:03:52.654Z",
+    "contrastRatio": "2.49",
+    "wcagAA": false
+  }
+}

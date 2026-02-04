@@ -1,14 +1,23 @@
 // Theme colors for each avatar stage
+import extractedColors from '../data/extractedStageColors.json';
+
+// Helper function to extract RGB values from hex for glow colors
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 export const STAGE_THEMES = {
     SEEDLING: {
         name: 'Seedling',
         accent: {
-            primary: '#4ade80',      // Vibrant Green
-            secondary: '#22c55e',    // Secondary green
-            muted: '#16a34a',        // Muted green
-            glow: 'rgba(74, 222, 128, 0.4)',
-            particleColor: '#86efac',
+            primary: extractedColors.seedling?.primary || '#4ade80',      // Extracted from wallpaper
+            secondary: extractedColors.seedling?.secondary || '#22c55e',  // Extracted secondary
+            muted: extractedColors.seedling?.muted || '#16a34a',          // Extracted muted
+            glow: hexToRgba(extractedColors.seedling?.primary || '#4ade80', 0.4),
+            particleColor: extractedColors.seedling?.highlight || '#86efac',
         },
         text: {
             accent: '#4ade80',
@@ -36,11 +45,11 @@ export const STAGE_THEMES = {
     EMBER: {
         name: 'Ember',
         accent: {
-            primary: '#f97316',      // Orange
-            secondary: '#ea580c',    // Deep orange
-            muted: '#9a3412',        // Dark orange
-            glow: 'rgba(249, 115, 22, 0.4)',
-            particleColor: '#fb923c',
+            primary: extractedColors.ember?.primary || '#f97316',      // Extracted from wallpaper
+            secondary: extractedColors.ember?.secondary || '#ea580c',  // Extracted secondary
+            muted: extractedColors.ember?.muted || '#9a3412',          // Extracted muted
+            glow: hexToRgba(extractedColors.ember?.primary || '#f97316', 0.4),
+            particleColor: extractedColors.ember?.highlight || '#fb923c',
         },
         text: {
             accent: '#fb923c',
@@ -68,11 +77,11 @@ export const STAGE_THEMES = {
     FLAME: {
         name: 'Flame',
         accent: {
-            primary: '#fcd34d',      // Gold (current default)
-            secondary: '#f59e0b',    // Amber
-            muted: '#92400e',        // Dark amber
-            glow: 'rgba(252, 211, 77, 0.4)',
-            particleColor: '#FF6B35', // Orange-red for particles to stand out
+            primary: extractedColors.flame?.primary || '#fcd34d',      // Extracted from wallpaper
+            secondary: extractedColors.flame?.secondary || '#f59e0b',  // Extracted secondary
+            muted: extractedColors.flame?.muted || '#92400e',          // Extracted muted
+            glow: hexToRgba(extractedColors.flame?.primary || '#fcd34d', 0.4),
+            particleColor: extractedColors.flame?.highlight || '#FF6B35',
         },
         text: {
             accent: '#fcd34d',
@@ -100,11 +109,11 @@ export const STAGE_THEMES = {
     BEACON: {
         name: 'Beacon',
         accent: {
-            primary: '#22d3ee',      // Cyan
-            secondary: '#06b6d4',    // Teal
-            muted: '#0e7490',        // Dark cyan
-            glow: 'rgba(34, 211, 238, 0.4)',
-            particleColor: '#67e8f9',
+            primary: extractedColors.beacon?.primary || '#22d3ee',      // Extracted from wallpaper
+            secondary: extractedColors.beacon?.secondary || '#06b6d4',  // Extracted secondary
+            muted: extractedColors.beacon?.muted || '#0e7490',          // Extracted muted
+            glow: hexToRgba(extractedColors.beacon?.primary || '#22d3ee', 0.4),
+            particleColor: extractedColors.beacon?.highlight || '#67e8f9',
         },
         text: {
             accent: '#22d3ee',
@@ -132,11 +141,11 @@ export const STAGE_THEMES = {
     STELLAR: {
         name: 'Stellar',
         accent: {
-            primary: '#a78bfa',      // Violet
-            secondary: '#8b5cf6',    // Purple
-            muted: '#5b21b6',        // Dark purple
-            glow: 'rgba(167, 139, 250, 0.4)',
-            particleColor: '#c084fc',
+            primary: extractedColors.stellar?.primary || '#a78bfa',      // Extracted from wallpaper
+            secondary: extractedColors.stellar?.secondary || '#8b5cf6',  // Extracted secondary
+            muted: extractedColors.stellar?.muted || '#5b21b6',          // Extracted muted
+            glow: hexToRgba(extractedColors.stellar?.primary || '#a78bfa', 0.4),
+            particleColor: extractedColors.stellar?.highlight || '#c084fc',
         },
         text: {
             accent: '#a78bfa',

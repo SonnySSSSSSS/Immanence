@@ -2,7 +2,7 @@
 // Developer-only lab for testing Immanence OS systems
 // Access: Ctrl+Shift+D or tap version 5 times
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { useLunarStore } from '../state/lunarStore';
 import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
@@ -18,6 +18,9 @@ import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
+
+// Lazy-loaded lab component (code-split, only loads when DevPanel opens)
+const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
@@ -540,7 +543,8 @@ export function DevPanel({
         attention: false,
         tracking: false,
         llm: false,
-        data: false
+        data: false,
+        bloomRingLab: false
     });
 
     // Armed state for destructive actions
@@ -1157,6 +1161,24 @@ export function DevPanel({
                         <div className="mt-4">
                             <TutorialEditor />
                         </div>
+                    </Section>
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* BREATHING RING LAB (Code-Split, Lazy-Loaded) */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="🔵 Breathing Ring Lab (Phase 0)"
+                        expanded={expandedSections.bloomRingLab}
+                        onToggle={() => toggleSection('bloomRingLab')}
+                        isLight={isLight}
+                    >
+                        <Suspense fallback={
+                            <div className="text-xs text-white/40 py-2">
+                                Loading lab...
+                            </div>
+                        }>
+                            <BloomRingLab isLight={isLight} />
+                        </Suspense>
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
