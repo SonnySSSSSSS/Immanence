@@ -7,19 +7,130 @@ import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, GodRays } 
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
-// Debug probe: set to true to verify lens post stack is running (exaggerated effects)
-const POST_PROBE = true;
+// Phase 2C-3: Ray Occluders Component
+function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
+  if (!enabled) return null;
 
-// GodRays probe: set to true for stronger light shafts during verification
-const RAYS_PROBE = true;
+  // Debug material: visible red for positioning verification
+  const debugMaterial = {
+    color: "#ff3355",
+    transparent: true,
+    opacity: 0.25,
+    depthWrite: true,
+    depthTest: true,
+    toneMapped: false,
+    side: THREE.DoubleSide
+  };
 
-// GodRays exaggeration for verification (non-negotiable initial test)
-const GODRAY_EXAGGERATION = 1.4;
+  // Real occluder material: depth-only, NO transparent pipeline
+  // CRITICAL: opaque material that writes depth but not color
+  // colorWrite is set via onUpdate to ensure compatibility
+  const occluderMaterial = {
+    color: "#000000",  // irrelevant since colorWrite will be false
+    transparent: false,  // do NOT use transparent pipeline (preserves reliable depth writing)
+    depthWrite: true,
+    depthTest: true,
+    toneMapped: false,
+    side: THREE.DoubleSide  // occlude from both sides
+  };
 
-// DEBUG: Toggle god rays visibility (scale-aware tuning)
-const DEBUG_RAYS = true;
+  const mat = debug ? debugMaterial : occluderMaterial;
 
-function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65, nucleusSunRef, godRayLightRef }) {
+  // Cross pattern: 2 bars covering full ring diameter (~3.2 units for 1.6 radius)
+  const renderCrossPattern = () => (
+    <>
+      {/* Horizontal bar */}
+      <mesh position={[0, 0, 0]}>
+        <planeGeometry args={[3.2 * scale, 0.06 * scale]} />
+        <meshBasicMaterial
+          {...mat}
+          onUpdate={(m) => { m.colorWrite = debug; }}
+        />
+      </mesh>
+      {/* Vertical bar */}
+      <mesh position={[0, 0, 0.001]}>
+        <planeGeometry args={[0.06 * scale, 3.2 * scale]} />
+        <meshBasicMaterial
+          {...mat}
+          onUpdate={(m) => { m.colorWrite = debug; }}
+        />
+      </mesh>
+    </>
+  );
+
+  // Grid pattern: cross + diagonals = 8 segments
+  const renderGridPattern = () => (
+    <>
+      {/* Cross bars (reuse cross pattern) */}
+      {renderCrossPattern()}
+      {/* Diagonal bars */}
+      <mesh position={[0, 0, 0.002]} rotation={[0, 0, Math.PI / 4]}>
+        <planeGeometry args={[3.6 * scale, 0.06 * scale]} />
+        <meshBasicMaterial
+          {...mat}
+          onUpdate={(m) => { m.colorWrite = debug; }}
+        />
+      </mesh>
+      <mesh position={[0, 0, 0.003]} rotation={[0, 0, -Math.PI / 4]}>
+        <planeGeometry args={[3.6 * scale, 0.06 * scale]} />
+        <meshBasicMaterial
+          {...mat}
+          onUpdate={(m) => { m.colorWrite = debug; }}
+        />
+      </mesh>
+    </>
+  );
+
+  // Radial pattern: 4 spokes at 0°, 45°, 90°, 135°
+  const renderRadialPattern = () => (
+    <>
+      {[0, 45, 90, 135].map((angle, i) => {
+        const rad = (angle * Math.PI) / 180;
+        return (
+          <mesh key={`radial-${i}`} position={[0, 0, i * 0.001]} rotation={[0, 0, rad]}>
+            <planeGeometry args={[3.6 * scale, 0.05 * scale]} />
+            <meshBasicMaterial
+              {...mat}
+              onUpdate={(m) => { m.colorWrite = debug; }}
+            />
+          </mesh>
+        );
+      })}
+    </>
+  );
+
+  const renderPattern = () => {
+    switch (pattern) {
+      case 'grid': return renderGridPattern();
+      case 'radial': return renderRadialPattern();
+      default: return renderCrossPattern();
+    }
+  };
+
+  return (
+    <group position={[0, 0, depthOffset]} name="rayOccluders">
+      {renderPattern()}
+    </group>
+  );
+}
+
+function BreathingRing({
+  breathSpeed = 0.8,
+  streakStrength = 0.20,
+  streakLength = 0.65,
+  nucleusSunRef,
+  godRayLightRef,
+  // Phase 2C-3: Sun proxy props
+  raySunY,
+  raySunZ,
+  raySunRadius,
+  // Phase 2C-3: Occluder props
+  occluderEnabled,
+  occluderPattern,
+  occluderScale,
+  occluderDepthOffset,
+  debugOccluders
+}) {
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
   const streakProxyRef = useRef(null);
@@ -120,9 +231,9 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
   return (
     <group>
-      {/* God-ray emitter (small axial hotspot with strong vertical bias) */}
-      <mesh ref={godRayLightRef} position={[0, 0.45, -2]}>
-        <sphereGeometry args={[0.05, 16, 16]} />
+      {/* God-ray emitter (tunable sun proxy - CRITICAL for shaft structure) */}
+      <mesh ref={godRayLightRef} position={[0, raySunY, raySunZ]}>
+        <sphereGeometry args={[raySunRadius, 16, 16]} />
         <meshBasicMaterial
           color="#ffffff"
           transparent
@@ -131,29 +242,14 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         />
       </mesh>
 
-      {/* Ray occluder (thin bars to force shaft slicing, not visible directly) */}
-      <group position={[0, 0, -1.5]}>
-        {/* Horizontal bar */}
-        <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[0.6, 0.015]} />
-          <meshBasicMaterial
-            color="#000000"
-            depthWrite={true}
-            depthTest={true}
-            toneMapped={false}
-          />
-        </mesh>
-        {/* Vertical bar */}
-        <mesh position={[0, 0, 0.001]}>
-          <planeGeometry args={[0.015, 0.6]} />
-          <meshBasicMaterial
-            color="#000000"
-            depthWrite={true}
-            depthTest={true}
-            toneMapped={false}
-          />
-        </mesh>
-      </group>
+      {/* Ray occluders (Phase 2C-3: structured shafts) */}
+      <RayOccluders
+        enabled={occluderEnabled}
+        pattern={occluderPattern}
+        scale={occluderScale}
+        depthOffset={occluderDepthOffset}
+        debug={debugOccluders}
+      />
 
       {/* Dark center disc to control inner glow (creates halo effect) */}
       <mesh position={[0, 0, -0.01]}>
@@ -580,7 +676,25 @@ export default function BloomRingCanvas({
   streakStrength = 0.20,
   streakThreshold = 0.85,
   streakLength = 0.65,
-  streakAngle = 0
+  streakAngle = 0,
+  // Phase 2C-3: GodRays controls
+  rayEnabled = true,
+  rayExposure = 0.12,
+  rayWeight = 0.4,
+  rayDecay = 0.93,
+  raySamples = 40,
+  rayDensity = 0.8,
+  rayClampMax = 1.0,
+  // Phase 2C-3: Sun proxy controls
+  raySunY = 0.45,
+  raySunZ = -2.0,
+  raySunRadius = 0.08,
+  // Phase 2C-3: Occluder controls
+  occluderEnabled = true,
+  occluderPattern = 'cross',
+  occluderScale = 1.2,
+  occluderDepthOffset = -1.5,
+  debugOccluders = false
 }) {
   const nucleusSunRef = useRef(null);
   const godRayLightRef = useRef(null);
@@ -596,21 +710,22 @@ export default function BloomRingCanvas({
   // Clamp bloom to preserve highlight detail and prevent full-frame blowout
   const cappedBloomStrength = Math.min(bloomStrength, 2.4);
 
-  // Gate god rays by bloom strength (rays only appear when highlights are hot)
-  const rayIntensity = Math.min(1, bloomStrength / 2.5);
-
   return (
     <Canvas
       style={{ width, height }}
       dpr={[1, 2]}
+      camera={{
+        fov: 12,
+        position: [0, 0, 10],
+        near: 0.1,
+        far: 50,
+      }}
       gl={{
         antialias: true,
         alpha: true,
         powerPreference: 'high-performance',
         preserveDrawingBuffer: false,
       }}
-      orthographic
-      camera={{ zoom: 80, position: [0, 0, 10] }}
       onCreated={({ gl }) => {
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -623,19 +738,28 @@ export default function BloomRingCanvas({
           streakLength={streakLength}
           nucleusSunRef={nucleusSunRef}
           godRayLightRef={godRayLightRef}
+          raySunY={raySunY}
+          raySunZ={raySunZ}
+          raySunRadius={raySunRadius}
+          occluderEnabled={occluderEnabled}
+          occluderPattern={occluderPattern}
+          occluderScale={occluderScale}
+          occluderDepthOffset={occluderDepthOffset}
+          debugOccluders={debugOccluders}
         />
 
         <EffectComposer multisampling={4}>
-          {/* Phase 2C-3: Occluded ray shafts (dark most of time, structured by occlusion) */}
-          {DEBUG_RAYS && (
+          {/* Phase 2C-3: Occluded ray shafts (tunable, structured by occlusion) */}
+          {/* No ref gating needed - GodRays will handle null sun gracefully until ref populates */}
+          {rayEnabled && (
             <GodRays
               sun={godRayLightRef}
-              samples={40}
-              density={0.8}
-              decay={0.93}
-              weight={0.4}
-              exposure={0.12 * rayIntensity}
-              clampMax={1.0}
+              samples={raySamples}
+              density={rayDensity}
+              decay={rayDecay}
+              weight={rayWeight}
+              exposure={rayExposure}
+              clampMax={rayClampMax}
               blendFunction={BlendFunction.SCREEN}
             />
           )}
@@ -676,7 +800,7 @@ export default function BloomRingCanvas({
           {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
           {/* Chromatic aberration (subtle RGB separation at edges) */}
           <ChromaticAberration
-            offset={POST_PROBE ? [0.01, 0.004] : [0.0012, 0.0005]}
+            offset={[0.0012, 0.0005]}
             radialModulation={true}
             modulationOffset={0.15}
           />
@@ -685,7 +809,7 @@ export default function BloomRingCanvas({
           <Vignette
             eskil={false}
             offset={0.25}
-            darkness={POST_PROBE ? 0.9 : 0.45}
+            darkness={0.45}
           />
         </EffectComposer>
       </Canvas>
