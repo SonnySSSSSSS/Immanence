@@ -133,9 +133,9 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
       </mesh>
 
       {/* Inner concentric core (Phase 2C: aperture stack) */}
-      <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, 0.002]}>
+      <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, -0.005]} rotation={[0, 0, 0]}>
         {/* Center glow disc (soft luminous core) */}
-        <mesh position={[0, 0, -0.001]}>
+        <mesh position={[0, 0, -0.003]}>
           <circleGeometry args={[0.14, 64]} />
           <meshBasicMaterial
             color="#FFF0E0"
