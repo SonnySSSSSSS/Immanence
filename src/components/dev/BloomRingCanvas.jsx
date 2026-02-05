@@ -345,10 +345,10 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         </group>
 
         {/* Top crosshair line */}
-        <group position={[0, 1.35, 0]}>
+        <group position={[0, 1.50, 0]}>
           {/* Shoulder glow (wide, low opacity) */}
           <mesh>
-            <planeGeometry args={[0.015, 0.25]} />
+            <planeGeometry args={[0.015, 0.55]} />
             <meshBasicMaterial
               color="#FFF8F0"
               transparent
@@ -360,7 +360,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           </mesh>
           {/* Hot core (thin, bright) */}
           <mesh position={[0, 0, 0.001]}>
-            <planeGeometry args={[0.006, 0.25]} />
+            <planeGeometry args={[0.006, 0.55]} />
             <meshBasicMaterial
               color="#FFFFFF"
               transparent
@@ -373,10 +373,10 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         </group>
 
         {/* Bottom crosshair line */}
-        <group position={[0, -1.35, 0]}>
+        <group position={[0, -1.50, 0]}>
           {/* Shoulder glow */}
           <mesh>
-            <planeGeometry args={[0.015, 0.25]} />
+            <planeGeometry args={[0.015, 0.55]} />
             <meshBasicMaterial
               color="#FFF8F0"
               transparent
@@ -388,7 +388,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           </mesh>
           {/* Hot core */}
           <mesh position={[0, 0, 0.001]}>
-            <planeGeometry args={[0.006, 0.25]} />
+            <planeGeometry args={[0.006, 0.55]} />
             <meshBasicMaterial
               color="#FFFFFF"
               transparent
@@ -404,7 +404,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         <group position={[-1.35, 0, 0]}>
           {/* Shoulder glow */}
           <mesh>
-            <planeGeometry args={[0.25, 0.015]} />
+            <planeGeometry args={[0.22, 0.015]} />
             <meshBasicMaterial
               color="#FFF8F0"
               transparent
@@ -416,11 +416,11 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           </mesh>
           {/* Hot core */}
           <mesh position={[0, 0, 0.001]}>
-            <planeGeometry args={[0.25, 0.006]} />
+            <planeGeometry args={[0.22, 0.006]} />
             <meshBasicMaterial
               color="#FFFFFF"
               transparent
-              opacity={0.35}
+              opacity={0.31}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
               toneMapped={false}
@@ -432,7 +432,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         <group position={[1.35, 0, 0]}>
           {/* Shoulder glow */}
           <mesh>
-            <planeGeometry args={[0.25, 0.015]} />
+            <planeGeometry args={[0.22, 0.015]} />
             <meshBasicMaterial
               color="#FFF8F0"
               transparent
@@ -444,11 +444,11 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           </mesh>
           {/* Hot core */}
           <mesh position={[0, 0, 0.001]}>
-            <planeGeometry args={[0.25, 0.006]} />
+            <planeGeometry args={[0.22, 0.006]} />
             <meshBasicMaterial
               color="#FFFFFF"
               transparent
-              opacity={0.35}
+              opacity={0.31}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
               toneMapped={false}
