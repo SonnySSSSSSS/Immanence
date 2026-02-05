@@ -120,8 +120,8 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
   return (
     <group>
-      {/* God-ray emitter (small axial hotspot, like lens flare source) */}
-      <mesh ref={godRayLightRef} position={[0, 0, -2]}>
+      {/* God-ray emitter (small axial hotspot with vertical bias for directional shafts) */}
+      <mesh ref={godRayLightRef} position={[0, 0.2, -2]}>
         <sphereGeometry args={[0.05, 16, 16]} />
         <meshBasicMaterial
           color="#ffffff"
@@ -602,6 +602,20 @@ export default function BloomRingCanvas({
         />
 
         <EffectComposer multisampling={4}>
+          {/* Phase 2C-2: Directional god rays (BEFORE bloom to preserve shaft structure) */}
+          {DEBUG_RAYS && (
+            <GodRays
+              sun={godRayLightRef}
+              samples={48}
+              density={1.25}
+              decay={0.93}
+              weight={0.75}
+              exposure={0.6 + rayIntensity * 0.4}
+              clampMax={1.0}
+              blendFunction={BlendFunction.SCREEN}
+            />
+          )}
+
           {/* Primary bloom (analog ring glow) - capped to preserve highlight detail */}
           <Bloom
             intensity={cappedBloomStrength}
@@ -617,20 +631,6 @@ export default function BloomRingCanvas({
               radius={streakLength * 2.0}
               luminanceThreshold={streakThreshold}
               luminanceSmoothing={0.01}
-            />
-          )}
-
-          {/* Phase 2C-S: Scale-aware axial god rays (biased for UI viewport visibility) */}
-          {DEBUG_RAYS && (
-            <GodRays
-              sun={godRayLightRef}
-              samples={128}
-              density={0.85}
-              decay={0.93}
-              weight={0.75}
-              exposure={0.6 + rayIntensity * 0.4}
-              clampMax={1.0}
-              blendFunction={BlendFunction.SCREEN}
             />
           )}
 
