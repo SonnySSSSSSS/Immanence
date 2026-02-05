@@ -1,51 +1,108 @@
 // src/components/dev/BloomRingLab.jsx
-// Phase 0: Breathing Ring Lab scaffold (lazy-loaded, code-split)
-// No Three.js/R3F yet - just the container and UI stub
-// Will unmount cleanly when DevPanel closes
+// Phase 1: Breathing Ring Lab with WebGL Bloom effect
+// Uses BloomRingCanvas to render the preview
+// Includes live control sliders for bloom parameters
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import BloomRingCanvas from './BloomRingCanvas.jsx';
 
 const PRESET_OPTIONS = [
-  { id: 'basic', label: 'Basic Bloom (placeholder)' },
-  { id: 'pulsing', label: 'Pulsing Bloom (placeholder)' },
-  { id: 'harmonic', label: 'Harmonic Bloom (placeholder)' },
+  { id: 'basic', label: 'Basic Bloom', strength: 2.0, radius: 0.4, threshold: 0.3, breathSpeed: 0.8 },
+  { id: 'soft', label: 'Soft Glow', strength: 1.2, radius: 0.6, threshold: 0.5, breathSpeed: 0.6 },
+  { id: 'intense', label: 'Intense Bloom', strength: 3.0, radius: 0.2, threshold: 0.1, breathSpeed: 1.0 },
 ];
 
 export function BloomRingLab({ isLight = false }) {
   const [selectedPreset, setSelectedPreset] = useState('basic');
+  const [bloomStrength, setBloomStrength] = useState(2.0);
+  const [bloomRadius, setBloomRadius] = useState(0.4);
+  const [bloomThreshold, setBloomThreshold] = useState(0.3);
+  const [breathSpeed, setBreathSpeed] = useState(0.8);
+
+  // Size measurement for Canvas mount gating
+  const containerRef = useRef(null);
+  const [measuredSize, setMeasuredSize] = useState({ w: 0, h: 0 });
+
+  // ResizeObserver to track container size
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const DEBUG = false;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (DEBUG) console.log('[BloomRingLab] size', width, height);
+        setMeasuredSize({ w: Math.floor(width), h: Math.floor(height) });
+      }
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const handlePresetChange = (presetId) => {
+    setSelectedPreset(presetId);
+    const preset = PRESET_OPTIONS.find(p => p.id === presetId);
+    if (preset) {
+      setBloomStrength(preset.strength);
+      setBloomRadius(preset.radius);
+      setBloomThreshold(preset.threshold);
+      setBreathSpeed(preset.breathSpeed);
+    }
+  };
+
+  const canvasReady = measuredSize.w >= 50 && measuredSize.h >= 50;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Preview Frame - Fixed size container for Three.js later */}
-      <div className="rounded-lg overflow-hidden border" style={{
-        background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(10, 10, 18, 0.5)',
-        borderColor: isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-        width: '100%',
-        aspectRatio: '1',
-        maxWidth: '300px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.3)',
-        fontSize: '12px',
-      }}>
-        <div className="text-center">
-          <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔵</div>
-          <div>Preview Frame</div>
-          <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6 }}>Canvas will mount here</div>
-        </div>
+      {/* Preview Frame - Canvas Container */}
+      <div
+        ref={containerRef}
+        className="rounded-lg overflow-hidden border"
+        style={{
+          background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(10, 10, 18, 0.5)',
+          borderColor: isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+          width: '100%',
+          maxWidth: '300px',
+          height: '300px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {canvasReady ? (
+          <BloomRingCanvas
+            width={measuredSize.w}
+            height={measuredSize.h}
+            isLight={isLight}
+            bloomStrength={bloomStrength}
+            bloomRadius={bloomRadius}
+            bloomThreshold={bloomThreshold}
+            breathSpeed={breathSpeed}
+          />
+        ) : (
+          <div style={{
+            fontSize: '10px',
+            color: isLight ? 'rgba(60, 50, 40, 0.4)' : 'rgba(255, 255, 255, 0.3)',
+          }}>
+            Waiting for layout...
+          </div>
+        )}
       </div>
 
-      {/* Control Stub */}
+      {/* Preset Dropdown */}
       <div>
         <label className="text-xs font-semibold block mb-2" style={{
           color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(255, 255, 255, 0.6)'
         }}>
-          Preset (Placeholder)
+          Preset
         </label>
         <select
           value={selectedPreset}
-          onChange={(e) => setSelectedPreset(e.target.value)}
+          onChange={(e) => handlePresetChange(e.target.value)}
           className="w-full rounded-lg px-3 py-2.5 text-xs font-medium"
           style={{
             background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
@@ -62,12 +119,117 @@ export function BloomRingLab({ isLight = false }) {
         </select>
       </div>
 
+      {/* Control Sliders */}
+      <div className="space-y-3 pt-2 border-t" style={{
+        borderColor: isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(255, 255, 255, 0.1)'
+      }}>
+        {/* Bloom Strength */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Bloom Strength
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {bloomStrength.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="3"
+            step="0.05"
+            value={bloomStrength}
+            onChange={(e) => setBloomStrength(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+
+        {/* Bloom Radius */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Bloom Radius
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {bloomRadius.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={bloomRadius}
+            onChange={(e) => setBloomRadius(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+
+        {/* Bloom Threshold */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Bloom Threshold
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {bloomThreshold.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={bloomThreshold}
+            onChange={(e) => setBloomThreshold(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+
+        {/* Breath Speed */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Breath Speed
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {breathSpeed.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0.1"
+            max="2.5"
+            step="0.05"
+            value={breathSpeed}
+            onChange={(e) => setBreathSpeed(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+      </div>
+
       {/* Info Text */}
       <div className="text-[10px] rounded-lg p-2" style={{
         background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(255, 255, 255, 0.05)',
         color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)'
       }}>
-        <strong>Phase 0:</strong> Scaffold only. Canvas and controls coming in Phase 1.
+        <strong>Phase 1:</strong> Live Bloom preview. Adjust parameters in real-time.
       </div>
     </div>
   );

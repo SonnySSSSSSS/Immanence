@@ -1167,7 +1167,7 @@ export function DevPanel({
                     {/* BREATHING RING LAB (Code-Split, Lazy-Loaded) */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
-                        title="🔵 Breathing Ring Lab (Phase 0)"
+                        title="🔵 Breathing Ring Lab (Phase 1)"
                         expanded={expandedSections.bloomRingLab}
                         onToggle={() => toggleSection('bloomRingLab')}
                         isLight={isLight}
