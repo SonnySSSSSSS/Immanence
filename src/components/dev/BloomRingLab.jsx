@@ -9,7 +9,7 @@ import BloomRingCanvas from './BloomRingCanvas.jsx';
 const PRESET_OPTIONS = [
   { id: 'basic', label: 'Basic Bloom', strength: 2.0, radius: 0.4, threshold: 0.3, breathSpeed: 0.8 },
   { id: 'soft', label: 'Soft Glow', strength: 1.2, radius: 0.6, threshold: 0.5, breathSpeed: 0.6 },
-  { id: 'intense', label: 'Intense Bloom', strength: 3.0, radius: 0.2, threshold: 0.1, breathSpeed: 1.0 },
+  { id: 'intense', label: 'Intense Bloom', strength: 2.8, radius: 0.60, threshold: 0.28, breathSpeed: 1.0 },
 ];
 
 export function BloomRingLab({ isLight = false }) {
@@ -60,6 +60,15 @@ export function BloomRingLab({ isLight = false }) {
 
   const canvasReady = measuredSize.w >= 50 && measuredSize.h >= 50;
 
+  // Guardrail normalization: prevent harsh bloom combinations
+  // If strength is high, ensure radius and threshold stay in softer range
+  const normalizedBloomRadius = bloomStrength > 2.4
+    ? Math.max(bloomRadius, 0.45)
+    : bloomRadius;
+  const normalizedBloomThreshold = bloomStrength > 2.4
+    ? Math.max(bloomThreshold, 0.22)
+    : bloomThreshold;
+
   return (
     <div className="flex flex-col gap-4">
       {/* Preview Frame - Canvas Container */}
@@ -83,8 +92,8 @@ export function BloomRingLab({ isLight = false }) {
             height={measuredSize.h}
             isLight={isLight}
             bloomStrength={bloomStrength}
-            bloomRadius={bloomRadius}
-            bloomThreshold={bloomThreshold}
+            bloomRadius={normalizedBloomRadius}
+            bloomThreshold={normalizedBloomThreshold}
             breathSpeed={breathSpeed}
             streakStrength={streakStrength}
             streakThreshold={streakThreshold}
