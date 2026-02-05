@@ -12,6 +12,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
   const streakProxyRef = useRef(null);
   const reticleRef = useRef(null);
   const innerGroupRef = useRef(null);
+  const nucleusCoreRef = useRef(null);
   const baseShoulderOpacity = 0.35;
 
   useFrame(({ clock }) => {
@@ -95,6 +96,14 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         }
       });
     }
+
+    // Nucleus core breathing (subtle heat modulation)
+    if (nucleusCoreRef.current) {
+      const breathPhase = Math.sin(t);
+      const nucleusPulse = 1.0 + 0.03 * breathPhase; // ±3% opacity modulation
+      const baseNucleusOpacity = 0.22;
+      nucleusCoreRef.current.material.opacity = baseNucleusOpacity * nucleusPulse;
+    }
   });
 
   return (
@@ -134,6 +143,34 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
       {/* Inner concentric core (Phase 2C: aperture stack) */}
       <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, -0.005]} rotation={[0, 0, 0]}>
+        {/* Center nucleus (Phase 2C Step 3: warm light source) */}
+        <group name="centerNucleus" position={[0, 0, 0]}>
+          {/* Warm halo disc */}
+          <mesh position={[0, 0, 0.012]}>
+            <circleGeometry args={[0.085, 64]} />
+            <meshBasicMaterial
+              color="#FFF2E8"
+              transparent
+              opacity={0.06}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* White core disc (breathing heat modulation) */}
+          <mesh ref={nucleusCoreRef} position={[0, 0, 0.013]}>
+            <circleGeometry args={[0.03, 64]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.22}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+
         {/* Center glow disc (soft luminous core) */}
         <mesh position={[0, 0, -0.003]}>
           <circleGeometry args={[0.14, 64]} />
