@@ -602,26 +602,34 @@ export default function BloomRingCanvas({
         />
 
         <EffectComposer multisampling={4}>
-          {/* Phase 2C-2: Directional god rays (BEFORE bloom to preserve shaft structure) */}
+          {/* Phase 2C-3: Controlled directional rays (structure, not brightness) */}
           {DEBUG_RAYS && (
             <GodRays
               sun={godRayLightRef}
-              samples={48}
-              density={1.25}
+              samples={40}
+              density={0.75}
               decay={0.93}
-              weight={0.75}
-              exposure={0.6 + rayIntensity * 0.4}
+              weight={0.25}
+              exposure={0.15 * rayIntensity}
               clampMax={1.0}
               blendFunction={BlendFunction.SCREEN}
             />
           )}
 
-          {/* Primary bloom (analog ring glow) - capped to preserve highlight detail */}
+          {/* Tight bloom (crisp ring edges, 70% of perceived glow) */}
           <Bloom
-            intensity={cappedBloomStrength}
-            radius={bloomRadius}
-            luminanceThreshold={bloomThreshold}
-            luminanceSmoothing={0.025}
+            intensity={cappedBloomStrength * 0.8}
+            radius={Math.min(bloomRadius, 0.35)}
+            luminanceThreshold={Math.max(bloomThreshold, 0.45)}
+            luminanceSmoothing={0.015}
+          />
+
+          {/* Wide bloom (atmosphere without milk, 30% of perceived glow) */}
+          <Bloom
+            intensity={cappedBloomStrength * 0.3}
+            radius={0.65}
+            luminanceThreshold={0.55}
+            luminanceSmoothing={0.05}
           />
 
           {/* Secondary bloom (streak effect, hot-pixel keyed) */}
