@@ -13,7 +13,10 @@ const POST_PROBE = true;
 // GodRays probe: set to true for stronger light shafts during verification
 const RAYS_PROBE = true;
 
-function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65, nucleusSunRef }) {
+// GodRays exaggeration for verification (non-negotiable initial test)
+const GODRAY_EXAGGERATION = 1.4;
+
+function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65, nucleusSunRef, godRayLightRef }) {
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
   const streakProxyRef = useRef(null);
@@ -114,6 +117,17 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
   return (
     <group>
+      {/* God-ray emitter (invisible light source mesh for volumetric rays) */}
+      <mesh ref={godRayLightRef} position={[0, 0, -0.2]}>
+        <circleGeometry args={[0.85, 64]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.0}
+          depthWrite={false}
+        />
+      </mesh>
+
       {/* Dark center disc to control inner glow (creates halo effect) */}
       <mesh position={[0, 0, -0.01]}>
         <circleGeometry args={[0.9, 128]} />
@@ -542,6 +556,7 @@ export default function BloomRingCanvas({
   streakAngle = 0
 }) {
   const nucleusSunRef = useRef(null);
+  const godRayLightRef = useRef(null);
 
   useEffect(() => {
     console.log('[BloomRingCanvas] Analog bloom + streak (Phase 2A-2)', {
@@ -574,6 +589,7 @@ export default function BloomRingCanvas({
           streakStrength={streakStrength}
           streakLength={streakLength}
           nucleusSunRef={nucleusSunRef}
+          godRayLightRef={godRayLightRef}
         />
 
         <EffectComposer multisampling={4}>
@@ -595,16 +611,16 @@ export default function BloomRingCanvas({
             />
           )}
 
-          {/* Phase 2F Step 2: GodRays (light shafts from nucleus) */}
+          {/* Phase 2C: Real volumetric god rays (occlusion-based light shafts) */}
           <GodRays
-            sun={nucleusSunRef}
-            samples={RAYS_PROBE ? 60 : 40}
-            density={0.95}
-            decay={0.92}
-            weight={RAYS_PROBE ? 0.65 : 0.45}
-            exposure={RAYS_PROBE ? 0.35 : 0.25}
+            sun={godRayLightRef}
+            blendFunction={BlendFunction.SCREEN}
+            samples={64}
+            density={0.9 * GODRAY_EXAGGERATION}
+            decay={0.96}
+            weight={0.8 * GODRAY_EXAGGERATION}
+            exposure={0.35}
             clampMax={1.0}
-            blur={true}
           />
 
           {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
