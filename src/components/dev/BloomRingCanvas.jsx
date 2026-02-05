@@ -10,6 +10,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
   const streakProxyRef = useRef(null);
+  const reticleRef = useRef(null);
   const baseShoulderOpacity = 0.35;
 
   useFrame(({ clock }) => {
@@ -59,6 +60,22 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
           child.material.opacity = baseStreakOpacity * asymmetryFactor;
         }
+      });
+    }
+
+    // Reticle breathing (very subtle, secondary to ring)
+    if (reticleRef.current) {
+      const breathPhase = Math.sin(t);
+      const reticleOpacityMod = 1.0 + 0.025 * breathPhase; // ±2.5% opacity modulation
+
+      reticleRef.current.children.forEach((line) => {
+        line.children.forEach((mesh, meshIndex) => {
+          if (mesh.material) {
+            // meshIndex 0 = shoulder, 1 = core
+            const baseOpacity = meshIndex === 0 ? 0.12 : 0.35;
+            mesh.material.opacity = baseOpacity * reticleOpacityMod;
+          }
+        });
       });
     }
   });
@@ -128,6 +145,121 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           </mesh>
         </group>
       )}
+
+      {/* Reticle geometry group (Phase 2B: instrumental structure) */}
+      <group ref={reticleRef} position={[0, 0, -0.005]}>
+        {/* Top crosshair line */}
+        <group position={[0, 1.35, 0]}>
+          {/* Shoulder glow (wide, low opacity) */}
+          <mesh>
+            <planeGeometry args={[0.015, 0.25]} />
+            <meshBasicMaterial
+              color="#FFF8F0"
+              transparent
+              opacity={0.12}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Hot core (thin, bright) */}
+          <mesh position={[0, 0, 0.001]}>
+            <planeGeometry args={[0.006, 0.25]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.35}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+
+        {/* Bottom crosshair line */}
+        <group position={[0, -1.35, 0]}>
+          {/* Shoulder glow */}
+          <mesh>
+            <planeGeometry args={[0.015, 0.25]} />
+            <meshBasicMaterial
+              color="#FFF8F0"
+              transparent
+              opacity={0.12}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Hot core */}
+          <mesh position={[0, 0, 0.001]}>
+            <planeGeometry args={[0.006, 0.25]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.35}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+
+        {/* Left crosshair line */}
+        <group position={[-1.35, 0, 0]}>
+          {/* Shoulder glow */}
+          <mesh>
+            <planeGeometry args={[0.25, 0.015]} />
+            <meshBasicMaterial
+              color="#FFF8F0"
+              transparent
+              opacity={0.12}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Hot core */}
+          <mesh position={[0, 0, 0.001]}>
+            <planeGeometry args={[0.25, 0.006]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.35}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+
+        {/* Right crosshair line */}
+        <group position={[1.35, 0, 0]}>
+          {/* Shoulder glow */}
+          <mesh>
+            <planeGeometry args={[0.25, 0.015]} />
+            <meshBasicMaterial
+              color="#FFF8F0"
+              transparent
+              opacity={0.12}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Hot core */}
+          <mesh position={[0, 0, 0.001]}>
+            <planeGeometry args={[0.25, 0.006]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.35}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+      </group>
     </group>
   );
 }
