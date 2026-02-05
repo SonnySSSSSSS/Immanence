@@ -148,6 +148,91 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
       {/* Reticle geometry group (Phase 2B: instrumental structure) */}
       <group ref={reticleRef} position={[0, 0, -0.005]}>
+        {/* Tick marks group (Step 2: sparse, instrumental) */}
+        <group>
+          {/* Major ticks (4 cardinal directions, aligned with crosshair) */}
+          {[
+            { angle: 0, length: 0.11, radius: 1.60, dim: 1.0 },
+            { angle: 90, length: 0.11, radius: 1.60, dim: 1.0 },
+            { angle: 180, length: 0.11, radius: 1.60, dim: 1.0 },
+            { angle: 270, length: 0.11, radius: 1.60, dim: 1.0 },
+          ].map(({ angle, length, radius, dim }) => {
+            const rad = (angle * Math.PI) / 180;
+            const x = Math.cos(rad) * radius;
+            const y = Math.sin(rad) * radius;
+            return (
+              <group key={`major-${angle}`} position={[x, y, 0]} rotation={[0, 0, rad]}>
+                {/* Shoulder */}
+                <mesh>
+                  <planeGeometry args={[length, 0.010]} />
+                  <meshBasicMaterial
+                    color="#FFF8F0"
+                    transparent
+                    opacity={0.07 * dim}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                  />
+                </mesh>
+                {/* Core */}
+                <mesh position={[0, 0, 0.001]}>
+                  <planeGeometry args={[length, 0.004]} />
+                  <meshBasicMaterial
+                    color="#FFFFFF"
+                    transparent
+                    opacity={0.18 * dim}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                  />
+                </mesh>
+              </group>
+            );
+          })}
+
+          {/* Minor ticks (6 uneven angles, quieter) */}
+          {[
+            { angle: 22, length: 0.06, radius: 1.60, dim: 0.85 },
+            { angle: 58, length: 0.06, radius: 1.60, dim: 0.90 },
+            { angle: 128, length: 0.06, radius: 1.60, dim: 0.75 },
+            { angle: 206, length: 0.06, radius: 1.60, dim: 0.95 },
+            { angle: 244, length: 0.06, radius: 1.60, dim: 0.80 },
+            { angle: 316, length: 0.06, radius: 1.60, dim: 0.88 },
+          ].map(({ angle, length, radius, dim }) => {
+            const rad = (angle * Math.PI) / 180;
+            const x = Math.cos(rad) * radius;
+            const y = Math.sin(rad) * radius;
+            return (
+              <group key={`minor-${angle}`} position={[x, y, 0]} rotation={[0, 0, rad]}>
+                {/* Shoulder */}
+                <mesh>
+                  <planeGeometry args={[length, 0.010]} />
+                  <meshBasicMaterial
+                    color="#FFF8F0"
+                    transparent
+                    opacity={0.07 * dim}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                  />
+                </mesh>
+                {/* Core */}
+                <mesh position={[0, 0, 0.001]}>
+                  <planeGeometry args={[length, 0.004]} />
+                  <meshBasicMaterial
+                    color="#FFFFFF"
+                    transparent
+                    opacity={0.18 * dim}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                  />
+                </mesh>
+              </group>
+            );
+          })}
+        </group>
+
         {/* Top crosshair line */}
         <group position={[0, 1.35, 0]}>
           {/* Shoulder glow (wide, low opacity) */}
