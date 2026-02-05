@@ -16,6 +16,9 @@ const RAYS_PROBE = true;
 // GodRays exaggeration for verification (non-negotiable initial test)
 const GODRAY_EXAGGERATION = 1.4;
 
+// DEBUG: Toggle god rays visibility (scale-aware tuning)
+const DEBUG_RAYS = true;
+
 function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65, nucleusSunRef, godRayLightRef }) {
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
@@ -617,17 +620,19 @@ export default function BloomRingCanvas({
             />
           )}
 
-          {/* Phase 2C: Axial god rays (lens hotspot shafts, gated by bloom strength) */}
-          <GodRays
-            sun={godRayLightRef}
-            samples={128}
-            density={0.85}
-            decay={0.96}
-            weight={0.35}
-            exposure={0.25 * rayIntensity}
-            clampMax={0.8}
-            blendFunction={BlendFunction.SCREEN}
-          />
+          {/* Phase 2C-S: Scale-aware axial god rays (biased for UI viewport visibility) */}
+          {DEBUG_RAYS && (
+            <GodRays
+              sun={godRayLightRef}
+              samples={128}
+              density={0.85}
+              decay={0.93}
+              weight={0.75}
+              exposure={0.6 + rayIntensity * 0.4}
+              clampMax={1.0}
+              blendFunction={BlendFunction.SCREEN}
+            />
+          )}
 
           {/* Film grain (after rays to preserve coherence) */}
           <Noise
