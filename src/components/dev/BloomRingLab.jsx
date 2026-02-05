@@ -1,7 +1,7 @@
 // src/components/dev/BloomRingLab.jsx
-// Phase 1: Breathing Ring Lab with WebGL Bloom effect
+// Phase 2A-2: Breathing Ring Lab with analog bloom + anamorphic streak
 // Uses BloomRingCanvas to render the preview
-// Includes live control sliders for bloom parameters
+// Includes live control sliders for bloom and streak parameters
 
 import React, { useState, useRef, useEffect } from 'react';
 import BloomRingCanvas from './BloomRingCanvas.jsx';
@@ -18,7 +18,9 @@ export function BloomRingLab({ isLight = false }) {
   const [bloomRadius, setBloomRadius] = useState(0.4);
   const [bloomThreshold, setBloomThreshold] = useState(0.3);
   const [breathSpeed, setBreathSpeed] = useState(0.8);
-  const [streakStrength, setStreakStrength] = useState(0.25);
+  const [streakStrength, setStreakStrength] = useState(0.20);
+  const [streakThreshold, setStreakThreshold] = useState(0.85);
+  const [streakLength, setStreakLength] = useState(0.65);
   const [streakAngle, setStreakAngle] = useState(0);
 
   // Size measurement for Canvas mount gating
@@ -85,6 +87,8 @@ export function BloomRingLab({ isLight = false }) {
             bloomThreshold={bloomThreshold}
             breathSpeed={breathSpeed}
             streakStrength={streakStrength}
+            streakThreshold={streakThreshold}
+            streakLength={streakLength}
             streakAngle={streakAngle}
           />
         ) : (
@@ -252,6 +256,56 @@ export function BloomRingLab({ isLight = false }) {
           />
         </div>
 
+        {/* Streak Threshold */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Streak Threshold
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {streakThreshold.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1.0"
+            step="0.01"
+            value={streakThreshold}
+            onChange={(e) => setStreakThreshold(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+
+        {/* Streak Length */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Streak Length
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {streakLength.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1.0"
+            step="0.01"
+            value={streakLength}
+            onChange={(e) => setStreakLength(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+
         {/* Streak Angle */}
         <div>
           <div className="flex items-center justify-between mb-1">
@@ -283,7 +337,7 @@ export function BloomRingLab({ isLight = false }) {
         background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(255, 255, 255, 0.05)',
         color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)'
       }}>
-        <strong>Phase 2A:</strong> Analog bloom + anamorphic streak. Adjust in real-time.
+        <strong>Phase 2A-2:</strong> Analog bloom + lens-like anamorphic streak (hot-pixel keyed).
       </div>
     </div>
   );

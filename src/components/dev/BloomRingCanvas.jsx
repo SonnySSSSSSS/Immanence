@@ -1,39 +1,16 @@
 // src/components/dev/BloomRingCanvas.jsx
-// Phase 1: Refined analog bloom with layered rings (no dirt/streak yet)
+// Phase 2A-2: Analog bloom + lens-like anamorphic streak (hot-pixel keyed)
 
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
-function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.25, streakAngle = 0 }) {
+function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65 }) {
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
-  const streakRef = useRef(null);
+  const streakProxyRef = useRef(null);
   const baseShoulderOpacity = 0.35;
-
-  // Create gradient texture for streak
-  const streakTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 32;
-    const ctx = canvas.getContext('2d');
-
-    // Create horizontal gradient (center bright, edges fade)
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    gradient.addColorStop(0.4, 'rgba(255, 248, 240, 0.5)');
-    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
-    gradient.addColorStop(0.6, 'rgba(255, 248, 240, 0.5)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    return texture;
-  }, []);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime * breathSpeed;
@@ -53,11 +30,22 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.25, streakAngle =
       shoulderRef.current.material.opacity = Math.max(0.15, opacityPulse);
     }
 
-    // Streak breathing (sync with core brightness)
-    if (streakRef.current && streakStrength > 0) {
+    // Streak proxy breathing (hot-pixel keyed, horizontal smear)
+    if (streakProxyRef.current && streakStrength > 0) {
       const breathPhase = Math.sin(t);
-      const streakOpacity = streakStrength * 0.3 * (0.5 + 0.5 * breathPhase);
-      streakRef.current.material.opacity = Math.max(0, streakOpacity);
+      const hotness = 0.5 + 0.5 * breathPhase; // 0 to 1
+
+      // Scale horizontally to create smear
+      const horizontalStretch = 1 + streakLength * 6;
+      streakProxyRef.current.scale.set(horizontalStretch, 1, 1);
+
+      // Very low opacity, keyed to hot core
+      const streakOpacity = streakStrength * 0.08 * hotness;
+      streakProxyRef.current.children.forEach(child => {
+        if (child.material) {
+          child.material.opacity = streakOpacity;
+        }
+      });
     }
   });
 
@@ -96,23 +84,35 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.25, streakAngle =
         />
       </mesh>
 
-      {/* Anamorphic streak (lens flare effect) */}
+      {/* Streak proxy group (horizontal smear, hot-pixel keyed) */}
       {streakStrength > 0 && (
-        <mesh
-          ref={streakRef}
-          position={[0, 0, 0.02]}
-          rotation={[0, 0, (streakAngle * Math.PI) / 180]}
-        >
-          <planeGeometry args={[6, 0.15, 1, 1]} />
-          <meshBasicMaterial
-            map={streakTexture}
-            transparent
-            opacity={streakStrength * 0.3}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
+        <group ref={streakProxyRef} position={[0, 0, 0.02]}>
+          {/* Proxy shoulder ring (stretched) */}
+          <mesh>
+            <ringGeometry args={[0.92, 1.12, 128]} />
+            <meshBasicMaterial
+              color="#FFF8F0"
+              transparent
+              opacity={0}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+
+          {/* Proxy core ring (stretched) */}
+          <mesh>
+            <ringGeometry args={[0.98, 1.05, 128]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
       )}
     </group>
   );
@@ -125,14 +125,18 @@ export default function BloomRingCanvas({
   bloomRadius = 0.4,
   bloomThreshold = 0.3,
   breathSpeed = 0.8,
-  streakStrength = 0.25,
+  streakStrength = 0.20,
+  streakThreshold = 0.85,
+  streakLength = 0.65,
   streakAngle = 0
 }) {
   useEffect(() => {
-    console.log('[BloomRingCanvas] Analog bloom + streak', {
-      width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed, streakStrength, streakAngle
+    console.log('[BloomRingCanvas] Analog bloom + streak (Phase 2A-2)', {
+      width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed,
+      streakStrength, streakThreshold, streakLength, streakAngle
     });
-  }, [width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed, streakStrength, streakAngle]);
+  }, [width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed,
+      streakStrength, streakThreshold, streakLength, streakAngle]);
 
   return (
     <div style={{ width, height, background: 'transparent' }}>
@@ -146,16 +150,27 @@ export default function BloomRingCanvas({
         <BreathingRing
           breathSpeed={breathSpeed}
           streakStrength={streakStrength}
-          streakAngle={streakAngle}
+          streakLength={streakLength}
         />
 
         <EffectComposer multisampling={0}>
+          {/* Primary bloom (analog ring glow) */}
           <Bloom
             intensity={bloomStrength}
             radius={bloomRadius}
             luminanceThreshold={bloomThreshold}
             luminanceSmoothing={0.025}
           />
+
+          {/* Secondary bloom (streak effect, hot-pixel keyed) */}
+          {streakStrength > 0 && (
+            <Bloom
+              intensity={streakStrength * 1.5}
+              radius={streakLength * 2.0}
+              luminanceThreshold={streakThreshold}
+              luminanceSmoothing={0.01}
+            />
+          )}
         </EffectComposer>
       </Canvas>
     </div>
