@@ -39,11 +39,25 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
       const horizontalStretch = 1 + streakLength * 6;
       streakProxyRef.current.scale.set(horizontalStretch, 1, 1);
 
-      // Very low opacity, keyed to hot core
-      const streakOpacity = streakStrength * 0.08 * hotness;
-      streakProxyRef.current.children.forEach(child => {
+      // Slow temporal drift (not synced with breath, breaks static feeling)
+      const driftPhase = Math.sin(t * 0.06) * 0.05; // 0.06 Hz, ±5% amplitude
+
+      // Edge decay (non-linear falloff based on horizontal stretch)
+      const edgeDecay = 1.0 - Math.pow(Math.min(horizontalStretch - 1, 4) / 4, 1.5) * 0.3;
+
+      // Base opacity (reduced by ~10% from Phase 2A-2)
+      const baseStreakOpacity = streakStrength * 0.072 * hotness * edgeDecay;
+
+      // Apply asymmetry to each child (upper/lower bias via mesh order)
+      streakProxyRef.current.children.forEach((child, index) => {
         if (child.material) {
-          child.material.opacity = streakOpacity;
+          // Shoulder ring (index 0): upper bias (65% base + drift)
+          // Core ring (index 1): lower bias (100% base - drift)
+          const asymmetryFactor = index === 0
+            ? 0.65 + driftPhase
+            : 1.0 - driftPhase;
+
+          child.material.opacity = baseStreakOpacity * asymmetryFactor;
         }
       });
     }
