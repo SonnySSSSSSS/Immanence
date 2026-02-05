@@ -11,6 +11,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
   const shoulderRef = useRef(null);
   const streakProxyRef = useRef(null);
   const reticleRef = useRef(null);
+  const innerGroupRef = useRef(null);
   const baseShoulderOpacity = 0.35;
 
   useFrame(({ clock }) => {
@@ -78,6 +79,22 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         });
       });
     }
+
+    // Inner concentric breathing (subtle core heating, opacity only)
+    if (innerGroupRef.current) {
+      const breathPhase = Math.sin(t);
+      const innerPulse = 1.0 + 0.015 * breathPhase; // ±1.5% opacity modulation
+
+      // Apply to hot core meshes only (even indices: 1, 3, 5, 7, 9)
+      // Structure: centerGlow(0), ringA_shoulder(1), ringA_core(2), ringB_shoulder(3), ringB_core(4), ringC_shoulder(5), ringC_core(6)
+      innerGroupRef.current.children.forEach((mesh, index) => {
+        if (mesh.material && index > 0 && index % 2 === 0) {
+          // Even indices after 0: core meshes at 2, 4, 6
+          const baseOpacity = 0.22;
+          mesh.material.opacity = baseOpacity * innerPulse;
+        }
+      });
+    }
   });
 
   return (
@@ -114,6 +131,100 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           toneMapped={false}
         />
       </mesh>
+
+      {/* Inner concentric core (Phase 2C: aperture stack) */}
+      <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, 0.002]}>
+        {/* Center glow disc (soft luminous core) */}
+        <mesh position={[0, 0, -0.001]}>
+          <circleGeometry args={[0.14, 64]} />
+          <meshBasicMaterial
+            color="#FFF0E0"
+            transparent
+            opacity={0.06}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+
+        {/* Inner Ring A (closest to center) */}
+        {/* Shoulder */}
+        <mesh>
+          <ringGeometry args={[0.16, 0.175, 128]} />
+          <meshBasicMaterial
+            color="#FFF8F0"
+            transparent
+            opacity={0.10}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+        {/* Core */}
+        <mesh position={[0, 0, 0.001]}>
+          <ringGeometry args={[0.16, 0.175, 128]} />
+          <meshBasicMaterial
+            color="#FFFFFF"
+            transparent
+            opacity={0.22}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+
+        {/* Inner Ring B (middle) */}
+        {/* Shoulder */}
+        <mesh>
+          <ringGeometry args={[0.26, 0.275, 128]} />
+          <meshBasicMaterial
+            color="#FFF8F0"
+            transparent
+            opacity={0.10}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+        {/* Core */}
+        <mesh position={[0, 0, 0.001]}>
+          <ringGeometry args={[0.26, 0.275, 128]} />
+          <meshBasicMaterial
+            color="#FFFFFF"
+            transparent
+            opacity={0.22}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+
+        {/* Inner Ring C (outer) */}
+        {/* Shoulder */}
+        <mesh>
+          <ringGeometry args={[0.36, 0.372, 128]} />
+          <meshBasicMaterial
+            color="#FFF8F0"
+            transparent
+            opacity={0.10}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+        {/* Core */}
+        <mesh position={[0, 0, 0.001]}>
+          <ringGeometry args={[0.36, 0.372, 128]} />
+          <meshBasicMaterial
+            color="#FFFFFF"
+            transparent
+            opacity={0.22}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      </group>
 
       {/* Streak proxy group (horizontal smear, hot-pixel keyed) */}
       {streakStrength > 0 && (
