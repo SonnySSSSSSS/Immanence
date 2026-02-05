@@ -117,11 +117,13 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
   return (
     <group>
-      {/* God-ray emitter (opaque light source for depth-based occlusion) */}
-      <mesh ref={godRayLightRef} position={[0, 0, -0.35]}>
-        <circleGeometry args={[0.9, 64]} />
+      {/* God-ray emitter (small axial hotspot, like lens flare source) */}
+      <mesh ref={godRayLightRef} position={[0, 0, -2]}>
+        <sphereGeometry args={[0.05, 16, 16]} />
         <meshBasicMaterial
           color="#ffffff"
+          transparent
+          opacity={0.9}
           toneMapped={false}
         />
       </mesh>
@@ -564,6 +566,12 @@ export default function BloomRingCanvas({
   }, [width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed,
       streakStrength, streakThreshold, streakLength, streakAngle]);
 
+  // Clamp bloom to preserve highlight detail and prevent full-frame blowout
+  const cappedBloomStrength = Math.min(bloomStrength, 2.4);
+
+  // Gate god rays by bloom strength (rays only appear when highlights are hot)
+  const rayIntensity = Math.min(1, bloomStrength / 2.5);
+
   return (
     <Canvas
       style={{ width, height }}
@@ -591,9 +599,9 @@ export default function BloomRingCanvas({
         />
 
         <EffectComposer multisampling={4}>
-          {/* Primary bloom (analog ring glow) */}
+          {/* Primary bloom (analog ring glow) - capped to preserve highlight detail */}
           <Bloom
-            intensity={bloomStrength}
+            intensity={cappedBloomStrength}
             radius={bloomRadius}
             luminanceThreshold={bloomThreshold}
             luminanceSmoothing={0.025}
@@ -609,16 +617,23 @@ export default function BloomRingCanvas({
             />
           )}
 
-          {/* Phase 2C: Real volumetric god rays (occlusion-based light shafts) */}
+          {/* Phase 2C: Axial god rays (lens hotspot shafts, gated by bloom strength) */}
           <GodRays
             sun={godRayLightRef}
-            samples={96}
-            density={1.2}
-            decay={0.94}
-            weight={1.1}
-            exposure={0.6}
-            clampMax={1.0}
+            samples={128}
+            density={0.85}
+            decay={0.96}
+            weight={0.35}
+            exposure={0.25 * rayIntensity}
+            clampMax={0.8}
             blendFunction={BlendFunction.SCREEN}
+          />
+
+          {/* Film grain (after rays to preserve coherence) */}
+          <Noise
+            opacity={0.035}
+            premultiply
+            blendFunction={BlendFunction.OVERLAY}
           />
 
           {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
@@ -634,12 +649,6 @@ export default function BloomRingCanvas({
             eskil={false}
             offset={0.25}
             darkness={POST_PROBE ? 0.9 : 0.45}
-          />
-
-          {/* Film grain (very subtle noise) */}
-          <Noise
-            opacity={POST_PROBE ? 0.25 : 0.045}
-            blendFunction={BlendFunction.OVERLAY}
           />
         </EffectComposer>
       </Canvas>
