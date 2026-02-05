@@ -120,8 +120,8 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
   return (
     <group>
-      {/* God-ray emitter (small axial hotspot with vertical bias for directional shafts) */}
-      <mesh ref={godRayLightRef} position={[0, 0.2, -2]}>
+      {/* God-ray emitter (small axial hotspot with strong vertical bias) */}
+      <mesh ref={godRayLightRef} position={[0, 0.45, -2]}>
         <sphereGeometry args={[0.05, 16, 16]} />
         <meshBasicMaterial
           color="#ffffff"
@@ -130,6 +130,30 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           toneMapped={false}
         />
       </mesh>
+
+      {/* Ray occluder (thin bars to force shaft slicing, not visible directly) */}
+      <group position={[0, 0, -1.5]}>
+        {/* Horizontal bar */}
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[0.6, 0.015]} />
+          <meshBasicMaterial
+            color="#000000"
+            depthWrite={true}
+            depthTest={true}
+            toneMapped={false}
+          />
+        </mesh>
+        {/* Vertical bar */}
+        <mesh position={[0, 0, 0.001]}>
+          <planeGeometry args={[0.015, 0.6]} />
+          <meshBasicMaterial
+            color="#000000"
+            depthWrite={true}
+            depthTest={true}
+            toneMapped={false}
+          />
+        </mesh>
+      </group>
 
       {/* Dark center disc to control inner glow (creates halo effect) */}
       <mesh position={[0, 0, -0.01]}>
@@ -602,15 +626,15 @@ export default function BloomRingCanvas({
         />
 
         <EffectComposer multisampling={4}>
-          {/* Phase 2C-3: Controlled directional rays (structure, not brightness) */}
+          {/* Phase 2C-3: Occluded ray shafts (dark most of time, structured by occlusion) */}
           {DEBUG_RAYS && (
             <GodRays
               sun={godRayLightRef}
               samples={40}
-              density={0.75}
+              density={0.8}
               decay={0.93}
-              weight={0.25}
-              exposure={0.15 * rayIntensity}
+              weight={0.4}
+              exposure={0.12 * rayIntensity}
               clampMax={1.0}
               blendFunction={BlendFunction.SCREEN}
             />
