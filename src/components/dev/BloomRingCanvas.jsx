@@ -141,6 +141,32 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         />
       </mesh>
 
+      {/* Outer companion rings (Phase 2C Step 4: subtle aperture stack) */}
+      {/* Inner companion (inside main ring) */}
+      <mesh position={[0, 0, -0.002]}>
+        <ringGeometry args={[0.90, 0.915, 128]} />
+        <meshBasicMaterial
+          color="#FFF8F0"
+          transparent
+          opacity={0.05}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Outer companion (outside main ring) */}
+      <mesh position={[0, 0, -0.002]}>
+        <ringGeometry args={[1.08, 1.095, 128]} />
+        <meshBasicMaterial
+          color="#FFF8F0"
+          transparent
+          opacity={0.05}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
       {/* Inner concentric core (Phase 2C: aperture stack) */}
       <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, -0.005]} rotation={[0, 0, 0]}>
         {/* Center nucleus (Phase 2C Step 3: warm light source) */}
