@@ -110,7 +110,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
     <group>
       {/* Dark center disc to control inner glow (creates halo effect) */}
       <mesh position={[0, 0, -0.01]}>
-        <circleGeometry args={[0.9, 64]} />
+        <circleGeometry args={[0.9, 128]} />
         <meshBasicMaterial
           color="#000000"
           transparent
@@ -173,7 +173,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
         <group name="centerNucleus" position={[0, 0, 0]}>
           {/* Warm halo disc */}
           <mesh position={[0, 0, 0.012]}>
-            <circleGeometry args={[0.085, 64]} />
+            <circleGeometry args={[0.085, 128]} />
             <meshBasicMaterial
               color="#FFF2E8"
               transparent
@@ -185,7 +185,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
           </mesh>
           {/* White core disc (breathing heat modulation) */}
           <mesh ref={nucleusCoreRef} position={[0, 0, 0.013]}>
-            <circleGeometry args={[0.03, 64]} />
+            <circleGeometry args={[0.03, 128]} />
             <meshBasicMaterial
               color="#FFFFFF"
               transparent
@@ -199,7 +199,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
         {/* Center glow disc (soft luminous core) */}
         <mesh position={[0, 0, -0.003]}>
-          <circleGeometry args={[0.14, 64]} />
+          <circleGeometry args={[0.14, 128]} />
           <meshBasicMaterial
             color="#FFF0E0"
             transparent
@@ -577,9 +577,19 @@ export default function BloomRingCanvas({
       <Canvas
         style={{ width: '100%', height: '100%' }}
         dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false,
+        }}
         orthographic
         camera={{ zoom: 80, position: [0, 0, 10] }}
+        onCreated={({ gl }) => {
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+          gl.toneMapping = THREE.NoToneMapping;
+        }}
       >
         <BreathingRing
           breathSpeed={breathSpeed}
@@ -587,7 +597,7 @@ export default function BloomRingCanvas({
           streakLength={streakLength}
         />
 
-        <EffectComposer multisampling={0}>
+        <EffectComposer multisampling={4}>
           {/* Primary bloom (analog ring glow) */}
           <Bloom
             intensity={bloomStrength}
