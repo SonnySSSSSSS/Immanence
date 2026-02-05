@@ -3,20 +3,22 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
 // Debug probe: set to true to verify lens post stack is running (exaggerated effects)
-const POST_PROBE = false;
+const POST_PROBE = true;
 
-function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65 }) {
+// GodRays probe: set to true for stronger light shafts during verification
+const RAYS_PROBE = true;
+
+function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65, nucleusSunRef }) {
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
   const streakProxyRef = useRef(null);
   const reticleRef = useRef(null);
   const innerGroupRef = useRef(null);
-  const nucleusCoreRef = useRef(null);
   const baseShoulderOpacity = 0.35;
 
   useFrame(({ clock }) => {
@@ -102,11 +104,11 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
     }
 
     // Nucleus core breathing (subtle heat modulation)
-    if (nucleusCoreRef.current) {
+    if (nucleusSunRef?.current) {
       const breathPhase = Math.sin(t);
       const nucleusPulse = 1.0 + 0.03 * breathPhase; // ±3% opacity modulation
       const baseNucleusOpacity = 0.22;
-      nucleusCoreRef.current.material.opacity = baseNucleusOpacity * nucleusPulse;
+      nucleusSunRef.current.material.opacity = baseNucleusOpacity * nucleusPulse;
     }
   });
 
@@ -188,7 +190,7 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
             />
           </mesh>
           {/* White core disc (breathing heat modulation) */}
-          <mesh ref={nucleusCoreRef} position={[0, 0, 0.013]}>
+          <mesh ref={nucleusSunRef} position={[0, 0, 0.013]}>
             <circleGeometry args={[0.03, 128]} />
             <meshBasicMaterial
               color="#FFFFFF"
@@ -539,6 +541,8 @@ export default function BloomRingCanvas({
   streakLength = 0.65,
   streakAngle = 0
 }) {
+  const nucleusSunRef = useRef(null);
+
   useEffect(() => {
     console.log('[BloomRingCanvas] Analog bloom + streak (Phase 2A-2)', {
       width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed,
@@ -569,6 +573,7 @@ export default function BloomRingCanvas({
           breathSpeed={breathSpeed}
           streakStrength={streakStrength}
           streakLength={streakLength}
+          nucleusSunRef={nucleusSunRef}
         />
 
         <EffectComposer multisampling={4}>
@@ -589,6 +594,18 @@ export default function BloomRingCanvas({
               luminanceSmoothing={0.01}
             />
           )}
+
+          {/* Phase 2F Step 2: GodRays (light shafts from nucleus) */}
+          <GodRays
+            sun={nucleusSunRef}
+            samples={RAYS_PROBE ? 60 : 40}
+            density={0.95}
+            decay={0.92}
+            weight={RAYS_PROBE ? 0.65 : 0.45}
+            exposure={RAYS_PROBE ? 0.35 : 0.25}
+            clampMax={1.0}
+            blur={true}
+          />
 
           {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
           {/* Chromatic aberration (subtle RGB separation at edges) */}
