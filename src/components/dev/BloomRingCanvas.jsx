@@ -117,14 +117,12 @@ function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength 
 
   return (
     <group>
-      {/* God-ray emitter (invisible light source mesh for volumetric rays) */}
-      <mesh ref={godRayLightRef} position={[0, 0, -0.2]}>
-        <circleGeometry args={[0.85, 64]} />
+      {/* God-ray emitter (opaque light source for depth-based occlusion) */}
+      <mesh ref={godRayLightRef} position={[0, 0, -0.35]}>
+        <circleGeometry args={[0.9, 64]} />
         <meshBasicMaterial
           color="#ffffff"
-          transparent
-          opacity={0.0}
-          depthWrite={false}
+          toneMapped={false}
         />
       </mesh>
 
@@ -614,13 +612,13 @@ export default function BloomRingCanvas({
           {/* Phase 2C: Real volumetric god rays (occlusion-based light shafts) */}
           <GodRays
             sun={godRayLightRef}
-            blendFunction={BlendFunction.SCREEN}
-            samples={64}
-            density={0.9 * GODRAY_EXAGGERATION}
-            decay={0.96}
-            weight={0.8 * GODRAY_EXAGGERATION}
-            exposure={0.35}
+            samples={96}
+            density={1.2}
+            decay={0.94}
+            weight={1.1}
+            exposure={0.6}
             clampMax={1.0}
+            blendFunction={BlendFunction.SCREEN}
           />
 
           {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
