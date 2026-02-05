@@ -18,6 +18,8 @@ export function BloomRingLab({ isLight = false }) {
   const [bloomRadius, setBloomRadius] = useState(0.4);
   const [bloomThreshold, setBloomThreshold] = useState(0.3);
   const [breathSpeed, setBreathSpeed] = useState(0.8);
+  const [streakStrength, setStreakStrength] = useState(0.25);
+  const [streakAngle, setStreakAngle] = useState(0);
 
   // Size measurement for Canvas mount gating
   const containerRef = useRef(null);
@@ -82,6 +84,8 @@ export function BloomRingLab({ isLight = false }) {
             bloomRadius={bloomRadius}
             bloomThreshold={bloomThreshold}
             breathSpeed={breathSpeed}
+            streakStrength={streakStrength}
+            streakAngle={streakAngle}
           />
         ) : (
           <div style={{
@@ -222,6 +226,56 @@ export function BloomRingLab({ isLight = false }) {
             className="w-full accent-amber-500"
           />
         </div>
+
+        {/* Streak Strength */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Streak Strength
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {streakStrength.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="2.0"
+            step="0.01"
+            value={streakStrength}
+            onChange={(e) => setStreakStrength(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
+
+        {/* Streak Angle */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-white/60" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)'
+            }}>
+              Streak Angle
+            </label>
+            <span className="text-xs text-white/50 font-mono" style={{
+              color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+            }}>
+              {streakAngle}°
+            </span>
+          </div>
+          <input
+            type="range"
+            min="-90"
+            max="90"
+            step="1"
+            value={streakAngle}
+            onChange={(e) => setStreakAngle(parseFloat(e.target.value))}
+            className="w-full accent-amber-500"
+          />
+        </div>
       </div>
 
       {/* Info Text */}
@@ -229,7 +283,7 @@ export function BloomRingLab({ isLight = false }) {
         background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(255, 255, 255, 0.05)',
         color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)'
       }}>
-        <strong>Phase 1:</strong> Live Bloom preview. Adjust parameters in real-time.
+        <strong>Phase 2A:</strong> Analog bloom + anamorphic streak. Adjust in real-time.
       </div>
     </div>
   );
