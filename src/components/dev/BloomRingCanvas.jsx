@@ -7,6 +7,9 @@ import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise } from '@re
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
+// Debug probe: set to true to verify lens post stack is running (exaggerated effects)
+const POST_PROBE = false;
+
 function BreathingRing({ breathSpeed = 0.8, streakStrength = 0.20, streakLength = 0.65 }) {
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
@@ -590,7 +593,7 @@ export default function BloomRingCanvas({
           {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
           {/* Chromatic aberration (subtle RGB separation at edges) */}
           <ChromaticAberration
-            offset={[0.0006, 0.0002]}
+            offset={POST_PROBE ? [0.01, 0.004] : [0.0012, 0.0005]}
             radialModulation={true}
             modulationOffset={0.15}
           />
@@ -599,12 +602,12 @@ export default function BloomRingCanvas({
           <Vignette
             eskil={false}
             offset={0.25}
-            darkness={0.35}
+            darkness={POST_PROBE ? 0.9 : 0.45}
           />
 
           {/* Film grain (very subtle noise) */}
           <Noise
-            opacity={0.035}
+            opacity={POST_PROBE ? 0.25 : 0.045}
             blendFunction={BlendFunction.OVERLAY}
           />
         </EffectComposer>
