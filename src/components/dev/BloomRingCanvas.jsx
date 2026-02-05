@@ -1,7 +1,7 @@
 // src/components/dev/BloomRingCanvas.jsx
 // Phase 2A-2: Analog bloom + lens-like anamorphic streak (hot-pixel keyed)
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -535,6 +535,9 @@ export default function BloomRingCanvas({
   streakLength = 0.65,
   streakAngle = 0
 }) {
+  // Light leak drift animation (Phase 2D Step 1)
+  const [driftTime, setDriftTime] = useState(0);
+
   useEffect(() => {
     console.log('[BloomRingCanvas] Analog bloom + streak (Phase 2A-2)', {
       width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed,
@@ -543,8 +546,34 @@ export default function BloomRingCanvas({
   }, [width, height, bloomStrength, bloomRadius, bloomThreshold, breathSpeed,
       streakStrength, streakThreshold, streakLength, streakAngle]);
 
+  // Slow drift animation for light leaks (not synced with breathing)
+  useEffect(() => {
+    let animationFrameId;
+    let startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = (Date.now() - startTime) / 1000; // seconds
+      setDriftTime(elapsed * 0.05); // 0.05 Hz = ~20 second cycle
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, []);
+
+  // Calculate drift offsets (±1-2% shift)
+  const warmDriftX = 35 + Math.sin(driftTime) * 1.5;
+  const warmDriftY = 70 + Math.cos(driftTime * 0.8) * 1.2;
+  const coolDriftX = 70 + Math.sin(driftTime * 1.3) * 1.0;
+  const coolDriftY = 30 + Math.cos(driftTime * 0.9) * 0.8;
+
   return (
-    <div style={{ width, height, background: 'transparent' }}>
+    <div style={{ position: 'relative', width, height, background: 'transparent' }}>
       <Canvas
         style={{ width: '100%', height: '100%' }}
         dpr={[1, 2]}
@@ -578,6 +607,34 @@ export default function BloomRingCanvas({
           )}
         </EffectComposer>
       </Canvas>
+
+      {/* Light leak veils overlay (Phase 2D Step 1: analog film wash) */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          opacity: 0.55,
+          mixBlendMode: 'screen',
+        }}
+      >
+        {/* Warm leak (bottom-left bias) */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(circle at ${warmDriftX}% ${warmDriftY}%, rgba(255,220,180,0.10) 0%, rgba(255,220,180,0.05) 18%, rgba(255,220,180,0.00) 55%)`,
+          }}
+        />
+        {/* Cool leak (top-right bias, fainter) */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(circle at ${coolDriftX}% ${coolDriftY}%, rgba(200,220,255,0.05) 0%, rgba(200,220,255,0.02) 20%, rgba(200,220,255,0.00) 55%)`,
+          }}
+        />
+      </div>
     </div>
   );
 }
