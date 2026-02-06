@@ -8,6 +8,7 @@ import { useProgressStore } from '../state/progressStore';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { syncFromProgressStore } from '../state/mandalaStore';
+import { usePathStore } from '../state/pathStore';
 import { logPractice } from './cycleManager';
 import { resolveCategoryIdFromSessionV2 } from './infographics/sessionCategory.js';
 import { MATCH_POLICY } from '../data/curriculumMatching.js';
@@ -342,6 +343,33 @@ export function recordPracticeSession(payload = {}, options = {}) {
         }
 
         useProgressStore.getState().recordSessionV2(normalizedSession);
+
+        try {
+            const normalizedMinutes = typeof duration === 'number'
+                ? duration
+                : (typeof normalizedDurationSec === 'number' ? normalizedDurationSec / 60 : 0);
+            const safeMinutes = Number.isFinite(normalizedMinutes) ? Math.max(1, Math.round(normalizedMinutes)) : 0;
+            const domainKey = domain || practiceId || practiceMode || 'breath';
+
+            if (safeMinutes > 0) {
+                usePathStore.getState().recordPractice({
+                    domain: domainKey,
+                    duration: safeMinutes,
+                    timestamp: new Date(normalizedEndedAt).getTime(),
+                    metadata: {
+                        practiceId,
+                        practiceMode,
+                        configSnapshot,
+                        instrumentation: instrumentationData,
+                        completion: normalizedCompletion,
+                    },
+                    practiceId,
+                    practiceMode,
+                });
+            }
+        } catch (e) {
+            console.warn('[recordPracticeSession] Failed to update pathStore', e);
+        }
 
         // Update lifetime tracking after session recording
         useProgressStore.getState().updateLifetimeTracking();

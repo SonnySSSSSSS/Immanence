@@ -58,11 +58,11 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                 <div
                     className="absolute pointer-events-none"
                     style={{
-                        width: "60%",
-                        height: "60%",
+                        width: "85%",
+                        height: "85%",
                         borderRadius: "9999px",
-                        background: `radial-gradient(circle, rgba(80, 200, 180, 0.25) 0%, rgba(60, 180, 160, 0.15) 50%, transparent 75%)`,
-                        filter: "blur(30px)",
+                        background: `radial-gradient(circle, rgba(220, 170, 90, 0.55) 0%, rgba(200, 150, 70, 0.32) 45%, transparent 75%)`,
+                        filter: "blur(55px)",
                         zIndex: 7,
                     }}
                 />
@@ -118,7 +118,7 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     // Glow: teal for dark, gold for light
                     boxShadow: isLight
                         ? `0 0 20px 8px rgba(200, 160, 110, 0.35), 0 0 40px 15px rgba(180, 140, 90, 0.2)`
-                        : `0 0 20px 8px rgba(80, 200, 180, 0.35), 0 0 40px 15px rgba(60, 180, 160, 0.2)`,
+                        : `0 0 30px 16px rgba(220, 170, 90, 0.55), 0 0 90px 40px rgba(190, 140, 70, 0.35)`,
                     zIndex: 9,
                 }}
             >
@@ -132,7 +132,8 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                         objectFit: "cover",
                         objectPosition: "50% 50%",
                         transform: "translate(-50%, -50%)",
-                        mixBlendMode: "screen",
+                        mixBlendMode: isLight ? "screen" : "normal",
+                        filter: isLight ? "none" : "sepia(0.45) saturate(1.45) hue-rotate(-10deg) brightness(1.08) contrast(1.05)",
                         maskImage: "radial-gradient(circle, black 88%, transparent 100%)",
                         WebkitMaskImage: "radial-gradient(circle, black 88%, transparent 100%)",
                     }}
@@ -143,7 +144,7 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     style={{
                         background: isLight
                             ? `radial-gradient(circle, rgba(200, 160, 110, 0.12) 0%, transparent 60%)`
-                            : `radial-gradient(circle, rgba(80, 200, 180, 0.12) 0%, transparent 60%)`,
+                            : `radial-gradient(circle, rgba(220, 170, 90, 0.25) 0%, transparent 60%)`,
                         mixBlendMode: "screen",
                         pointerEvents: "none",
                     }}
@@ -172,8 +173,8 @@ export function StaticSigilCore({ stage = "flame", path = null, showCore = true,
                     height: "56%",
                     borderRadius: "9999px",
                     background: accentColor,
-                    opacity: stage === "flame" ? 0.35 : 0.45,
-                    filter: "blur(12px)",
+                    opacity: stage === "flame" ? 0.7 : 0.55,
+                    filter: "blur(22px)",
                     zIndex: -1,
                 }}
             />

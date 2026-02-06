@@ -8,12 +8,10 @@ import { STAGE_COLORS } from "../constants/stageColors.js";
 
 // Sanskrit path names with their closest one-word English translations
 const PATH_TRANSLATIONS = {
-    soma: { sanskrit: 'Soma', english: 'Sensory' },
-    prana: { sanskrit: 'Prana', english: 'Breath' },
-    dhyana: { sanskrit: 'Dhyana', english: 'Meditation' },
-    drishti: { sanskrit: 'Drishti', english: 'Vision' },
-    jnana: { sanskrit: 'Jnana', english: 'Knowledge' },
-    samyoga: { sanskrit: 'Samyoga', english: 'Union' },
+    yantra: { sanskrit: 'Yantra', english: 'Ritual' },
+    kaya: { sanskrit: 'Kaya', english: 'Somatic' },
+    chitra: { sanskrit: 'Chitra', english: 'Imaginal' },
+    nada: { sanskrit: 'Nada', english: 'Sonic' },
 };
 
 // Attention vector labels
@@ -28,69 +26,40 @@ const PathIcon = ({ path, color, size = 20 }) => {
     const iconColor = color || 'currentColor';
 
     const icons = {
-        // Soma (Body): Concentric circles - grounded body-field
-        soma: (
+        // Yantra (Symbolic): Triangular lattice - intentional structure
+        yantra: (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke={iconColor} strokeWidth="1" opacity="0.4" />
-                <circle cx="12" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.6" />
-                <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
+                <polygon points="12,3 21,19 3,19" stroke={iconColor} strokeWidth="1" opacity="0.55" />
+                <polygon points="12,6 18,17 6,17" stroke={iconColor} strokeWidth="1" opacity="0.65" />
+                <circle cx="12" cy="12" r="1.6" fill={iconColor} opacity="0.95" />
             </svg>
         ),
-        // Prana (Breath): Spiral flow lines - vital currents
-        prana: (
+        // Kaya (Somatic): Concentric field rings - embodied presence
+        kaya: (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M12 3 C8 5, 6 9, 8 12 C10 15, 8 19, 12 21"
-                    stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
-                />
-                <path
-                    d="M12 3 C16 5, 18 9, 16 12 C14 15, 16 19, 12 21"
-                    stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" opacity="0.7"
-                />
-                <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
+                <circle cx="12" cy="12" r="9" stroke={iconColor} strokeWidth="1" opacity="0.35" />
+                <circle cx="12" cy="12" r="5.5" stroke={iconColor} strokeWidth="1" opacity="0.55" />
+                <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.85" />
             </svg>
         ),
-        // Dhyana (Meditation): Abstract lotus geometry - stillness
-        dhyana: (
+        // Chitra (Imaginal): Petal star - morphing vision
+        chitra: (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-                <path d="M12 4 L14 10 L12 8 L10 10 Z" stroke={iconColor} strokeWidth="0.8" fill={iconColor} opacity="0.5" />
-                <path d="M12 4 L16 12 L12 9 L8 12 Z" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
-                <ellipse cx="12" cy="18" rx="6" ry="2" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-                <circle cx="12" cy="12" r="2" fill={iconColor} opacity="0.9" />
+                <path d="M12 3 L14.5 9 L21 12 L14.5 15 L12 21 L9.5 15 L3 12 L9.5 9 Z" stroke={iconColor} strokeWidth="1" opacity="0.55" />
+                <circle cx="12" cy="12" r="2.2" fill={iconColor} opacity="0.9" />
             </svg>
         ),
-        // Drishti (Vision): Aperture/lens rings - radiating perception
-        drishti: (
+        // Nada (Sonic): Wave rings - rhythmic resonance
+        nada: (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke={iconColor} strokeWidth="0.8" opacity="0.3" />
-                <path d="M12 3 L12 6 M12 18 L12 21 M3 12 L6 12 M18 12 L21 12" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-                <path d="M5.5 5.5 L7.5 7.5 M16.5 16.5 L18.5 18.5 M5.5 18.5 L7.5 16.5 M16.5 7.5 L18.5 5.5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
-                <circle cx="12" cy="12" r="4" stroke={iconColor} strokeWidth="1" opacity="0.6" />
-                <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.95" />
-            </svg>
-        ),
-        // Jnana (Wisdom): Crystalline light burst - knowledge
-        jnana: (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-                <path d="M12 2 L12 7 M12 17 L12 22 M2 12 L7 12 M17 12 L22 12" stroke={iconColor} strokeWidth="1.2" opacity="0.6" />
-                <path d="M5 5 L8.5 8.5 M15.5 15.5 L19 19 M5 19 L8.5 15.5 M15.5 8.5 L19 5" stroke={iconColor} strokeWidth="0.8" opacity="0.4" />
-                <polygon points="12,6 14,10 12,9 10,10" fill={iconColor} opacity="0.7" />
-                <polygon points="12,18 14,14 12,15 10,14" fill={iconColor} opacity="0.7" />
-                <circle cx="12" cy="12" r="2.5" fill={iconColor} opacity="0.9" />
-            </svg>
-        ),
-        // Samyoga (Integration): Vesica piscis / interlocking rings - unity
-        samyoga: (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-                <circle cx="9" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-                <circle cx="15" cy="12" r="6" stroke={iconColor} strokeWidth="1" opacity="0.5" />
-                <ellipse cx="12" cy="12" rx="2.5" ry="5" fill={iconColor} opacity="0.3" />
-                <circle cx="12" cy="12" r="1.5" fill={iconColor} opacity="0.9" />
+                <path d="M3 12 Q6 9 9 12 T15 12 T21 12" stroke={iconColor} strokeWidth="1.2" opacity="0.7" />
+                <path d="M4 16 Q7 13 10 16 T16 16 T20 16" stroke={iconColor} strokeWidth="1" opacity="0.5" />
+                <circle cx="12" cy="8" r="1.5" fill={iconColor} opacity="0.85" />
             </svg>
         ),
     };
 
-    return icons[path?.toLowerCase()] || icons.soma;
+    return icons[path?.toLowerCase()] || icons.yantra;
 };
 
 // Stage colors for glow effects and styling
@@ -211,13 +180,12 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
 
     // Get the path translation, or fallback to capitalized path
     const pathLower = path ? path.toLowerCase() : null;
-    const pathTranslation = pathLower ? PATH_TRANSLATIONS[pathLower] : null;
+    const hasPath = path && path.trim() !== '';
+    const shouldShowPath = stageLower !== 'seedling' && hasPath;
+    const pathTranslation = shouldShowPath ? PATH_TRANSLATIONS[pathLower] : null;
     const pathName = pathTranslation
         ? (showEnglish ? pathTranslation.english : pathTranslation.sanskrit)
-        : (path ? path.charAt(0).toUpperCase() + path.slice(1).toLowerCase() : null);
-
-    // Check if we have a path to display
-    const hasPath = path && path.trim() !== '';
+        : (shouldShowPath ? path.charAt(0).toUpperCase() + path.slice(1).toLowerCase() : null);
 
     // Tooltip descriptions (general, non-statistical)
     const STAGE_DESCRIPTIONS = {
@@ -229,12 +197,10 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
     };
 
     const PATH_DESCRIPTIONS = {
-        soma: "The path of embodiment. Cultivating awareness through the body and senses.",
-        prana: "The path of breath. Using life force as the doorway to presence.",
-        dhyana: "The path of meditation. Training the mind through stillness and focus.",
-        drishti: "The path of vision. Developing clear seeing and insight.",
-        jnana: "The path of knowledge. Understanding through wisdom and inquiry.",
-        samyoga: "The path of integration. Unifying all aspects of self and practice.",
+        yantra: "The path of ritual. Symbolic structure and deliberate form stabilize attention.",
+        kaya: "The path of the body. Awareness grows through sensation and the felt field.",
+        chitra: "The path of vision. Imaginal clarity shapes perception and inner sight.",
+        nada: "The path of rhythm. Breath and sound entrain the nervous system.",
     };
 
     // Tooltip handlers with 2-second delay
@@ -254,7 +220,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
     };
 
     const currentStageDescription = STAGE_DESCRIPTIONS[stageLower] || STAGE_DESCRIPTIONS.flame;
-    const currentPathDescription = pathLower ? PATH_DESCRIPTIONS[pathLower] : null;
+    const currentPathDescription = shouldShowPath ? PATH_DESCRIPTIONS[pathLower] : null;
 
     return (
         <div
@@ -312,7 +278,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
             </div>
 
             {/* Title container - Geometrically Stable Textured Card */}
-            <TexturedTitleCard stageColors={stageColors} isLight={isLight} hasPath={hasPath} attention={attention} width={width}>
+            <TexturedTitleCard stageColors={stageColors} isLight={isLight} hasPath={shouldShowPath} attention={attention} width={width}>
                 {/* FIXED 2-ROW GRID LAYOUT*/}
                 <div className="flex flex-col items-center gap-1">
 
@@ -404,8 +370,8 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
                                 <div
                                     className="divider-glyph relative"
                                     style={{
-                                        opacity: hasPath ? 0.5 : 0,
-                                        visibility: hasPath ? 'visible' : 'hidden',
+                                        opacity: shouldShowPath ? 0.5 : 0,
+                                        visibility: shouldShowPath ? 'visible' : 'hidden',
                                         width: '18px',
                                         transition: 'opacity 0.3s ease'
                                     }}
@@ -434,7 +400,7 @@ export function StageTitle({ stage, path, attention, showWelcome = true, width }
 
                         {/* RIGHT COL: Path (Centered) */}
                         <div className="flex justify-center w-full items-center">
-                            {hasPath && (
+                            {shouldShowPath && (
                                 <div
                                     className="path-section relative flex items-center justify-center cursor-help"
                                     onMouseEnter={() => handleMouseEnter('path')}

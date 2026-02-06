@@ -7,7 +7,7 @@ export const SENSORY_TYPES = {
         label: 'Body Scan',
         description: 'Sensing the body, point by point',
         icon: '🫸',
-        pathContribution: 'Soma',
+        pathContribution: 'Kaya',
         promptInterval: 30, // seconds between prompts
     },
     bhakti: {
@@ -15,7 +15,7 @@ export const SENSORY_TYPES = {
         label: 'Bhakti',
         description: 'Opening the heart through devotion',
         icon: '💗',
-        pathContribution: 'Samyoga',
+        pathContribution: 'Yantra',
         promptInterval: 45,
     },
     sakshi: {
@@ -23,7 +23,7 @@ export const SENSORY_TYPES = {
         label: 'Sakshi',
         description: 'Resting as awareness itself',
         icon: '◯',
-        pathContribution: 'Dhyana',
+        pathContribution: 'Yantra',
         promptInterval: 90, // sparse prompts
     },
     emotion: {
@@ -31,7 +31,7 @@ export const SENSORY_TYPES = {
         label: 'Emotion',
         description: 'Meeting your feelings with openness',
         icon: '💝',
-        pathContribution: 'Prana',
+        pathContribution: 'Kaya',
         promptInterval: 45,
     },
 };

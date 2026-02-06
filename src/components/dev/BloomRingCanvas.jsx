@@ -37,11 +37,20 @@ function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
   const mat = debug ? debugMaterial : occluderMaterial;
 
   // Cross pattern: 2 bars covering full ring diameter (~3.2 units for 1.6 radius)
+  // Thickness scales less than length for better beam definition
   const renderCrossPattern = () => (
     <>
+      {/* Central disc occluder to carve core */}
+      <mesh position={[0, 0, -0.002]}>
+        <circleGeometry args={[0.15 * scale, 32]} />
+        <meshBasicMaterial
+          {...mat}
+          onUpdate={(m) => { m.colorWrite = debug; }}
+        />
+      </mesh>
       {/* Horizontal bar */}
       <mesh position={[0, 0, 0]}>
-        <planeGeometry args={[3.2 * scale, 0.06 * scale]} />
+        <planeGeometry args={[3.2 * scale, 0.04 * Math.sqrt(scale)]} />
         <meshBasicMaterial
           {...mat}
           onUpdate={(m) => { m.colorWrite = debug; }}
@@ -49,7 +58,7 @@ function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
       </mesh>
       {/* Vertical bar */}
       <mesh position={[0, 0, 0.001]}>
-        <planeGeometry args={[0.06 * scale, 3.2 * scale]} />
+        <planeGeometry args={[0.04 * Math.sqrt(scale), 3.2 * scale]} />
         <meshBasicMaterial
           {...mat}
           onUpdate={(m) => { m.colorWrite = debug; }}
@@ -63,16 +72,16 @@ function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
     <>
       {/* Cross bars (reuse cross pattern) */}
       {renderCrossPattern()}
-      {/* Diagonal bars */}
+      {/* Diagonal bars - thinner for subtler segmentation */}
       <mesh position={[0, 0, 0.002]} rotation={[0, 0, Math.PI / 4]}>
-        <planeGeometry args={[3.6 * scale, 0.06 * scale]} />
+        <planeGeometry args={[3.6 * scale, 0.04 * Math.sqrt(scale)]} />
         <meshBasicMaterial
           {...mat}
           onUpdate={(m) => { m.colorWrite = debug; }}
         />
       </mesh>
       <mesh position={[0, 0, 0.003]} rotation={[0, 0, -Math.PI / 4]}>
-        <planeGeometry args={[3.6 * scale, 0.06 * scale]} />
+        <planeGeometry args={[3.6 * scale, 0.04 * Math.sqrt(scale)]} />
         <meshBasicMaterial
           {...mat}
           onUpdate={(m) => { m.colorWrite = debug; }}
@@ -81,14 +90,23 @@ function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
     </>
   );
 
-  // Radial pattern: 4 spokes at 0°, 45°, 90°, 135°
+  // Radial pattern: 8 spokes for sacred geometry hint
   const renderRadialPattern = () => (
     <>
-      {[0, 45, 90, 135].map((angle, i) => {
+      {/* Central disc occluder */}
+      <mesh position={[0, 0, -0.002]}>
+        <circleGeometry args={[0.15 * scale, 32]} />
+        <meshBasicMaterial
+          {...mat}
+          onUpdate={(m) => { m.colorWrite = debug; }}
+        />
+      </mesh>
+      {/* 8 radial spokes at 45° intervals */}
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
         const rad = (angle * Math.PI) / 180;
         return (
-          <mesh key={`radial-${i}`} position={[0, 0, i * 0.001]} rotation={[0, 0, rad]}>
-            <planeGeometry args={[3.6 * scale, 0.05 * scale]} />
+          <mesh key={`radial-${i}`} position={[0, 0, i * 0.0005]} rotation={[0, 0, rad]}>
+            <planeGeometry args={[3.6 * scale, 0.03 * Math.sqrt(scale)]} />
             <meshBasicMaterial
               {...mat}
               onUpdate={(m) => { m.colorWrite = debug; }}
@@ -108,7 +126,12 @@ function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
   };
 
   return (
-    <group position={[0, 0, depthOffset]} name="rayOccluders">
+    <group
+      position={[0, 0, depthOffset]}
+      name="rayOccluders"
+      renderOrder={-10}
+      frustumCulled={false}
+    >
       {renderPattern()}
     </group>
   );
@@ -129,13 +152,18 @@ function BreathingRing({
   occluderPattern,
   occluderScale,
   occluderDepthOffset,
-  debugOccluders
+  debugOccluders,
+  // Avatar integration
+  accentColor = '#ffffff',
+  mode = 'lab'  // 'lab' = full geometry, 'avatar' = FX-only (light + subtle glow)
 }) {
+  const isAvatar = mode === 'avatar';
   const coreRef = useRef(null);
   const shoulderRef = useRef(null);
   const streakProxyRef = useRef(null);
   const reticleRef = useRef(null);
   const innerGroupRef = useRef(null);
+  const avatarGlowRef = useRef(null);
   const baseShoulderOpacity = 0.35;
 
   useFrame(({ clock }) => {
@@ -227,98 +255,196 @@ function BreathingRing({
       const baseNucleusOpacity = 0.22;
       nucleusSunRef.current.material.opacity = baseNucleusOpacity * nucleusPulse;
     }
+
+    // Avatar mode: ambient field breathing (felt, not seen)
+    if (isAvatar && avatarGlowRef.current) {
+      const breathPhase = Math.sin(t);
+      // Slow secondary drift (breaks perfect sinusoidal feel)
+      const drift = Math.sin(t * 0.37) * 0.02;
+      // Scale: very subtle expansion/contraction
+      const s = 1.0 + 0.025 * breathPhase + drift;
+      avatarGlowRef.current.scale.set(s, s, 1);
+      // Opacity modulation on children (glow disc + hotspot)
+      avatarGlowRef.current.children.forEach((mesh, i) => {
+        if (mesh.material) {
+          const base = i === 0 ? 0.12 : (i === 1 ? 0.08 : 0.05);
+          mesh.material.opacity = base * (1.0 + 0.15 * breathPhase + drift);
+        }
+      });
+    }
   });
 
   return (
     <group>
-      {/* God-ray emitter (tunable sun proxy - CRITICAL for shaft structure) */}
-      <mesh ref={godRayLightRef} position={[0, raySunY, raySunZ]}>
-        <sphereGeometry args={[raySunRadius, 16, 16]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.9}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Ray occluders (Phase 2C-3: structured shafts) */}
-      <RayOccluders
-        enabled={occluderEnabled}
-        pattern={occluderPattern}
-        scale={occluderScale}
-        depthOffset={occluderDepthOffset}
-        debug={debugOccluders}
-      />
-
-      {/* Dark center disc to control inner glow (creates halo effect) */}
-      <mesh position={[0, 0, -0.01]}>
-        <circleGeometry args={[0.9, 128]} />
-        <meshBasicMaterial
-          color="#000000"
-          transparent
-          opacity={0.9}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {/* Soft shoulder ring (creates analog falloff) */}
-      <mesh ref={shoulderRef} position={[0, 0, 0]}>
-        <ringGeometry args={[0.92, 1.12, 128]} />
-        <meshBasicMaterial
-          color="#FFF8F0"
-          transparent
-          opacity={baseShoulderOpacity}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Hot core ring (thin bright center) */}
-      <mesh ref={coreRef} position={[0, 0, 0.01]}>
-        <ringGeometry args={[0.98, 1.05, 128]} />
-        <meshBasicMaterial
-          color="#FFFFFF"
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Outer companion rings (Phase 2C Step 4: subtle aperture stack) */}
-      {/* Inner companion (inside main ring) */}
-      <mesh position={[0, 0, -0.002]}>
-        <ringGeometry args={[0.90, 0.915, 128]} />
-        <meshBasicMaterial
-          color="#FFF8F0"
-          transparent
-          opacity={0.05}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </mesh>
-      {/* Outer companion (outside main ring) */}
-      <mesh position={[0, 0, -0.002]}>
-        <ringGeometry args={[1.08, 1.095, 128]} />
-        <meshBasicMaterial
-          color="#FFF8F0"
-          transparent
-          opacity={0.05}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Inner concentric core (Phase 2C: aperture stack) */}
-      <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, -0.005]} rotation={[0, 0, 0]}>
-        {/* Center nucleus (Phase 2C Step 3: warm light source) */}
-        <group name="centerNucleus" position={[0, 0, 0]}>
-          {/* Warm halo disc */}
-          <mesh position={[0, 0, 0.012]}>
-            <circleGeometry args={[0.085, 128]} />
+      {/* Avatar mode: soft radial glow field (felt, not seen) */}
+      {isAvatar && (
+        <group ref={avatarGlowRef}>
+          {/* Outer glow field - large soft accent-tinted disc */}
+          <mesh position={[0, 0, 0]}>
+            <circleGeometry args={[0.85, 128]} />
             <meshBasicMaterial
-              color="#FFF2E8"
+              color={accentColor}
+              transparent
+              opacity={0.12}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Inner warmth - smaller, slightly brighter */}
+          <mesh position={[0, 0, 0.001]}>
+            <circleGeometry args={[0.4, 128]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={0.08}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Central hotspot - tiny warm point */}
+          <mesh position={[0, 0, 0.002]}>
+            <circleGeometry args={[0.12, 64]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.05}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+      )}
+
+      {/* God-ray emitter (tunable sun proxy - CRITICAL for shaft structure) - lab only */}
+      {!isAvatar && (
+        <mesh ref={godRayLightRef} position={[0, raySunY, raySunZ]}>
+          <sphereGeometry args={[raySunRadius, 16, 16]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0.9}
+            toneMapped={false}
+          />
+        </mesh>
+      )}
+
+      {/* Ray occluders (Phase 2C-3: structured shafts) - lab only */}
+      {!isAvatar && (
+        <RayOccluders
+          enabled={occluderEnabled}
+          pattern={occluderPattern}
+          scale={occluderScale}
+          depthOffset={occluderDepthOffset}
+          debug={debugOccluders}
+        />
+      )}
+
+      {/* Dark center disc to control inner glow (creates halo effect) - lab only */}
+      {!isAvatar && (
+        <mesh position={[0, 0, -0.01]}>
+          <circleGeometry args={[0.9, 128]} />
+          <meshBasicMaterial
+            color="#000000"
+            transparent
+            opacity={0.9}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+
+      {/* Soft shoulder ring (creates analog falloff) - lab only */}
+      {!isAvatar && (
+        <mesh ref={shoulderRef} position={[0, 0, 0]}>
+          <ringGeometry args={[0.92, 1.12, 128]} />
+          <meshBasicMaterial
+            color={accentColor}
+            transparent
+            opacity={baseShoulderOpacity}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      )}
+
+      {/* Hot core ring (thin bright center) - lab only */}
+      {!isAvatar && (
+        <mesh ref={coreRef} position={[0, 0, 0.01]}>
+          <ringGeometry args={[0.98, 1.05, 128]} />
+          <meshBasicMaterial
+            color="#FFFFFF"
+            toneMapped={false}
+          />
+        </mesh>
+      )}
+
+      {/* Outer companion rings - lab only */}
+      {!isAvatar && (
+        <>
+          <mesh position={[0, 0, -0.002]}>
+            <ringGeometry args={[0.90, 0.915, 128]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={0.05}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh position={[0, 0, -0.002]}>
+            <ringGeometry args={[1.08, 1.095, 128]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={0.05}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </>
+      )}
+
+      {/* Inner concentric core (Phase 2C: aperture stack) - lab only */}
+      {!isAvatar && (
+        <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, -0.005]} rotation={[0, 0, 0]}>
+          {/* Center nucleus (Phase 2C Step 3: warm light source) */}
+          <group name="centerNucleus" position={[0, 0, 0]}>
+            {/* Warm halo disc */}
+            <mesh position={[0, 0, 0.012]}>
+              <circleGeometry args={[0.085, 128]} />
+              <meshBasicMaterial
+                color="#FFF2E8"
+                transparent
+                opacity={0.06}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+                toneMapped={false}
+              />
+            </mesh>
+            {/* White core disc (breathing heat modulation) */}
+            <mesh ref={nucleusSunRef} position={[0, 0, 0.013]}>
+              <circleGeometry args={[0.03, 128]} />
+              <meshBasicMaterial
+                color="#FFFFFF"
+                transparent
+                opacity={0.22}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+                toneMapped={false}
+              />
+            </mesh>
+          </group>
+
+          {/* Center glow disc (soft luminous core) */}
+          <mesh position={[0, 0, -0.003]}>
+            <circleGeometry args={[0.14, 128]} />
+            <meshBasicMaterial
+              color="#FFF0E0"
               transparent
               opacity={0.06}
               blending={THREE.AdditiveBlending}
@@ -326,9 +452,75 @@ function BreathingRing({
               toneMapped={false}
             />
           </mesh>
-          {/* White core disc (breathing heat modulation) */}
-          <mesh ref={nucleusSunRef} position={[0, 0, 0.013]}>
-            <circleGeometry args={[0.03, 128]} />
+
+          {/* Inner Ring A (closest to center) */}
+          {/* Shoulder */}
+          <mesh>
+            <ringGeometry args={[0.16, 0.175, 128]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={0.10}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Core */}
+          <mesh position={[0, 0, 0.001]}>
+            <ringGeometry args={[0.16, 0.175, 128]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.22}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+
+          {/* Inner Ring B (middle) */}
+          {/* Shoulder */}
+          <mesh>
+            <ringGeometry args={[0.26, 0.275, 128]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={0.10}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Core */}
+          <mesh position={[0, 0, 0.001]}>
+            <ringGeometry args={[0.26, 0.275, 128]} />
+            <meshBasicMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.22}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+
+          {/* Inner Ring C (outer) */}
+          {/* Shoulder */}
+          <mesh>
+            <ringGeometry args={[0.36, 0.372, 128]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={0.10}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Core */}
+          <mesh position={[0, 0, 0.001]}>
+            <ringGeometry args={[0.36, 0.372, 128]} />
             <meshBasicMaterial
               color="#FFFFFF"
               transparent
@@ -339,107 +531,16 @@ function BreathingRing({
             />
           </mesh>
         </group>
+      )}
 
-        {/* Center glow disc (soft luminous core) */}
-        <mesh position={[0, 0, -0.003]}>
-          <circleGeometry args={[0.14, 128]} />
-          <meshBasicMaterial
-            color="#FFF0E0"
-            transparent
-            opacity={0.06}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-
-        {/* Inner Ring A (closest to center) */}
-        {/* Shoulder */}
-        <mesh>
-          <ringGeometry args={[0.16, 0.175, 128]} />
-          <meshBasicMaterial
-            color="#FFF8F0"
-            transparent
-            opacity={0.10}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-        {/* Core */}
-        <mesh position={[0, 0, 0.001]}>
-          <ringGeometry args={[0.16, 0.175, 128]} />
-          <meshBasicMaterial
-            color="#FFFFFF"
-            transparent
-            opacity={0.22}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-
-        {/* Inner Ring B (middle) */}
-        {/* Shoulder */}
-        <mesh>
-          <ringGeometry args={[0.26, 0.275, 128]} />
-          <meshBasicMaterial
-            color="#FFF8F0"
-            transparent
-            opacity={0.10}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-        {/* Core */}
-        <mesh position={[0, 0, 0.001]}>
-          <ringGeometry args={[0.26, 0.275, 128]} />
-          <meshBasicMaterial
-            color="#FFFFFF"
-            transparent
-            opacity={0.22}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-
-        {/* Inner Ring C (outer) */}
-        {/* Shoulder */}
-        <mesh>
-          <ringGeometry args={[0.36, 0.372, 128]} />
-          <meshBasicMaterial
-            color="#FFF8F0"
-            transparent
-            opacity={0.10}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-        {/* Core */}
-        <mesh position={[0, 0, 0.001]}>
-          <ringGeometry args={[0.36, 0.372, 128]} />
-          <meshBasicMaterial
-            color="#FFFFFF"
-            transparent
-            opacity={0.22}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-      </group>
-
-      {/* Streak proxy group (horizontal smear, hot-pixel keyed) */}
-      {streakStrength > 0 && (
+      {/* Streak proxy group (horizontal smear, hot-pixel keyed) - lab only */}
+      {!isAvatar && streakStrength > 0 && (
         <group ref={streakProxyRef} position={[0, 0, 0.02]}>
           {/* Proxy shoulder ring (stretched) */}
           <mesh>
             <ringGeometry args={[0.92, 1.12, 128]} />
             <meshBasicMaterial
-              color="#FFF8F0"
+              color={accentColor}
               transparent
               opacity={0}
               blending={THREE.AdditiveBlending}
@@ -463,10 +564,11 @@ function BreathingRing({
         </group>
       )}
 
-      {/* Reticle geometry group (Phase 2B: instrumental structure) */}
-      <group ref={reticleRef} position={[0, 0, -0.005]}>
-        {/* Tick marks group (Step 2: sparse, instrumental) */}
-        <group>
+      {/* Reticle geometry group (Phase 2B: instrumental structure) - lab only */}
+      {!isAvatar && (
+        <group ref={reticleRef} position={[0, 0, -0.005]}>
+          {/* Tick marks group (Step 2: sparse, instrumental) */}
+          <group>
           {/* Major ticks (4 cardinal directions, aligned with crosshair) */}
           {[
             { angle: 0, length: 0.11, radius: 1.60, dim: 1.0 },
@@ -661,7 +763,8 @@ function BreathingRing({
             />
           </mesh>
         </group>
-      </group>
+        </group>
+      )}
     </group>
   );
 }
@@ -694,7 +797,11 @@ export default function BloomRingCanvas({
   occluderPattern = 'cross',
   occluderScale = 1.2,
   occluderDepthOffset = -1.5,
-  debugOccluders = false
+  debugOccluders = false,
+  // Avatar integration: accent color tint
+  accentColor = '#ffffff',
+  // Avatar integration: mode ('lab' = full geometry, 'avatar' = FX-only)
+  mode = 'lab'
 }) {
   const nucleusSunRef = useRef(null);
   const godRayLightRef = useRef(null);
@@ -709,6 +816,7 @@ export default function BloomRingCanvas({
 
   // Clamp bloom to preserve highlight detail and prevent full-frame blowout
   const cappedBloomStrength = Math.min(bloomStrength, 2.4);
+  const isAvatar = mode === 'avatar';
 
   return (
     <Canvas
@@ -746,12 +854,15 @@ export default function BloomRingCanvas({
           occluderScale={occluderScale}
           occluderDepthOffset={occluderDepthOffset}
           debugOccluders={debugOccluders}
+          accentColor={accentColor}
+          mode={mode}
         />
 
-        <EffectComposer multisampling={4}>
-          {/* Phase 2C-3: Occluded ray shafts (tunable, structured by occlusion) */}
-          {/* No ref gating needed - GodRays will handle null sun gracefully until ref populates */}
-          {rayEnabled && (
+        {/* Avatar mode: minimal post-processing (soft field blur only) */}
+        {/* Lab mode: full post-processing pipeline */}
+        <EffectComposer multisampling={0}>
+          {/* GodRays - lab only (creates visible structure, violates avatar subtlety) */}
+          {!isAvatar && rayEnabled && (
             <GodRays
               sun={godRayLightRef}
               samples={raySamples}
@@ -764,24 +875,27 @@ export default function BloomRingCanvas({
             />
           )}
 
-          {/* Tight bloom (crisp ring edges, 70% of perceived glow) */}
+          {/* Avatar: single gentle bloom to blur disc edges into seamless field */}
+          {/* Lab: tight bloom (crisp ring edges, 70% of perceived glow) */}
           <Bloom
-            intensity={cappedBloomStrength * 0.8}
-            radius={Math.min(bloomRadius, 0.35)}
-            luminanceThreshold={Math.max(bloomThreshold, 0.45)}
-            luminanceSmoothing={0.015}
+            intensity={isAvatar ? 0.6 : cappedBloomStrength * 0.8}
+            radius={isAvatar ? 0.5 : Math.min(bloomRadius, 0.35)}
+            luminanceThreshold={isAvatar ? 0.1 : Math.max(bloomThreshold, 0.45)}
+            luminanceSmoothing={isAvatar ? 0.4 : 0.015}
           />
 
-          {/* Wide bloom (atmosphere without milk, 30% of perceived glow) */}
-          <Bloom
-            intensity={cappedBloomStrength * 0.3}
-            radius={0.65}
-            luminanceThreshold={0.55}
-            luminanceSmoothing={0.05}
-          />
+          {/* Wide bloom - lab only */}
+          {!isAvatar && (
+            <Bloom
+              intensity={cappedBloomStrength * 0.3}
+              radius={0.65}
+              luminanceThreshold={0.55}
+              luminanceSmoothing={0.05}
+            />
+          )}
 
-          {/* Secondary bloom (streak effect, hot-pixel keyed) */}
-          {streakStrength > 0 && (
+          {/* Secondary bloom (streak effect) - lab only */}
+          {!isAvatar && streakStrength > 0 && (
             <Bloom
               intensity={streakStrength * 1.5}
               radius={streakLength * 2.0}
@@ -790,27 +904,32 @@ export default function BloomRingCanvas({
             />
           )}
 
-          {/* Film grain (after rays to preserve coherence) */}
-          <Noise
-            opacity={0.035}
-            premultiply
-            blendFunction={BlendFunction.OVERLAY}
-          />
+          {/* Film grain - lab only */}
+          {!isAvatar && (
+            <Noise
+              opacity={0.035}
+              premultiply
+              blendFunction={BlendFunction.OVERLAY}
+            />
+          )}
 
-          {/* Phase 2F Step 1: Lens post stack (optical artifacts) */}
-          {/* Chromatic aberration (subtle RGB separation at edges) */}
-          <ChromaticAberration
-            offset={[0.0012, 0.0005]}
-            radialModulation={true}
-            modulationOffset={0.15}
-          />
+          {/* Chromatic aberration - lab only */}
+          {!isAvatar && (
+            <ChromaticAberration
+              offset={[0.0012, 0.0005]}
+              radialModulation={true}
+              modulationOffset={0.15}
+            />
+          )}
 
-          {/* Vignette (subtle edge darkening) */}
-          <Vignette
-            eskil={false}
-            offset={0.25}
-            darkness={0.45}
-          />
+          {/* Vignette - lab only */}
+          {!isAvatar && (
+            <Vignette
+              eskil={false}
+              offset={0.25}
+              darkness={0.45}
+            />
+          )}
         </EffectComposer>
       </Canvas>
   );

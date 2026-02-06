@@ -10,6 +10,7 @@ export function AvatarV3Container({
   driftDuration,
   lensDuration,
   settleActive,
+  stackStyle,
   ariaLabel,
   onTap,
   children,
@@ -43,7 +44,7 @@ export function AvatarV3Container({
             '--avatar-v3-lens-duration': `${lensDuration}s`,
           }}
         >
-          <div className="avatar-v3__stack">{children}</div>
+          <div className="avatar-v3__stack" style={stackStyle}>{children}</div>
         </div>
       </div>
     </div>

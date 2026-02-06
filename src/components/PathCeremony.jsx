@@ -27,6 +27,8 @@ const CEREMONY_AUDIO_PATH = `${import.meta.env.BASE_URL}assets/audio/path-ceremo
 export function PathCeremony({ stage = 'flame' }) {
     const pendingCeremony = usePathStore(s => s.pendingCeremony);
     const dismissCeremony = usePathStore(s => s.dismissCeremony);
+    const devPreviewCeremony = usePathStore(s => s.devPreviewCeremony);
+    const dismissDevPreview = usePathStore(s => s.dismissDevPreview);
 
     const [isVisible, setIsVisible] = useState(false);
     const [animationPhase, setAnimationPhase] = useState('entering'); // entering | revealed | exiting
@@ -39,9 +41,13 @@ export function PathCeremony({ stage = 'flame' }) {
         setCanShare(!!navigator.share || !!navigator.clipboard);
     }, []);
 
+    const activeCeremony = devPreviewCeremony || pendingCeremony;
+    const stageLower = stage?.toLowerCase?.() || 'flame';
+    const isSeedling = stageLower === 'seedling';
+
     // Show ceremony when pendingCeremony changes
     useEffect(() => {
-        if (pendingCeremony) {
+        if (activeCeremony) {
             setIsVisible(true);
             setAnimationPhase('entering');
 
@@ -60,7 +66,7 @@ export function PathCeremony({ stage = 'flame' }) {
 
             return () => clearTimeout(timer);
         }
-    }, [pendingCeremony]);
+    }, [activeCeremony]);
 
     // Handle continue click
     const handleContinue = useCallback(() => {
@@ -73,15 +79,19 @@ export function PathCeremony({ stage = 'flame' }) {
 
         setTimeout(() => {
             setIsVisible(false);
-            dismissCeremony();
+            if (devPreviewCeremony) {
+                dismissDevPreview();
+            } else {
+                dismissCeremony();
+            }
         }, 500);
-    }, [dismissCeremony]);
+    }, [dismissCeremony, dismissDevPreview, devPreviewCeremony]);
 
     // Handle share
     const handleShare = useCallback(async () => {
-        if (!pendingCeremony) return;
+        if (!activeCeremony) return;
 
-        const { type, path, previousPath } = pendingCeremony;
+        const { type, path, previousPath } = activeCeremony;
         const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
         const pathName = PATH_NAMES[path];
         const symbol = PATH_SYMBOLS[path];
@@ -103,14 +113,14 @@ export function PathCeremony({ stage = 'flame' }) {
         } catch (e) {
             console.log('Share cancelled or failed:', e);
         }
-    }, [pendingCeremony, stage]);
+    }, [activeCeremony, stage]);
 
     // Don't render if not visible
-    if (!isVisible || !pendingCeremony) {
+    if (!isVisible || !activeCeremony || (isSeedling && !devPreviewCeremony)) {
         return null;
     }
 
-    const { type, path, previousPath } = pendingCeremony;
+    const { type, path, previousPath } = activeCeremony;
     const symbol = PATH_SYMBOLS[path];
     const pathName = PATH_NAMES[path];
     const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);

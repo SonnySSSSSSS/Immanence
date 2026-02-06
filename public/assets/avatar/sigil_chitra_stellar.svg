@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="512" cy="512" r="360" />
+  <rect x="302" y="302" width="420" height="420" />
+  <polygon points="512 252 772 512 512 772 252 512" />
+  <polygon points="512 272 304.5 662 719.5 662" />
+  <polygon points="512 752 719.5 362 304.5 362" />
+  <line x1="512" y1="512" x2="812" y2="512" />
+  <line x1="512" y1="512" x2="769.8" y2="662" />
+  <line x1="512" y1="512" x2="662" y2="769.8" />
+  <line x1="512" y1="512" x2="512" y2="812" />
+  <line x1="512" y1="512" x2="362" y2="769.8" />
+  <line x1="512" y1="512" x2="254.2" y2="662" />
+  <line x1="512" y1="512" x2="212" y2="512" />
+  <line x1="512" y1="512" x2="254.2" y2="362" />
+  <line x1="512" y1="512" x2="362" y2="254.2" />
+  <line x1="512" y1="512" x2="512" y2="212" />
+  <line x1="512" y1="512" x2="662" y2="254.2" />
+  <line x1="512" y1="512" x2="769.8" y2="362" />
+  <circle cx="512" cy="512" r="100" />
+</svg>

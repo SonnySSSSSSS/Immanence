@@ -82,16 +82,15 @@ export function RuneRingLayer({ stage = "flame", isPracticing = false, speedMult
                     alt="Rune ring"
                     className="w-full h-full object-contain"
                     style={{
-                        // Teal-tinted stone look - harmonized with avatar glow
-                        filter: `brightness(0.92) saturate(0.75) contrast(1.08) hue-rotate(-10deg) drop-shadow(0 0 4px rgba(80, 200, 180, 0.3))`,
-                        opacity: 0.9,
+                        filter: `brightness(1.15) saturate(1.55) contrast(1.12) sepia(0.28) drop-shadow(0 0 10px rgba(230, 180, 90, 0.65)) drop-shadow(0 0 18px rgba(200, 150, 70, 0.35))`,
+                        opacity: 1,
                     }}
                 />
                 {/* Inner bevel/shadow for depth */}
                 <div
                     className="absolute inset-[15%] rounded-full pointer-events-none"
                     style={{
-                        boxShadow: `inset 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 -2px 8px rgba(80, 200, 180, 0.08)`,
+                        boxShadow: `inset 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 -2px 8px rgba(200, 160, 80, 0.10)`,
                     }}
                 />
                 <div className="absolute inset-0 pointer-events-none">

@@ -14,6 +14,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
 import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
 import { useAvatarV3State } from '../state/avatarV3Store.js';
+import { usePathStore } from '../state/pathStore.js';
 
 export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide, isPracticing = false }) {
   const { activePath, beginPath } = useNavigationStore();
@@ -25,6 +26,9 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const effectiveStage = avatarStage || currentStage;
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
+  const getDisplayPath = usePathStore(s => s.getDisplayPath);
+  const storedPath = getDisplayPath ? getDisplayPath(effectiveStage) : null;
+  const avatarPath = previewPath ?? storedPath;
   const pathGridRef = useRef(null);
   const [showCodex, setShowCodex] = useState(false);
   const [navModalOpen, setNavModalOpen] = useState(false);
@@ -71,6 +75,7 @@ export function NavigationSection({ onStageChange, currentStage, previewPath, pr
           lastStageChange={lastStageChange}
           lastModeChange={lastModeChange}
           lastSessionComplete={lastSessionComplete}
+          path={avatarPath}
           size={isSanctuary ? 'sanctuary' : 'hearth'}
         />
       </div>

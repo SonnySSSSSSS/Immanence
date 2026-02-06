@@ -32,7 +32,9 @@
       "Bash(then echo \"exists\")",
       "Bash(else echo \"not exists\")",
       "Bash(fi)",
-      "Bash(npm run extract-colors:*)"
+      "Bash(npm run extract-colors:*)",
+      "Bash(timeout 8 tail:*)",
+      "Bash(exit 0)"
     ]
   },
   "mcpServers": {

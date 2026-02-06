@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { TracePage } from "./pages/TracePage.jsx";
+import { Playground } from "./dev/Playground.jsx";
 import "./immanence.css";
 import "./index.css";
 
@@ -23,6 +24,9 @@ if (import.meta.env.DEV && "serviceWorker" in navigator) {
 // Simple path-based routing (no React Router needed)
 const getRoute = () => {
   const path = window.location.pathname;
+  if (import.meta.env.DEV && path === "/__playground") {
+    return "playground";
+  }
   // Handle both /Immanence/trace and /trace
   if (path.endsWith('/trace') || path.endsWith('/trace/')) {
     return 'trace';
@@ -35,6 +39,9 @@ const RootComponent = () => {
 
   if (route === 'trace') {
     return <TracePage />;
+  }
+  if (route === "playground") {
+    return <Playground />;
   }
 
   return <App />;

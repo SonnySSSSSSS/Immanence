@@ -11,7 +11,51 @@ import {
   getDominantMode,
   normalizeModeWeights,
 } from './constants.js';
+import { STAGE_THEMES } from '../../theme/stageColors.js';
+import { getPathVisuals } from '../../data/pathVisuals.js';
+import BloomRingCanvas from '../dev/BloomRingCanvas.jsx';
 import './AvatarV3.css';
+
+/**
+ * AvatarBloomLayer - Circular breathing ring with stage-matched accent color
+ * Renders BloomRingCanvas clipped to circular avatar boundary
+ */
+function AvatarBloomLayer({ stage, size, bloomOpacity = 0.25, breathSpeed = 0.8 }) {
+  // Map stage to STAGE_THEMES key (lowercase to uppercase)
+  const stageKey = stage?.toUpperCase() || 'SEEDLING';
+  const accentColor = STAGE_THEMES[stageKey]?.accent.primary || '#ffffff';
+
+  // Size mapping from AvatarV3.css: hearth max = 195px, sanctuary max = 240px
+  const canvasSize = size === 'sanctuary' ? 240 : 195;
+
+  return (
+    <div
+      className="avatar-v3__layer avatar-v3__bloom-layer"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mixBlendMode: 'screen',
+        opacity: bloomOpacity,
+      }}
+    >
+      <div style={{ width: canvasSize, height: canvasSize }}>
+        <BloomRingCanvas
+          width={canvasSize}
+          height={canvasSize}
+          mode="avatar"
+          accentColor={accentColor}
+          breathSpeed={breathSpeed}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function AvatarV3({
   stage,
@@ -20,6 +64,7 @@ export function AvatarV3({
   lastStageChange: _lastStageChange,
   lastModeChange: _lastModeChange,
   lastSessionComplete,
+  path = null,
   size = 'hearth',
   onTap,
   showDetailsOnTap = true,
@@ -35,16 +80,36 @@ export function AvatarV3({
     key: 0,
   });
 
+  const stageKey = stageTransition.to || stage || 'seedling';
+  const pathVisuals = useMemo(() => getPathVisuals(path, stageKey), [path, stageKey]);
+
   const baseBreathDuration = useMemo(() => 14 + Math.random() * 4, []);
   const baseDriftDuration = useMemo(() => 60 + Math.random() * 60, []);
   const baseLensDuration = useMemo(() => 45 + Math.random() * 45, []);
 
-  const breathDuration = isPracticing ? baseBreathDuration * 1.05 : baseBreathDuration;
+  const breathDuration = pathVisuals?.breathDuration
+    ?? (isPracticing ? baseBreathDuration * 1.05 : baseBreathDuration);
   const driftDuration = isPracticing ? baseDriftDuration * 1.25 : baseDriftDuration;
   const lensDuration = baseLensDuration;
 
-  const breathMin = isPracticing ? 0.93 : ANIMATION_DEFAULTS.breathMin;
-  const breathMax = ANIMATION_DEFAULTS.breathMax;
+  const breathMin = pathVisuals?.breathMin
+    ?? (isPracticing ? 0.93 : ANIMATION_DEFAULTS.breathMin);
+  const breathMax = pathVisuals?.breathMax ?? ANIMATION_DEFAULTS.breathMax;
+  const bloomOpacity = pathVisuals?.bloomOpacity ?? 0.25;
+  const bloomBreathSpeed = pathVisuals?.bloomBreathSpeed ?? 0.8;
+  const sigilSrc = pathVisuals?.sigil
+    ? `${import.meta.env.BASE_URL}assets/avatar/${pathVisuals.sigil}`
+    : `${import.meta.env.BASE_URL}assets/avatar/sigil_flower.svg`;
+  const sigilMaskStyle = sigilSrc ? {
+    WebkitMaskImage: `url(${sigilSrc})`,
+    maskImage: `url(${sigilSrc})`,
+  } : undefined;
+  const stackStyle = pathVisuals ? {
+    '--path-glow-blur': `${pathVisuals.glowBlur}px`,
+    '--path-glow-opacity': pathVisuals.glowOpacity,
+    '--path-vignette-opacity': pathVisuals.vignetteOpacity,
+    '--path-lens-opacity': pathVisuals.lensIntensity,
+  } : undefined;
 
   const prevPracticingRef = useRef(isPracticing);
   const [settleActive, setSettleActive] = useState(false);
@@ -104,6 +169,7 @@ export function AvatarV3({
         driftDuration={driftDuration}
         lensDuration={lensDuration}
         settleActive={settleActive}
+        stackStyle={stackStyle}
         ariaLabel={ariaLabel}
         onTap={handleTap}
       >
@@ -116,14 +182,19 @@ export function AvatarV3({
           previousStage={stageTransition.from}
           transitionActive={stageTransition.active}
         />
+        <div className="avatar-v3__layer avatar-v3__tint" />
         <div className="avatar-v3__layer avatar-v3__vignette" />
-        <div className="avatar-v3__layer avatar-v3__sigil">
-          <img
-            src={`${import.meta.env.BASE_URL}assets/avatar/sigil_flower.svg`}
-            alt=""
-            className="avatar-v3__sigil-image"
-          />
-        </div>
+        {/* Breathing bloom ring with structured god rays (above stage image + vignette) */}
+        <AvatarBloomLayer
+          stage={stageKey}
+          size={size}
+          bloomOpacity={bloomOpacity}
+          breathSpeed={bloomBreathSpeed}
+        />
+        <div
+          className="avatar-v3__layer avatar-v3__sigil"
+          style={sigilMaskStyle}
+        />
         <LensHighlight />
         <div className="avatar-v3__layer avatar-v3__glass">
           <img

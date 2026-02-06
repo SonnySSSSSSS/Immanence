@@ -24,7 +24,7 @@ const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m =>
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
-const PATH_OPTIONS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
+const PATH_OPTIONS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER COMPONENTS (moved outside to avoid hook rendering issues)
@@ -498,7 +498,15 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
 
 export function DevPanel({
     isOpen,
-    onClose
+    onClose,
+    avatarStage: avatarStageProp,
+    setAvatarStage: setAvatarStageProp,
+    avatarPath: avatarPathProp,
+    setAvatarPath: setAvatarPathProp,
+    showCore: showCoreProp,
+    setShowCore: setShowCoreProp,
+    avatarAttention: avatarAttentionProp,
+    setAvatarAttention: setAvatarAttentionProp,
 }) {
     // Early return BEFORE any hooks to avoid hook count mismatch
     if (!isOpen) return null;
@@ -528,15 +536,37 @@ export function DevPanel({
     const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
     const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
+    const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isPlaygroundPath = currentPathname === '/__playground';
 
-    // Avatar stage for wallpaper (simplified until avatar system rebuilt)
-    const [avatarStage, setAvatarStage] = useState('Flame');
+    // Avatar preview controls (fallback to local state if no props supplied)
+    const [avatarStageLocal, setAvatarStageLocal] = useState('Flame');
+    const [avatarPathLocal, setAvatarPathLocal] = useState(PATH_OPTIONS[0] || 'Yantra');
+    const [showCoreLocal, setShowCoreLocal] = useState(true);
+    const [avatarAttentionLocal, setAvatarAttentionLocal] = useState('none');
+
+    const avatarStage = avatarStageProp ?? avatarStageLocal;
+    const setAvatarStage = setAvatarStageProp ?? setAvatarStageLocal;
+    const avatarPath = avatarPathProp ?? avatarPathLocal;
+    const setAvatarPath = setAvatarPathProp ?? setAvatarPathLocal;
+    const showCore = showCoreProp ?? showCoreLocal;
+    const setShowCore = setShowCoreProp ?? setShowCoreLocal;
+    const avatarAttention = avatarAttentionProp ?? avatarAttentionLocal;
+    const setAvatarAttention = setAvatarAttentionProp ?? setAvatarAttentionLocal;
+
+    // Sync initial path to parent when DevPanel opens and parent has no path set
+    useEffect(() => {
+        if (isOpen && avatarPathProp === null && setAvatarPathProp) {
+            setAvatarPathProp(avatarPathLocal);
+        }
+    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
     const [gyroX, setGyroX] = useState(0);
     const [gyroY, setGyroY] = useState(0);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
         avatar: true,
+        playground: false,
         lunar: true,
         curriculum: false,
         path: false,
@@ -632,6 +662,18 @@ export function DevPanel({
         location.reload();
     };
 
+    const handleOpenPlayground = () => {
+        if (typeof window === 'undefined') return;
+        sessionStorage.setItem('dev:returnPath', window.location.pathname);
+        window.location.assign('/__playground');
+    };
+
+    const handleBackFromPlayground = () => {
+        if (typeof window === 'undefined') return;
+        const returnPath = sessionStorage.getItem('dev:returnPath') || '/';
+        window.location.assign(returnPath);
+    };
+
     return (
         <div className="fixed inset-0 z-[9999] flex">
             {/* Backdrop */}
@@ -678,7 +720,7 @@ export function DevPanel({
                         isLight={isLight}
                     >
                         <div className="text-xs text-white/50 mb-3">
-                            Stage controls wallpaper only. Full avatar system coming soon.
+                            Stage controls color/wallpaper. Path controls sigil geometry, breath, bloom intensity.
                         </div>
 
                         {/* Stage selector */}
@@ -703,6 +745,58 @@ export function DevPanel({
                             >
                                 {STAGE_OPTIONS.map(s => (
                                     <option key={s} value={s}>{s}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Path selector */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-sm font-medium w-16" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white' }}>Path</label>
+                            <select
+                                value={avatarPath || ''}
+                                onChange={(e) => setAvatarPath(e.target.value || null)}
+                                className="flex-1 rounded-lg px-3 py-2.5 text-base font-medium"
+                                style={{
+                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
+                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
+                                    colorScheme: isLight ? 'light' : 'dark'
+                                }}
+                            >
+                                <option value="">None (default)</option>
+                                {PATH_OPTIONS.map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Core + Attention preview toggles */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Preview</label>
+                            <button
+                                onClick={() => setShowCore(!showCore)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                                style={{
+                                    background: showCore ? 'rgba(212, 168, 74, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'white',
+                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.35)' : '1px solid rgba(255, 255, 255, 0.2)'
+                                }}
+                            >
+                                {showCore ? 'Core On' : 'Core Off'}
+                            </button>
+                            <select
+                                value={avatarAttention}
+                                onChange={(e) => setAvatarAttention(e.target.value)}
+                                className="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium"
+                                style={{
+                                    background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
+                                    border: isLight ? '1px solid rgba(180, 155, 110, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)',
+                                    color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'white',
+                                    colorScheme: isLight ? 'light' : 'dark'
+                                }}
+                            >
+                                {['none', 'ekagrata', 'sahaja', 'vigilance'].map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
                                 ))}
                             </select>
                         </div>
@@ -787,6 +881,47 @@ export function DevPanel({
                             >
                                 Reset Tilt
                             </button>
+                        </div>
+                    </Section>
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* UI PLAYGROUND SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="UI Playground"
+                        expanded={expandedSections.playground}
+                        onToggle={() => toggleSection('playground')}
+                        isLight={isLight}
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(255, 255, 255, 0.7)' }}>
+                                Launcher <span className="font-mono text-[10px] opacity-80">BUILD_PROBE</span>
+                            </span>
+                            {!isPlaygroundPath ? (
+                                <button
+                                    onClick={handleOpenPlayground}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border"
+                                    style={{
+                                        background: isLight ? 'rgba(180, 155, 110, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                                        color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                        borderColor: isLight ? 'rgba(180, 155, 110, 0.35)' : 'rgba(255, 255, 255, 0.22)',
+                                    }}
+                                >
+                                    Open Playground
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleBackFromPlayground}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border"
+                                    style={{
+                                        background: isLight ? 'rgba(180, 155, 110, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                                        color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                        borderColor: isLight ? 'rgba(180, 155, 110, 0.35)' : 'rgba(255, 255, 255, 0.22)',
+                                    }}
+                                >
+                                    Back
+                                </button>
+                            )}
                         </div>
                     </Section>
 
@@ -1529,10 +1664,16 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
     const _devSetDay = useCurriculumStore(s => s._devSetDay);
     const _devCompleteDay = useCurriculumStore(s => s._devCompleteDay);
     const logLegCompletion = useCurriculumStore(s => s.logLegCompletion);
+    const logDayCompletion = useCurriculumStore(s => s.logDayCompletion);
     const dayCompletions = useCurriculumStore(s => s.dayCompletions);
     const legCompletions = useCurriculumStore(s => s.legCompletions);
+    const onboardingComplete = useCurriculumStore(s => s.onboardingComplete);
     const _devReset = useCurriculumStore(s => s._devReset);
     const getActiveCurriculum = useCurriculumStore(s => s.getActiveCurriculum);
+
+    // Navigation path state — blocks curriculum card when active
+    const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
+    const abandonPath = useNavigationStore(s => s.abandonPath);
 
     const curriculum = getActiveCurriculum();
     const totalDays = curriculum?.duration || 14;
@@ -1545,8 +1686,39 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
     const [simDays, setSimDays] = React.useState(totalDays);
     const [simLegs, setSimLegs] = React.useState(totalLegsPerDay);
 
+    /**
+     * Ensure onboarding is complete with default time slots so the curriculum
+     * card actually renders (gate condition: needsSetup must be false).
+     */
+    const ensureOnboarding = () => {
+        const state = useCurriculumStore.getState();
+        if (state.onboardingComplete && state.curriculumStartDate && state.practiceTimeSlots?.length > 0) {
+            return; // Already set up
+        }
+        const defaultTimeSlots = state.practiceTimeSlots?.length > 0
+            ? state.practiceTimeSlots
+            : ['08:00', '20:00'];
+        const defaultThoughts = state.thoughtCatalog?.length > 0
+            ? [] // Don't overwrite existing thoughts
+            : [
+                { text: 'I am not good enough', weight: 1 },
+                { text: 'I always mess things up', weight: 1 },
+                { text: 'Everyone else has it figured out', weight: 0 },
+                { text: 'I should be better by now', weight: 0 },
+                { text: 'Nothing ever works out', weight: 0 },
+            ];
+        state.completeOnboarding(defaultTimeSlots, defaultThoughts);
+        console.log('[DevPanel] Auto-completed onboarding with defaults:', {
+            timeSlots: defaultTimeSlots,
+            thoughts: defaultThoughts.length,
+            curriculumStartDate: useCurriculumStore.getState().curriculumStartDate,
+        });
+    };
+
     const simulateEntireProgram = () => {
-        // Simulate full curriculum with configurable days and legs
+        // Ensure onboarding so the curriculum card actually renders
+        ensureOnboarding();
+        console.log('[DevPanel] Starting curriculum simulation:', { simDays, simLegs });
         for (let day = 1; day <= simDays; day++) {
             for (let leg = 1; leg <= simLegs; leg++) {
                 logLegCompletion(day, leg, {
@@ -1556,29 +1728,52 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
                     notes: `Dev simulated day ${day}, leg ${leg}`,
                 });
             }
+            // Mark the full day as complete so getStreak() and isTodayComplete() work
+            logDayCompletion(day, {
+                duration: simLegs * 5,
+                focusRating: 4,
+                challenges: [],
+                notes: `Dev simulated day ${day}`,
+            });
         }
-        console.log(`✅ Simulated ${simDays} days with ${simLegs} legs each`);
+        console.log(`✅ Completed curriculum simulation: ${simDays} days × ${simLegs} legs, ${simDays} dayCompletions written`);
     };
 
     const completeCurrentDay = () => {
-        // Complete both legs for the current day
-        logLegCompletion(currentDay, 1, {
+        // Ensure onboarding so the curriculum card actually renders
+        ensureOnboarding();
+        const day = useCurriculumStore.getState().getCurrentDayNumber();
+        console.log('[DevPanel] Completing current day:', day);
+        logLegCompletion(day, 1, {
             duration: 5,
             focusRating: 4,
             challenges: [],
             notes: 'Dev completed leg 1',
         });
-        logLegCompletion(currentDay, 2, {
+        logLegCompletion(day, 2, {
             duration: 5,
             focusRating: 5,
             challenges: [],
             notes: 'Dev completed leg 2',
         });
-        console.log(`✅ Completed both legs for Day ${currentDay}`);
+        // Mark the full day as complete so getStreak() and isTodayComplete() work
+        logDayCompletion(day, {
+            duration: 10,
+            focusRating: 4,
+            challenges: [],
+            notes: `Dev completed day ${day}`,
+        });
+        console.log(`✅ Completed Day ${day}: 2 legs + dayCompletion written`);
+    };
+
+    const quickSetupOnly = () => {
+        ensureOnboarding();
+        console.log('✅ Onboarding complete — curriculum card should now be visible');
     };
 
     const populateSampleThoughts = () => {
         const { completeOnboarding, practiceTimeSlots } = useCurriculumStore.getState();
+        const defaultTimeSlots = practiceTimeSlots?.length > 0 ? practiceTimeSlots : ['08:00', '20:00'];
         const sampleThoughts = [
             { text: 'I am not good enough', weight: 1 },
             { text: 'I always mess things up', weight: 1 },
@@ -1588,8 +1783,8 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
             { text: 'I am capable of growth', weight: 0 },
             { text: 'This moment is full of potential', weight: 0 },
         ];
-        completeOnboarding(practiceTimeSlots, sampleThoughts);
-        console.log('✅ Populated 7 sample thoughts (2 priority, 5 normal)');
+        completeOnboarding(defaultTimeSlots, sampleThoughts);
+        console.log('✅ Populated 7 sample thoughts (2 priority, 5 normal) + onboarding complete');
     };
 
     const testWeightedRandom = () => {
@@ -1609,6 +1804,26 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
             onToggle={onToggle}
             isLight={isLight}
         >
+            {/* Onboarding Status */}
+            {!onboardingComplete && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-300">
+                    ⚠️ Onboarding not complete — curriculum card won't render. Click "Quick Setup" or any simulation button below.
+                </div>
+            )}
+
+            {/* Active path conflict warning */}
+            {activePathId && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-xs text-orange-300">
+                    ⚠️ Active navigation path "{activePathId}" is blocking the curriculum card.
+                    <button
+                        className="ml-2 underline hover:text-orange-200 transition-colors"
+                        onClick={() => { abandonPath(); console.log('✅ Navigation path cleared — curriculum card should now be visible'); }}
+                    >
+                        Clear path
+                    </button>
+                </div>
+            )}
+
             {/* Stats */}
             <div className="grid grid-cols-3 gap-2 mb-4 text-xs">
                 <div className="bg-white/5 rounded-lg px-3 py-2">
@@ -1624,6 +1839,13 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
                     <div className="text-white/90 font-mono">{completedLegs}</div>
                 </div>
             </div>
+
+            {/* Quick Setup (onboarding only, no completions) */}
+            {!onboardingComplete && (
+                <div className="mb-3">
+                    <DevButton onClick={quickSetupOnly}>⚡ Quick Setup (onboarding only)</DevButton>
+                </div>
+            )}
 
             {/* Day Navigation */}
             <div className="grid grid-cols-4 gap-2 mb-3">

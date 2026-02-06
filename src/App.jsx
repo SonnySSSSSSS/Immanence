@@ -183,7 +183,7 @@ function App() {
 
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
-  const [previewPath, setPreviewPath] = useState('Soma');
+  const [previewPath, setPreviewPath] = useState(null);
   const [previewShowCore, setPreviewShowCore] = useState(true);
   const [previewAttention, setPreviewAttention] = useState('none');
 
@@ -436,7 +436,7 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      v3.27.14
+                      v3.27.27
                     </div>
                   </div>
 

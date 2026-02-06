@@ -1,0 +1,20 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sigilStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.95)" />
+      <stop offset="100%" stop-color="rgba(220,210,190,0.85)" />
+    </linearGradient>
+  </defs>
+  <g stroke="url(#sigilStroke)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Concentric ripple rings -->
+    <circle cx="512" cy="512" r="380" opacity="0.8" />
+    <circle cx="512" cy="512" r="300" opacity="0.65" />
+    <circle cx="512" cy="512" r="220" opacity="0.55" />
+    <circle cx="512" cy="512" r="140" opacity="0.5" />
+    <circle cx="512" cy="512" r="60" opacity="0.6" stroke-width="24" />
+    <!-- Standing wave (horizontal) -->
+    <path d="M132 512 C 212 352, 312 352, 392 512 C 472 672, 552 672, 632 512 C 712 352, 812 352, 892 512" opacity="0.75" stroke-width="26" />
+    <!-- Standing wave (vertical) -->
+    <path d="M512 132 C 352 212, 352 312, 512 392 C 672 472, 672 552, 512 632 C 352 712, 352 812, 512 892" opacity="0.75" stroke-width="26" />
+  </g>
+</svg>

@@ -24,18 +24,20 @@ export function BloomRingLab({ isLight = false }) {
   const [streakAngle, setStreakAngle] = useState(0);
 
   // GodRays controls (Phase 2C-3)
+  // Optimized defaults: higher decay + lower density + higher weight = structured shafts
   const [rayEnabled, setRayEnabled] = useState(true);
-  const [rayExposure, setRayExposure] = useState(0.12);
-  const [rayWeight, setRayWeight] = useState(0.4);
-  const [rayDecay, setRayDecay] = useState(0.93);
-  const [raySamples, setRaySamples] = useState(40);
-  const [rayDensity, setRayDensity] = useState(0.8);
-  const [rayClampMax, setRayClampMax] = useState(1.0);
+  const [rayExposure, setRayExposure] = useState(0.15);
+  const [rayWeight, setRayWeight] = useState(0.5);
+  const [rayDecay, setRayDecay] = useState(0.95);
+  const [raySamples, setRaySamples] = useState(50);
+  const [rayDensity, setRayDensity] = useState(0.6);
+  const [rayClampMax, setRayClampMax] = useState(0.75);
 
   // Sun proxy controls (Phase 2C-3: critical for shaft structure)
+  // Slightly larger sun radius for more pronounced shafts
   const [raySunY, setRaySunY] = useState(0.45);
   const [raySunZ, setRaySunZ] = useState(-2.0);
-  const [raySunRadius, setRaySunRadius] = useState(0.08);
+  const [raySunRadius, setRaySunRadius] = useState(0.10);
 
   // Occluder controls (Phase 2C-3)
   const [occluderEnabled, setOccluderEnabled] = useState(true);
@@ -491,7 +493,7 @@ export function BloomRingLab({ isLight = false }) {
             max="100"
             step="5"
             value={raySamples}
-            onChange={(e) => setRaySamples(parseFloat(e.target.value))}
+            onChange={(e) => setRaySamples(parseInt(e.target.value, 10))}
             className="w-full accent-amber-500"
           />
         </div>

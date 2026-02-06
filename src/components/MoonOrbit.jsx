@@ -59,11 +59,11 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
     const heat = Math.max(0, Math.min(1, progress / 12)); // 0..1 as moon progresses
     const glowIntensity = 0.6 + 0.4 * heat; // Glow increases with heat
 
-    const baseStroke = "rgba(255, 255, 255, 0.16)";
-    const litStroke = "rgba(140, 255, 225, 0.72)";
-    const haloStroke = `rgba(${Math.round(140 + 60 * heat)}, 255, ${Math.round(225 - 50 * heat)}, ${0.22 * glowIntensity})`;
-    const moonCoreFill = heat > 0.1 ? `rgba(255, 230, 150, ${0.5 + 0.5 * heat})` : "rgba(248, 250, 252, 0.96)";
-    const moonRimStroke = `rgba(248, 250, 252, ${0.42 * glowIntensity})`;
+    const baseStroke = "rgba(255, 220, 140, 0.16)";
+    const litStroke = "rgba(255, 200, 100, 0.72)";
+    const haloStroke = `rgba(${Math.round(200 + 55 * heat)}, ${Math.round(160 + 40 * heat)}, ${Math.round(80 + 20 * heat)}, ${0.22 * glowIntensity})`;
+    const moonCoreFill = heat > 0.1 ? `rgba(255, 220, 120, ${0.5 + 0.5 * heat})` : "rgba(255, 240, 200, 0.96)";
+    const moonRimStroke = `rgba(255, 220, 140, ${0.42 * glowIntensity})`;
 
 
     const tangentX = -Math.sin(moonAngle);
@@ -155,8 +155,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
 
     return (
         <g className="moon-orbit-dark">
-            {/* DEBUG: Red square proof - remove after verification */}
-            <rect x="8" y="8" width="10" height="10" fill="red" />
+            {/* Phase track and moon orbit */}
 
             {DEBUG_PHASE_STRIP && (
                 <g>
@@ -260,7 +259,7 @@ export function MoonOrbit({ avatarRadius = 138, centerX = 300, centerY = 300 }) 
                             cy={segment.y}
                             r={segment.size}
                             fill="none"
-                            stroke={`rgba(140, 255, 225, ${0.34 * segment.alpha})`}
+                            stroke={`rgba(255, 200, 100, ${0.34 * segment.alpha})`}
                             strokeWidth={1.425}
                             style={{ filter: `blur(${BLUR_STDDEV}px)` }}
                         />

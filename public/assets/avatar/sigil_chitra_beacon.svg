@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="512" cy="512" r="340" />
+  <rect x="312" y="312" width="400" height="400" />
+  <polygon points="512 272 752 512 512 752 272 512" />
+  <line x1="512" y1="512" x2="792" y2="512" />
+  <line x1="512" y1="512" x2="754.5" y2="652" />
+  <line x1="512" y1="512" x2="652" y2="754.5" />
+  <line x1="512" y1="512" x2="512" y2="792" />
+  <line x1="512" y1="512" x2="372" y2="754.5" />
+  <line x1="512" y1="512" x2="269.5" y2="652" />
+  <line x1="512" y1="512" x2="232" y2="512" />
+  <line x1="512" y1="512" x2="269.5" y2="372" />
+  <line x1="512" y1="512" x2="372" y2="269.5" />
+  <line x1="512" y1="512" x2="512" y2="232" />
+  <line x1="512" y1="512" x2="652" y2="269.5" />
+  <line x1="512" y1="512" x2="754.5" y2="372" />
+</svg>

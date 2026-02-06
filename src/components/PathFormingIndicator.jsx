@@ -15,13 +15,14 @@ import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
 export function PathFormingIndicator({ compact = false }) {
     const pathStatus = usePathStore(s => s.pathStatus);
     const getFormingInfo = usePathStore(s => s.getFormingInfo);
+    const PATH_ORDER = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 
     // Only show if still forming
     if (pathStatus !== 'forming') {
         return null;
     }
 
-    const { daysUntilEmergence, dominantTendency, progress } = getFormingInfo();
+    const { daysUntilEmergence, dominantTendency, progress, signals, totalSignal } = getFormingInfo();
 
     const ringSize = compact ? 60 : 100;
     const strokeWidth = compact ? 4 : 6;
@@ -31,6 +32,12 @@ export function PathFormingIndicator({ compact = false }) {
 
     const symbol = dominantTendency ? PATH_SYMBOLS[dominantTendency] : '○';
     const tendencyName = dominantTendency ? PATH_NAMES[dominantTendency] : null;
+    const signalEntries = PATH_ORDER.map((pathId) => ({
+        pathId,
+        name: PATH_NAMES[pathId],
+        symbol: PATH_SYMBOLS[pathId],
+        value: signals?.[pathId] || 0,
+    }));
 
     return (
         <div
@@ -156,6 +163,74 @@ export function PathFormingIndicator({ compact = false }) {
                     >
                         This may change
                     </div>
+                </div>
+            )}
+
+            {/* Signal grid */}
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: compact ? '0.4rem 0.6rem' : '0.5rem 0.75rem',
+                    width: '100%',
+                }}
+            >
+                {signalEntries.map(({ pathId, name, symbol: entrySymbol, value }) => (
+                    <div
+                        key={pathId}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                        }}
+                    >
+                        <span style={{ fontSize: compact ? '0.85rem' : '1rem', opacity: 0.8 }}>{entrySymbol}</span>
+                        <div style={{ flex: 1 }}>
+                            <div
+                                style={{
+                                    height: '4px',
+                                    background: 'rgba(255, 255, 255, 0.08)',
+                                    borderRadius: '3px',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: `${Math.round(value * 100)}%`,
+                                        height: '100%',
+                                        background: 'var(--accent-color, #fcd34d)',
+                                        opacity: value > 0.4 ? 1 : 0.6,
+                                        transition: 'width 0.5s ease',
+                                    }}
+                                />
+                            </div>
+                            <div
+                                style={{
+                                    fontFamily: 'var(--font-display)',
+                                    fontSize: compact ? '0.55rem' : '0.625rem',
+                                    letterSpacing: '0.08em',
+                                    textTransform: 'uppercase',
+                                    color: 'rgba(255, 255, 255, 0.45)',
+                                    marginTop: '0.2rem',
+                                }}
+                            >
+                                {name}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {totalSignal < 1 && (
+                <div
+                    style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: compact ? '0.65rem' : '0.7rem',
+                        color: 'rgba(255, 255, 255, 0.35)',
+                        fontStyle: 'italic',
+                    }}
+                >
+                    Signal is still forming
                 </div>
             )}
         </div>

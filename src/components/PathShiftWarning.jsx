@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
+import { useLunarStore } from '../state/lunarStore';
 
 /**
  * PathShiftWarning — Display when path is shifting
@@ -15,9 +16,11 @@ import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
 export function PathShiftWarning({ compact = false }) {
     const pathStatus = usePathStore(s => s.pathStatus);
     const getShiftInfo = usePathStore(s => s.getShiftInfo);
+    const stage = useLunarStore(s => s.getCurrentStage());
+    const stageLower = (stage || 'seedling').toLowerCase();
 
     // Only show if shifting
-    if (pathStatus !== 'shifting') {
+    if (pathStatus !== 'shifting' || stageLower === 'seedling') {
         return null;
     }
 

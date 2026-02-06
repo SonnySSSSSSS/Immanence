@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
+import { useLunarStore } from '../state/lunarStore';
 
 /**
  * PathBadges — Shows up to 2 secondary path symbols
@@ -11,7 +12,14 @@ import { PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
  * The symbols are positioned above the avatar.
  */
 export function PathBadges({ paths = [], size = 'normal' }) {
+    const stage = useLunarStore(s => s.getCurrentStage());
+    const stageLower = (stage || 'seedling').toLowerCase();
+
     if (!paths || paths.length === 0) {
+        return null;
+    }
+
+    if (stageLower === 'seedling') {
         return null;
     }
 
@@ -49,7 +57,7 @@ export function PathBadges({ paths = [], size = 'normal' }) {
                         e.target.style.transform = 'scale(1)';
                     }}
                 >
-                    {PATH_SYMBOLS[path]}
+                    {PATH_SYMBOLS[path] || '○'}
                 </div>
             ))}
         </div>
@@ -63,8 +71,8 @@ export function PathBadges({ paths = [], size = 'normal' }) {
 export function PathSymbol({ path, size = 'normal', showLabel = false }) {
     if (!path) return null;
 
-    const symbol = PATH_SYMBOLS[path];
-    const name = PATH_NAMES[path];
+    const symbol = PATH_SYMBOLS[path] || '○';
+    const name = PATH_NAMES[path] || path;
 
     const fontSize = size === 'small' ? '1rem' : size === 'large' ? '2rem' : '1.5rem';
 

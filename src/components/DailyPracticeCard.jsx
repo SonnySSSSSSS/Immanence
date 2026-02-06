@@ -469,7 +469,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const user = useAuthUser();
     const displayName = getDisplayName(user);
 
-    if (needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
+    // Show path-based daily card when an active path with scheduled times exists,
+    // regardless of onboarding status — prevents falling through to stale curriculum modal
+    const hasActivePath = activePathObj && times.length > 0;
+
+    if (hasActivePath || needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
 
         return (
@@ -628,11 +632,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         {/* Progress Meter */}
                                         {metrics.durationDays > 0 && (
                                             <div className="mt-4 space-y-2">
-                                                <div className="flex justify-between text-[10px] opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.08em]" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
                                                     <span>DAY {metrics.dayIndex} OF {metrics.durationDays}</span>
-                                                    <span>{METRIC_LABELS.adherence}: {Math.round(metrics.adherencePct)}%</span>
+                                                    <span style={{ color: 'var(--accent-color)' }}>{METRIC_LABELS.adherence}: {Math.round(metrics.adherencePct)}%</span>
                                                 </div>
-                                                <div className="flex justify-end text-[10px] opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                <div className="flex justify-end text-[10px] font-black uppercase tracking-[0.08em]" style={{ color: 'var(--accent-color)' }}>
                                                     <span>{METRIC_LABELS.program}: {Math.round(metrics.timePct)}%</span>
                                                 </div>
                                                 <div 
@@ -1305,8 +1309,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             {todaysPractice.title || `Day ${dayNumber}`}
                                         </div>
                                         {streak > 1 && (
-                                            <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: isLight ? 'rgba(255, 200, 0, 0.12)' : 'rgba(255, 200, 0, 0.1)', border: isLight ? '1px solid rgba(255, 200, 0, 0.3)' : '1px solid rgba(255, 200, 0, 0.3)', color: isLight ? '#8b6b2c' : 'var(--accent-color)' }}>
-                                                🔥 {streak}
+                                            <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', color: 'var(--accent-color)' }}>
+                                                🔥 {streak}-DAY STREAK
                                             </div>
                                         )}
                                     </div>
@@ -1380,7 +1384,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         {leg.description || 'Guided practice'}
                                                     </div>
                                                     {leg.practiceConfig?.duration && (
-                                                        <div className="text-[10px] uppercase tracking-[0.18em] font-black mt-1" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                        <div className="text-[10px] uppercase tracking-[0.18em] font-black mt-1" style={{ color: 'var(--accent-color)', opacity: 0.7 }}>
                                                             {leg.practiceConfig.duration} min
                                                         </div>
                                                     )}
@@ -1390,7 +1394,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 {!leg.completed ? (
                                                     <div className="flex flex-col items-end gap-1">
                                                         {legTimeStr && (
-                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)', opacity: 0.75 }}>
                                                                 {legTimeStr}
                                                             </div>
                                                         )}
@@ -1405,7 +1409,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                             </div>
                                                         )}
                                                         {isActionable && !lastSessionFailed && (
-                                                            <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b6b2c' : 'var(--accent-50)' }}>
+                                                            <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: 'var(--accent-color)' }}>
                                                                 Next Up
                                                             </div>
                                                         )}

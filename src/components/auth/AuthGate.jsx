@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
-import { setAuthUser } from "../../state/useAuthUser";
+// NOTE: Multi-user sync feature is disabled until Supabase CORS is configured.
+// To enable, set ENABLE_AUTH to true and configure Supabase allowed origins.
+const ENABLE_AUTH = false;
+
+// Lazy import to avoid Supabase initialization when auth is disabled
+const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabase);
+const getSetAuthUser = () => import("../../state/useAuthUser").then(m => m.setAuthUser);
 
 export default function AuthGate({ children, onAuthChange }) {
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(ENABLE_AUTH);
 
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [email, setEmail] = useState("");
@@ -12,29 +17,37 @@ export default function AuthGate({ children, onAuthChange }) {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    // Skip auth initialization when disabled
+    if (!ENABLE_AUTH) {
+      onAuthChange?.("INITIAL_SESSION", null);
+      return;
+    }
+
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!mounted) return;
-      if (error) console.error("[AuthGate] getSession error", error);
-      const nextSession = data?.session ?? null;
-      setSession(nextSession);
-      setAuthUser(nextSession?.user ?? null);
-      onAuthChange?.("INITIAL_SESSION", nextSession);
-      setLoading(false);
-    });
+    Promise.all([getSupabase(), getSetAuthUser()]).then(([supabase, setAuthUser]) => {
+      supabase.auth.getSession().then(({ data, error }) => {
+        if (!mounted) return;
+        if (error) console.error("[AuthGate] getSession error", error);
+        const nextSession = data?.session ?? null;
+        setSession(nextSession);
+        setAuthUser(nextSession?.user ?? null);
+        onAuthChange?.("INITIAL_SESSION", nextSession);
+        setLoading(false);
+      });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
-      const nextSession = newSession ?? null;
-      setSession(nextSession);
-      setAuthUser(nextSession?.user ?? null);
-      onAuthChange?.(event, nextSession);
-    });
+      const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+        const nextSession = newSession ?? null;
+        setSession(nextSession);
+        setAuthUser(nextSession?.user ?? null);
+        onAuthChange?.(event, nextSession);
+      });
 
-    return () => {
-      mounted = false;
-      sub?.subscription?.unsubscribe?.();
-    };
+      return () => {
+        mounted = false;
+        sub?.subscription?.unsubscribe?.();
+      };
+    });
   }, []);
 
   async function handleSubmit(e) {
@@ -47,6 +60,7 @@ export default function AuthGate({ children, onAuthChange }) {
         return;
       }
 
+      const supabase = await getSupabase();
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
@@ -62,10 +76,16 @@ export default function AuthGate({ children, onAuthChange }) {
   }
 
   async function handleSignOut() {
+    const supabase = await getSupabase();
     await supabase.auth.signOut();
   }
 
   if (loading) return null;
+
+  // When auth is disabled, just render children
+  if (!ENABLE_AUTH) {
+    return <>{children}</>;
+  }
 
   if (!session) {
     return (

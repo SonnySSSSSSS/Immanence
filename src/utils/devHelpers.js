@@ -233,7 +233,7 @@ export function getStoreSnapshot() {
 /**
  * Trigger path emergence ceremony
  */
-export function triggerPathEmergence(path = 'Prana') {
+export function triggerPathEmergence(path = 'Yantra') {
     usePathStore.getState()._devTriggerEmergence(path);
     console.log(`[DevHelper] Triggered emergence ceremony for ${path}`);
 }
@@ -241,7 +241,7 @@ export function triggerPathEmergence(path = 'Prana') {
 /**
  * Trigger path shift ceremony
  */
-export function triggerPathShift(fromPath = 'Prana', toPath = 'Dhyana') {
+export function triggerPathShift(fromPath = 'Yantra', toPath = 'Kaya') {
     usePathStore.getState()._devTriggerShift(fromPath, toPath);
     console.log(`[DevHelper] Triggered shift ceremony: ${fromPath} → ${toPath}`);
 }

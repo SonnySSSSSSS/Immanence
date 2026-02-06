@@ -9,100 +9,68 @@
  * - shiftTo: Text shown when arriving at this path
  */
 export const PATH_DESCRIPTIONS = {
-    Soma: {
-        emergence: `Your practice moves through form. Sensation is your teacher, posture your laboratory. 
-        
+    Yantra: {
+        emergence: `Your practice moves through structure. You work with symbols, ritual precision, and deliberate form to tune attention.
+
+You understand that meaning can be engineered. When the form is clean, the mind becomes clear.
+
+The Yantra path trains intentional structure. Your avatar now reflects this geometric clarity.`,
+
+        shiftTo: `Your practice is shaped by structure now. Symbol, sequence, and precise form guide your attention.
+
+The Yantra path knows that ritual design can stabilize consciousness. Your avatar reflects this clarity of form.`,
+
+        shiftFrom: `Structure was your teacher. Through ritual precision, you learned to align mind with form.
+
+Now your practice moves toward a new center. The structure remains, but it no longer leads.`
+    },
+
+    Kaya: {
+        emergence: `Your practice moves through sensation. The body is your field, perception your laboratory.
+
 You understand that consciousness is not housed in the body — it is the body, experienced from within.
 
-The Soma path trains embodiment: the capacity to inhabit your physical form with full presence. Your avatar now reflects this grounding in its movement and texture.`,
+The Kaya path trains embodied presence. Your avatar now reflects this grounded field.`,
 
-        shiftTo: `Now your practice has settled into form. The body has become your laboratory — sensation your guide.
+        shiftTo: `Your practice has settled into sensation. The body is your field, perception your guide.
 
-The Soma path asks: what does consciousness feel like from within? Your avatar reflects this return to ground.`,
+The Kaya path asks: what does awareness feel like from within? Your avatar reflects this grounded presence.`,
 
-        shiftFrom: `The body was your ground. Sensation carried you through each session, teaching what words cannot convey.
+        shiftFrom: `Sensation was your teacher. The body carried you through each session, revealing what words cannot.
 
 Now your practice moves toward a new center. The body remains, but it no longer leads.`
     },
 
-    Prana: {
-        emergence: `Your practice rides the breath. The rhythm of inhale and exhale has become your primary instrument of regulation.
+    Chitra: {
+        emergence: `Your practice trains the imaginal field. You build the capacity to see what is not physically present.
 
-You know that breath is the bridge — the one autonomic function you can consciously shape. Through it, you access states that lie beyond direct control.
+The imaginal realm is not fantasy — it is the medium through which intention becomes form.
 
-The Prana path trains the life force itself. Your avatar now pulses with this rhythmic awareness.`,
+The Chitra path develops vision and image. Your avatar now carries the mark of luminous seeing.`,
 
-        shiftTo: `Your practice rides the breath now. Inhale and exhale have become your instruments.
+        shiftTo: `Your practice has turned toward vision. You are learning to move within the imaginal field.
 
-The Prana path knows that breath is the bridge between voluntary and involuntary, between body and mind. Your avatar pulses with this rhythm.`,
+The Chitra path knows that what we can clearly see within, we can bring into form. Your avatar reflects this inner seeing.`,
 
-        shiftFrom: `The breath was your bridge. Through its rhythm, you found access to states beyond direct control.
+        shiftFrom: `Vision was your teacher. The imaginal field trained your focus and your clarity.
 
-Now your practice moves toward a new center. The breath continues, but it no longer leads.`
+Now your practice moves toward a new center. The vision remains, but the path turns.`
     },
 
-    Dhyana: {
-        emergence: `Your practice cultivates stillness. You've discovered that beneath thought is awareness, and awareness needs no object.
+    Nada: {
+        emergence: `Your practice moves through rhythm. Breath and sound have become your primary instruments of attention.
 
-The witness position is becoming your natural home. Not as escape from experience, but as the ground from which experience arises.
+You understand that rhythm is a bridge — a temporal structure the nervous system can follow into coherence.
 
-The Dhyana path is the way of presence itself. Your avatar now reflects this centered quietude.`,
+The Nada path trains resonance itself. Your avatar now pulses with this rhythmic awareness.`,
 
-        shiftTo: `Your practice has found stillness at its center. Beneath thought, you've discovered awareness itself.
+        shiftTo: `Your practice is carried by rhythm now. Breath and sound shape your field of attention.
 
-The Dhyana path is the way of the witness — not as escape from experience, but as its unchanging ground. Your avatar reflects this deep presence.`,
+The Nada path knows that resonance stabilizes the mind. Your avatar reflects this rhythmic coherence.`,
 
-        shiftFrom: `Stillness was your teacher. In the space between thoughts, you found what does not come and go.
+        shiftFrom: `Rhythm was your teacher. Through resonance, you learned to entrain attention to time.
 
-Now your practice moves toward a new center. The stillness remains, but the path turns.`
-    },
-
-    Drishti: {
-        emergence: `Your practice trains the inner eye. You're building the capacity to see what isn't physically present — to hold forms in mental space, to link sound to sight.
-
-The imaginal realm is not fantasy. It is the medium through which intention shapes reality.
-
-The Drishti path develops the visionary faculty. Your avatar now carries the mark of focused inner sight.`,
-
-        shiftTo: `Your practice has turned inward, toward vision. You're learning to see what isn't physically present — to navigate the imaginal realm.
-
-The Drishti path knows that what we can clearly envision, we can eventually manifest. Your avatar reflects this focused inner sight.`,
-
-        shiftFrom: `Vision was your teacher. Through the inner eye, you learned to see beyond the immediately present.
-
-Now your practice moves toward a new center. The visionary capacity remains, but the path turns.`
-    },
-
-    Jnana: {
-        emergence: `Your practice moves through understanding. You know that intellectual clarity is not separate from embodiment — that frameworks, maps, and conceptual precision are tools of liberation, not obstacles to it.
-
-Study is not passive reception. It is active engagement with wisdom traditions that have mapped this territory for millennia.
-
-The Jnana path honors the mind's capacity to illuminate. Your avatar now carries the mark of crystalline clarity.`,
-
-        shiftTo: `Your practice has found its center in understanding. You know that clear thinking is not opposed to embodiment — it illuminates the path.
-
-The Jnana path is the way of wisdom. Study becomes practice. Your avatar reflects this crystalline clarity.`,
-
-        shiftFrom: `Understanding was your teacher. Through the study of wisdom, you found maps for territory you already sensed.
-
-Now your practice moves toward a new center. The wisdom remains, but the path turns.`
-    },
-
-    Samyoga: {
-        emergence: `Your practice refuses specialization. You move between body, breath, mind, vision, and wisdom with fluid balance.
-
-This is the rarest path — not because it's "higher," but because genuine integration requires sustained attention to all domains. Most people find a home in one. You have found home in their union.
-
-The Samyoga path is wholeness itself. Your avatar reflects the harmony of all paths moving as one.`,
-
-        shiftTo: `Your practice has found its center in integration. Now all the paths flow through you in balanced rhythm.
-
-Samyoga is the rarest path — not higher, but harder to maintain. It requires equal attention to body, breath, mind, vision, and wisdom. Your avatar reflects this unified wholeness.`,
-
-        shiftFrom: `Integration was your teacher. For a time, you held all paths in balance, moving fluidly between them.
-
-Now one path emerges more strongly. This is not loss — it is focus. The whole remains, but one note sounds more clearly.`
+Now your practice moves toward a new center. The rhythm remains, but it no longer leads.`
     }
 };
 

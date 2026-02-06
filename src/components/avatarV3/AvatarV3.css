@@ -66,8 +66,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(1) contrast(1.1) brightness(0.98);
-  opacity: 0.98;
+  filter: grayscale(0.45) contrast(1.08) brightness(0.7);
+  opacity: 0.62;
 }
 
 .avatar-v3__stage-layer {
@@ -77,14 +77,20 @@
 }
 
 .avatar-v3__vignette {
-  background: radial-gradient(circle at center, rgba(0,0,0,0) 52%, rgba(0,0,0,0.5) 100%);
+  background: radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 75%, rgba(0,0,0,0.85) 100%);
   mix-blend-mode: multiply;
-  opacity: 0.6;
+  opacity: var(--path-vignette-opacity, 0.85);
+}
+
+.avatar-v3__tint {
+  background: radial-gradient(circle at 50% 45%, var(--accent-glow, rgba(255,255,255,0.35)) 0%, rgba(255,255,255,0) 65%);
+  mix-blend-mode: screen;
+  opacity: 0.45;
 }
 
 .avatar-v3__lens {
   mix-blend-mode: screen;
-  opacity: 0.16;
+  opacity: var(--path-lens-opacity, 0.16);
   filter: blur(1.5px);
   animation: avatar-v3-lens-drift var(--avatar-v3-lens-duration, 70s) linear infinite;
 }
@@ -100,21 +106,22 @@
 }
 
 .avatar-v3__core-bed {
-  background: radial-gradient(circle at 50% 40%, rgba(10, 18, 26, 0.65) 0%, rgba(5, 8, 12, 0.95) 80%);
-  opacity: 0.85;
+  background: radial-gradient(circle at 50% 40%, rgba(10, 18, 26, 0.85) 0%, rgba(5, 8, 12, 0.98) 80%);
+  opacity: 0.92;
 }
 
 .avatar-v3__core-glow {
   background: radial-gradient(
     circle at 50% 50%,
     var(--accent-glow) 0%,
-    var(--accent-glow)60 25%,
-    var(--accent-glow)25 45%,
-    transparent 70%
+    var(--accent-glow)80 20%,
+    var(--accent-glow)50 40%,
+    var(--accent-glow)20 60%,
+    transparent 80%
   );
   mix-blend-mode: screen;
-  opacity: 0.65;
-  filter: blur(2px);
+  opacity: var(--path-glow-opacity, 0.85);
+  filter: blur(var(--path-glow-blur, 8px));
 }
 
 .avatar-v3__glass {
@@ -130,17 +137,17 @@
 }
 
 .avatar-v3__sigil {
-  opacity: 0.55;
+  opacity: 0.95;
+  background-color: var(--accent-color, #ffffff);
+  background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.18) 45%, rgba(255,255,255,0) 70%);
   mix-blend-mode: screen;
-  filter: drop-shadow(0 0 8px rgba(230, 220, 200, 0.25));
-}
-
-.avatar-v3__sigil-image {
-  width: 100%;
-  height: 100%;
-  display: block;
-  opacity: 0.9;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 0 16px var(--accent-glow, rgba(230, 220, 200, 0.55)));
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 78% 78%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 78% 78%;
 }
 
 .avatar-v3__glass-image {

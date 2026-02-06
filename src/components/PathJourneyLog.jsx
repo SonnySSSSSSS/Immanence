@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
+import { useLunarStore } from '../state/lunarStore';
 
 /**
  * PathJourneyLog — Shows path history timeline and practice stats
@@ -13,17 +14,23 @@ import { usePathStore, PATH_SYMBOLS, PATH_NAMES } from '../state/pathStore';
  * - Charts showing practice distribution
  */
 export function PathJourneyLog() {
-    const currentPath = usePathStore(s => s.currentPath);
+    const getDisplayPath = usePathStore(s => s.getDisplayPath);
+    const rawPath = usePathStore(s => s.currentPath);
     const pathStatus = usePathStore(s => s.pathStatus);
     const getPathJourney = usePathStore(s => s.getPathJourney);
     const getPracticeDistribution = usePathStore(s => s.getPracticeDistribution);
     const pathEmergenceDate = usePathStore(s => s.pathEmergenceDate);
+    const stage = useLunarStore(s => s.getCurrentStage());
+    const currentPath = getDisplayPath ? getDisplayPath(stage) : rawPath;
 
     const journey = getPathJourney();
     const distribution = getPracticeDistribution();
 
+    const stageLower = (stage || 'seedling').toLowerCase();
+    const isSeedling = stageLower === 'seedling';
+
     // If no path yet, show minimal state
-    if (!currentPath && pathStatus === 'forming') {
+    if (!currentPath && (pathStatus === 'forming' || pathStatus === 'balanced' || isSeedling)) {
         return (
             <div
                 style={{
@@ -58,7 +65,9 @@ export function PathJourneyLog() {
                         lineHeight: 1.6,
                     }}
                 >
-                    Your path is still forming. Practice consistently and your unique path will emerge after 90 days.
+                    {pathStatus === 'balanced'
+                        ? 'Your attention is balanced across interfaces. No single path dominates yet.'
+                        : 'Your path is still forming. Practice consistently and your unique path will emerge after 90 days.'}
                 </p>
             </div>
         );
@@ -133,7 +142,7 @@ export function PathJourneyLog() {
                 </div>
             )}
 
-            {/* Practice Distribution */}
+            {/* Path Distribution */}
             {distribution && distribution.length > 0 && (
                 <div style={{ marginBottom: '1.5rem' }}>
                     <h4
@@ -148,15 +157,15 @@ export function PathJourneyLog() {
                             marginBottom: '0.75rem',
                         }}
                     >
-                        Practice Distribution
+                        Path Distribution
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {distribution
                             .filter(d => d.minutes > 0)
                             .sort((a, b) => b.percentage - a.percentage)
-                            .map(({ domain, pathName, symbol, minutes, percentage }) => (
+                            .map(({ path, pathName, symbol, minutes, percentage }) => (
                                 <div
-                                    key={domain}
+                                    key={path}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -254,8 +263,13 @@ export function PathJourneyLog() {
                                         {entry.trigger === 'emergence' ? 'Path Emerged' : 'Path Shifted'}
                                         {' → '}
                                         <span style={{ color: 'var(--accent-color, #fcd34d)' }}>
-                                            {entry.pathName}
+                                            {entry.pathName || 'Balanced'}
                                         </span>
+                                        {entry.legacyToPathName && entry.legacyToPathName !== entry.pathName && (
+                                            <span style={{ color: 'rgba(255, 255, 255, 0.4)', marginLeft: '0.35rem' }}>
+                                                (legacy: {entry.legacyToPathName})
+                                            </span>
+                                        )}
                                     </div>
                                     <div
                                         style={{

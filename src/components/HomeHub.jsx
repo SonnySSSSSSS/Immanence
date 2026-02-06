@@ -37,9 +37,10 @@ import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js
 import { TUTORIALS } from "../tutorials/tutorialRegistry.js";
 import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
 import { useAvatarV3State } from "../state/avatarV3Store.js";
+import { usePathStore } from "../state/pathStore.js";
 
 // Available paths that match image filenames
-const PATHS = ['Soma', 'Prana', 'Dhyana', 'Drishti', 'Jnana', 'Samyoga'];
+const PATHS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 
 // Sanctuary mode unified width rail (leaves margin within 820px app container)
 const SANCTUARY_MODULE_MAX_WIDTH = '740px';
@@ -66,6 +67,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const effectiveStage = avatarStage || currentStage;
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
+  const getDisplayPath = usePathStore(s => s.getDisplayPath);
+  const storedPath = getDisplayPath ? getDisplayPath(effectiveStage) : null;
+  const avatarPath = previewPath ?? storedPath;
 
   const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
   const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
@@ -429,6 +433,7 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
               lastStageChange={lastStageChange}
               lastModeChange={lastModeChange}
               lastSessionComplete={lastSessionComplete}
+              path={avatarPath}
               size={isSanctuary ? 'sanctuary' : 'hearth'}
             />
           </div>
@@ -605,9 +610,9 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 className="w-2.5 h-2.5 rounded-full transition-all"
                 style={{
                   background:
-                    homeSwipePage === idx ? 'rgba(80, 255, 160, 0.85)' : 'rgba(255, 255, 255, 0.18)',
-                  boxShadow: homeSwipePage === idx ? '0 0 12px rgba(80, 255, 160, 0.22)' : 'none',
-                  border: homeSwipePage === idx ? '1px solid rgba(120, 255, 180, 0.25)' : '1px solid rgba(255,255,255,0.10)',
+                    homeSwipePage === idx ? 'var(--accent-80)' : 'rgba(255, 255, 255, 0.18)',
+                  boxShadow: homeSwipePage === idx ? '0 0 12px var(--accent-25)' : 'none',
+                  border: homeSwipePage === idx ? '1px solid var(--accent-30)' : '1px solid rgba(255,255,255,0.10)',
                   transform: homeSwipePage === idx ? 'scale(1.05)' : 'scale(1.0)',
                 }}
               />

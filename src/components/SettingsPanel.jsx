@@ -3,7 +3,9 @@
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
-import { supabase } from '../lib/supabaseClient';
+// NOTE: Auth feature disabled - lazy import to prevent Supabase CORS errors
+const ENABLE_AUTH = false;
+const getSupabase = () => import('../lib/supabaseClient').then(m => m.supabase);
 
 export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -35,7 +37,10 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    if (ENABLE_AUTH) {
+      const supabase = await getSupabase();
+      await supabase.auth.signOut();
+    }
     resetSettings();
     clearSettingsPersistedState();
     onClose?.();
