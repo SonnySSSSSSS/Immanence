@@ -5,6 +5,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+void motion;
+
 // Check if Speech Recognition is available
 const SpeechRecognition = typeof window !== 'undefined'
     ? (window.SpeechRecognition || window.webkitSpeechRecognition)

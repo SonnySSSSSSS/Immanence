@@ -2,7 +2,7 @@
 // Self-Knowledge section for Wave Function management
 // Houses personality assessments and profile display
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useWaveStore } from '../../state/waveStore.js';
 import { BigFiveAssessment } from './BigFiveAssessment.jsx';
 import { PersonalityWave } from './PersonalityWave.jsx';
@@ -13,9 +13,6 @@ export function SelfKnowledgeView() {
     const [draftScores, setDraftScores] = useState(null);
 
     const bigFive = useWaveStore(state => state.bigFive);
-    const viaTopStrengths = useWaveStore(state => state.viaTopStrengths);
-    const enneagram = useWaveStore(state => state.enneagram);
-    const attachmentStyle = useWaveStore(state => state.attachmentStyle);
     const selfDescribedTags = useWaveStore(state => state.selfDescribedTags);
     const isMinimumViable = useWaveStore(state => state.isMinimumViable);
     const getTraitSummary = useWaveStore(state => state.getTraitSummary);

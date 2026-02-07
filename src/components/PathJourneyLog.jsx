@@ -163,7 +163,7 @@ export function PathJourneyLog() {
                         {distribution
                             .filter(d => d.minutes > 0)
                             .sort((a, b) => b.percentage - a.percentage)
-                            .map(({ path, pathName, symbol, minutes, percentage }) => (
+                            .map(({ path, symbol, percentage }) => (
                                 <div
                                     key={path}
                                     style={{

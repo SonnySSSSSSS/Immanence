@@ -19,8 +19,6 @@ export function VisualizationCanvas({
     const {
         phase,
         progress,
-        cycleCount,
-        isRunning,
         sessionSeed,
         start,
         stop,

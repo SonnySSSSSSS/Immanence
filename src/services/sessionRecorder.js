@@ -240,7 +240,6 @@ export function recordPracticeSession(payload = {}, options = {}) {
     const {
         domain,
         duration,
-        metadata = {},
         instrumentation = null,
         exitType = null,
         practiceId = null,
@@ -259,7 +258,6 @@ export function recordPracticeSession(payload = {}, options = {}) {
     const cycleEnabled = options.cycleEnabled ?? payload.cycleEnabled ?? false;
     const cycleMinDuration = options.cycleMinDuration ?? payload.cycleMinDuration ?? 10;
     const cyclePracticeData = options.cyclePracticeData ?? payload.cyclePracticeData ?? null;
-    let recordedSession = null;
     let instrumentationData = instrumentation;
 
     if (exitType && !instrumentationData) {

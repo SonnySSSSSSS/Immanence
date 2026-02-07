@@ -5,7 +5,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useProgressStore } from '../state/progressStore.js';
 import { useDisplayModeStore } from "../state/displayModeStore.js";
-import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 import { useTheme } from '../context/ThemeContext.jsx';
 import { PrecisionMeterDevPanel } from './dev/PrecisionMeterDevPanel.jsx';
 import { ARCHIVE_TABS, REPORT_DOMAINS } from './tracking/archiveLinkConstants.js';
@@ -80,7 +79,6 @@ function Tooltip({ text, position }) {
  * Regiment Progress - Glass Capsule Liquid Bar (Accent-Color Adaptive)
  */
 function RegimentProgress({ progress, isLight, r, g, b }) {
-    const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
     const percentage = Math.round(progress * 100);
 
     // Convert RGB to CSS color
@@ -436,7 +434,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
 
     const cardRef = useRef(null);
-    const [gradientAngle, setGradientAngle] = useState(135);
     const [showDevPanel, setShowDevPanel] = useState(false);
 
     // Keyboard shortcut for dev panel (Shift+P)
@@ -483,38 +480,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
     
     // Better color transformation from cyan base to stage accent
     // Uses sepia + hue-rotate for cleaner color shifts
-    const stageColorFilter = (() => {
-        const { r, g, b } = baseAccent;
-        const max = Math.max(r, g, b) / 255;
-        const min = Math.min(r, g, b) / 255;
-        let h = 0;
-        if (max !== min) {
-            const d = max - min;
-            const rn = r / 255, gn = g / 255, bn = b / 255;
-            if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
-            else if (max === gn) h = ((bn - rn) / d + 2) / 6;
-            else h = ((rn - gn) / d + 4) / 6;
-        }
-        const targetHue = Math.round(h * 360);
-
-        // Map target hue to filter string with sepia for warmer tones
-        if (targetHue >= 10 && targetHue <= 60) {
-            // Orange/Yellow range (Ember/Flame) - use sepia for warmth
-            return `sepia(0.8) saturate(2) hue-rotate(${targetHue - 30}deg) brightness(1.1)`;
-        } else if (targetHue >= 90 && targetHue <= 150) {
-            // Green range (Seedling) - direct hue shift from cyan
-            return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
-        } else if (targetHue >= 180 && targetHue <= 210) {
-            // Cyan range (Beacon) - minimal adjustment
-            return `saturate(1.4) brightness(1.05) contrast(1.1)`;
-        } else if (targetHue >= 260 && targetHue <= 300) {
-            // Purple/Violet range (Stellar) - hue shift from cyan
-            return `hue-rotate(${targetHue - 180}deg) saturate(1.5) brightness(1.1)`;
-        }
-        // Default fallback
-        return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
-    })();
-    
     // Create shade variations of the stage accent (adjust lightness)
     const adjustBrightness = (rgb, factor) => ({
         r: Math.min(255, Math.round(rgb.r * factor)),
@@ -547,25 +512,12 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
     };
 
     const currentDomain = domainConfig[domain] || domainConfig.wisdom;
-    const getTrajectory = useProgressStore(s => s.getTrajectory);
-    
-    const trajectory = useMemo(() => getTrajectory(7), [getTrajectory, sessionsCount]);
-    
     // Get Timing Offsets for the 5-level chart
     const getWeeklyTimingOffsets = useProgressStore(s => s.getWeeklyTimingOffsets);
     const weekOffsets = useMemo(() => getWeeklyTimingOffsets(domain), [getWeeklyTimingOffsets, domain, sessionsCount]);
 
-    const regimentProgress = weekOffsets.filter(d => d.practiced).length / 7;
-
-    useEffect(() => {
-        if (cardRef.current) {
-            const rect = cardRef.current.getBoundingClientRect();
-            setGradientAngle(calculateGradientAngle(rect, getAvatarCenter()));
-        }
-    }, [isLight]);
-
     const domainLabels = { wisdom: 'Wisdom', breathwork: 'Breathwork', visualization: 'Visualization' };
-    const today = new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+    void getAvatarCenter;
 
     return (
         <>

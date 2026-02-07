@@ -224,7 +224,7 @@ export default function SevenDayTrendCurve({ last7Days = [0, 0, 0, 0, 0, 0, 0] }
     const hasData = safeLast7Days.some(v => v > 0);
     const curveData = hasData ? safeLast7Days : [3, 8, 5, 12, 7, 15, 10]; // Sample data for visibility testing
 
-    const { segments, areaPath, peakPoint, peakIndex, peakValue, echoPath1, echoPath2, mainPath } = generateCurve(curveData, width, height, 0.3, isLight);
+    const { segments, areaPath, peakPoint, peakValue, echoPath1, echoPath2, mainPath } = generateCurve(curveData, width, height, 0.3, isLight);
 
     // Latest point
     const weekMax = Math.max(...safeLast7Days, 30);

@@ -11,7 +11,6 @@
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, { useState } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
@@ -190,7 +189,7 @@ function StatsSummary({ isLight }) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function CurriculumHub({ onSelectDay, onClose, isInModal = false }) {
+export function CurriculumHub({ onSelectDay, isInModal = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     

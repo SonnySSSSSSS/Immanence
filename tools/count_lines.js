@@ -8,7 +8,7 @@ function walk(dir){
   for(const name of entries){
     const p = path.join(dir, name);
     let stat;
-    try{ stat = fs.statSync(p); } catch(e){ continue; }
+    try{ stat = fs.statSync(p); } catch{ continue; }
     if(stat.isDirectory()) out = out.concat(walk(p));
     else if(exts.includes(path.extname(p))) out.push(p);
   }
@@ -19,7 +19,7 @@ let total = 0;
 const counts = {};
 files.forEach(f => {
   let content;
-  try{ content = fs.readFileSync(f, 'utf8'); } catch(e){ return; }
+  try{ content = fs.readFileSync(f, 'utf8'); } catch{ return; }
   const lines = content.split(/\r?\n/).length;
   total += lines;
   const e = path.extname(f);

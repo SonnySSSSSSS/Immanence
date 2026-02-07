@@ -117,10 +117,9 @@ export function initializeStamps() {
  * Get a stamp for drawing
  * @param {string} theme - 'clouds' | 'birds' | 'leaves' | 'lanterns'
  * @param {number} variant - Stamp variant index (0-based)
- * @param {string} category - 'neutral' | 'future' | 'past' | 'body' | 'evaluating'
  * @returns {{element: HTMLImageElement|HTMLVideoElement, type: 'image'|'video'}|null}
  */
-export function getStamp(theme, variant, _category = 'neutral') {
+export function getStamp(theme, variant) {
     if (!stampCache) return null;
 
     const fileNumbers = STAMP_FILES[theme];

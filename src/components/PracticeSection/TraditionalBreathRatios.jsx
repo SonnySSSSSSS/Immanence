@@ -56,7 +56,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
   // Format ratio display
   const formatRatio = (ratio) => {
     return ratio
-      .map((val, idx) => {
+      .map((val) => {
         if (val === 0) return null;
         return val;
       })

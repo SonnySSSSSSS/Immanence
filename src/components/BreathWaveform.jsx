@@ -26,7 +26,6 @@ function buildBreathPath({ inhale, hold1, exhale, hold2 }, cycles = 2) {
   const wInhale = (safeInhale / total) * cycleWidth;
   const wHold1 = (safeHold1 / total) * cycleWidth;
   const wExhale = (safeExhale / total) * cycleWidth;
-  const wHold2 = (safeHold2 / total) * cycleWidth;
 
   // Generate continuous sine wave - like reference image
   // One full breath cycle = one full sine wave period

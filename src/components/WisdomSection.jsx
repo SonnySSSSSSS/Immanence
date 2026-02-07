@@ -892,9 +892,6 @@ function CategoryCard({ category, isSelected, onClick, isLight }) {
     ? 'rgba(180, 140, 100, 0.3)'
     : 'rgba(138, 43, 226, 0.2)';
   
-  const textColor = isLight
-    ? 'rgba(80, 60, 40, 0.9)'
-    : 'rgba(253, 251, 245, 0.9)';
   
   const symptomColor = isLight
     ? 'rgba(80, 60, 40, 0.6)'
@@ -1065,23 +1062,9 @@ export function WisdomSection() {
   // RECOMMENDATIONS VIEW - "The Compass" Radial Navigation
   // ─────────────────────────────────────────────────────────────────────────
   const renderRecommendationsView = () => {
-    const categories = getAllCategories();
     const currentCategory = selectedCategory
       ? wisdomCategories[selectedCategory]
       : null;
-
-    // Archetypal icons for each category (image assets)
-    // Mapping keys to match wisdomRecommendations.js exactly
-    const categoryIcons = {
-      "focus-presence": `${import.meta.env.BASE_URL}icons/compass/eye.png`,
-      "emotional-regulation": `${import.meta.env.BASE_URL}icons/compass/balance.png`,
-      "shadow-integration": `${import.meta.env.BASE_URL}icons/compass/moon.png`,
-      "heart-connection": `${import.meta.env.BASE_URL}icons/compass/heart.png`,
-      "grounding-safety": `${import.meta.env.BASE_URL}icons/compass/mountain.png`,
-      "expression-voice": `${import.meta.env.BASE_URL}icons/compass/wave.png`,
-      "resonance-alignment": `${import.meta.env.BASE_URL}icons/compass/star.png`,
-      "self-knowledge": `${import.meta.env.BASE_URL}icons/compass/fire.png`,
-    };
 
     if (currentCategory) {
       // Expanded view - show back button and recommendations

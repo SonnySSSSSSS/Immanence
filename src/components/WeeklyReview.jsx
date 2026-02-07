@@ -1,15 +1,11 @@
 ﻿// src/components/WeeklyReview.jsx
 import React from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
-import { useNavigationStore } from '../state/navigationStore.js';
 
 export function WeeklyReview() {
-    const { getStats, getWeekLogs } = useApplicationStore();
-    const { activePath } = useNavigationStore();
+    const { getStats } = useApplicationStore();
 
     const weekStats = getStats(7);
-    const weekLogs = getWeekLogs();
-
     // Calculate practice days this week (would integrate with PracticeSection store)
     // For now, mock with random data
     const practiceDays = 5; // TODO: Get from practice store

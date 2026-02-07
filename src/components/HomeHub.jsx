@@ -14,7 +14,7 @@ import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
 import { SessionHistoryView } from "./SessionHistoryView.jsx";
 import { SideNavigation } from "./SideNavigation.jsx";
-import { plateauMaterial, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from "../styles/cardMaterial.js";
+import { noiseOverlayStyle, sheenOverlayStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
 import { STAGES } from "../state/stageConfig.js";
@@ -55,16 +55,15 @@ const SANCTUARY_RAIL_STYLE = {
 };
 
 
-function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false }) {
+function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
-  const { getCurrentStage, progress, getDaysUntilNextStage } = useLunarStore();
+  const { getCurrentStage, getDaysUntilNextStage } = useLunarStore();
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.viewportMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
-  const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const effectiveStage = avatarStage || currentStage;
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
   const getDisplayPath = usePathStore(s => s.getDisplayPath);
@@ -74,10 +73,12 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
   const { isOpen: isTutorialOpen, tutorialId, stepIndex } = useTutorialStore();
   const activeTutorialTarget = tutorialId ? TUTORIALS[tutorialId]?.steps?.[stepIndex]?.target : null;
   const isDailyCardTutorialTarget = isTutorialOpen && activeTutorialTarget?.includes('home-daily-card');
+  const handleSelectSection = React.useCallback((section) => {
+    if (lockToHub) return;
+    onSelectSection(section);
+  }, [lockToHub, onSelectSection]);
 
   // Cloud background test state
-  const [cloudBackground, setCloudBackground] = useState('cloudier'); // 'light_clouds', 'cloudier', 'cloudiest', or 'none'
-  
   // Curriculum state
   const curriculumOnboardingComplete = useCurriculumStore(s => s.onboardingComplete);
   const curriculumPracticeTimeSlots = useCurriculumStore(s => s.practiceTimeSlots);
@@ -87,7 +88,6 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     return typeof getScheduleSlots === 'function' ? getScheduleSlots() : [];
   }, [curriculumPracticeTimeSlots]); // Depend on curriculum state to stay in sync
   const activePath = useNavigationStore(s => s.activePath);
-  const currentPathId = activePath?.activePathId ?? activePath?.pathId ?? null;
   const practiceTimeSlots = (navigationScheduleSlots && navigationScheduleSlots.length > 0)
     ? navigationScheduleSlots.map(slot => slot.time)
     : curriculumPracticeTimeSlots;
@@ -230,33 +230,20 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
     };
   }, []);
 
-  useEffect(() => {
-    // Listen for DevPanel cloud background changes
-    const handleCloudChange = (e) => setCloudBackground(e.detail);
-    window.addEventListener('dev-cloud-change', handleCloudChange);
-    return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
-  }, []);
-
   // Honor log modal state (moved from TrackingHub)
   const [showHonorModal, setShowHonorModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
-  const contentMaxWidth = isSanctuary ? 'max-w-5xl' : 'max-w-[580px]';
-
   const streakInfo = getStreakInfo();
   const breathStats = getDomainStats('breathwork');
-  const weeklyPattern = getWeeklyPattern();
+  void getWeeklyPattern;
 
   // Derive stats from real data
-  const totalSessions = breathStats.totalSessions;
-  const weeklyConsistency = weeklyPattern.filter(Boolean).length;
   const avgAccuracy = breathStats.avgAccuracy || 0;
-  const currentStreak = streakInfo.current;
   const daysUntilNext = getDaysUntilNextStage() || 0;
   const lunarStage = getCurrentStage();
-  const nextStage = STAGES[lunarStage]?.next || null;
   const progressToNextStage = daysUntilNext > 0
     ? (STAGES[lunarStage]?.duration - daysUntilNext) / STAGES[lunarStage]?.duration
     : 0;
@@ -282,17 +269,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
 
   const lastPracticed = formatLastPracticed(breathStats.lastPracticed);
 
-  const accuracyPct = Math.round(avgAccuracy * 100);
-  const progressPct = Math.round(progressToNextStage * 100);
-
-  // Listen for DevPanel cloud background changes
-  useEffect(() => {
-    const handleCloudChange = (e) => setCloudBackground(e.detail);
-    window.addEventListener('dev-cloud-change', handleCloudChange);
-    return () => window.removeEventListener('dev-cloud-change', handleCloudChange);
-  }, []);
+  void avgAccuracy;
+  void progressToNextStage;
 
   const handleStartPractice = (leg, context = {}) => {
+    if (lockToHub) return;
     // Handle curriculum launcher (leg with launcherId)
     if (leg?.launcherId) {
       setLauncherContext({
@@ -324,17 +305,17 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
         },
         persistPreferences: false,
       });
-      onSelectSection('practice');
+      handleSelectSection('practice');
       return;
     }
     
     // Default: open practice section
-    onSelectSection('practice');
+    handleSelectSection('practice');
   };
 
   const handleCloseLauncher = () => {
     setLauncherContext(null);
-    onSelectSection(null);
+    handleSelectSection(null);
   };
 
   const openArchive = (initialTab = ARCHIVE_TABS.ALL, initialReportDomain = null) => {
@@ -505,24 +486,28 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
           >
             <SimpleModeButton
               title="Practice"
-              onClick={() => onSelectSection("practice")}
+              onClick={() => handleSelectSection("practice")}
+              disabled={lockToHub}
               icon="practice"
             />
             <SimpleModeButton
               title="Wisdom"
-              onClick={() => onSelectSection("wisdom")}
+              onClick={() => handleSelectSection("wisdom")}
+              disabled={lockToHub}
               gradient="linear-gradient(135deg, #B4E6D4 0%, #7FD4B8 100%)"
               icon="wisdom"
             />
             <SimpleModeButton
               title="Application"
-              onClick={() => onSelectSection("application")}
+              onClick={() => handleSelectSection("application")}
+              disabled={lockToHub}
               gradient="linear-gradient(135deg, #FFD97D 0%, #FFB85C 100%)"
               icon="application"
             />
             <SimpleModeButton
               title="Navigation"
-              onClick={() => onSelectSection("navigation")}
+              onClick={() => handleSelectSection("navigation")}
+              disabled={lockToHub}
               gradient="linear-gradient(135deg, #E5C4FF 0%, #B88FD9 100%)"
               icon="navigation"
             />
@@ -561,11 +546,11 @@ function HomeHub({ onSelectSection, onStageChange, currentStage, previewPath, pr
                 <DailyPracticeCard
                   onStartPractice={handleStartPractice}
                   onViewCurriculum={openCurriculumHub}
-                  onNavigate={onSelectSection}
+                  onNavigate={handleSelectSection}
                   hasPersistedCurriculumData={hasPersistedCurriculumData}
                   onboardingComplete={curriculumOnboardingComplete}
                   practiceTimeSlots={practiceTimeSlots}
-                  onStartSetup={() => onSelectSection('navigation')}
+                  onStartSetup={() => handleSelectSection('navigation')}
                   isTutorialTarget={isDailyCardTutorialTarget}
                 />
                 </div>

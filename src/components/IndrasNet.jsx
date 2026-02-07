@@ -53,7 +53,7 @@ const STAGE_PARTICLE_COLORS = {
     stellar: { primary: 'rgba(192, 132, 252, ', glow: 'rgba(168, 85, 247, ' },   // Purple
 };
 
-export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false, displayMode = 'hearth', currentPracticeId = null }) {
+export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false, displayMode = 'hearth' }) {
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const widthRef = useRef(430);

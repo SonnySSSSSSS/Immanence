@@ -111,6 +111,7 @@ export function CurriculumPrecisionRail() {
     const isLight = colorScheme === 'light';
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [tooltipPos, setTooltipPos] = useState(null);
+    const [showLegend, setShowLegend] = useState(false);
 
     // Fetch the 14-day rail
     const rail = useCurriculumStore(s => s.getPrecisionRailWindow)(14);
@@ -134,38 +135,44 @@ export function CurriculumPrecisionRail() {
         setTooltipPos(null);
     };
 
+    const handleGridMouseEnter = () => setShowLegend(true);
+    const handleGridMouseLeave = () => setShowLegend(false);
+
     return (
-        <div
-            className="curriculum-precision-rail"
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                padding: '12px 0',
-                fontFamily: 'var(--font-body)',
-            }}
-        >
-            {/* Label */}
+        <div style={{ position: 'relative' }}>
             <div
+                className="curriculum-precision-rail"
                 style={{
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'var(--accent-60)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '12px 0',
+                    fontFamily: 'var(--font-body)',
                 }}
             >
-                14-Day Precision Window
-            </div>
+                {/* Label */}
+                <div
+                    style={{
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'var(--accent-60)',
+                    }}
+                >
+                    14-Day Precision Window
+                </div>
 
-            {/* Rail cells (14 cells, oldest on left, newest on right) */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(14, 1fr)',
-                    gap: '4px',
-                    position: 'relative',
-                }}
+                {/* Rail cells (14 cells, oldest on left, newest on right) */}
+                <div
+                    onMouseEnter={handleGridMouseEnter}
+                    onMouseLeave={handleGridMouseLeave}
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(14, 1fr)',
+                        gap: '4px',
+                        position: 'relative',
+                    }}
             >
                 {rail.map((day, index) => {
                     const tooltip = buildDayTooltip(day);
@@ -191,77 +198,97 @@ export function CurriculumPrecisionRail() {
                         </div>
                     );
                 })}
+                </div>
             </div>
 
-            {/* Legend */}
-            <div
-                style={{
-                    fontSize: '9px',
-                    color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(255, 255, 255, 0.4)',
-                    display: 'flex',
-                    gap: '16px',
-                    flexWrap: 'wrap',
-                    marginTop: '4px',
-                }}
-            >
-                <span>
-                    <span
-                        style={{
-                            display: 'inline-block',
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '2px',
-                            background: isLight ? 'rgba(100, 150, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
-                            marginRight: '4px',
-                            verticalAlign: 'middle',
-                        }}
-                    />
-                    Green = on-time
-                </span>
-                <span>
-                    <span
-                        style={{
-                            display: 'inline-block',
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '2px',
-                            background: isLight ? 'rgba(200, 100, 80, 0.7)' : 'rgba(244, 67, 54, 0.6)',
-                            marginRight: '4px',
-                            verticalAlign: 'middle',
-                        }}
-                    />
-                    Red = late
-                </span>
-                <span>
-                    <span
-                        style={{
-                            display: 'inline-block',
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '2px',
-                            border: `1px solid ${isLight ? 'rgba(180, 140, 90, 0.3)' : 'rgba(255, 255, 255, 0.2)'}`,
-                            background: 'transparent',
-                            marginRight: '4px',
-                            verticalAlign: 'middle',
-                        }}
-                    />
-                    Blank = unmet
-                </span>
-                <span>
-                    <span
-                        style={{
-                            display: 'inline-block',
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '2px',
-                            background: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(255, 255, 255, 0.08)',
-                            marginRight: '4px',
-                            verticalAlign: 'middle',
-                        }}
-                    />
-                    Gray = off/pause
-                </span>
-            </div>
+            {/* Legend popup - appears on hover over grid, positioned absolutely */}
+            {showLegend && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '0',
+                        marginTop: '6px',
+                        fontSize: '9px',
+                        color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'rgba(255, 255, 255, 0.6)',
+                        display: 'flex',
+                        gap: '12px',
+                        flexWrap: 'wrap',
+                        background: isLight ? 'rgba(250, 246, 238, 0.95)' : 'rgba(10, 12, 16, 0.95)',
+                        border: `1px solid ${isLight ? 'rgba(180, 140, 90, 0.2)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 10,
+                        pointerEvents: 'none',
+                        animation: 'fadeIn 150ms ease-out',
+                    }}
+                >
+                    <style>{`
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                    `}</style>
+                    <span>
+                        <span
+                            style={{
+                                display: 'inline-block',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '1px',
+                                background: isLight ? 'rgba(100, 150, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
+                                marginRight: '4px',
+                                verticalAlign: 'middle',
+                            }}
+                        />
+                        on-time
+                    </span>
+                    <span>
+                        <span
+                            style={{
+                                display: 'inline-block',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '1px',
+                                background: isLight ? 'rgba(200, 100, 80, 0.7)' : 'rgba(244, 67, 54, 0.6)',
+                                marginRight: '4px',
+                                verticalAlign: 'middle',
+                            }}
+                        />
+                        late
+                    </span>
+                    <span>
+                        <span
+                            style={{
+                                display: 'inline-block',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '1px',
+                                border: `1px solid ${isLight ? 'rgba(180, 140, 90, 0.3)' : 'rgba(255, 255, 255, 0.2)'}`,
+                                background: 'transparent',
+                                marginRight: '4px',
+                                verticalAlign: 'middle',
+                            }}
+                        />
+                        unmet
+                    </span>
+                    <span>
+                        <span
+                            style={{
+                                display: 'inline-block',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '1px',
+                                background: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                                marginRight: '4px',
+                                verticalAlign: 'middle',
+                            }}
+                        />
+                        off/pause
+                    </span>
+                </div>
+            )}
         </div>
     );
 }

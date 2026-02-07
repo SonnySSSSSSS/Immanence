@@ -1,7 +1,7 @@
 // src/components/vipassana/ThoughtLabeling.jsx
 // Core gesture interpreter for thought labeling - Hybrid DOM/Canvas version
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { PRACTICE_INVARIANT, VIPASSANA_AUDIO } from '../../data/vipassanaThemes';
 import { VipassanaCanvas } from './VipassanaCanvas';
 import { RadialDial } from './RadialDial';
@@ -48,7 +48,7 @@ export function ThoughtLabeling({
 }) {
     const [thoughts, setThoughts] = useState([]);
     const [dialState, setDialState] = useState({ visible: false, x: 0, y: 0 });
-    const [stickyThoughtId, setStickyThoughtId] = useState(null);
+    const [_stickyThoughtId, setStickyThoughtId] = useState(null);
     const [ripples, setRipples] = useState([]);
 
     const lastSpawnTimeRef = useRef(0);
@@ -94,7 +94,7 @@ export function ThoughtLabeling({
             audio.volume = cue.volume;
             audio.currentTime = 0;
             audio.play().catch(() => { });
-        } catch (e) { }
+        } catch { }
     }, [audioEnabled]);
 
     const spawnThought = useCallback((x, y, category = 'neutral') => {

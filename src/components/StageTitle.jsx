@@ -66,7 +66,7 @@ const PathIcon = ({ path, color, size = 20 }) => {
 
 
 // Textured Title Card Component - Geometrically Stable with Minimal Texture
-const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention, width }) => {
+const TexturedTitleCard = ({ children, stageColors, isLight, width }) => {
     const cardRef = useRef(null);
     const [gradientAngle, setGradientAngle] = useState(135);
 
@@ -85,9 +85,6 @@ const TexturedTitleCard = ({ children, stageColors, isLight, hasPath, attention,
 
     // Stage-adaptive tint color (use gradient midpoint)
     const tintColor = stageColors.gradient[1];
-
-    // Gold border texture (CSS-generated hammered edge)
-    const goldBorderTexture = `url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L12,0 L12,12 L0,12 Z' fill='%23D4AF37' /%3E%3Cpath d='M0,0 L1,1 L1,11 L0,12 M12,0 L11,1 L11,11 L12,12' fill='%23C9A942' /%3E%3C/svg%3E")`;
 
     return (
         <div

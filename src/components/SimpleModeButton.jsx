@@ -5,7 +5,7 @@ import { useSettingsStore } from '../state/settingsStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 
-export function SimpleModeButton({ title, onClick, icon }) {
+export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
     const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
@@ -56,13 +56,23 @@ export function SimpleModeButton({ title, onClick, icon }) {
         }
     };
 
+    const handleClick = () => {
+        if (disabled) return;
+        if (onClick) onClick();
+    };
+
     return (
         <button
             type="button"
-            onClick={onClick}
+            onClick={handleClick}
             className="group relative flex flex-col items-center gap-1.5"
-            style={{ cursor: 'pointer' }}
+            style={{
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.45 : 1,
+                filter: disabled ? 'grayscale(0.4)' : 'none',
+            }}
             aria-label={title}
+            aria-disabled={disabled}
         >
             <div
                 className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
@@ -82,6 +92,7 @@ export function SimpleModeButton({ title, onClick, icon }) {
                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => {
+                    if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
                     e.currentTarget.style.borderColor = isLight ? `${primaryHex}90` : `${primaryHex}`;
                     e.currentTarget.style.boxShadow = isLight
@@ -89,6 +100,7 @@ export function SimpleModeButton({ title, onClick, icon }) {
                         : `0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryHex}60`;
                 }}
                 onMouseLeave={(e) => {
+                    if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1) translateY(0)';
                     e.currentTarget.style.borderColor = isLight ? `${primaryHex}60` : `${primaryHex}70`;
                     e.currentTarget.style.boxShadow = isLight

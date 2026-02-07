@@ -10,12 +10,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 export function HubStagePanel({
     stage,
     path,
-    showCore,
     attention,
-    lastPracticed,
-    streakInfo,
-    onOpenHardwareGuide,
-    onOpenHonorLog,
     hideStageTitle = false,
 }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -24,11 +19,7 @@ export function HubStagePanel({
     const auroraAsset = `aurora_${stageKey}.png`;
 
     // Color tokens
-    const textPrimary = isLight ? 'rgba(45, 40, 35, 0.98)' : 'rgba(253, 251, 245, 1)';
-    const textSecondary = isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253, 251, 245, 0.85)';
-    const textMuted = isLight ? 'rgba(90, 77, 60, 0.45)' : 'rgba(253, 251, 245, 0.35)';
     const dividerColor = isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)';
-    const accentColor = isLight ? 'var(--light-accent)' : 'var(--accent-color)';
 
     return (
         <div className="w-full flex flex-col items-center px-4 relative" style={{ maxWidth: '430px' }}>

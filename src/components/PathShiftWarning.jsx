@@ -28,8 +28,6 @@ export function PathShiftWarning({ compact = false }) {
     if (!shiftInfo) return null;
 
     const {
-        currentPath,
-        pendingPath,
         daysUntilShift,
         progress,
         currentSymbol,

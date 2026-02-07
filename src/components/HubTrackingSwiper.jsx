@@ -7,6 +7,8 @@ import { TrackingHub } from './TrackingHub.jsx';
 import { ApplicationTrackingCard } from './ApplicationTrackingCard.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
+void motion;
+
 const PAGES = [
     { id: 0, name: 'Practice Hub', component: TrackingHub },
     { id: 1, name: 'Application Hub', component: ApplicationTrackingCard }

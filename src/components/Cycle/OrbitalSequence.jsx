@@ -2,6 +2,8 @@
 // Orbital/radial layout for circuit exercises
 import { motion } from 'framer-motion';
 
+void motion;
+
 export function OrbitalSequence({ selectedExercises, onRemove }) {
     if (selectedExercises.length === 0) return null;
 

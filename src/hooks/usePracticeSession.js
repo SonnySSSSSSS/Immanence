@@ -2,7 +2,7 @@
 // Manages practice session lifecycle, start/stop logic, and progress recording
 
 import { useState, useCallback, useRef } from 'react';
-import { loadPreferences, savePreferences } from '../state/practiceStore.js';
+import { loadPreferences } from '../state/practiceStore.js';
 import { recordPracticeSession } from '../services/sessionRecorder.js';
 import { useSessionInstrumentation } from './useSessionInstrumentation.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
@@ -67,13 +67,7 @@ export function usePracticeSession(options = {}) {
     const {
       practice,
       duration,
-      preset,
-      pattern,
       sensoryType,
-      vipassanaTheme,
-      vipassanaElement,
-      soundType,
-      geometry,
       fromCurriculum = false,
     } = practiceConfig;
 

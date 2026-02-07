@@ -2,7 +2,6 @@
 // Cognitive Submode Menu - Awareness Practice Configuration
 // Displays Sakshi I & II practice cards with scene selector
 import React from 'react';
-import { useTheme } from '../context/ThemeContext.jsx';
 import { useAwarenessSceneStore } from '../state/awarenessSceneStore.js';
 import { useSessionOverrideStore } from '../state/sessionOverrideStore.js';
 
@@ -21,10 +20,6 @@ const AWARENESS_SCENES = [
 ];
 
 export function SensoryConfig({
-    sensoryType,
-    setSensoryType,
-    isLight = false,
-    onStart = null,
 }) {
     const selectedSceneBase = useAwarenessSceneStore((s) => s.selectedScene);
     const setSelectedSceneBase = useAwarenessSceneStore((s) => s.setSelectedScene);

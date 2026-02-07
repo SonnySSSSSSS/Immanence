@@ -5,6 +5,8 @@ import { useCycleStore, CYCLE_TYPES, CYCLE_MODES } from '../../state/cycleStore'
 import { useDisplayModeStore } from '../../state/displayModeStore';
 import { useState } from 'react';
 
+void motion;
+
 export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) {
     const startCycle = useCycleStore((state) => state.startCycle);
     const displayMode = useDisplayModeStore((s) => s.mode);

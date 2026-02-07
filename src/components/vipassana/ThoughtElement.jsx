@@ -1,7 +1,7 @@
 // src/components/vipassana/ThoughtElement.jsx
 // Individual thought event with dissolution animation
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { THOUGHT_CATEGORIES, PRACTICE_INVARIANT } from '../../data/vipassanaThemes';
 import { STAMP_FILES } from '../../utils/stamps';
 
@@ -14,7 +14,6 @@ export function ThoughtElement({
     baseDuration = PRACTICE_INVARIANT.thoughtLifetime,
     fadeModifier = 1.0,
     isSticky = false,
-    driftDirection = { x: 0, y: 0 }, // Not used directly anymore, using vx/vy from thought object
     vx = 0,
     vy = 0,
     phase = 0,
@@ -144,7 +143,7 @@ export function ThoughtElement({
         }, PRACTICE_INVARIANT.longPressThreshold);
     };
 
-    const handlePointerUp = (e) => {
+    const handlePointerUp = () => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;

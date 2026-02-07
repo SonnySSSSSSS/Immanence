@@ -6,9 +6,9 @@ import { useProgressStore } from '../state/progressStore.js';
 import { DishonorBadge } from './DishonorBadge.jsx';
 import { Icon } from '../icons/Icon.jsx';
 import SevenDayTrendCurve from './SevenDayTrendCurve.jsx';
-import { plateauMaterial, plateauMaterialElevated, plateauMaterialClear, noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from '../styles/cardMaterial.js';
+import { noiseOverlayStyle, sheenOverlayStyle, innerGlowStyle } from '../styles/cardMaterial.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
-import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
+import { calculateGradientAngle, getAvatarCenter } from '../utils/dynamicLighting.js';
 import { SessionHistoryView } from './SessionHistoryView.jsx';
 import { AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
@@ -84,7 +84,6 @@ const CYMATIC_GLYPHS = {
  */
 function StatsCard({ domain, stats, isLight }) {
     const cardRef = useRef(null);
-    const [gradientAngle, setGradientAngle] = useState(135);
     const theme = useTheme();
     
     // Calculate hue rotation to match stage accent
@@ -111,8 +110,7 @@ function StatsCard({ domain, stats, isLight }) {
         if (cardRef.current) {
             const rect = cardRef.current.getBoundingClientRect();
             const avatarCenter = getAvatarCenter();
-            const angle = calculateGradientAngle(rect, avatarCenter);
-            setGradientAngle(angle);
+            calculateGradientAngle(rect, avatarCenter);
         }
     }, [isLight]);
 
@@ -598,7 +596,6 @@ function DomainInsights({ domain, stats }) {
 
 export function TrackingHub({ streakInfo: propStreakInfo }) {
     const {
-        getStreakInfo,
         getDomainStats,
         getPrimaryDomain
     } = useProgressStore();
@@ -613,7 +610,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
     const stats = getDomainStats(primaryDomainObj.id);
 
     // Derived data - use prop if provided, otherwise get from store
-    const streakInfo = propStreakInfo || getStreakInfo();
+    void propStreakInfo;
 
     return (
         <div className="w-full max-w-md mx-auto">

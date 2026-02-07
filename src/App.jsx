@@ -16,6 +16,7 @@ import { DevPanel } from "./components/DevPanel.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
+import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
 import { InstallPrompt } from "./components/InstallPrompt.jsx";
@@ -80,10 +81,14 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
 }
 
 
-function App() {
+function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // Display mode (sanctuary/hearth) and color scheme (dark/light)
   const displayMode = useDisplayModeStore((s) => s.mode);
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+  const overrideStage = useDevOverrideStore((s) => s.stage);
+  const overridePath = useDevOverrideStore((s) => s.avatarPath);
+  const setOverrideStage = useDevOverrideStore((s) => s.setStage);
+  const setOverridePath = useDevOverrideStore((s) => s.setAvatarPath);
   const isLight = colorScheme === 'light';
 
   const outerBackground = isLight
@@ -119,6 +124,7 @@ function App() {
 
   const [defaultView] = useState(getDefaultView());
   const [activeSection, setActiveSection] = useState(() => {
+    if (playgroundMode) return null;
     // If default view is 'navigation', start there
     return defaultView === 'navigation' ? 'navigation' : null;
   });
@@ -136,6 +142,9 @@ function App() {
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
+  const effectiveShowBackgroundBottomLayer = playgroundMode
+    ? Boolean(playgroundBottomLayer)
+    : showBackgroundBottomLayer;
 
   // Screen Wake Lock when in Vigilance Mode
   useWakeLock(isMinimized);
@@ -164,22 +173,26 @@ function App() {
       setShowBackgroundBottomLayer(e.detail);
     };
     const handleAvatarStage = (e) => {
+      if (playgroundMode) return;
       console.log('App: dev-avatar-stage event received, detail:', e.detail);
       const stageName = e.detail.stage;
       setAvatarStage(stageName);
-      setPreviewStage(stageName);
     };
     window.addEventListener('dev-hide-cards', handleHideCards);
     // window.addEventListener('dev-background-top', handleTopLayer);
     window.addEventListener('dev-background-bottom', handleBottomLayer);
-    window.addEventListener('dev-avatar-stage', handleAvatarStage);
+    if (!playgroundMode) {
+      window.addEventListener('dev-avatar-stage', handleAvatarStage);
+    }
     return () => {
       window.removeEventListener('dev-hide-cards', handleHideCards);
       // window.removeEventListener('dev-background-top', handleTopLayer);
       window.removeEventListener('dev-background-bottom', handleBottomLayer);
-      window.removeEventListener('dev-avatar-stage', handleAvatarStage);
+      if (!playgroundMode) {
+        window.removeEventListener('dev-avatar-stage', handleAvatarStage);
+      }
     };
-  }, []);
+  }, [playgroundMode]);
 
   // Preview state (lifted from AvatarPreview to persist and apply to all avatars)
   const [previewStage, setPreviewStage] = useState('Seedling');
@@ -187,10 +200,48 @@ function App() {
   const [previewShowCore, setPreviewShowCore] = useState(true);
   const [previewAttention, setPreviewAttention] = useState('none');
 
+  const effectivePreviewStage = playgroundMode ? overrideStage : previewStage;
+  const effectivePreviewPath = playgroundMode ? overridePath : previewPath;
+  const effectiveAvatarStage = playgroundMode ? overrideStage : avatarStage;
+
+  const handlePreviewStageChange = useCallback((nextStage) => {
+    if (playgroundMode) {
+      setOverrideStage(nextStage);
+      return;
+    }
+    setPreviewStage(nextStage);
+  }, [playgroundMode, setOverrideStage]);
+
+  const handlePreviewPathChange = useCallback((nextPath) => {
+    if (playgroundMode) {
+      setOverridePath(nextPath);
+      return;
+    }
+    setPreviewPath(nextPath);
+  }, [playgroundMode, setOverridePath]);
+
+  const handleAvatarStageSelection = useCallback((stageName) => {
+    if (playgroundMode) {
+      setOverrideStage(stageName);
+      return;
+    }
+    setAvatarStage(stageName);
+    setPreviewStage(stageName);
+  }, [playgroundMode, setOverrideStage]);
+
+  const handleSectionSelect = useCallback((section) => {
+    if (playgroundMode) {
+      setActiveSection(null);
+      return;
+    }
+    setActiveSection(section);
+  }, [playgroundMode]);
+
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {
+    if (playgroundMode) return;
     setAvatarStage(previewStage);
-  }, [previewStage]);
+  }, [playgroundMode, previewStage]);
 
   // Preload critical images on app start
   useEffect(() => {
@@ -274,7 +325,7 @@ function App() {
 
   return (
     <AuthGate onAuthChange={handleAuthChange}>
-    <ThemeProvider currentStage={avatarStage}>
+    <ThemeProvider currentStage={effectiveAvatarStage}>
 
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
@@ -297,10 +348,10 @@ function App() {
       <DevPanel
         isOpen={showDevPanel}
         onClose={() => setShowDevPanel(false)}
-        avatarStage={previewStage}
-        setAvatarStage={setPreviewStage}
-        avatarPath={previewPath}
-        setAvatarPath={setPreviewPath}
+        avatarStage={effectivePreviewStage}
+        setAvatarStage={handlePreviewStageChange}
+        avatarPath={effectivePreviewPath}
+        setAvatarPath={handlePreviewPathChange}
         showCore={previewShowCore}
         setShowCore={setPreviewShowCore}
         avatarAttention={previewAttention}
@@ -337,7 +388,7 @@ function App() {
         />
 
         {/* Full-viewport Background (wallpaper fills entire screen) */}
-        <Background stage={previewStage} showBottomLayer={showBackgroundBottomLayer} />
+        <Background stage={effectivePreviewStage} showBottomLayer={effectiveShowBackgroundBottomLayer} />
 
         <PhoticCirclesOverlay
           isOpen={isPhoticOpen}
@@ -436,11 +487,11 @@ function App() {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      v3.27.27
+                      v3.27.58
                     </div>
                   </div>
 
-                  {!isHub && (
+                  {!isHub && !playgroundMode && (
                     <button
                       type="button"
                       onClick={() => setActiveSection(null)}
@@ -463,21 +514,19 @@ function App() {
               }}
               inert={isMinimized ? "" : undefined}
             >
-              {isHub ? (
+              {(isHub || playgroundMode) ? (
                 <div key="hub" className="section-enter">
                   {!hideCards && (
                     <HomeHub
-                      onSelectSection={setActiveSection}
-                      onStageChange={(hsl, stageName) => {
-                        setAvatarStage(stageName);
-                        setPreviewStage(stageName);
-                      }}
+                      onSelectSection={handleSectionSelect}
+                      onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                       isPracticing={isPracticing}
-                      currentStage={previewStage}
-                      previewPath={previewPath}
+                      currentStage={effectivePreviewStage}
+                      previewPath={effectivePreviewPath}
                       previewShowCore={previewShowCore}
                       previewAttention={previewAttention}
                       onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
+                      lockToHub={playgroundMode}
                     />
                   )}
                 </div>
@@ -490,18 +539,15 @@ function App() {
                   onPracticingChange={handlePracticingChange}
                   breathState={breathState}
                   onBreathStateChange={setBreathState}
-                  onStageChange={(hsl, stageName) => {
-                    setAvatarStage(stageName);
-                    setPreviewStage(stageName);
-                  }}
-                  currentStage={previewStage}
-                  previewPath={previewPath}
+                  onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
+                  currentStage={effectivePreviewStage}
+                  previewPath={effectivePreviewPath}
                   previewShowCore={previewShowCore}
                   previewAttention={previewAttention}
                   showFxGallery={showFxGallery}
-                  onNavigate={setActiveSection}
+                  onNavigate={handleSectionSelect}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
-                  onRitualComplete={() => setActiveSection(null)}
+                  onRitualComplete={() => handleSectionSelect(null)}
                   onOpenPhotic={() => setIsPhoticOpen(true)}
                   hideCards={hideCards}
                 />
@@ -525,10 +571,10 @@ function App() {
   );
 }
 
-function AppWithBoundary() {
+function AppWithBoundary(props) {
   return (
     <ErrorBoundary>
-      <App />
+      <App {...props} />
     </ErrorBoundary>
   );
 }

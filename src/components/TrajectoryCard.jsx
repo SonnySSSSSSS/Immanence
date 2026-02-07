@@ -4,7 +4,6 @@
 import React, { useMemo } from 'react';
 import { useProgressStore } from '../state/progressStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
-import { useTheme } from '../context/ThemeContext';
 import { REPORT_DOMAINS } from './tracking/archiveLinkConstants.js';
 
 export function TrajectoryCard({ onTap }) {
@@ -12,8 +11,6 @@ export function TrajectoryCard({ onTap }) {
     const getTrajectory = useProgressStore(s => s.getTrajectory);
     const sessionsCount = useProgressStore(s => s.sessions.length);
     const isLight = useDisplayModeStore(s => s.colorScheme === 'light');
-    const theme = useTheme();
-    const stage = theme?.stage || 'flame';
 
     // Memoize trajectory computation - only recalculate when sessions/dailyLogs change
     const trajectory = useMemo(() => {

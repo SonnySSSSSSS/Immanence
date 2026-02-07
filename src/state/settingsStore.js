@@ -134,7 +134,7 @@ export const useSettingsStore = create(
                 };
             }),
 
-            resetPhoticSettings: () => set((state) => ({
+            resetPhoticSettings: () => set(() => ({
                 photic: {
                     rateHz: 2.0,
                     dutyCycle: 0.5,

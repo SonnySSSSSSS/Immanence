@@ -14,7 +14,8 @@ const ALLOWED_MODELS = [
 ];
 
 export default {
-    async fetch(request, env, ctx) {
+    async fetch(request, env, _ctx) {
+        void _ctx;
         // CORS headers
         const corsHeaders = {
             'Access-Control-Allow-Origin': '*',

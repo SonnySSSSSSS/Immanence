@@ -15,6 +15,8 @@ import { useDisplayModeStore } from '../state/displayModeStore';
 import { loadPreferences } from '../state/practiceStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
+void motion;
+
 const BASE = import.meta.env.BASE_URL || '/';
 
 const RITUAL_STEPS = [

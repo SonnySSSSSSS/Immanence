@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+void motion;
+
 const RitualProgress = ({
     currentStepIndex,
     totalSteps,
     stepTimeRemaining,
     stepDuration,
-    totalTimeElapsed,
-    totalDurationEstimated
+    totalTimeElapsed
 }) => {
     // Calculate percentage for current step
     const stepProgress = Math.max(0, Math.min(100, ((stepDuration - stepTimeRemaining) / stepDuration) * 100));

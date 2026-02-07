@@ -261,6 +261,7 @@ export const usePathStore = create(
             version: 2,
             partialize: (state) => {
                 const { devPreviewCeremony, ...rest } = state;
+                void devPreviewCeremony;
                 return rest;
             },
             migrate: (persistedState, version) => {

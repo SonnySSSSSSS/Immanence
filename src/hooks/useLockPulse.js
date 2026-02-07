@@ -8,7 +8,7 @@
  * - Haptic: 5-stage vibration pattern matching the pulse
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 
 const GOLDEN_RATIO = 1.618;
 const SHORT_MS = 350;

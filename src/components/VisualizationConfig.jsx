@@ -15,8 +15,6 @@ export function VisualizationConfig({
     setFadeOutDuration,
     voidDuration,
     setVoidDuration,
-    duration,
-    setDuration,
     audioEnabled,
     setAudioEnabled,
     isLight = false,
@@ -37,7 +35,6 @@ export function VisualizationConfig({
         'zen-stones': '/visualization/zen-stones.svg',
     };
 
-    const totalCycleDuration = fadeInDuration + displayDuration + fadeOutDuration + voidDuration;
     const rawIndex = OPTIONS.indexOf(geometry);
     const currentIndex = rawIndex >= 0 ? rawIndex : 0;
 

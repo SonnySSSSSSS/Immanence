@@ -6,6 +6,8 @@ import { getAllBenchmarkSummary } from '../../services/benchmarkManager';
 import { useState } from 'react';
 import { ModeSwitchDialog } from './ModeSwitchDialog';
 
+void motion;
+
 export function CheckpointReview({ isOpen, onClose }) {
     const currentCycle = useCycleStore((state) => state.currentCycle);
     const getCycleInfo = useCycleStore((state) => state.getCycleInfo);

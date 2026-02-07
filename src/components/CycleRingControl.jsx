@@ -1,6 +1,6 @@
 // src/components/CycleRingControl.jsx
 // Donut chart control for visualization phase timing
-import React, { useState, useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 
 export function CycleRingControl({
     fadeInDuration,
@@ -23,8 +23,6 @@ export function CycleRingControl({
     ];
 
     const svgRef = useRef(null);
-    const [activeHandle, setActiveHandle] = useState(null);
-
     const values = {
         fadeIn: fadeInDuration,
         display: displayDuration,

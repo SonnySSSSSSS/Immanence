@@ -1,11 +1,11 @@
 // src/components/Application/practices/MirrorStillness.jsx
 // 90-second timed stillness practice with countdown ring
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useModeTrainingStore, PRACTICE_STATES } from '../../../state/modeTrainingStore.js';
 import { PRACTICE_DEFINITIONS } from '../../../state/practiceConfig.js';
 
 export function MirrorStillness({ onComplete }) {
-    const { practiceState, setPracticeState, updateCompletion, addEntry } = useModeTrainingStore();
+    const { practiceState, setPracticeState, updateCompletion } = useModeTrainingStore();
     const [timeRemaining, setTimeRemaining] = useState(90);
     const [totalTime] = useState(90);
     const [introComplete, setIntroComplete] = useState(false);

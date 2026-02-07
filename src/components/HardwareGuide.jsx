@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+void motion;
 
 export function HardwareGuide({ isOpen, onClose }) {
     if (!isOpen) return null;

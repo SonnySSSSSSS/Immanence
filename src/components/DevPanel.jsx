@@ -129,15 +129,13 @@ function SessionCard({ session, isLight }) {
 
 // TrackingInspectorSection: Large component for tracking data display and injection
 // (Defined outside DevPanel to avoid hook rendering issues)
-function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, handleDestructive }) {
+function TrackingInspectorSection() {
     const { sessions, streak, vacation } = useProgressStore();
     const { currentCycle } = useCycleStore();
     const { awarenessLogs } = useApplicationStore();
     const { scheduleAdherenceLog } = useNavigationStore();
 
     // Get last 10 sessions
-    const recentSessions = sessions.slice(-10).reverse();
-
     // Calculate current streak
     const calculateCurrentStreak = () => {
         if (!sessions || sessions.length === 0) return 0;
@@ -173,9 +171,7 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
     };
 
     const currentStreak = calculateCurrentStreak();
-    const longestStreak = streak?.longest || 0;
     const isVacation = vacation?.active || false;
-    const lastPracticeDate = sessions.length > 0 ? sessions[sessions.length - 1].dateKey : 'Never';
 
     // Helper functions need to be defined inside the component to access hooks
     function injectMockPattern(patternKey) {
@@ -491,6 +487,18 @@ function TrackingInspectorSection({ expanded, onToggle, isLight = false, armed, 
         console.log('🗑️ RESET ALL TRACKING DATA');
     }
 
+    void injectMockPattern;
+    void addStreakDays;
+    void breakStreak;
+    void toggleVacation;
+    void injectMultiYearData;
+    void exportToJSON;
+    void copyToClipboard;
+    void injectTimingPattern;
+    void clearMockData;
+    void resetProgressStore;
+    void resetAllTracking;
+
     // NOTE: Full JSX return was removed during refactor - component currently non-functional
     // This needs to be restored with the complete Section JSX
     return <div>TrackingInspectorSection JSX needs to be restored</div>;
@@ -522,8 +530,8 @@ export function DevPanel({
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
-    const lightModeRingType = useSettingsStore(s => s.lightModeRingType);
-    const setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
+    const _lightModeRingType = useSettingsStore(s => s.lightModeRingType);
+    const _setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
     const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
     const setButtonThemeDark = useSettingsStore(s => s.setButtonThemeDark);
     const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
@@ -581,8 +589,8 @@ export function DevPanel({
     const [armed, setArmed] = useState(null);
 
     // Background layer visibility state
-    const [showBgTop, setShowBgTop] = useState(true);
-    const [showBgBottom, setShowBgBottom] = useState(true);
+    const [_showBgTop, setShowBgTop] = useState(true);
+    const [_showBgBottom, setShowBgBottom] = useState(true);
 
     // Slider state
     const [sliderProgress, setSliderProgress] = useState(lunarProgress);

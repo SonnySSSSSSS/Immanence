@@ -6,10 +6,8 @@ import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
-import { VipassanaVariantSelector } from "./vipassana/VipassanaVariantSelector.jsx";
 import { NavigationRitualLibrary } from "./NavigationRitualLibrary.jsx";
 import { CircuitConfig } from "./Cycle/CircuitConfig.jsx";
-import { useTheme } from "../context/ThemeContext.jsx";
 import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
@@ -19,7 +17,7 @@ import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
-import { ringFXPresets, getCategories } from "../data/ringFXPresets.js";
+import { ringFXPresets } from "../data/ringFXPresets.js";
 import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -308,7 +306,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     startSession,
     endSession,
     recordAliveSignal,
-    recordSession,
     logCircuitCompletionEvent,
   } = usePracticeSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -325,8 +322,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     Number.isFinite(benchmark.exhale) && benchmark.exhale > 0 &&
     Number.isFinite(benchmark.hold2) && benchmark.hold2 > 0
   );
-  const getPatternForCycle = useBreathBenchmarkStore(s => s.getPatternForCycle);
-  const calculateTotalCycles = useBreathBenchmarkStore(s => s.calculateTotalCycles);
   const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
   const hasSong = useTempoAudioStore((s) => s.hasSong);
   const isSongPlaying = useTempoAudioStore((s) => s.isPlaying);
@@ -339,7 +334,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Tempo sync session state (3-phase cap schedule)
   const tempoSessionActive = useTempoSyncSessionStore(s => s.isActive);
-  const tempoSessionCap = useTempoSyncSessionStore(s => s.segmentCap);
   const tempoSessionEffective = useTempoSyncSessionStore(s => s.effectivePhaseDurations);
   const songDurationSec = useTempoAudioStore(s => s.songDurationSec);
 
@@ -375,10 +369,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
-  const getActivePracticeDay = useCurriculumStore(s => s.getActivePracticeDay);
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
   const activePracticeSession = useCurriculumStore(s => s.activePracticeSession);
-  const activePracticeLeg = useCurriculumStore(s => s.activePracticeLeg);
   const clearActivePracticeSession = useCurriculumStore(s => s.clearActivePracticeSession);
   const getCircuit = useCurriculumStore(s => s.getCircuit);
   
@@ -634,10 +626,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     clearPracticeLaunchContext?.();
   }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit]);
 
-  const [isStarting, setIsStarting] = useState(false);
+  const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
-  const [lastSessionId, setLastSessionId] = useState(null);
+  const [_lastSessionId, setLastSessionId] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [breathSubmode, setBreathSubmode] = useState("breath");
   const { startMicroNote, pendingMicroNote } = useJournalStore();
@@ -684,10 +676,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [activeCircuitId, setActiveCircuitId] = useState(null);
   const [circuitConfig, setCircuitConfig] = useState(null);
   const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
-  const [circuitSavedPractice, setCircuitSavedPractice] = useState(null);
+  const [_circuitSavedPractice, setCircuitSavedPractice] = useState(null);
   const [circuitValidationError, setCircuitValidationError] = useState(null);
   const [tapErrors, setTapErrors] = useState([]);
-  const [lastErrorMs, setLastErrorMs] = useState(null);
+  const [_lastErrorMs, setLastErrorMs] = useState(null);
   const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
   const [breathCount, setBreathCount] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState(null);
@@ -714,15 +706,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
     };
     }, [isRunning, activePracticeSession, activeCircuitId]);
-  const [visualizationCycles, setVisualizationCycles] = useState(0);
+  const [_visualizationCycles, setVisualizationCycles] = useState(0);
   const [activeRitual, setActiveRitual] = useState(null);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [countdownValue, setCountdownValue] = useState(null);
   const circuitCountdownRef = useRef(null);
-
-  // Sound/Visual ephemeral state
-  const [vipassanaVariant, setVipassanaVariant] = useState('thought-labeling');
-  const [showVipassanaVariantModal, setShowVipassanaVariantModal] = useState(false);
 
   // Ring FX ephemeral state
   const [currentFxIndex, setCurrentFxIndex] = useState(0);
@@ -754,7 +741,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     frequencySet,
     selectedFrequencyIndex,
     driftEnabled,
-    audioEnabled: cymaticsAudioEnabled
+    audioEnabled: _cymaticsAudioEnabled
   } = practiceParams.cymatics;
 
   // Emotion params
@@ -769,7 +756,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const { vipassanaTheme, vipassanaElement, scanType = 'full' } = practiceParams[vTarget];
 
   // Derived variant for VipassanaVisual
-  const effectiveVipassanaVariant = isCognitive ? 'sakshi' : 'thought-labeling';
 
   // Derived Values
   const selectedFrequency = SOLFEGGIO_SET[selectedFrequencyIndex] || SOLFEGGIO_SET[4];
@@ -960,14 +946,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setBreathCount(0);
   };
 
-  const handleExerciseComplete = () => {
-    if (activeCircuitId && circuitConfig) {
-      advanceCircuitExercise();
-    } else {
-      handleStop();
-    }
-  };
-
   const startCircuitCountdown = (nextExercise) => {
     if (circuitCountdownRef.current) {
       clearInterval(circuitCountdownRef.current);
@@ -1092,14 +1070,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setPracticeId('circuit');
   };
 
-  const handlePatternChange = (key, value) => {
-    setPattern((prev) => ({
-      ...prev,
-      [key]: Number.parseInt(value, 10) || 0,
-    }));
-    setPreset(null);
-  };
-
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -1158,11 +1128,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Use the larger of the two (timer is more accurate for completion, instrumentation for analytics)
     const actualDurationSeconds = Math.max(timerBasedDurationSeconds, instrumentationDurationSeconds);
 
-    const id =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : String(Date.now());
-
     const tapCount = tapErrors.length;
     let avgErrorMs = null;
     let bestErrorMs = null;
@@ -1176,23 +1141,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       );
     }
 
-    let subType = null;
-    if (practice === "Somatic Vipassana") subType = sensoryType;
-    if (practice === "Sound") subType = soundType;
-    if (practice === "Visualization") subType = geometry;
-    if (practice === "Cymatics") subType = `${selectedFrequency.hz} Hz - ${selectedFrequency.name} `;
-    if (practice === "Rituals") subType = activeRitual?.id;
-
-    const sessionPayload = {
-      id,
-      date: new Date().toISOString(),
-      type: practice.toLowerCase(),
-      subType,
-      durationMinutes: duration,
-      pattern: practice === "Breath & Stillness" ? { ...pattern } : null,
-      tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-    };
-
     let recordedSession = null;
     try {
       let domain = 'breathwork';
@@ -1204,8 +1152,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       else if (p.includes('feeling')) domain = 'focus';
       else if (p.includes('cognitive') || p.includes('insight')) domain = 'focus';
 
-      const activePath = useNavigationStore.getState().activePath;
-      const activePathId = activePath?.activePathId || activePath?.pathId || null;
       const actualPracticeId = getActualPracticeId(practiceId);
 
       if (import.meta.env.DEV) {
@@ -1677,24 +1623,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     handleSelectRitual(ritual);
   };
 
-  const handleNextStep = () => {
-    if (!activeRitual) return;
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < activeRitual.steps.length) {
-      setCurrentStepIndex(nextIndex);
-    }
-  };
-
-  const handleRitualComplete = () => {
-    handleStop();
-
-    // Navigate back to home after ritual completion
-    // (ritual doesn't show summary, so we reset to practice selection which shows home)
-    setTimeout(() => {
-      setPracticeId('breath'); // Reset to practice selection menu
-    }, 300);
-  };
-
   const handleAccuracyTap = (errorMs) => {
     if (!isRunning) return;
 
@@ -1763,8 +1691,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     onBreathStateChange: notifyBreathStateChange,
   });
 
-  const theme = useTheme();
-  const { primary, secondary, muted, glow } = theme.accent;
   const showFeedback = lastSignedErrorMs !== null && isBreathPractice;
   const timeLeftText = formatTime(timeLeft);
 

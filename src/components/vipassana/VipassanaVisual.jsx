@@ -1,4 +1,3 @@
-import React from 'react';
 import { HomeSnowVipassana } from './HomeSnowVipassana';
 import { ThoughtLabeling } from './ThoughtLabeling';
 
@@ -10,7 +9,6 @@ export function VipassanaVisual({
     onExit,
     durationSeconds,
     themeId = 'bird',
-    stage = 'flame'
 }) {
     if (!isActive) return null;
 

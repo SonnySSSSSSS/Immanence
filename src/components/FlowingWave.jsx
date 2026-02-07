@@ -7,13 +7,11 @@ import React from 'react';
  * FlowingWave - Animated SVG wave decoration
  * Creates smooth, flowing curves that animate horizontally
  * 
- * @param {number} height - Height of the wave container (default: 100)
  * @param {string} color - Wave stroke color (default: uses CSS variable)
  * @param {number} opacity - Wave opacity (default: 0.3)
  * @param {boolean} animate - Whether to animate the wave (default: true)
  */
 function FlowingWave({
-    height = 100,
     color = 'var(--accent-color)',
     opacity = 0.3,
     animate = true

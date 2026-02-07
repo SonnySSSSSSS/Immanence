@@ -6,9 +6,8 @@ import React from 'react';
 import BreathWaveform from './BreathWaveform.jsx';
 import { EmberLightRays } from './EmberLightRays.jsx';
 
-export function BreathSessionDisplay({ pattern, duration, timeLeft, breathCount }) {
+export function BreathSessionDisplay({ pattern, duration }) {
   const { inhale = 4, hold1 = 4, exhale = 4, hold2 = 4 } = pattern || {};
-  const totalTime = inhale + hold1 + exhale + hold2;
 
   const phases = [
     { label: 'INHALE', key: 'inhale', value: inhale },

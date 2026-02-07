@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logBenchmark } from '../../services/benchmarkManager';
 
+void motion;
+
 const BENCHMARK_FIELDS = {
     breath: [
         { key: 'holdDuration', label: 'Breath Hold Duration', unit: 'seconds', type: 'number' },

@@ -1,11 +1,10 @@
 // src/components/DailyPracticeCard.jsx
-import React, { useRef, useState, useEffect, useMemo, useTransition } from 'react';
+import React, { useState, useMemo, useTransition } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { METRIC_LABELS } from "../constants/metricsLabels";
-import { calculateGradientAngle, getAvatarCenter } from "../utils/dynamicLighting.js";
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey } from '../utils/dateUtils.js';
@@ -37,6 +36,17 @@ const THEME_CONFIG = {
         shadow: '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)'
     }
 };
+
+/**
+ * Adherence color: neutral gray at 0%, transitions to soft green when >0%.
+ * Avoids competing with the START button's saturated accent.
+ */
+function getAdherenceColor(adherencePct, isLight) {
+    if (Math.round(adherencePct) <= 0) {
+        return isLight ? 'rgba(60, 50, 35, 0.45)' : 'rgba(253, 251, 245, 0.40)';
+    }
+    return isLight ? 'rgba(60, 110, 60, 0.75)' : 'rgba(120, 200, 140, 0.75)';
+}
 
 /**
  * Map practice type to canonical practiceId
@@ -336,6 +346,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const computeProgressMetrics = useNavigationStore(s => s.computeProgressMetrics);
     const computeMissState = useNavigationStore(s => s.computeMissState);
     const restartPath = useNavigationStore(s => s.restartPath);
+    const abandonPath = useNavigationStore(s => s.abandonPath);
     
     const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
     const missState = useMemo(() => computeMissState(), [computeMissState, sessionsV2.length]);
@@ -383,8 +394,29 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return labels.slice(0, times.length);
     }, [activePathObj, metrics.dayIndex, times.length]);
 
-    const cardRef = useRef(null);
-    const [gradientAngle, setGradientAngle] = useState(135);
+    // Calculate slot dates based on path start time and current time
+    const slotDates = useMemo(() => {
+        if (times.length === 0 || !activePath?.startedAt) return [];
+
+        const now = new Date();
+        let cycleStartKey = todayKey; // Default to today
+
+        // Check if first slot's window has passed - if so, we move to next cycle day
+        if (times.length > 0) {
+            const firstSlotScheduledAt = localDateTimeFromDateKeyAndTime(todayKey, times[0]);
+            if (firstSlotScheduledAt) {
+                const { expired } = getStartWindowState({ now, scheduledAt: firstSlotScheduledAt });
+                if (expired) {
+                    // First slot's window passed, use tomorrow for cycle
+                    cycleStartKey = addDaysToDateKey(todayKey, 1);
+                }
+            }
+        }
+
+        // Generate dates for each slot
+        return times.map((_, idx) => cycleStartKey);
+    }, [times, activePath?.startedAt, todayKey]);
+
     const [missedLegWarning, setMissedLegWarning] = useState(null);
 
     const theme = useTheme();
@@ -398,7 +430,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         activeCurriculumId,
         getCurrentDayNumber,
         getTodaysPractice,
-        isTodayComplete,
         getProgress,
         getStreak,
         getDayLegsWithStatus,
@@ -412,57 +443,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
     const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
-
-    // Parse hex to RGB for dynamic effects
-    const baseAccent = useMemo(() => {
-        const hex = primaryHex;
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : { r: 126, g: 217, b: 87 };
-    }, [primaryHex]);
-
-    // Better color transformation from cyan base to stage accent
-    const stageColorFilter = useMemo(() => {
-        const { r, g, b } = baseAccent;
-        const max = Math.max(r, g, b) / 255;
-        const min = Math.min(r, g, b) / 255;
-        let h = 0;
-        if (max !== min) {
-            const d = max - min;
-            const rn = r / 255, gn = g / 255, bn = b / 255;
-            if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
-            else if (max === gn) h = ((bn - rn) / d + 2) / 6;
-            else h = ((rn - gn) / d + 4) / 6;
-        }
-        const targetHue = Math.round(h * 360);
-
-        // Map target hue to filter string with sepia for warmer tones
-        if (targetHue >= 10 && targetHue <= 60) {
-            // Orange/Yellow range (Ember/Flame) - use sepia for warmth
-            return `sepia(0.8) saturate(2) hue-rotate(${targetHue - 30}deg) brightness(1.1)`;
-        } else if (targetHue >= 90 && targetHue <= 150) {
-            // Green range (Seedling) - direct hue shift from cyan
-            return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
-        } else if (targetHue >= 180 && targetHue <= 210) {
-            // Cyan range (Beacon) - minimal adjustment
-            return `saturate(1.4) brightness(1.05) contrast(1.1)`;
-        } else if (targetHue >= 260 && targetHue <= 300) {
-            // Purple/Violet range (Stellar) - hue shift from cyan
-            return `hue-rotate(${targetHue - 180}deg) saturate(1.5) brightness(1.1)`;
-        }
-        // Default fallback
-        return `hue-rotate(${targetHue - 180}deg) saturate(1.3) brightness(1.05)`;
-    }, [baseAccent]);
-
-    useEffect(() => {
-        if (cardRef.current) {
-            const rect = cardRef.current.getBoundingClientRect();
-            setGradientAngle(calculateGradientAngle(rect, getAvatarCenter()));
-        }
-    }, [isLight, displayMode]);
 
     const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
 
@@ -504,7 +484,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     }}
                 >
                     <div
-                        ref={cardRef}
                         className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
                         style={{
                             ...(isFirefox ? {
@@ -536,20 +515,68 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             }}
                         />
 
-                        <div className="absolute inset-0 pointer-events-none" style={{ 
-                            background: isLight 
-                                ? 'linear-gradient(to right, rgba(250, 246, 238, 0) 0%, rgba(250, 246, 238, 0.3) 30%, rgba(250, 246, 238, 0.9) 100%)' 
-                                : 'linear-gradient(to right, rgba(20, 15, 25, 0) 0%, rgba(20, 15, 25, 0.45) 40%, rgba(20, 15, 25, 0.95) 100%)' 
+                        <div className="absolute inset-0 pointer-events-none" style={{
+                            background: isLight
+                                ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)'
+                                : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)'
                         }} />
 
-                        <div 
-                            className="relative z-10 w-full min-h-[460px] flex flex-col"
+                        {/* Left strip instrumentation - vertical meters */}
+                        <div
+                            className="absolute"
                             style={{
-                                background: isFirefox
-                                    ? (isLight ? '#faf6ee' : '#14121a')
-                                    : (isLight ? 'rgba(250, 246, 238, 0.85)' : 'rgba(20, 15, 25, 0.85)'),
-                                backdropFilter: isFirefox ? 'none' : 'blur(16px)',
-                                WebkitBackdropFilter: isFirefox ? 'none' : 'blur(16px)',
+                                top: 0,
+                                left: 0,
+                                bottom: 0,
+                                right: 'clamp(320px, 70%, 380px)',
+                                zIndex: 5,
+                                pointerEvents: 'none',
+                            }}
+                        >
+                            <div className="w-full h-full relative">
+                                <div
+                                    className="absolute flex flex-col pointer-events-none"
+                                    style={{
+                                        top: '12px',
+                                        left: '12px',
+                                        right: '12px',
+                                        bottom: '12px',
+                                        justifyContent: 'flex-start',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                    }}
+                                >
+                                    <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
+                                        <VerticalMeter
+                                            label="COMPLETION"
+                                            valueText={`${completedCount}/${times.length}`}
+                                            progressRatio={times.length > 0 ? completedCount / times.length : 0}
+                                            isLight={isLight}
+                                            progressBarColor={progressBarColor}
+                                        />
+                                    </div>
+
+                                    {metrics.durationDays > 0 && (
+                                        <div style={{ width: '72px', flex: 3, minHeight: '140px' }}>
+                                            <VerticalMeter
+                                                label="DAY"
+                                                valueText={`${metrics.dayIndex}/${metrics.durationDays}`}
+                                                progressRatio={metrics.dayIndex / metrics.durationDays}
+                                                isLight={isLight}
+                                                progressBarColor={progressBarColor}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right content panel */}
+                        <div
+                            className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
+                            style={{
+                                background: 'transparent',
+                                borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
                                 color: isLight ? '#3c3020' : '#fdfbf5',
                             }}
                         >
@@ -564,7 +591,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 />
                             )}
 
-                            <div className="p-6 sm:p-7 relative z-10 flex flex-col gap-5">
+                            <div className="px-6 sm:px-7 pt-4 sm:pt-5 pb-4 relative z-10">
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
                                 {!activePathObj ? (
@@ -603,9 +630,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>PATH STATUS</div>
                                         <div className="mt-4 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>Path Broken</div>
                                         <div className="mt-2 text-sm opacity-70" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>Missed {missState.consecutiveMissedDays} consecutive days.</div>
-                                        <div className="mt-6">
+                                        <div className="mt-6 flex flex-col gap-3">
                                             <button
-                                                onClick={() => restartPath?.()}
+                                                onClick={() => {
+                                                    console.log('[DailyPracticeCard] Restart Path clicked');
+                                                    restartPath();
+                                                }}
                                                 className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
                                                 style={{
                                                     background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
@@ -614,6 +644,22 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 }}
                                             >
                                                 Restart Path
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    console.log('[DailyPracticeCard] Abandon Path clicked');
+                                                    if (window.confirm('Are you sure you want to abandon this path? All progress will be lost.')) {
+                                                        abandonPath();
+                                                    }
+                                                }}
+                                                className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
+                                                style={{
+                                                    background: isLight ? 'rgba(60, 50, 35, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                                                    color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253, 251, 245, 0.7)',
+                                                    border: isLight ? '1px solid rgba(60, 50, 35, 0.2)' : '1px solid rgba(255, 255, 255, 0.2)',
+                                                }}
+                                            >
+                                                Abandon Path
                                             </button>
                                         </div>
                                     </div>
@@ -625,34 +671,85 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     </div>
                                 ) : times.length > 0 ? (
                                     <div>
-                                        <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>TODAY'S SCHEDULE</div>
-                                        <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
-                                        <div className="mt-2 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>{activePathObj.title}</div>
-                                        
-                                        {/* Progress Meter */}
+                                        <div className="text-[10px] font-black uppercase tracking-[0.32em]" style={{ color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253, 251, 245, 0.5)', lineHeight: 1 }}>
+                                            TODAY&apos;S SCHEDULE
+                                        </div>
+                                        <div style={{ fontSize: 11, opacity: 0.75, marginTop: 4, color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                            Hello, {displayName || '[Guest]'}
+                                        </div>
+
+                                        {/* Path title */}
+                                        <div className="mt-1" style={{
+                                            fontSize: 18, fontWeight: 600,
+                                            fontFamily: 'var(--font-display)',
+                                            color: 'var(--accent-color)',
+                                            lineHeight: 1.25, letterSpacing: '0.02em',
+                                        }}>
+                                            {activePathObj.title}
+                                        </div>
+
+                                        {/* Metrics row */}
                                         {metrics.durationDays > 0 && (
-                                            <div className="mt-4 space-y-2">
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.08em]" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
-                                                    <span>DAY {metrics.dayIndex} OF {metrics.durationDays}</span>
-                                                    <span style={{ color: 'var(--accent-color)' }}>{METRIC_LABELS.adherence}: {Math.round(metrics.adherencePct)}%</span>
-                                                </div>
-                                                <div className="flex justify-end text-[10px] font-black uppercase tracking-[0.08em]" style={{ color: 'var(--accent-color)' }}>
-                                                    <span>{METRIC_LABELS.program}: {Math.round(metrics.timePct)}%</span>
-                                                </div>
-                                                <div 
-                                                    className="h-2 rounded-full overflow-hidden"
+                                            <div className="mt-1 flex items-baseline gap-4">
+                                                <span style={{
+                                                    fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                                                    letterSpacing: '0.06em', lineHeight: 1, whiteSpace: 'nowrap',
+                                                    color: getAdherenceColor(metrics.adherencePct, isLight),
+                                                }}>
+                                                    {METRIC_LABELS.adherence} {Math.round(metrics.adherencePct)}%
+                                                </span>
+                                                <span style={{
+                                                    fontSize: 10, fontWeight: 900, textTransform: 'uppercase',
+                                                    letterSpacing: '0.06em', lineHeight: 1, whiteSpace: 'nowrap',
+                                                    color: getAdherenceColor(metrics.timePct, isLight),
+                                                }}>
+                                                    {METRIC_LABELS.program} {Math.round(metrics.timePct)}%
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Progress bar with embedded day counter */}
+                                        {metrics.durationDays > 0 && (
+                                            <div style={{ position: 'relative', marginTop: 12 }}>
+                                                <div
+                                                    className="h-6 rounded-lg overflow-hidden"
                                                     style={{
-                                                        background: isLight ? 'rgba(180, 140, 60, 0.1)' : 'rgba(255, 255, 255, 0.05)'
+                                                        background: isLight ? 'rgba(180,140,60,0.12)' : 'rgba(255,255,255,0.08)',
                                                     }}
                                                 >
-                                                    <div 
+                                                    <div
                                                         className="h-full transition-all duration-500"
                                                         style={{
                                                             width: `${metrics.adherencePct}%`,
                                                             background: 'linear-gradient(90deg, var(--accent-color), var(--accent-70))',
-                                                            boxShadow: '0 0 10px var(--accent-30)'
+                                                            boxShadow: '0 0 8px var(--accent-30)',
                                                         }}
                                                     />
+                                                </div>
+
+                                                {/* Day counter overlay */}
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 0, left: 0, right: 0, bottom: 0,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        pointerEvents: 'none',
+                                                    }}
+                                                >
+                                                    <span style={{
+                                                        fontSize: 10,
+                                                        fontWeight: 900,
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.08em',
+                                                        color: isLight ? 'rgba(60,50,35,0.8)' : 'rgba(253,251,245,0.9)',
+                                                        textShadow: isLight
+                                                            ? '0 1px 3px rgba(255,255,255,0.5)'
+                                                            : '0 1px 3px rgba(0,0,0,0.6)',
+                                                    }}>
+                                                        DAY {metrics.dayIndex} / {metrics.durationDays}
+                                                    </span>
                                                 </div>
                                             </div>
                                         )}
@@ -665,9 +762,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <div className="mt-6 space-y-2">
                                             {times.map((time, idx) => {
                                                 const isDone = idx < completedCount;
-                                                const isNext = idx === nextIndex;
+                                                const slotDateKey = slotDates[idx] || todayKey;
+                                                // Check time window for this slot using the correct date
+                                                const scheduledAt = localDateTimeFromDateKeyAndTime(slotDateKey, time);
+                                                const { tooEarly, expired } = scheduledAt ? getStartWindowState({ now: new Date(), scheduledAt }) : { tooEarly: false, expired: false };
+                                                const isOutsideWindow = tooEarly || expired;
+                                                // Each slot opens independently based on its own time window (allows partial day completion)
+                                                const isActionable = !isDone && !isOutsideWindow && slotLaunches[idx]?.practiceId;
+                                                // Format the date for display
+                                                const slotDate = new Date(`${slotDateKey}T00:00:00`);
+                                                const dateStr = slotDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                                                 return (
-                                                    <div 
+                                                    <div
                                                         key={idx}
                                                         className="flex items-center justify-between p-3 rounded-lg transition-all"
                                                         style={{
@@ -676,6 +782,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         }}
                                                     >
                                                         <div className={isDone ? 'line-through' : ''} style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                            <div className="text-[9px] opacity-60 mb-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                                {dateStr}
+                                                            </div>
                                                             <span className="text-sm font-semibold">{time}</span>
                                                             {practiceLabels[idx] && (
                                                                 <div className="text-[9px] opacity-60 mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
@@ -690,8 +799,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 const durationMin = slot?.durationMin;
                                                                 const practiceParamsPatch = slot?.practiceParamsPatch;
                                                                 const practiceConfig = slot?.practiceConfig;
-                                                                console.log("[DailyPracticeCard] START slot", { 
-                                                                    slotTime: time, 
+                                                                console.log("[DailyPracticeCard] START slot", {
+                                                                    slotTime: time,
                                                                     slotIndex: idx,
                                                                     practiceId,
                                                                     durationMin,
@@ -699,35 +808,35 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                     dayIndex: metrics.dayIndex,
                                                                     weekIndex: Math.ceil(metrics.dayIndex / 7)
                                                                 });
-                                                                
+
                                                                 if (!practiceId) {
                                                                     console.warn("[DailyPracticeCard] No practiceId resolved for slot", idx);
                                                                     return;
                                                                 }
-                                                                
-                                                                onStartPractice?.({ 
-                                                                    practiceId, 
+
+                                                                onStartPractice?.({
+                                                                    practiceId,
                                                                     durationMin,
                                                                     practiceParamsPatch,
                                                                     overrides: slot?.overrides,
                                                                     locks: slot?.locks,
                                                                     practiceConfig,
-                                                                    pathContext: { 
-                                                                        activePathId: activePath?.activePathId, 
-                                                                        slotTime: time, 
+                                                                    pathContext: {
+                                                                        activePathId: activePath?.activePathId,
+                                                                        slotTime: time,
                                                                         slotIndex: idx,
                                                                         dayIndex: metrics.dayIndex,
                                                                         weekIndex: Math.ceil(metrics.dayIndex / 7)
                                                                     }
                                                                 });
                                                             }}
-                                                            disabled={!isNext || !slotLaunches[idx]?.practiceId}
+                                                            disabled={!isActionable}
                                                             className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                                                                isNext && slotLaunches[idx]?.practiceId
-                                                                    ? 'btn-primary hover:scale-105 cursor-pointer' 
+                                                                isActionable
+                                                                    ? 'btn-primary hover:scale-105 cursor-pointer'
                                                                     : 'btn-muted opacity-50 cursor-not-allowed'
                                                             }`}
-                                                            style={isNext && slotLaunches[idx]?.practiceId ? {
+                                                            style={isActionable ? {
                                                                 background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
                                                                 color: '#fff',
                                                                 boxShadow: '0 3px 10px var(--accent-30)',
@@ -736,7 +845,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253, 251, 245, 0.5)',
                                                             }}
                                                             >
-                                                            {isDone ? 'Done' : isNext ? 'Start' : 'Locked'}
+                                                            {isDone ? 'Done' : (isOutsideWindow ? (tooEarly ? 'Not Yet' : 'Locked') : 'Start')}
                                                         </button>
                                                     </div>
                                                 );
@@ -762,7 +871,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const dayNumber = getCurrentDayNumber();
     const todaysPractice = getTodaysPractice();
-    const isComplete = isTodayComplete();
     const progress = getProgress();
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
@@ -1141,7 +1249,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId, metadata });
     };
 
-    const [isPending, startTransition] = useTransition();
+    const [_isPending, startTransition] = useTransition();
 
     const completedLegs = legs.filter(l => l.completed).length;
 
@@ -1176,7 +1284,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             >
                 {/* MIDDLE: Container */}
                 <div
-                    ref={cardRef}
                     className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
                     style={{
                         ...(isFirefox ? {
@@ -1212,8 +1319,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     {/* 2. LEFT BLOOM FADE: image blooms into parchment */}
                     <div className="absolute inset-0 pointer-events-none" style={{
                         background: isLight
-                            ? 'linear-gradient(to right, rgba(250, 246, 238, 0) 0%, rgba(250, 246, 238, 0.3) 30%, rgba(250, 246, 238, 0.9) 100%)'
-                            : 'linear-gradient(to right, rgba(20, 15, 25, 0) 0%, rgba(20, 15, 25, 0.45) 40%, rgba(20, 15, 25, 0.95) 100%)'
+                            ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)'
+                            : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)'
                     }} />
 
                     {/* 2.5 LEFT STRIP INSTRUMENTATION - rails anchored top/bottom */}
@@ -1269,11 +1376,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     <div 
                         className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
                         style={{
-                            background: isFirefox 
-                                ? (isLight ? '#faf6ee' : '#14121a')
-                                : (isLight ? 'rgba(250, 246, 238, 0.95)' : 'rgba(20, 15, 25, 0.95)'),
-                            backdropFilter: isFirefox ? 'none' : 'blur(16px)',
-                            WebkitBackdropFilter: isFirefox ? 'none' : 'blur(16px)',
+                            background: 'transparent',
                             borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
                             color: isLight ? '#3c3020' : '#fdfbf5',
                         }}

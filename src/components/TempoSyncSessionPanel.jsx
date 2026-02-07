@@ -23,8 +23,6 @@ export function TempoSyncSessionPanel() {
   const phaseLabel = `Phase ${segmentIndex + 1}/3`;
   const capPercent = Math.round(segmentCap * 100);
 
-  const formatDuration = (sec) => sec.toFixed(1) + 's';
-
   return (
     <div
       style={{

@@ -17,7 +17,6 @@
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { CURRICULUM_CHALLENGES, RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
@@ -186,7 +185,7 @@ function FocusTrend({ dayCompletions, isLight, totalDays }) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function CurriculumCompletionReport({ onDismiss, onRestart }) {
+export function CurriculumCompletionReport({ onDismiss }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';

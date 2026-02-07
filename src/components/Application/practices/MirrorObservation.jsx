@@ -3,12 +3,13 @@
 // Redesigned: Full-screen immersive "Tunnel of Truth" experience
 // Uses sentence builders instead of form fields
 
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChainStore } from '../../../state/chainStore.js';
-import { validateMirrorEntry } from '../../../services/llmService.js';
 import { SentenceBuilder, ActorActionBuilder } from '../SentenceBuilder.jsx';
 import { MirrorSeal } from '../MirrorSeal.jsx';
+
+void motion;
 
 // Build neutral sentence from components
 function buildNeutralSentence(context, actor, action, recipient) {
@@ -74,7 +75,6 @@ export function MirrorObservation({ onComplete }) {
         updateMirrorData,
         updateMirrorContext,
         lockMirror,
-        setMirrorLLMValidation,
     } = useChainStore();
 
     const [phase, setPhase] = useState(0); // 0: context, 1: action, 2: seal

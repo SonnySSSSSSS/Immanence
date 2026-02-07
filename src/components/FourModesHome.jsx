@@ -8,6 +8,8 @@ import { FOUR_MODES } from '../data/fourModes.js';
 import { useChainStore } from '../state/chainStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
+void motion;
+
 // Image filename mapping using existing mode images
 const MODE_IMAGE_MAP = {
     mirror: 'mode-mirror.png',
@@ -168,7 +170,7 @@ function ChainThread({ isComplete, isNext, isLight }) {
     );
 }
 
-export function FourModesHome({ onSelectMode, onClose }) {
+export function FourModesHome({ onSelectMode }) {
     const { activeChain, isModeAccessible, startNewChain } = useChainStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';

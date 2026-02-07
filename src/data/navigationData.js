@@ -7,8 +7,13 @@ export const paths = [
         title: "Initiation Path",
         subtitle: "A simple beginning",
         description: "A foundational 2-week journey to establish daily practice rhythms and begin your integration path.",
+        overviewNotes: [
+            "Establish a breath practice that expands capacity across this leg.",
+            "Familiarize yourself with the other fundamental practices."
+        ],
         glyph: "✨",
         duration: 2, // 2 weeks
+        showBreathBenchmark: true,
 
         practices: [
             { type: "Breathing", pattern: "Box", duration: 7 },
@@ -39,7 +44,7 @@ export const paths = [
                     "Circuit: Breath(5m) → Visualization(5m) → Feeling(5m) (evening)"
                 ],
                 reading: [],
-                tracking: "Journal: What shifted this week?"
+                tracking: "Final day: after your closing ritual, re-benchmark and compare your first and last attempts."
             }
         ],
 

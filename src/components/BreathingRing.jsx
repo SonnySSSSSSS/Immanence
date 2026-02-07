@@ -8,11 +8,10 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { EnsoStroke } from "./EnsoStroke";
-import { useTheme } from "../context/ThemeContext";
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, practiceEnergy = 0.5, totalSessionDurationSec = null, timeLeftText = null }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, totalSessionDurationSec = null }) {
   const lockedPatternRef = useRef(null);
   const pendingPatternRef = useRef(null);
   const incomingPatternRef = useRef(breathPattern);
@@ -82,8 +81,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const [echo, setEcho] = useState(null);
   const previousProgressRef = useRef(0);
   const audioContextRef = useRef(null);
-  const [mandalaProgress, setMandalaProgress] = useState(0);
-  const lastCycleRef = useRef(0);
   
 
   // Enso feedback state
@@ -147,7 +144,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     phase: soundPhase,
     pattern: displayedPattern,
     isRunning: !!startTime,
-    _progress: progress,
   });
 
   // Calculate current scale based on progress through cycle
@@ -222,8 +218,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     // Crossed back into INHALE phase (release from exhale hold) - CYCLE COMPLETE
     if (prevP >= tExhale && currP < tExhale) {
       playSound(500); // Medium-low ping (exhale release)
-      // Cycle completed - increment mandala
-      setMandalaProgress(prev => Math.min(prev + 0.1, 1)); // Grow to max 100%
       if (onCycleComplete) {
         onCycleComplete();
       }
@@ -421,9 +415,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const glowLayers = computeGlowLayers();
 
   // Read theme for dynamic colors
-  const theme = useTheme();
-  const { primary, secondary, muted, glow } = theme.accent;
-
   // Detect light mode to use subtle shadow instead of glow
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';

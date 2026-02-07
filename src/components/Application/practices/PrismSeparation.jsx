@@ -2,7 +2,7 @@
 // Prism Mode: Separation - Distinguish fact from narrative
 // IE v1 Spec: Display locked Mirror, log interpretations, categorize as Supported/Unsupported
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useChainStore } from '../../../state/chainStore.js';
 import { VoiceInput } from '../VoiceInput.jsx';
 
@@ -91,7 +91,6 @@ export function PrismSeparation({ onComplete }) {
     // Calculate stats
     const supportedCount = interpretations.filter(i => i.isSupported === true).length;
     const unsupportedCount = interpretations.filter(i => i.isSupported === false).length;
-    const categorizedCount = interpretations.filter(i => i.isSupported !== null).length;
     const total = interpretations.length;
     const supportedRatio = total > 0 ? Math.round((supportedCount / total) * 100) : 0;
 
@@ -150,7 +149,7 @@ export function PrismSeparation({ onComplete }) {
 
                 {/* Interpretation list */}
                 <div className="flex-1 mb-4 space-y-2 overflow-y-auto max-h-40">
-                    {interpretations.map((interp, idx) => (
+                    {interpretations.map((interp) => (
                         <div
                             key={interp.id}
                             className="px-3 py-2 rounded text-sm"
@@ -402,7 +401,7 @@ export function PrismSeparation({ onComplete }) {
 
                 {/* Interpretation breakdown */}
                 <div className="w-full max-w-sm space-y-2 mb-6 max-h-32 overflow-y-auto">
-                    {interpretations.map((interp, idx) => (
+                    {interpretations.map((interp) => (
                         <div
                             key={interp.id}
                             className="flex items-center gap-2 text-xs"

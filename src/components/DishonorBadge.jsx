@@ -9,7 +9,6 @@ export function DishonorBadge({ showAlways = false }) {
     const { getHonorStatus, sessions, honorLogs } = useProgressStore();
     const honorStatus = getHonorStatus();
 
-    const totalPractices = sessions.length + honorLogs.length;
     const { ratio, hasDishonorBadge } = honorStatus;
 
     // Only show if: enough data (≥10 practices) AND ratio > 50%

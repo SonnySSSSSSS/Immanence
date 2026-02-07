@@ -54,7 +54,7 @@ export function CymaticsVisualization({
         displayDuration,
         fadeOutDuration,
         voidDuration,
-        onPhaseChange: (newPhase, oldPhase) => {
+        onPhaseChange: () => {
             // Audio continues through all phases, no changes needed here
         },
         onCycleComplete: (cycle) => {

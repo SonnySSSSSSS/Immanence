@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 
-export function PresenceSigil({ onLongPress, onTap, stage = 'flame' }) {
+void motion;
+
+export function PresenceSigil({ onLongPress, onTap }) {
     const [isPressing, setIsPressing] = useState(false);
     const timerRef = useRef(null);
     const controls = useAnimation();

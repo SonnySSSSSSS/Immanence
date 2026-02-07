@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import { STAGE_THEMES, BASE_THEME, STAGE_NAME_MAP } from '../theme/stageColors';
-import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 const ThemeContext = createContext(null);
 

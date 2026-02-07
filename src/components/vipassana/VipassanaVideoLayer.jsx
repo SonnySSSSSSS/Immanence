@@ -2,7 +2,7 @@
 // Transparent video overlay for Vipassana practice
 // Uses WebM with alpha transparency for clean compositing
 
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 // WebM with alpha transparency (VP9 codec) - the only browser-supported transparent video format
 // Updated with new clean alpha channel videos
@@ -41,7 +41,6 @@ const VIDEO_CONFIGS = {
 export function VipassanaVideoLayer({
     videoType = 'leaves',
     enabled = true,
-    opacity = 0.6,
 }) {
     const videoRef = useRef(null);
     const [videoReady, setVideoReady] = useState(false);

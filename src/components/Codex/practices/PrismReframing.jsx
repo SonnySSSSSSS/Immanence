@@ -1,11 +1,11 @@
 // src/components/Codex/practices/PrismReframing.jsx
 // 3-frame plausible perspective shift practice
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTrainingStore, PRACTICE_STATES } from '../../../state/trainingStore.js';
 import { PRACTICE_DEFINITIONS } from '../../../state/practiceConfig.js';
 
 export function PrismReframing({ onComplete }) {
-    const { practiceState, setPracticeState, addEntry, currentSession, calculateModeCompletion } = useTrainingStore();
+    const { practiceState, setPracticeState, addEntry, currentSession } = useTrainingStore();
     const [currentFrame, setCurrentFrame] = useState(0);
     const [currentInput, setCurrentInput] = useState('');
     const [introComplete, setIntroComplete] = useState(false);

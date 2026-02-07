@@ -2,10 +2,9 @@
 // Post-Session Capture Modal
 // Phase 2: Routes to CircuitJournalForm for circuits, micro-note form for sessions
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useJournalStore, ATTENTION_QUALITIES, TECH_NOTE_PLACEHOLDERS, CHALLENGE_TAXONOMY } from '../state/journalStore.js';
-import { useProgressStore } from '../state/progressStore.js';
 import { useLunarStore } from '../state/lunarStore.js';
 import { CircuitJournalForm } from './CircuitJournalForm.jsx';
 
@@ -41,8 +40,6 @@ function SingleSessionJournalForm({ sessionId, onComplete }) {
         completeMicroNote,
         cancelMicroNote
     } = useJournalStore();
-
-    const progressStore = useProgressStore();
 
     const [placeholderIndex] = useState(Math.floor(Math.random() * TECH_NOTE_PLACEHOLDERS.length));
 

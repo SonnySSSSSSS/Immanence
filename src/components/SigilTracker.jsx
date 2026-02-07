@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useSigilStore } from '../state/sigilStore';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function SigilTracker({ isOpen, onClose, stage = 'flame' }) {
+export function SigilTracker({ isOpen, onClose }) {
     const [currentPath, setCurrentPath] = useState([]);
     const [isDrawing, setIsDrawing] = useState(false);
     const [intention, setIntention] = useState('');

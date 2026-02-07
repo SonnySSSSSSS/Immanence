@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { RitualSelectionDeck } from './RitualSelectionDeck.jsx';
 import RitualSession from './RitualSession.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
-export function NavigationRitualLibrary({ onComplete, onNavigate, selectedRitual, onSelectRitual, onRitualReturn }) {
+export function NavigationRitualLibrary({ onComplete, selectedRitual, onSelectRitual, onRitualReturn }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
@@ -56,12 +56,6 @@ export function NavigationRitualLibrary({ onComplete, onNavigate, selectedRitual
                 console.error("[RITUAL LIBRARY] ✗ No fallback available - both callbacks missing");
             }
         }
-    };
-
-    // Full completion: stop practice AND navigate to hub (user clicks "Return to Hub")
-    const handleFullComplete = () => {
-        onComplete(); // This cleans up the PracticeSection state
-        if (onNavigate) onNavigate(null); // This returns to HomeHub
     };
 
     // If ritual is selected, show RitualSession

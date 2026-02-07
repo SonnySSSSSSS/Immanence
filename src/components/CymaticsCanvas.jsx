@@ -1,5 +1,5 @@
 // src/components/CymaticsCanvas.jsx
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
     getChladniAmplitude,
     applyDrift
@@ -102,8 +102,6 @@ export function CymaticsCanvas({
                 const p = particles[i];
 
                 // Get current amplitude (absolute value)
-                const amp = Math.abs(getChladniAmplitude(p.x, p.y, effectiveN, effectiveM, width, height));
-
                 // Calculate gradient by sampling nearby points
                 const ampRight = Math.abs(getChladniAmplitude(p.x + delta, p.y, effectiveN, effectiveM, width, height));
                 const ampLeft = Math.abs(getChladniAmplitude(p.x - delta, p.y, effectiveN, effectiveM, width, height));

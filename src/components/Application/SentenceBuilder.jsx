@@ -6,6 +6,8 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VoiceInput } from './VoiceInput.jsx';
 
+void motion;
+
 // Bottom Sheet Modal for token editing - compact and mystical
 function TokenEditSheet({ isOpen, onClose, type, value, onChange }) {
     const inputRef = useRef(null);

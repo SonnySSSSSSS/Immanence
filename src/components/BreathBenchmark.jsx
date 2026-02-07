@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
+
+void motion;
 
 const PHASES = [
     { key: 'inhale', label: 'INHALE', instruction: 'Breathe in slowly until you cannot inhale anymore', minSeconds: 2 },
@@ -155,7 +157,12 @@ export function BreathBenchmark({ isOpen, onClose }) {
                 exit={{ opacity: 0 }}
                 style={{
                     position: 'fixed',
-                    inset: 0,
+                    top: 0,
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '100%',
+                    maxWidth: '820px',
                     zIndex: 9999,
                     background: bgColor,
                     display: 'flex',
@@ -165,6 +172,9 @@ export function BreathBenchmark({ isOpen, onClose }) {
                     color: textColor,
                     fontFamily: 'var(--font-body)',
                     cursor: stage === 'results' ? 'default' : 'pointer',
+                    padding: '24px 16px',
+                    boxSizing: 'border-box',
+                    overflowY: 'auto',
                 }}
                 onClick={stage !== 'results' ? handleTap : undefined}
             >

@@ -5,9 +5,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils';
-import { usePathStore } from './pathStore';
-import { useLunarStore } from './lunarStore';
-import { triggerWeeklyAggregation } from './attentionStore';
 import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking';
 
 // ========================================
@@ -583,9 +580,6 @@ export const useProgressStore = create(
                 const sessions = getCanonicalSessions(state);
                 const minutesTotal = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
                 const sessionsCount = sessions.length;
-                const isDev =
-                    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
-                    (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production');
                 return {
                     sessionsCount,
                     minutesTotal

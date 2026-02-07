@@ -52,7 +52,7 @@ export function SacredTimeSlider({ value, onChange, options }) {
 
             oscillator.start(ctx.currentTime);
             oscillator.stop(ctx.currentTime + 0.05);
-        } catch (e) {
+        } catch {
             // Audio not available, silent fail
         }
     };

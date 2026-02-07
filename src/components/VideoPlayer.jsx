@@ -63,7 +63,7 @@ export function VideoPlayer({ video, onComplete, onClose, autoplay = false }) {
                         onComplete?.();
                     }
                 }
-            } catch (_e) {
+            } catch {
                 // Player might be destroyed
             }
         }, 2000);

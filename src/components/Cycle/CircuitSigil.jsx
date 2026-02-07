@@ -1,7 +1,6 @@
 // src/components/Cycle/CircuitSigil.jsx
 // Living sigil that charges as exercises are selected
 import React from 'react';
-import { useThemeStore } from '../../state/themeStore';
 
 const SIGIL_SIZE = 200;
 const CENTER_SIZE = 60;

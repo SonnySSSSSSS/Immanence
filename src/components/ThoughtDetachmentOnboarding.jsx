@@ -1,5 +1,5 @@
 // src/components/ThoughtDetachmentOnboarding.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -34,7 +34,6 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
     const { 
         completeOnboarding, 
         onboardingComplete, 
-        thoughtCatalog, 
         logLegCompletion,
         getCurrentDayNumber,
         getWeightedRandomThought

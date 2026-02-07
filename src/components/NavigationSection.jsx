@@ -16,7 +16,7 @@ import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
 import { useAvatarV3State } from '../state/avatarV3Store.js';
 import { usePathStore } from '../state/pathStore.js';
 
-export function NavigationSection({ onStageChange, currentStage, previewPath, previewShowCore, previewAttention, onNavigate, onOpenHardwareGuide, isPracticing = false }) {
+export function NavigationSection({ currentStage, previewPath, onNavigate, isPracticing = false }) {
   const { activePath, beginPath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.mode);

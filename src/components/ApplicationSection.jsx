@@ -3,7 +3,7 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { SigilSealingArea } from './SigilSealingArea.jsx';
 import { ApplicationTrackingCard } from './ApplicationTrackingCard.jsx';
 
-export function ApplicationSection({ onStageChange, currentStage, previewPath, previewShowCore, onNavigate }) {
+export function ApplicationSection({ onNavigate }) {
   const { activePath } = useNavigationStore();
 
   const handleOpenArchive = (tab) => {

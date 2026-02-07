@@ -5,6 +5,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
+void motion;
+
 const swipeConfidenceThreshold = 10000;
 const swipePower = (offset, velocity) => {
     return Math.abs(offset) * velocity;

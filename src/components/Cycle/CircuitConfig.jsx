@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+void motion;
+
 const AVAILABLE_EXERCISES = [
     {
         id: 'breath',
@@ -130,37 +132,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
         if (onChange) onChange({ exercises: updated, intervalBreakSec });
     };
 
-    const handleDurationChange = (exerciseId, duration) => {
-        const updated = selectedExercises.map((e) =>
-            e.exercise.id === exerciseId ? { ...e, duration } : e
-        );
-        setSelectedExercises(updated);
-        setCircuitError(null);
-        if (onChange) onChange({ exercises: updated, intervalBreakSec });
-    };
-
     // Remove exercise by index (needed for duplicates)
     const handleRemoveExercise = (indexToRemove) => {
         const updated = selectedExercises.filter((_, idx) => idx !== indexToRemove);
-        setSelectedExercises(updated);
-        setCircuitError(null);
-        if (onChange) onChange({ exercises: updated, intervalBreakSec });
-    };
-
-    const handleReorder = (fromIndex, toIndex) => {
-        const updated = [...selectedExercises];
-        const [moved] = updated.splice(fromIndex, 1);
-        updated.splice(toIndex, 0, moved);
-
-        for (let i = 1; i < updated.length; i++) {
-            const a = updated[i - 1]?.exercise?.type;
-            const b = updated[i]?.exercise?.type;
-            if (a && b && a === b) {
-                setCircuitError('Same practice cannot be placed consecutively.');
-                return;
-            }
-        }
-
         setSelectedExercises(updated);
         setCircuitError(null);
         if (onChange) onChange({ exercises: updated, intervalBreakSec });
@@ -320,7 +294,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={0.2}
-                        onDragEnd={(e, { offset, velocity }) => {
+                        onDragEnd={(e, { offset }) => {
                             const swipe = offset.x;
                             if (swipe < -50 && pageIndex < totalPages - 1) {
                                 setPageIndex(prev => prev + 1);

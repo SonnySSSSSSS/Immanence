@@ -6,10 +6,8 @@ import React, { useState, useEffect } from 'react';
 export function OculusRing({
     children,
     size = 300,
-    progress = 0, // 0-1 for step progress
     totalSteps = 4,
     currentStep = 0,
-    accentColor = 'var(--accent-color)',
     breathDuration = 6, // 6-second breath cycle
 }) {
     // Breathing animation state (0 to 1, where 0.5 is neutral)

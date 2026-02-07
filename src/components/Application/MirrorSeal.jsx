@@ -2,8 +2,10 @@
 // Mirror Seal - Ceremonial reveal and locking of the neutral sentence
 // Transforms messy input into a "minted artifact"
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+void motion;
 
 // Particle component for dissolution effect
 function DissolutionParticle({ delay }) {

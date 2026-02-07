@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+void motion;
 
 const RitualStepDisplay = ({ step, stepIndex, totalSteps, isPaused, isLight = false }) => {
     const containerRef = useRef(null);

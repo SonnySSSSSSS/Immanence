@@ -1,6 +1,5 @@
 // src/components/Codex/CodexTablet.jsx
 // Individual card component for the Codex system - Grid card style
-import React from 'react';
 import { CODEX_MODES } from './codexCards.js';
 
 // Mode geometry SVG icons
@@ -58,7 +57,7 @@ const ModeIcon = ({ mode }) => {
     );
 };
 
-export function CodexTablet({ card, isExpanded = false, isFocused = false, isDimmed = false, isHighlighted = false, onToggle, onNavigate }) {
+export function CodexTablet({ card, isFocused = false, isDimmed = false, isHighlighted = false, onToggle, onNavigate }) {
     const mode = CODEX_MODES[card.mode] || CODEX_MODES.mirror;
 
     const handleBeginPractice = (e) => {

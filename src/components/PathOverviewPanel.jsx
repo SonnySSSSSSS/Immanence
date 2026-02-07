@@ -1,12 +1,13 @@
 // src/components/PathOverviewPanel.jsx
 import React, { useState } from 'react';
-import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { treatiseChapters } from '../data/treatise.generated.js';
 import { useUiStore } from '../state/uiStore.js';
+import { BreathBenchmark } from './BreathBenchmark.jsx';
+import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -17,6 +18,9 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const { practiceTimeSlots, setPracticeTimeSlots } = useCurriculumStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleRequired, setScheduleRequired] = useState(false);
+    const [showBenchmark, setShowBenchmark] = useState(false);
+    const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
+    const needsRebenchmark = useBreathBenchmarkStore(s => s.needsRebenchmark());
 
     if (!path || path.placeholder) return null;
 
@@ -116,6 +120,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 // No background/border/shadow - handled by wrapper in NavigationSection
             }}
         >
+            <BreathBenchmark isOpen={showBenchmark} onClose={() => setShowBenchmark(false)} />
             {/* Center top ornament */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />
@@ -180,6 +185,29 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                     </p>
                 </div>
             </div>
+
+            {path.overviewNotes?.length > 0 && (
+                <div className="mb-6">
+                    <h3
+                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                        Initiation Focus
+                    </h3>
+                    <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
+                        {path.overviewNotes.map((note, idx) => (
+                            <li
+                                key={idx}
+                                className="text-sm flex items-start gap-2"
+                                style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.8)' }}
+                            >
+                                <span className="text-[var(--accent-50)] mt-0.5">•</span>
+                                <span>{note}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {/* Practice Section */}
             {path.practices.length > 0 && (
@@ -448,6 +476,44 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
+            {path.showBreathBenchmark && (
+                <div className="mb-8">
+                    <h3
+                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                        Breath Benchmark
+                    </h3>
+                    <p
+                        className="text-sm italic"
+                        style={{ color: isLight ? 'rgba(90, 77, 60, 0.65)' : 'rgba(253,251,245,0.6)' }}
+                    >
+                        Establish the baseline you will expand. Click to measure your current breath capacity.
+                    </p>
+                    <div className="mt-3 flex justify-center">
+                        <button
+                            onClick={() => setShowBenchmark(true)}
+                            className="rounded-full px-4 py-2"
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontSize: "10px",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                textTransform: "uppercase",
+                                background: "transparent",
+                                border: `1px solid ${hasBenchmark ? "var(--accent-color)" : "var(--accent-10)"}`,
+                                color: hasBenchmark ? "var(--accent-color)" : "var(--text-muted)",
+                                boxShadow: needsRebenchmark ? '0 0 12px var(--accent-15)' : "none",
+                                animation: needsRebenchmark ? 'benchmarkRadiate 2s ease-in-out infinite' : 'none',
+                                transition: 'background 400ms ease, border-color 400ms ease, color 400ms ease',
+                            }}
+                        >
+                            {hasBenchmark ? '🔄 Re-benchmark' : '📏 Benchmark'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Practice Times */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
@@ -507,6 +573,17 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                     This will become your active focus for the next {path.duration} weeks.
                 </p>
             </div>
+
+            <style>{`
+                @keyframes benchmarkRadiate {
+                    0%, 100% {
+                        box-shadow: 0 0 8px var(--accent-15);
+                    }
+                    50% {
+                        box-shadow: 0 0 20px var(--accent-30), 0 0 30px var(--accent-15);
+                    }
+                }
+            `}</style>
         </div>
     );
 }

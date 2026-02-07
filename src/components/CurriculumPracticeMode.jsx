@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 
 /**
@@ -9,7 +8,6 @@ export function CurriculumPracticeMode() {
     const { 
         getActivePracticeDay, 
         activePracticeSession,
-        getCurrentDayNumber,
     } = useCurriculumStore();
 
     const practiceDay = getActivePracticeDay();

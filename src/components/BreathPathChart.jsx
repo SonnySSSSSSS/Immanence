@@ -1,8 +1,8 @@
 // src/components/BreathPathChart.jsx
 // Renders a breath slope chart with an animated dot that follows inhale/hold/exhale/hold timings
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
-export function BreathPathChart({ inhale = 4, hold1 = 4, exhale = 4, hold2 = 4, tokens = {} }) {
+export function BreathPathChart({ inhale = 4, hold1 = 4, exhale = 4, hold2 = 4 }) {
   const pathRef = useRef(null);
   const dotRef = useRef(null);
 
@@ -54,7 +54,6 @@ export function BreathPathChart({ inhale = 4, hold1 = 4, exhale = 4, hold2 = 4, 
       const elapsedSec = elapsed / 1000;
       
       // Find which segment we're in based on elapsed time
-      let cumulativeLength = 0;
       for (let i = 0; i < segments.length; i++) {
         const seg = segments[i];
         if (elapsedSec >= seg.start && elapsedSec < seg.start + seg.duration) {

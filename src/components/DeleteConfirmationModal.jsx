@@ -5,7 +5,7 @@ import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { AccessibleModal } from './AccessibleModal';
 
-export function DeleteConfirmationModal({ title, message, onConfirm, onCancel }) {
+export function DeleteConfirmationModal({ message, onConfirm, onCancel }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 

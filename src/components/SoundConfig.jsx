@@ -735,16 +735,6 @@ export function SoundConfig({
                 </div>
             </div>
 
-            {/* CARD 4 — DURATION (placeholder) */}
-            <div
-                className="rounded-2xl p-4 text-center text-xs opacity-50"
-                style={{
-                    border: `1px solid ${isLight ? "var(--light-border)" : "rgba(255,255,255,0.10)"}`,
-                }}
-            >
-                Duration is configured at the practice level
-            </div>
-
             <style>{`
                 @keyframes fade-in {
                     from { opacity: 0; transform: translateY(5px); }

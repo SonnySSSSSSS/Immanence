@@ -75,11 +75,6 @@ export default function AuthGate({ children, onAuthChange }) {
     }
   }
 
-  async function handleSignOut() {
-    const supabase = await getSupabase();
-    await supabase.auth.signOut();
-  }
-
   if (loading) return null;
 
   // When auth is disabled, just render children

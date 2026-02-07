@@ -7,7 +7,7 @@ import { SakshiVisual } from './SakshiVisual.jsx';
 import { BodyScanVisual } from './BodyScanVisual.jsx';
 import { SENSORY_TYPES } from '../data/sensoryTypes.js';
 import { SAKSHI_PROMPTS } from '../data/sakshiPrompts.js';
-import { BODY_SCANS, getAllBodyScans } from '../data/bodyScanPrompts.js';
+import { BODY_SCANS } from '../data/bodyScanPrompts.js';
 import { getEmotionPrompts } from '../data/emotionPractices.js';
 import { getAllRituals, getRitualById } from '../data/rituals/index.js';
 import RitualSession from './RitualSession.jsx';
@@ -23,14 +23,12 @@ export function SensorySession({
     onStop,
     onTimeUpdate,
     scanType,
-    onScanTypeChange,
     emotionMode,
     emotionPromptMode,
     isLight = false,
 }) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [currentPrompt, setCurrentPrompt] = useState('');
-    const [mode, setMode] = useState('noting'); // unused, kept for future
     const [selectedRitualId, setSelectedRitualId] = useState('standingMeditation'); // for bhakti default
     const [selectedScanId, setSelectedScanId] = useState(scanType ?? 'full'); // for bodyScan localized scans
     const [devPromptIndex, setDevPromptIndex] = useState(0); // DEV: manual prompt navigation
@@ -43,18 +41,9 @@ export function SensorySession({
 
     // Timer Refs
     const startTimeRef = useRef(performance.now());
-    const intervalRef = useRef(null);
     const onStopCalledRef = useRef(false);
 
-    // Scroll Refs
-    const scrollContainerRef = useRef(null);
-    const isDraggingRef = useRef(false);
-    const dragStartXRef = useRef(0);
-    const scrollStartRef = useRef(0);
-
     const config = SENSORY_TYPES[sensoryType];
-    const totalSeconds = duration * 60;
-
     // Fetch available rituals if in bhakti mode
     const availableRituals = sensoryType === 'bhakti' ? getAllRituals() : [];
 
@@ -74,7 +63,6 @@ export function SensorySession({
     }, [sensoryType, selectedScanId, emotionMode, emotionPromptMode]);
 
     // Auto-advance timer with even distribution
-    const timeoutRef = useRef(null);
     const intervalRef2 = useRef(null);
 
     // Calculate step durations for even distribution
@@ -191,7 +179,7 @@ export function SensorySession({
         onStopCalledRef.current = false;
         setElapsedSeconds(0);
         startTimeRef.current = performance.now();
-    }, [sensoryType, mode, selectedScanId, emotionMode, emotionPromptMode, duration]);
+    }, [sensoryType, selectedScanId, emotionMode, emotionPromptMode, duration]);
 
     // Sync local scan selection with external scanType changes
     useEffect(() => {
@@ -199,36 +187,6 @@ export function SensorySession({
             setSelectedScanId(scanType);
         }
     }, [scanType, selectedScanId]);
-
-    // Drag handlers
-    const handleMouseDown = (e) => {
-        if (!scrollContainerRef.current) return;
-        isDraggingRef.current = true;
-        dragStartXRef.current = e.pageX;
-        scrollStartRef.current = scrollContainerRef.current.scrollLeft;
-        scrollContainerRef.current.style.cursor = 'grabbing';
-    };
-
-    const handleMouseMove = (e) => {
-        if (!isDraggingRef.current || !scrollContainerRef.current) return;
-        e.preventDefault();
-        const dx = e.pageX - dragStartXRef.current;
-        scrollContainerRef.current.scrollLeft = scrollStartRef.current - dx;
-    };
-
-    const handleMouseUp = () => {
-        isDraggingRef.current = false;
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.style.cursor = 'grab';
-        }
-    };
-
-    const handleMouseLeave = () => {
-        isDraggingRef.current = false;
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.style.cursor = 'grab';
-        }
-    };
 
     // Render Logic
     if (sensoryType === 'bhakti') {

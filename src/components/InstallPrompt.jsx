@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+void motion;
+
 export function InstallPrompt() {
     const [isVisible, setIsVisible] = useState(false);
 

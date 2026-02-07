@@ -15,7 +15,7 @@ const MODE_CONSEQUENCES = {
 };
 
 // Responsive Beacon Component - Active field, not logo
-function ModeBeacon({ modeId, practice }) {
+function ModeBeacon({ practice }) {
     const [pulsePhase, setPulsePhase] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
 

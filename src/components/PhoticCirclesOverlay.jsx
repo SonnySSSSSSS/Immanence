@@ -2,15 +2,12 @@
 // Photic circles entrainment overlay
 // Two pulsing circles with RAF-based timing (horizontal layout)
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { PhoticControlPanel } from './PhoticControlPanel';
 import { useEffectivePhotic } from '../hooks/useEffectiveSettings';
-import { useDisplayModeStore } from '../state/displayModeStore';
 import { computePhoticLayout } from '../utils/photicLayout';
 
 export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
-    const colorScheme = useDisplayModeStore((s) => s.colorScheme);
-    const isLight = colorScheme === 'light';
     const photic = useEffectivePhotic();
 
     // Component state (not persisted)
@@ -34,7 +31,6 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     // Refs for RAF loop and DOM manipulation
     const rafRef = useRef(null);
     const startTimeRef = useRef(null);
-    const lastIntensityRef = useRef(0);
     const leftCircleRef = useRef(null);
     const rightCircleRef = useRef(null);
 

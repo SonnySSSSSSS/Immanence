@@ -7,7 +7,7 @@ import { useUiStore } from '../state/uiStore.js';
 import { treatiseChapters } from '../data/treatise.generated.js';
 
 export function ActivePathState({ onNavigate }) {
-    const { activePath, completeWeek, abandonPath, restartPath, isWeekCompleted } = useNavigationStore();
+    const { activePath, abandonPath, restartPath, isWeekCompleted } = useNavigationStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
@@ -74,12 +74,6 @@ export function ActivePathState({ onNavigate }) {
             durationMin: typeof durationMin === 'number' ? durationMin : undefined,
         });
         onNavigate?.('wisdom');
-    };
-
-    const handleCompleteWeek = () => {
-        if (currentWeek <= path.duration) {
-            completeWeek(currentWeek);
-        }
     };
 
     const handleAbandon = () => {
@@ -417,14 +411,6 @@ export function ActivePathState({ onNavigate }) {
             <div className="flex flex-wrap items-center gap-4">
                 {!isPathComplete ? (
                     <>
-                        <button
-                            onClick={handleCompleteWeek}
-                            className="flex-1 px-6 py-3 rounded-full text-[#050508] font-bold text-base shadow-[0_0_20px_var(--accent-30)] hover:shadow-[0_0_30px_var(--accent-40)] transition-all"
-                            style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))' }}
-                        >
-                            COMPLETE WEEK {currentWeek}
-                        </button>
-
                         <button
                             onClick={() => setShowRestartConfirm(true)}
                             className="px-4 py-3 text-sm transition-colors"

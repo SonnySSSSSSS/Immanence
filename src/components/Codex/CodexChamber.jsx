@@ -1,7 +1,7 @@
 // src/components/Codex/CodexChamber.jsx
 // Compass - Orientation chamber with questions as center of gravity
 // Option 3: Card backs present but dormant until question selected
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { codexCards, CODEX_MODES } from './codexCards.js';
 import { CodexTablet } from './CodexTablet.jsx';
 
@@ -32,7 +32,7 @@ const ORIENTATION_QUESTIONS = {
 };
 
 // Face-down card component
-function DormantCard({ isAwakened = false, isHighlighted = false, onClick, card, expandedCard, setExpandedCard, onNavigate }) {
+function DormantCard({ isAwakened = false, isHighlighted = false, card, expandedCard, setExpandedCard, onNavigate }) {
     if (isAwakened) {
         // Show the real card when awakened
         return (

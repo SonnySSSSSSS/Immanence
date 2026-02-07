@@ -1,11 +1,11 @@
 // src/components/Codex/practices/SwordCompression.jsx
 // Rapid decision clarity practice with optional timer
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTrainingStore, PRACTICE_STATES } from '../../../state/trainingStore.js';
 import { PRACTICE_DEFINITIONS } from '../../../state/practiceConfig.js';
 
 export function SwordCompression({ onComplete }) {
-    const { practiceState, setPracticeState, addEntry, setTimerUsed, currentSession, calculateModeCompletion } = useTrainingStore();
+    const { practiceState, setPracticeState, addEntry, setTimerUsed, currentSession } = useTrainingStore();
     const [currentStep, setCurrentStep] = useState(0);
     const [currentInput, setCurrentInput] = useState('');
     const [introComplete, setIntroComplete] = useState(false);

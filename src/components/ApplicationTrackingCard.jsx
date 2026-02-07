@@ -7,7 +7,6 @@ import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getPathById } from '../data/navigationData.js';
-import { useTheme } from '../context/ThemeContext.jsx';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
 import { ARCHIVE_TABS } from './tracking/archiveLinkConstants.js';
 
@@ -72,8 +71,8 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
                 margin: '0 auto',
                 border: '2px solid transparent',
                 backgroundImage: isLight
-                    ? `linear-gradient(rgba(252, 248, 240, 0.98), rgba(248, 244, 235, 0.96)), 
-                       ${getDynamicGoldGradient(gradientAngle, true)}`
+                          ? `linear-gradient(rgba(252, 248, 240, 0.98), rgba(248, 244, 235, 0.96)), 
+                              ${getDynamicGoldGradient(gradientAngle)}`
                     : `linear-gradient(135deg, rgba(20, 15, 25, 0.98), rgba(10, 8, 15, 0.98)), 
                        linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.02))`,
                 backgroundOrigin: 'padding-box, border-box',

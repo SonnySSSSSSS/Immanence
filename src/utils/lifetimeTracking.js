@@ -1,7 +1,7 @@
 // src/utils/lifetimeTracking.js
 // Lifetime tracking aggregation utilities (reuses reportUtils patterns)
 
-import { getYearStart, bucketByTime } from '../components/tracking/reports/reportUtils';
+import { bucketByTime } from '../components/tracking/reports/reportUtils';
 
 /**
  * Extract year from date string or Date object

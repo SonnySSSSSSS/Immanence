@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { SigilSealingArea } from '../components/SigilSealingArea';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { ThemeProvider } from '../context/ThemeContext.jsx';

@@ -2,8 +2,9 @@ import { ThoughtDetachmentOnboarding } from '../ThoughtDetachmentOnboarding.jsx'
 import { motion } from 'framer-motion';
 import { useCycleStore } from '../../state/cycleStore';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
-import { useState } from 'react';
 import { CycleChoiceModal } from './CycleChoiceModal';
+
+void motion;
 
 export function ConsistencyFoundation() {
     const currentCycle = useCycleStore((state) => state.currentCycle);

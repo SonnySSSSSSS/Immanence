@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RitualStepDisplay from './RitualStepDisplay';
 import RitualProgress from './RitualProgress';
-import { getRitualById } from '../data/rituals';
-import { useVideoStore } from '../state/videoStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { Icon } from '../icons/Icon.jsx';
+
+void motion;
 
 const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     // State
@@ -21,8 +21,6 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
 
     // Refs for timer
     const timerRef = useRef(null);
-    const startTimeRef = useRef(null);
-
     // Context / Helpers
     const currentStep = ritual.steps[currentStepIndex];
     const totalSteps = ritual.steps.length;

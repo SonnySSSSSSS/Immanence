@@ -111,8 +111,6 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
 
     const [activeTab, setActiveTab] = useState(initialTab || ARCHIVE_TABS.ALL);
     const [filterDate, setFilterDate] = useState(null);
-    const [reportDomain, setReportDomain] = useState(initialReportDomain || REPORT_DOMAINS.PRACTICE);
-    const [reportOutput, setReportOutput] = useState(null);
     
     // Edit/Delete state for single sessions
     const [editingSessionId, setEditingSessionId] = useState(null);
@@ -124,32 +122,33 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         }
     }, [initialTab]);
 
-    useEffect(() => {
-        if (initialReportDomain) {
-            setReportDomain(initialReportDomain);
-        }
-    }, [initialReportDomain]);
 
     const combinedEntries = useMemo(() => {
         const entries = [];
 
-        allSessions.forEach(entry => {
-            const timestamp = entry.date || entry.timestamp;
-            const dateKey = entry.dateKey || (timestamp ? getDateKey(new Date(timestamp)) : null);
+        allSessions.forEach((session, index) => {
+            const timestamp = session?.date
+                || session?.timestamp
+                || session?.startedAt
+                || session?.endedAt
+                || (session?.dateKey ? `${session.dateKey}T00:00:00` : null);
+            if (!timestamp) return;
+            const dateKey = session?.dateKey || getDateKey(new Date(timestamp));
             entries.push({
-                id: `session-${entry.id}`,
+                id: `practice-${session?.id ?? index}`,
                 type: 'practice',
                 dateKey,
                 timestamp,
-                data: entry
+                data: session
             });
         });
 
-        circuitEntries.forEach(entry => {
-            const timestamp = entry.timestamp || entry.completionTime;
-            const dateKey = entry.dateKey || (timestamp ? getDateKey(new Date(timestamp)) : null);
+        circuitEntries.forEach((entry, index) => {
+            const timestamp = entry?.timestamp || (entry?.dateKey ? `${entry.dateKey}T00:00:00` : null);
+            if (!timestamp) return;
+            const dateKey = entry?.dateKey || getDateKey(new Date(timestamp));
             entries.push({
-                id: `circuit-${entry.id}`,
+                id: `circuit-${entry?.id ?? index}`,
                 type: 'circuit',
                 dateKey,
                 timestamp,
@@ -157,10 +156,10 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
             });
         });
 
-        readingSessions.forEach(entry => {
+        readingSessions.forEach((entry, index) => {
             if (!entry?.date) return;
             entries.push({
-                id: `wisdom-reading-${entry.id}`,
+                id: `reading-${entry?.id ?? index}`,
                 type: 'wisdom-reading',
                 dateKey: getDateKey(new Date(entry.date)),
                 timestamp: entry.date,
@@ -168,10 +167,10 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
             });
         });
 
-        quizAttempts.forEach(entry => {
+        quizAttempts.forEach((entry, index) => {
             if (!entry?.date) return;
             entries.push({
-                id: `wisdom-quiz-${entry.id}`,
+                id: `quiz-${entry?.id ?? index}`,
                 type: 'wisdom-quiz',
                 dateKey: getDateKey(new Date(entry.date)),
                 timestamp: entry.date,
@@ -235,87 +234,6 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     };
 
     const formatMinutes = (minutes) => `${Math.round(minutes || 0)}m`;
-    const formatAdherenceMinutes = (value) => (value === null || value === undefined ? '-' : `${value}m`);
-
-    const getWindowCutoff = (days) => {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - (days - 1));
-        cutoff.setHours(0, 0, 0, 0);
-        return cutoff;
-    };
-
-    const getPracticeWindowStats = (days) => {
-        const cutoff = getWindowCutoff(days);
-        const sessions = allSessions.filter(s => new Date(s.date) >= cutoff);
-        const minutesTotal = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-        const accuracyValues = sessions
-            .filter(s => s.domain === 'breathwork')
-            .map(s => s.metadata?.accuracy)
-            .filter(a => typeof a === 'number');
-        const avgAccuracy = accuracyValues.length > 0
-            ? accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length
-            : null;
-        return {
-            sessionsCount: sessions.length,
-            minutesTotal,
-            avgAccuracy
-        };
-    };
-
-    const getWisdomWindowStats = (days) => {
-        const cutoff = getWindowCutoff(days);
-        const reading = readingSessions.filter(s => new Date(s.date) >= cutoff);
-        const quizzes = quizAttempts.filter(q => new Date(q.date) >= cutoff);
-        const videoEntries = Object.entries(videoById || {});
-        const videosInWindow = videoEntries.filter(([, data]) => {
-            if (!data?.lastWatchedAt) return false;
-            return new Date(data.lastWatchedAt) >= cutoff;
-        });
-        const videosCompleted = videosInWindow.filter(([, data]) => data.completed).length;
-        return {
-            readingCount: reading.length,
-            readingMinutes: Math.round(reading.reduce((sum, s) => sum + (s.timeSpent || 0), 0) / 60),
-            quizCount: quizzes.length,
-            quizPassRate: quizzes.length > 0
-                ? Math.round((quizzes.filter(q => q.passed).length / quizzes.length) * 100)
-                : 0,
-            videosStarted: videosInWindow.length,
-            videosCompleted,
-            videoCompletionRate: videosInWindow.length > 0
-                ? Math.round((videosCompleted / videosInWindow.length) * 100)
-                : 0
-        };
-    };
-
-    const buildReportText = (domain, days) => {
-        if (domain === 'practice') {
-            const stats = getPracticeWindowStats(days);
-            const accuracyText = stats.avgAccuracy === null ? '' : ` Average breath accuracy was ${Math.round(stats.avgAccuracy * 100)}%.`;
-            return `In the last ${days} days, you completed ${stats.sessionsCount} practice sessions totaling ${Math.round(stats.minutesTotal)} minutes.${accuracyText}`.trim();
-        }
-
-        if (domain === 'navigation') {
-            const summary = getScheduleAdherenceSummary?.(days, navigationActivePath?.activePathId);
-            if (!summary || summary.avgAbsDeltaMinutes === null) {
-                return `No schedule adherence records in the last ${days} days.`;
-            }
-            return `In the last ${days} days, your schedule adherence rate was ${summary.adherenceRate}%, with an average absolute offset of ${summary.avgAbsDeltaMinutes} minutes.`;
-        }
-
-        if (domain === 'wisdom') {
-            const stats = getWisdomWindowStats(days);
-            const quizText = stats.quizCount > 0 ? ` Quiz pass rate was ${stats.quizPassRate}%.` : '';
-            return `In the last ${days} days, you logged ${stats.readingCount} reading sessions (${stats.readingMinutes} minutes) and started ${stats.videosStarted} videos (${stats.videosCompleted} completed).${quizText}`.trim();
-        }
-
-        if (domain === 'application') {
-            const stats = days >= 90 ? appStats90 : appStats30;
-            const rate = stats.respondedDifferentlyPercent || 0;
-            return `In the last ${days} days, you logged ${stats.total} awareness events. Responded-differently rate was ${rate}%.`;
-        }
-
-        return '';
-    };
 
     const practiceSummary = useMemo(() => {
         const totalSessions = allSessions.length;
@@ -402,10 +320,6 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     );
     const adherenceSummary30 = useMemo(
         () => getScheduleAdherenceSummary?.(30, navigationActivePath?.activePathId) || null,
-        [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
-    );
-    const adherenceSummary90 = useMemo(
-        () => getScheduleAdherenceSummary?.(90, navigationActivePath?.activePathId) || null,
         [getScheduleAdherenceSummary, navigationActivePath, scheduleAdherenceLog]
     );
 
@@ -747,156 +661,6 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
         return null;
     };
 
-    const reportDomains = [
-        { key: REPORT_DOMAINS.PRACTICE, label: 'Practice' },
-        { key: REPORT_DOMAINS.NAVIGATION, label: 'Navigation' },
-        { key: REPORT_DOMAINS.WISDOM, label: 'Wisdom' },
-        { key: REPORT_DOMAINS.APPLICATION, label: 'Application' }
-    ];
-
-    const handleGenerateReport = (days) => {
-        const text = buildReportText(reportDomain, days);
-        setReportOutput({ domain: reportDomain, days, text });
-    };
-
-    const renderReports = () => {
-        const practiceTotals = trajectory8.weeks.reduce((sum, w) => sum + (w.totalMinutes || 0), 0);
-        const practiceDays = trajectory8.weeks.reduce((sum, w) => sum + (w.daysActive || 0), 0);
-        const wisdom30 = getWisdomWindowStats(30);
-        const wisdom90 = getWisdomWindowStats(90);
-
-        return (
-            <div>
-                <div style={{ ...summaryRowStyle, marginBottom: '10px' }}>
-                    {reportDomains.map(domain => (
-                        <button
-                            key={domain.key}
-                            onClick={() => setReportDomain(domain.key)}
-                            style={{
-                                padding: '6px 10px',
-                                borderRadius: '999px',
-                                border: `1px solid ${borderColor}`,
-                                backgroundColor: reportDomain === domain.key ? `${accentColor}20` : 'transparent',
-                                color: reportDomain === domain.key ? accentColor : textColor,
-                                fontSize: '11px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            {domain.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div style={summaryCardStyle}>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
-                        Practice Report (8 weeks)
-                    </div>
-                    {trajectory8.weeks.length === 0 ? (
-                        <div style={{ fontSize: '12px', opacity: 0.7 }}>No practice data available yet.</div>
-                    ) : (
-                        <div style={summaryRowStyle}>
-                            <div><strong>{trajectory8.weeks.length}</strong> weeks tracked</div>
-                            <div><strong>{practiceDays}</strong> active days</div>
-                            <div><strong>{Math.round(practiceTotals)}</strong> minutes total</div>
-                            <div>Trend: {trajectory8.trends?.directionLabel || 'stable'}</div>
-                        </div>
-                    )}
-                </div>
-
-                <div style={summaryCardStyle}>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
-                        Navigation Precision Report (7/30/90)
-                    </div>
-                    <div style={summaryRowStyle}>
-                        <div><strong>7d:</strong> {adherenceSummary7 ? `${adherenceSummary7.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary7?.avgAbsDeltaMinutes)}</div>
-                        <div><strong>30d:</strong> {adherenceSummary30 ? `${adherenceSummary30.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary30?.avgAbsDeltaMinutes)}</div>
-                        <div><strong>90d:</strong> {adherenceSummary90 ? `${adherenceSummary90.adherenceRate}%` : '-'} | Avg abs: {formatAdherenceMinutes(adherenceSummary90?.avgAbsDeltaMinutes)}</div>
-                    </div>
-                </div>
-
-                <div style={summaryCardStyle}>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
-                        Wisdom Report (30/90)
-                    </div>
-                    <div style={{ ...summaryRowStyle, marginBottom: '6px' }}>
-                        <div><strong>30d:</strong> {wisdom30.readingCount} readings | {wisdom30.readingMinutes}m | {wisdom30.videosStarted} videos ({wisdom30.videosCompleted} completed)</div>
-                    </div>
-                    <div style={summaryRowStyle}>
-                        <div><strong>90d:</strong> {wisdom90.readingCount} readings | {wisdom90.readingMinutes}m | {wisdom90.videosStarted} videos ({wisdom90.videosCompleted} completed)</div>
-                    </div>
-                </div>
-
-                <div style={summaryCardStyle}>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '6px' }}>
-                        Application Report (30/90)
-                    </div>
-                    <div style={{ ...summaryRowStyle, marginBottom: '6px' }}>
-                        <div><strong>30d:</strong> {appStats30.total} logs | Responded differently: {appStats30.respondedDifferentlyPercent}%</div>
-                    </div>
-                    <div style={summaryRowStyle}>
-                        <div><strong>90d:</strong> {appStats90.total} logs | Responded differently: {appStats90.respondedDifferentlyPercent}%</div>
-                    </div>
-                </div>
-
-                <div style={summaryCardStyle}>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, marginBottom: '8px' }}>
-                        Generate Report Paragraph
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                        <button
-                            onClick={() => handleGenerateReport(30)}
-                            style={{
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                border: `1px solid ${borderColor}`,
-                                backgroundColor: `${accentColor}10`,
-                                color: accentColor,
-                                fontSize: '11px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Generate 30-day text report
-                        </button>
-                        <button
-                            onClick={() => handleGenerateReport(90)}
-                            style={{
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                border: `1px solid ${borderColor}`,
-                                backgroundColor: `${accentColor}10`,
-                                color: accentColor,
-                                fontSize: '11px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Generate 90-day text report
-                        </button>
-                    </div>
-                    {reportOutput && reportOutput.domain === reportDomain && (
-                        <textarea
-                            readOnly
-                            value={reportOutput.text}
-                            style={{
-                                width: '100%',
-                                minHeight: '80px',
-                                padding: '10px',
-                                borderRadius: '6px',
-                                border: `1px solid ${borderColor}`,
-                                backgroundColor: isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
-                                color: textColor,
-                                fontSize: '12px',
-                                fontFamily: 'inherit',
-                                resize: 'vertical'
-                            }}
-                        />
-                    )}
-                </div>
-            </div>
-        );
-    };
 
     const footerText = useMemo(() => {
         switch (activeTab) {

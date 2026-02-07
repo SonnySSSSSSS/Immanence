@@ -55,7 +55,7 @@ export function RitualImageTest() {
                                 e.target.style.border = '2px solid red';
                                 e.target.alt = `Image failed to load: /${step.image}`;
                             }}
-                            onLoad={(e) => {
+                            onLoad={() => {
                                 console.log(`✅ Loaded: /${step.image}`);
                             }}
                         />

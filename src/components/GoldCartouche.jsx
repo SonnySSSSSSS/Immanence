@@ -2,7 +2,7 @@
 // Authority Material Component - Polished Gold Seal for State Indicators
 import React from 'react';
 
-export function GoldCartouche({ text, stageColor, isLight = false, onStateChange = false }) {
+export function GoldCartouche({ text, isLight = false, onStateChange = false }) {
   return (
     <div className="gold-cartouche inline-block">
       <div className={`cartouche-plate ${onStateChange ? 'state-change' : ''}`}>

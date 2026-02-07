@@ -2,7 +2,7 @@
 // Phase 3: Visual insights for circuit practice data
 // Shows: Attention trend line, challenge frequency bar chart, exercise heatmap
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useCircuitJournalStore } from '../state/circuitJournalStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { useAttentionTrendMemo, useChallengeMemo, useExerciseStatsMemo } from '../hooks/useEntryMemoization';
@@ -21,7 +21,6 @@ export function CircuitInsightsView() {
 
     const bgColor = isLight ? 'rgba(245, 240, 230, 0.95)' : 'rgba(20, 25, 35, 0.95)';
     const textColor = isLight ? 'rgba(35, 20, 10, 0.95)' : 'rgba(253, 251, 245, 0.95)';
-    const accentColor = isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)';
     const borderColor = isLight ? 'rgba(180, 120, 40, 0.15)' : 'rgba(255, 255, 255, 0.1)';
     const gridColor = isLight ? 'rgba(180, 120, 40, 0.1)' : 'rgba(255, 255, 255, 0.05)';
 
@@ -54,7 +53,7 @@ export function CircuitInsightsView() {
                     Attention Quality Trend
                 </h3>
                 {attentionData.length > 0 ? (
-                    <LineChart data={attentionData} height={200} isLight={isLight} accentColor={accentColor} gridColor={gridColor} textColor={textColor} />
+                    <LineChart data={attentionData} height={200} gridColor={gridColor} textColor={textColor} />
                 ) : (
                     <p style={{ opacity: 0.6, margin: 0 }}>No data yet</p>
                 )}
@@ -72,7 +71,7 @@ export function CircuitInsightsView() {
                     Challenge Frequency
                 </h3>
                 {challengeData.length > 0 ? (
-                    <BarChart data={challengeData} height={200} isLight={isLight} accentColor={accentColor} gridColor={gridColor} textColor={textColor} />
+                    <BarChart data={challengeData} height={200} gridColor={gridColor} textColor={textColor} />
                 ) : (
                     <p style={{ opacity: 0.6, margin: 0 }}>No challenges logged</p>
                 )}
@@ -89,7 +88,7 @@ export function CircuitInsightsView() {
                     Exercise Performance
                 </h3>
                 {heatmapData.length > 0 ? (
-                    <Heatmap data={heatmapData} isLight={isLight} textColor={textColor} />
+                    <Heatmap data={heatmapData} textColor={textColor} />
                 ) : (
                     <p style={{ opacity: 0.6, margin: 0 }}>No exercise data</p>
                 )}
@@ -101,7 +100,7 @@ export function CircuitInsightsView() {
 /**
  * LineChart: Attention quality over time
  */
-function LineChart({ data, height, isLight, accentColor, gridColor, textColor }) {
+function LineChart({ data, height, gridColor, textColor }) {
     if (data.length === 0) return null;
 
     const width = 600;
@@ -192,7 +191,7 @@ function LineChart({ data, height, isLight, accentColor, gridColor, textColor })
 /**
  * BarChart: Challenge frequency
  */
-function BarChart({ data, height, isLight, accentColor, gridColor, textColor }) {
+function BarChart({ data, height, gridColor, textColor }) {
     if (data.length === 0) return null;
 
     const width = 600;
@@ -265,7 +264,7 @@ function BarChart({ data, height, isLight, accentColor, gridColor, textColor }) 
 /**
  * Heatmap: Exercise performance grid
  */
-function Heatmap({ data, isLight, textColor }) {
+function Heatmap({ data, textColor }) {
     const cellSize = 40;
     const labelWidth = 150;
     const totalWidth = labelWidth + data.length * cellSize + 40;

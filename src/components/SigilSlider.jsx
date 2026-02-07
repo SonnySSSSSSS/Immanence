@@ -10,7 +10,6 @@ const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ']; // Elder Futhar
 const ALCHEMICAL = ['🜁', '🜂', '🜃', '🜄', '🜔', '🜍', '🜎']; // Alchemical symbols
 
 export function SigilSlider({
-    progress = 0, // 0-1
     totalSteps = 4,
     currentStep = 0,
     variant = 'planetary', // 'planetary', 'runic', 'alchemical'

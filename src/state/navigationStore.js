@@ -453,8 +453,6 @@ export const useNavigationStore = create(
                     return { consecutiveMissedDays: 0, broken: false };
                 }
 
-                const path = getPathById(state.activePath.activePathId);
-                const durationDays = path?.tracking?.durationDays || (path?.duration * 7) || 0;
                 const expectedPerDay = state.activePath.schedule?.selectedTimes?.length || 0;
 
                 if (!state.activePath.startedAt || expectedPerDay === 0) {
@@ -556,6 +554,7 @@ export const useNavigationStore = create(
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
                 const { selectedPathId, ...rest } = state;
+                void selectedPathId;
                 return rest;
             },
             migrate: (persistedState) => {

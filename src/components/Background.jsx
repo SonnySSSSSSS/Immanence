@@ -25,9 +25,7 @@ const STAGE_VIGNETTE_LIGHT = {
 
 export function Background({ stage = 'flame', showBottomLayer = true }) {
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
-  const displayMode = useDisplayModeStore((s) => s.mode);
   const isLight = colorScheme === 'light';
-  const isSanctuary = displayMode === 'sanctuary';
 
 
   const stageLower = (stage || 'flame').toLowerCase();
@@ -40,7 +38,6 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
 
   // Bottom layer state with fallback handling
   const stageBottomUrl = `${import.meta.env.BASE_URL}bg/bg-${stageLower}-bottom.png`;
-  const fallbackBottomUrl = `${import.meta.env.BASE_URL}bg/bg-seedling-bottom.png`;
   const [bottomSrc, setBottomSrc] = useState(stageBottomUrl);
 
   // Reset bottom src when stage changes

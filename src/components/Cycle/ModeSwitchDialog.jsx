@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCycleStore, CYCLE_MODES } from '../../state/cycleStore';
 import { recalibrateOnModeSwitch } from '../../services/cycleManager';
 
+void motion;
+
 export function ModeSwitchDialog({ isOpen, onClose, onConfirm }) {
     const currentCycle = useCycleStore((state) => state.currentCycle);
     const getCycleInfo = useCycleStore((state) => state.getCycleInfo);

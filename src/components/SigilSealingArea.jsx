@@ -3,10 +3,8 @@
 // Replaces the tracking view with an always-available awareness logging tool
 
 import React, { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
-import { getPathById } from '../data/navigationData.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
 export function SigilSealingArea() {
@@ -71,8 +69,6 @@ export function SigilSealingArea() {
     const handleClear = () => {
         setCurrentPath([]);
     };
-
-    const path = activePath ? getPathById(activePath.activePathId) : null;
 
     return (
         <div className="w-full max-w-2xl mx-auto space-y-6">

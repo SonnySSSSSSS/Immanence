@@ -46,7 +46,7 @@ export const useTrackingStore = create(
 
             // Get weekly timing offsets
             // Returns mock data if devModeOverride is active; else empty array
-            getWeeklyTimingOffsets: (domain = 'breath') => {
+            getWeeklyTimingOffsets: () => {
                 const state = get();
 
                 // Return mock if override is active

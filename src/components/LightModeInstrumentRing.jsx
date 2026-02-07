@@ -8,7 +8,6 @@ import React, { useRef, useEffect } from 'react';
 export function LightModeInstrumentRing({
     size = 288,
     accent = 'var(--accent-color)',
-    isPracticing = false,
     lightDirection = 315 // Degrees (top-right light source)
 }) {
     const canvasRef = useRef(null);

@@ -30,10 +30,9 @@ export function calculateGradientAngle(elementRect, avatarCenter) {
 /**
  * Gets the gold gradient string with dynamic angle
  * @param {number} angle - Gradient angle in degrees
- * @param {boolean} isLight - Light mode flag
  * @returns {string} CSS gradient string
  */
-export function getDynamicGoldGradient(angle, _isLight = false) {
+export function getDynamicGoldGradient(angle) {
     return `linear-gradient(${angle}deg, #AF8B2C 0%, #D4AF37 25%, #FBF5B7 50%, #D4AF37 75%, #AF8B2C 100%)`;
 }
 

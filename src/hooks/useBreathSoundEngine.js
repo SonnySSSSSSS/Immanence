@@ -12,7 +12,7 @@ import { useTempoSyncStore } from '../state/tempoSyncStore.js';
  * - Exhale: Falling pitch (280Hz → 140Hz) with breathy texture
  * - Hold (bottom): Steady 140Hz tone with subtle vibrato
  */
-export function useBreathSoundEngine({ phase, pattern, isRunning, _progress }) {
+export function useBreathSoundEngine({ phase, pattern, isRunning }) {
     const breathSoundEnabled = useSettingsStore(s => s.breathSoundEnabled);
 
     const audioContextRef = useRef(null);
@@ -25,7 +25,7 @@ export function useBreathSoundEngine({ phase, pattern, isRunning, _progress }) {
             try {
                 if (node.stop) node.stop();
                 if (node.disconnect) node.disconnect();
-            } catch (e) {
+            } catch {
                 // Ignore errors from already-stopped nodes
             }
         });

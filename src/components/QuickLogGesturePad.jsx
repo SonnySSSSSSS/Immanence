@@ -1,5 +1,5 @@
 ﻿// src/components/QuickLogGesturePad.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { getPathById } from '../data/navigationData.js';

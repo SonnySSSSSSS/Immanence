@@ -1,6 +1,6 @@
 // src/components/Codex/ModeTraining.jsx
 // Modal container for mode-based training practices
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTrainingStore, PRACTICE_STATES } from '../../state/trainingStore.js';
 import { CODEX_MODES } from './codexCards.js';
 import { PRACTICE_DEFINITIONS } from '../../state/practiceConfig.js';
@@ -12,7 +12,7 @@ import { SwordCompression } from './practices/SwordCompression.jsx';
 // Mirror: Timed Stillness Practice
 // ==========================================
 function MirrorStillness({ onComplete }) {
-    const { practiceState, setPracticeState, updateCompletion, addEntry } = useTrainingStore();
+    const { practiceState, setPracticeState, updateCompletion } = useTrainingStore();
     const [timeRemaining, setTimeRemaining] = useState(90); // 90 seconds
     const [totalTime] = useState(90);
     const [introComplete, setIntroComplete] = useState(false);
@@ -239,8 +239,6 @@ function ModeCheck({ onComplete }) {
 // ==========================================
 export function ModeTraining({ mode, practiceType = 'stillness', onClose }) {
     const {
-        currentSession,
-        practiceState,
         startSession,
         endSession,
         shouldTriggerHarmony,
