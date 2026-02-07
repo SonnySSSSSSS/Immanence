@@ -48,7 +48,6 @@ export function ThoughtLabeling({
 }) {
     const [thoughts, setThoughts] = useState([]);
     const [dialState, setDialState] = useState({ visible: false, x: 0, y: 0 });
-    const [_stickyThoughtId, setStickyThoughtId] = useState(null);
     const [ripples, setRipples] = useState([]);
 
     const lastSpawnTimeRef = useRef(0);
@@ -93,8 +92,8 @@ export function ThoughtLabeling({
             const audio = audioRefs.current[cueKey];
             audio.volume = cue.volume;
             audio.currentTime = 0;
-            audio.play().catch(() => { });
-        } catch { }
+            audio.play().catch(() => undefined);
+        } catch { void 0; }
     }, [audioEnabled]);
 
     const spawnThought = useCallback((x, y, category = 'neutral') => {
@@ -200,7 +199,6 @@ export function ThoughtLabeling({
         if (PRACTICE_INVARIANT.allowOneSticky) {
             const now = Date.now();
             setThoughts((prev) => prev.map((t) => ({ ...t, isSticky: t.id === thoughtId, stickyStartTime: t.id === thoughtId ? now : undefined })));
-            setStickyThoughtId(thoughtId);
             playAudio('thoughtSticky');
         }
     }, [playAudio]);

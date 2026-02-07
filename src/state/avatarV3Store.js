@@ -264,6 +264,7 @@ export function useAvatarV3State() {
   useEffect(() => {
     if (stageRef.current !== stage) {
       stageRef.current = stage;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- time marker for stage transitions
       setLastStageChange(Date.now());
     }
   }, [stage]);
@@ -274,6 +275,7 @@ export function useAvatarV3State() {
     );
     if (weightsChanged) {
       weightsRef.current = modeWeights;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- time marker for mode weight updates
       setLastModeChange(Date.now());
     }
   }, [modeWeights]);
@@ -282,6 +284,7 @@ export function useAvatarV3State() {
     const latestCompletion = getLatestCompletionTimestamp(sessions);
     if (latestCompletion && completionRef.current !== latestCompletion) {
       completionRef.current = latestCompletion;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- time marker for latest completion
       setLastSessionComplete(latestCompletion);
     }
   }, [sessions]);

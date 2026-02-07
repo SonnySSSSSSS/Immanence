@@ -77,6 +77,44 @@ const buildPathContext = ({ activePath, activePathId, endedAt }) => {
     };
 };
 
+function devAssertSessionPathContext({ activePath, providedPathContext, persistedPathContext, sessionId }) {
+    const hasActivePath = !!activePath;
+    const activeRunId = activePath?.runId || null;
+    const activePathId = activePath?.activePathId || null;
+
+    // Always log the exact resolved context in dev to make handoff failures obvious.
+    console.debug('[sessionRecorder][dev] pathContext resolved', {
+        sessionId: sessionId || null,
+        activePath: { runId: activeRunId, activePathId },
+        providedPathContext,
+        persistedPathContext,
+    });
+
+    if (hasActivePath) {
+        console.assert(
+            !!persistedPathContext?.runId,
+            '[sessionRecorder][assert] Missing persisted pathContext.runId with active path',
+            {
+                sessionId: sessionId || null,
+                activePath: { runId: activeRunId, activePathId },
+                providedPathContext,
+                persistedPathContext,
+            }
+        );
+
+        console.assert(
+            persistedPathContext?.runId === activeRunId,
+            '[sessionRecorder][assert] Persisted runId does not match active path runId',
+            {
+                sessionId: sessionId || null,
+                activePath: { runId: activeRunId, activePathId },
+                providedPathContext,
+                persistedPathContext,
+            }
+        );
+    }
+}
+
 /**
  * Parse "HH:mm" time string to minutes since midnight
  * MUST MATCH curriculumRail.js implementation
@@ -247,7 +285,9 @@ export function recordPracticeSession(payload = {}, options = {}) {
         configSnapshot = null,
         completion = null,
         activePathId = null,
+        runId = null,
         dayIndex = null,
+        weekIndex = null,
         startedAt = null,
         endedAt = null,
         durationSec = null,
@@ -299,6 +339,9 @@ export function recordPracticeSession(payload = {}, options = {}) {
         activePathId,
         endedAt: normalizedEndedAt,
     });
+    const resolvedRunId = runId || normalizedPathContext.runId || null;
+    const resolvedActivePathId = activePathId || normalizedPathContext.activePathId || null;
+    const resolvedWeekIndex = weekIndex ?? normalizedPathContext.weekIndex;
 
     const normalizedSession = {
         id: null,
@@ -310,10 +353,10 @@ export function recordPracticeSession(payload = {}, options = {}) {
         configSnapshot,
         completion: normalizedCompletion,
         pathContext: {
-            runId: normalizedPathContext.runId,
-            activePathId: normalizedPathContext.activePathId,
+            runId: resolvedRunId,
+            activePathId: resolvedActivePathId,
             dayIndex: dayIndex ?? normalizedPathContext.dayIndex,
-            weekIndex: normalizedPathContext.weekIndex,
+            weekIndex: resolvedWeekIndex,
         },
         // Phase 7: deterministic scheduleMatched snapshot (computed at record time)
         scheduleMatched: normalizedStartedAt ? computeScheduleMatchedSnapshot({
@@ -324,7 +367,7 @@ export function recordPracticeSession(payload = {}, options = {}) {
     };
 
     // DEV-ONLY: Guard against missing runId when activePath exists
-    if (isDev && activePath && !normalizedPathContext?.runId) {
+    if (isDev && activePath && !resolvedRunId) {
         console.error('[sessionRecorder] CRITICAL: Missing runId in pathContext despite active path', {
             activePath,
             normalizedPathContext,
@@ -338,6 +381,20 @@ export function recordPracticeSession(payload = {}, options = {}) {
             normalizedSession.id = crypto.randomUUID();
         } else {
             normalizedSession.id = String(Date.now());
+        }
+
+        if (isDev) {
+            devAssertSessionPathContext({
+                activePath,
+                providedPathContext: {
+                    runId: runId || null,
+                    activePathId: activePathId || null,
+                    dayIndex: dayIndex ?? null,
+                    weekIndex: weekIndex ?? null,
+                },
+                persistedPathContext: normalizedSession.pathContext,
+                sessionId: normalizedSession.id,
+            });
         }
 
         useProgressStore.getState().recordSessionV2(normalizedSession);

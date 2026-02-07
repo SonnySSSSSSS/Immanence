@@ -1,8 +1,8 @@
 // Glow style - Unwitnessed icon
-import React from 'react';
+import React, { useId } from 'react';
 
 export function Unwitnessed({ size = 24, color = 'currentColor', className = '' }) {
-    const id = `unwit-glow-${Math.random().toString(36).substr(2, 9)}`;
+    const id = useId();
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" className={className}>
             <defs>

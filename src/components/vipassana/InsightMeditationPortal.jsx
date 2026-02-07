@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useDisplayModeStore } from '../../state/displayModeStore';
 
 const CATEGORIES = [
     { id: 'pull', label: 'PULL', icon: '🧲', color: '#60A5FA' },
@@ -9,7 +8,6 @@ const CATEGORIES = [
 ];
 
 export function InsightMeditationPortal({ onExit }) {
-    const { mode } = useDisplayModeStore();
     const assetsPrefix = import.meta.env.BASE_URL + 'assets/';
     
     const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
@@ -37,6 +35,21 @@ export function InsightMeditationPortal({ onExit }) {
 
     // Parallax logic - Horizontal (Mandated)
     const [offsets, setOffsets] = useState({ bg: 0, mid: 0, fg: 0 });
+
+    const spawnThought = useCallback(() => {
+        const id = Date.now();
+        const fromLeft = Math.random() > 0.5;
+        const newThought = {
+            id,
+            x: fromLeft ? -5 : 105,
+            y: 35 + Math.random() * 30, // Centered vertically in window
+            vx: fromLeft ? (0.04 + Math.random() * 0.08) : -(0.04 + Math.random() * 0.08),
+            scale: 0.5 + Math.random() * 0.5,
+            variant: Math.floor(Math.random() * 4),
+        };
+        setThoughts(prev => [...prev, newThought]);
+        lastSpawnTime.current = id;
+    }, []);
 
     useEffect(() => {
         if (isPortrait) return;
@@ -66,22 +79,7 @@ export function InsightMeditationPortal({ onExit }) {
         };
         animationFrameRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrameRef.current);
-    }, [activeThought, isPortrait]);
-
-    const spawnThought = useCallback(() => {
-        const id = Date.now();
-        const fromLeft = Math.random() > 0.5;
-        const newThought = {
-            id,
-            x: fromLeft ? -5 : 105,
-            y: 35 + Math.random() * 30, // Centered vertically in window
-            vx: fromLeft ? (0.04 + Math.random() * 0.08) : -(0.04 + Math.random() * 0.08),
-            scale: 0.5 + Math.random() * 0.5,
-            variant: Math.floor(Math.random() * 4),
-        };
-        setThoughts(prev => [...prev, newThought]);
-        lastSpawnTime.current = id;
-    }, []);
+    }, [activeThought, isPortrait, spawnThought]);
 
     const handleTag = (categoryId) => {
         if (!activeThought) return;

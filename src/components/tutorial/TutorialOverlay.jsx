@@ -246,6 +246,7 @@ export const TutorialOverlay = () => {
 
   useLayoutEffect(() => {
     if (!isOpen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- layout sync for tooltip positioning
     updatePosition();
   }, [isOpen, updatePosition]);
 

@@ -234,8 +234,9 @@ export const useTempoDetection = () => {
 
   // Load and analyze audio file
   const loadAudioFile = (file) => {
-    return new Promise(async (resolve, reject) => {
-      try {
+    return new Promise((resolve, reject) => {
+      const run = async () => {
+        try {
         const audioInit = initializeAudioContext();
         const ctx = audioInit.ctx;
         const filter = audioInit.filter;
@@ -352,10 +353,13 @@ export const useTempoDetection = () => {
       }
     };
 
-        resolve(audio);
-      } catch (error) {
-        reject(error);
-      }
+          resolve(audio);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      run();
     });
   };
 
@@ -656,7 +660,9 @@ export const useTempoDetection = () => {
     getAudioElement,
     setLoopState,
     resetDetection,
+    // eslint-disable-next-line react-hooks/refs -- exposed for diagnostics
     audioContext: audioContextRef.current,
+    // eslint-disable-next-line react-hooks/refs -- exposed for diagnostics
     analyser: analyserRef.current,
   };
 };

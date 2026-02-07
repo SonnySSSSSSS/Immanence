@@ -352,51 +352,7 @@ export function ActivePathState({ onNavigate }) {
                 </div>
             )}
 
-            {/* Quick Actions */}
-            {!isPathComplete && (
-                <div>
-                    <h3
-                        className="text-base font-bold mb-3"
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            letterSpacing: 'var(--tracking-wide)',
-                            color: isLight ? 'rgba(180, 140, 90, 0.8)' : 'var(--accent-color)'
-                        }}
-                    >
-                        Quick Actions
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                        {[
-                            { label: 'Practice', action: 'go-to-practice' },
-                            { label: 'Wisdom', action: 'go-to-wisdom' },
-                            { label: 'Application', action: 'track-application' }
-                        ].map((btn, i) => (
-                            <button
-                                key={i}
-                                className="px-4 py-2 rounded-full border transition-all text-sm"
-                                style={{
-                                    fontFamily: 'var(--font-body)',
-                                    fontWeight: 500,
-                                    letterSpacing: '0.01em',
-                                    borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)',
-                                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.8)',
-                                    background: isLight ? 'rgba(255, 255, 255, 0.4)' : 'transparent'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.background = isLight ? 'rgba(180, 140, 90, 0.1)' : 'var(--accent-10)';
-                                    e.target.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.5)' : 'var(--accent-50)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.background = isLight ? 'rgba(255, 255, 255, 0.4)' : 'transparent';
-                                    e.target.style.borderColor = isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-30)';
-                                }}
-                            >
-                                → {btn.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {/* Quick Actions removed per request */}
 
             {/* Ornamental Divider */}
             <div className="flex items-center justify-center py-2">

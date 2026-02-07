@@ -34,7 +34,7 @@ export const useTempoAudioStore = create((set, get) => ({
 
     // revoke prior blob
     if (blobUrl) {
-      try { URL.revokeObjectURL(blobUrl); } catch {}
+      try { URL.revokeObjectURL(blobUrl); } catch { void 0; }
       blobUrl = null;
     }
 
@@ -50,12 +50,12 @@ export const useTempoAudioStore = create((set, get) => ({
 
   clearSong: () => {
     if (audioEl) {
-      try { audioEl.pause(); } catch {}
-      try { audioEl.removeAttribute("src"); } catch {}
-      try { audioEl.load(); } catch {}
+      try { audioEl.pause(); } catch { void 0; }
+      try { audioEl.removeAttribute("src"); } catch { void 0; }
+      try { audioEl.load(); } catch { void 0; }
     }
     if (blobUrl) {
-      try { URL.revokeObjectURL(blobUrl); } catch {}
+      try { URL.revokeObjectURL(blobUrl); } catch { void 0; }
       blobUrl = null;
     }
     audioEl = null;
@@ -65,8 +65,8 @@ export const useTempoAudioStore = create((set, get) => ({
 
   stop: (reason = "stop") => {
     if (!audioEl) return;
-    try { audioEl.pause(); } catch {}
-    try { audioEl.currentTime = 0; } catch {}
+    try { audioEl.pause(); } catch { void 0; }
+    try { audioEl.currentTime = 0; } catch { void 0; }
     useTempoAudioStore.setState({ isPlaying: false });
     console.log("[TempoAudioStore] stopped", { reason });
   },

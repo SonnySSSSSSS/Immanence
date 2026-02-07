@@ -26,7 +26,7 @@ export const useUiStore = create((set) => ({
     //     awarenessScene?: string[],
     //   },
     //   practiceConfig?: Record<string, any>,
-    //   pathContext?: { activePathId?: string, slotTime?: string, slotIndex?: number, dayIndex?: number, weekIndex?: number },
+    //   pathContext?: { runId?: string, activePathId?: string, slotTime?: string, slotIndex?: number, dayIndex?: number, weekIndex?: number },
     //   persistPreferences?: boolean, // default true; set false for recommendations
     // }
     practiceLaunchContext: null,

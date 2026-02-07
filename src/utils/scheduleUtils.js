@@ -19,7 +19,10 @@ export function localDateTimeFromDateKeyAndTime(dateKey, timeStr) {
   if (typeof dateKey !== 'string' || !dateKey) return null;
   const parsed = parseHHMM(timeStr);
   if (!parsed) return null;
-  const d = new Date(`${dateKey}T00:00:00`);
+  // Parse YYYY-MM-DD as local date explicitly to avoid timezone issues
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  const d = new Date(year, month - 1, day, 0, 0, 0, 0);
   if (Number.isNaN(d.getTime())) return null;
   d.setHours(parsed.hours, parsed.minutes, 0, 0);
   return d;

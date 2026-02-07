@@ -487,7 +487,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                       className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      v3.27.58
+                      v3.27.78
                     </div>
                   </div>
 

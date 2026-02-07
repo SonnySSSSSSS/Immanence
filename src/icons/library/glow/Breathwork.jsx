@@ -1,8 +1,8 @@
 // Glow style - Breathwork icon
-import React from 'react';
+import React, { useId } from 'react';
 
 export function Breathwork({ size = 24, color = 'currentColor', className = '' }) {
-    const id = `breathwork-glow-${Math.random().toString(36).substr(2, 9)}`;
+    const id = useId();
 
     return (
         <svg

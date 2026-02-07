@@ -1,8 +1,8 @@
 // Glow style - Wisdom icon
-import React from 'react';
+import React, { useId } from 'react';
 
 export function Wisdom({ size = 24, color = 'currentColor', className = '' }) {
-    const id = `wisdom-glow-${Math.random().toString(36).substr(2, 9)}`;
+    const id = useId();
 
     return (
         <svg

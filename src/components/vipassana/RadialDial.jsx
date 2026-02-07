@@ -20,7 +20,6 @@ export function RadialDial({
     autoDismissMs = 1200,
 }) {
     const [hoveredSegment, setHoveredSegment] = useState(null);
-    const [isDragging, setIsDragging] = useState(false);
     const dialRef = useRef(null);
     const dismissTimer = useRef(null);
 
@@ -76,7 +75,6 @@ export function RadialDial({
         } else {
             onDismiss?.();
         }
-        setIsDragging(false);
     };
 
     const handleSegmentClick = (categoryId) => {

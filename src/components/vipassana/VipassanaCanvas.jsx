@@ -22,7 +22,7 @@ export function VipassanaCanvas({
     // Dev debug overlay toggle
     const [showDebug, setShowDebug] = useState(false);
     const [fps, setFps] = useState(60);
-    const lastFrameTimeRef = useRef(performance.now());
+    const lastFrameTimeRef = useRef(0);
     const frameCountRef = useRef(0);
     const stampsReadyRef = useRef(false);
 
@@ -157,7 +157,7 @@ export function VipassanaCanvas({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        let lastTime = performance.now();
+        lastFrameTimeRef.current = performance.now();
 
         const render = (currentTime) => {
             // FPS calculation
@@ -171,6 +171,7 @@ export function VipassanaCanvas({
 
             // Clear canvas
             const rect = canvas.getBoundingClientRect();
+            const now = Date.now();
             ctx.clearRect(0, 0, rect.width, rect.height);
 
             // Viewport culling: only render visible thoughts
@@ -206,10 +207,7 @@ export function VipassanaCanvas({
             visibleThoughts.forEach((thought, index) => {
                 if (!showStamps) return;
 
-                const now = Date.now();
                 const age = (now - thought.spawnTime) / 1000; // seconds
-                const lifetime = thought.baseDuration * thought.fadeModifier;
-                const progress = Math.min(age / lifetime, 1);
 
                 // Determine tier based on index
                 let tierAlphaModifier = 1.0;
@@ -425,7 +423,7 @@ export function VipassanaCanvas({
 
             // PHASE 5: Atmospheric Events rendering (after thoughts)
             if (atmosphericEvent) {
-                const eventAge = (Date.now() - atmosphericEvent.startTime) / 1000;
+                const eventAge = (now - atmosphericEvent.startTime) / 1000;
                 const eventProgress = eventAge / (atmosphericEvent.type === 'ufo' ? 0.8 :
                     atmosphericEvent.type === 'rainShimmer' ? 1.5 : 2.0);
 

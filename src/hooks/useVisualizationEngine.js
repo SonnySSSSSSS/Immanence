@@ -131,10 +131,12 @@ export function useVisualizationEngine({
     }, []);
 
     // Start the engine
+     
     const start = useCallback(() => {
         if (isRunningRef.current) return;
 
         // Generate new session seed
+         
         setSessionSeed(Math.random());
 
         // Reset state

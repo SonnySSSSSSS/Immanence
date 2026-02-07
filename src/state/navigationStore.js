@@ -422,8 +422,27 @@ export const useNavigationStore = create(
 
                 // Completed sessions so far (scoped to current run)
                 const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
+                const activeRunId = state.activePath.runId || null;
+                const activePathId = state.activePath.activePathId || null;
+                const activePathStartMs = new Date(state.activePath.startedAt).getTime();
+                const isSessionInActiveRun = (session) => {
+                    const sessionRunId = session?.pathContext?.runId || null;
+                    if (activeRunId && sessionRunId) {
+                        return sessionRunId === activeRunId;
+                    }
+
+                    // Fallback for orphaned/legacy sessions that lack runId.
+                    const sessionPathId = session?.pathContext?.activePathId || null;
+                    if (!activePathId || !sessionPathId || sessionPathId !== activePathId) return false;
+
+                    const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
+                    if (!sessionAnchorIso) return false;
+                    const sessionMs = new Date(sessionAnchorIso).getTime();
+                    if (Number.isNaN(sessionMs)) return false;
+                    return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
+                };
                 const completedSessionsSoFar = sessionsV2.filter(
-                    s => (s.pathContext?.runId === state.activePath.runId) && (s.completion === "completed")
+                    s => isSessionInActiveRun(s) && (s.completion === "completed")
                 ).length;
 
                 // Adherence %
@@ -461,12 +480,30 @@ export const useNavigationStore = create(
 
                 const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
                 const startedAtLocalKey = getLocalDateKey(new Date(state.activePath.startedAt));
+                const activeRunId = state.activePath.runId || null;
+                const activePathId = state.activePath.activePathId || null;
+                const activePathStartMs = new Date(state.activePath.startedAt).getTime();
+                const isSessionInActiveRun = (session) => {
+                    const sessionRunId = session?.pathContext?.runId || null;
+                    if (activeRunId && sessionRunId) {
+                        return sessionRunId === activeRunId;
+                    }
+
+                    const sessionPathId = session?.pathContext?.activePathId || null;
+                    if (!activePathId || !sessionPathId || sessionPathId !== activePathId) return false;
+
+                    const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
+                    if (!sessionAnchorIso) return false;
+                    const sessionMs = new Date(sessionAnchorIso).getTime();
+                    if (Number.isNaN(sessionMs)) return false;
+                    return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
+                };
                 
                 // Build map of completed sessions by date (using local date keys, scoped to current run)
                 const completedByDate = {};
                 sessionsV2.forEach(s => {
-                    if ((s.pathContext?.runId === state.activePath.runId) && (s.completion === "completed")) {
-                        const dateKey = getLocalDateKey(new Date(s.startedAt));
+                    if (isSessionInActiveRun(s) && (s.completion === "completed")) {
+                        const dateKey = getLocalDateKey(new Date(s.startedAt || s.endedAt));
                         if (dateKey) {
                             completedByDate[dateKey] = (completedByDate[dateKey] || 0) + 1;
                         }

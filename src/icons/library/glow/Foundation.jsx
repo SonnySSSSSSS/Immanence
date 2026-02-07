@@ -1,8 +1,8 @@
 // Glow style - Foundation icon
-import React from 'react';
+import React, { useId } from 'react';
 
 export function Foundation({ size = 24, color = 'currentColor', className = '' }) {
-    const id = `found-glow-${Math.random().toString(36).substr(2, 9)}`;
+    const id = useId();
 
     return (
         <svg

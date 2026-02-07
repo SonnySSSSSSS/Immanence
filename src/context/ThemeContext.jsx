@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // ThemeContext - provides stage-based theming throughout the app
 
 import React, { createContext, useContext, useMemo, useEffect } from 'react';

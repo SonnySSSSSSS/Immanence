@@ -8,7 +8,7 @@ const CATEGORIES = [
     { id: 'static', label: 'STATIC', icon: '🌫️', color: '#9CA3AF' },
 ];
 
-export function HomeSnowVipassana({ isActive, onExit }) {
+export function HomeSnowVipassana({ onExit }) {
     const { mode } = useDisplayModeStore();
     const isHearth = mode === 'hearth';
     const assetsPrefix = import.meta.env.BASE_URL + 'assets/';
@@ -30,6 +30,21 @@ export function HomeSnowVipassana({ isActive, onExit }) {
     // Parallax logic - Horizontal
     const [offsets, setOffsets] = useState({ bg: 0, mid: 0, fg: 0 });
 
+    const spawnThought = useCallback(() => {
+        const id = Date.now();
+        const fromLeft = Math.random() > 0.5;
+        const newThought = {
+            id,
+            x: fromLeft ? -5 : 105,
+            y: 40 + Math.random() * 20, // Midground vertical zone
+            vx: fromLeft ? (0.05 + Math.random() * 0.1) : -(0.05 + Math.random() * 0.1),
+            scale: 0.6 + Math.random() * 0.4,
+            variant: Math.floor(Math.random() * 4), // 4 categories
+        };
+        setThoughts(prev => [...prev, newThought]);
+        lastSpawnTime.current = id;
+    }, []);
+
     useEffect(() => {
         let startTime = performance.now();
         const animate = (time) => {
@@ -39,9 +54,9 @@ export function HomeSnowVipassana({ isActive, onExit }) {
             // We use a modular loop based on image width (860px for hearth)
             const width = isHearth ? 860 : 1640; // Double the viewport width
             setOffsets({
-                bg: (elapsed * 15) % (width/2),
-                mid: (elapsed * 40) % (width/2),
-                fg: (elapsed * 80) % (width/2),
+                bg: (elapsed * 15) % (width / 2),
+                mid: (elapsed * 40) % (width / 2),
+                fg: (elapsed * 80) % (width / 2),
             });
 
             // Thought movement - Drifting across MIDGROUND (center zone)
@@ -60,22 +75,7 @@ export function HomeSnowVipassana({ isActive, onExit }) {
         };
         animationFrameRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrameRef.current);
-    }, [activeThought]);
-
-    const spawnThought = useCallback(() => {
-        const id = Date.now();
-        const fromLeft = Math.random() > 0.5;
-        const newThought = {
-            id,
-            x: fromLeft ? -5 : 105,
-            y: 40 + Math.random() * 20, // Midground vertical zone
-            vx: fromLeft ? (0.05 + Math.random() * 0.1) : -(0.05 + Math.random() * 0.1),
-            scale: 0.6 + Math.random() * 0.4,
-            variant: Math.floor(Math.random() * 4), // 4 categories
-        };
-        setThoughts(prev => [...prev, newThought]);
-        lastSpawnTime.current = id;
-    }, []);
+    }, [activeThought, isHearth, spawnThought]);
 
     const handleTag = (categoryId) => {
         if (!activeThought) return;

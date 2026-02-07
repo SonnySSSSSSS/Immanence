@@ -385,6 +385,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // When we enter PracticeSection from a recommendation/schedule, we should NOT overwrite user prefs.
   const suppressPrefSaveRef = useRef(false);
 
+  // Persist pathContext from launch context so it survives clearPracticeLaunchContext
+  const activePathContextRef = useRef(null);
+
   const mergePracticeParamsPatch = useCallback((patch) => {
     if (!patch || typeof patch !== 'object') return;
     setPracticeParams((prev) => {
@@ -623,6 +626,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
     }
 
+    // Preserve pathContext for session recording (survives clearPracticeLaunchContext)
+    if (ctx.pathContext) {
+      activePathContextRef.current = ctx.pathContext;
+    }
+
     clearPracticeLaunchContext?.();
   }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit]);
 
@@ -708,6 +716,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }, [isRunning, activePracticeSession, activeCircuitId]);
   const [_visualizationCycles, setVisualizationCycles] = useState(0);
   const [activeRitual, setActiveRitual] = useState(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [countdownValue, setCountdownValue] = useState(null);
   const circuitCountdownRef = useRef(null);
 
@@ -1042,6 +1051,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         },
         startedAt: startedAtIso,
         endedAt: endedAtIso,
+        activePathId: activePathContextRef.current?.activePathId || null,
+        runId: activePathContextRef.current?.runId || null,
+        dayIndex: activePathContextRef.current?.dayIndex || null,
+        weekIndex: activePathContextRef.current?.weekIndex || null,
       });
     } catch (e) {
       console.error("Failed to save circuit session:", e);
@@ -1154,6 +1167,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
       const actualPracticeId = getActualPracticeId(practiceId);
 
+      // Use exitType (timer-based) as the source of truth for completion status
+      // exitType is 'completed' when timeLeft <= 0, which means the session ran to completion
+      const completion = exitType;
+
       if (import.meta.env.DEV) {
         console.log('[PracticeSection] recordPracticeSession about to run', {
           practiceId,
@@ -1163,10 +1180,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           exitType: completion,
         });
       }
-
-      // Use exitType (timer-based) as the source of truth for completion status
-      // exitType is 'completed' when timeLeft <= 0, which means the session ran to completion
-      const completion = exitType;
 
       // For emotion practice (feeling), use emotionMode; for others use activeMode or breathSubmode
       let practiceMode = practiceParams?.activeMode || (practiceId === 'breath' ? breathSubmode : null);
@@ -1193,6 +1206,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         },
 
         endedAt: endedAtIso,
+        activePathId: activePathContextRef.current?.activePathId || null,
+        runId: activePathContextRef.current?.runId || null,
+        dayIndex: activePathContextRef.current?.dayIndex || null,
+        weekIndex: activePathContextRef.current?.weekIndex || null,
       });
     } catch (e) {
       console.error("Failed to save session:", e);
