@@ -98,3 +98,27 @@ body::-webkit-scrollbar {
   position: relative;
   z-index: 1;
 }
+
+/* DailyPracticeCard: keep depth shadows off the blur layer.
+   Some browsers render jagged/steppy rounded shadow edges when box-shadow is applied on the same
+   element that has backdrop-filter + overflow clipping. */
+.dpBlurSurface {
+  box-shadow: var(--dp-inset-shadow, inset 0 1px 0 rgba(255,255,255,0.08)) !important;
+}
+
+/* DailyPracticeCard helpers */
+.dpRadiusInherit {
+  /* When used inside nested relative containers (like .glassCardContent),
+     inherit won't pick up the card radius. Use the card-provided CSS var. */
+  border-radius: var(--dp-radius, inherit);
+}
+
+/* Clip decorative layers without forcing the main glass surface into an overflow-clipped compositing path. */
+.dpClipSurface {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--dp-radius, 24px);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}

@@ -301,7 +301,7 @@ function resolvePracticeLaunchFromEntry(entry) {
     return null;
 }
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
@@ -546,6 +546,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const primaryHex = theme?.accent?.primary || '#4ade80';
     const progressBarColor = theme?.ui?.progressBar || '#4ade80';
 
+    const maybeShadow = (shadow) => (debugShadowOff ? 'none' : shadow);
+    const maybeBlur = (blur) => (debugBlurOff ? 'none' : blur);
+    const maybeBorder = (border) => (debugBorderOff ? 'none' : border);
+    const maybeMaskImage = (mask) => (debugMaskOff ? 'none' : mask);
+
     const {
         onboardingComplete: storeOnboardingComplete,
         activeCurriculumId,
@@ -595,30 +600,31 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     style={{
                         borderRadius: '24px',
                         overflow: 'visible',
-                        boxShadow: isLight
+                        boxShadow: maybeShadow(isLight
                             ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                            : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`,
+                            : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`),
                     }}
                 >
                 <div
-                    className="w-full relative overflow-hidden"
+                    className="w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
                         background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                        border: isLight ? `1px solid ${primaryHex}30` : `1px solid ${primaryHex}40`,
-                        // Keep blur on the surface, but keep "depth" shadows off this backdrop-filter layer
-                        // to avoid jagged/steppy shadow edges around rounded corners on some compositing paths.
-                        boxShadow: isLight
+                        border: maybeBorder(isLight ? `1px solid ${primaryHex}30` : `1px solid ${primaryHex}40`),
+                        '--dp-radius': '24px',
+                        // Set inset-only shadow via CSS var + !important class to prevent accidental depth shadows on this layer.
+                        '--dp-inset-shadow': isLight
                             ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
                             : 'inset 0 1px 0 rgba(255,255,255,0.06)',
-                        backdropFilter: isLight ? 'none' : 'blur(16px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(16px)',
+                        backdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
+                        WebkitBackdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
                         isolation: 'isolate',
                     }}
                 >
                         <div className="glassCardContent">
+                        <div className="dpClipSurface">
                         <div
-                            className="absolute inset-0 pointer-events-none"
+                            className="absolute inset-0 pointer-events-none dpRadiusInherit"
                             style={{
                                 backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
                                 backgroundSize: 'cover',
@@ -628,7 +634,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             }}
                         />
 
-                        <div className="absolute inset-0 pointer-events-none" style={{
+                        <div className="absolute inset-0 pointer-events-none dpRadiusInherit" style={{
                             background: isLight
                                 ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)'
                                 : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)'
@@ -686,6 +692,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     )}
                                 </div>
                             </div>
+                        </div>
                         </div>
 
                         {/* Right content panel */}
@@ -1030,28 +1037,30 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 style={{
                     borderRadius: '24px',
                     overflow: 'visible',
-                    boxShadow: isLight
+                    boxShadow: maybeShadow(isLight
                         ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                        : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)',
+                        : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)'),
                 }}
             >
                 <div
-                    className="w-full relative overflow-hidden"
+                    className="w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
                         background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
-                        border: isLight ? '1px solid rgba(160, 120, 60, 0.14)' : '1px solid rgba(95, 255, 170, 0.20)',
-                        boxShadow: isLight
+                        border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.14)' : '1px solid rgba(95, 255, 170, 0.20)'),
+                        '--dp-radius': '24px',
+                        '--dp-inset-shadow': isLight
                             ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
                             : 'inset 0 1px 0 rgba(255,255,255,0.06)',
-                        backdropFilter: isLight ? 'none' : 'blur(16px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(16px)',
+                        backdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
+                        WebkitBackdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
                         isolation: 'isolate',
                     }}
                 >
+                <div className="dpClipSurface">
                 {/* Relic/Cosmic Background Wallpaper */}
                 <div
-                    className="absolute inset-0 pointer-events-none"
+                    className="absolute inset-0 pointer-events-none dpRadiusInherit"
                     style={{
                         backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
                         backgroundSize: 'cover',
@@ -1065,7 +1074,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 {/* Canvas Grain Texture (Light mode only) */}
                 {isLight && (
                     <div
-                        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                        className="absolute inset-0 pointer-events-none opacity-[0.03] dpRadiusInherit"
                         style={{
                             backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.png)`,
                             backgroundSize: '200px',
@@ -1073,6 +1082,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         }}
                     />
                 )}
+                </div>
 
                 <div className="glassCardContent relative z-10 p-8 text-center">
                     <div className="text-4xl mb-4">🏆</div>
@@ -1340,37 +1350,39 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     borderRadius: '24px',
                     overflow: 'visible',
                     // Depth shadow belongs on the non-blurred wrapper to avoid jagged edges on rounded corners.
-                    boxShadow: isLight
+                    boxShadow: maybeShadow(isLight
                         ? '0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.10), 0 16px 32px rgba(0, 0, 0, 0.12)'
-                        : `0 1px 2px rgba(0, 0, 0, 0.20), 0 4px 8px rgba(0, 0, 0, 0.24), 0 8px 16px rgba(0, 0, 0, 0.28), 0 16px 32px rgba(0, 0, 0, 0.32), 0 0 20px ${primaryHex}15`,
+                        : `0 1px 2px rgba(0, 0, 0, 0.20), 0 4px 8px rgba(0, 0, 0, 0.24), 0 8px 16px rgba(0, 0, 0, 0.28), 0 16px 32px rgba(0, 0, 0, 0.32), 0 0 20px ${primaryHex}15`),
                 }}
             >
                 {/* MIDDLE: Container */}
                 <div
-                    className="w-full relative overflow-hidden"
+                    className="w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
                         background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(12, 18, 22, 0.85)',
-                        border: isLight ? `1.5px solid rgba(180, 140, 60, 0.25)` : `1.5px solid rgba(80, 180, 160, 0.35)`,
-                        boxShadow: isLight
+                        border: maybeBorder(isLight ? `1.5px solid rgba(180, 140, 60, 0.25)` : `1.5px solid rgba(80, 180, 160, 0.35)`),
+                        '--dp-radius': '24px',
+                        '--dp-inset-shadow': isLight
                             ? 'inset 0 1px 0 rgba(255, 255, 255, 0.5)'
                             : 'inset 0 1px 0 rgba(80, 180, 160, 0.20)',
-                        backdropFilter: isLight ? 'none' : 'blur(16px)',
-                        WebkitBackdropFilter: isLight ? 'none' : 'blur(16px)',
+                        backdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
+                        WebkitBackdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
                         isolation: 'isolate',
                     }}
                 >
                     <div className="glassCardContent">
+                    <div className="dpClipSurface">
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
                     <div
-                        className="absolute inset-0 pointer-events-none"
+                        className="absolute inset-0 pointer-events-none dpRadiusInherit"
                         style={{
                             background: isLight
                                 ? 'radial-gradient(ellipse at 60% 40%, rgba(250, 246, 238, 0.95) 0%, rgba(245, 235, 220, 0.90) 40%, rgba(240, 228, 208, 0.85) 100%)'
                                 : 'radial-gradient(ellipse at 60% 40%, rgba(18, 28, 32, 1) 0%, rgba(12, 20, 24, 1) 50%, rgba(8, 14, 18, 1) 100%)',
                             transition: 'all 0.7s ease-in-out',
-                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 20%)',
-                            maskImage: 'linear-gradient(to right, transparent 0%, black 20%)',
+                            WebkitMaskImage: maybeMaskImage('linear-gradient(to right, transparent 0%, black 20%)'),
+                            maskImage: maybeMaskImage('linear-gradient(to right, transparent 0%, black 20%)'),
                         }}
                     />
 
@@ -1425,6 +1437,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
 
                     {/* 3. CONTENT PANEL (Owns the readable layout) */}

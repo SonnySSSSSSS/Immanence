@@ -55,7 +55,7 @@ const SANCTUARY_RAIL_STYLE = {
 };
 
 
-function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false }) {
+function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false, debugDisableDailyCard = false, debugBuildProbe = false, debugShadowScan = false, debugDailyCardShadowOff = false, debugDailyCardBlurOff = false, debugDailyCardBorderOff = false, debugDailyCardMaskOff = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, getDaysUntilNextStage } = useLunarStore();
@@ -64,6 +64,15 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
   const displayMode = useDisplayModeStore(s => s.viewportMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
+
+  // Debug flags are sourced from App.jsx (URL + localStorage) and passed as props so they work in embedded shells.
+  const disableDailyCard = Boolean(debugDisableDailyCard);
+  const showBuildProbe = Boolean(debugBuildProbe);
+  void debugShadowScan;
+  const dailyCardShadowOff = Boolean(debugDailyCardShadowOff);
+  const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
+  const dailyCardBorderOff = Boolean(debugDailyCardBorderOff);
+  const dailyCardMaskOff = Boolean(debugDailyCardMaskOff);
   const effectiveStage = avatarStage || currentStage;
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
   const getDisplayPath = usePathStore(s => s.getDisplayPath);
@@ -517,19 +526,71 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
                   style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
                 >
                 <div ref={homeSwipePracticeRef} className="w-full">
-                <DailyPracticeCard
-                  onStartPractice={handleStartPractice}
-                  onViewCurriculum={openCurriculumHub}
-                  onNavigate={handleSelectSection}
-                  hasPersistedCurriculumData={hasPersistedCurriculumData}
-                  onboardingComplete={curriculumOnboardingComplete}
-                  practiceTimeSlots={practiceTimeSlots}
-                  onStartSetup={() => handleSelectSection('navigation')}
-                  isTutorialTarget={isDailyCardTutorialTarget}
-                  showPerLegCompletion={false}
-                  showDailyCompletionNotice={true}
-                  showSessionMeter={false}
-                />
+                {disableDailyCard ? (
+                  <div
+                    className="w-full relative"
+                    style={{
+                      ...(isSanctuary ? {} : {
+                        maxWidth: '430px',
+                        margin: '0 auto',
+                      }),
+                      borderRadius: '24px',
+                      // Intentionally no shadow, no blur, no filter. If jagged corners persist, it is not this card.
+                      boxShadow: 'none',
+                      filter: 'none',
+                      transform: 'none',
+                      background: isLight ? 'rgba(250, 246, 238, 0.10)' : 'rgba(0, 0, 0, 0.10)',
+                      border: '1px dashed rgba(255, 80, 80, 0.65)',
+                      minHeight: '520px',
+                    }}
+                    >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 10,
+                        left: 12,
+                        fontSize: 12,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        opacity: 0.85,
+                        color: isLight ? 'rgba(60, 50, 35, 0.75)' : 'rgba(255,255,255,0.75)',
+                      }}
+                    >
+                      BUILD_PROBE: DailyPracticeCard disabled
+                    </div>
+                  </div>
+                ) : (
+                  <DailyPracticeCard
+                    onStartPractice={handleStartPractice}
+                    onViewCurriculum={openCurriculumHub}
+                    onNavigate={handleSelectSection}
+                    hasPersistedCurriculumData={hasPersistedCurriculumData}
+                    onboardingComplete={curriculumOnboardingComplete}
+                    practiceTimeSlots={practiceTimeSlots}
+                    onStartSetup={() => handleSelectSection('navigation')}
+                    isTutorialTarget={isDailyCardTutorialTarget}
+                    showPerLegCompletion={false}
+                    showDailyCompletionNotice={true}
+                    showSessionMeter={false}
+                    debugShadowOff={dailyCardShadowOff}
+                    debugBlurOff={dailyCardBlurOff}
+                    debugBorderOff={dailyCardBorderOff}
+                    debugMaskOff={dailyCardMaskOff}
+                  />
+                )}
+
+                {showBuildProbe && (
+                  <div
+                    className="mt-2 text-[11px] uppercase tracking-[0.12em]"
+                    style={{
+                      opacity: 0.8,
+                      color: isLight ? 'rgba(60, 50, 35, 0.65)' : 'rgba(255,255,255,0.65)',
+                      userSelect: 'text',
+                    }}
+                  >
+                    BUILD_PROBE: HomeHub flags | disableDailyCard:{String(disableDailyCard)}
+                  </div>
+                )}
                 </div>
                 </section>
 

@@ -26,6 +26,8 @@ import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
 import { TutorialOverlay } from "./components/tutorial/TutorialOverlay.jsx";
+import { ShadowScanOverlay } from "./components/debug/ShadowScanOverlay.jsx";
+import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
@@ -142,6 +144,26 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
+  const isDev = import.meta.env.DEV;
+
+  // Debug flags for visual investigations (dev-only; ignored in prod builds).
+  const getDevFlag = useCallback((key) => {
+    if (!isDev) return null;
+    return getDebugFlagValue(key, { allowUrl: true });
+  }, [isDev]);
+
+  const debugDisableDailyCard = isDev && parseDebugBool(getDevFlag('disableDailyCard'));
+  const debugBuildProbe = isDev && parseDebugBool(getDevFlag('buildProbe'));
+  const debugShadowScan = isDev && parseDebugBool(getDevFlag('shadowScan'));
+  const debugDailyCardShadowOff = isDev && parseDebugBool(getDevFlag('dailyCardShadowOff'));
+  const debugDailyCardBlurOff = isDev && parseDebugBool(getDevFlag('dailyCardBlurOff'));
+  const debugDailyCardBorderOff = isDev && parseDebugBool(getDevFlag('dailyCardBorderOff'));
+  const debugDailyCardMaskOff = isDev && parseDebugBool(getDevFlag('dailyCardMaskOff'));
+
+  const toggleDebugFlag = useCallback((key) => {
+    if (!isDev) return;
+    toggleDebugFlagLs(key);
+  }, [isDev]);
   const effectiveShowBackgroundBottomLayer = playgroundMode
     ? Boolean(playgroundBottomLayer)
     : showBackgroundBottomLayer;
@@ -484,7 +506,18 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     <div
                       className={`type-caption uppercase tracking-wide ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                     >
-                      v3.27.133
+                      <button
+                        type="button"
+                        className="cursor-default"
+                        title="Debug: Alt+Shift+Click toggles buildProbe. Alt+Ctrl+Click toggles disableDailyCard."
+                        onClick={(e) => {
+                          if (e.altKey && e.shiftKey) toggleDebugFlag('buildProbe');
+                          if (e.altKey && (e.ctrlKey || e.metaKey)) toggleDebugFlag('disableDailyCard');
+                        }}
+                        style={{ background: 'transparent' }}
+                      >
+                        v3.27.133
+                      </button>
                     </div>
                   </div>
 
@@ -512,6 +545,122 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
             >
               {(isHub || playgroundMode) ? (
                 <div key="hub" className="section-enter">
+                  {debugBuildProbe && (
+                    <div
+                      className="mx-6 mt-3 mb-2 rounded-lg px-3 py-2 text-[11px] uppercase tracking-[0.12em]"
+                      style={{
+                        border: '1px dashed rgba(255, 80, 80, 0.65)',
+                        background: isLight ? 'rgba(250, 246, 238, 0.10)' : 'rgba(0,0,0,0.10)',
+                        color: isLight ? 'rgba(60, 50, 35, 0.75)' : 'rgba(255,255,255,0.75)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ userSelect: 'text' }}>
+                          BUILD_PROBE: App debug flags | disableDailyCard:{String(debugDisableDailyCard)} | shadowScan:{String(debugShadowScan)} | dailyCardShadowOff:{String(debugDailyCardShadowOff)} | dailyCardBlurOff:{String(debugDailyCardBlurOff)} | dailyCardBorderOff:{String(debugDailyCardBorderOff)} | dailyCardMaskOff:{String(debugDailyCardMaskOff)} | href:{typeof window !== 'undefined' ? String(window.location.href) : 'n/a'}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', maxWidth: '100%' }}>
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('disableDailyCard')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: debugDisableDailyCard ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle disableDailyCard (reloads)"
+                          >
+                            toggle disableDailyCard
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('shadowScan')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: debugShadowScan ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle shadowScan overlay (reloads)"
+                          >
+                            toggle shadowScan
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('dailyCardShadowOff')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: debugDailyCardShadowOff ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle dailyCardShadowOff (reloads)"
+                          >
+                            toggle card shadowOff
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('dailyCardBlurOff')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: debugDailyCardBlurOff ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle dailyCardBlurOff (reloads)"
+                          >
+                            toggle card blurOff
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('dailyCardBorderOff')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: debugDailyCardBorderOff ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle dailyCardBorderOff (reloads)"
+                          >
+                            toggle card borderOff
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('dailyCardMaskOff')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: debugDailyCardMaskOff ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle dailyCardMaskOff (reloads)"
+                          >
+                            toggle card maskOff
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleDebugFlag('buildProbe')}
+                            className="px-2 py-1 rounded-md"
+                            style={{
+                              background: 'rgba(255,255,255,0.08)',
+                              border: '1px solid rgba(255, 80, 80, 0.35)',
+                              color: 'inherit',
+                            }}
+                            title="Toggle buildProbe (reloads)"
+                          >
+                            hide probe
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {!hideCards && (
                     <HomeHub
                       onSelectSection={handleSectionSelect}
@@ -523,6 +672,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                       previewAttention={previewAttention}
                       onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                       lockToHub={playgroundMode}
+                      debugDisableDailyCard={debugDisableDailyCard}
+                      debugBuildProbe={debugBuildProbe}
+                      debugShadowScan={debugShadowScan}
+                      debugDailyCardShadowOff={debugDailyCardShadowOff}
+                      debugDailyCardBlurOff={debugDailyCardBlurOff}
+                      debugDailyCardBorderOff={debugDailyCardBorderOff}
+                      debugDailyCardMaskOff={debugDailyCardMaskOff}
                     />
                   )}
                 </div>
@@ -560,6 +716,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
           {/* Tutorial overlay system */}
           <TutorialOverlay />
+
+          {/* Debug overlay: identifies the actual element owning shadows/filters/backdrop when enabled */}
+          <ShadowScanOverlay enabled={isDev && debugShadowScan} />
         </div >
       </div >
     </ThemeProvider >

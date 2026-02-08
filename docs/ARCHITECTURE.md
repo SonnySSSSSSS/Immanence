@@ -937,6 +937,64 @@ Tutorial rendering is hardened to prevent XSS, path tricks, and layout breakage:
 
 These render-time guards intentionally mirror editor-time validation to ensure localStorage tampering cannot bypass constraints.
 
+## Glass Card Rendering (Shadows, Blur, Rounded Corners)
+
+Immanence cards frequently combine all of the following on the same surface:
+
+- rounded corners (`border-radius`)
+- depth shadow
+- glass blur (`backdrop-filter`)
+- full-bleed decorative layers (wallpaper, gradients, masks)
+
+Certain browsers will produce **steppy/jagged corner edges** (especially at the bottom corners) if depth shadows or clipping are applied on the same composited layer as `backdrop-filter`.
+
+### DailyPracticeCard: Avoid Jagged Corner Artifacts
+
+Owner: `src/components/DailyPracticeCard.jsx`
+
+Contract:
+
+- **Depth shadow belongs on an outer, non-blurred wrapper** (`overflow: visible` + `box-shadow`).
+- The main glass surface (`.dpBlurSurface`) may use `backdrop-filter`, but should **not** rely on `overflow: hidden` to do all clipping when also blurred.
+- **Decorative full-bleed layers must be clipped by a dedicated inner clip layer** (`.dpClipSurface`) so the glass surface itself does not become the clip-rasterization boundary.
+- Border radius for nested clip layers must be explicit, not inherited through arbitrary DOM nesting:
+  - DailyPracticeCard sets `--dp-radius: 24px` on the glass surface.
+  - `.dpClipSurface` / `.dpRadiusInherit` use `border-radius: var(--dp-radius, ...)`.
+
+Implementation pieces:
+
+- CSS helpers live in `src/index.css`:
+  - `.dpBlurSurface` (inset-only shadow enforcement; avoids accidental depth shadow on blur layer)
+  - `.dpClipSurface` (absolute inset clip wrapper with `overflow: hidden` + `border-radius: var(--dp-radius)`)
+  - `.dpRadiusInherit` (forces `border-radius: var(--dp-radius)` for nested decorative layers)
+
+If you see “square” corners after a refactor:
+
+- It is usually a nested absolute layer not being clipped by `.dpClipSurface`, or a clip layer inheriting `0px` radius because it is no longer under the radius-owning element.
+
+### Diagnostics: ShadowScan + Debug Flags
+
+To prevent guesswork, the repo includes a dev-only workflow to identify which element “owns” shadow/filter/backdrop/mask at a pixel:
+
+- Overlay: `src/components/debug/ShadowScanOverlay.jsx` (portaled to `document.body`)
+- Flags are persisted in localStorage as `debug:<flag>` and toggled via UI buttons (reload-based).
+- **Dev gating**: debug flags are read/applied only when `import.meta.env.DEV` is true (`src/App.jsx`). In production builds these flags are ignored (no probe UI, no overlays).
+- Flag utilities: `src/components/debug/debugFlags.js` (single source of truth for parsing/toggling/resetting).
+
+Common flags:
+
+- `debug:buildProbe` - shows the probe banner/controls.
+- `debug:shadowScan` - enables ShadowScan overlay (Shift+Click locks, Esc clears).
+- `debug:disableDailyCard` - replaces DailyPracticeCard with a no-shadow/ no-blur placeholder to prove ownership.
+- DailyPracticeCard bisection:
+  - `debug:dailyCardShadowOff`
+  - `debug:dailyCardBlurOff`
+  - `debug:dailyCardBorderOff`
+  - `debug:dailyCardMaskOff`
+- `debug:shadowScanPanelCollapsed` - docks the panel to the top when collapsed so the card bottom edge stays visible at 100% zoom.
+
+Note: ShadowScan’s red outline uses `getBoundingClientRect()` and is always rectangular. Do not interpret it as proof of square border radius.
+
 ## Guardrails
 
 - Prefer **selectors over prop drilling**: lift data into Zustand selectors (e.g., `getStreakInfo`, `getDayLegsWithStatus`) instead of passing nested props between cards.
