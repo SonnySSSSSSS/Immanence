@@ -533,9 +533,6 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
           {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
           {p.supportsDuration && practiceId !== 'circuit' && (
             <div style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}>
-              <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-                Sacred Duration (minutes)
-              </div>
               <SacredTimeSlider 
                 value={duration} 
                 onChange={onDurationChange} 

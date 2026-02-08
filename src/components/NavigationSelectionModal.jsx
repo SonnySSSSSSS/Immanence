@@ -47,13 +47,8 @@ export function NavigationSelectionModal({
             >
                 {/* Header */}
                 <div
-                    className="mb-6 text-center"
+                    className="type-label mb-6 text-center"
                     style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        textTransform: 'uppercase',
                         color: 'rgba(253, 251, 245, 0.4)',
                     }}
                 >
@@ -74,22 +69,19 @@ export function NavigationSelectionModal({
                                     onSelectView(option.id);
                                     onClose();
                                 }}
-                                className={`w-full px-6 py-4 rounded-full transition-all duration-300 group relative overflow-hidden ${isSelected ? 'glass-capsule' : 'hover:bg-white/5'}`}
+                                className={`type-label w-full px-6 py-4 rounded-full transition-all duration-300 group relative overflow-hidden ${isSelected ? 'glass-capsule' : 'hover:bg-white/5'}`}
                                 style={{
                                     border: isSelected
                                         ? `0.5px solid ${isCompass ? 'rgba(220, 210, 180, 0.4)' : 'var(--accent-40)'}`
                                         : '0.5px solid transparent',
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '12px',
-                                    letterSpacing: 'var(--tracking-mythic)',
                                     color: isSelected ? goldColor : 'rgba(253, 251, 245, 0.5)',
                                     textAlign: 'center',
                                     background: isSelected ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                                 }}
                             >
                                 <div className="relative z-10">
-                                    <div className="text-sm">{option.label}</div>
-                                    <div style={{ fontSize: '9px', opacity: 0.5, marginTop: '2px', fontStyle: 'italic', letterSpacing: 'var(--tracking-wide)' }}>
+                                    <div className="type-h3">{option.label}</div>
+                                    <div className="type-caption italic opacity-50 mt-0.5">
                                         {option.description}
                                     </div>
                                 </div>
@@ -100,11 +92,8 @@ export function NavigationSelectionModal({
 
                 {/* Close hint */}
                 <div
-                    className="mt-6 text-center"
+                    className="type-caption mt-6 text-center"
                     style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '9px',
-                        letterSpacing: 'var(--tracking-wide)',
                         color: 'rgba(253, 251, 245, 0.3)',
                     }}
                 >

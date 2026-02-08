@@ -29,7 +29,9 @@ import {
 
 export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
+    const archiveMaxWidth = displayMode === 'sanctuary' ? '820px' : '430px';
     
     // Get the store methods as references (not calling them to avoid new array on every render)
     const getAllCircuitEntries = useCircuitJournalStore(s => s.getAllEntries);
@@ -714,7 +716,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                     backgroundColor: bgColor,
                     color: textColor,
                     borderRadius: '16px',
-                    maxWidth: '700px',
+                    maxWidth: archiveMaxWidth,
                     width: '100%',
                     maxHeight: '90vh',
                     display: 'flex',
@@ -765,7 +767,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))',
                         gap: '0',
-                        padding: '8px',
+                        padding: '10px 8px',
                         borderBottom: `1px solid ${borderColor}`,
                         backgroundColor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)'
                     }}
@@ -797,7 +799,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
 
                 {/* Filter Row */}
                 {activeTab !== 'insights' && (
-                    <div style={{ padding: '12px', borderBottom: `1px solid ${borderColor}`, display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ padding: '14px 12px', borderBottom: `1px solid ${borderColor}`, display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <span style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 'bold' }}>Filter:</span>
                         <input
                             type="date"
@@ -933,7 +935,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                 </div>
 
                 {/* Footer */}
-                <div style={{ padding: '12px 20px', borderTop: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)' }}>
+                <div style={{ padding: '12px 20px', borderTop: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)' }}>
                     <div style={{ fontSize: '11px', opacity: 0.5 }}>
                         {footerText}
                     </div>

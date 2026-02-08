@@ -281,11 +281,8 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
           return (
             <div
               key={option}
-              className="flex items-center justify-center"
+              className="type-h2 flex items-center justify-center"
               style={{
-                fontSize: "22px",
-                fontWeight: 600,
-                letterSpacing: "var(--tracking-wide)",
                 color: "var(--text-primary)",
                 opacity,
                 transform: `scale(${scale})`,
@@ -1753,12 +1750,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               </div>
               <div className="relative z-[1] flex items-start justify-center w-full pt-3">
                 <div
+                  className="type-label tracking-[0.18em]"
                   style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
                     color: "rgba(255,255,255,0.85)",
                     textShadow: '0 2px 16px rgba(0,0,0,0.6)',
                   }}
@@ -1886,7 +1879,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               backdropFilter: 'blur(8px)',
             }}
           >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '10px', letterSpacing: 'var(--tracking-mythic)', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+            <span className="type-label" style={{ color: 'var(--text-secondary)' }}>
               Circuit
             </span>
             <div className="flex gap-1">
@@ -1903,7 +1896,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 />
               ))}
             </div>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--text-muted)' }}>
+            <span className="type-caption text-[10px]" style={{ color: 'var(--text-muted)' }}>
               {circuitExerciseIndex + 1}/{circuitConfig.exercises.length}
             </span>
           </div>
@@ -1956,11 +1949,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           ) : (
             <div className="flex flex-col items-center justify-center animate-fade-in-up">
               <div
-                className="text-2xl mb-4 text-center"
+                className="type-h2 mb-4 text-center"
                 style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 600,
-                  letterSpacing: "var(--tracking-mythic)",
                   color: "var(--accent-color)",
                   textShadow: "0 0 20px var(--accent-30)"
                 }}
@@ -1974,13 +1964,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
               <div className="mt-6 w-64">
                 <div
-                  className="mb-2 flex items-center justify-between"
+                  className="type-label text-[8px] mb-2 flex items-center justify-between"
                   style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: "8px",
-                    fontWeight: 600,
-                    letterSpacing: "var(--tracking-wide)",
-                    textTransform: "uppercase",
                     color: "var(--text-muted)",
                   }}
                 >
@@ -2032,10 +2017,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           >
             <button
               onClick={handlePrevFx}
-              className="transition-colors px-2 py-1"
+              className="type-h2 transition-colors px-2 py-1"
               style={{ 
-                fontFamily: 'var(--font-display)', 
-                fontWeight: 600, 
                 fontSize: '16px',
                 color: 'rgba(255,255,255,0.65)'
               }}
@@ -2046,29 +2029,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               ◀
             </button>
             <div
-              className="text-center min-w-[200px]"
+              className="type-label text-center min-w-[200px]"
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '11px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-wide)',
                 color: 'var(--accent-color)',
               }}
             >
-              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '8px', marginBottom: '2px' }}>
+              <div className="type-caption text-[8px] mb-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 {currentFxPreset?.category}
               </div>
               <div>{currentFxPreset?.name}</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '8px', marginTop: '2px' }}>
+              <div className="type-caption text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 {currentFxIndex + 1} / {ringFXPresets.length}
               </div>
             </div>
             <button
               onClick={handleNextFx}
-              className="transition-colors px-2 py-1"
+              className="type-h2 transition-colors px-2 py-1"
               style={{ 
-                fontFamily: 'var(--font-display)', 
-                fontWeight: 600, 
                 fontSize: '16px',
                 color: 'rgba(255,255,255,0.65)'
               }}
@@ -2196,10 +2173,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           }}
         >
           <div
+            className="type-display text-[120px] font-bold"
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '120px',
-              fontWeight: 700,
               color: 'var(--accent-color)',
               textShadow: '0 0 40px var(--accent-color), 0 0 80px var(--accent-color)',
               animation: 'countdown-pulse 1s ease-in-out',
@@ -2208,14 +2183,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             {countdownValue}
           </div>
           <div
+            className="type-label text-[14px] mt-8"
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '14px',
-              fontWeight: 600,
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
               color: 'rgba(255, 255, 255, 0.6)',
-              marginTop: '32px',
             }}
           >
             Get Ready...
@@ -2223,16 +2193,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           {/* Next practice info for circuit transitions */}
           {activeCircuitId && circuitConfig && circuitExerciseIndex < circuitConfig.exercises.length && (
             <div
+              className="type-body text-[16px] text-center mt-6"
               style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '16px',
-                fontWeight: 500,
                 color: 'rgba(255, 255, 255, 0.8)',
-                marginTop: '24px',
-                textAlign: 'center',
               }}
             >
-              <div style={{ opacity: 0.6, fontSize: '12px', marginBottom: '8px' }}>Next:</div>
+              <div className="type-caption text-[12px] mb-2" style={{ opacity: 0.6 }}>Next:</div>
               <div>
                 {circuitConfig.exercises[circuitExerciseIndex].exercise.name}
                 {' '}({circuitConfig.exercises[circuitExerciseIndex].duration}m)
@@ -2258,33 +2224,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           onClick={() => setCircuitValidationError(null)}
         >
           <div
+            className="type-body"
             style={{
               background: 'rgba(20, 20, 30, 0.95)',
               border: '1px solid rgba(200, 100, 100, 0.4)',
               borderRadius: '12px',
               padding: '32px',
               maxWidth: '420px',
-              fontFamily: 'var(--font-body)',
               color: 'rgba(255, 255, 255, 0.9)',
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
+              className="type-h3 mb-4"
               style={{
-                fontSize: '16px',
-                fontWeight: 600,
-                marginBottom: '16px',
                 color: 'rgba(255, 100, 100, 0.9)',
               }}
             >
               Circuit Configuration Error
             </div>
             <div
+              className="type-body text-[14px] mb-6"
               style={{
-                fontSize: '14px',
-                lineHeight: '1.6',
-                marginBottom: '24px',
                 color: 'rgba(255, 255, 255, 0.8)',
               }}
             >
@@ -2292,6 +2254,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             </div>
             <button
               onClick={() => setCircuitValidationError(null)}
+              className="type-body text-[14px] font-semibold"
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -2299,8 +2262,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 border: '1px solid rgba(100, 150, 200, 0.5)',
                 borderRadius: '8px',
                 color: 'rgba(255, 255, 255, 0.9)',
-                fontSize: '14px',
-                fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}

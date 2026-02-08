@@ -107,13 +107,9 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
       <div className="mb-6" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
         {/* Text prompt above button */}
         <div
+          className="type-label italic"
           style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '11px',
-            letterSpacing: 'var(--tracking-wide)',
             color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.8)',
-            textTransform: 'uppercase',
-            fontStyle: 'italic',
             textShadow: isLight ? 'none' : '0 2px 8px rgba(0,0,0,0.5)'
           }}
         >
@@ -121,12 +117,8 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
         </div>
         <button
           onClick={() => setNavModalOpen(true)}
-          className="px-6 py-3 rounded-full"
+          className="type-label px-6 py-3 rounded-full"
           style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '12px',
-            fontWeight: 500,
-            letterSpacing: 'var(--tracking-wide)',
             color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
             display: 'flex',
             alignItems: 'center',
@@ -175,7 +167,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
                 <div className="mt-8">
                 {/* Active Path Header */}
                 <div
-                  className="text-[9px] uppercase tracking-[0.24em] mb-3"
+                  className="type-label mb-3"
                   style={{ color: isLight ? 'rgba(90, 77, 60, 0.5)' : 'rgba(253,251,245,0.5)' }}
                 >
                   Active Path

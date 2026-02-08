@@ -26,20 +26,17 @@ export function ApplicationSection({ onNavigate }) {
         {/* Empty State */}
         <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
           <h2
-            className="text-lg mb-4"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: 'var(--tracking-mythic)', color: 'var(--accent-color)' }}
+            className="type-h2 mb-4 text-[var(--accent-color)]"
           >
             Application
           </h2>
           <p
-            className="text-base text-[rgba(253,251,245,0.7)] mb-2 leading-relaxed"
-            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.02em' }}
+            className="type-body text-[rgba(253,251,245,0.7)] mb-2"
           >
             This is where practice meets life.
           </p>
           <p
-            className="text-sm text-[rgba(253,251,245,0.6)] mb-6 leading-relaxed italic"
-            style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.02em' }}
+            className="type-body text-[rgba(253,251,245,0.6)] mb-6 italic"
           >
             You'll track moments of awareness-when you catch yourself in old patterns.
           </p>
@@ -52,8 +49,8 @@ export function ApplicationSection({ onNavigate }) {
                 console.error('? onNavigate is undefined!');
               }
             }}
-            className="px-6 py-3 rounded-full text-[#050508] font-semibold text-sm"
-            style={{ fontFamily: 'var(--font-display)', letterSpacing: 'var(--tracking-mythic)', background: 'var(--ui-button-gradient)' }}
+            className="type-label px-6 py-3 rounded-full text-[#050508]"
+            style={{ background: 'var(--ui-button-gradient)' }}
           >
             GO TO NAVIGATION
           </button>

@@ -82,13 +82,9 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
 
           {/* Title */}
           <div
+            className="type-label mb-5"
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '16px',
-              fontWeight: 600,
-              letterSpacing: 'var(--tracking-mythic)',
               color: 'var(--text-primary)',
-              marginBottom: '20px',
               textShadow: isLight ? 'none' : '0 0 10px var(--accent-30)',
             }}
           >
@@ -110,46 +106,20 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
           >
             {/* Practice Type */}
             <div>
-              <span style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '9px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                textTransform: 'uppercase',
-                color: 'var(--text-muted)',
-              }}>
+              <span className="type-label" style={{ color: 'var(--text-muted)' }}>
                 Practice
               </span>
-              <div style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginTop: '4px',
-              }}>
+              <div className="type-h3 mt-1" style={{ color: 'var(--text-primary)' }}>
                 {summary.practice}
               </div>
             </div>
 
             {/* Duration */}
             <div>
-              <span style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '9px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                textTransform: 'uppercase',
-                color: 'var(--text-muted)',
-              }}>
+              <span className="type-label" style={{ color: 'var(--text-muted)' }}>
                 Duration
               </span>
-              <div style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginTop: '4px',
-              }}>
+              <div className="type-metric text-[12px] mt-1" style={{ color: 'var(--text-primary)' }}>
                 {summary.duration}m
               </div>
             </div>
@@ -157,23 +127,10 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
             {/* Accuracy (if available) */}
             {summary.tapStats && (
               <div>
-                <span style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-muted)',
-                }}>
+                <span className="type-label" style={{ color: 'var(--text-muted)' }}>
                   Accuracy
                 </span>
-                <div style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  marginTop: '4px',
-                }}>
+                <div className="type-metric text-[12px] mt-1" style={{ color: 'var(--text-primary)' }}>
                   {summary.tapStats.avgErrorMs}ms
                 </div>
               </div>
@@ -182,23 +139,10 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
             {/* Breath Count (if available) */}
             {summary.breathCount > 0 && (
               <div>
-                <span style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-muted)',
-                }}>
+                <span className="type-label" style={{ color: 'var(--text-muted)' }}>
                   Breaths
                 </span>
-                <div style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  marginTop: '4px',
-                }}>
+                <div className="type-metric text-[12px] mt-1" style={{ color: 'var(--text-primary)' }}>
                   {summary.breathCount}
                 </div>
               </div>
@@ -208,16 +152,11 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
           {/* Emotion Closing Line (if emotion practice) */}
           {summary.closingLine && (
             <div
-              className="rounded-lg p-4 mb-6"
+              className="type-body text-[12px] italic text-center rounded-lg p-4 mb-6"
               style={{
                 background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)',
                 border: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid rgba(255,255,255,0.1)',
-                fontFamily: 'var(--font-body)',
-                fontSize: '12px',
-                fontStyle: 'italic',
                 color: isLight ? 'rgba(60,50,35,0.7)' : 'rgba(253,251,245,0.7)',
-                textAlign: 'center',
-                lineHeight: '1.6',
               }}
             >
               "{summary.closingLine}"
@@ -227,14 +166,9 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
           {/* Emotion Completion Count (if emotion practice) */}
           {summary.emotionCompletionCount !== null && summary.emotionCompletionCount !== undefined && (
             <div
+              className="type-label text-[11px] text-center mb-5"
               style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '11px',
                 color: isLight ? 'rgba(60,50,35,0.6)' : 'rgba(253,251,245,0.6)',
-                textAlign: 'center',
-                marginBottom: '20px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
               }}
             >
               Completed {summary.emotionCompletionCount} {summary.emotionCompletionCount === 1 ? 'time' : 'times'}
@@ -244,14 +178,9 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
           {/* Sakshi Completion Count (if awareness/cognitive vipassana) */}
           {summary.sakshiCompletionCount !== null && summary.sakshiCompletionCount !== undefined && (
             <div
+              className="type-label text-[11px] text-center mb-5"
               style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '11px',
                 color: isLight ? 'rgba(60,50,35,0.6)' : 'rgba(253,251,245,0.6)',
-                textAlign: 'center',
-                marginBottom: '20px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
               }}
             >
               Sakshi completed {summary.sakshiCompletionCount} {summary.sakshiCompletionCount === 1 ? 'time' : 'times'}
@@ -262,15 +191,9 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
           {isFromCurriculum && (
             <div style={{ marginBottom: '20px' }}>
               <div
+                className="type-label mb-2.5 text-center"
                 style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
                   color: 'var(--text-muted)',
-                  marginBottom: '10px',
-                  textAlign: 'center',
                 }}
               >
                 How was your focus?
@@ -310,40 +233,22 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
                 textAlign: 'center',
               }}
             >
-              <span style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '9px',
-                fontWeight: 600,
-                letterSpacing: 'var(--tracking-mythic)',
-                textTransform: 'uppercase',
-                color: 'var(--accent-color)',
-              }}>
+              <span className="type-label" style={{ color: 'var(--accent-color)' }}>
                 {isFirstLeg ? '✦ What\'s Up Next' : '✦ Next in Curriculum'}
               </span>
-              <div style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginTop: '6px',
-              }}>
+              <div className="type-h3 text-[13px] mt-1.5" style={{ color: 'var(--text-primary)' }}>
                 {summary.nextLeg.practiceType || summary.nextLeg.label}
               </div>
               {/* Show time for first leg completion */}
               {isFirstLeg && summary.nextLeg.time && (
-                <div style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: 'var(--text-muted)',
-                  marginTop: '4px',
-                }}>
+                <div className="type-caption text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
                   at {summary.nextLeg.time}
                 </div>
               )}
               {onStartNext && !isFirstLeg && (
                 <button
                   onClick={() => onStartNext(summary.nextLeg.practiceType)}
-                  className="mt-3 px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all hover:scale-105"
+                  className="type-label mt-3 px-6 py-2 rounded-full font-bold transition-all hover:scale-105"
                   style={{
                     background: 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
                     color: '#050508',
@@ -368,15 +273,9 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
               }}
             >
               <div
+                className="type-label mb-3 text-center"
                 style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  letterSpacing: 'var(--tracking-mythic)',
-                  textTransform: 'uppercase',
                   color: 'var(--accent-color)',
-                  marginBottom: '12px',
-                  textAlign: 'center',
                 }}
               >
                 ✦ Today's Practice Complete
@@ -384,45 +283,19 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '9px',
-                    fontWeight: 600,
-                    letterSpacing: 'var(--tracking-mythic)',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                  }}>
+                  <div className="type-label" style={{ color: 'var(--text-muted)' }}>
                     Total Time
                   </div>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginTop: '4px',
-                  }}>
+                  <div className="type-metric text-[16px] mt-1" style={{ color: 'var(--text-primary)' }}>
                     {summary.dailyStats.totalMinutes}m
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '9px',
-                    fontWeight: 600,
-                    letterSpacing: 'var(--tracking-mythic)',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                  }}>
+                  <div className="type-label" style={{ color: 'var(--text-muted)' }}>
                     Precision
                   </div>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: 'var(--accent-color)',
-                    marginTop: '4px',
-                  }}>
+                  <div className="type-metric text-[16px] mt-1" style={{ color: 'var(--accent-color)' }}>
                     {summary.dailyStats.precisionScore || 'N/A'}
                   </div>
                 </div>
@@ -435,31 +308,13 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
                   paddingTop: '12px',
                   borderTop: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid var(--accent-10)',
                 }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '9px',
-                    fontWeight: 600,
-                    letterSpacing: 'var(--tracking-mythic)',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                    marginBottom: '4px',
-                  }}>
+                  <div className="type-label mb-1" style={{ color: 'var(--text-muted)' }}>
                     Next Practice
                   </div>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                  }}>
+                  <div className="type-h3 text-[12px]" style={{ color: 'var(--text-primary)' }}>
                     {summary.dailyStats.nextPracticeType}
                   </div>
-                  <div style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '11px',
-                    color: 'var(--accent-color)',
-                    marginTop: '2px',
-                  }}>
+                  <div className="type-caption text-[11px] mt-0.5" style={{ color: 'var(--accent-color)' }}>
                     Tomorrow at {summary.dailyStats.nextPracticeTime}
                   </div>
                 </div>
@@ -470,7 +325,7 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
           {/* Done Button */}
           <button
             onClick={onContinue}
-            className="px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-wider transition-all hover:scale-105"
+            className="type-label px-8 py-3 rounded-full font-bold transition-all hover:scale-105"
             style={{
               background: summary.nextLeg || !onStartNext ? 'var(--accent-color)' : (isLight ? 'rgba(60,50,35,0.15)' : 'rgba(255,255,255,0.15)'),
               color: summary.nextLeg || !onStartNext ? '#fff' : 'var(--text-secondary)',

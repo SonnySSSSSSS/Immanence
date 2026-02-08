@@ -600,7 +600,7 @@ function PartAccordion({
       {/* Expanded Chapters */}
       {isExpanded && (
         <div
-          className="px-5 pb-4 space-y-2"
+          className="px-5 pb-4 space-y-3"
           style={{ animation: "slideDown 200ms ease-out" }}
         >
           {chapters.map((ch) => {
@@ -611,8 +611,8 @@ function PartAccordion({
                 onClick={() => onChapterClick(ch)}
                 className="w-full text-left px-4 py-3 rounded-xl border transition-all group"
                 style={{
-                  background: "rgba(0,0,0,0.2)",
-                  border: "1px solid var(--accent-10)",
+                  background: "rgba(0,0,0,0.18)",
+                  border: "1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)",
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -620,7 +620,7 @@ function PartAccordion({
                     <div className="flex items-center gap-2">
                       <span
                         className="text-[11px]"
-                        style={{ color: "var(--accent-color)" }}
+                        style={{ color: "hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.7)" }}
                       >
                         {typeof ch.order === "number" ? ch.order : ch.order}
                       </span>
@@ -1357,7 +1357,7 @@ export function WisdomSection() {
     // If searching, show flat results
     if (filteredChapters) {
       return (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Search */}
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
@@ -1394,15 +1394,15 @@ export function WisdomSection() {
             {filteredChapters.length !== 1 ? "s" : ""} for "{searchQuery}"
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {filteredChapters.map((ch) => (
               <button
                 key={ch.id}
                 onClick={() => openChapterModal(ch)}
                 className="w-full text-left px-4 py-3 rounded-xl border transition-all"
                 style={{
-                  background: "rgba(0,0,0,0.2)",
-                  border: "1px solid var(--accent-10)",
+                  background: "rgba(0,0,0,0.18)",
+                  border: "1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)",
                 }}
               >
                 <div
@@ -1428,9 +1428,9 @@ export function WisdomSection() {
 
     // Normal view - Parts accordion
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Header */}
-        <div className="text-center pb-4 border-b border-[var(--accent-10)]">
+        <div className="text-center pb-5 border-b border-[var(--accent-10)]">
           <h2
             className="text-[16px] uppercase mb-1"
             style={{

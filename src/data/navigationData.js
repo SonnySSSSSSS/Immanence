@@ -14,6 +14,11 @@ export const paths = [
         glyph: "✨",
         duration: 2, // 2 weeks
         showBreathBenchmark: true,
+        scheduleSelection: {
+            requiredCount: 2,
+            maxCount: 2,
+            errorMessage: "Please select exactly 2 time slots to begin this path.",
+        },
 
         practices: [
             { type: "Breathing", pattern: "Box", duration: 7 },

@@ -80,10 +80,10 @@ function getWeekForDay(path, dayIndex) {
  * Vertical meter for left-pane progression
  * Two stacked meters (Completion + Path) live in the wallpaper strip.
  */
-function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarColor }) {
+function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarColor, isHighlighted = false }) {
     const ratio = Math.max(0, Math.min(1, Number.isFinite(progressRatio) ? progressRatio : 0));
 
-    const meterBackground = isLight ? 'rgba(250, 246, 238, 0.20)' : 'rgba(10, 12, 16, 0.22)';
+    const meterBackground = isLight ? 'rgba(250, 246, 238, 0.06)' : 'rgba(10, 12, 16, 0.22)';
     const meterBorder = isLight ? '1px solid rgba(160, 120, 60, 0.12)' : '1px solid rgba(120, 255, 180, 0.16)';
     const labelColor = isLight ? 'rgba(60, 50, 35, 0.62)' : 'rgba(253, 251, 245, 0.55)';
     const valueColor = isLight ? 'rgba(35, 20, 10, 0.92)' : 'rgba(253, 251, 245, 0.92)';
@@ -98,14 +98,16 @@ function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarCo
                     height: '100%',
                     padding: '8px 8px 7px',
                     background: meterBackground,
-                    border: meterBorder,
+                    border: isHighlighted ? `1px solid ${progressBarColor}` : meterBorder,
                     borderRadius: '14px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    boxShadow: isLight
-                        ? '0 10px 24px rgba(0, 0, 0, 0.08)'
-                        : '0 14px 30px rgba(0, 0, 0, 0.32)',
+                    boxShadow: isHighlighted
+                        ? `0 0 16px ${progressBarColor}`
+                        : (isLight
+                            ? '0 10px 24px rgba(0, 0, 0, 0.08)'
+                            : '0 14px 30px rgba(0, 0, 0, 0.32)'),
                 }}
                 aria-label={`${label}: ${valueText}`}
             >
@@ -299,16 +301,13 @@ function resolvePracticeLaunchFromEntry(entry) {
     return null;
 }
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
     const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
     
-    // Firefox detection
-    const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
-
     // Navigation path fallback
     const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
     const activePathObj = activePathId ? getPathById(activePathId) : null;
@@ -318,7 +317,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();
     const sessionsV2 = useProgressStore(s => s.sessionsV2 || []);
-    
+
     const todaySessions = useMemo(() => {
         const activeRunId = activePath?.runId ?? null;
         const activePathIdForRun = activePath?.activePathId ?? null;
@@ -349,9 +348,63 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         });
     }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt, todayKey]);
 
-    const completedCount = useMemo(
+    const completedTodayCount = useMemo(
         () => todaySessions.filter(s => s.completion === "completed").length,
         [todaySessions]
+    );
+
+    const displayDayKey = useMemo(() => {
+        if (times.length === 0 || !activePath?.startedAt) return todayKey;
+
+        let cycleStartKey = todayKey;
+        const firstSlotScheduledAt = localDateTimeFromDateKeyAndTime(todayKey, times[0]);
+        if (firstSlotScheduledAt) {
+            const { expired } = getStartWindowState({ now: new Date(), scheduledAt: firstSlotScheduledAt });
+            if (expired) {
+                cycleStartKey = addDaysToDateKey(todayKey, 1) || todayKey;
+            }
+        }
+
+        if (completedTodayCount >= times.length) {
+            cycleStartKey = addDaysToDateKey(cycleStartKey, 1) || cycleStartKey;
+        }
+
+        return cycleStartKey;
+    }, [times, activePath?.startedAt, todayKey, completedTodayCount]);
+
+    const displaySessions = useMemo(() => {
+        const activeRunId = activePath?.runId || null;
+        const activePathIdForRun = activePath?.activePathId || null;
+        const activePathStartMs = activePath?.startedAt ? new Date(activePath.startedAt).getTime() : NaN;
+
+        const isSessionInActiveRun = (session) => {
+            const sessionRunId = session?.pathContext?.runId || null;
+            if (activeRunId && sessionRunId) {
+                return sessionRunId === activeRunId;
+            }
+
+            // Fallback for legacy/orphaned records missing runId.
+            const sessionPathId = session?.pathContext?.activePathId ?? null;
+            if (!activePathIdForRun || !sessionPathId || sessionPathId !== activePathIdForRun) return false;
+
+            const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
+            if (!sessionAnchorIso) return false;
+            const sessionMs = new Date(sessionAnchorIso).getTime();
+            if (Number.isNaN(sessionMs)) return false;
+            return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
+        };
+
+        return sessionsV2.filter((s) => {
+            const sessionAnchorIso = s?.startedAt || s?.endedAt || null;
+            if (!sessionAnchorIso) return false;
+            if (getLocalDateKey(new Date(sessionAnchorIso)) !== displayDayKey) return false;
+            return isSessionInActiveRun(s);
+        });
+    }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt, displayDayKey]);
+
+    const completedCount = useMemo(
+        () => displaySessions.filter(s => s.completion === "completed").length,
+        [displaySessions]
     );
 
     const nextIndex = Math.min(completedCount, times.length);
@@ -372,6 +425,30 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const abandonPath = useNavigationStore(s => s.abandonPath);
     
     const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
+    const hasStartedPath = useMemo(() => {
+        if (!activePath?.runId && !activePath?.activePathId) return false;
+        const activePathStartMs = activePath?.startedAt ? new Date(activePath.startedAt).getTime() : NaN;
+
+        return sessionsV2.some((session) => {
+            const sessionRunId = session?.pathContext?.runId ?? null;
+            if (activePath?.runId && sessionRunId) {
+                return sessionRunId === activePath.runId;
+            }
+
+            const sessionPathId = session?.pathContext?.activePathId ?? null;
+            if (!activePath?.activePathId || !sessionPathId || sessionPathId !== activePath.activePathId) return false;
+
+            const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
+            if (!sessionAnchorIso) return false;
+            const sessionMs = new Date(sessionAnchorIso).getTime();
+            if (Number.isNaN(sessionMs)) return false;
+
+            return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
+        });
+    }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt]);
+
+    const pathDayIndexDisplay = hasStartedPath ? metrics.dayIndex : 0;
+    const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
     const missState = useMemo(() => computeMissState(), [
         computeMissState,
         sessionsV2.length,
@@ -457,25 +534,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Calculate slot dates based on path start time and current time
     const slotDates = useMemo(() => {
         if (times.length === 0 || !activePath?.startedAt) return [];
-
-        const now = new Date();
-        let cycleStartKey = todayKey; // Default to today
-
-        // Check if first slot's window has passed - if so, we move to next cycle day
-        if (times.length > 0) {
-            const firstSlotScheduledAt = localDateTimeFromDateKeyAndTime(todayKey, times[0]);
-            if (firstSlotScheduledAt) {
-                const { expired } = getStartWindowState({ now, scheduledAt: firstSlotScheduledAt });
-                if (expired) {
-                    // First slot's window passed, use tomorrow for cycle
-                    cycleStartKey = addDaysToDateKey(todayKey, 1);
-                }
-            }
-        }
-
-        // Generate dates for each slot
-        return times.map((_, idx) => cycleStartKey);
-    }, [times, activePath?.startedAt, todayKey]);
+        return times.map(() => displayDayKey);
+    }, [times, activePath?.startedAt, displayDayKey]);
 
     const [missedLegWarning, setMissedLegWarning] = useState(null);
     const [_isPending, startTransition] = useTransition();
@@ -500,6 +560,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         practiceTimeSlots: storePracticeTimeSlots,
         lastSessionFailed,
         clearLastSessionFailed,
+        activePracticeSession = null,
+        legCompletions = null,
     } = useCurriculumStore();
 
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
@@ -529,41 +591,31 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 }}
             >
                 <div
-                    className={isFirefox ? "w-full relative" : "w-full relative glassCardShadowWrap"}
+                    className="w-full relative"
                     style={{
                         borderRadius: '24px',
-                        ...(isFirefox ? {
-                            boxShadow: isLight
-                                ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                                : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95, 255, 170, 0.08)',
-                        } : {
-                            '--glass-radius': '24px',
-                            '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
-                            '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
-                            '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
-                        }),
+                        overflow: 'visible',
+                        boxShadow: isLight
+                            ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
+                            : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`,
                     }}
                 >
-                    <div
-                        className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
-                        style={{
-                            ...(isFirefox ? {
-                                borderRadius: '24px',
-                                background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                                boxShadow: `
-                                    inset 0 0 0 1px ${isLight ? `${primaryHex}30` : `${primaryHex}40`},
-                                    0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
-                                `.trim().replace(/\\s+/g, ' '),
-                            } : {
-                                background: 'transparent',
-                                '--glass-radius': '24px',
-                                '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                                '--glass-blur': isLight ? '0px' : '16px',
-                                '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
-                                '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
-                            }),
-                        }}
-                    >
+                <div
+                    className="w-full relative overflow-hidden"
+                    style={{
+                        borderRadius: '24px',
+                        background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
+                        border: isLight ? `1px solid ${primaryHex}30` : `1px solid ${primaryHex}40`,
+                        // Keep blur on the surface, but keep "depth" shadows off this backdrop-filter layer
+                        // to avoid jagged/steppy shadow edges around rounded corners on some compositing paths.
+                        boxShadow: isLight
+                            ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
+                            : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                        backdropFilter: isLight ? 'none' : 'blur(16px)',
+                        WebkitBackdropFilter: isLight ? 'none' : 'blur(16px)',
+                        isolation: 'isolate',
+                    }}
+                >
                         <div className="glassCardContent">
                         <div
                             className="absolute inset-0 pointer-events-none"
@@ -603,28 +655,32 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         right: '12px',
                                         bottom: '12px',
                                         justifyContent: 'flex-start',
-                                        alignItems: 'center',
-                                        gap: '12px',
+                                        alignItems: showSessionMeter ? 'center' : 'stretch',
+                                        gap: showSessionMeter ? '12px' : '0px',
                                     }}
                                 >
-                                    <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
-                                        <VerticalMeter
-                                            label="COMPLETION"
-                                            valueText={`${completedCount}/${times.length}`}
-                                            progressRatio={times.length > 0 ? completedCount / times.length : 0}
-                                            isLight={isLight}
-                                            progressBarColor={progressBarColor}
-                                        />
-                                    </div>
-
-                                    {metrics.durationDays > 0 && (
-                                        <div style={{ width: '72px', flex: 3, minHeight: '140px' }}>
+                                    {showSessionMeter && (
+                                        <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
                                             <VerticalMeter
-                                                label="DAY"
-                                                valueText={`${metrics.dayIndex}/${metrics.durationDays}`}
-                                                progressRatio={metrics.dayIndex / metrics.durationDays}
+                                                label="SESSION"
+                                                valueText={`${completedCount}/${times.length}`}
+                                                progressRatio={times.length > 0 ? completedCount / times.length : 0}
                                                 isLight={isLight}
                                                 progressBarColor={progressBarColor}
+                                                isHighlighted={shouldHighlightCompletion}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {metrics.durationDays > 0 && (
+                                        <div style={showSessionMeter ? { width: '72px', flex: 3, minHeight: '140px' } : { width: '100%', flex: 1, minHeight: '100%', height: '100%' }}>
+                                            <VerticalMeter
+                                                label="DAY"
+                                                valueText={`${pathDayIndexDisplay}/${metrics.durationDays}`}
+                                                progressRatio={pathDayProgressRatio}
+                                                isLight={isLight}
+                                                progressBarColor={progressBarColor}
+                                                isHighlighted={pathDayProgressRatio >= 1}
                                             />
                                         </div>
                                     )}
@@ -878,7 +934,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 ) : (
                                     <div>
                                         <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>TODAY'S PRACTICE</div>
-                                        <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
                                         <div className="mt-2 text-lg font-semibold" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>{activePathObj.title}</div>
                                         <div className="mt-2 text-sm opacity-80" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>No practice times scheduled for today</div>
                                     </div>
@@ -897,6 +952,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const progress = getProgress();
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
+    const hasStartedCurriculum = !!activePracticeSession || (legCompletions && Object.keys(legCompletions).length > 0);
 
     // Use *days* for "DAY X OF Y" (not total legs/sessions).
     // Priority: program duration (when curriculum is active) > path duration > fallback
@@ -920,7 +976,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return 14;
     })();
 
-    const dayIndexDisplay = activePathObj ? (metrics?.dayIndex || 1) : dayNumber;
+    const dayIndexDisplay = activePathObj ? (metrics?.dayIndex || 1) : (hasStartedCurriculum ? dayNumber : 0);
     const dayProgressRatio = (() => {
         const n = Number(dayIndexDisplay);
         const d = Number(totalDaysDisplay);
@@ -970,38 +1026,27 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
         return (
             <div
-                className={isFirefox ? "w-full" : "w-full glassCardShadowWrap"}
+                className="w-full"
                 style={{
                     borderRadius: '24px',
-                    ...(isFirefox ? {
-                        boxShadow: isLight
-                            ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                            : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)',
-                    } : {
-                        '--glass-radius': '24px',
-                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
-                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
-                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : '0 0 18px rgba(95,255,170,0.08)',
-                    }),
+                    overflow: 'visible',
+                    boxShadow: isLight
+                        ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
+                        : '0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px rgba(95,255,170,0.08)',
                 }}
             >
                 <div
-                    className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
+                    className="w-full relative overflow-hidden"
                     style={{
-                        ...(isFirefox ? {
-                            borderRadius: '24px',
-                            background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
-                            boxShadow: `
-                                inset 0 0 0 1px ${isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(95, 255, 170, 0.20)'},
-                                0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
-                            `.trim().replace(/\\s+/g, ' '),
-                        } : {
-                            '--glass-radius': '24px',
-                            '--glass-bg': isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
-                            '--glass-blur': isLight ? '0px' : '16px',
-                            '--glass-stroke': isLight ? 'rgba(160, 120, 60, 0.14)' : 'rgba(95, 255, 170, 0.20)',
-                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
-                        }),
+                        borderRadius: '24px',
+                        background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
+                        border: isLight ? '1px solid rgba(160, 120, 60, 0.14)' : '1px solid rgba(95, 255, 170, 0.20)',
+                        boxShadow: isLight
+                            ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
+                            : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                        backdropFilter: isLight ? 'none' : 'blur(16px)',
+                        WebkitBackdropFilter: isLight ? 'none' : 'blur(16px)',
+                        isolation: 'isolate',
                     }}
                 >
                 {/* Relic/Cosmic Background Wallpaper */}
@@ -1120,7 +1165,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     <div style={{ fontSize: 10, letterSpacing: '0.32em', textTransform: 'uppercase', opacity: 0.7 }}>
                         Today&apos;s Practice
                     </div>
-                    <div style={{ fontSize: 12, opacity: 0.85 }}>Hello, {displayName}</div>
                     <div style={{ fontSize: 14, marginTop: 8, opacity: 0.75 }}>
                         Practice data isn&apos;t available in this browser yet.
                     </div>
@@ -1274,6 +1318,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     };
 
     const completedLegs = legs.filter(l => l.completed).length;
+    const isDailyComplete = legs.length > 0 && completedLegs === legs.length;
+    const shouldHighlightCompletion = showDailyCompletionNotice && isDailyComplete;
 
     return (
             <div
@@ -1289,61 +1335,44 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             >
             {/* OUTER: Frame with Shadow */}
             <div
-                className={isFirefox ? "w-full relative" : "w-full relative glassCardShadowWrap"}
+                className="w-full relative"
                 style={{
                     borderRadius: '24px',
-                    ...(isFirefox ? {
-                        boxShadow: isLight
-                            ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
-                            : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`,
-                    } : {
-                        '--glass-radius': '24px',
-                        '--glass-shadow-1': isLight ? '0 14px 34px rgba(0,0,0,0.10)' : '0 18px 40px rgba(0,0,0,0.28)',
-                        '--glass-shadow-2': isLight ? '0 6px 14px rgba(0,0,0,0.06)' : '0 6px 14px rgba(0,0,0,0.18)',
-                        '--glass-shadow-aura': isLight ? '0 0 0 rgba(0,0,0,0)' : `0 0 18px ${primaryHex}22`,
-                    }),
+                    overflow: 'visible',
+                    // Depth shadow belongs on the non-blurred wrapper to avoid jagged edges on rounded corners.
+                    boxShadow: isLight
+                        ? '0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.10), 0 16px 32px rgba(0, 0, 0, 0.12)'
+                        : `0 1px 2px rgba(0, 0, 0, 0.20), 0 4px 8px rgba(0, 0, 0, 0.24), 0 8px 16px rgba(0, 0, 0, 0.28), 0 16px 32px rgba(0, 0, 0, 0.32), 0 0 20px ${primaryHex}15`,
                 }}
             >
                 {/* MIDDLE: Container */}
                 <div
-                    className={isFirefox ? "w-full relative overflow-hidden" : "w-full relative glassCardShell"}
+                    className="w-full relative overflow-hidden"
                     style={{
-                        ...(isFirefox ? {
-                            borderRadius: '24px',
-                            background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                            boxShadow: `
-                                inset 0 0 0 1px ${isLight ? `${primaryHex}30` : `${primaryHex}40`},
-                                0 0 0 1px ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)'}
-                            `.trim().replace(/\\s+/g, ' '),
-                        } : {
-                            background: 'transparent',
-                            '--glass-radius': '24px',
-                            '--glass-bg': isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                            '--glass-blur': isLight ? '0px' : '16px',
-                            '--glass-stroke': isLight ? `${primaryHex}30` : `${primaryHex}40`,
-                            '--glass-outline': isLight ? 'rgba(0,0,0,0.06)' : 'rgba(25, 30, 35, 0.45)',
-                        }),
+                        borderRadius: '24px',
+                        background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(12, 18, 22, 0.85)',
+                        border: isLight ? `1.5px solid rgba(180, 140, 60, 0.25)` : `1.5px solid rgba(80, 180, 160, 0.35)`,
+                        boxShadow: isLight
+                            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                            : 'inset 0 1px 0 rgba(80, 180, 160, 0.20)',
+                        backdropFilter: isLight ? 'none' : 'blur(16px)',
+                        WebkitBackdropFilter: isLight ? 'none' : 'blur(16px)',
+                        isolation: 'isolate',
                     }}
                 >
                     <div className="glassCardContent">
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}
                     <div
                         className="absolute inset-0 pointer-events-none"
-                            style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${isLight ? config.bgAsset : `card_bg_comet_${stageLower}.png`})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                filter: isLight ? 'saturate(1.1)' : 'none',
-                                transition: 'all 0.7s ease-in-out',
-                            }}
+                        style={{
+                            background: isLight
+                                ? 'radial-gradient(ellipse at 60% 40%, rgba(250, 246, 238, 0.95) 0%, rgba(245, 235, 220, 0.90) 40%, rgba(240, 228, 208, 0.85) 100%)'
+                                : 'radial-gradient(ellipse at 60% 40%, rgba(18, 28, 32, 1) 0%, rgba(12, 20, 24, 1) 50%, rgba(8, 14, 18, 1) 100%)',
+                            transition: 'all 0.7s ease-in-out',
+                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 20%)',
+                            maskImage: 'linear-gradient(to right, transparent 0%, black 20%)',
+                        }}
                     />
-
-                    {/* 2. LEFT BLOOM FADE: image blooms into parchment */}
-                    <div className="absolute inset-0 pointer-events-none" style={{
-                        background: isLight
-                            ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)'
-                            : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)'
-                    }} />
 
                     {/* 2.5 LEFT STRIP INSTRUMENTATION - rails anchored top/bottom */}
                     <div
@@ -1352,7 +1381,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             top: 0,
                             left: 0,
                             bottom: 0,
-                            right: 'clamp(320px, 70%, 380px)',
+                            width: '96px',
                             zIndex: 5,
                             pointerEvents: 'none',
                         }}
@@ -1367,27 +1396,31 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     right: '12px',
                                     bottom: '12px',
                                     justifyContent: 'flex-start',
-                                    alignItems: 'center',
-                                    gap: '12px',
+                                    alignItems: showSessionMeter ? 'center' : 'stretch',
+                                    gap: '20px',
                                 }}
                             >
-                                <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
-                                    <VerticalMeter
-                                        label="COMPLETION"
-                                        valueText={`${completedLegs}/${legs.length}`}
-                                        progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
-                                        isLight={isLight}
-                                        progressBarColor={progressBarColor}
-                                    />
-                                </div>
+                                {showSessionMeter && (
+                                    <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
+                                        <VerticalMeter
+                                            label="SESSION"
+                                            valueText={`${completedLegs}/${legs.length}`}
+                                            progressRatio={legs.length > 0 ? completedLegs / legs.length : 0}
+                                            isLight={isLight}
+                                            progressBarColor={progressBarColor}
+                                            isHighlighted={shouldHighlightCompletion}
+                                        />
+                                    </div>
+                                )}
 
-                                <div style={{ width: '72px', flex: 3, minHeight: '140px' }}>
+                                <div style={showSessionMeter ? { width: '72px', flex: 3, minHeight: '140px' } : { width: '100%', flex: 1, minHeight: '100%', height: '100%' }}>
                                       <VerticalMeter
                                           label="DAY"
                                           valueText={`${dayIndexDisplay}/${totalDaysDisplay}`}
                                           progressRatio={dayProgressRatio}
                                           isLight={isLight}
                                           progressBarColor={progressBarColor}
+                                          isHighlighted={dayProgressRatio >= 1}
                                       />
                                 </div>
                             </div>
@@ -1395,54 +1428,52 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     </div>
 
                     {/* 3. CONTENT PANEL (Owns the readable layout) */}
-                    <div 
+                    <div
                         className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
                         style={{
                             background: 'transparent',
-                            borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
+                            borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.30)' : '1px solid var(--accent-15)',
                             color: isLight ? '#3c3020' : '#fdfbf5',
                         }}
                     >
-                            {/* Panel texture scrim */}
-                            {isLight && (
-                                <div
-                                    className="absolute inset-0 pointer-events-none opacity-40"
-                                    style={{
-                                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.png)`,
-                                        backgroundSize: 'cover',
-                                        mixBlendMode: 'multiply',
-                                    }}
-                                />
-                            )}
-
                             {/* Scrollable Container */}
                             <div className="px-6 sm:px-7 pt-4 sm:pt-5 pb-4 relative z-10">
                                 {/* Decorative corner embellishments */}
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
 
                                 {/* Header */}
-                                <div className="flex items-start justify-between gap-3 mb-2">
-                                    <div>
-                                        <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                                            Today's Practice
-                                        </div>
-                                        <div style={{ fontSize: 11, opacity: 0.85 }}>Hello, {displayName}</div>
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253,251,245,0.45)', letterSpacing: '0.08em' }}>
+                                        Today's Practice
                                     </div>
-
-                                    <div className="flex flex-col items-end gap-1">
-                                        <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="text-xl font-bold tracking-tight" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                             {todaysPractice.title || `Day ${dayNumber}`}
                                         </div>
-                                        {streak > 1 && (
-                                            <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', color: 'var(--accent-color)' }}>
-                                                🔥 {streak}-DAY STREAK
-                                            </div>
-                                        )}
+                                        <div className="flex flex-col items-end gap-1">
+                                            {streak > 1 && (
+                                                <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', color: 'var(--accent-color)' }}>
+                                                    🔥 {streak}-DAY STREAK
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
+                                {showDailyCompletionNotice && isDailyComplete && (
+                                    <div
+                                        className="mt-4 w-full text-center text-[11px] font-semibold tracking-wide"
+                                        style={{
+                                            color: isLight ? 'rgba(60, 110, 60, 0.75)' : 'rgba(120, 200, 140, 0.65)',
+                                            letterSpacing: '0.02em'
+                                        }}
+                                    >
+                                        Completed today's sessions — see you tomorrow!
+                                    </div>
+                                )}
+
                                 {/* Legs List */}
-                                <div className="space-y-3">
+                                <div className="space-y-5">
                                     {missedLegWarning && (
                                         <div
                                             className="rounded-xl border px-4 py-3"
@@ -1495,7 +1526,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         transform: isActionable ? 'scale(1.05)' : 'scale(1)',
                                                     }}
                                                 >
-                                                    {leg.completed ? '✓' : leg.legNumber}
+                                                    {leg.completed && showPerLegCompletion ? '✓' : leg.legNumber}
                                                 </div>
 
                                                 {/* Leg Details */}
@@ -1581,15 +1612,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 {legTimeStr}
                                                             </div>
                                                         )}
-                                                        <div style={{
-                                                            fontSize: '9px',
-                                                            fontFamily: 'var(--font-display)',
-                                                            fontWeight: 600,
-                                                            color: 'var(--accent-color)',
-                                                            opacity: 0.8,
-                                                        }}>
-                                                            Done
-                                                        </div>
+                                                        {showPerLegCompletion && (
+                                                            <div style={{
+                                                                fontSize: '9px',
+                                                                fontFamily: 'var(--font-display)',
+                                                                fontWeight: 600,
+                                                                color: 'var(--accent-color)',
+                                                                opacity: 0.8,
+                                                            }}>
+                                                                Done
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

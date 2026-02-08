@@ -262,16 +262,16 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
             {/* Header Text - ABOVE the chart, more legible */}
             <div
                 className="text-[9px] font-black uppercase tracking-[0.3em] text-center mb-2 relative z-10"
-                style={{ 
-                    color: config.textMain, 
+                style={{
+                    color: config.textMain,
                     fontFamily: 'var(--font-display)',
                     opacity: 0.7,
-                    textShadow: isLight 
-                        ? '0 1px 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.5)' 
+                    textShadow: isLight
+                        ? '0 1px 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.5)'
                         : '0 1px 2px rgba(0,0,0,0.5)'
                 }}
             >
-                Timing Precision - Last 7 days
+                Last 7 days
             </div>
 
             {/* Chart Container */}
@@ -375,7 +375,7 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
             </div>
             
             {/* Day Labels Row - Below chart area */}
-            <div className="flex justify-between items-center pl-1 pr-6 mt-4 relative z-10">
+            <div className="flex justify-between items-center pl-3 pr-12 mt-4 relative z-10">
                 {days.map((day, i) => {
                     const data = weekOffsets[i] || { practiced: false };
                     return (
@@ -623,7 +623,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
             )}
 
             {/* Content Container - Shortened bottom to pull parchment edge up */}
-            <div className={`relative px-9 ${isLight ? 'pt-5 pb-2' : 'py-3'} z-10`} style={{ background: 'transparent' }}>
+            <div className="relative px-6 py-4 z-10" style={{ background: 'transparent' }}>
 
 
 
@@ -662,7 +662,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
                     <div className="flex-1 flex items-center justify-end gap-6 pr-4">
                         {/* Sessions - LEFT */}
                         <div className="text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: 'Inter, sans-serif' }}>All-time Sessions</span>
                             <div className="flex items-center justify-end gap-2">
                                 <div className="flex flex-col items-center">
                                     {isLight ? (
@@ -691,7 +690,6 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
 
                         {/* Streak - RIGHT */}
                         <div className="text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: 'Inter, sans-serif' }}>Current Streak</span>
                             <div className="flex items-center justify-end gap-2">
                                 <div className="flex flex-col items-center">
                                     {isLight ? (

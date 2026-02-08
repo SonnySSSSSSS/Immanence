@@ -21,13 +21,8 @@ export function SessionControls({
       {/* Breathing Pattern Display (above stop button) */}
       {isBreathPractice && (
         <div
-          className="mb-4"
+          className="type-label text-[12px] mb-4"
           style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "12px",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
             color: "rgba(255,255,255,0.92)",
             textShadow: "0 2px 12px rgba(0,0,0,0.55)",
             padding: "8px 12px",
@@ -46,11 +41,8 @@ export function SessionControls({
         {showFeedback && (
           <div
             key={lastSignedErrorMs}
-            className="font-medium uppercase animate-fade-in-up"
+            className="type-label font-medium animate-fade-in-up"
             style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 600,
-              letterSpacing: "0.15em",
               color: feedbackColor,
               textShadow: feedbackShadow
             }}
@@ -62,13 +54,8 @@ export function SessionControls({
 
       <button
         onClick={onStop}
-        className="rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
+        className="type-label rounded-full px-7 py-2.5 transition-all duration-200 hover:-translate-y-0.5 min-w-[200px] relative overflow-hidden"
         style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "11px",
-          letterSpacing: "var(--tracking-mythic)",
-          textTransform: "uppercase",
-          fontWeight: 600,
           background: buttonBg,
           color: "#050508",
           boxShadow: radialGlow
@@ -102,13 +89,8 @@ export function SessionControls({
 
       {timeLeftText && (
         <div
-          className="mt-5"
+          className="type-label text-[12px] mt-5"
           style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "12px",
-            fontWeight: 600,
-            letterSpacing: "var(--tracking-mythic)",
-            textTransform: "uppercase",
             color: "var(--text-primary)",
           }}
         >
@@ -118,13 +100,8 @@ export function SessionControls({
 
       {showBreathCount && (
         <div
-          className="mt-2"
+          className="type-label text-[9px] mt-2"
           style={{
-            fontFamily: "var(--font-body)",
-            fontSize: "9px",
-            fontWeight: 600,
-            letterSpacing: "var(--tracking-wide)",
-            textTransform: "uppercase",
             color: 'var(--accent-50)',
           }}
         >

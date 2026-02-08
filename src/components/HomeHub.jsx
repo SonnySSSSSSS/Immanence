@@ -362,7 +362,10 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
       {/* ──────────────────────────────────────────────────────────────────────
           AVATAR & HUB INSTRUMENT - Full-Bleed Altar (Cosmic Zone)
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full flex flex-col items-center gap-0 py-1 transition-all duration-500 overflow-visible">
+      <div
+        className="w-full flex flex-col items-center gap-0 pb-0 transition-all duration-500 overflow-visible"
+        style={{ paddingTop: isSanctuary ? '16px' : '12px' }}
+      >
         <div className="relative w-full flex items-center justify-center overflow-visible">
           {/* Cloud Background - NO LONGER HERE, moved to full-page layer */}
 
@@ -383,29 +386,13 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
                 'transparent 75%)',
               filter: isSanctuary ? 'blur(90px)' : 'blur(75px)',
               opacity: isLight
-                ? (isSanctuary ? 0.12 : 0.10)
-                : (isSanctuary ? 0.35 : 0.28),
+                ? (isSanctuary ? 0.08 : 0.06)
+                : (isSanctuary ? 0.25 : 0.20),
               pointerEvents: 'none',
               zIndex: 0,
             }}
           />
 
-          {/* Diagonal Grounding Shadow - Cast by central instrument (Radial Lighting) */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              width: '180%',
-              height: '40px',
-              background: isLight
-                ? 'radial-gradient(ellipse at center, rgba(120, 90, 60, 0.15) 0%, transparent 70%)'
-                : 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, transparent 75%)',
-              top: '65%',
-              left: '55%',
-              transform: 'translate(-50%, -50%) rotate(-15deg)',
-              filter: isLight ? 'blur(60px)' : 'blur(40px)',
-              zIndex: -2,
-            }}
-          />
 
           <div className="relative z-10 flex items-center justify-center">
             <AvatarV3
@@ -429,7 +416,6 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
           showCore={previewShowCore}
           attention={previewAttention}
           lastPracticed={lastPracticed}
-          streakInfo={streakInfo}
           onOpenHardwareGuide={onOpenHardwareGuide}
           onOpenHonorLog={() => setShowHonorModal(true)}
           hideStageTitle={true}
@@ -456,33 +442,23 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full px-4 flex flex-col items-center gap-1 pb-4">
+      <div className="w-full px-4 flex flex-col items-center gap-3 pb-4">
 
         {/* EXPLORE MODES - Navigation Buttons */}
         <div
-          className="w-full mb-4 transition-all duration-700"
+          className="w-full transition-all duration-700"
           style={isSanctuary ? SANCTUARY_RAIL_STYLE : {
             maxWidth: 'min(430px, 94vw)',
             margin: '0 auto',
-            padding: '0 16px',
           }}
         >
-          <div
-            className="text-[11px] font-black uppercase tracking-[0.3em] text-center mb-5 opacity-40 transition-colors duration-500"
-            style={{
-              color: isLight ? 'var(--light-text-secondary)' : 'var(--text-accent-muted)',
-              textShadow: isLight ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            Explore Modes
-          </div>
 
           {/* Horizontal Row - Simple circular buttons - DISTRIBUTES ACROSS RAIL */}
           <div
             className="flex flex-row items-center w-full"
             style={{
-              justifyContent: isSanctuary ? 'space-around' : 'center',
-              gap: isSanctuary ? '0' : '10px',
+              justifyContent: 'space-between',
+              gap: '0',
             }}
           >
             <SimpleModeButton
@@ -495,21 +471,18 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
               title="Wisdom"
               onClick={() => handleSelectSection("wisdom")}
               disabled={lockToHub}
-              gradient="linear-gradient(135deg, #B4E6D4 0%, #7FD4B8 100%)"
               icon="wisdom"
             />
             <SimpleModeButton
               title="Application"
               onClick={() => handleSelectSection("application")}
               disabled={lockToHub}
-              gradient="linear-gradient(135deg, #FFD97D 0%, #FFB85C 100%)"
               icon="application"
             />
             <SimpleModeButton
               title="Navigation"
               onClick={() => handleSelectSection("navigation")}
               disabled={lockToHub}
-              gradient="linear-gradient(135deg, #E5C4FF 0%, #B88FD9 100%)"
               icon="navigation"
             />
           </div>
@@ -518,12 +491,12 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
         {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
         <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
           <div
-            className="w-full overflow-hidden"
+            className="w-full overflow-x-hidden overflow-y-visible"
             style={{
-              height: homeSwipeHeight ? `${Math.max(homeSwipeHeight, 200)}px` : 'auto',
               minHeight: '200px',
               transition: 'height 280ms ease',
               willChange: 'height',
+              paddingBottom: '12px',
             }}
           >
               <div
@@ -533,7 +506,7 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
                   scrollSnapType: 'x mandatory',
                   WebkitOverflowScrolling: 'touch',
                   scrollBehavior: 'smooth',
-                  overflowY: 'hidden',
+                  overflowY: 'visible',
                   overscrollBehaviorX: 'contain',
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
@@ -553,6 +526,9 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
                   practiceTimeSlots={practiceTimeSlots}
                   onStartSetup={() => handleSelectSection('navigation')}
                   isTutorialTarget={isDailyCardTutorialTarget}
+                  showPerLegCompletion={false}
+                  showDailyCompletionNotice={true}
+                  showSessionMeter={false}
                 />
                 </div>
                 </section>
@@ -586,7 +562,7 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
             </div>
 
           {/* Page indicator */}
-          <div className="flex items-center justify-center gap-2 pt-1">
+          <div className="flex items-center justify-center gap-2 pt-2">
             {[0, 1].map((idx) => (
               <button
                 key={idx}
@@ -694,9 +670,8 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
                       borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
                     }}>
                       <h2
-                        className="text-xl font-semibold"
+                        className="type-h2"
                         style={{
-                          fontFamily: 'var(--font-display)',
                           color: 'var(--accent-color)',
                         }}
                       >
@@ -842,11 +817,8 @@ function ArcModeButton({ title, onClick, image, isLight }) {
         }}
       >
         <span
+          className="type-label text-[7px] font-bold"
           style={{
-            fontSize: '7px',
-            fontWeight: '700',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
             color: isLight ? 'var(--light-accent)' : 'rgba(253, 251, 245, 0.95)',
             textShadow: isLight
               ? '0 1px 2px rgba(255, 255, 255, 0.8)'
@@ -1058,12 +1030,9 @@ function ModeButton({ title, onClick, image, colorGrade = 'gold' }) {
           />
         )}
         <div
-          className="text-sm font-bold tracking-wide transition-colors relative"
+          className="type-label text-sm font-bold transition-colors relative"
           style={{
             color: isLight ? 'var(--light-accent)' : 'var(--accent-color)',
-            fontFamily: 'var(--font-display)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
             textShadow: isLight
               ? '0 1px 2px rgba(255, 255, 255, 1), 0 2px 12px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7), 1px 1px 0 rgba(0, 0, 0, 0.25), -1px -1px 0 rgba(0, 0, 0, 0.15)'
               : '0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.7)',

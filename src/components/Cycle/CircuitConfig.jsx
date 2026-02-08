@@ -149,15 +149,15 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
     const displaySeconds = totalDurationSec % 60;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
             {/* Total Duration - Hero Number with Pulse */}
             <div
                 className="p-4 rounded relative"
                 style={{
                     background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
                     backdropFilter: 'blur(10px)',
-                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
-                    boxShadow: 'inset 0 0 20px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1)',
+                    border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.12)',
+                    boxShadow: 'inset 0 0 18px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08)',
                 }}
             >
                 <style>{`
@@ -175,7 +175,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                 <div>
                     {/* Header Label */}
                     <div
-                        className="text-xs mb-3 tracking-wider uppercase font-medium"
+                        className="text-xs mb-2 tracking-wider uppercase font-medium"
                         style={{
                             fontFamily: 'var(--font-body)',
                             color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
@@ -184,19 +184,9 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         Total Circuit
                     </div>
                     {/* Values Row */}
-                    <div style={{ display: 'flex', alignItems: 'end', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         {/* Minutes */}
                         <div style={{ flex: '0 0 auto' }}>
-                            <div
-                                className="text-xs mb-1 tracking-wider uppercase font-medium"
-                                style={{
-                                    fontFamily: 'var(--font-body)',
-                                    color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
-                                    fontSize: '10px',
-                                }}
-                            >
-                                Minutes
-                            </div>
                             <div
                                 className="text-3xl font-bold tracking-wide"
                                 style={{
@@ -209,18 +199,10 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 {displayMinutes}
                             </div>
                         </div>
+                        {/* Separator */}
+                        <div style={{ fontSize: '24px', opacity: 0.5, lineHeight: '1', marginBottom: '2px' }}>:</div>
                         {/* Seconds */}
                         <div style={{ flex: '0 0 auto' }}>
-                            <div
-                                className="text-xs mb-1 tracking-wider uppercase font-medium"
-                                style={{
-                                    fontFamily: 'var(--font-body)',
-                                    color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
-                                    fontSize: '10px',
-                                }}
-                            >
-                                Seconds
-                            </div>
                             <div
                                 className="text-3xl font-bold tracking-wide"
                                 style={{
@@ -230,31 +212,64 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                     lineHeight: '1',
                                 }}
                             >
-                                {displaySeconds}
+                                {displaySeconds.toString().padStart(2, '0')}
                             </div>
                         </div>
                         {/* Break Between */}
-                        <div style={{ flex: '0 0 auto' }}>
+                        <div style={{ flex: '0 0 auto', marginLeft: '12px', display: 'flex', alignItems: 'center', position: 'relative' }}>
                             <div
-                                className="text-xs mb-1 tracking-wider uppercase font-medium"
+                                className="text-xs tracking-wider uppercase font-medium"
                                 style={{
                                     fontFamily: 'var(--font-body)',
                                     color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
                                     fontSize: '10px',
+                                    position: 'absolute',
+                                    top: '-14px',
+                                    left: '2px',
                                 }}
                             >
                                 Break Between
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="60"
-                                    value={intervalBreakSec}
+                            <input
+                                type="text"
+                                    value={`0:${intervalBreakSec.toString().padStart(2, '0')}`}
                                     onChange={(e) => {
-                                        const clamped = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                                        const raw = e.target.value || '';
+                                        // Extract digits only after optional "0:"
+                                        const stripped = raw.replace(/^0:?/, '').replace(/\D/g, '');
+                                        if (stripped === '') {
+                                            setIntervalBreakSec(1);
+                                            if (onChange) onChange({ exercises: selectedExercises, intervalBreakSec: 1 });
+                                            return;
+                                        }
+                                        const parsed = parseInt(stripped, 10);
+                                        const clamped = Math.max(1, Math.min(59, Number.isFinite(parsed) ? parsed : 1));
                                         setIntervalBreakSec(clamped);
                                         if (onChange) onChange({ exercises: selectedExercises, intervalBreakSec: clamped });
+                                    }}
+                                    onKeyDown={(e) => {
+                                        const input = e.target;
+                                        const cursorPos = input.selectionStart;
+                                        // Prevent deleting the "0:" prefix (positions 0-2)
+                                        if ((e.key === 'Backspace' && cursorPos <= 2) || (e.key === 'Delete' && cursorPos < 2)) {
+                                            e.preventDefault();
+                                        }
+                                        // Arrow left stops at colon boundary
+                                        if (e.key === 'ArrowLeft' && cursorPos === 2) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    onClick={(e) => {
+                                        const input = e.target;
+                                        // Clicking before colon moves cursor to after colon
+                                        if (input.selectionStart < 2) {
+                                            input.setSelectionRange(2, 2);
+                                        }
+                                    }}
+                                    onFocus={(e) => {
+                                        const input = e.target;
+                                        // Auto-select seconds portion for quick editing
+                                        setTimeout(() => input.setSelectionRange(2, input.value.length), 0);
                                     }}
                                     className="text-lg font-bold rounded px-2 cursor-pointer text-center"
                                     style={{
@@ -268,9 +283,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                         boxSizing: 'border-box',
                                         width: '64px'
                                     }}
-                                />
-                                <div style={{ fontSize: '11px', fontFamily: 'var(--font-body)', color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)', whiteSpace: 'nowrap' }}>sec</div>
-                            </div>
+                            />
                         </div>
                     </div>
                 </div>
@@ -402,7 +415,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
 
             {/* Circuit Sequence - Energy Pathway */}
             {selectedExercises.length > 0 && (
-                <div>
+                <div style={{ marginBottom: '10px' }}>
                     {circuitError && (
                         <div
                             className="mb-3 px-3 py-2 rounded text-[11px] font-medium uppercase tracking-[0.15em]"
@@ -420,14 +433,14 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                         className="text-[10px] mb-3 uppercase tracking-[0.2em] font-bold"
                         style={{ fontFamily: 'var(--font-display)', color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.4)' }}
                     >
-                        Energy Pathway · {selectedExercises.length} Nodes
+                        Energy Pathway
                     </div>
                     <div className="relative">
                         <div className="space-y-2 relative" style={{ zIndex: 1 }}>
                             {selectedExercises.map((item, index) => (
                                 <div
                                     key={`${item.exercise.id}-${index}`}
-                                    className="p-3 rounded"
+                                    className="p-2 rounded"
                                     style={{
                                         background: isLight ? 'rgba(60,50,35,0.03)' : 'rgba(255,255,255,0.04)',
                                         border: isLight ? '1px solid var(--light-border)' : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
@@ -435,7 +448,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                         display: 'grid',
                                         gridTemplateColumns: '32px minmax(0, 1fr) 92px',
                                         alignItems: 'center',
-                                        columnGap: '12px',
+                                        columnGap: '10px',
                                         width: '100%',
                                         overflow: 'hidden'
                                     }}

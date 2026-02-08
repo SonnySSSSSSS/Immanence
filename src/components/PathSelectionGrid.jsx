@@ -37,8 +37,8 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     return (
         <div className="w-full">
             <div
-                className="text-[9px] uppercase tracking-[0.24em] mb-3"
-                style={{ color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.9)', textShadow: isLight ? 'none' : '0 1px 3px rgba(0,0,0,0.4)', fontWeight: 600 }}
+                className="type-label mb-3"
+                style={{ color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.9)', textShadow: isLight ? 'none' : '0 1px 3px rgba(0,0,0,0.4)' }}
             >
                 Select Your Path
             </div>
@@ -155,9 +155,8 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                             <div className="relative z-10">
                                 {/* Glyph */}
                                 <div
-                                    className="text-3xl mb-3 font-bold tracking-wide transition-colors"
+                                    className="type-h1 mb-3 transition-colors"
                                     style={{
-                                        fontFamily: 'var(--font-display)',
                                         color: isLight
                                             ? (isSelected ? 'rgba(140, 100, 40, 0.9)' : 'rgba(140, 100, 40, 0.6)')
                                             : 'var(--accent-70)'
@@ -168,9 +167,8 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
                                 {/* Title */}
                                 <h3
-                                    className="text-sm font-bold mb-1.5 leading-tight line-clamp-2 tracking-wide transition-colors"
+                                    className="type-h3 mb-1.5 leading-tight line-clamp-2 transition-colors"
                                     style={{
-                                        fontFamily: 'var(--font-display)',
                                         color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'rgba(253,251,245,0.92)'
                                     }}
                                 >
@@ -179,11 +177,8 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
                                 {/* Subtitle */}
                                 <p
-                                    className="text-[11px] mb-2.5 leading-snug line-clamp-2 font-medium transition-colors"
+                                    className="type-caption text-[11px] mb-2.5 leading-snug line-clamp-2 italic transition-colors"
                                     style={{
-                                        fontFamily: 'var(--font-body)',
-                                        fontStyle: 'italic',
-                                        letterSpacing: '0.01em',
                                         color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.65)'
                                     }}
                                 >
@@ -193,7 +188,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                 {/* Duration */}
                                 {!isPlaceholder && (
                                     <div
-                                        className="text-[10px] uppercase tracking-wider font-bold"
+                                        className="type-label font-bold"
                                         style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
                                     >
                                         {typeof entry.duration === 'number' ? `${entry.duration} weeks` : entry.duration}
@@ -202,7 +197,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
                                 {isPlaceholder && (
                                     <div
-                                        className="text-[10px] uppercase tracking-wider opacity-40 font-bold"
+                                        className="type-label opacity-40 font-bold"
                                         style={{ color: isLight ? 'rgba(60, 52, 37, 0.4)' : 'rgba(253,251,245,0.3)' }}
                                     >
                                         Coming soon

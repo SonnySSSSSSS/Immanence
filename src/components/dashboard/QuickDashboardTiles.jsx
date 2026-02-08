@@ -44,23 +44,18 @@ function DashboardTile({ tile, isLight }) {
             }}
         >
             <div
+                className="type-label mb-1.5"
                 style={{
-                    fontSize: '10px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
                     color: isLight
                         ? 'rgba(100, 80, 60, 0.6)'
                         : 'rgba(255, 255, 255, 0.5)',
-                    marginBottom: '6px',
                 }}
             >
                 {label}
             </div>
             <div
+                className="type-metric text-[20px]"
                 style={{
-                    fontSize: '20px',
-                    fontWeight: '700',
                     color: isLight
                         ? 'rgba(45, 35, 25, 0.95)'
                         : 'rgba(255, 255, 255, 0.95)',
@@ -71,12 +66,11 @@ function DashboardTile({ tile, isLight }) {
             </div>
             {unit && (
                 <div
+                    className="type-caption text-[9px] mt-0.5"
                     style={{
-                        fontSize: '9px',
                         color: isLight
                             ? 'rgba(100, 80, 60, 0.5)'
                             : 'rgba(255, 255, 255, 0.4)',
-                        marginTop: '2px',
                     }}
                 >
                     {unit}
@@ -90,11 +84,6 @@ function DashboardTile({ tile, isLight }) {
  * Sessions infographic: horizontal bar + number
  */
 function SessionsModule({ value, isLight, isSanctuary = false }) {
-    const cap = 60;
-    const fill = Math.min(value / cap, 1);
-    const barHeight = 6;
-    const barColor = isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.2)';
-    const fillColor = isLight ? 'rgba(100, 80, 60, 0.8)' : 'rgba(76, 175, 80, 0.8)';
 
     const readabilityStyle = isSanctuary && !isLight ? {
         background: 'rgba(0, 0, 0, 0.24)',
@@ -110,14 +99,10 @@ function SessionsModule({ value, isLight, isSanctuary = false }) {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', ...readabilityStyle }}>
+            <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', ...readabilityStyle }}>
                 {Math.round(value)}
             </div>
-            <svg width="100%" height="12" viewBox="0 0 100 12" style={{ overflow: 'visible' }}>
-                <rect x="0" y="3" width="100" height={barHeight} rx="3" fill={barColor} />
-                <rect x="0" y="3" width={fill * 100} height={barHeight} rx="3" fill={fillColor} />
-            </svg>
-            <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
+            <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
                 Sessions
             </div>
         </div>
@@ -128,10 +113,6 @@ function SessionsModule({ value, isLight, isSanctuary = false }) {
  * Active Days infographic: dot strip (14 dots) + number
  */
 function ActiveDaysModule({ value, isLight, isSanctuary = false }) {
-    const dotCount = 14;
-    const filled = Math.min(value, dotCount);
-    const dotRadius = 3;
-    const dotSpacing = 8;
 
     const readabilityStyle = isSanctuary && !isLight ? {
         background: 'rgba(0, 0, 0, 0.24)',
@@ -147,23 +128,10 @@ function ActiveDaysModule({ value, isLight, isSanctuary = false }) {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', ...readabilityStyle }}>
+            <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', ...readabilityStyle }}>
                 {Math.round(value)}
             </div>
-            <svg width="100%" height="10" viewBox={`0 0 ${dotCount * dotSpacing} 10`} style={{ overflow: 'visible' }}>
-                {Array.from({ length: dotCount }).map((_, i) => (
-                    <circle
-                        key={i}
-                        cx={i * dotSpacing + dotRadius}
-                        cy="5"
-                        r={dotRadius}
-                        fill={i < filled
-                            ? (isLight ? 'rgba(100, 80, 60, 0.8)' : 'rgba(76, 175, 80, 0.8)')
-                            : (isLight ? 'rgba(100, 80, 60, 0.2)' : 'rgba(255, 255, 255, 0.1)')}
-                    />
-                ))}
-            </svg>
-            <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
+            <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
                 Active Days
             </div>
         </div>
@@ -217,11 +185,11 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
                         )}
                     </svg>
                     {/* Percent overlay inside circle */}
-                    <div style={{ position: 'relative', zIndex: 1, fontSize: '16px', fontWeight: '700', color: 'rgba(255, 255, 255, 0.95)', textAlign: 'center' }}>
+                    <div className="type-metric text-[16px]" style={{ position: 'relative', zIndex: 1, color: 'rgba(255, 255, 255, 0.95)', textAlign: 'center' }}>
                         {displayValue}
                     </div>
                 </div>
-                <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255, 255, 255, 0.5)' }}>
+                <div className="type-label text-[9px]" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                     {label}
                 </div>
             </div>
@@ -256,10 +224,10 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
                     />
                 )}
             </svg>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+            <div className="type-metric text-[16px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
                 {displayValue}
             </div>
-            <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
+            <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
                 {label}
             </div>
         </div>
@@ -362,16 +330,6 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                 >
                 {/* Content layer */}
                 <div className="glassCardContent" style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                    {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: '8px', borderBottom: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.15)' : 'rgba(255, 255, 255, 0.08)'}` }}>
-                    <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
-                        Progress Overview
-                    </div>
-                    <div style={{ fontSize: '10px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(255, 255, 255, 0.4)' }}>
-                        90 Days
-                    </div>
-                </div>
-
                 {/* 2x2 infographic grid */}
                 <div
                     style={{
@@ -390,7 +348,7 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                 {onOpenDetails && (
                     <button
                         onClick={onOpenDetails}
-                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
+                        className="type-label px-4 py-2 rounded-full font-bold transition-all hover:scale-105"
                         style={{
                             background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
                             color: '#fff',
@@ -436,12 +394,9 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                 {onOpenDetails && (
                     <button
                         onClick={onOpenDetails}
+                        className="type-label text-[11px]"
                         style={{
                             padding: '6px 12px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
                             border: 'none',
                             borderRadius: '4px',
                             background: isLight

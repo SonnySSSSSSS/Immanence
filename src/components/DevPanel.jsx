@@ -4,20 +4,18 @@
 
 import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { useLunarStore } from '../state/lunarStore';
-import { STAGES, STAGE_THRESHOLDS } from '../state/stageConfig';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { useDisplayModeStore } from '../state/displayModeStore';
 import { useCurriculumStore } from '../state/curriculumStore';
-import { useCycleStore } from '../state/cycleStore';
-import { useApplicationStore } from '../state/applicationStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
+import * as devHelpers from '../utils/devHelpers.js';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -30,27 +28,6 @@ const PATH_OPTIONS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 // HELPER COMPONENTS (moved outside to avoid hook rendering issues)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// StreakDisplay component: Visual fire emoji intensity based on streak length
-function StreakDisplay({ streak }) {
-    let fireEmoji = '';
-
-    if (streak === 0) {
-        fireEmoji = '💨'; // No streak
-    } else if (streak < 3) {
-        fireEmoji = '🔥'; // Small fire
-    } else if (streak < 7) {
-        fireEmoji = '🔥🔥'; // Growing
-    } else if (streak < 14) {
-        fireEmoji = '🔥🔥🔥'; // Strong
-    } else if (streak < 30) {
-        fireEmoji = '🔥🔥🔥🔥'; // Blazing
-    } else {
-        fireEmoji = '🔥🔥🔥🔥🔥'; // Inferno
-    }
-
-    return <span className="inline-block">{fireEmoji}</span>;
-}
-
 function getNewestDateKey(sessions = []) {
     let newest = null;
     sessions.forEach((session) => {
@@ -61,447 +38,17 @@ function getNewestDateKey(sessions = []) {
     return newest;
 }
 
-// SessionCard mini-component: displays type, duration, precision
-function SessionCard({ session, isLight }) {
-    const practiceTypeLabels = {
-        breath: '🌬️ Breath',
-        breathwork: '🌬️ Breath',
-        visualization: '👁️ Visual',
-        wisdom: '📖 Wisdom',
-        circuit: '⚡ Circuit',
-        cognitive_vipassana: '🧠 Cognitive',
-        somatic_vipassana: '🧘 Somatic',
-        cymatics: '🎵 Cymatics',
-        sound: '🔊 Sound',
-        ritual: '🕯️ Ritual'
-    };
+function TutorialAnchorCountReadout() {
+    const [count, setCount] = useState(0);
 
-    const exitTypeColors = {
-        completed: isLight ? '#16a34a' : '#22c55e',
-        early_exit: isLight ? '#ca8a04' : '#eab308',
-        abandoned: isLight ? '#dc2626' : '#ef4444'
-    };
+    useEffect(() => {
+        const update = () => setCount(document.querySelectorAll('[data-tutorial]').length);
+        update();
+        const interval = setInterval(update, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
-    const practiceLabel = practiceTypeLabels[session.practiceType] || session.practiceType;
-    const duration = session.duration || Math.floor((session.durationMs || 0) / 60000);
-    const exitType = session.instrumentation?.exit_type || session.exitType || 'completed';
-    const precision = session.instrumentation?.precision || session.precision?.breath?.rhythmAccuracy || 0;
-    const precisionPercent = Math.round(precision * 100);
-
-    return (
-        <div className="p-2 rounded-lg" style={{
-            background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-            border: `1px solid ${isLight ? 'rgba(180, 155, 110, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`
-        }}>
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium" style={{
-                    color: isLight ? 'rgba(45, 40, 35, 0.8)' : 'rgba(255, 255, 255, 0.8)'
-                }}>
-                    {practiceLabel}
-                </span>
-                <span className="text-xs" style={{
-                    color: exitTypeColors[exitType]
-                }}>
-                    {exitType === 'completed' ? '✓' : exitType === 'early_exit' ? '⏸' : '✕'}
-                </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-                <span style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.5)' }}>
-                    {duration} min
-                </span>
-                <div className="flex items-center gap-1">
-                    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{
-                        background: isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(255, 255, 255, 0.1)'
-                    }}>
-                        <div className="h-full rounded-full transition-all" style={{
-                            width: `${precisionPercent}%`,
-                            background: isLight ? 'rgba(180, 155, 110, 0.6)' : 'rgba(255, 255, 255, 0.3)'
-                        }} />
-                    </div>
-                    <span style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)' }}>
-                        {precisionPercent}%
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// TrackingInspectorSection: Large component for tracking data display and injection
-// (Defined outside DevPanel to avoid hook rendering issues)
-function TrackingInspectorSection() {
-    const { sessions, streak, vacation } = useProgressStore();
-    const { currentCycle } = useCycleStore();
-    const { awarenessLogs } = useApplicationStore();
-    const { scheduleAdherenceLog } = useNavigationStore();
-
-    // Get last 10 sessions
-    // Calculate current streak
-    const calculateCurrentStreak = () => {
-        if (!sessions || sessions.length === 0) return 0;
-    
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        let currentStreak = 0;
-        let checkDate = new Date(today);
-    
-        for (let i = 0; i < 365; i++) {
-            const dateKey = checkDate.toISOString().split('T')[0];
-            const hasSession = sessions.some(s => s.dateKey === dateKey);
-        
-            if (hasSession) {
-                currentStreak++;
-                checkDate.setDate(checkDate.getDate() - 1);
-            } else if (i === 0) {
-                // Check yesterday
-                checkDate.setDate(checkDate.getDate() - 1);
-                const yesterdayKey = checkDate.toISOString().split('T')[0];
-                if (sessions.some(s => s.dateKey === yesterdayKey)) {
-                    currentStreak++;
-                    checkDate.setDate(checkDate.getDate() - 1);
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-    
-        return currentStreak;
-    };
-
-    const currentStreak = calculateCurrentStreak();
-    const isVacation = vacation?.active || false;
-
-    // Helper functions need to be defined inside the component to access hooks
-    function injectMockPattern(patternKey) {
-        const pattern = MOCK_PATTERNS[patternKey];
-        if (!pattern) return;
-        const realSessions = sessions.filter(s => !s.metadata?.mock);
-        useProgressStore.setState({ sessions: realSessions });
-
-        const mockSessions = [
-            ...generateMockSessions('breathwork', pattern.breathwork),
-            ...generateMockSessions('visualization', pattern.visualization),
-            ...generateMockSessions('wisdom', pattern.wisdom)
-        ];
-
-        const nextSessions = [...realSessions, ...mockSessions];
-        const newestDateKey = mockSessions.length > 0 ? getNewestDateKey(nextSessions) : null;
-        useProgressStore.setState((state) => ({
-            sessions: nextSessions,
-            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
-        }));
-        console.log(`✅ Injected ${mockSessions.length} mock sessions (${pattern.label})`);
-    }
-
-    function addStreakDays(days) {
-        const now = Date.now();
-        const msPerDay = 24 * 60 * 60 * 1000;
-        const newSessions = [];
-
-        for (let i = 0; i < days; i++) {
-            const sessionDate = new Date(now - (i * msPerDay));
-            const dateKey = sessionDate.toISOString().split('T')[0];
-    
-            newSessions.push({
-                id: `streak_mock_${sessionDate.getTime()}`,
-                dateKey,
-                timestamp: sessionDate.getTime(),
-                practiceType: 'breath',
-                practiceFamily: 'attention',
-                duration: 10,
-                durationMs: 600000,
-                exitType: 'completed',
-                metadata: { mock: true, streakSimulator: true },
-                instrumentation: {
-                    precision: 0.8,
-                    exit_type: 'completed'
-                }
-            });
-        }
-
-        useProgressStore.setState((state) => {
-            const nextSessions = [...state.sessions, ...newSessions];
-            const newestDateKey = newSessions.length > 0 ? getNewestDateKey(nextSessions) : null;
-            return {
-                sessions: nextSessions,
-                streak: {
-                    ...state.streak,
-                    ...(newestDateKey ? { lastPracticeDate: newestDateKey } : {}),
-                    longest: Math.max(state.streak?.longest || 0, currentStreak + days)
-                }
-            };
-        });
-        console.log(`✅ Added ${days} streak days`);
-    }
-
-    function breakStreak() {
-        const today = new Date().toISOString().split('T')[0];
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-        const filteredSessions = sessions.filter(s => 
-            s.dateKey !== today && s.dateKey !== yesterday
-        );
-
-        useProgressStore.setState({ 
-            sessions: filteredSessions
-        });
-        console.log('🔥 Streak broken (removed today & yesterday)');
-    }
-
-    function toggleVacation() {
-        const newVacationState = !isVacation;
-        useProgressStore.setState({ 
-            vacation: {
-                active: newVacationState,
-                startDate: newVacationState ? new Date().toISOString().split('T')[0] : null,
-                frozenStreak: newVacationState ? currentStreak : 0
-            }
-        });
-        console.log(`🏖️ Vacation mode ${newVacationState ? 'activated' : 'deactivated'}`);
-    }
-
-    function injectMultiYearData() {
-        const realSessions = sessions.filter(s => !s.metadata?.mock && !s.metadata?.multiYear);
-        const mockSessions = [];
-        
-        const domains = ['breathwork', 'visualization', 'wisdom', 'ritual'];
-        const now = new Date();
-        const startYear = now.getFullYear() - 2;
-        
-        for (let year = startYear; year <= now.getFullYear(); year++) {
-            const sessionsThisYear = year === startYear ? 80 : year === startYear + 1 ? 120 : 95;
-            
-            for (let i = 0; i < sessionsThisYear; i++) {
-                const dayOfYear = Math.floor(Math.random() * 365);
-                const sessionDate = new Date(year, 0, 1);
-                sessionDate.setDate(sessionDate.getDate() + dayOfYear);
-                
-                const hour = Math.random() < 0.6 ? 6 + Math.floor(Math.random() * 4) : 17 + Math.floor(Math.random() * 5);
-                const minute = Math.floor(Math.random() * 60);
-                sessionDate.setHours(hour, minute, 0, 0);
-                
-                const domainWeights = [0.5, 0.25, 0.15, 0.1];
-                const rand = Math.random();
-                let domain = domains[0];
-                let cumulative = 0;
-                for (let j = 0; j < domains.length; j++) {
-                    cumulative += domainWeights[j];
-                    if (rand < cumulative) {
-                        domain = domains[j];
-                        break;
-                    }
-                }
-                
-                const duration = 10 + Math.floor(Math.random() * 36);
-                
-                mockSessions.push({
-                    id: `multiyear_${sessionDate.getTime()}`,
-                    date: sessionDate.toISOString(),
-                    dateKey: sessionDate.toISOString().split('T')[0],
-                    domain,
-                    duration,
-                    metadata: { 
-                        mock: true, 
-                        multiYear: true,
-                        injectedYear: year
-                    }
-                });
-            }
-        }
-        
-        mockSessions.sort((a, b) => new Date(a.date) - new Date(b.date));
-        
-        const nextSessions = [...realSessions, ...mockSessions];
-        const newestDateKey = mockSessions.length > 0 ? getNewestDateKey(nextSessions) : null;
-        useProgressStore.setState((state) => ({
-            sessions: nextSessions,
-            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
-        }));
-        
-        useProgressStore.getState().updateLifetimeTracking();
-        
-        const yearCounts = mockSessions.reduce((acc, s) => {
-            acc[s.metadata.injectedYear] = (acc[s.metadata.injectedYear] || 0) + 1;
-            return acc;
-        }, {});
-        
-        console.log(`✅ Injected ${mockSessions.length} multi-year sessions:`, yearCounts);
-    }
-
-    function exportToJSON() {
-        const exportData = {
-            exportDate: new Date().toISOString(),
-            version: '1.0',
-            progressStore: {
-                sessions: sessions,
-                streak: streak,
-                vacation: vacation,
-                honorLogs: useProgressStore.getState().honorLogs || []
-            },
-            cycleStore: {
-                currentCycle: currentCycle,
-                completedCycles: useCycleStore.getState().completedCycles || []
-            },
-            applicationStore: {
-                awarenessLogs: awarenessLogs || []
-            },
-            navigationStore: {
-                scheduleAdherenceLog: scheduleAdherenceLog || [],
-                activePathId: useNavigationStore.getState().activePathId
-            }
-        };
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `immanence-tracking-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        console.log('📥 Exported tracking data to JSON');
-    }
-
-    function copyToClipboard() {
-        const exportData = {
-            exportDate: new Date().toISOString(),
-            progressStore: { sessions, streak, vacation },
-            cycleStore: { currentCycle },
-            applicationStore: { awarenessLogs },
-            navigationStore: { scheduleAdherenceLog }
-        };
-
-        navigator.clipboard.writeText(JSON.stringify(exportData, null, 2))
-            .then(() => console.log('📋 Copied to clipboard'))
-            .catch(err => console.error('❌ Copy failed:', err));
-    }
-
-    function injectTimingPattern(pattern) {
-        const now = Date.now();
-        const msPerDay = 24 * 60 * 60 * 1000;
-        const newSessions = [];
-
-        const realSessions = sessions.filter(s => !s.metadata?.mock);
-        const adherenceLog = Array.isArray(scheduleAdherenceLog) ? scheduleAdherenceLog.filter(e => !e.mock) : [];
-        useProgressStore.setState({ sessions: realSessions });
-        useNavigationStore.setState({ scheduleAdherenceLog: adherenceLog });
-
-        for (let i = 0; i < 7; i++) {
-            const baseTime = now - (i * msPerDay);
-            const sessionDate = new Date(baseTime);
-            sessionDate.setHours(12, 0, 0, 0);
-    
-            let offsetMs;
-            if (pattern === 'precise') {
-                offsetMs = (Math.random() * 10 - 5) * 60 * 1000;
-            } else {
-                offsetMs = (Math.random() * 240 - 120) * 60 * 1000;
-            }
-    
-            const actualTime = new Date(sessionDate.getTime() + offsetMs);
-            const dateKey = sessionDate.toISOString().split('T')[0];
-            const deltaMinutes = Math.round(offsetMs / (60 * 1000));
-    
-            newSessions.push({
-                id: `timing_mock_${actualTime.getTime()}`,
-                dateKey,
-                timestamp: actualTime.getTime(),
-                domain: 'breathwork',
-                practiceType: 'breath',
-                practiceFamily: 'attention',
-                date: sessionDate.toISOString(),
-                duration: 10,
-                durationMs: 600000,
-                exitType: 'completed',
-                metadata: { mock: true, timingPattern: pattern },
-                instrumentation: {
-                    precision: pattern === 'precise' ? 0.9 : 0.5,
-                    exit_type: 'completed'
-                }
-            });
-    
-            const adherenceLogNext = Array.isArray(adherenceLog) ? adherenceLog : [];
-            if (Array.isArray(adherenceLogNext)) {
-                const adherenceEntry = {
-                    day: dateKey,
-                    scheduledTime: '12:00',
-                    actualStartTime: actualTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                    deltaMinutes: deltaMinutes,
-                    withinWindow: Math.abs(deltaMinutes) <= 15,
-                    mock: true
-                };
-    
-                useNavigationStore.setState({
-                    scheduleAdherenceLog: [...adherenceLogNext, adherenceEntry]
-                });
-            }
-        }
-
-        const nextSessions = [...realSessions, ...newSessions];
-        const newestDateKey = getNewestDateKey(nextSessions);
-        useProgressStore.setState((state) => ({
-            sessions: nextSessions,
-            ...(newestDateKey ? { streak: { ...state.streak, lastPracticeDate: newestDateKey } } : {})
-        }));
-        console.log(`⏱️ Injected ${pattern} timing pattern (7 days)`);
-    }
-
-    function clearMockData() {
-        const realSessions = sessions.filter(s => !s.metadata?.mock);
-        useProgressStore.setState({ sessions: realSessions });
-        console.log('🗑️ Cleared all mock data');
-    }
-
-    function resetProgressStore() {
-        useProgressStore.setState({
-            sessions: [],
-            streak: { lastPracticeDate: null, longest: 0 },
-            vacation: { active: false, startDate: null, frozenStreak: 0 },
-            honorLogs: []
-        });
-        console.log('🗑️ Reset progressStore');
-    }
-
-    function resetAllTracking() {
-        useProgressStore.setState({
-            sessions: [],
-            streak: { lastPracticeDate: null, longest: 0 },
-            vacation: { active: false, startDate: null, frozenStreak: 0 },
-            honorLogs: []
-        });
-
-        useCycleStore.setState({
-            currentCycle: null,
-            completedCycles: []
-        });
-
-        useApplicationStore.setState({
-            awarenessLogs: []
-        });
-
-        useNavigationStore.setState({
-            scheduleAdherenceLog: []
-        });
-
-        console.log('🗑️ RESET ALL TRACKING DATA');
-    }
-
-    void injectMockPattern;
-    void addStreakDays;
-    void breakStreak;
-    void toggleVacation;
-    void injectMultiYearData;
-    void exportToJSON;
-    void copyToClipboard;
-    void injectTimingPattern;
-    void clearMockData;
-    void resetProgressStore;
-    void resetAllTracking;
-
-    // NOTE: Full JSX return was removed during refactor - component currently non-functional
-    // This needs to be restored with the complete Section JSX
-    return <div>TrackingInspectorSection JSX needs to be restored</div>;
+    return <span className="text-white/70 font-mono">{count}</span>;
 }
 
 export function DevPanel({
@@ -516,9 +63,6 @@ export function DevPanel({
     avatarAttention: avatarAttentionProp,
     setAvatarAttention: setAvatarAttentionProp,
 }) {
-    // Early return BEFORE any hooks to avoid hook count mismatch
-    if (!isOpen) return null;
-
     // Lunar store state
     const lunarProgress = useLunarStore(s => s.progress);
     const totalDays = useLunarStore(s => s.totalPracticeDays);
@@ -568,8 +112,6 @@ export function DevPanel({
             setAvatarPathProp(avatarPathLocal);
         }
     }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-    const [gyroX, setGyroX] = useState(0);
-    const [gyroY, setGyroY] = useState(0);
 
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
@@ -577,8 +119,6 @@ export function DevPanel({
         playground: false,
         lunar: true,
         curriculum: false,
-        path: false,
-        attention: false,
         tracking: false,
         llm: false,
         data: false,
@@ -588,31 +128,8 @@ export function DevPanel({
     // Armed state for destructive actions
     const [armed, setArmed] = useState(null);
 
-    // Background layer visibility state
-    const [_showBgTop, setShowBgTop] = useState(true);
-    const [_showBgBottom, setShowBgBottom] = useState(true);
-
     // Slider state
     const [sliderProgress, setSliderProgress] = useState(lunarProgress);
-
-    // Listen for background layer changes from App
-    useEffect(() => {
-        const handleTopChange = (e) => {
-            setShowBgTop(e.detail);
-            console.log('DevPanel: Top layer toggled to', e.detail);
-        };
-        const handleBottomChange = (e) => {
-            setShowBgBottom(e.detail);
-            console.log('DevPanel: Bottom layer toggled to', e.detail);
-        };
-        // Listen on capture to catch events from other instances
-        window.addEventListener('dev-background-top', handleTopChange, true);
-        window.addEventListener('dev-background-bottom', handleBottomChange, true);
-        return () => {
-            window.removeEventListener('dev-background-top', handleTopChange, true);
-            window.removeEventListener('dev-background-bottom', handleBottomChange, true);
-        };
-    }, []);
 
     // Sync slider with store
     useEffect(() => {
@@ -681,6 +198,8 @@ export function DevPanel({
         const returnPath = sessionStorage.getItem('dev:returnPath') || '/';
         window.location.assign(returnPath);
     };
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[9999] flex">
@@ -827,68 +346,6 @@ export function DevPanel({
                                     </button>
                                 ))}
                             </div>
-                        </div>
-
-                        {/* Gyro Simulation for Ring Drift */}
-                        <div className="border-t border-white/10 pt-3 mt-2">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs text-white/50">🎯 Ring Drift Simulation</span>
-                                <span className="text-[10px] text-cyan-400/70 font-mono">
-                                    X:{gyroX.toFixed(0)} Y:{gyroY.toFixed(0)}
-                                </span>
-                            </div>
-
-                            {/* X Tilt */}
-                            <div className="flex items-center gap-2 mb-2">
-                                <label className="text-xs text-white/40 w-8">X</label>
-                                <input
-                                    type="range"
-                                    min="-30"
-                                    max="30"
-                                    value={gyroX}
-                                    className="flex-1 accent-cyan-500"
-                                    onChange={(e) => {
-                                        const val = parseFloat(e.target.value);
-                                        setGyroX(val);
-                                        console.log('🎯 Gyro X:', val);
-                                        window.dispatchEvent(new CustomEvent('dev-gyro', {
-                                            detail: { axis: 'gamma', value: val }
-                                        }));
-                                    }}
-                                />
-                            </div>
-
-                            {/* Y Tilt */}
-                            <div className="flex items-center gap-2 mb-2">
-                                <label className="text-xs text-white/40 w-8">Y</label>
-                                <input
-                                    type="range"
-                                    min="-30"
-                                    max="30"
-                                    value={gyroY}
-                                    className="flex-1 accent-cyan-500"
-                                    onChange={(e) => {
-                                        const val = parseFloat(e.target.value);
-                                        setGyroY(val);
-                                        console.log('🎯 Gyro Y:', val);
-                                        window.dispatchEvent(new CustomEvent('dev-gyro', {
-                                            detail: { axis: 'beta', value: val }
-                                        }));
-                                    }}
-                                />
-                            </div>
-
-                            {/* Reset button */}
-                            <button
-                                onClick={() => {
-                                    setGyroX(0);
-                                    setGyroY(0);
-                                    window.dispatchEvent(new CustomEvent('dev-gyro', { detail: { reset: true } }));
-                                }}
-                                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 hover:text-white/90 transition-all"
-                            >
-                                Reset Tilt
-                            </button>
                         </div>
                     </Section>
 
@@ -1090,8 +547,6 @@ export function DevPanel({
                         isLight={isLight}
                     />
 
-                    {/* Path Ceremony and Attention Path sections removed - legacy systems */}
-
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* TRACKINGHUB SECTION */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -1100,18 +555,6 @@ export function DevPanel({
                         onToggle={() => toggleSection('tracking')}
                         isLight={isLight}
                     />
-
-                        {/* ═══════════════════════════════════════════════════════════════ */}
-                        {/* TRACKING INSPECTOR SECTION */}
-                        {/* ═══════════════════════════════════════════════════════════════ */}
-                        {/* TEMPORARILY DISABLED - Component needs JSX restoration */}
-                        {/* <TrackingInspectorSection
-                            expanded={expandedSections.trackingInspector}
-                            onToggle={() => toggleSection('trackingInspector')}
-                            isLight={isLight}
-                            armed={armed}
-                            handleDestructive={handleDestructive}
-                        /> */}
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* LLM TEST SECTION */}
@@ -1285,16 +728,7 @@ export function DevPanel({
 
                         {/* Anchor count readout */}
                         <div className="text-[10px] text-white/40 mb-4 px-3">
-                            Anchors in DOM: <span className="text-white/70 font-mono">{(() => {
-                                const [count, setCount] = React.useState(0);
-                                React.useEffect(() => {
-                                    const update = () => setCount(document.querySelectorAll('[data-tutorial]').length);
-                                    update();
-                                    const interval = setInterval(update, 1000);
-                                    return () => clearInterval(interval);
-                                }, []);
-                                return count;
-                            })()}</span>
+                            Anchors in DOM: <TutorialAnchorCountReadout />
                         </div>
 
                         {/* CoordinateHelper UI - Tutorial Pick mode */}
@@ -1424,8 +858,6 @@ export function DevPanel({
 // ═══════════════════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
-
-// AttentionPathSection removed - legacy system
 
 function TrackingHubSection({ expanded, onToggle, isLight = false }) {
     const { sessions } = useProgressStore();

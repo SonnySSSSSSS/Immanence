@@ -267,13 +267,13 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
     if (!videos || videos.length === 0) return null;
 
     return (
-        <div className="mb-6">
+        <div className="mb-7">
             {/* Label with scroll arrows */}
-            <div className="flex items-center justify-between mb-3 px-4">
+            <div className="flex items-center justify-between mb-4 px-4">
                 <div
                     className="text-[10px] uppercase tracking-[0.2em]"
                     style={{
-                        color: isLight ? 'rgba(140, 100, 60, 0.8)' : 'rgba(255,200,120,0.6)',
+                        color: isLight ? 'rgba(140, 100, 60, 0.85)' : 'rgba(255,200,120,0.7)',
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
                         letterSpacing: 'var(--tracking-mythic)',
@@ -327,7 +327,7 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
                 {/* Scroll area */}
                 <div
                     ref={scrollRef}
-                    className="flex gap-3 px-4 pb-2"
+                    className="flex gap-3 px-4 pb-3"
                     style={{
                         overflowX: 'auto',
                         overflowY: 'hidden',
@@ -469,7 +469,7 @@ export function VideoLibrary({ initialVideoId = null, initialVideoBudgetMin = nu
             />
 
             {/* THE OFFERINGS - Horizontal bands */}
-            <div className="flex-1 py-4">
+            <div className="flex-1 pt-6 pb-4">
                 {/* Featured band (if any) */}
                 {featuredVideos.length > 0 && (
                     <OfferingBand

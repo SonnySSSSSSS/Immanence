@@ -58,21 +58,21 @@ export function SensoryConfig({
     const baseUrl = import.meta.env.BASE_URL;
 
     return (
-        <div className="sensory-config space-y-6">
+        <div className="sensory-config space-y-7">
             {/* Sakshi Practice Cards */}
-            <div className="space-y-3">
+            <div className="space-y-4">
                 {/* Sakshi I - Witnessing Presence */}
                 <button
                     onClick={() => setSakshiVersion(1)}
                     className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-lg text-left w-full"
                     style={{
                         background: 'linear-gradient(135deg, rgba(20, 40, 45, 0.8) 0%, rgba(15, 35, 40, 0.9) 100%)',
-                        borderColor: sakshiVersion === 1 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.3)',
+                        borderColor: sakshiVersion === 1 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.26)',
                         borderWidth: sakshiVersion === 1 ? '2px' : '1px',
                         minHeight: '180px',
                         display: 'flex',
                         alignItems: 'stretch',
-                        boxShadow: sakshiVersion === 1 ? '0 0 20px rgba(100, 200, 150, 0.4)' : 'none',
+                        boxShadow: sakshiVersion === 1 ? '0 0 20px rgba(100, 200, 150, 0.35)' : 'none',
                         padding: 0,
                     }}
                 >
@@ -94,7 +94,7 @@ export function SensoryConfig({
 
                     {/* Content overlay */}
                     <div
-                        className="relative z-10 p-6 flex flex-col justify-between flex-1"
+                        className="relative z-10 p-5 flex flex-col justify-between flex-1"
                         style={{
                             background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, transparent 100%)',
                         }}
@@ -103,11 +103,12 @@ export function SensoryConfig({
                             <h3
                                 style={{
                                     fontFamily: 'var(--font-display)',
-                                    fontSize: '16px',
+                                    fontSize: '12px',
                                     fontWeight: 600,
                                     color: '#D4AF37',
                                     letterSpacing: '1px',
-                                    marginBottom: '4px',
+                                    marginBottom: '2px',
+                                    opacity: 0.8,
                                 }}
                             >
                                 SAKSHI I
@@ -128,7 +129,7 @@ export function SensoryConfig({
                                     fontFamily: 'var(--font-serif)',
                                     fontSize: '12px',
                                     color: 'rgba(232, 220, 200, 0.8)',
-                                    lineHeight: '1.5',
+                                    lineHeight: '1.4',
                                 }}
                             >
                                 Observe the self as it moves through life.
@@ -161,12 +162,12 @@ export function SensoryConfig({
                     className="relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer hover:shadow-lg text-left w-full"
                     style={{
                         background: 'linear-gradient(135deg, rgba(20, 40, 45, 0.8) 0%, rgba(15, 35, 40, 0.9) 100%)',
-                        borderColor: sakshiVersion === 2 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.3)',
+                        borderColor: sakshiVersion === 2 ? 'rgba(100, 200, 150, 0.8)' : 'rgba(100, 200, 150, 0.26)',
                         borderWidth: sakshiVersion === 2 ? '2px' : '1px',
                         minHeight: '180px',
                         display: 'flex',
                         alignItems: 'stretch',
-                        boxShadow: sakshiVersion === 2 ? '0 0 20px rgba(100, 200, 150, 0.4)' : 'none',
+                        boxShadow: sakshiVersion === 2 ? '0 0 20px rgba(100, 200, 150, 0.35)' : 'none',
                         padding: 0,
                     }}
                 >
@@ -188,7 +189,7 @@ export function SensoryConfig({
 
                     {/* Content overlay */}
                     <div
-                        className="relative z-10 p-6 flex flex-col justify-between flex-1"
+                        className="relative z-10 p-5 flex flex-col justify-between flex-1"
                         style={{
                             background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, transparent 100%)',
                         }}
@@ -197,11 +198,12 @@ export function SensoryConfig({
                             <h3
                                 style={{
                                     fontFamily: 'var(--font-display)',
-                                    fontSize: '16px',
+                                    fontSize: '12px',
                                     fontWeight: 600,
                                     color: '#D4AF37',
                                     letterSpacing: '1px',
-                                    marginBottom: '4px',
+                                    marginBottom: '2px',
+                                    opacity: 0.8,
                                 }}
                             >
                                 SAKSHI II
@@ -222,7 +224,7 @@ export function SensoryConfig({
                                     fontFamily: 'var(--font-serif)',
                                     fontSize: '12px',
                                     color: 'rgba(232, 220, 200, 0.8)',
-                                    lineHeight: '1.5',
+                                    lineHeight: '1.4',
                                 }}
                             >
                                 Watch the mind through a reflective lens.
@@ -251,7 +253,7 @@ export function SensoryConfig({
             </div>
 
             {/* Scene Selector */}
-            <div className="space-y-3">
+            <div className="space-y-4">
                 <div
                     style={{
                         fontFamily: 'var(--font-display)',
@@ -275,13 +277,13 @@ export function SensoryConfig({
                             className="relative group rounded-lg overflow-hidden transition-all duration-300"
                             style={{
                                 aspectRatio: '4/3',
-                                border: selectedScene === scene.id ? '2px solid #64C896' : '1px solid rgba(100, 200, 150, 0.2)',
+                                border: selectedScene === scene.id ? '2px solid #64C896' : '1px solid rgba(100, 200, 150, 0.16)',
                                 borderRadius: '8px',
                                 background: 'rgba(0, 0, 0, 0.3)',
                                 padding: 0,
                                 cursor: 'pointer',
                                 transform: selectedScene === scene.id ? 'scale(1.05)' : 'scale(1)',
-                                boxShadow: selectedScene === scene.id ? '0 0 12px rgba(100, 200, 150, 0.4)' : 'none',
+                                boxShadow: selectedScene === scene.id ? '0 0 12px rgba(100, 200, 150, 0.35)' : 'none',
                             }}
                         >
                             {/* Background image */}

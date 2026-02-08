@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Typography Guard
+        run: npm run guard:typography
+
       - name: Build
         run: npm run build
 

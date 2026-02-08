@@ -70,7 +70,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
     }, [selectedRitual]);
 
     return (
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-6">
             <div
                 style={{
                     borderRadius: '16px',
@@ -82,7 +82,7 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
             >
                 {/* Header - selection */}
                 <div
-                    className="mb-3 text-center"
+                    className="mb-2 text-center"
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontSize: '9px',
@@ -202,9 +202,9 @@ export function RitualSelectionDeck({ onSelectRitual, selectedRitualId }) {
                 style={{
                     borderRadius: '16px',
                     padding: '14px 16px 16px',
-                    background: isLight ? 'rgba(255,255,255,0.6)' : 'rgba(16,16,26,0.5)',
-                    border: isLight ? '1px solid rgba(160,120,60,0.18)' : '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: isLight ? '0 10px 28px rgba(0,0,0,0.08)' : '0 10px 28px rgba(0,0,0,0.22)',
+                    background: isLight ? 'rgba(255,255,255,0.55)' : 'rgba(16,16,26,0.45)',
+                    border: isLight ? '1px solid rgba(160,120,60,0.14)' : '1px solid rgba(255,255,255,0.06)',
+                    boxShadow: isLight ? '0 8px 24px rgba(0,0,0,0.07)' : '0 8px 24px rgba(0,0,0,0.2)',
                 }}
             >
                 <div

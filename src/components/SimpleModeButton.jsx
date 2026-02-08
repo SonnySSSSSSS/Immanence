@@ -65,7 +65,7 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
         <button
             type="button"
             onClick={handleClick}
-            className="group relative flex flex-col items-center gap-1.5"
+            className="group relative flex flex-col items-center gap-3"
             style={{
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.45 : 1,
@@ -83,18 +83,16 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
                     backgroundImage: `url(${getBackgroundImage()})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    border: isLight ? `2px solid ${primaryHex}60` : `2px solid ${primaryHex}70`,
+                    border: isLight ? `1px solid ${primaryHex}40` : `1px solid ${primaryHex}50`,
                     boxShadow: isLight
                         ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
                         : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`,
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => {
                     if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
-                    e.currentTarget.style.borderColor = isLight ? `${primaryHex}90` : `${primaryHex}`;
+                    e.currentTarget.style.borderColor = isLight ? `${primaryHex}70` : `${primaryHex}80`;
                     e.currentTarget.style.boxShadow = isLight
                         ? `0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2), 0 0 25px ${primaryHex}40`
                         : `0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryHex}60`;
@@ -102,7 +100,7 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
                 onMouseLeave={(e) => {
                     if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                    e.currentTarget.style.borderColor = isLight ? `${primaryHex}60` : `${primaryHex}70`;
+                    e.currentTarget.style.borderColor = isLight ? `${primaryHex}40` : `${primaryHex}50`;
                     e.currentTarget.style.boxShadow = isLight
                         ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
                         : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`;
@@ -129,10 +127,9 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
                 {getIcon()}
             </div>
             <span
-                className="text-[9px] font-bold uppercase tracking-wider"
+                className="type-label font-bold"
                 style={{
                     color: isLight ? 'rgba(100, 80, 60, 0.75)' : 'rgba(253, 251, 245, 0.7)',
-                    letterSpacing: '0.08em',
                 }}
             >
                 {title}

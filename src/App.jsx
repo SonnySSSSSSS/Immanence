@@ -57,7 +57,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
         {section === "wisdom" && !hideCards && (
           <Suspense fallback={
             <div className="flex items-center justify-center p-12">
-              <div className="text-white/50 font-bold text-sm tracking-wide" style={{ fontFamily: 'var(--font-ui)' }}>Loading Wisdom...</div>
+              <div className="type-label normal-case text-white/50">Loading Wisdom...</div>
             </div>
           }>
             <WisdomSection />
@@ -67,7 +67,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
         {section === "application" && !hideCards && (
           <Suspense fallback={
             <div className="flex items-center justify-center p-12">
-              <div className="text-white/50 font-bold text-sm tracking-wide" style={{ fontFamily: 'var(--font-ui)' }}>Loading Application...</div>
+              <div className="type-label normal-case text-white/50">Loading Application...</div>
             </div>
           }>
             <ApplicationSection onStageChange={onStageChange} currentStage={currentStage} previewPath={previewPath} previewShowCore={previewShowCore} previewAttention={previewAttention} onNavigate={onNavigate} />
@@ -440,8 +440,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                 {/* Left: Branding */}
                 <div className="flex-1 flex items-center justify-start">
                   <div
-                    className={`text-[10px] text-suspended ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
-                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.15em' }}
+                    className={`type-label ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
                   >
                     IMMANENCE OS
                   </div>
@@ -477,17 +476,15 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         const tutorialStore = useTutorialStore.getState();
                         tutorialStore.openTutorial(headerTutorialId);
                       }}
-                      className={`text-[10px] uppercase tracking-[0.15em] px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
-                      style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
+                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                       title="Tutorial"
                     >
                       ?
                     </button>
                     <div
-                      className={`text-[8px] uppercase tracking-[0.15em] ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
-                      style={{ fontFamily: 'var(--font-display)' }}
+                      className={`type-caption uppercase tracking-wide ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
                     >
-                      v3.27.78
+                      v3.27.133
                     </div>
                   </div>
 
@@ -495,8 +492,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     <button
                       type="button"
                       onClick={() => setActiveSection(null)}
-                      className={`text-[11px] uppercase tracking-[0.15em] px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
-                      style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
+                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                     >
                       Home
                     </button>

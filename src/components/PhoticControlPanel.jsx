@@ -200,20 +200,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     }}
                     data-guide-step="protocol"
                 >
-                    <div
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '9px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-wide)',
-                            textTransform: 'uppercase',
-                            color: 'var(--accent-60)',
-                            marginBottom: '12px',
-                        }}
-                    >
-                        Signal
-                    </div>
-
                     {/* Invisible anchor for intensity tutorial step */}
                     <div
                         data-guide-step="intensity"
@@ -241,7 +227,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             }}
                             style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
-                        <div style={controlValueStyle}>{photic.rateHz.toFixed(1)} Hz</div>
                     </div>
 
                     {/* Timing Mode - Horizontal */}
@@ -318,7 +303,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             }}
                             style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
-                        <div style={controlValueStyle}>{Math.round(photic.brightness * 100)}%</div>
                     </div>
                 </div>
 
@@ -333,20 +317,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     }}
                     data-guide-step="geometry"
                 >
-                    <div
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '9px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-wide)',
-                            textTransform: 'uppercase',
-                            color: 'var(--accent-60)',
-                            marginBottom: '12px',
-                        }}
-                    >
-                        Geometry
-                    </div>
-
                     {/* Radius Slider - Horizontal */}
                     <div style={controlRowStyle}>
                         <label style={controlLabelStyle}>Radius</label>
@@ -361,7 +331,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             }}
                             style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
-                        <div style={controlValueStyle}>{photic.radiusPx}px</div>
                     </div>
 
                     {/* Spacing Slider - Horizontal */}
@@ -378,7 +347,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                             }}
                             style={{ flex: 1, minWidth: 0, width: '100%', accentColor: 'var(--accent-color)' }}
                         />
-                        <div style={controlValueStyle}>{photic.spacingPx}px</div>
                     </div>
                 </div>
 
@@ -393,20 +361,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                     }}
                     data-guide-step="color"
                 >
-                    <div
-                        style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '9px',
-                            fontWeight: 600,
-                            letterSpacing: 'var(--tracking-wide)',
-                            textTransform: 'uppercase',
-                            color: 'var(--accent-60)',
-                            marginBottom: '12px',
-                        }}
-                    >
-                        Color
-                    </div>
-
                     {/* Color Target Toggle (only shown when linkColors is OFF) */}
                     {!photic.linkColors && (
                         <div style={{ marginBottom: '8px' }}>
@@ -496,13 +450,11 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
 
                     {/* Link Colors Toggle - Horizontal */}
                     <div style={controlRowStyle}>
-                        <label style={controlLabelStyle}>Link</label>
-                        <div style={{ flex: 1 }} />
                         <button
                             onClick={() => {
                                 setPhoticSetting('linkColors', !photic.linkColors);
                             }}
-                            className="px-2 py-1 rounded-lg text-xs font-semibold transition-all"
+                            className="px-2 py-1 rounded-lg text-xs font-semibold transition-all flex-1"
                             style={{
                                 fontFamily: 'var(--font-display)',
                                 backgroundColor: photic.linkColors
@@ -515,11 +467,13 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
                                         : 'var(--accent-20)'
                                 }`,
                                 cursor: 'pointer',
-                                minWidth: '48px',
                                 textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}
                         >
-                            {photic.linkColors ? 'ON' : 'OFF'}
+                            Link
                         </button>
                     </div>
                 </div>

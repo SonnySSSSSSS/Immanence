@@ -41,24 +41,9 @@ export function EmotionConfig({
   const frameText = currentPractice?.oneLineFrame || 'Hold space for what arises.';
 
   return (
-    <div className="emotion-config flex flex-col gap-8">
+    <div className="emotion-config flex flex-col gap-6">
       {/* Emotion Mode Selector */}
       <div>
-        <div
-          className="mb-3"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '9px',
-            fontWeight: 600,
-            letterSpacing: 'var(--tracking-mythic)',
-            textTransform: 'uppercase',
-            color: textColors.muted,
-            textAlign: 'center',
-          }}
-        >
-          Emotion Focus
-        </div>
-
         <div
           className="grid grid-cols-2 gap-2"
           style={{
@@ -106,7 +91,7 @@ export function EmotionConfig({
       {/* Frame Text */}
       {currentPractice && (
         <div
-          className="rounded-lg p-4"
+          className="rounded-lg p-3"
           style={{
             background: isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)',
             border: isLight ? '1px solid rgba(60,50,35,0.1)' : '1px solid rgba(255,255,255,0.1)',
@@ -124,21 +109,6 @@ export function EmotionConfig({
 
       {/* Prompt Mode Selector */}
       <div>
-        <div
-          className="mb-3"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '9px',
-            fontWeight: 600,
-            letterSpacing: 'var(--tracking-mythic)',
-            textTransform: 'uppercase',
-            color: textColors.muted,
-            textAlign: 'center',
-          }}
-        >
-          Prompt Style
-        </div>
-
         <div className="flex gap-2 justify-center">
           {PROMPT_MODES.map((pMode) => {
             const isActive = promptMode === pMode.id;

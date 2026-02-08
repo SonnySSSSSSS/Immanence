@@ -10,7 +10,7 @@ export function ReportSection({
 }) {
     return (
         <section style={{ marginBottom: '18px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.65, marginBottom: '8px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.75, marginBottom: '10px' }}>
                 {title}
             </div>
             <div style={{

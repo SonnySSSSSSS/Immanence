@@ -7,6 +7,7 @@ import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
 import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
+import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
 const SCHEDULE_MATCH_RADIUS_MIN = 90;
@@ -56,7 +57,15 @@ export const useNavigationStore = create(
                 const runId = crypto?.randomUUID?.() || String(Date.now());
                 // Align Day 1 to the selected first slot time:
                 // if the first slot window has already passed today, Day 1 begins tomorrow.
-                const selectedTimes = useCurriculumStore.getState().getPracticeTimeSlots() || [];
+                const selectedTimesRaw = useCurriculumStore.getState().getPracticeTimeSlots() || [];
+                const scheduleConstraint = getScheduleConstraintForPath(pathId);
+                const selectedTimes = scheduleConstraint?.maxCount
+                    ? selectedTimesRaw.slice(0, scheduleConstraint.maxCount)
+                    : selectedTimesRaw.slice();
+                const validation = validateSelectedTimes(selectedTimes, scheduleConstraint);
+                if (!validation.ok) {
+                    return { ok: false, error: validation.error };
+                }
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
                     firstSlotTime: selectedTimes[0],
@@ -90,6 +99,8 @@ export const useNavigationStore = create(
                     },
                     selectedPathId: pathId // Keep selection synced
                 });
+
+                return { ok: true };
             },
 
             // Mark current week as complete and advance
@@ -218,11 +229,14 @@ export const useNavigationStore = create(
              * Kept for UI compatibility but internally delegates to curriculum store
              */
             setScheduleSlots: (slots = []) => {
+                const pathId = get().activePath?.activePathId || get().selectedPathId || null;
+                const scheduleConstraint = getScheduleConstraintForPath(pathId);
+                const maxAllowed = scheduleConstraint?.maxCount || 3;
                 // Extract times from slot objects
                 const times = slots
                     .filter(slot => slot && slot.time)
                     .map(slot => slot.time)
-                    .slice(0, 3);
+                    .slice(0, maxAllowed);
 
                 // Write to canonical curriculum store
                 useCurriculumStore.getState().setPracticeTimeSlots(times);

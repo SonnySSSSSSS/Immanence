@@ -196,9 +196,6 @@ function PracticeMenu({
     {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
     {showDuration && (
       <div style={{ marginBottom: durationMarginBottom }}>
-        <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: durationTitleMarginBottom, letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-          Sacred Duration (minutes)
-        </div>
         <SacredTimeSlider
           value={duration}
           onChange={onDurationChange}

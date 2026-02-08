@@ -12,6 +12,7 @@ export function Playground() {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [frameWidth, setFrameWidth] = useState(0);
   const exitingRef = useRef(false);
+  const syncingFromLayoutRef = useRef(false);
 
   const displayMode = useDisplayModeStore((s) => s.mode);
   const viewportMode = useDisplayModeStore((s) => s.viewportMode);
@@ -42,6 +43,24 @@ export function Playground() {
   const deactivatePlayground = useDevOverrideStore((s) => s.deactivatePlayground);
 
   const presetOptions = Object.entries(PLAYGROUND_PRESETS);
+  const initialSnapshotRef = useRef(null);
+  const initialUiStateRef = useRef(null);
+
+  if (initialSnapshotRef.current == null) {
+    initialSnapshotRef.current = {
+      mode: displayMode,
+      viewportMode,
+      previewStage: overrideStage || stage,
+      previewPath: overridePath,
+    };
+  }
+
+  if (initialUiStateRef.current == null) {
+    initialUiStateRef.current = {
+      layoutMode,
+      stage,
+    };
+  }
 
   const applyRestoredSnapshot = useCallback(
     (snapshot) => {
@@ -86,18 +105,16 @@ export function Playground() {
   }, [restorePlaygroundState]);
 
   useEffect(() => {
-    const snapshot = {
-      mode: displayMode,
-      viewportMode,
-      previewStage: overrideStage || stage,
-      previewPath: overridePath,
-    };
+    const snapshot = initialSnapshotRef.current;
+    const initialUiState = initialUiStateRef.current;
     captureSnapshot(snapshot);
     activatePlayground(snapshot);
-    setOverrideLayoutMode(layoutMode);
-    setMode(layoutMode);
-    setViewportMode(layoutMode);
-    setOverrideStage(stage);
+
+    syncingFromLayoutRef.current = true;
+    setOverrideLayoutMode(initialUiState.layoutMode);
+    setMode(initialUiState.layoutMode);
+    setViewportMode(initialUiState.layoutMode);
+    setOverrideStage(initialUiState.stage);
 
     return () => {
       if (!exitingRef.current) {
@@ -107,17 +124,11 @@ export function Playground() {
   }, [
     activatePlayground,
     captureSnapshot,
-    displayMode,
-    layoutMode,
-    overrideStage,
-    overridePath,
     restorePlaygroundState,
     setMode,
     setOverrideLayoutMode,
     setOverrideStage,
     setViewportMode,
-    stage,
-    viewportMode,
   ]);
 
   useEffect(() => {
@@ -134,6 +145,7 @@ export function Playground() {
 
   // Drawer -> app mode/stage
   useEffect(() => {
+    syncingFromLayoutRef.current = true;
     setMode(layoutMode);
     setViewportMode(layoutMode);
     setOverrideLayoutMode(layoutMode);
@@ -145,6 +157,10 @@ export function Playground() {
 
   // App -> drawer mode two-way sync (WidthToggle can change it)
   useEffect(() => {
+    if (syncingFromLayoutRef.current) {
+      syncingFromLayoutRef.current = false;
+      return;
+    }
     if (displayMode !== layoutMode) {
       setLayoutMode(displayMode);
       setOverrideLayoutMode(displayMode);

@@ -117,25 +117,6 @@ function BreathPracticeCard({
 
   return (
     <div className="relative px-8 animate-in fade-in duration-300">
-      {/* FOUNDATION section header (above Breath & Stillness tabs) */}
-      {practiceId === 'breath' && (
-        <div
-          style={{
-            fontSize: '14px',
-            fontFamily: 'var(--font-display)',
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#F5E6D3',
-            marginTop: '20px',
-            marginBottom: '24px',
-            textAlign: 'center',
-          }}
-        >
-          FOUNDATION
-        </div>
-      )}
-
       {/* HEADER - using shared component */}
       <PracticeMenuHeader
         title={practiceId === 'breath' ? undefined : label}
@@ -145,70 +126,56 @@ function BreathPracticeCard({
       >
         {/* Top Level: Breath vs Stillness as Title-like Tabs */}
         {practiceId === 'breath' && (
-          <div className="flex items-center justify-center gap-4" style={{ marginTop: '20px', marginBottom: '24px' }}>
+            <div className="flex items-center justify-center gap-4" style={{ marginTop: '18px', marginBottom: '24px' }}>
             {[
               { id: 'breath', label: 'Breath' },
               { id: 'stillness', label: 'Stillness' }
-            ].map((item, idx) => {
+            ].map((item) => {
               const isActive = breathSubmode === item.id;
               return (
-                <React.Fragment key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => onBreathSubmodeChange?.(item.id)}
-                    aria-selected={isActive}
-                    aria-label={`${item.label} mode`}
-                    className="breath-title-tab transition-all"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
-                      paddingBottom: '4px',
-                      cursor: 'pointer',
-                      transition: 'all 300ms ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = 'rgba(212, 175, 55, 0.7)';
-                        e.currentTarget.style.opacity = '0.8';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = 'rgba(245, 230, 211, 0.45)';
-                        e.currentTarget.style.opacity = '1';
-                      }
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.outline = '2px solid rgba(212, 175, 55, 0.6)';
-                      e.currentTarget.style.outlineOffset = '4px';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.outline = 'none';
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                  {idx === 0 && (
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '16px',
-                        fontWeight: 600,
-                        color: 'rgba(212, 175, 55, 0.7)',
-                        userSelect: 'none',
-                      }}
-                    >
-                      &
-                    </span>
-                  )}
-                </React.Fragment>
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onBreathSubmodeChange?.(item.id)}
+                  aria-selected={isActive}
+                  aria-label={`${item.label} mode`}
+                  className="breath-title-tab transition-all"
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
+                    paddingBottom: '4px',
+                    cursor: 'pointer',
+                    transition: 'all 300ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = 'rgba(212, 175, 55, 0.7)';
+                      e.currentTarget.style.opacity = '0.8';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = 'rgba(245, 230, 211, 0.45)';
+                      e.currentTarget.style.opacity = '1';
+                    }
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.outline = '2px solid rgba(212, 175, 55, 0.6)';
+                    e.currentTarget.style.outlineOffset = '4px';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.outline = 'none';
+                  }}
+                >
+                  {item.label}
+                </button>
               );
             })}
           </div>
@@ -216,13 +183,13 @@ function BreathPracticeCard({
       </PracticeMenuHeader>
 
       {/* Dynamic Config Panel */}
-      <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '16px' : '32px' }}>
+      <div className="min-h-[100px]" style={{ marginBottom: practiceId === 'breath' ? '20px' : '32px' }}>
         {/* Focus Mode: Collapsed Summary */}
         {isFocusMode && practiceId === 'breath' && (
           <div
             className="relative z-20"
             style={{
-              marginBottom: '16px',
+              marginBottom: '20px',
               pointerEvents: "auto",
             }}
           >
@@ -238,19 +205,19 @@ function BreathPracticeCard({
               onClick={() => setMode("focus")}
               style={{
                 width: '100%',
-                padding: '8px 12px',
+                padding: '6px 12px',
                 fontSize: '10px',
                 fontWeight: 600,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                background: 'rgba(212, 175, 55, 0.12)',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
+                background: 'rgba(212, 175, 55, 0.1)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
                 borderRadius: '8px',
-                color: 'rgba(212, 175, 55, 0.9)',
+                color: 'rgba(212, 175, 55, 0.85)',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-display)',
                 transition: 'all 200ms',
-                marginBottom: '12px',
+                marginBottom: '16px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
@@ -270,7 +237,7 @@ function BreathPracticeCard({
         {breathSubmode === 'breath' && !isFocusMode && (
           <>
             {/* Expansion vs Traditional Toggle - first after header */}
-            <div className="flex items-center justify-center gap-2" style={{ marginBottom: '16px' }}>
+            <div className="flex items-center justify-center gap-2" style={{ marginBottom: '18px' }}>
               {[
                 { id: 'expansion', label: 'Expansion' },
                 { id: 'traditional', label: 'Traditional' }
@@ -308,71 +275,71 @@ function BreathPracticeCard({
                 backdropFilter: 'blur(32px) saturate(160%)',
                 WebkitBackdropFilter: 'blur(32px) saturate(160%)',
                 borderRadius: '16px',
-                padding: '20px',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
+                padding: '16px',
+                border: '1px solid rgba(212, 175, 55, 0.15)',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
               }}
             >
               <BreathWaveform pattern={pattern} />
             </div>
 
-            {/* Breath Phase Input Controls - always visible */}
-            <div
-              className="flex justify-center gap-8"
-              style={{ marginTop: '24px', marginBottom: '16px' }}
-            >
-              {[
-                { label: 'INHALE', key: 'inhale', min: 1 },
-                { label: 'HOLD 1', key: 'hold1', min: 0 },
-                { label: 'EXHALE', key: 'exhale', min: 1 },
-                { label: 'HOLD 2', key: 'hold2', min: 0 }
-              ].map((phase) => (
-                <div key={phase.key} className="flex flex-col items-center">
-                  <label
-                    style={{
-                      fontSize: '9px',
-                      letterSpacing: '0.12em',
-                      color: 'rgba(255,255,255,0.4)',
-                      marginBottom: '8px',
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: 600,
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    {phase.label}
-                  </label>
-                  <input
-                    type="number"
-                    min={phase.min}
-                    max="60"
-                    value={pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
-                    onChange={(e) => {
-                      const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
-                      onPatternChange?.((prev) => ({ ...prev, [phase.key]: val }));
-                    }}
-                    className="breath-input"
-                    style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '6px',
-                      padding: '6px 0',
-                      width: '44px',
-                      color: 'var(--accent-color)',
-                      textAlign: 'center',
-                      fontSize: '18px',
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-display)',
-                      outline: 'none',
-                      transition: 'all 200ms'
-                    }}
-                  />
-                </div>
-              ))}
+            {/* Breath Cycle Header and Input Controls */}
+            <div style={{ marginTop: '24px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'rgba(255,255,255,0.4)',
+                  marginBottom: '10px',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  textAlign: 'center'
+                }}
+              >
+                Breath Cycle (seconds)
+              </div>
+              <div className="flex justify-center gap-6">
+                {[
+                  { label: 'INHALE', key: 'inhale', min: 1 },
+                  { label: 'HOLD 1', key: 'hold1', min: 0 },
+                  { label: 'EXHALE', key: 'exhale', min: 1 },
+                  { label: 'HOLD 2', key: 'hold2', min: 0 }
+                ].map((phase) => (
+                  <div key={phase.key} className="flex flex-col items-center">
+                    <input
+                      type="number"
+                      min={phase.min}
+                      max="60"
+                      value={pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
+                      onChange={(e) => {
+                        const val = Math.max(phase.min, Math.min(60, parseInt(e.target.value) || 0));
+                        onPatternChange?.((prev) => ({ ...prev, [phase.key]: val }));
+                      }}
+                      className="breath-input"
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '6px',
+                        padding: '6px 0',
+                        width: '44px',
+                        color: 'rgba(212, 175, 55, 0.8)',
+                        textAlign: 'center',
+                        fontSize: '16px',
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-display)',
+                        outline: 'none',
+                        transition: 'all 200ms'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Traditional Ratios Panel - shown when traditional method selected */}
             {breathMethod === 'traditional' && (
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '28px' }}>
                 <TraditionalBreathRatios
                   onSelectRatio={([inhale, hold1, exhale, hold2]) => {
                     onPatternChange?.({ inhale, hold1, exhale, hold2 });
@@ -383,7 +350,7 @@ function BreathPracticeCard({
 
             {/* Benchmark Button - only for expansion method */}
             {breathMethod === 'expansion' && (
-              <div className="flex justify-center" style={{ marginBottom: '16px' }}>
+              <div className="flex justify-center" style={{ marginBottom: '20px' }}>
                 <button
                   onClick={onRunBenchmark}
                   className="benchmark-button"
@@ -395,9 +362,9 @@ function BreathPracticeCard({
                     textTransform: 'uppercase',
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    background: 'rgba(212, 175, 55, 0.08)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)',
-                    color: 'rgba(212, 175, 55, 0.9)',
+                    background: 'rgba(212, 175, 55, 0.06)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
+                    color: 'rgba(212, 175, 55, 0.85)',
                     cursor: 'pointer',
                     transition: 'all 200ms',
                     boxShadow: '0 0 8px rgba(212, 175, 55, 0.1)'
@@ -444,7 +411,7 @@ function BreathPracticeCard({
                 rgba(233,195,90,0.04) 60%,
                 transparent 70%
               );
-              filter: blur(18px);
+              filter: blur(12px);
               pointer-events: none;
               z-index: 0;
               animation: breath-pulse-glow 8s infinite ease-in-out;
@@ -553,7 +520,7 @@ function BreathPracticeCard({
                 rgba(233,195,90,0.04) 60%,
                 transparent 70%
               );
-              filter: blur(18px);
+              filter: blur(12px);
               pointer-events: none;
               z-index: 0;
               animation: breath-pulse-glow 8s infinite ease-in-out;
@@ -573,14 +540,14 @@ function BreathPracticeCard({
 
       {/* Collapsible Tempo Sync Section (Breath Practice + Expansion Method Only) */}
       {breathSubmode === 'breath' && breathMethod === 'expansion' && !isFocusMode && (
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <button
             onClick={onToggleTempoSync}
           style={{
             width: '100%',
             padding: '12px 16px',
-            backgroundColor: showTempoSync ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(74, 222, 128, 0.2)',
+            backgroundColor: showTempoSync ? 'rgba(74, 222, 128, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(74, 222, 128, 0.18)',
             borderRadius: '10px',
             color: 'var(--text-secondary)',
             fontSize: '11px',
@@ -595,12 +562,12 @@ function BreathPracticeCard({
             textTransform: 'uppercase',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.12)';
-            e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.4)';
+            e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.35)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = showTempoSync ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255, 255, 255, 0.03)';
-            e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.2)';
+            e.currentTarget.style.backgroundColor = showTempoSync ? 'rgba(74, 222, 128, 0.06)' : 'rgba(255, 255, 255, 0.02)';
+            e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.18)';
           }}
         >
           <span>?? Tempo Sync</span>
@@ -634,12 +601,9 @@ function BreathPracticeCard({
       {/* Shared Duration Slider - Hidden for Circuit as it manages its own total duration */}
       {supportsDuration && practiceId !== 'circuit' && !(practiceId === 'breath' && isFocusMode) && (
         <div
-          style={{ marginBottom: practiceId === 'breath' ? '24px' : '40px' }}
+          style={{ marginBottom: practiceId === 'breath' ? '24px' : '32px' }}
           data-tutorial={breathSubmode === 'stillness' ? 'stillness-options' : undefined}
         >
-          <div className="font-bold uppercase text-center" style={{ fontFamily: 'var(--font-display)', color: 'rgba(245, 230, 211, 0.5)', marginBottom: practiceId === 'breath' ? '16px' : '24px', letterSpacing: '0.12em', fontSize: '10px', fontWeight: 600, opacity: 1 }}>
-            Sacred Duration (minutes)
-          </div>
           <SacredTimeSlider
             value={duration}
             onChange={onDurationChange}
@@ -650,7 +614,7 @@ function BreathPracticeCard({
 
       {/* Start Button - Sacred Portal with Ember Theme */}
       {!(practiceId === 'ritual') && (
-        <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
+        <div className="flex flex-col items-center" style={{ marginTop: '24px', marginBottom: '14px' }}>
           <button
             onClick={handleStart}
             className="group transition-all duration-300 relative overflow-hidden begin-button"
@@ -733,15 +697,15 @@ function BreathPracticeCard({
           `}</style>
 
           {practiceId === 'breath' && (
-            <div className="w-full" style={{ maxWidth: '430px', marginTop: '14px' }}>
+            <div className="w-full" style={{ maxWidth: '430px', marginTop: '12px' }}>
               <button
                 type="button"
                 onClick={onToggleTrajectory}
-                className="w-full text-[9px] font-black uppercase tracking-[0.35em] transition-opacity"
+                className="w-full text-[10px] font-black uppercase tracking-[0.32em] transition-opacity"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: 'rgba(253, 251, 245, 0.85)',
-                  opacity: showTrajectory ? 0.95 : 0.55,
+                  opacity: showTrajectory ? 0.95 : 0.7,
                   padding: '10px 12px',
                   borderRadius: '14px',
                   border: '1px solid rgba(255,255,255,0.10)',

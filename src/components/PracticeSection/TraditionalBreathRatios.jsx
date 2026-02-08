@@ -73,10 +73,11 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
         backdropFilter: "blur(32px) saturate(160%)",
         WebkitBackdropFilter: "blur(32px) saturate(160%)",
         borderRadius: "16px",
-        padding: "20px",
-        border: "1px solid rgba(212, 175, 55, 0.25)",
+        padding: "14px",
+        border: "1px solid rgba(212, 175, 55, 0.12)",
         boxShadow:
           "0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+        marginBottom: "8px",
       }}
     >
       {/* Ratio Cards */}
@@ -88,15 +89,15 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
             style={{
               display: "block",
               width: "100%",
-              padding: "12px 14px",
+              padding: "9px 12px",
               background:
                 selectedId === r.id
                   ? "rgba(212, 175, 55, 0.2)"
                   : "rgba(255, 255, 255, 0.03)",
               border:
                 selectedId === r.id
-                  ? "1px solid rgba(212, 175, 55, 0.6)"
-                  : "1px solid rgba(255, 255, 255, 0.08)",
+                  ? "1px solid rgba(212, 175, 55, 0.5)"
+                  : "1px solid rgba(255, 255, 255, 0.06)",
               borderRadius: "8px",
               color: "rgba(255, 255, 255, 0.9)",
               cursor: "pointer",
@@ -122,7 +123,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
                 fontSize: "12px",
                 fontWeight: 600,
                 letterSpacing: "0.03em",
-                marginBottom: "4px",
+                marginBottom: "2px",
               }}
             >
               {r.label}
@@ -131,7 +132,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
               style={{
                 fontSize: "10px",
                 opacity: 0.6,
-                marginBottom: "6px",
+                marginBottom: "4px",
               }}
             >
               {formatRatio(r.ratio)}
@@ -149,7 +150,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
       </div>
 
       {/* Advanced Toggle */}
-      <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+      <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
           style={{
@@ -182,7 +183,7 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
                 fontWeight: 600,
               }}
             >
-              Cadence: {(cadenceScale * 100).toFixed(0)}%
+              Cadence
             </label>
 
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -238,22 +239,6 @@ export function TraditionalBreathRatios({ onSelectRatio }) {
                 +
               </button>
             </div>
-
-            {/* Readout */}
-            {selectedId && (
-              <div style={{ marginTop: "12px", fontSize: "9px", opacity: 0.6 }}>
-                <div style={{ marginBottom: "4px" }}>
-                  <strong>Scaled Pattern:</strong>
-                </div>
-                {TRADITIONAL_RATIOS.find((r) => r.id === selectedId) && (
-                  <div>
-                    {formatRatio(
-                      getScaledRatio(TRADITIONAL_RATIOS.find((r) => r.id === selectedId).ratio)
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </div>

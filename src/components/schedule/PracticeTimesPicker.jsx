@@ -3,6 +3,7 @@ import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { getLocalDateKey } from '../../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt } from '../../utils/scheduleUtils.js';
+import { canToggleTime, validateSelectedTimes } from '../../utils/scheduleSelectionConstraints.js';
 
 const DEFAULT_TIME_OPTIONS = [
     '05:00',
@@ -34,6 +35,8 @@ export function PracticeTimesPicker({
     value,
     onChange,
     maxSlots = 3,
+    scheduleConstraint = null,
+    onConstraintViolation,
     timeOptions = DEFAULT_TIME_OPTIONS,
     title = 'Select Practice Times',
 }) {
@@ -46,14 +49,20 @@ export function PracticeTimesPicker({
         ? computeScheduleAnchorStartAt({ now: new Date(), firstSlotTime })
         : null;
     const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey();
+    const effectiveConstraint = scheduleConstraint || { maxCount: maxSlots };
 
     const toggleTime = (timeValue) => {
         if (selectedTimes.includes(timeValue)) {
             onChange?.(selectedTimes.filter((t) => t !== timeValue));
             return;
         }
-        if (selectedTimes.length >= maxSlots) return;
-        onChange?.([...selectedTimes, timeValue]);
+        const nextSelectedTimes = [...selectedTimes, timeValue];
+        if (!canToggleTime(nextSelectedTimes, effectiveConstraint)) {
+            const validation = validateSelectedTimes(nextSelectedTimes, effectiveConstraint);
+            onConstraintViolation?.(validation.error || 'Unable to select this time slot.');
+            return;
+        }
+        onChange?.(nextSelectedTimes);
     };
 
     return (
@@ -70,7 +79,7 @@ export function PracticeTimesPicker({
                 </h2>
             ) : null}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto no-scrollbar\">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 max-h-48 overflow-y-auto no-scrollbar">
                 {timeOptions.map((timeValue) => {
                     const isSelected = selectedTimes.includes(timeValue);
                     return (

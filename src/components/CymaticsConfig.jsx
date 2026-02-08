@@ -51,20 +51,9 @@ export function CymaticsConfig({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-5">
             {/* Frequency Set Selector - Compact Pills */}
             <div>
-                <div
-                    className="text-[9px] uppercase tracking-[0.25em] mb-2"
-                    style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        color: 'var(--text-muted)'
-                    }}
-                >
-                    Frequency Set
-                </div>
                 <div className="grid grid-cols-2 gap-2">
                     {frequencySets.map((set) => (
                         <button
@@ -86,7 +75,9 @@ export function CymaticsConfig({
                             }}
                             className="px-3 py-2 rounded-full text-[10px] text-center min-h-[44px] leading-tight whitespace-normal min-w-0 break-words max-w-full"
                             style={{
-                                border: frequencySet === set.id ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
+                                border: frequencySet === set.id
+                                    ? '1px solid var(--accent-40)'
+                                    : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.18)',
                                 background: frequencySet === set.id ? 'var(--accent-10)' : 'transparent',
                                 color: frequencySet === set.id ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 fontFamily: 'var(--font-display)',
@@ -102,24 +93,13 @@ export function CymaticsConfig({
             </div>
 
             {/* Frequency Card - Large, Clickable */}
-            <div>
-                <div
-                    className="text-[9px] uppercase tracking-[0.25em] mb-2"
-                    style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        color: 'var(--text-muted)'
-                    }}
-                >
-                    Frequency
-                </div>
+            <div style={{ marginTop: '6px' }}>
                 <button
                     onClick={() => setShowFrequencyModal(!showFrequencyModal)}
                     className="w-full p-4 rounded-2xl text-center transition-all relative overflow-hidden"
                     style={{
                         background: isLight ? 'var(--light-bg-surface)' : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-                        border: isLight ? '1px solid var(--light-border)' : '1px solid var(--accent-30)',
+                        border: isLight ? '1px solid var(--light-border)' : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.26)',
                         boxShadow: isLight ? '0 2px 12px var(--light-shadow-tint)' : '0 0 20px var(--accent-15), inset 0 0 20px var(--accent-08)',
                     }}
                 >
@@ -151,27 +131,29 @@ export function CymaticsConfig({
                     )}
 
                     <div
-                        className="text-sm mb-1 font-semibold"
+                        className="text-sm font-semibold"
                         style={{
                             fontFamily: 'var(--font-display)',
                             color: 'var(--accent-color)',
                             letterSpacing: 'var(--tracking-wide)',
                             fontSize: '14px',
+                            marginBottom: '2px',
                         }}
                     >
                         {selectedFrequency?.name || 'Select Frequency'}
                     </div>
                     <div
-                        className="text-2xl font-bold mb-1"
+                        className="text-2xl font-bold"
                         style={{
                             fontFamily: 'var(--font-display)',
                             color: 'var(--text-primary)',
+                            marginBottom: '2px',
                         }}
                     >
                         {selectedFrequency?.hz || '---'} Hz
                     </div>
                     <div
-                        className="text-[10px]"
+                        className="text-[9px]"
                         style={{ color: 'var(--text-muted)' }}
                     >
                         {selectedFrequency?.quality || 'Tap to choose'}
@@ -192,7 +174,7 @@ export function CymaticsConfig({
                                 style={{
                                     border: selectedFrequency?.hz === freq.hz
                                         ? '1px solid var(--accent-color)'
-                                        : '1px solid var(--accent-15)',
+                                        : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.18)',
                                     background: selectedFrequency?.hz === freq.hz
                                         ? 'var(--accent-10)'
                                         : (isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)'),
@@ -215,18 +197,7 @@ export function CymaticsConfig({
             </div>
 
             {/* Phase Cycle - Compact Selector */}
-            <div>
-                <div
-                    className="text-[9px] uppercase tracking-[0.25em] mb-2"
-                    style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                        color: 'var(--text-muted)'
-                    }}
-                >
-                    Phase Cycle
-                </div>
+            <div style={{ paddingTop: '4px' }}>
                 <div className="grid grid-cols-4 gap-2 mb-3">
                     {PHASE_CYCLE_PRESETS.map((preset) => (
                         <button
@@ -236,10 +207,10 @@ export function CymaticsConfig({
                             style={{
                                 border: totalCycleDuration === preset.total
                                     ? '1px solid var(--accent-color)'
-                                    : '1px solid var(--accent-15)',
+                                    : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.18)',
                                 background: totalCycleDuration === preset.total
                                     ? 'var(--accent-10)'
-                                    : (isLight ? 'rgba(60,50,35,0.05)' : 'rgba(0,0,0,0.2)'),
+                                    : (isLight ? 'rgba(60,50,35,0.04)' : 'rgba(0,0,0,0.16)'),
                                 color: totalCycleDuration === preset.total
                                     ? 'var(--accent-color)'
                                     : 'var(--text-secondary)',
@@ -312,7 +283,7 @@ export function CymaticsConfig({
                     </div>
                 </div>
                 <div
-                    className="mt-1 text-center text-[9px]"
+                    className="mt-1 text-center text-[8px]"
                     style={{ color: 'var(--text-muted)' }}
                 >
                     In → Hold → Out → Void
@@ -320,12 +291,14 @@ export function CymaticsConfig({
             </div>
 
             {/* Toggles - Horizontal Row */}
-            <div className="flex gap-2">
+            <div className="flex gap-2" style={{ paddingTop: '4px' }}>
                 <button
                     onClick={() => setDriftEnabled(!driftEnabled)}
-                    className="flex-1 px-3 py-2.5 rounded-xl text-[10px] flex items-center justify-between"
+                    className="flex-1 px-3 py-2.5 rounded-xl text-[10px] flex items-center justify-center"
                     style={{
-                        border: driftEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
+                        border: driftEnabled
+                            ? '1px solid var(--accent-40)'
+                            : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.18)',
                         background: driftEnabled ? 'var(--accent-10)' : 'transparent',
                         color: driftEnabled ? 'var(--text-primary)' : 'var(--text-secondary)',
                         fontFamily: 'var(--font-display)',
@@ -335,14 +308,15 @@ export function CymaticsConfig({
                     }}
                 >
                     <span>Drift</span>
-                    <span className="text-[9px] opacity-70">{driftEnabled ? 'ON' : 'OFF'}</span>
                 </button>
 
                 <button
                     onClick={() => setAudioEnabled(!audioEnabled)}
-                    className="flex-1 px-3 py-2.5 rounded-xl text-[10px] flex items-center justify-between"
+                    className="flex-1 px-3 py-2.5 rounded-xl text-[10px] flex items-center justify-center"
                     style={{
-                        border: audioEnabled ? '1px solid var(--accent-40)' : '1px solid var(--accent-15)',
+                        border: audioEnabled
+                            ? '1px solid var(--accent-40)'
+                            : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.18)',
                         background: audioEnabled ? 'var(--accent-10)' : 'transparent',
                         color: audioEnabled ? 'var(--text-primary)' : 'var(--text-secondary)',
                         fontFamily: 'var(--font-display)',
@@ -352,7 +326,6 @@ export function CymaticsConfig({
                     }}
                 >
                     <span>Audio</span>
-                    <span className="text-[9px] opacity-70">{audioEnabled ? 'ON' : 'OFF'}</span>
                 </button>
             </div>
         </div>

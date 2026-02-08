@@ -8,6 +8,7 @@ import { treatiseChapters } from '../data/treatise.generated.js';
 import { useUiStore } from '../state/uiStore.js';
 import { BreathBenchmark } from './BreathBenchmark.jsx';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
+import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -17,7 +18,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const { beginPath } = useNavigationStore();
     const { practiceTimeSlots, setPracticeTimeSlots } = useCurriculumStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);
-    const [scheduleRequired, setScheduleRequired] = useState(false);
+    const [scheduleError, setScheduleError] = useState(null);
     const [showBenchmark, setShowBenchmark] = useState(false);
     const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
     const needsRebenchmark = useBreathBenchmarkStore(s => s.needsRebenchmark());
@@ -33,21 +34,40 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     };
 
     const scheduleTimes = (practiceTimeSlots || []).filter(Boolean);
+    const scheduleConstraint = getScheduleConstraintForPath(path.id);
+    const scheduleValidation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
+    const canBeginPath = scheduleValidation.ok;
+    const scheduleInstruction = scheduleConstraint?.requiredCount === 2 && scheduleConstraint?.maxCount === 2
+        ? 'Select 2 time slots for practice that you can attend consistently for 2 weeks.'
+        : 'Choose at least one time to begin this path.';
 
     const handleScheduleChange = (nextTimes) => {
-        setScheduleRequired(false);
-        setPracticeTimeSlots(nextTimes);
+        const normalizedTimes = Array.isArray(nextTimes) ? nextTimes.filter(Boolean) : [];
+        const constrainedTimes = scheduleConstraint?.maxCount
+            ? normalizedTimes.slice(0, scheduleConstraint.maxCount)
+            : normalizedTimes;
+        setScheduleError(null);
+        setPracticeTimeSlots(constrainedTimes);
+    };
+
+    const handleConstraintViolation = (errorMessage) => {
+        setScheduleError(errorMessage || scheduleValidation.error);
     };
 
     const handleBegin = () => {
-        if (!path.simple && scheduleTimes.length === 0) {
-            setScheduleRequired(true);
+        const validation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
+        if (!validation.ok) {
+            setScheduleError(validation.error);
             return;
         }
+        setScheduleError(null);
         if (onBegin) {
             onBegin(path.id);
         } else {
-            beginPath(path.id);
+            const beginResult = beginPath(path.id);
+            if (beginResult?.ok === false) {
+                setScheduleError(beginResult.error || validation.error);
+            }
         }
     };
 
@@ -478,6 +498,9 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {path.showBreathBenchmark && (
                 <div className="mb-8">
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.65)' : 'var(--accent-50)' }}>
+                        Step 1: Benchmark
+                    </div>
                     <h3
                         className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
                         style={{ fontFamily: 'var(--font-display)' }}
@@ -516,21 +539,26 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {/* Practice Times */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.65)' : 'var(--accent-50)' }}>
+                    Step 2: Select Time Slots
+                </div>
                 <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
                     Select your practice times
                 </div>
                 <div className="mb-3" style={{ color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.7)', fontSize: '12px' }}>
-                    Choose at least one time to begin this path.
+                    {scheduleInstruction}
                 </div>
                 <PracticeTimesPicker
                     value={scheduleTimes}
                     onChange={handleScheduleChange}
-                    maxSlots={3}
+                    maxSlots={scheduleConstraint?.maxCount ?? 3}
+                    scheduleConstraint={scheduleConstraint}
+                    onConstraintViolation={handleConstraintViolation}
                     title={null}
                 />
-                {scheduleRequired && (
-                    <div className="mt-3 text-[11px] uppercase tracking-wider" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
-                        Select at least one time to continue.
+                {scheduleError && (
+                    <div className="mt-3 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                        {scheduleError}
                     </div>
                 )}
             </div>
@@ -546,10 +574,13 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {/* BEGIN Button */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                <div className="text-[10px] uppercase tracking-[0.18em] mb-3" style={{ color: isLight ? 'rgba(140, 100, 40, 0.65)' : 'var(--accent-50)' }}>
+                    Step 3: Click Begin this path
+                </div>
                 <button
                     onClick={handleBegin}
-                    disabled={scheduleTimes.length === 0}
-                    className="w-full py-4 rounded-full font-bold text-lg transition-all group relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
+                    aria-disabled={!canBeginPath}
+                    className={`w-full py-4 rounded-full font-bold text-lg transition-all group relative overflow-hidden ${canBeginPath ? '' : 'opacity-60 cursor-not-allowed'}`}
                     style={{
                         fontFamily: 'var(--font-display)',
                         letterSpacing: 'var(--tracking-mythic)',

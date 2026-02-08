@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "node scripts/guard-dev.mjs && npx vite",
     "dev:clean": "powershell -ExecutionPolicy Bypass -File ./dev-reset.ps1 && npm run dev",
+    "guard:typography": "node scripts/guard-typography.mjs",
+    "guard:typography:report": "node scripts/guard-typography.mjs --report",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",

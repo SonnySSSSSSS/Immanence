@@ -55,7 +55,7 @@ export function PracticeMenuHeader({
   };
 
   return (
-    <div className="practiceMenuHeader" style={{ marginTop: '20px', marginBottom }}>
+    <div className="practiceMenuHeader" style={{ marginTop: '16px', marginBottom }}>
       {/* Top row: tutorial button centered */}
       <div className="practiceMenuHeaderTopRow">
         <div />
@@ -63,15 +63,10 @@ export function PracticeMenuHeader({
           <div className="tutorialButtonWrap">
             <button
               type="button"
-              className="practiceMenuHeaderTutorial"
+              className="practiceMenuHeaderTutorial type-label"
               data-tutorial="tutorial-button"
               onClick={handleTutorialClick}
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '10px',
-                fontWeight: 600,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
                 padding: '8px 12px',
                 borderRadius: '8px',
                 border: '1px solid rgba(255,255,255,0.2)',
@@ -118,13 +113,8 @@ export function PracticeMenuHeader({
       {title && (
         <div className="practiceMenuHeaderTitleRow">
           <div
-            className="practiceMenuHeaderTitle"
+            className="practiceMenuHeaderTitle type-h2"
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '16px',
-              fontWeight: 600,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
               color: '#F5E6D3',
             }}
           >

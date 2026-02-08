@@ -93,7 +93,7 @@ export function CircuitTrainingSelector({
         onClick={() => setOpen((v) => !v)}
         className={
           "w-full text-left rounded-lg border transition-all duration-200 " +
-          "flex items-center gap-3 px-4 py-2.5 " +
+          "flex items-center gap-3 px-4 py-3 " +
           "border-white/10 overflow-hidden " +
           "hover:border-white/20"
         }
@@ -110,7 +110,7 @@ export function CircuitTrainingSelector({
       >
         {/* Color rail indicator */}
         <div
-          className="w-2 h-6 rounded-full flex-shrink-0"
+          className="w-2 h-7 rounded-full flex-shrink-0"
           style={{
             background: active.rail,
             opacity: 0.85,
