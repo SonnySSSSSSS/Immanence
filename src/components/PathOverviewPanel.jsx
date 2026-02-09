@@ -14,6 +14,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
+    const goldLabelColor = isLight ? 'rgba(180, 120, 40, 0.75)' : 'var(--gold-80)';
 
     const { beginPath } = useNavigationStore();
     const { practiceTimeSlots, setPracticeTimeSlots } = useCurriculumStore();
@@ -269,7 +270,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                         style={{
                             fontFamily: 'var(--font-display)',
                             letterSpacing: 'var(--tracking-wide)',
-                            color: isLight ? 'rgba(180, 140, 90, 0.8)' : 'var(--accent-60)'
+                            color: goldLabelColor,
                         }}
                     >
                         <span className="w-8 h-[1px]" style={{ background: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)' }} />
@@ -411,7 +412,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {path.showBreathBenchmark && (
                 <div className="mb-8">
-                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.65)' : 'var(--accent-50)' }}>
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
                         Step 1: Benchmark
                     </div>
                     <h3
@@ -452,7 +453,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {/* Practice Times */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
-                <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: isLight ? 'rgba(140, 100, 40, 0.65)' : 'var(--accent-50)' }}>
+                <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
                     Step 2: Select Time Slots
                 </div>
                 <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
@@ -487,7 +488,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {/* BEGIN Button */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
-                <div className="text-[10px] uppercase tracking-[0.18em] mb-3" style={{ color: isLight ? 'rgba(140, 100, 40, 0.65)' : 'var(--accent-50)' }}>
+                <div className="text-[10px] uppercase tracking-[0.18em] mb-3" style={{ color: goldLabelColor }}>
                     Step 3: Click Begin this path
                 </div>
                 <button

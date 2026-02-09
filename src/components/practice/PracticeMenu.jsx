@@ -65,7 +65,7 @@ function PracticeMenu({
   return (
     <div 
       key={containerKey} 
-      className="relative px-8 animate-in fade-in duration-300"
+      className="relative px-4 sm:px-8 animate-in fade-in duration-300"
     >
     {/* HEADER - using shared component */}
     <PracticeMenuHeader

@@ -210,7 +210,7 @@
 .PracticePanelShell {
   position: relative;
   overflow: hidden;
-  background-image: url("./bg/practice-breath-mandala.png");
+  background-image: var(--practice-panel-wallpaper, none);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

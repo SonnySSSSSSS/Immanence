@@ -53,10 +53,10 @@ function BreathPracticeCard({
       background: 'rgba(255, 255, 255, 0.03)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
       borderRadius: '12px',
-      padding: '16px',
-      marginBottom: '16px',
+      padding: '12px',
+      marginBottom: '12px',
     }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         {/* Method */}
         <div>
           <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Method</div>
@@ -116,7 +116,7 @@ function BreathPracticeCard({
   );
 
   return (
-    <div className="relative px-8 animate-in fade-in duration-300">
+    <div className="relative px-4 sm:px-8 animate-in fade-in duration-300">
       {/* HEADER - using shared component */}
       <PracticeMenuHeader
         title={practiceId === 'breath' ? undefined : label}

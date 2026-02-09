@@ -55,6 +55,13 @@ export function PracticeOptionsCard({
   const isCollapsed = !practiceId;
   const viewportMode = useDisplayModeStore(s => s.viewportMode);
   const isSanctuary = viewportMode === 'sanctuary';
+  const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
+  const practicePanelWallpaper = tokens?.isLight
+    ? `linear-gradient(rgba(245, 240, 230, 0.70), rgba(245, 240, 230, 0.86)), url("${practicePanelWallpaperUrl}")`
+    : `linear-gradient(rgba(10, 12, 18, 0.35), rgba(10, 12, 18, 0.62)), url("${practicePanelWallpaperUrl}")`;
+  const cardPadding = practiceId === 'breath'
+    ? (isSanctuary ? '8px 28px 28px' : '8px 20px 20px')
+    : (isSanctuary ? '24px' : '20px');
 
   const [showTrajectory, setShowTrajectory] = useState(false);
   const [showTempoSync, setShowTempoSync] = useState(false);
@@ -139,9 +146,10 @@ export function PracticeOptionsCard({
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           borderRadius: '20px',
-          padding: practiceId === 'breath' ? '8px 24px 24px' : '24px',
+          padding: cardPadding,
           minHeight: isCollapsed ? '88px' : 'auto',
           border: '1px solid var(--accent-30)',
+          '--practice-panel-wallpaper': practicePanelWallpaper,
           boxShadow: `
             0 12px 48px rgba(0, 0, 0, 0.6),
             0 4px 16px var(--accent-15),
