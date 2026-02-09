@@ -146,6 +146,49 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const isDev = import.meta.env.DEV;
 
+  const handleClosePhotic = useCallback(() => {
+    setIsPhoticOpen(false);
+
+    // Best-effort cleanup for browsers that support it.
+    try {
+      if (screen?.orientation?.unlock) screen.orientation.unlock();
+    } catch {
+      // Ignore unlock failures.
+    }
+
+    try {
+      if (document?.fullscreenElement && document?.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    } catch {
+      // Ignore fullscreen exit failures.
+    }
+  }, []);
+
+  const handleOpenPhotic = useCallback(async () => {
+    // Best-effort: request fullscreen (improves chance of orientation lock working).
+    try {
+      if (!document.fullscreenElement && document.documentElement?.requestFullscreen) {
+        await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      }
+    } catch {
+      // Ignore fullscreen failures (unsupported browser, permissions, etc.).
+    }
+
+    // Best-effort: lock orientation to landscape (not supported on iOS Safari).
+    try {
+      if (screen?.orientation?.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch {
+      // Ignore lock failures (unsupported browser, not fullscreen, permissions).
+    }
+
+    // Even if lock fails (or OS orientation is fixed), the photic overlay itself renders in a
+    // landscape coordinate system (rotated in portrait viewports).
+    setIsPhoticOpen(true);
+  }, []);
+
   // Debug flags for visual investigations (dev-only; ignored in prod builds).
   const getDevFlag = useCallback((key) => {
     if (!isDev) return null;
@@ -439,7 +482,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
         <PhoticCirclesOverlay
           isOpen={isPhoticOpen}
-          onClose={() => setIsPhoticOpen(false)}
+          onClose={handleClosePhotic}
           autoStart={true}
         />
 
@@ -726,7 +769,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   onNavigate={handleSectionSelect}
                   onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                   onRitualComplete={() => handleSectionSelect(null)}
-                  onOpenPhotic={() => setIsPhoticOpen(true)}
+                  onOpenPhotic={handleOpenPhotic}
                   hideCards={hideCards}
                 />
               )}

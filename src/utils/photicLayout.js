@@ -74,7 +74,7 @@ export function computePhoticLayout({
 
     // Use the most restrictive scale, clamped to safe range
     const scale = Math.max(
-        Math.min(Math.max(widthScale, heightScale), 1.0), // Most restrictive, don't scale up
+        Math.min(Math.min(widthScale, heightScale), 1.0), // Most restrictive, don't scale up
         0.05 // Minimum viable scale
     );
 

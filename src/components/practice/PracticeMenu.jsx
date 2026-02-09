@@ -62,6 +62,8 @@ function PracticeMenu({
   const isIntegration = practice?.id === 'integration';
   const hasDefaultRitual = localStorage.getItem('immanenceOS.rituals.defaultRitualId') !== null;
   const showQuickStart = isIntegration && hasDefaultRitual;
+  const isDirectPhoticConfig = ConfigComponent === PhoticControlPanel;
+  const isSubmodePhoticConfig = ActiveSubModeConfig === PhoticControlPanel;
   return (
     <div 
       key={containerKey} 
@@ -95,6 +97,7 @@ function PracticeMenu({
               isLight={isLight}
               selectedRitualId={selectedRitualId}
               onStart={onStart}
+              isEmbedded={isSubmodePhoticConfig}
             />
           ) : (
             <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
@@ -107,6 +110,7 @@ function PracticeMenu({
           {...setters}
           isLight={isLight}
           selectedRitualId={selectedRitualId}
+          isEmbedded={isDirectPhoticConfig}
         />
       ) : (
         <div className="flex items-center justify-center py-12" style={{ fontFamily: 'Inter, Outfit, sans-serif', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.4, fontWeight: 500 }}>
