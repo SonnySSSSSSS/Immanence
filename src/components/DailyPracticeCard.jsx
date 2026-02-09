@@ -583,7 +583,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const hasActivePath = activePathObj && times.length > 0;
 
     if (hasActivePath || needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
-        const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
+        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
 
         return (
             <div
@@ -611,7 +611,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     style={{
                         borderRadius: '24px',
                         background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                        border: maybeBorder(isLight ? `1px solid ${primaryHex}30` : `1px solid ${primaryHex}40`),
+                        border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
                         '--dp-radius': '24px',
                         // Set inset-only shadow via CSS var + !important class to prevent accidental depth shadows on this layer.
                         '--dp-inset-shadow': isLight
@@ -622,12 +622,25 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         isolation: 'isolate',
                     }}
                 >
+                        {/* Inner decorative border - matches practice card styling */}
+                        <div
+                            className="absolute pointer-events-none"
+                            style={{
+                                top: '8px',
+                                left: '8px',
+                                right: '8px',
+                                bottom: '8px',
+                                border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-25)',
+                                borderRadius: '14px',
+                                zIndex: 10,
+                            }}
+                        />
                         <div className="glassCardContent">
                         <div className="dpClipSurface">
                         <div
                             className="absolute inset-0 pointer-events-none dpRadiusInherit"
                             style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
+                                backgroundImage: `url(${bgAssetUrl})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
                                 filter: isLight ? 'saturate(1.1)' : 'none',
@@ -1093,7 +1106,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     };
 
     if (dayNumber > 14 || progress.completed >= progress.total) {
-        const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
+        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
 
         return (
             <div
@@ -1111,7 +1124,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     style={{
                         borderRadius: '24px',
                         background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
-                        border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.14)' : '1px solid rgba(95, 255, 170, 0.20)'),
+                        border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
                         '--dp-radius': '24px',
                         '--dp-inset-shadow': isLight
                             ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
@@ -1121,12 +1134,25 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         isolation: 'isolate',
                     }}
                 >
+                {/* Inner decorative border - matches practice card styling */}
+                <div
+                    className="absolute pointer-events-none"
+                    style={{
+                        top: '8px',
+                        left: '8px',
+                        right: '8px',
+                        bottom: '8px',
+                        border: isLight ? '1px solid rgba(160, 120, 60, 0.15)' : '1px solid var(--accent-25)',
+                        borderRadius: '14px',
+                        zIndex: 10,
+                    }}
+                />
                 <div className="dpClipSurface">
                 {/* Relic/Cosmic Background Wallpaper */}
                 <div
                     className="absolute inset-0 pointer-events-none dpRadiusInherit"
                     style={{
-                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
+                        backgroundImage: `url(${bgAssetUrl})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         opacity: isLight ? 0.21 : 0.36,
@@ -1425,7 +1451,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     style={{
                         borderRadius: '24px',
                         background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(12, 18, 22, 0.85)',
-                        border: maybeBorder(isLight ? `1.5px solid rgba(180, 140, 60, 0.25)` : `1.5px solid rgba(80, 180, 160, 0.35)`),
+                        border: maybeBorder(isLight ? '1px solid rgba(180, 140, 60, 0.25)' : '1px solid var(--accent-30)'),
                         '--dp-radius': '24px',
                         '--dp-inset-shadow': isLight
                             ? 'inset 0 1px 0 rgba(255, 255, 255, 0.5)'
@@ -1435,6 +1461,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         isolation: 'isolate',
                     }}
                 >
+                    {/* Inner decorative border - matches practice card styling */}
+                    <div
+                        className="absolute pointer-events-none"
+                        style={{
+                            top: '8px',
+                            left: '8px',
+                            right: '8px',
+                            bottom: '8px',
+                            border: isLight ? '1px solid rgba(180, 140, 60, 0.15)' : '1px solid var(--accent-25)',
+                            borderRadius: '14px',
+                            zIndex: 10,
+                        }}
+                    />
                     <div className="glassCardContent">
                     <div className="dpClipSurface">
                     {/* 1. IMMERSIVE BACKGROUND LAYER (No layout width) */}

@@ -99,7 +99,7 @@ export function CircuitTrainingSelector({
         }
         style={{
           fontFamily: 'var(--font-display)',
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url("${import.meta.env.BASE_URL}bg/practice-breath-mandala.png")`,
+          backgroundImage: `linear-gradient(rgba(20, 15, 25, 0.35), rgba(20, 15, 25, 0.55)), url("${import.meta.env.BASE_URL}bg/practice-breath-mandala.png")`,
           backgroundSize: 'auto, cover',
           backgroundPosition: 'center, center',
           backgroundRepeat: 'no-repeat',
@@ -162,7 +162,7 @@ export function CircuitTrainingSelector({
               transformOrigin: 'top center',
               transform: animIn ? 'scaleY(1)' : 'scaleY(0.92)',
               opacity: animIn ? 1 : 0,
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url("${import.meta.env.BASE_URL}bg/practice-breath-mandala.png")`,
+              backgroundImage: `linear-gradient(rgba(20, 15, 25, 0.35), rgba(20, 15, 25, 0.55)), url("${import.meta.env.BASE_URL}bg/practice-breath-mandala.png")`,
               backgroundSize: 'auto, cover',
               backgroundPosition: 'center, center',
               backgroundRepeat: 'no-repeat',
