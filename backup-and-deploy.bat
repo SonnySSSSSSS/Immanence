@@ -1,13 +1,36 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Non-interactive entrypoints
+:: Usage:
+::   backup-and-deploy.bat :DO_DEPLOY
+::   backup-and-deploy.bat --deploy
+::   backup-and-deploy.bat :DO_DEPLOY_DRY
+::   backup-and-deploy.bat --deploy-dry
+if /i "%~1"==":DO_DEPLOY" (
+  call :DO_DEPLOY
+  exit /b %errorlevel%
+)
+if /i "%~1"=="--deploy" (
+  call :DO_DEPLOY
+  exit /b %errorlevel%
+)
+if /i "%~1"==":DO_DEPLOY_DRY" (
+  call :DO_DEPLOY_DRY
+  exit /b %errorlevel%
+)
+if /i "%~1"=="--deploy-dry" (
+  call :DO_DEPLOY_DRY
+  exit /b %errorlevel%
+)
+
 :: ============================================================================
 :: IMMANENCE - Safety and Deployment System
 :: ============================================================================
 
-set PROJECT_DIR=D:\Unity Apps\immanence-os
-set QUICK_BACKUP=D:\Unity Apps\immanence-os-backup-quick
-set SNAPSHOT_DIR=D:\Unity Apps\immanence-os-snapshots
+for %%I in ("%~dp0.") do set "PROJECT_DIR=%%~fI"
+set "QUICK_BACKUP=%PROJECT_DIR%-backup-quick"
+set "SNAPSHOT_DIR=%PROJECT_DIR%-snapshots"
 
 :: Files and folders to exclude from backups
 set EXCLUDE_LIST=node_modules .git dist .cache .vite .agent
@@ -275,68 +298,30 @@ echo [DEPLOY] Building and deploying to GitHub Pages...
 
 cd /d "%PROJECT_DIR%"
 
-:: Build the app
-echo [DEPLOY] Running build...
-call npm run build
+echo [DEPLOY] Running npm deploy...
+call npm run deploy
 if errorlevel 1 (
-    echo [DEPLOY] FAILED - Build failed
+    echo [DEPLOY] FAILED - npm run deploy failed
     exit /b 1
 )
-
-:: Check if dist folder exists
-if not exist "dist" (
-    echo [DEPLOY] FAILED - dist folder not found after build
-    exit /b 1
-)
-
-:: Deploy to gh-pages
-echo [DEPLOY] Deploying to gh-pages...
-
-:: Save current branch
-for /f "tokens=*" %%b in ('git branch --show-current') do set CURRENT_BRANCH=%%b
-
-:: Checkout gh-pages
-git checkout gh-pages
-if errorlevel 1 (
-    echo [DEPLOY] FAILED - Could not checkout gh-pages
-    git checkout %CURRENT_BRANCH%
-    exit /b 1
-)
-
-:: Remove old files (except .git)
-for /d %%d in (*) do (
-    if not "%%d"==".git" (
-        rmdir /s /q "%%d" 2>nul
-    )
-)
-for %%f in (*) do (
-    if not "%%f"==".git" (
-        del /q "%%f" 2>nul
-    )
-)
-
-:: Copy dist contents to root
-xcopy /E /I /Y "dist\*" "."
-if errorlevel 1 (
-    echo [DEPLOY] FAILED - Could not copy dist contents
-    git checkout %CURRENT_BRANCH%
-    exit /b 1
-)
-
-:: Commit and push
-git add -A
-git commit -m "Deploy: %date% %time%"
-git push --force origin gh-pages
-if errorlevel 1 (
-    echo [DEPLOY] FAILED - Could not push to gh-pages
-    git checkout %CURRENT_BRANCH%
-    exit /b 1
-)
-
-:: Return to original branch
-git checkout %CURRENT_BRANCH%
 
 echo [DEPLOY] OK - Live at https://sonnysssssss.github.io/Immanence/
+exit /b 0
+
+:DO_DEPLOY_DRY
+echo.
+echo [DEPLOY] Dry-run deploy (no push)...
+
+cd /d "%PROJECT_DIR%"
+
+echo [DEPLOY] Running npm deploy:dry...
+call npm run deploy:dry
+if errorlevel 1 (
+    echo [DEPLOY] FAILED - npm run deploy:dry failed
+    exit /b 1
+)
+
+echo [DEPLOY] OK - Dry-run completed
 exit /b 0
 
 :: ============================================================================

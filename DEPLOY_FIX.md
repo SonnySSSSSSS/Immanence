@@ -4,7 +4,7 @@
 
 **Symptom**: GitHub Pages shows stale content (Last-Modified: Jan 23, 2026)
 
-**Root Cause**: The `gh-pages` npm package fails with `spawn ENAMETOOLONG` error on Windows due to path-length limits. The deployment command `npm run deploy` never completes successfully.
+**Root Cause**: `npm run deploy` was wired to the `gh-pages` npm package, which can hit Windows command-line limits (`spawn ENAMETOOLONG`) when the publish directory contains lots of files/long paths. In this repo, `dist/` was bloated because Vite copies `public/` verbatim — and `public/comfyui/` contained a full Node project including `node_modules/`, adding ~1,400 extra files to the publish set.
 
 **Evidence**:
 ```bash
@@ -19,6 +19,10 @@ Output shows:
 ## Solution
 
 Use **direct git deployment** instead of the `gh-pages` npm package.
+
+### Option 0: Fix the underlying `dist/` bloat (Recommended)
+
+Move server/tool projects out of `public/` so Vite doesn’t ship them to the web build. In particular, `public/comfyui/` should not live under `public/` (it included `node_modules/` and caused most of the deploy failure surface).
 
 ### Option 1: Use `deploy-direct.bat` (Recommended)
 
@@ -68,9 +72,9 @@ Replace the `gh-pages` package with the direct deployment:
 "deploy": "deploy-direct.bat"
 ```
 
-**Option B** - Use PowerShell (cross-platform):
+**Option B** - Use Node (cross-platform, avoids long arg lists):
 ```json
-"deploy": "node scripts/deploy.mjs"
+"deploy": "node scripts/deploy-gh-pages.mjs --no-build"
 ```
 
 ## Testing the Fix

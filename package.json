@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "node scripts/deploy-gh-pages.mjs --no-build",
+    "deploy:dry": "node scripts/deploy-gh-pages.mjs --no-build --dry-run",
     "extract-colors": "node scripts/extractStageColors.js"
   },
 

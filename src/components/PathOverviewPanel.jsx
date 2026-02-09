@@ -207,50 +207,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             </div>
 
-            {path.overviewNotes?.length > 0 && (
-                <div className="mb-6">
-                    <h3
-                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
-                        style={{ fontFamily: 'var(--font-display)' }}
-                    >
-                        Initiation Focus
-                    </h3>
-                    <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
-                        {path.overviewNotes.map((note, idx) => (
-                            <li
-                                key={idx}
-                                className="text-sm flex items-start gap-2"
-                                style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.8)' }}
-                            >
-                                <span className="text-[var(--accent-50)] mt-0.5">•</span>
-                                <span>{note}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {/* Practice Section */}
-            {path.practices.length > 0 && (
-                <div>
-                    <h3
-                        className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
-                        style={{ fontFamily: 'var(--font-display)' }}
-                    >
-                        Practice
-                    </h3>
-                    <ul className="space-y-1.5" style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em', fontWeight: 500 }}>
-                        {path.practices.map((practice, idx) => (
-                            <li key={idx} className="text-sm text-[rgba(253,251,245,0.8)] flex items-center gap-2">
-                                <span className="text-[var(--accent-50)]">•</span>
-                                {practice.type}
-                                {practice.pattern && ` (${practice.pattern})`}
-                                {practice.duration && ` - ${practice.duration}min`}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            {/* Intentionally omit overview + practice summary to keep this surface short. */}
 
             {/* Wisdom Section */}
             {path.chapters.length > 0 && (
@@ -304,34 +261,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
-            {/* Weekly Timeline */}
-            {path.weeks.length > 0 && (
-                <div>
-                    <h3
-                        className="text-base font-bold text-[var(--accent-color)] mb-3 tracking-wide"
-                        style={{ fontFamily: 'var(--font-display)' }}
-                    >
-                        Weekly Timeline
-                    </h3>
-                    <div className="flex items-center gap-2 mb-4">
-                        {path.weeks.map((week, idx) => (
-                            <React.Fragment key={week.number}>
-                                <div
-                                    className="flex flex-col items-center gap-1"
-                                    title={week.title}
-                                >
-                                    <div className="w-3 h-3 rounded-full border border-[var(--accent-30)] bg-[var(--accent-10)]" />
-                                    <div className="text-[9px] text-[var(--accent-40)]">{week.number}</div>
-                                </div>
-                                {idx < path.weeks.length - 1 && (
-                                    <div className="flex-1 h-[1px] bg-[var(--accent-15)]" />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Weekly Breakdown */}
             {path.weeks.length > 0 && (
                 <div className="mb-8">
@@ -381,28 +310,11 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                                     Week {week.number}: {week.title}
                                                 </h4>
                                             </div>
-                                            <p
-                                                className="text-sm italic"
-                                                style={{ color: isLight ? 'rgba(90, 77, 60, 0.65)' : 'rgba(253,251,245,0.6)' }}
-                                            >
-                                                {week.focus}
-                                            </p>
                                         </div>
                                     </button>
 
                                     {isExpanded && (
                                         <div className="px-4 pb-4 space-y-3 border-t border-[var(--accent-10)] pt-3 transition-all duration-[1500ms] ease-in-out" style={{ opacity: 1, transform: 'scaleY(1)', transformOrigin: 'top' }}>
-                                            {/* Focus */}
-                                            <div>
-                                                <div className="text-xs text-[var(--accent-60)] uppercase tracking-wider mb-1">Focus</div>
-                                                <p
-                                                    className="text-sm text-[rgba(253,251,245,0.8)] italic leading-relaxed font-medium"
-                                                    style={{ fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}
-                                                >
-                                                    {week.focus}
-                                                </p>
-                                            </div>
-
                                             {/* Practices */}
                                             {week.practices.length > 0 && (
                                                 <div>

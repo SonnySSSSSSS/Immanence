@@ -8,7 +8,7 @@ setlocal enabledelayedexpansion
 :: avoiding Windows path-length issues (spawn ENAMETOOLONG).
 :: ============================================================================
 
-set PROJECT_DIR=D:\Unity Apps\immanence-os
+for %%I in ("%~dp0.") do set "PROJECT_DIR=%%~fI"
 
 echo.
 echo ========================================
