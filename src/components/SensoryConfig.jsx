@@ -73,6 +73,7 @@ export function SensoryConfig({
                         display: 'flex',
                         alignItems: 'stretch',
                         boxShadow: sakshiVersion === 1 ? '0 0 20px rgba(100, 200, 150, 0.35)' : 'none',
+                        opacity: sakshiVersion === 1 ? 1 : 0.55,
                         padding: 0,
                     }}
                 >
@@ -168,6 +169,7 @@ export function SensoryConfig({
                         display: 'flex',
                         alignItems: 'stretch',
                         boxShadow: sakshiVersion === 2 ? '0 0 20px rgba(100, 200, 150, 0.35)' : 'none',
+                        opacity: sakshiVersion === 2 ? 1 : 0.55,
                         padding: 0,
                     }}
                 >
@@ -294,6 +296,7 @@ export function SensoryConfig({
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'cover',
+                                    opacity: selectedScene === scene.id ? 1 : 0.45,
                                     transition: 'opacity 300ms',
                                 }}
                             />

@@ -13,29 +13,29 @@ export const STAGE_THEMES = {
     SEEDLING: {
         name: 'Seedling',
         accent: {
-            primary: extractedColors.seedling?.primary || '#4ade80',      // Extracted from wallpaper
+            primary: extractedColors.seedling?.primary || '#588B7A',      // Extracted from wallpaper
             secondary: extractedColors.seedling?.secondary || '#22c55e',  // Extracted secondary
             muted: extractedColors.seedling?.muted || '#16a34a',          // Extracted muted
-            glow: hexToRgba(extractedColors.seedling?.primary || '#4ade80', 0.4),
+            glow: hexToRgba(extractedColors.seedling?.primary || '#588B7A', 0.4),
             particleColor: extractedColors.seedling?.highlight || '#86efac',
         },
         text: {
-            accent: '#4ade80',
+            accent: '#588B7A',
             accentMuted: 'rgba(74, 222, 128, 0.7)',
         },
         ui: {
             selectedBg: 'rgba(74, 222, 128, 0.15)',
             selectedBorder: 'rgba(74, 222, 128, 0.4)',
             hoverBg: 'rgba(74, 222, 128, 0.08)',
-            progressBar: '#4ade80',
-            buttonGradient: 'linear-gradient(135deg, #4ade80, #22c55e)',
+            progressBar: '#588B7A',
+            buttonGradient: 'linear-gradient(135deg, #588B7A, #22c55e)',
         },
         light: {
             bgBase: '#F0F9F4',          // Light mint
             bgSurface: '#F8FCF9',       // Soft white with green tint
             textPrimary: '#14532d',     // Deep forest green
             textSecondary: '#166534',   // Medium forest green
-            accent: '#4ade80',          // Vibrant green
+            accent: '#588B7A',          // Vibrant green
             accentMuted: '#86efac',     // Lighter green for contrast
             border: 'rgba(74, 222, 128, 0.25)',
             shadowTint: 'rgba(34, 197, 94, 0.12)',

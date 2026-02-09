@@ -135,6 +135,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
     return (
         <div
+            data-testid="path-overview-panel"
             className="w-full max-w-2xl mx-auto p-8 relative"
             style={{
                 // No background/border/shadow - handled by wrapper in NavigationSection
@@ -579,6 +580,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
                 <button
                     onClick={handleBegin}
+                    data-testid="begin-path-button"
                     aria-disabled={!canBeginPath}
                     className={`w-full py-4 rounded-full font-bold text-lg transition-all group relative overflow-hidden ${canBeginPath ? '' : 'opacity-60 cursor-not-allowed'}`}
                     style={{

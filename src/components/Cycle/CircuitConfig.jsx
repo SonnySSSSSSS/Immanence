@@ -176,9 +176,10 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                     {/* Header Labels */}
                     <div
                         style={{
-                            display: 'flex',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr auto',
                             alignItems: 'baseline',
-                            gap: '12px',
+                            columnGap: '12px',
                         }}
                     >
                         <div
@@ -198,53 +199,54 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                 fontSize: '10px',
                                 lineHeight: '1',
                                 whiteSpace: 'nowrap',
-                                marginLeft: 'auto',
-                                minWidth: '96px',
-                                textAlign: 'left',
+                                minWidth: '90px',
+                                textAlign: 'right',
                             }}
                         >
                             Break Between
                         </div>
                     </div>
                     {/* Values Row */}
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
-                        {/* Minutes */}
-                        <div
-                            className="text-3xl font-bold tracking-wide"
-                            style={{
-                                color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
-                                fontFamily: 'var(--font-display)',
-                                animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
-                                lineHeight: '1',
-                            }}
-                        >
-                            {displayMinutes}
-                        </div>
-                        {/* Separator */}
-                        <div
-                            className="text-3xl font-bold"
-                            style={{
-                                opacity: 0.5,
-                                lineHeight: '1',
-                                fontFamily: 'var(--font-display)',
-                            }}
-                        >
-                            :
-                        </div>
-                        {/* Seconds */}
-                        <div
-                            className="text-3xl font-bold tracking-wide"
-                            style={{
-                                color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
-                                fontFamily: 'var(--font-display)',
-                                animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
-                                lineHeight: '1',
-                            }}
-                        >
-                            {displaySeconds.toString().padStart(2, '0')}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', columnGap: '12px', alignItems: 'end' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', minWidth: 0 }}>
+                            {/* Minutes */}
+                            <div
+                                className="text-3xl font-bold tracking-wide"
+                                style={{
+                                    color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
+                                    fontFamily: 'var(--font-display)',
+                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                    lineHeight: '1',
+                                }}
+                            >
+                                {displayMinutes}
+                            </div>
+                            {/* Separator */}
+                            <div
+                                className="text-3xl font-bold"
+                                style={{
+                                    opacity: 0.5,
+                                    lineHeight: '1',
+                                    fontFamily: 'var(--font-display)',
+                                }}
+                            >
+                                :
+                            </div>
+                            {/* Seconds */}
+                            <div
+                                className="text-3xl font-bold tracking-wide"
+                                style={{
+                                    color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
+                                    fontFamily: 'var(--font-display)',
+                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                    lineHeight: '1',
+                                }}
+                            >
+                                {displaySeconds.toString().padStart(2, '0')}
+                            </div>
                         </div>
                         {/* Break Between */}
-                        <div style={{ flex: '0 0 auto', marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', minWidth: '96px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', justifySelf: 'end', minWidth: '90px' }}>
                             <input
                                 type="text"
                                     value={`0:${intervalBreakSec.toString().padStart(2, '0')}`}
@@ -397,7 +399,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                                     <motion.div
                                                         initial={{ scale: 0 }}
                                                         animate={{ scale: 1 }}
-                                                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#fcd34d] flex items-center justify-center shadow-lg"
+                                                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#fcd34d] flex items-center justify-center shadow-sm"
                                                     >
                                                         <span className="text-[10px] text-black font-black">✓</span>
                                                     </motion.div>
@@ -461,7 +463,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                         border: isLight ? '1px solid var(--light-border)' : '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
                                         backdropFilter: 'blur(5px)',
                                         display: 'grid',
-                                        gridTemplateColumns: '32px minmax(0, 1fr) 92px',
+                                        gridTemplateColumns: '32px minmax(0, 1fr) 110px',
                                         alignItems: 'center',
                                         columnGap: '10px',
                                         width: '100%',
@@ -515,7 +517,7 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                     </div>
 
                                     {/* Right Zone: Duration Input + Remove Button */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', width: '92px', minWidth: '92px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', width: '110px', minWidth: '110px' }}>
                                         <input
                                             type="number"
                                             min="1"
@@ -543,6 +545,17 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                                 textAlign: 'center'
                                             }}
                                         />
+                                        <span
+                                            style={{
+                                                fontFamily: 'var(--font-body)',
+                                                fontSize: '10px',
+                                                color: isLight ? 'var(--text-muted)' : 'rgba(255,255,255,0.35)',
+                                                letterSpacing: '0.05em',
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            min
+                                        </span>
                                         <button
                                             onClick={() => handleRemoveExercise(index)}
                                             className={`text-sm transition-colors ${isLight ? 'text-[#3D3425]/30 hover:text-[#3D3425]/70' : 'text-white/30 hover:text-white/70'}`}

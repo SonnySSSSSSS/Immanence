@@ -30,6 +30,7 @@ export function NavigationSelectionModal({
 
     return (
         <div
+            data-testid="navigation-selection-modal"
             className="fixed inset-0 flex items-center justify-center z-50"
             style={{
                 background: 'rgba(0, 0, 0, 0.7)',

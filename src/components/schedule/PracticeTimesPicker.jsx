@@ -2,7 +2,7 @@
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { getLocalDateKey } from '../../utils/dateUtils.js';
-import { computeScheduleAnchorStartAt } from '../../utils/scheduleUtils.js';
+import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../../utils/scheduleUtils.js';
 import { canToggleTime, validateSelectedTimes } from '../../utils/scheduleSelectionConstraints.js';
 
 const DEFAULT_TIME_OPTIONS = [
@@ -42,18 +42,23 @@ export function PracticeTimesPicker({
 }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const selectedTimes = Array.isArray(value) ? value : [];
+    const effectiveConstraint = scheduleConstraint || { maxCount: maxSlots };
+    const selectedTimesRaw = Array.isArray(value) ? value : [];
+    const selectedTimes = normalizeAndSortTimeSlots(selectedTimesRaw, {
+        maxCount: effectiveConstraint?.maxCount ?? maxSlots,
+    });
 
     const firstSlotTime = selectedTimes[0] || null;
     const startAt = firstSlotTime
         ? computeScheduleAnchorStartAt({ now: new Date(), firstSlotTime })
         : null;
     const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey();
-    const effectiveConstraint = scheduleConstraint || { maxCount: maxSlots };
 
     const toggleTime = (timeValue) => {
         if (selectedTimes.includes(timeValue)) {
-            onChange?.(selectedTimes.filter((t) => t !== timeValue));
+            onChange?.(normalizeAndSortTimeSlots(selectedTimes.filter((t) => t !== timeValue), {
+                maxCount: effectiveConstraint?.maxCount ?? maxSlots,
+            }));
             return;
         }
         const nextSelectedTimes = [...selectedTimes, timeValue];
@@ -62,7 +67,9 @@ export function PracticeTimesPicker({
             onConstraintViolation?.(validation.error || 'Unable to select this time slot.');
             return;
         }
-        onChange?.(nextSelectedTimes);
+        onChange?.(normalizeAndSortTimeSlots(nextSelectedTimes, {
+            maxCount: effectiveConstraint?.maxCount ?? maxSlots,
+        }));
     };
 
     return (

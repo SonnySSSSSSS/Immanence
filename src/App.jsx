@@ -27,7 +27,7 @@ import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
 import { TutorialOverlay } from "./components/tutorial/TutorialOverlay.jsx";
 import { ShadowScanOverlay } from "./components/debug/ShadowScanOverlay.jsx";
-import { getDebugFlagValue, getDebugUrlValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
+import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
@@ -153,12 +153,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, [isDev]);
 
   const debugDisableDailyCard = isDev && parseDebugBool(getDevFlag('disableDailyCard'));
-  const [debugBuildProbe, setDebugBuildProbe] = useState(() =>
-    isDev && parseDebugBool(getDebugUrlValue('buildProbe'))
-  );
-  const [debugShadowScan, setDebugShadowScan] = useState(() =>
-    isDev && parseDebugBool(getDebugUrlValue('shadowScan'))
-  );
+  const [debugBuildProbe, setDebugBuildProbe] = useState(false);
+  const [debugShadowScan, setDebugShadowScan] = useState(false);
   const debugDailyCardShadowOff = isDev && parseDebugBool(getDevFlag('dailyCardShadowOff'));
   const debugDailyCardBlurOff = isDev && parseDebugBool(getDevFlag('dailyCardBlurOff'));
   const debugDailyCardBorderOff = isDev && parseDebugBool(getDevFlag('dailyCardBorderOff'));
@@ -463,7 +459,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
             // Hearth: Phone width (430px)
             width: '100%',
             maxWidth: '430px',
-            boxShadow: '0 0 100px rgba(255, 120, 40, 0.15), 0 0 200px rgba(255, 80, 20, 0.08)',
+            // Keep frame shadow off; rectangular frame-glow reads as square corner artifacts near glass cards.
+            boxShadow: 'none',
             overflowX: 'hidden',
             overflowY: 'visible',
             zIndex: 1,
@@ -545,7 +542,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.148
+                        v3.27.160
                       </button>
                     </div>
                   </div>
@@ -574,7 +571,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
             >
               {(isHub || playgroundMode) ? (
                 <div key="hub" className="section-enter">
-                  {debugBuildProbe && (
+                  {(debugBuildProbe && debugShadowScan) && (
                     <div
                       className="mx-6 mt-3 mb-2 rounded-lg px-3 py-2 text-[11px] uppercase tracking-[0.12em]"
                       style={{
@@ -702,7 +699,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                       onOpenHardwareGuide={() => setIsHardwareGuideOpen(true)}
                       lockToHub={playgroundMode}
                       debugDisableDailyCard={debugDisableDailyCard}
-                      debugBuildProbe={debugBuildProbe}
+                      debugBuildProbe={debugBuildProbe && debugShadowScan}
                       debugShadowScan={debugShadowScan}
                       debugDailyCardShadowOff={debugDailyCardShadowOff}
                       debugDailyCardBlurOff={debugDailyCardBlurOff}

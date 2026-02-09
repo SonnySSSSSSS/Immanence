@@ -18,6 +18,8 @@ export function PracticeMenuHeader({
   children,
   marginBottom = '24px',
 }) {
+  const hasTitle = Boolean(title);
+  const hasHeaderRows = showTutorial || hasTitle;
   // Tutorial hint state
   const TUTORIAL_HINT_KEY = "immanence.tutorialHintSeen";
   const [showTutorialHint, setShowTutorialHint] = useState(false);
@@ -55,11 +57,11 @@ export function PracticeMenuHeader({
   };
 
   return (
-    <div className="practiceMenuHeader" style={{ marginTop: '16px', marginBottom }}>
+    <div className="practiceMenuHeader" style={{ marginTop: hasHeaderRows ? '16px' : '0px', marginBottom }}>
       {/* Top row: tutorial button centered */}
-      <div className="practiceMenuHeaderTopRow">
-        <div />
-        {showTutorial && (
+      {showTutorial && (
+        <div className="practiceMenuHeaderTopRow">
+          <div />
           <div className="tutorialButtonWrap">
             <button
               type="button"
@@ -105,12 +107,12 @@ export function PracticeMenuHeader({
               </div>
             )}
           </div>
-        )}
-        <div />
-      </div>
+          <div />
+        </div>
+      )}
 
       {/* Title row: centered title on its own line (only render if title provided) */}
-      {title && (
+      {hasTitle && (
         <div className="practiceMenuHeaderTitleRow">
           <div
             className="practiceMenuHeaderTitle type-h2"

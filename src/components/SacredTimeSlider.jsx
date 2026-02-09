@@ -135,18 +135,6 @@ export function SacredTimeSlider({ value, onChange, options }) {
                     }}
                 />
 
-                {/* Active fill line */}
-                <div
-                    className="absolute left-0 h-0.5 rounded-full"
-                    style={{
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: `${thumbPercent}%`,
-                        background: 'linear-gradient(90deg, #C9A961, #D4AF37)',
-                        boxShadow: '0 0 12px rgba(201, 169, 97, 0.6)',
-                        opacity: 0.9
-                    }}
-                />
 
                 {/* Tick marks and labels */}
                 {options.map((opt, i) => {
@@ -187,8 +175,8 @@ export function SacredTimeSlider({ value, onChange, options }) {
                                 <div
                                     className="rounded-full"
                                     style={{
-                                        width: '4px',
-                                        height: '4px',
+                                        width: '6px',
+                                        height: '6px',
                                         background: isActive ? '#D4AF37' : 'rgba(255,255,255,0.15)',
                                         boxShadow: isActive ? '0 0 6px rgba(212, 175, 55, 0.8)' : 'none'
                                     }}
@@ -207,7 +195,8 @@ export function SacredTimeSlider({ value, onChange, options }) {
                         transform: `translate(-50%, -50%) scale(${pulseActive ? 1.3 : 1})`,
                         width: '28px',
                         height: '28px',
-                        zIndex: 10
+                        zIndex: 10,
+                        transition: 'left 80ms ease-out',
                     }}
                 >
                     {/* Inner neon core */}

@@ -542,26 +542,33 @@ function PartAccordion({
     <div className="border-b border-[var(--accent-10)]">
       {/* Part Header */}
       <button
-        onClick={onToggle}
+        onClick={chapterCount > 0 ? onToggle : undefined}
+        disabled={chapterCount === 0}
         className="w-full px-5 py-4 flex items-center justify-between text-left transition-all hover:bg-[var(--accent-05)]"
-        style={{ background: isExpanded ? "var(--accent-05)" : "transparent" }}
+        style={{
+          background: isExpanded ? "var(--accent-05)" : "transparent",
+          cursor: chapterCount === 0 ? "default" : "pointer",
+          opacity: chapterCount === 0 ? 0.5 : 1
+        }}
       >
         <div className="flex items-center gap-3">
-          <span
-            className="text-[11px] transition-transform"
-            style={{
-              color: "var(--accent-color)",
-              transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-            }}
-          >
-            ▶
-          </span>
+          {chapterCount > 0 && (
+            <span
+              className="text-[11px] transition-transform"
+              style={{
+                color: "var(--accent-color)",
+                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+              }}
+            >
+              ›
+            </span>
+          )}
           <div>
             <div className="flex items-center gap-2">
               {part.number && (
                 <span
                   className="text-[10px] uppercase tracking-[0.2em]"
-                  style={{ color: "var(--accent-color)" }}
+                  style={{ color: "var(--accent-color)", opacity: 0.5 }}
                 >
                   Part {part.number}
                 </span>
@@ -593,7 +600,7 @@ function PartAccordion({
           className="text-[10px] uppercase tracking-[0.15em]"
           style={{ color: "rgba(253,251,245,0.4)" }}
         >
-          {rangeText || `${chapterCount} items`}
+          {chapterCount === 0 ? "Coming soon" : (rangeText || `${chapterCount} items`)}
         </div>
       </button>
 

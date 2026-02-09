@@ -69,10 +69,10 @@ function PracticeMenu({
     >
     {/* HEADER - using shared component */}
     <PracticeMenuHeader
-      title={label}
+      title={undefined}
       tutorialId={`practice:${practice?.id || 'breath'}`}
-      showTutorial={true}
-      marginBottom={titleContainerMarginBottom}
+      showTutorial={false}
+      marginBottom={showRitualSubtitle ? '8px' : '0px'}
     >
       {/* Inline subtitle for ritual */}
       {showRitualSubtitle && (
@@ -87,7 +87,7 @@ function PracticeMenu({
       {hasSubModes ? (
         <div>
           {/* Sub-mode Toggle - Title-as-tabs style */}
-          <div className="flex items-center justify-center gap-2" style={{ marginTop: '20px', marginBottom: '24px' }}>
+          <div className="flex items-center justify-center gap-2" style={{ marginTop: '0px', marginBottom: '24px' }}>
             {Object.entries(practice.subModes).map(([modeKey, modeConfig], idx) => {
               const isActive = activeMode === modeKey;
               return (

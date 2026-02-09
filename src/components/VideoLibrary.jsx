@@ -270,16 +270,34 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
         <div className="mb-7">
             {/* Label with scroll arrows */}
             <div className="flex items-center justify-between mb-4 px-4">
-                <div
-                    className="text-[10px] uppercase tracking-[0.2em]"
-                    style={{
-                        color: isLight ? 'rgba(140, 100, 60, 0.85)' : 'rgba(255,200,120,0.7)',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        letterSpacing: 'var(--tracking-mythic)',
-                    }}
-                >
-                    ▶ {label}
+                <div>
+                    <div
+                        className="text-[10px] uppercase tracking-[0.2em]"
+                        style={{
+                            color: isLight ? 'rgba(140, 100, 60, 0.85)' : 'rgba(255,200,120,0.7)',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            letterSpacing: 'var(--tracking-mythic)',
+                        }}
+                    >
+                        ▶ {label}
+                    </div>
+                    {label === 'Featured' && (
+                        <div
+                            className="text-[8px] italic mt-0.5"
+                            style={{ color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(255,200,120,0.4)' }}
+                        >
+                            Curated picks
+                        </div>
+                    )}
+                    {label === 'Library' && (
+                        <div
+                            className="text-[8px] italic mt-0.5"
+                            style={{ color: isLight ? 'rgba(100, 80, 60, 0.5)' : 'rgba(255,200,120,0.4)' }}
+                        >
+                            All videos
+                        </div>
+                    )}
                 </div>
 
                 {/* Arrow buttons */}
@@ -292,6 +310,7 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
                             background: canScrollLeft ? 'rgba(255,180,100,0.15)' : 'transparent',
                             color: canScrollLeft ? 'rgba(255,180,100,0.8)' : 'rgba(255,255,255,0.2)',
                             cursor: canScrollLeft ? 'pointer' : 'default',
+                            opacity: canScrollLeft ? 0.7 : 0.15,
                         }}
                     >
                         ←
@@ -304,6 +323,7 @@ function OfferingBand({ label, videos, activeVideoId, onSelect, isLight }) {
                             background: canScrollRight ? 'rgba(255,180,100,0.15)' : 'transparent',
                             color: canScrollRight ? 'rgba(255,180,100,0.8)' : 'rgba(255,255,255,0.2)',
                             cursor: canScrollRight ? 'pointer' : 'default',
+                            opacity: canScrollRight ? 0.7 : 0.15,
                         }}
                     >
                         →

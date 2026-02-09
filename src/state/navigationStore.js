@@ -6,7 +6,7 @@ import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
-import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
+import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
@@ -59,9 +59,9 @@ export const useNavigationStore = create(
                 // if the first slot window has already passed today, Day 1 begins tomorrow.
                 const selectedTimesRaw = useCurriculumStore.getState().getPracticeTimeSlots() || [];
                 const scheduleConstraint = getScheduleConstraintForPath(pathId);
-                const selectedTimes = scheduleConstraint?.maxCount
-                    ? selectedTimesRaw.slice(0, scheduleConstraint.maxCount)
-                    : selectedTimesRaw.slice();
+                const selectedTimes = normalizeAndSortTimeSlots(selectedTimesRaw, {
+                    maxCount: scheduleConstraint?.maxCount ?? 3,
+                });
                 const validation = validateSelectedTimes(selectedTimes, scheduleConstraint);
                 if (!validation.ok) {
                     return { ok: false, error: validation.error };
@@ -563,7 +563,10 @@ export const useNavigationStore = create(
                 console.log('[restartPath] NEW RUN', runId);
                 const pathId = state.activePath.activePathId;
                 const durationDays = getPathDurationDays(pathId);
-                const selectedTimes = state.activePath.schedule?.selectedTimes || [];
+                const scheduleConstraint = getScheduleConstraintForPath(pathId);
+                const selectedTimes = normalizeAndSortTimeSlots(state.activePath.schedule?.selectedTimes || [], {
+                    maxCount: scheduleConstraint?.maxCount ?? 3,
+                });
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
                     firstSlotTime: selectedTimes[0],
@@ -578,6 +581,10 @@ export const useNavigationStore = create(
                         startedAt,
                         endsAt,
                         status: 'active',
+                        schedule: {
+                            ...(state.activePath.schedule || {}),
+                            selectedTimes,
+                        },
                         progress: {
                             sessionsCompleted: 0,
                             totalMinutes: 0,
@@ -601,7 +608,7 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 3,  // Bumped for legacy field removal
+            version: 4,  // Bumped for schedule time normalization
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
                 const { selectedPathId, ...rest } = state;
@@ -615,9 +622,19 @@ export const useNavigationStore = create(
                 // Clean up legacy fields from activePath if present
                 if (rest?.activePath) {
                     const { pathId: _, startDate: __, currentWeek: ___, completedWeeks: ____, ...cleanPath } = rest.activePath;
-                    rest.activePath = cleanPath;
+                    const scheduleConstraint = getScheduleConstraintForPath(cleanPath?.activePathId);
+                    const selectedTimes = normalizeAndSortTimeSlots(cleanPath?.schedule?.selectedTimes || [], {
+                        maxCount: scheduleConstraint?.maxCount ?? 3,
+                    });
+                    rest.activePath = {
+                        ...cleanPath,
+                        schedule: {
+                            ...(cleanPath.schedule || {}),
+                            selectedTimes,
+                        },
+                    };
                 }
-                
+                 
                 return { ...rest, selectedPathId: null };
             },
             onRehydrateStorage: () => (state) => {

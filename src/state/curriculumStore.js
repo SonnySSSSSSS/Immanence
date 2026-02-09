@@ -5,7 +5,7 @@ import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
 import { EVENING_TEST_CIRCUIT } from '../data/pilotTestProgram.js';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { getCurriculumPrecisionRail } from '../services/infographics/curriculumRail.js';
-import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
+import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 
 export const FOUNDATION_CIRCUIT = {
     id: 'intro_circuit',
@@ -79,15 +79,16 @@ export const useCurriculumStore = create(
             // ONBOARDING ACTIONS
             completeOnboarding: (timeSlots = [], thoughts = []) => {
                 const nowDate = new Date();
+                const normalizedSlots = normalizeAndSortTimeSlots(timeSlots, { maxCount: 3 });
                 const startAt = computeScheduleAnchorStartAt({
                     now: nowDate,
-                    firstSlotTime: Array.isArray(timeSlots) ? timeSlots[0] : null,
+                    firstSlotTime: normalizedSlots[0] ?? null,
                 });
                 const now = nowDate.toISOString();
                 set({
                     onboardingComplete: true,
                     onboardingDismissed: false,
-                    practiceTimeSlots: timeSlots,
+                    practiceTimeSlots: normalizedSlots,
                     thoughtCatalog: thoughts.map((t, idx) => ({
                         id: `thought-${Date.now()}-${idx}`,
                         text: t.text,
@@ -110,20 +111,14 @@ export const useCurriculumStore = create(
              * Normalizes input: filters falsy, converts to "HH:mm", limits to 3 slots
              */
             setPracticeTimeSlots: (times = []) => {
-                const normalized = Array.isArray(times)
-                    ? times
-                        .filter(t => typeof t === 'string' && t.trim().length > 0)
-                        .map(t => t.trim())
-                        .slice(0, 3)
-                    : [];
-                set({ practiceTimeSlots: normalized });
+                set({ practiceTimeSlots: normalizeAndSortTimeSlots(times, { maxCount: 3 }) });
             },
 
             /**
              * Get practice time slots (canonical schedule read point)
              */
             getPracticeTimeSlots: () => {
-                return (get().practiceTimeSlots || []).slice(); // Return copy to prevent mutation
+                return normalizeAndSortTimeSlots(get().practiceTimeSlots || [], { maxCount: 3 });
             },
 
             shouldShowOnboarding: () => {
@@ -358,8 +353,8 @@ getNextLeg: (dayNumber, offset = 1) => {
 },
 
 /**
- * Get all legs for a day with their completion status and time slots
- */
+             * Get all legs for a day with their completion status and time slots
+             */
             getDayLegsWithStatus: (dayNumber) => {
                 const state = get();
                 const day = state.getCurriculumDay(dayNumber);
@@ -367,13 +362,25 @@ getNextLeg: (dayNumber, offset = 1) => {
 
                 const { practiceTimeSlots } = state;
 
-                return day.legs.map((leg, index) => ({
+                const legsSorted = [...day.legs].sort((a, b) => {
+                    const an = Number(a?.legNumber);
+                    const bn = Number(b?.legNumber);
+                    const aOrder = Number.isFinite(an) ? an : 9999;
+                    const bOrder = Number.isFinite(bn) ? bn : 9999;
+                    return aOrder - bOrder;
+                });
+
+                return legsSorted.map((leg, index) => {
+                    const legNum = Number(leg?.legNumber);
+                    const timeIndex = Number.isFinite(legNum) ? Math.max(0, legNum - 1) : index;
+                    return ({
                     ...leg,
                     // Inject time from onboarding slots (leg 1 = slot 0, leg 2 = slot 1, etc.)
-                    time: practiceTimeSlots && practiceTimeSlots[index] ? practiceTimeSlots[index] : leg.time,
+                    time: practiceTimeSlots && practiceTimeSlots[timeIndex] ? practiceTimeSlots[timeIndex] : leg.time,
                     completed: state.isLegComplete(dayNumber, leg.legNumber),
                     completion: state.legCompletions[`${dayNumber}-${leg.legNumber}`] || null,
-                }));
+                    });
+                });
             },
 
             // PROGRESS & STATS
@@ -551,11 +558,13 @@ getNextLeg: (dayNumber, offset = 1) => {
         }),
         {
             name: 'immanenceOS.curriculum',
-            version: 3,
+            version: 4,
             migrate: (persistedState) => {
-                // Migration logic for future version updates
-                // Currently at version 3, no migration needed
-                return persistedState;
+                const next = persistedState || {};
+                return {
+                    ...next,
+                    practiceTimeSlots: normalizeAndSortTimeSlots(next.practiceTimeSlots || [], { maxCount: 3 }),
+                };
             },
         }
     )

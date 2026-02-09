@@ -483,7 +483,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                   <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', letterSpacing: '0.05em' }}>
                     {showNoStable
                       ? `No stable tempo detected - ${confidencePercent}%`
-                      : `${isLocked ? '?? LOCKED' : confidence > 0.8 ? 'CONFIDENT' : confidence > 0.4 ? '?? DETECTING' : '? WAITING'} - ${confidencePercent}%`}
+                      : `${isLocked ? '🔒 LOCKED' : confidence > 0.8 ? 'CONFIDENT' : confidence > 0.4 ? '🔄 DETECTING' : '⏳ WAITING'} - ${confidencePercent}%`}
                   </div>
                 )}
               </div>
@@ -606,10 +606,10 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                   onClick={handleResetDetection}
                   style={{
                     padding: '8px',
-                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
-                    border: '1px solid rgba(248, 113, 113, 0.3)',
+                    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
                     borderRadius: '6px',
-                    color: '#f87171',
+                    color: 'rgba(212, 175, 55, 0.85)',
                     fontSize: '10px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -617,12 +617,12 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(248, 113, 113, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(248, 113, 113, 0.5)';
+                    e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(248, 113, 113, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(248, 113, 113, 0.3)';
+                    e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.25)';
                   }}
                 >
                   ↻ RESET BPM DETECTION
@@ -856,10 +856,10 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
             onClick={() => setShowFileDrawer(true)}
             style={{
               padding: '10px',
-              backgroundColor: 'rgba(74, 222, 128, 0.1)',
-              border: '1px solid rgba(74, 222, 128, 0.3)',
+              backgroundColor: 'rgba(212, 175, 55, 0.1)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
               borderRadius: '8px',
-              color: 'var(--accent-primary)',
+              color: 'rgba(212, 175, 55, 0.85)',
               fontSize: '11px',
               fontWeight: 700,
               cursor: 'pointer',
@@ -867,12 +867,12 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.15)';
-              e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.5)';
+              e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
+              e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(74, 222, 128, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.3)';
+              e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.25)';
             }}
           >
             📁 LOAD AUDIO FILE
@@ -902,7 +902,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
           <div style={{ padding: '12px', backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {/* File Name */}
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>?? File</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>📄 File</div>
               <div style={{ fontSize: '11px', color: 'var(--text-primary)', wordBreak: 'break-all', fontWeight: 500, letterSpacing: '0.03em' }}>
                 {songName || 'No song loaded'}
               </div>
@@ -918,7 +918,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                 {/* Progress Scrubber */}
                 <div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>? Progress</span>
+                    <span>▶ Progress</span>
                     <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
                   </div>
                   <div
@@ -946,7 +946,7 @@ export const TempoSyncPanel = ({ isPracticing = false, onRunBenchmark }) => {
                 {/* A/B Loop Controls */}
                 <div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>?? A/B Loop</span>
+                    <span>🔁 A/B Loop</span>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '9px' }}>
                       <input
                         type="checkbox"

@@ -15,7 +15,7 @@ import { BreathBenchmark } from "./BreathBenchmark.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
-import { SOLFEGGIO_SET } from "../utils/frequencyLibrary.js";
+import { SOLFEGGIO_SET, FREQUENCY_SETS } from "../utils/frequencyLibrary.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
 import { ringFXPresets } from "../data/ringFXPresets.js";
 import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
@@ -764,7 +764,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Derived variant for VipassanaVisual
 
   // Derived Values
-  const selectedFrequency = SOLFEGGIO_SET[selectedFrequencyIndex] || SOLFEGGIO_SET[4];
+  const activeFreqSet = FREQUENCY_SETS[frequencySet] || SOLFEGGIO_SET;
+  const selectedFrequency = activeFreqSet[selectedFrequencyIndex] || activeFreqSet[0];
   const binauralPreset = BINAURAL_PRESETS.find(p => p.name === binauralPresetId) || BINAURAL_PRESETS[0];
   const isochronicPreset = ISOCHRONIC_PRESETS.find(p => p.name === isochronicPresetId) || ISOCHRONIC_PRESETS[0];
 
@@ -830,8 +831,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setAudioEnabled = (val) => updateParams('visualization', { audioEnabled: val });
   const setFrequencySet = (val) => updateParams('cymatics', { frequencySet: val });
   const setSelectedFrequency = (val) => {
-    const idx = SOLFEGGIO_SET.findIndex(f => f.hz === val.hz);
-    updateParams('cymatics', { selectedFrequencyIndex: idx !== -1 ? idx : 4 });
+    const currentSet = FREQUENCY_SETS[frequencySet] || SOLFEGGIO_SET;
+    const idx = currentSet.findIndex(f => f.hz === val.hz);
+    updateParams('cymatics', { selectedFrequencyIndex: idx !== -1 ? idx : 0 });
   };
   const setDriftEnabled = (val) => updateParams('cymatics', { driftEnabled: val });
   const setEmotionMode = (val) => updateParams('feeling', { mode: val });

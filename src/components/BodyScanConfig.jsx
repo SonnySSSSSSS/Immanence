@@ -147,11 +147,11 @@ export function BodyScanConfig({
             >
                 {/* Radio indicator */}
                 <div
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                    className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center"
                     style={{
                         border: isSelected
                             ? '2px solid var(--accent-color)'
-                            : (isLight ? '2px solid rgba(90,77,60,0.3)' : '2px solid rgba(255,255,255,0.2)'),
+                            : (isLight ? '2px solid rgba(90,77,60,0.18)' : '2px solid rgba(255,255,255,0.12)'),
                         background: isSelected ? 'var(--accent-color)' : 'transparent',
                     }}
                 >
@@ -221,9 +221,9 @@ export function BodyScanConfig({
                         overflowX: 'auto',
                         overflowY: 'hidden',
                         display: 'flex',
-                        justifyContent: 'flex-start',
-                        gap: '10px',
-                        padding: '4px 8px',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '4px 0',
                         marginTop: '10px',
                         marginBottom: '12px',
                         pointerEvents: 'auto',
@@ -251,29 +251,30 @@ export function BodyScanConfig({
                                     }, 0);
                                 }}
                                 style={{
-                                    height: '44px',
-                                    minWidth: '44px',
-                                    padding: '0',
+                                    height: '50px',
+                                    flex: 1,
+                                    padding: '4px 6px',
                                     borderRadius: '14px',
                                     background: isActive ? rail.chakraColor : 'rgba(10,12,14,.35)',
                                     border: isActive ? `2px solid ${rail.chakraColor}` : '1px solid rgba(212,175,55,.18)',
                                     backdropFilter: 'blur(6px)',
                                     cursor: 'pointer',
                                     transition: 'all 200ms ease-out',
-                                    boxShadow: isActive 
+                                    boxShadow: isActive
                                         ? `0 0 24px ${rail.chakraColor}, 0 0 12px ${rail.chakraColor}`
                                         : 'none',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '8px',
+                                    gap: '2px',
                                     color: 'rgba(255,255,255,0.92)',
-                                    flexShrink: 0,
                                     whiteSpace: 'nowrap',
                                 }}
                                 title={rail.tooltip}
                             >
                                 <span style={{ fontSize: '18px', lineHeight: '1' }}>{rail.icon}</span>
+                                <span style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-ui)', opacity: 0.8 }}>{rail.label}</span>
                             </button>
                         );
                     })}
@@ -361,45 +362,6 @@ export function BodyScanConfig({
                         );
                     })}
                 </div>
-            </div>
-
-            {/* Dots indicator */}
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    marginBottom: '12px',
-                }}
-            >
-                {REGION_RAILS.map(rail => {
-                    const isActive = activeRailId === rail.id;
-                    return (
-                        <button
-                            key={`dot-${rail.id}`}
-                            onClick={() => {
-                                setActiveRailId(rail.id);
-                                requestAnimationFrame(() => {
-                                    const el = cardRefs.current[rail.id];
-                                    if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                                });
-                            }}
-                            style={{
-                                width: isActive ? '16px' : '6px',
-                                height: '6px',
-                                borderRadius: '999px',
-                                background: isActive ? rail.chakraColor : 'rgba(212,175,55,.35)',
-                                transition: 'all 200ms ease-out',
-                                cursor: 'pointer',
-                                border: isActive ? `2px solid ${rail.chakraColor}` : 'none',
-                                padding: 0,
-                                opacity: isActive ? 1 : 0.6,
-                                boxShadow: isActive ? `0 0 8px ${rail.chakraColor}` : 'none',
-                            }}
-                            aria-label={`Jump to ${rail.label}`}
-                        />
-                    );
-                })}
             </div>
 
             {/* Options for selected rail */}

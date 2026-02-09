@@ -35,7 +35,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const combinedEntries = [...programs, ...paths];
 
     return (
-        <div className="w-full">
+        <div className="w-full" data-testid="path-grid-root">
             <div
                 className="type-label mb-3"
                 style={{ color: isLight ? 'rgba(60, 52, 37, 0.7)' : 'rgba(253,251,245,0.9)', textShadow: isLight ? 'none' : '0 1px 3px rgba(0,0,0,0.4)' }}
@@ -53,6 +53,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                     return (
                         <button
                             key={entry.id}
+                            data-testid={!entry.isProgram ? `path-card-${entry.id}` : undefined}
                             onClick={() => {
                                 if (entry.isProgram) {
                                     entry.onClick();
@@ -149,7 +150,10 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
                             {/* Active indicator */}
                             {isActive && (
-                                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--accent-color)] shadow-[0_0_8px_var(--accent-60)] z-10" />
+                                <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '7px', fontWeight: 600, letterSpacing: '0.1em', color: 'var(--accent-color)', textTransform: 'uppercase' }}>Active</span>
+                                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-color)] shadow-[0_0_8px_var(--accent-60)]" />
+                                </div>
                             )}
 
                             <div className="relative z-10">
@@ -167,8 +171,12 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
                                 {/* Title */}
                                 <h3
-                                    className="type-h3 mb-1.5 leading-tight line-clamp-2 transition-colors"
+                                    className="mb-1.5 leading-tight line-clamp-2 transition-colors"
                                     style={{
+                                        fontFamily: 'var(--font-display)',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                        letterSpacing: 'var(--tracking-normal)',
                                         color: isLight ? 'rgba(60, 52, 37, 0.9)' : 'rgba(253,251,245,0.92)'
                                     }}
                                 >
@@ -191,7 +199,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                         className="type-label font-bold"
                                         style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
                                     >
-                                        {typeof entry.duration === 'number' ? `${entry.duration} weeks` : entry.duration}
+                                        {typeof entry.duration === 'number' ? `${entry.duration} weeks` : `${entry.duration} · Ongoing`}
                                     </div>
                                 )}
 

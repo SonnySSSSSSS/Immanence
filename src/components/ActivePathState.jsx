@@ -91,6 +91,7 @@ export function ActivePathState({ onNavigate }) {
 
     return (
         <div
+            data-testid="active-path-root"
             className="w-full p-6 space-y-6 relative"
             style={{
                 background: isLight

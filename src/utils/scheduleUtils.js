@@ -15,6 +15,52 @@ export function parseHHMM(timeStr) {
   return { hours, minutes };
 }
 
+export function formatHHMM({ hours, minutes } = {}) {
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+export function normalizeHHMM(timeStr) {
+  const parsed = parseHHMM(timeStr);
+  return parsed ? formatHHMM(parsed) : null;
+}
+
+export function timeStrToMinutes(timeStr) {
+  const parsed = parseHHMM(timeStr);
+  if (!parsed) return null;
+  return parsed.hours * 60 + parsed.minutes;
+}
+
+export function normalizeAndSortTimeSlots(times = [], { maxCount = 3 } = {}) {
+  const raw = Array.isArray(times) ? times : [];
+  const normalized = raw
+    .filter((t) => typeof t === 'string' && t.trim().length > 0)
+    .map((t) => normalizeHHMM(t))
+    .filter(Boolean);
+
+  // De-dupe while preserving first occurrence (pre-sort) to keep user intent where possible.
+  const uniq = [];
+  const seen = new Set();
+  for (const t of normalized) {
+    if (seen.has(t)) continue;
+    seen.add(t);
+    uniq.push(t);
+  }
+
+  uniq.sort((a, b) => {
+    const am = timeStrToMinutes(a);
+    const bm = timeStrToMinutes(b);
+    if (am === null && bm === null) return 0;
+    if (am === null) return 1;
+    if (bm === null) return -1;
+    return am - bm;
+  });
+
+  const limit = Number.isFinite(maxCount) ? Math.max(0, maxCount) : 3;
+  return uniq.slice(0, limit);
+}
+
 export function localDateTimeFromDateKeyAndTime(dateKey, timeStr) {
   if (typeof dateKey !== 'string' || !dateKey) return null;
   const parsed = parseHHMM(timeStr);
@@ -67,4 +113,3 @@ export function getStartWindowState({
   const withinWindow = !tooEarly && !expired;
   return { withinWindow, tooEarly, expired, deltaMinutes };
 }
-

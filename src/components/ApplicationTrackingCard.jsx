@@ -39,22 +39,22 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
     // Map stats to directions (N/E/S/W)
     const directionStats = {
         north: {
-            label: applicationItems[0] || 'Awareness',
+            label: applicationItems[0] || 'North',
             count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[0])] || 0,
             color: '#FF6B35'
         },
         east: {
-            label: applicationItems[3] || 'Awareness',
+            label: applicationItems[3] || 'East',
             count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[3])] || 0,
             color: '#9B5DE5'
         },
         south: {
-            label: applicationItems[2] || 'Awareness',
+            label: applicationItems[2] || 'South',
             count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[2])] || 0,
             color: '#4ECDC4'
         },
         west: {
-            label: applicationItems[1] || 'Awareness',
+            label: applicationItems[1] || 'West',
             count: weekStats.byCategory?.[normalizeCategoryKey(applicationItems[1])] || 0,
             color: '#F7DC6F'
         }
@@ -112,8 +112,12 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                             <div
-                                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                                style={{ background: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}
+                                className={`w-1.5 h-1.5 rounded-full ${totalGestures > 0 ? 'animate-pulse' : ''}`}
+                                style={{
+                                    background: totalGestures > 0
+                                        ? (isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)')
+                                        : (isLight ? 'rgba(100, 80, 60, 0.2)' : 'rgba(253, 251, 245, 0.2)')
+                                }}
                             />
                             <div
                                 className="text-[8px] font-black uppercase tracking-[0.1em] opacity-40"

@@ -50,7 +50,7 @@ function getDayStyle(dayStatus, isLight) {
     const baseStyle = {
         width: '100%',
         aspectRatio: '1',
-        borderRadius: '4px',
+        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -157,7 +157,7 @@ export function CurriculumPrecisionRail() {
                         fontWeight: '600',
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
-                        color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'var(--accent-60)',
+                        color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'var(--accent-40)',
                     }}
                 >
                     14-Day Precision Window
@@ -186,10 +186,8 @@ export function CurriculumPrecisionRail() {
                             onMouseLeave={handleMouseLeave}
                             style={{
                                 ...dayStyle,
-                                opacity: isHovered ? 1 : 0.85,
-                                boxShadow: isHovered
-                                    ? `0 0 8px ${isLight ? 'rgba(100, 80, 60, 0.3)' : 'rgba(255, 255, 255, 0.2)'}`
-                                    : 'none',
+                                opacity: 0.9,
+                                boxShadow: 'none',
                             }}
                             title={tooltip}
                         >
@@ -236,7 +234,7 @@ export function CurriculumPrecisionRail() {
                                 display: 'inline-block',
                                 width: '8px',
                                 height: '8px',
-                                borderRadius: '1px',
+                                borderRadius: '50%',
                                 background: isLight ? 'rgba(100, 150, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
                                 marginRight: '4px',
                                 verticalAlign: 'middle',
@@ -250,7 +248,7 @@ export function CurriculumPrecisionRail() {
                                 display: 'inline-block',
                                 width: '8px',
                                 height: '8px',
-                                borderRadius: '1px',
+                                borderRadius: '50%',
                                 background: isLight ? 'rgba(200, 100, 80, 0.7)' : 'rgba(244, 67, 54, 0.6)',
                                 marginRight: '4px',
                                 verticalAlign: 'middle',
@@ -264,7 +262,7 @@ export function CurriculumPrecisionRail() {
                                 display: 'inline-block',
                                 width: '8px',
                                 height: '8px',
-                                borderRadius: '1px',
+                                borderRadius: '50%',
                                 border: `1px solid ${isLight ? 'rgba(180, 140, 90, 0.3)' : 'rgba(255, 255, 255, 0.2)'}`,
                                 background: 'transparent',
                                 marginRight: '4px',
@@ -279,7 +277,7 @@ export function CurriculumPrecisionRail() {
                                 display: 'inline-block',
                                 width: '8px',
                                 height: '8px',
-                                borderRadius: '1px',
+                                borderRadius: '50%',
                                 background: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(255, 255, 255, 0.08)',
                                 marginRight: '4px',
                                 verticalAlign: 'middle',

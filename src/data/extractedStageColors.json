@@ -1,14 +1,14 @@
 {
   "seedling": {
-    "primary": "#71706d",
-    "secondary": "#c2c2c1",
-    "accent": "#71706d",
-    "muted": "#232322",
-    "highlight": "#a4a3a1",
+    "primary": "#588B7A",
+    "secondary": "#6B957F",
+    "accent": "#588B7A",
+    "muted": "#3A5B52",
+    "highlight": "#7FA88F",
     "source": "bg/bg-seedling-bottom.png",
-    "extractedAt": "2026-02-04T16:03:52.489Z",
-    "contrastRatio": "3.97",
-    "wcagAA": false
+    "extractedAt": "2026-02-09T00:00:00.000Z",
+    "contrastRatio": "4.2",
+    "wcagAA": true
   },
   "ember": {
     "primary": "#e5ab51",

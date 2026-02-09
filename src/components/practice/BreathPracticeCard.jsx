@@ -228,7 +228,7 @@ function BreathPracticeCard({
                 e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
               }}
             >
-              Done
+              ▲ Collapse
             </button>
           </div>
         )}
@@ -570,7 +570,7 @@ function BreathPracticeCard({
             e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.18)';
           }}
         >
-          <span>?? Tempo Sync</span>
+          <span>🎵 Tempo Sync</span>
           <span style={{ transform: showTempoSync ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}></span>
         </button>
         

@@ -577,7 +577,7 @@ export function SoundConfig({
                             <>
                                 <div>
                                     <div
-                                        className="mb-2"
+                                        className="mb-2 flex items-center justify-between"
                                         style={{
                                             fontFamily: "var(--font-display)",
                                             fontSize: "8px",
@@ -588,6 +588,7 @@ export function SoundConfig({
                                         }}
                                     >
                                         <span>Reverb</span>
+                                        <span style={{ color: 'var(--accent-color)' }}>{Math.round(reverbWet * 100)}%</span>
                                     </div>
                                     <input
                                         type="range"
@@ -610,7 +611,7 @@ export function SoundConfig({
                                                 color: textColors.muted,
                                             }}
                                         >
-                                            Size
+                                            Reverb Size
                                         </div>
                                         <div className="flex gap-1">
                                             {(["S","M","L"]).map(sz => (
@@ -634,7 +635,7 @@ export function SoundConfig({
 
                                 <div>
                                     <div
-                                        className="mb-2"
+                                        className="mb-2 flex items-center justify-between"
                                         style={{
                                             fontFamily: "var(--font-display)",
                                             fontSize: "8px",
@@ -645,6 +646,7 @@ export function SoundConfig({
                                         }}
                                     >
                                         <span>Chorus</span>
+                                        <span style={{ color: 'var(--accent-color)' }}>{Math.round(chorusWet * 100)}%</span>
                                     </div>
                                     <input
                                         type="range"
@@ -671,6 +673,42 @@ export function SoundConfig({
                 }
                 .animate-fade-in {
                     animation: fade-in 0.3s ease-out;
+                }
+                .sound-config input[type="range"] {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    height: 6px;
+                    border-radius: 3px;
+                    background: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.06);
+                    outline: none;
+                    cursor: pointer;
+                }
+                .sound-config input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background: var(--accent-color);
+                    border: 2px solid var(--accent-color);
+                    box-shadow: 0 0 12px var(--accent-40);
+                    cursor: pointer;
+                }
+                .sound-config input[type="range"]::-moz-range-thumb {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background: var(--accent-color);
+                    border: 2px solid var(--accent-color);
+                    box-shadow: 0 0 12px var(--accent-40);
+                    cursor: pointer;
+                }
+                .sound-config input[type="range"]::-moz-range-track {
+                    height: 6px;
+                    border-radius: 3px;
+                    background: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.06);
                 }
             `}</style>
         </div>

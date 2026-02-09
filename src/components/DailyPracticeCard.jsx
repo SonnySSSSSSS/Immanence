@@ -8,7 +8,7 @@ import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey } from '../utils/dateUtils.js';
-import { getStartWindowState, localDateTimeFromDateKeyAndTime } from '../utils/scheduleUtils.js';
+import { getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition } from '../data/programRegistry.js';
@@ -103,11 +103,9 @@ function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarCo
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    boxShadow: isHighlighted
-                        ? `0 0 16px ${progressBarColor}`
-                        : (isLight
-                            ? '0 10px 24px rgba(0, 0, 0, 0.08)'
-                            : '0 14px 30px rgba(0, 0, 0, 0.32)'),
+                    boxShadow: isLight
+                        ? '0 2px 8px rgba(0, 0, 0, 0.06)'
+                        : '0 4px 12px rgba(0, 0, 0, 0.2)',
                 }}
                 aria-label={`${label}: ${valueText}`}
             >
@@ -134,33 +132,19 @@ function VerticalMeter({ label, valueText, progressRatio, isLight, progressBarCo
                         }}
                     />
 
-                    <div
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            pointerEvents: 'none',
-                        }}
-                    >
-                        <div
-                            style={{
-                                padding: '4px 7px',
-                                borderRadius: '10px',
-                                background: isLight ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.35)',
-                                border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.12)',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: 800,
-                                fontSize: 12,
-                                lineHeight: 1,
-                                color: valueColor,
-                                textShadow: isLight ? 'none' : '0 1px 2px rgba(0,0,0,0.55)',
-                            }}
-                        >
-                            {valueText}
-                        </div>
-                    </div>
+                </div>
+
+                <div
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 800,
+                        fontSize: 11,
+                        lineHeight: 1,
+                        color: valueColor,
+                        textAlign: 'center',
+                    }}
+                >
+                    {valueText}
                 </div>
 
                 <div
@@ -312,7 +296,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
     const activePathObj = activePathId ? getPathById(activePathId) : null;
     const activePath = useNavigationStore(s => s.activePath);
-    const times = activePath?.schedule?.selectedTimes || []; // ["06:00","20:00"]
+    const times = normalizeAndSortTimeSlots(activePath?.schedule?.selectedTimes || [], { maxCount: 3 }); // ["06:00","20:00"]
 
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();
@@ -550,7 +534,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const maybeShadow = (shadow) => (debugShadowOff ? 'none' : shadow);
     const maybeBlur = (blur) => (debugBlurOff ? 'none' : blur);
     const maybeBorder = (border) => (debugBorderOff ? 'none' : border);
-    const maybeMaskImage = (mask) => (debugMaskOff ? 'none' : mask);
+    const clipOverflow = debugMaskOff ? 'visible' : 'hidden';
 
     const {
         onboardingComplete: storeOnboardingComplete,
@@ -610,6 +594,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     className="w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
+                        overflow: clipOverflow,
                         background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
                         border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
                         '--dp-radius': '24px',
@@ -810,7 +795,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     <div>
                                         {/* TODAY'S PRACTICE label - matches curriculum style */}
                                         <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{
-                                            color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253,251,245,0.45)',
+                                            color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)',
                                             letterSpacing: '0.08em'
                                         }}>
                                             Today's Practice
@@ -819,7 +804,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         {/* Path title - matches curriculum "Test Program" style */}
                                         <div className="mt-2 text-xl font-bold tracking-tight" style={{
                                             fontFamily: 'var(--font-display)',
-                                            color: isLight ? '#3c3020' : '#fdfbf5',
+                                            color: isLight ? '#3c3020' : 'var(--accent-color)',
                                         }}>
                                             {activePathObj.title}
                                         </div>
@@ -863,14 +848,14 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                     >
                                                         {/* Leg Number / Status */}
                                                         <div
-                                                            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
+                                                            className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 transition-all"
                                                             style={{
                                                                 background: isDone
                                                                     ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
                                                                     : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
                                                                 color: isDone ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
-                                                                boxShadow: isDone ? '0 6px 20px var(--accent-25)' : 'none',
-                                                                transform: isActionable ? 'scale(1.05)' : 'scale(1)',
+                                                                boxShadow: 'none',
+                                                                transform: 'scale(1)',
                                                             }}
                                                         >
                                                             {isDone ? '✓' : legNumber}
@@ -878,7 +863,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                                         {/* Leg Details */}
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="text-[11px] opacity-70 leading-snug" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                            <div className="text-[11px] leading-snug" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
                                                                 {dateStr}
                                                             </div>
                                                             {practiceLabels[idx] && (
@@ -891,7 +876,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         {!isDone ? (
                                                             <div className="flex flex-col items-end gap-1">
                                                                 {/* Time label */}
-                                                                <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)', opacity: 0.75 }}>
+                                                                <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
                                                                     {time}
                                                                 </div>
                                                                 {/* Status text */}
@@ -981,7 +966,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                             background: (isOutsideWindow || benchmarkMissing)
                                                                                 ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
                                                                                 : 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                                                                            color: (isOutsideWindow || benchmarkMissing) ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
+                                                                            color: (isOutsideWindow || benchmarkMissing) ? (isLight ? '#3c3020' : 'var(--accent-color)') : '#fff',
                                                                             boxShadow: (isOutsideWindow || benchmarkMissing) ? 'none' : '0 3px 10px var(--accent-30)',
                                                                             cursor: (isOutsideWindow || benchmarkMissing) ? 'not-allowed' : 'pointer',
                                                                             ...(isActionable && {
@@ -1123,6 +1108,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     className="w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
+                        overflow: clipOverflow,
                         background: isLight ? 'rgba(245, 239, 229, 0.92)' : 'rgba(10, 10, 15, 0.72)',
                         border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
                         '--dp-radius': '24px',
@@ -1441,8 +1427,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     overflow: 'visible',
                     // Depth shadow belongs on the non-blurred wrapper to avoid jagged edges on rounded corners.
                     boxShadow: maybeShadow(isLight
-                        ? '0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.10), 0 16px 32px rgba(0, 0, 0, 0.12)'
-                        : `0 1px 2px rgba(0, 0, 0, 0.20), 0 4px 8px rgba(0, 0, 0, 0.24), 0 8px 16px rgba(0, 0, 0, 0.28), 0 16px 32px rgba(0, 0, 0, 0.32), 0 0 20px ${primaryHex}15`),
+                        ? '0 14px 34px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.06)'
+                        : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`),
                 }}
             >
                 {/* MIDDLE: Container */}
@@ -1450,6 +1436,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     className="w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
+                        overflow: clipOverflow,
                         background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(12, 18, 22, 0.85)',
                         border: maybeBorder(isLight ? '1px solid rgba(180, 140, 60, 0.25)' : '1px solid var(--accent-30)'),
                         '--dp-radius': '24px',
@@ -1484,8 +1471,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 ? 'radial-gradient(ellipse at 60% 40%, rgba(250, 246, 238, 0.95) 0%, rgba(245, 235, 220, 0.90) 40%, rgba(240, 228, 208, 0.85) 100%)'
                                 : 'radial-gradient(ellipse at 60% 40%, rgba(18, 28, 32, 1) 0%, rgba(12, 20, 24, 1) 50%, rgba(8, 14, 18, 1) 100%)',
                             transition: 'all 0.7s ease-in-out',
-                            WebkitMaskImage: maybeMaskImage('linear-gradient(to right, transparent 0%, black 20%)'),
-                            maskImage: maybeMaskImage('linear-gradient(to right, transparent 0%, black 20%)'),
                         }}
                     />
 
@@ -1559,7 +1544,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                 {/* Header */}
                                 <div className="flex flex-col gap-2 mb-4">
-                                    <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253,251,245,0.45)', letterSpacing: '0.08em' }}>
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)', letterSpacing: '0.08em' }}>
                                         Today's Practice
                                     </div>
                                     <div className="flex items-center justify-between gap-3">
@@ -1637,7 +1622,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         background: leg.completed
                                                             ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
                                                             : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
-                                                        color: leg.completed ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
+                                                        color: leg.completed ? '#fff' : (isLight ? '#3c3020' : 'var(--accent-60)'),
                                                         boxShadow: leg.completed ? '0 6px 20px var(--accent-25)' : 'none',
                                                         transform: isActionable ? 'scale(1.05)' : 'scale(1)',
                                                     }}
@@ -1652,11 +1637,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                             {leg.label || leg.practiceType}
                                                         </div>
                                                     </div>
-                                                    <div className="text-[11px] opacity-70 leading-snug mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                    <div className="text-[11px] leading-snug mt-1" style={{ color: isLight ? 'rgba(60, 50, 35, 0.7)' : 'rgba(253,251,245,0.55)' }}>
                                                         {leg.description || 'Guided practice'}
                                                     </div>
                                                     {leg.practiceConfig?.duration && (
-                                                        <div className="text-[10px] uppercase tracking-[0.18em] font-black mt-1" style={{ color: 'var(--accent-color)', opacity: 0.7 }}>
+                                                        <div className="text-[10px] uppercase tracking-[0.18em] font-black mt-1" style={{ color: 'var(--accent-color)' }}>
                                                             {leg.practiceConfig.duration} min
                                                         </div>
                                                     )}
@@ -1666,7 +1651,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 {!leg.completed ? (
                                                     <div className="flex flex-col items-end gap-1">
                                                         {legTimeStr && (
-                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)', opacity: 0.75 }}>
+                                                            <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)' }}>
                                                                 {legTimeStr}
                                                             </div>
                                                         )}
@@ -1705,7 +1690,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                     background: (isLockedLeg || isSoftLocked)
                                                                         ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
                                                                         : 'var(--accent-color)',
-                                                                    color: (isLockedLeg || isSoftLocked) ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
+                                                                    color: (isLockedLeg || isSoftLocked) ? (isLight ? '#3c3020' : 'rgba(253,251,245,0.50)') : '#fff',
                                                                     boxShadow: (isLockedLeg || isSoftLocked) ? 'none' : '0 3px 10px var(--accent-30)',
                                                                     cursor: (isLockedLeg || isSoftLocked) ? 'not-allowed' : 'pointer',
                                                                     ...(isActionable && !lastSessionFailed && {

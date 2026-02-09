@@ -3,6 +3,7 @@
 // Replaces the tracking view with an always-available awareness logging tool
 
 import React, { useState, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -174,7 +175,7 @@ export function SigilSealingArea() {
                         <p
                             className="text-[12px] italic text-center"
                             style={{
-                                color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(253, 251, 245, 0.2)',
+                                color: isLight ? 'rgba(100, 80, 60, 0.55)' : 'rgba(253, 251, 245, 0.45)',
                                 fontFamily: 'var(--font-body)'
                             }}
                         >
@@ -238,8 +239,8 @@ export function SigilSealingArea() {
                     }}
                 >
                     <div
-                        className="text-[9px] uppercase tracking-[0.2em] mb-3 text-center opacity-50"
-                        style={{ color: isLight ? 'rgba(100, 80, 60, 0.75)' : 'rgba(253, 251, 245, 0.5)' }}
+                        className="text-[9px] uppercase tracking-[0.2em] mb-3 text-center"
+                        style={{ color: isLight ? 'rgba(100, 80, 60, 0.75)' : 'rgba(253, 251, 245, 0.7)' }}
                     >
                         Current Intention
                     </div>
