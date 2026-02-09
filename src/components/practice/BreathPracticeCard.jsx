@@ -124,62 +124,7 @@ function BreathPracticeCard({
         showTutorial={true}
         marginBottom={practiceId === 'breath' ? '0px' : '24px'}
       >
-        {/* Top Level: Breath vs Stillness as Title-like Tabs */}
-        {practiceId === 'breath' && (
-            <div className="flex items-center justify-center gap-4" style={{ marginTop: '18px', marginBottom: '24px' }}>
-            {[
-              { id: 'breath', label: 'Breath' },
-              { id: 'stillness', label: 'Stillness' }
-            ].map((item) => {
-              const isActive = breathSubmode === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onBreathSubmodeChange?.(item.id)}
-                  aria-selected={isActive}
-                  aria-label={`${item.label} mode`}
-                  className="breath-title-tab transition-all"
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
-                    paddingBottom: '4px',
-                    cursor: 'pointer',
-                    transition: 'all 300ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.color = 'rgba(212, 175, 55, 0.7)';
-                      e.currentTarget.style.opacity = '0.8';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.color = 'rgba(245, 230, 211, 0.45)';
-                      e.currentTarget.style.opacity = '1';
-                    }
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.outline = '2px solid rgba(212, 175, 55, 0.6)';
-                    e.currentTarget.style.outlineOffset = '4px';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.outline = 'none';
-                  }}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Top Level: Breath vs Stillness - Now rendered as glass buttons outside card */}
       </PracticeMenuHeader>
 
       {/* Dynamic Config Panel */}

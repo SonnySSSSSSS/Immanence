@@ -35,7 +35,8 @@
       "Bash(npm run extract-colors:*)",
       "Bash(timeout 8 tail:*)",
       "Bash(exit 0)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(cmd /c:*)"
     ]
   },
   "mcpServers": {

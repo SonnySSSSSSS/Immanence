@@ -139,7 +139,7 @@ export function PracticeOptionsCard({
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           borderRadius: '20px',
-          padding: '24px',
+          padding: practiceId === 'breath' ? '8px 24px 24px' : '24px',
           minHeight: isCollapsed ? '88px' : 'auto',
           border: '1px solid var(--accent-30)',
           boxShadow: `

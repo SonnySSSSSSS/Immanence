@@ -50,6 +50,7 @@ import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { PracticeOptionsCard } from "./practice/PracticeOptionsCard.jsx";
+import { GlassIconButton, SUB_MODE_ICON_MAP } from "./GlassIconButton.jsx";
 import ParallaxForest from "./ParallaxForest.jsx";
 import { SakshiVisual } from "./SakshiVisual.jsx";
 import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
@@ -2299,6 +2300,73 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               />
             )}
           />
+
+        {/* Sub-Mode Toggle Buttons (between header and card) */}
+        {(() => {
+          const practice = getPracticeConfig(practiceId);
+          const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
+
+          // Handle breath practice separately (uses breathSubmode instead of subModes)
+          if (practiceId === 'breath') {
+            const modes = [
+              { id: 'breath', label: 'Breath' },
+              { id: 'stillness', label: 'Stillness' }
+            ];
+
+            return (
+              <div
+                className="flex items-center justify-center w-full"
+                style={{
+                  marginTop: '16px',
+                  marginBottom: '16px',
+                  gap: '64px',
+                }}
+              >
+                {modes.map((mode) => (
+                  <GlassIconButton
+                    key={mode.id}
+                    label={mode.label}
+                    iconName={mode.id}
+                    onClick={() => setBreathSubmode(mode.id)}
+                    selected={breathSubmode === mode.id}
+                  />
+                ))}
+              </div>
+            );
+          }
+
+          // Handle practices with subModes
+          if (!hasSubModes) return null;
+
+          const activeMode = practiceParams[practiceId]?.activeMode || practice.defaultSubMode;
+          const buttonCount = Object.keys(practice.subModes).length;
+
+          return (
+            <div
+              className="flex items-center justify-center w-full"
+              style={{
+                marginTop: '16px',
+                marginBottom: '16px',
+                gap: buttonCount === 3 ? '48px' : '64px',
+              }}
+            >
+              {Object.entries(practice.subModes).map(([modeKey, modeConfig]) => {
+                const isActive = activeMode === modeKey;
+                const iconName = SUB_MODE_ICON_MAP[modeKey] || SUB_MODE_ICON_MAP[modeConfig.id] || 'cognitive';
+
+                return (
+                  <GlassIconButton
+                    key={modeKey}
+                    label={modeConfig.label}
+                    iconName={iconName}
+                    onClick={() => updateParams(practiceId, { activeMode: modeKey })}
+                    selected={isActive}
+                  />
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Bottom Layer: Dynamic Options Card */}
         <PracticeOptionsCard

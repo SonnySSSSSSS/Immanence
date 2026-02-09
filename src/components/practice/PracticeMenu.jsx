@@ -86,37 +86,7 @@ function PracticeMenu({
     <div className="min-h-[100px]" style={{ marginBottom: configPanelMarginBottom }}>
       {hasSubModes ? (
         <div>
-          {/* Sub-mode Toggle - Title-as-tabs style */}
-          <div className="flex items-center justify-center gap-2" style={{ marginTop: '0px', marginBottom: '24px' }}>
-            {Object.entries(practice.subModes).map(([modeKey, modeConfig], idx) => {
-              const isActive = activeMode === modeKey;
-              return (
-                <React.Fragment key={modeKey}>
-                  <button
-                    onClick={() => setters.setActiveMode?.(modeKey)}
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      padding: '4px 0',
-                      border: 'none',
-                      background: 'transparent',
-                      color: isActive ? 'rgba(212, 175, 55, 0.95)' : 'rgba(245, 230, 211, 0.45)',
-                      borderBottom: isActive ? '2px solid rgba(212, 175, 55, 0.9)' : '2px solid transparent',
-                      cursor: 'pointer',
-                      transition: 'all 200ms',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {modeConfig.label}
-                  </button>
-                  {idx < Object.keys(practice.subModes).length - 1 && <span style={{ color: 'rgba(245, 230, 211, 0.4)', margin: '0 6px' }}>/</span>}
-                </React.Fragment>
-              );
-            })}
-          </div>
+          {/* Sub-mode Toggle - Now rendered as glass buttons outside card */}
 
           {/* Render the Config for the active sub-mode */}
           {ActiveSubModeConfig ? (

@@ -588,3 +588,31 @@ return domainTotals;
 **Key Finding:** Domain sessions/minutes metrics are identically computed in both A and C (`getAllStats()`) but A applies windowing while C shows lifetime totals. Potential consolidation: extract windowing logic to selector-level for consistency.
 
 **No behavior changes recommended.** Audit complete.
+
+---
+
+## GitHub Pages Deploy Investigation (2026-02-09)
+
+**Goal:** Determine why GitHub Pages serves stale content even though deploy reports success.
+
+### Findings
+
+- **Build succeeds locally** via `npm run build` (see [build_output.txt](build_output.txt)).
+- **Deploy fails** during `npm run deploy` with `Error: spawn ENAMETOOLONG` originating in `gh-pages` (see [build_output.txt](build_output.txt)).
+- **Live site headers** indicate stale content:
+  - `Cache-Control: max-age=600`
+  - `ETag: "6972fe03-7aa"`
+  - `Age: 132`
+  - `Last-Modified: Fri, 23 Jan 2026 04:50:11 GMT`
+  - `Date: Mon, 09 Feb 2026 10:59:12 GMT`
+  - Recorded in [dry_run_output.txt](dry_run_output.txt)
+
+### Interpretation
+
+The Pages site is not updating because the deploy step fails before publishing. The most likely root cause is a Windows path-length issue in `gh-pages` when spawning git with long file paths. Until `npm run deploy` completes successfully, GitHub Pages will continue serving the older `Last-Modified` build.
+
+### Next Checks (if continuing investigation)
+
+1. Verify whether Windows long paths are enabled, or run deploy from a shorter path.
+2. Try `gh-pages` with a temporary shorter staging directory.
+3. Compare the generated `dist/index.html` with the live page to confirm mismatch once deploy succeeds.
