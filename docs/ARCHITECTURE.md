@@ -977,7 +977,9 @@ If you see “square” corners after a refactor:
 To prevent guesswork, the repo includes a dev-only workflow to identify which element “owns” shadow/filter/backdrop/mask at a pixel:
 
 - Overlay: `src/components/debug/ShadowScanOverlay.jsx` (portaled to `document.body`)
-- Flags are persisted in localStorage as `debug:<flag>` and toggled via UI buttons (reload-based).
+- Most flags are persisted in localStorage as `debug:<flag>` and toggled via UI buttons (reload-based).
+- `shadowScan` is session-scoped in `App.jsx` (default OFF on page load) and toggled live without reload.
+- `buildProbe` is session-scoped in `App.jsx` (default OFF on page load) and can be toggled via Alt+Shift+Click on the version tag, or via ShadowScan panel when enabled.
 - **Dev gating**: debug flags are read/applied only when `import.meta.env.DEV` is true (`src/App.jsx`). In production builds these flags are ignored (no probe UI, no overlays).
 - Flag utilities: `src/components/debug/debugFlags.js` (single source of truth for parsing/toggling/resetting).
 

@@ -3,7 +3,6 @@
 // Access: Ctrl+Shift+D or tap version 5 times
 
 import React, { useState, useCallback, useEffect, Suspense } from 'react';
-import { useLunarStore } from '../state/lunarStore';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
@@ -11,7 +10,6 @@ import { useDisplayModeStore } from '../state/displayModeStore';
 import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
-import { LLMTestPanel } from './dev/LLMTestPanel.jsx';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
@@ -63,23 +61,11 @@ export function DevPanel({
     avatarAttention: avatarAttentionProp,
     setAvatarAttention: setAvatarAttentionProp,
 }) {
-    // Lunar store state
-    const lunarProgress = useLunarStore(s => s.progress);
-    const totalDays = useLunarStore(s => s.totalPracticeDays);
-    const currentStage = useLunarStore(s => s.getCurrentStage());
-    const recentActivity = useLunarStore(s => s.recentActivity);
-    const sparkleMode = useLunarStore(s => s.sparkleMode);
-    const cycleSparkleMode = useLunarStore(s => s.cycleSparkleMode);
-
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
     const _lightModeRingType = useSettingsStore(s => s.lightModeRingType);
     const _setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
-    const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
-    const setButtonThemeDark = useSettingsStore(s => s.setButtonThemeDark);
-    const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
-    const setButtonThemeLight = useSettingsStore(s => s.setButtonThemeLight);
     const photic = useSettingsStore(s => s.photic);
     const setPhoticSetting = useSettingsStore(s => s.setPhoticSetting);
 
@@ -117,24 +103,14 @@ export function DevPanel({
     const [expandedSections, setExpandedSections] = useState({
         avatar: true,
         playground: false,
-        lunar: true,
         curriculum: false,
         tracking: false,
-        llm: false,
         data: false,
         bloomRingLab: false
     });
 
     // Armed state for destructive actions
     const [armed, setArmed] = useState(null);
-
-    // Slider state
-    const [sliderProgress, setSliderProgress] = useState(lunarProgress);
-
-    // Sync slider with store
-    useEffect(() => {
-        setSliderProgress(lunarProgress);
-    }, [lunarProgress]);
 
     // Inspector modal
     const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -160,17 +136,6 @@ export function DevPanel({
             setTimeout(() => setArmed(null), 3000); // Auto-disarm
         }
     }, [armed]);
-
-    // Handle slider change
-    const handleProgressChange = (e) => {
-        const value = parseFloat(e.target.value);
-        setSliderProgress(value);
-    };
-
-    // Commit slider value on release
-    const handleProgressCommit = () => {
-        devHelpers.setMoonProgress(sliderProgress);
-    };
 
     // Open inspector
     const openInspector = () => {
@@ -391,152 +356,6 @@ export function DevPanel({
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* BUTTON AESTHETICS SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="Button Aesthetics"
-                        expanded={expandedSections.buttons || false}
-                        onToggle={() => toggleSection('buttons')}
-                        isLight={isLight}
-                    >
-                        {/* Dark Mode Theme */}
-                        {!isLight && (
-                            <div className="flex flex-col gap-2 mb-4">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-white/30">
-                                    Dark Mode Theme (Cosmic)
-                                </label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {['cosmic', 'bioluminescent', 'aurora', 'crystalline', 'electric'].map(theme => (
-                                        <button
-                                            key={theme}
-                                            onClick={() => setButtonThemeDark(theme)}
-                                            className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all border ${buttonThemeDark === theme
-                                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                                : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
-                                                }`}
-                                        >
-                                            {theme}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Light Mode Theme */}
-                        {isLight && (
-                            <div className="flex flex-col gap-2 mb-4">
-                                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(60, 50, 40, 0.4)' }}>
-                                    Light Mode Theme (Pastel)
-                                </label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {['watercolor', 'sketch', 'botanical', 'inkwash', 'cloudscape'].map(theme => (
-                                        <button
-                                            key={theme}
-                                            onClick={() => setButtonThemeLight(theme)}
-                                            className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-tight transition-all border ${buttonThemeLight === theme
-                                                ? 'bg-amber-700/20 text-amber-800 border-amber-700/30'
-                                                : 'bg-black/5 text-black/40 border-black/10 hover:bg-black/10'
-                                                }`}
-                                        >
-                                            {theme}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="text-[10px] text-center opacity-40 mt-2 italic">
-                            {isLight ? 'Pastel & Watercolor' : 'Dramatic & Cosmic'}
-                        </div>
-                    </Section>
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* LUNAR PROGRESS SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="Lunar Progress"
-                        expanded={expandedSections.lunar}
-                        onToggle={() => toggleSection('lunar')}
-                        isLight={isLight}
-                    >
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                            <div className="bg-white/5 rounded-lg px-3 py-2">
-                                <div className="text-white/40">Progress</div>
-                                <div className="text-white/90 font-mono">{lunarProgress.toFixed(2)} / 12</div>
-                            </div>
-                            <div className="bg-white/5 rounded-lg px-3 py-2">
-                                <div className="text-white/40">Total Days</div>
-                                <div className="text-white/90 font-mono">{totalDays}</div>
-                            </div>
-                            <div className="bg-white/5 rounded-lg px-3 py-2">
-                                <div className="text-white/40">Stage</div>
-                                <div className="text-white/90">{currentStage}</div>
-                            </div>
-                            <div className="bg-white/5 rounded-lg px-3 py-2">
-                                <div className="text-white/40">Trail Length</div>
-                                <div className="text-white/90">{recentActivity.filter(a => a.completed).length}/7</div>
-                            </div>
-                        </div>
-
-                        {/* Sparkle mode toggle */}
-                        <div className="flex items-center justify-between mb-4 bg-white/5 rounded-lg px-3 py-2">
-                            <span className="text-xs text-white/50">Moon Sparkles</span>
-                            <button
-                                onClick={cycleSparkleMode}
-                                className="px-3 py-1 rounded text-xs bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors"
-                            >
-                                {sparkleMode === 'none' ? '✗ None' : sparkleMode === 'static' ? '✦ Static' : '✧ Floating'}
-                            </button>
-                        </div>
-
-                        {/* Progress slider */}
-                        <div className="mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs text-white/50">Moon Position</span>
-                                <span className="text-xs text-white/70 font-mono">{sliderProgress.toFixed(1)}</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="12"
-                                step="0.1"
-                                value={sliderProgress}
-                                onChange={handleProgressChange}
-                                onMouseUp={handleProgressCommit}
-                                onTouchEnd={handleProgressCommit}
-                                className="w-full accent-amber-500"
-                            />
-                        </div>
-
-                        {/* Practice buttons */}
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                            <DevButton onClick={() => devHelpers.simulatePracticeDays(1)}>+1 Day</DevButton>
-                            <DevButton onClick={() => devHelpers.simulatePracticeDays(10)}>+10 Days</DevButton>
-                            <DevButton onClick={() => devHelpers.simulatePracticeDays(30)}>+30 Days</DevButton>
-                        </div>
-
-                        {/* Stage buttons */}
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                            <DevButton onClick={() => devHelpers.goToPreviousStage()}>← Prev Stage</DevButton>
-                            <DevButton onClick={() => devHelpers.advanceToNextStage()}>Next Stage →</DevButton>
-                        </div>
-
-                        {/* Simulation buttons */}
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                            <DevButton onClick={() => devHelpers.simulateDrift(7)}>Simulate 7-Day Drift</DevButton>
-                            <DevButton onClick={() => devHelpers.fillRecentActivity()}>Fill Trail</DevButton>
-                        </div>
-
-                        {/* Reset lunar (destructive) */}
-                        <DestructiveButton
-                            label="Reset Lunar"
-                            armed={armed === 'lunar'}
-                            onArm={() => handleDestructive('lunar', () => useLunarStore.getState()._devReset())}
-                        />
-                    </Section>
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* CURRICULUM SIMULATION SECTION */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <CurriculumSection
@@ -555,18 +374,6 @@ export function DevPanel({
                         onToggle={() => toggleSection('tracking')}
                         isLight={isLight}
                     />
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* LLM TEST SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="LLM Service (Gemini)"
-                        expanded={expandedSections.llm}
-                        onToggle={() => toggleSection('llm')}
-                        isLight={isLight}
-                    >
-                        <LLMTestPanel />
-                    </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* REPORTING LAYER TEST SECTION */}

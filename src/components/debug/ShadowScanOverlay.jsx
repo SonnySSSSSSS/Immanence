@@ -154,7 +154,7 @@ export function ShadowScanOverlay({ enabled = false }) {
     return {
       buildProbe: isDebugFlagEnabled("buildProbe", { allowUrl: false }),
       disableDailyCard: isDebugFlagEnabled("disableDailyCard", { allowUrl: false }),
-      shadowScan: isDebugFlagEnabled("shadowScan", { allowUrl: false }),
+      shadowScan: Boolean(enabled),
       dailyCardShadowOff: isDebugFlagEnabled("dailyCardShadowOff", { allowUrl: false }),
       dailyCardBlurOff: isDebugFlagEnabled("dailyCardBlurOff", { allowUrl: false }),
       dailyCardBorderOff: isDebugFlagEnabled("dailyCardBorderOff", { allowUrl: false }),
@@ -472,7 +472,13 @@ export function ShadowScanOverlay({ enabled = false }) {
             </button>
             <button
               type="button"
-              onClick={() => setDebugFlag("buildProbe", true)}
+              onClick={() => {
+                try {
+                  window.dispatchEvent(new CustomEvent("debug:buildProbe", { detail: { enabled: true } }));
+                } catch {
+                  // ignore
+                }
+              }}
               style={{
                 pointerEvents: "auto",
                 background: debugState?.buildProbe ? "rgba(255, 80, 80, 0.22)" : "rgba(255,255,255,0.08)",
@@ -485,7 +491,7 @@ export function ShadowScanOverlay({ enabled = false }) {
                 letterSpacing: "0.06em",
                 fontSize: 10,
               }}
-              title="Show the top probe banner (sets debug:buildProbe=1)"
+              title="Show the top probe banner (session only)"
             >
               show probe
             </button>

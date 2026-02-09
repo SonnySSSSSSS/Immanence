@@ -27,7 +27,7 @@ import { PhoticCirclesOverlay } from "./components/PhoticCirclesOverlay.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
 import { TutorialOverlay } from "./components/tutorial/TutorialOverlay.jsx";
 import { ShadowScanOverlay } from "./components/debug/ShadowScanOverlay.jsx";
-import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
+import { getDebugFlagValue, getDebugUrlValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
@@ -153,8 +153,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, [isDev]);
 
   const debugDisableDailyCard = isDev && parseDebugBool(getDevFlag('disableDailyCard'));
-  const debugBuildProbe = isDev && parseDebugBool(getDevFlag('buildProbe'));
-  const debugShadowScan = isDev && parseDebugBool(getDevFlag('shadowScan'));
+  const [debugBuildProbe, setDebugBuildProbe] = useState(() =>
+    isDev && parseDebugBool(getDebugUrlValue('buildProbe'))
+  );
+  const [debugShadowScan, setDebugShadowScan] = useState(() =>
+    isDev && parseDebugBool(getDebugUrlValue('shadowScan'))
+  );
   const debugDailyCardShadowOff = isDev && parseDebugBool(getDevFlag('dailyCardShadowOff'));
   const debugDailyCardBlurOff = isDev && parseDebugBool(getDevFlag('dailyCardBlurOff'));
   const debugDailyCardBorderOff = isDev && parseDebugBool(getDevFlag('dailyCardBorderOff'));
@@ -163,6 +167,31 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const toggleDebugFlag = useCallback((key) => {
     if (!isDev) return;
     toggleDebugFlagLs(key);
+  }, [isDev]);
+
+  const toggleShadowScan = useCallback(() => {
+    if (!isDev) return;
+    // Session-only: starts disabled on each page load by default.
+    setDebugShadowScan(v => !v);
+  }, [isDev]);
+
+  const toggleBuildProbe = useCallback(() => {
+    if (!isDev) return;
+    // Session-only: starts disabled on each page load by default.
+    setDebugBuildProbe(v => !v);
+  }, [isDev]);
+
+  useEffect(() => {
+    if (!isDev) return undefined;
+
+    const onProbeEvent = (e) => {
+      const enabled = e?.detail?.enabled;
+      if (typeof enabled === 'boolean') setDebugBuildProbe(enabled);
+      else setDebugBuildProbe(v => !v);
+    };
+
+    window.addEventListener('debug:buildProbe', onProbeEvent);
+    return () => window.removeEventListener('debug:buildProbe', onProbeEvent);
   }, [isDev]);
   const effectiveShowBackgroundBottomLayer = playgroundMode
     ? Boolean(playgroundBottomLayer)
@@ -511,12 +540,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         className="cursor-default"
                         title="Debug: Alt+Shift+Click toggles buildProbe. Alt+Ctrl+Click toggles disableDailyCard."
                         onClick={(e) => {
-                          if (e.altKey && e.shiftKey) toggleDebugFlag('buildProbe');
+                          if (e.altKey && e.shiftKey) toggleBuildProbe();
                           if (e.altKey && (e.ctrlKey || e.metaKey)) toggleDebugFlag('disableDailyCard');
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.133
+                        v3.27.144
                       </button>
                     </div>
                   </div>
@@ -576,14 +605,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
                           <button
                             type="button"
-                            onClick={() => toggleDebugFlag('shadowScan')}
+                            onClick={toggleShadowScan}
                             className="px-2 py-1 rounded-md"
                             style={{
                               background: debugShadowScan ? 'rgba(255, 80, 80, 0.20)' : 'rgba(255,255,255,0.08)',
                               border: '1px solid rgba(255, 80, 80, 0.35)',
                               color: 'inherit',
                             }}
-                            title="Toggle shadowScan overlay (reloads)"
+                            title="Toggle shadowScan overlay (session only)"
                           >
                             toggle shadowScan
                           </button>
@@ -646,14 +675,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
                           <button
                             type="button"
-                            onClick={() => toggleDebugFlag('buildProbe')}
+                            onClick={toggleBuildProbe}
                             className="px-2 py-1 rounded-md"
                             style={{
                               background: 'rgba(255,255,255,0.08)',
                               border: '1px solid rgba(255, 80, 80, 0.35)',
                               color: 'inherit',
                             }}
-                            title="Toggle buildProbe (reloads)"
+                            title="Toggle buildProbe (session only)"
                           >
                             hide probe
                           </button>

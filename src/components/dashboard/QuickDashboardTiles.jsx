@@ -6,6 +6,7 @@
 import React from 'react';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { useTheme } from '../../context/ThemeContext.jsx';
+import { useAvatarV3State } from '../../state/avatarV3Store.js';
 
 /**
  * Render a single dashboard tile
@@ -248,6 +249,15 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
     const isLight = colorScheme === 'light';
     const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
+    // Get theme for accent color (matches DailyPracticeCard border styling)
+    const theme = useTheme();
+    const primaryHex = theme?.accent?.primary || '#4ade80';
+
+    // Get current avatar stage for wallpaper
+    const { stage: avatarStage } = useAvatarV3State();
+    const stageLower = String(avatarStage || 'seedling').toLowerCase();
+    const bgAsset = isLight ? 'ancient_relic_focus.png' : `card_bg_comet_${stageLower}.png`;
+
     if (!tiles || Object.keys(tiles).length === 0) {
         return null;
     }
@@ -273,11 +283,6 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
         value: tiles[id],
         unit: id === 'minutes_total' ? 'min' : '',
     }));
-
-    // HubCard variant: infographic card with wallpaper background
-    // Get theme for accent color (matches DailyPracticeCard border styling)
-    const theme = useTheme();
-    const primaryHex = theme?.accent?.primary || '#4ade80';
 
     if (variant === 'hubCard') {
         return (
@@ -328,8 +333,47 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
                         }),
                     }}
                 >
+                {/* Wallpaper Background Layer - matches DailyPracticeCard */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/${bgAsset})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        opacity: isLight ? 0.21 : 0.36,
+                        mixBlendMode: isLight ? 'multiply' : 'screen',
+                        filter: 'none',
+                        borderRadius: '24px',
+                        overflow: 'hidden',
+                    }}
+                />
+
+                {/* Gradient Overlay for text legibility */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        background: isLight
+                            ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)'
+                            : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)',
+                        borderRadius: '24px',
+                    }}
+                />
+
+                {/* Canvas Grain Texture (Light mode only) */}
+                {isLight && (
+                    <div
+                        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                        style={{
+                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.png)`,
+                            backgroundSize: '200px',
+                            mixBlendMode: 'multiply',
+                            borderRadius: '24px',
+                        }}
+                    />
+                )}
+
                 {/* Content layer */}
-                <div className="glassCardContent" style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                <div className="glassCardContent relative z-10" style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
                 {/* 2x2 infographic grid */}
                 <div
                     style={{

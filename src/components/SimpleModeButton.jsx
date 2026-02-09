@@ -1,24 +1,22 @@
 // src/components/SimpleModeButton.jsx
 // Mode button with cosmic dark mode and watercolor light mode imagery
 
-import { useSettingsStore } from '../state/settingsStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 
 export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const buttonThemeDark = useSettingsStore(s => s.buttonThemeDark);
-    const buttonThemeLight = useSettingsStore(s => s.buttonThemeLight);
     const isLight = colorScheme === 'light';
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
 
-    // Get appropriate background image based on mode, theme and icon
+    // Get appropriate background image based on mode and icon
+    // Using default themes: 'cosmic' for dark, 'watercolor' for light
     const getBackgroundImage = () => {
-        const theme = isLight ? buttonThemeLight : buttonThemeDark;
+        const buttonTheme = isLight ? 'watercolor' : 'cosmic';
         const mode = isLight ? 'light' : 'dark';
-        const imagePath = `${import.meta.env.BASE_URL}mode_buttons/${icon}_${theme}_${mode}.png`;
+        const imagePath = `${import.meta.env.BASE_URL}mode_buttons/${icon}_${buttonTheme}_${mode}.png`;
         return imagePath;
     };
 

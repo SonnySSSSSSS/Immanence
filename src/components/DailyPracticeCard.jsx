@@ -508,26 +508,27 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Practice names for each slot (based on current week)
     const practiceLabels = useMemo(() => {
         if (!activePathObj || !metrics.dayIndex) return [];
-        
+
         const weekIndex = Math.ceil(metrics.dayIndex / 7);
         const week = activePathObj.weeks?.find(w => w.number === weekIndex) || activePathObj.weeks?.[0];
-        
+
         if (!week) return [];
-        
+
         // Extract practice labels from week.focus or week.practices
         let labels = [];
         if (week.focus) {
-            // If focus is a string like "Morning breath (7min) + Evening circuit (15min)", split by patterns
-            labels = [week.focus];
+            // If focus is a string like "Morning breath (7min) + Evening circuit (15min)", split by " + "
+            const parts = week.focus.split(' + ').map(s => s.trim());
+            labels = parts.length > 1 ? parts : [week.focus];
         } else if (week.practices && Array.isArray(week.practices)) {
             labels = week.practices.map(p => typeof p === 'string' ? p : (p.name || p.type || ''));
         }
-        
+
         // Pad or repeat to match number of times
         while (labels.length < times.length) {
-            labels.push(labels[0] || '');
+            labels.push(labels[labels.length - 1] || labels[0] || '');
         }
-        
+
         return labels.slice(0, times.length);
     }, [activePathObj, metrics.dayIndex, times.length]);
 
@@ -794,12 +795,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     </div>
                                 ) : times.length > 0 ? (
                                     <div>
-                                        {/* Path title */}
-                                        <div className="mt-1" style={{
-                                            fontSize: 18, fontWeight: 600,
+                                        {/* TODAY'S PRACTICE label - matches curriculum style */}
+                                        <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{
+                                            color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253,251,245,0.45)',
+                                            letterSpacing: '0.08em'
+                                        }}>
+                                            Today's Practice
+                                        </div>
+
+                                        {/* Path title - matches curriculum "Test Program" style */}
+                                        <div className="mt-2 text-xl font-bold tracking-tight" style={{
                                             fontFamily: 'var(--font-display)',
-                                            color: 'var(--accent-color)',
-                                            lineHeight: 1.25, letterSpacing: '0.02em',
+                                            color: isLight ? '#3c3020' : '#fdfbf5',
                                         }}>
                                             {activePathObj.title}
                                         </div>
@@ -809,7 +816,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             <CurriculumPrecisionRail />
                                         </div>
 
-                                        <div className="mt-4 space-y-2">
+                                        <div className="mt-4 space-y-5">
                                             {times.map((time, idx) => {
                                                 const isDone = idx < completedCount;
                                                 const slotDateKey = slotDates[idx] || todayKey;
@@ -825,78 +832,77 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 // Format the date for display
                                                 const slotDate = new Date(`${slotDateKey}T00:00:00`);
                                                 const dateStr = slotDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                                const legNumber = idx + 1;
                                                 return (
                                                     <div
                                                         key={idx}
-                                                        className="flex items-center justify-between p-3 rounded-lg transition-all"
+                                                        className="rounded-2xl border p-4 flex items-center gap-3 transition-all"
                                                         style={{
-                                                            background: isLight ? 'rgba(180, 140, 60, 0.05)' : 'rgba(255, 255, 255, 0.03)',
-                                                            opacity: isDone ? 0.5 : 1,
+                                                            borderColor: isLight ? 'rgba(160, 120, 60, 0.18)' : 'var(--accent-15)',
+                                                            background: isLight
+                                                                ? 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)'
+                                                                : 'linear-gradient(135deg, rgba(30, 25, 35, 0.95) 0%, rgba(24, 20, 30, 0.92) 100%)',
+                                                            boxShadow: isLight
+                                                                ? '0 6px 18px rgba(120, 90, 60, 0.1)'
+                                                                : '0 10px 30px rgba(0,0,0,0.45)',
+                                                            opacity: isDone ? 0.7 : 1,
                                                         }}
                                                     >
-                                                        <div className={isDone ? 'line-through' : ''} style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
-                                                            <div className="text-[9px] opacity-60 mb-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                        {/* Leg Number / Status */}
+                                                        <div
+                                                            className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all"
+                                                            style={{
+                                                                background: isDone
+                                                                    ? 'linear-gradient(135deg, var(--accent-color), var(--accent-60))'
+                                                                    : (isLight ? 'rgba(160, 120, 60, 0.1)' : 'rgba(255, 255, 255, 0.08)'),
+                                                                color: isDone ? '#fff' : (isLight ? '#3c3020' : '#fdfbf5'),
+                                                                boxShadow: isDone ? '0 6px 20px var(--accent-25)' : 'none',
+                                                                transform: isActionable ? 'scale(1.05)' : 'scale(1)',
+                                                            }}
+                                                        >
+                                                            {isDone ? '✓' : legNumber}
+                                                        </div>
+
+                                                        {/* Leg Details */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-[11px] opacity-70 leading-snug" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
                                                                 {dateStr}
                                                             </div>
-                                                            <span className="text-sm font-semibold">{time}</span>
                                                             {practiceLabels[idx] && (
-                                                                <div className="text-[9px] opacity-60 mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                                <div className="text-sm font-bold leading-tight mt-1" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
                                                                     {practiceLabels[idx]}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {/* Wrapper catches shift-click even when button disabled (dev override) */}
-                                                        <div onClick={(e) => {
-                                                            if (e.shiftKey && !isDone && slotLaunches[idx]?.practiceId) {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                console.log('[DEV] Shift-click override: bypassing time window');
-                                                                const slot = slotLaunches[idx];
-                                                                const practiceId = slot?.practiceId;
-                                                                const durationMin = slot?.durationMin;
-                                                                const practiceParamsPatch = slot?.practiceParamsPatch;
-                                                                const practiceConfig = slot?.practiceConfig;
-                                                                onStartPractice?.({
-                                                                    practiceId,
-                                                                    durationMin,
-                                                                    practiceParamsPatch,
-                                                                    overrides: slot?.overrides,
-                                                                    locks: slot?.locks,
-                                                                    practiceConfig,
-                                                                    pathContext: {
-                                                                        runId: activePath?.runId,
-                                                                        activePathId: activePath?.activePathId,
-                                                                        slotTime: time,
-                                                                        slotIndex: idx,
-                                                                        dayIndex: metrics.dayIndex,
-                                                                        weekIndex: Math.ceil(metrics.dayIndex / 7)
-                                                                    }
-                                                                });
-                                                            }
-                                                        }}>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    if (!e.shiftKey) {
+                                                        {/* Action - matches curriculum styling */}
+                                                        {!isDone ? (
+                                                            <div className="flex flex-col items-end gap-1">
+                                                                {/* Time label */}
+                                                                <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: 'var(--accent-color)', opacity: 0.75 }}>
+                                                                    {time}
+                                                                </div>
+                                                                {/* Status text */}
+                                                                {expired && (
+                                                                    <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b7b63' : 'rgba(253,251,245,0.55)' }}>
+                                                                        Window Passed
+                                                                    </div>
+                                                                )}
+                                                                {isActionable && (
+                                                                    <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: 'var(--accent-color)' }}>
+                                                                        Next Up
+                                                                    </div>
+                                                                )}
+                                                                {/* Wrapper catches shift-click even when button disabled */}
+                                                                <div onClick={(e) => {
+                                                                    if (e.shiftKey && slotLaunches[idx]?.practiceId) {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        console.log('[DEV] Shift-click override: bypassing time window');
                                                                         const slot = slotLaunches[idx];
                                                                         const practiceId = slot?.practiceId;
                                                                         const durationMin = slot?.durationMin;
                                                                         const practiceParamsPatch = slot?.practiceParamsPatch;
                                                                         const practiceConfig = slot?.practiceConfig;
-                                                                        console.log("[DailyPracticeCard] START slot", {
-                                                                            slotTime: time,
-                                                                            slotIndex: idx,
-                                                                            practiceId,
-                                                                            durationMin,
-                                                                            activePathId: activePath?.activePathId,
-                                                                            dayIndex: metrics.dayIndex,
-                                                                            weekIndex: Math.ceil(metrics.dayIndex / 7)
-                                                                        });
-
-                                                                        if (!practiceId) {
-                                                                            console.warn("[DailyPracticeCard] No practiceId resolved for slot", idx);
-                                                                            return;
-                                                                        }
-
                                                                         onStartPractice?.({
                                                                             practiceId,
                                                                             durationMin,
@@ -914,25 +920,83 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                             }
                                                                         });
                                                                     }
-                                                                }}
-                                                                className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                                                                    isActionable
-                                                                        ? 'btn-primary hover:scale-105 cursor-pointer'
-                                                                        : 'btn-muted opacity-50 cursor-not-allowed'
-                                                                }`}
-                                                                style={isActionable ? {
-                                                                    background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                                                                    color: '#fff',
-                                                                    boxShadow: '0 3px 10px var(--accent-30)',
-                                                                } : {
-                                                                    background: isLight ? 'rgba(180, 140, 60, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                                                                    color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'rgba(253, 251, 245, 0.5)',
-                                                                    pointerEvents: 'none',
-                                                                }}
-                                                                >
-                                                                {isDone ? 'Done' : (benchmarkMissing ? 'Benchmark Required' : (isOutsideWindow ? (tooEarly ? 'Not Yet' : 'Locked') : 'Start'))}
-                                                            </button>
-                                                        </div>
+                                                                }}>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            if (!e.shiftKey) {
+                                                                                const slot = slotLaunches[idx];
+                                                                                const practiceId = slot?.practiceId;
+                                                                                const durationMin = slot?.durationMin;
+                                                                                const practiceParamsPatch = slot?.practiceParamsPatch;
+                                                                                const practiceConfig = slot?.practiceConfig;
+                                                                                console.log("[DailyPracticeCard] START slot", {
+                                                                                    slotTime: time,
+                                                                                    slotIndex: idx,
+                                                                                    practiceId,
+                                                                                    durationMin,
+                                                                                    activePathId: activePath?.activePathId,
+                                                                                    dayIndex: metrics.dayIndex,
+                                                                                    weekIndex: Math.ceil(metrics.dayIndex / 7)
+                                                                                });
+
+                                                                                if (!practiceId) {
+                                                                                    console.warn("[DailyPracticeCard] No practiceId resolved for slot", idx);
+                                                                                    return;
+                                                                                }
+
+                                                                                onStartPractice?.({
+                                                                                    practiceId,
+                                                                                    durationMin,
+                                                                                    practiceParamsPatch,
+                                                                                    overrides: slot?.overrides,
+                                                                                    locks: slot?.locks,
+                                                                                    practiceConfig,
+                                                                                    pathContext: {
+                                                                                        runId: activePath?.runId,
+                                                                                        activePathId: activePath?.activePathId,
+                                                                                        slotTime: time,
+                                                                                        slotIndex: idx,
+                                                                                        dayIndex: metrics.dayIndex,
+                                                                                        weekIndex: Math.ceil(metrics.dayIndex / 7)
+                                                                                    }
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                        disabled={isOutsideWindow || benchmarkMissing}
+                                                                        className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                        style={{
+                                                                            background: (isOutsideWindow || benchmarkMissing)
+                                                                                ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
+                                                                                : 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
+                                                                            color: (isOutsideWindow || benchmarkMissing) ? (isLight ? '#3c3020' : '#fdfbf5') : '#fff',
+                                                                            boxShadow: (isOutsideWindow || benchmarkMissing) ? 'none' : '0 3px 10px var(--accent-30)',
+                                                                            cursor: (isOutsideWindow || benchmarkMissing) ? 'not-allowed' : 'pointer',
+                                                                            ...(isActionable && {
+                                                                                boxShadow: '0 8px 20px var(--accent-30)',
+                                                                            }),
+                                                                            pointerEvents: (isOutsideWindow || benchmarkMissing) ? 'none' : 'auto',
+                                                                        }}
+                                                                    >
+                                                                        {benchmarkMissing ? 'Benchmark Required' : (expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start'))}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex flex-col items-end gap-1" style={{ flexShrink: 0 }}>
+                                                                <div className="text-[11px] font-mono uppercase tracking-wider" style={{ color: isLight ? '#8b7b63' : 'var(--accent-40)' }}>
+                                                                    {time}
+                                                                </div>
+                                                                <div style={{
+                                                                    fontSize: '9px',
+                                                                    fontFamily: 'var(--font-display)',
+                                                                    fontWeight: 600,
+                                                                    color: 'var(--accent-color)',
+                                                                    opacity: 0.8,
+                                                                }}>
+                                                                    Done
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             })}

@@ -173,63 +173,78 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                     }
                 `}</style>
                 <div>
-                    {/* Header Label */}
+                    {/* Header Labels */}
                     <div
-                        className="text-xs mb-2 tracking-wider uppercase font-medium"
                         style={{
-                            fontFamily: 'var(--font-body)',
-                            color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: '12px',
                         }}
                     >
-                        Total Circuit
+                        <div
+                            className="text-xs mb-2 tracking-wider uppercase font-medium"
+                            style={{
+                                fontFamily: 'var(--font-body)',
+                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.6)',
+                            }}
+                        >
+                            Total Circuit
+                        </div>
+                        <div
+                            className="text-xs mb-2 tracking-wider uppercase font-medium"
+                            style={{
+                                fontFamily: 'var(--font-body)',
+                                color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
+                                fontSize: '10px',
+                                lineHeight: '1',
+                                whiteSpace: 'nowrap',
+                                marginLeft: 'auto',
+                                minWidth: '96px',
+                                textAlign: 'left',
+                            }}
+                        >
+                            Break Between
+                        </div>
                     </div>
                     {/* Values Row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
                         {/* Minutes */}
-                        <div style={{ flex: '0 0 auto' }}>
-                            <div
-                                className="text-3xl font-bold tracking-wide"
-                                style={{
-                                    color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
-                                    fontFamily: 'var(--font-display)',
-                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
-                                    lineHeight: '1',
-                                }}
-                            >
-                                {displayMinutes}
-                            </div>
+                        <div
+                            className="text-3xl font-bold tracking-wide"
+                            style={{
+                                color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
+                                fontFamily: 'var(--font-display)',
+                                animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                lineHeight: '1',
+                            }}
+                        >
+                            {displayMinutes}
                         </div>
                         {/* Separator */}
-                        <div style={{ fontSize: '24px', opacity: 0.5, lineHeight: '1', marginBottom: '2px' }}>:</div>
+                        <div
+                            className="text-3xl font-bold"
+                            style={{
+                                opacity: 0.5,
+                                lineHeight: '1',
+                                fontFamily: 'var(--font-display)',
+                            }}
+                        >
+                            :
+                        </div>
                         {/* Seconds */}
-                        <div style={{ flex: '0 0 auto' }}>
-                            <div
-                                className="text-3xl font-bold tracking-wide"
-                                style={{
-                                    color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
-                                    fontFamily: 'var(--font-display)',
-                                    animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
-                                    lineHeight: '1',
-                                }}
-                            >
-                                {displaySeconds.toString().padStart(2, '0')}
-                            </div>
+                        <div
+                            className="text-3xl font-bold tracking-wide"
+                            style={{
+                                color: isLight ? 'var(--text-primary)' : 'rgba(255,255,255,0.95)',
+                                fontFamily: 'var(--font-display)',
+                                animation: selectedExercises.length > 0 ? 'energy-pulse 2s ease-in-out infinite' : 'none',
+                                lineHeight: '1',
+                            }}
+                        >
+                            {displaySeconds.toString().padStart(2, '0')}
                         </div>
                         {/* Break Between */}
-                        <div style={{ flex: '0 0 auto', marginLeft: '12px', display: 'flex', alignItems: 'center', position: 'relative' }}>
-                            <div
-                                className="text-xs tracking-wider uppercase font-medium"
-                                style={{
-                                    fontFamily: 'var(--font-body)',
-                                    color: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5)',
-                                    fontSize: '10px',
-                                    position: 'absolute',
-                                    top: '-14px',
-                                    left: '2px',
-                                }}
-                            >
-                                Break Between
-                            </div>
+                        <div style={{ flex: '0 0 auto', marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', minWidth: '96px' }}>
                             <input
                                 type="text"
                                     value={`0:${intervalBreakSec.toString().padStart(2, '0')}`}
@@ -277,11 +292,11 @@ export function CircuitConfig({ value, onChange, isLight = false }) {
                                         background: 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)',
                                         color: 'var(--accent-color)',
                                         border: '1px solid hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3)',
-                                        letterSpacing: 'var(--tracking-wide)',
+                                        letterSpacing: '0.02em',
                                         height: '32px',
                                         lineHeight: '32px',
                                         boxSizing: 'border-box',
-                                        width: '64px'
+                                        width: '72px'
                                     }}
                             />
                         </div>
