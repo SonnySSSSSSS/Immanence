@@ -13,6 +13,7 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
+    const isNavHeroActive = isActive && icon === 'navigation';
 
     React.useEffect(() => {
         return () => {
@@ -92,6 +93,18 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
 
     const baseLabelOpacity = isActive ? 0.41 : 0.31;
     const labelOpacity = Math.min(0.5, baseLabelOpacity + (isPressing ? 0.09 : 0));
+    const baseBorderColor = isLight ? `${primaryHex}40` : `${primaryHex}50`;
+    const activeNavBorderColor = isLight ? 'rgba(132, 224, 156, 0.82)' : 'rgba(106, 224, 210, 0.85)';
+    const baseShadow = isLight
+        ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
+        : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`;
+    const activeNavShadow = isLight
+        ? `0 8px 24px rgba(100, 80, 60, 0.24), 0 0 20px rgba(156, 236, 172, 0.34), 0 0 26px rgba(87, 218, 204, 0.2), inset 0 2px 6px rgba(255, 255, 255, 0.92)`
+        : `0 8px 26px rgba(0, 0, 0, 0.55), 0 0 26px rgba(156, 236, 172, 0.24), 0 0 42px rgba(87, 218, 204, 0.26), inset 0 1px 2px rgba(255, 255, 255, 0.18)`;
+    const hoverBorderColor = isLight ? `${primaryHex}70` : `${primaryHex}80`;
+    const hoverShadow = isLight
+        ? `0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2), 0 0 25px ${primaryHex}40`
+        : `0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryHex}60`;
 
     return (
         <button
@@ -116,27 +129,21 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
                     backgroundImage: `url(${getBackgroundImage()})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    border: isLight ? `1px solid ${primaryHex}40` : `1px solid ${primaryHex}50`,
-                    boxShadow: isLight
-                        ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
-                        : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`,
+                    border: `1px solid ${isNavHeroActive ? activeNavBorderColor : baseBorderColor}`,
+                    boxShadow: isNavHeroActive ? activeNavShadow : baseShadow,
                     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}
                 onMouseEnter={(e) => {
                     if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
-                    e.currentTarget.style.borderColor = isLight ? `${primaryHex}70` : `${primaryHex}80`;
-                    e.currentTarget.style.boxShadow = isLight
-                        ? `0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2), 0 0 25px ${primaryHex}40`
-                        : `0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryHex}60`;
+                    e.currentTarget.style.borderColor = isNavHeroActive ? activeNavBorderColor : hoverBorderColor;
+                    e.currentTarget.style.boxShadow = isNavHeroActive ? activeNavShadow : hoverShadow;
                 }}
                 onMouseLeave={(e) => {
                     if (disabled) return;
                     e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                    e.currentTarget.style.borderColor = isLight ? `${primaryHex}40` : `${primaryHex}50`;
-                    e.currentTarget.style.boxShadow = isLight
-                        ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
-                        : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`;
+                    e.currentTarget.style.borderColor = isNavHeroActive ? activeNavBorderColor : baseBorderColor;
+                    e.currentTarget.style.boxShadow = isNavHeroActive ? activeNavShadow : baseShadow;
                 }}
             >
                 {/* Dark overlay for text legibility (dark mode only) */}
@@ -154,6 +161,15 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
                         className="absolute inset-0 rounded-full"
                         style={{
                             background: 'radial-gradient(circle, transparent 30%, rgba(255,255,255,0.15) 70%)',
+                        }}
+                    />
+                )}
+                {isNavHeroActive && (
+                    <div
+                        className="absolute inset-0 rounded-full pointer-events-none"
+                        style={{
+                            background: 'radial-gradient(circle at 50% 42%, rgba(156, 236, 172, 0.22) 0%, rgba(87, 218, 204, 0.14) 45%, rgba(0, 0, 0, 0) 74%)',
+                            mixBlendMode: 'screen',
                         }}
                     />
                 )}

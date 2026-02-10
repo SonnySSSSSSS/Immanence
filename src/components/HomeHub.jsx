@@ -73,7 +73,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
   const dailyCardBorderOff = Boolean(debugDailyCardBorderOff);
   const dailyCardMaskOff = Boolean(debugDailyCardMaskOff);
-  const effectiveStage = avatarStage || currentStage;
+  // Prefer the stage coming from the main app/dev controls (`currentStage`), then fall back to avatar store stage.
+  // This prevents "two stage sources" where the avatar/popup drift from the stage shown elsewhere.
+  const effectiveStage = currentStage || avatarStage;
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
   const getDisplayPath = usePathStore(s => s.getDisplayPath);
   const storedPath = getDisplayPath ? getDisplayPath(effectiveStage) : null;
@@ -637,9 +639,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 className="w-2.5 h-2.5 rounded-full transition-all"
                 style={{
                   background:
-                    homeSwipePage === idx ? 'var(--accent-80)' : 'rgba(255, 255, 255, 0.18)',
-                  boxShadow: homeSwipePage === idx ? '0 0 12px var(--accent-25)' : 'none',
-                  border: homeSwipePage === idx ? '1px solid var(--accent-30)' : '1px solid rgba(255,255,255,0.10)',
+                    homeSwipePage === idx
+                      ? 'linear-gradient(135deg, rgba(156, 236, 172, 0.95) 0%, rgba(87, 218, 204, 0.92) 100%)'
+                      : 'rgba(255, 255, 255, 0.18)',
+                  boxShadow: homeSwipePage === idx
+                    ? '0 0 14px rgba(87, 218, 204, 0.34), 0 0 6px rgba(156, 236, 172, 0.30)'
+                    : 'none',
+                  border: homeSwipePage === idx
+                    ? '1px solid rgba(122, 232, 188, 0.7)'
+                    : '1px solid rgba(255,255,255,0.10)',
                   transform: homeSwipePage === idx ? 'scale(1.05)' : 'scale(1.0)',
                 }}
               />

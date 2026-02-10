@@ -1,0 +1,163 @@
+.avatar-composite {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.avatar-composite__globe-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: circle(50% at 50% 50%);
+  border-radius: 9999px;
+}
+
+.avatar-composite__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.avatar-composite__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.avatar-composite__layer--bg {
+  z-index: 1;
+}
+
+.avatar-composite__layer--stage {
+  z-index: 2;
+}
+
+.avatar-composite__inner-glow {
+  z-index: 3;
+  background:
+    radial-gradient(
+      circle at 50% 44%,
+      rgba(172, 236, 165, 0.22) 0%,
+      rgba(88, 217, 205, 0.14) 36%,
+      rgba(236, 198, 128, 0.1) 58%,
+      rgba(0, 0, 0, 0) 78%
+    );
+  mix-blend-mode: screen;
+  opacity: 0.92;
+}
+
+.avatar-composite__layer--glass {
+  z-index: 4;
+}
+
+.avatar-composite__vignette {
+  z-index: 5;
+  background:
+    radial-gradient(
+      circle at 50% 52%,
+      rgba(0, 0, 0, 0) 53%,
+      rgba(32, 26, 20, 0.16) 75%,
+      rgba(7, 8, 10, 0.34) 100%
+    );
+}
+
+.avatar-composite__ring {
+  z-index: 6;
+}
+
+.avatar-composite__glass-pulse {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: calc(var(--avatar-composite-glass-base-opacity, 1) * var(--avatar-composite-glass-pulse, 1));
+  animation: avatar-composite-glass-pulse 20s ease-in-out infinite;
+}
+
+.avatar-composite__ring-spin {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  transform-origin: center center;
+  animation: avatar-composite-ring-spin 480s linear infinite;
+}
+
+.avatar-composite--debug .avatar-composite__layer--bg {
+  outline: 1px solid rgba(76, 201, 240, 0.9);
+  outline-offset: -1px;
+}
+
+.avatar-composite--debug .avatar-composite__layer--stage {
+  outline: 1px solid rgba(144, 224, 239, 0.9);
+  outline-offset: -2px;
+}
+
+.avatar-composite--debug .avatar-composite__layer--glass {
+  outline: 1px solid rgba(202, 240, 248, 0.9);
+  outline-offset: -3px;
+}
+
+.avatar-composite--debug .avatar-composite__ring {
+  outline: 1px solid rgba(255, 179, 71, 0.9);
+  outline-offset: -1px;
+}
+
+.avatar-composite__debug-readout {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  padding: 4px 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  user-select: none;
+}
+
+.avatar-composite__debug-line {
+  font-size: 9px;
+  line-height: 1.15;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  white-space: nowrap;
+}
+
+.avatar-composite__debug-line--bg {
+  color: rgba(76, 201, 240, 0.95);
+}
+
+.avatar-composite__debug-line--stage {
+  color: rgba(144, 224, 239, 0.95);
+}
+
+.avatar-composite__debug-line--glass {
+  color: rgba(202, 240, 248, 0.95);
+}
+
+.avatar-composite__debug-line--ring {
+  color: rgba(255, 179, 71, 0.95);
+}
+
+@keyframes avatar-composite-ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes avatar-composite-glass-pulse {
+  0% { --avatar-composite-glass-pulse: 0.95; }
+  50% { --avatar-composite-glass-pulse: 1.05; }
+  100% { --avatar-composite-glass-pulse: 0.95; }
+}

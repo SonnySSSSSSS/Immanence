@@ -24,7 +24,8 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
   const isSanctuary = displayMode === 'sanctuary';
   const isHearth = displayMode === 'hearth';
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
-  const effectiveStage = avatarStage || currentStage;
+  // Prefer the stage coming from the main app/dev controls (`currentStage`), then fall back to avatar store stage.
+  const effectiveStage = currentStage || avatarStage;
   const normalizedStage = String(effectiveStage || 'seedling').toLowerCase();
   const getDisplayPath = usePathStore(s => s.getDisplayPath);
   const storedPath = getDisplayPath ? getDisplayPath(effectiveStage) : null;
