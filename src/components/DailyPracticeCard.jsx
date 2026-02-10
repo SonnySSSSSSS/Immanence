@@ -482,29 +482,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const abandonPath = useNavigationStore(s => s.abandonPath);
     
     const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
-    const hasStartedPath = useMemo(() => {
-        if (!activePath?.runId && !activePath?.activePathId) return false;
-        const activePathStartMs = activePath?.startedAt ? new Date(activePath.startedAt).getTime() : NaN;
 
-        return sessionsV2.some((session) => {
-            const sessionRunId = session?.pathContext?.runId ?? null;
-            if (activePath?.runId && sessionRunId) {
-                return sessionRunId === activePath.runId;
-            }
+    const pathDayIndexDisplay = useMemo(() => {
+        if (!activePath?.startedAt || !metrics.durationDays) return 0;
 
-            const sessionPathId = session?.pathContext?.activePathId ?? null;
-            if (!activePath?.activePathId || !sessionPathId || sessionPathId !== activePath.activePathId) return false;
+        const fromMs = parseDateKeyToUtcMs(startDayKey);
+        const toMs = parseDateKeyToUtcMs(todayKey);
+        if (Number.isNaN(fromMs) || Number.isNaN(toMs)) return 0;
 
-            const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
-            if (!sessionAnchorIso) return false;
-            const sessionMs = new Date(sessionAnchorIso).getTime();
-            if (Number.isNaN(sessionMs)) return false;
+        // Day meter reflects completed days, so Day 1 becomes "1/N" only after that day ends.
+        const completedDays = Math.floor((toMs - fromMs) / (24 * 60 * 60 * 1000));
+        return Math.max(0, Math.min(completedDays, metrics.durationDays));
+    }, [activePath?.startedAt, metrics.durationDays, startDayKey, todayKey]);
 
-            return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
-        });
-    }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt]);
-
-    const pathDayIndexDisplay = hasStartedPath ? metrics.dayIndex : 0;
     const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
     const missState = useMemo(() => computeMissState(), [
         computeMissState,

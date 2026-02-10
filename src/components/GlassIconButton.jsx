@@ -2,6 +2,7 @@
 // Reusable glass icon button for practice mode toggles
 // Based on SimpleModeButton with enhanced selection states
 
+import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 
@@ -38,9 +39,19 @@ export function GlassIconButton({
 }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
+  const [isPressing, setIsPressing] = React.useState(false);
+  const pressTimerRef = React.useRef(null);
 
   const theme = useTheme();
   const primaryHex = theme?.accent?.primary || '#4ade80';
+
+  React.useEffect(() => {
+    return () => {
+      if (pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+      }
+    };
+  }, []);
 
   // No background images - transparent/glass only
 
@@ -221,11 +232,27 @@ export function GlassIconButton({
     if (onClick) onClick();
   };
 
+  const handlePressFeedback = () => {
+    if (disabled) return;
+    setIsPressing(true);
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+    }
+    pressTimerRef.current = setTimeout(() => {
+      setIsPressing(false);
+      pressTimerRef.current = null;
+    }, 130);
+  };
+
+  const baseLabelOpacity = selected ? 0.41 : 0.31;
+  const labelOpacity = Math.min(0.5, baseLabelOpacity + (isPressing ? 0.09 : 0));
+
   return (
     <button
       type="button"
       onClick={handleClick}
-      className="group relative flex flex-col items-center gap-3"
+      onPointerDown={handlePressFeedback}
+      className="group relative flex flex-col items-center"
       style={{
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.45 : 1,
@@ -294,20 +321,38 @@ export function GlassIconButton({
         )}
         {getIcon()}
       </div>
-      <span
-        className="type-label font-bold"
+      <div
         style={{
-          color: selected
-            ? (isLight ? 'rgba(100, 80, 60, 0.95)' : 'rgba(253, 251, 245, 0.9)')
-            : (isLight ? 'rgba(100, 80, 60, 0.65)' : 'rgba(253, 251, 245, 0.6)'),
-          transition: 'color 0.3s ease',
-          fontSize: '10px',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase'
+          marginTop: '5px',
+          marginLeft: '4px',
+          marginRight: '4px',
+          padding: '0 7px',
+          borderRadius: '6px',
+          background: `rgba(0, 0, 0, ${labelOpacity})`,
+          transition: 'background-color 130ms ease',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
-        {label}
-      </span>
+        <span
+          className="font-medium"
+          style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: 'var(--type-label-size)',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: selected
+              ? (isLight ? 'rgba(100, 80, 60, 0.95)' : 'rgb(248, 247, 244)')
+              : (isLight ? 'rgba(100, 80, 60, 0.85)' : 'rgba(248, 247, 244, 0.9)'),
+            textShadow: 'none',
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+            transition: 'color 0.3s ease',
+          }}
+        >
+          {label}
+        </span>
+      </div>
     </button>
   );
 }

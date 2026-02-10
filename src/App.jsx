@@ -733,6 +733,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   {!hideCards && (
                     <HomeHub
                       onSelectSection={handleSectionSelect}
+                      activeSection={activeSection}
                       onStageChange={(hsl, stageName) => handleAvatarStageSelection(stageName)}
                       isPracticing={isPracticing}
                       currentStage={effectivePreviewStage}

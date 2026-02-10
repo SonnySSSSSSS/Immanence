@@ -1,15 +1,26 @@
 // src/components/SimpleModeButton.jsx
 // Mode button with cosmic dark mode and watercolor light mode imagery
 
+import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 
-export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
+export function SimpleModeButton({ title, onClick, icon, disabled = false, isActive = false }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const [isPressing, setIsPressing] = React.useState(false);
+    const pressTimerRef = React.useRef(null);
 
     const theme = useTheme();
     const primaryHex = theme?.accent?.primary || '#4ade80';
+
+    React.useEffect(() => {
+        return () => {
+            if (pressTimerRef.current) {
+                clearTimeout(pressTimerRef.current);
+            }
+        };
+    }, []);
 
     // Get appropriate background image based on mode and icon
     // Using default themes: 'cosmic' for dark, 'watercolor' for light
@@ -67,11 +78,27 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
         if (onClick) onClick();
     };
 
+    const handlePressFeedback = () => {
+        if (disabled) return;
+        setIsPressing(true);
+        if (pressTimerRef.current) {
+            clearTimeout(pressTimerRef.current);
+        }
+        pressTimerRef.current = setTimeout(() => {
+            setIsPressing(false);
+            pressTimerRef.current = null;
+        }, 130);
+    };
+
+    const baseLabelOpacity = isActive ? 0.41 : 0.31;
+    const labelOpacity = Math.min(0.5, baseLabelOpacity + (isPressing ? 0.09 : 0));
+
     return (
         <button
             type="button"
             onClick={handleClick}
-            className="group relative flex flex-col items-center gap-3"
+            onPointerDown={handlePressFeedback}
+            className="group relative flex flex-col items-center"
             style={{
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.45 : 1,
@@ -132,14 +159,35 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false }) {
                 )}
                 {getIcon()}
             </div>
-            <span
-                className="type-label font-bold"
+            <div
                 style={{
-                    color: isLight ? 'rgba(100, 80, 60, 0.75)' : 'rgba(253, 251, 245, 0.7)',
+                    marginTop: '5px',
+                    marginLeft: '4px',
+                    marginRight: '4px',
+                    padding: '0 7px',
+                    borderRadius: '6px',
+                    background: `rgba(0, 0, 0, ${labelOpacity})`,
+                    transition: 'background-color 130ms ease',
+                    display: 'flex',
+                    alignItems: 'center',
                 }}
             >
-                {title}
-            </span>
+                <span
+                    className="font-medium"
+                    style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: 'var(--type-label-size)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        color: 'rgb(248, 247, 244)',
+                        textShadow: 'none',
+                        lineHeight: 1,
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {title}
+                </span>
+            </div>
         </button>
     );
 }

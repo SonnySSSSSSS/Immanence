@@ -55,7 +55,7 @@ const SANCTUARY_RAIL_STYLE = {
 };
 
 
-function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false, debugDisableDailyCard = false, debugBuildProbe = false, debugShadowScan = false, debugDailyCardShadowOff = false, debugDailyCardBlurOff = false, debugDailyCardBorderOff = false, debugDailyCardMaskOff = false }) {
+function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false, debugDisableDailyCard = false, debugBuildProbe = false, debugShadowScan = false, debugDailyCardShadowOff = false, debugDailyCardBlurOff = false, debugDailyCardBorderOff = false, debugDailyCardMaskOff = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, getDaysUntilNextStage } = useLunarStore();
@@ -475,24 +475,28 @@ function HomeHub({ onSelectSection, currentStage, previewPath, previewShowCore, 
               onClick={() => handleSelectSection("practice")}
               disabled={lockToHub}
               icon="practice"
+              isActive={activeSection === 'practice'}
             />
             <SimpleModeButton
               title="Wisdom"
               onClick={() => handleSelectSection("wisdom")}
               disabled={lockToHub}
               icon="wisdom"
+              isActive={activeSection === 'wisdom'}
             />
             <SimpleModeButton
               title="Application"
               onClick={() => handleSelectSection("application")}
               disabled={lockToHub}
               icon="application"
+              isActive={activeSection === 'application'}
             />
             <SimpleModeButton
               title="Navigation"
               onClick={() => handleSelectSection("navigation")}
               disabled={lockToHub}
               icon="navigation"
+              isActive={activeSection === 'navigation'}
             />
           </div>
         </div>

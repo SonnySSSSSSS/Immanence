@@ -119,8 +119,26 @@ export function CircuitTrainingSelector({
 
         {/* Active label - shows category name */}
         <div className="flex-1 min-w-0">
-          <div className="text-sm leading-tight text-white/90 truncate font-medium" style={{ fontFamily: 'var(--font-display)' }}>
-            {active.label}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0 7px',
+              borderRadius: '6px',
+              background: 'rgba(0, 0, 0, 0.33)',
+              maxWidth: '100%',
+            }}
+          >
+            <div
+              className="text-sm truncate font-medium"
+              style={{
+                fontFamily: 'var(--font-display)',
+                color: 'rgba(255, 255, 255, 0.92)',
+                lineHeight: 1,
+              }}
+            >
+              {active.label}
+            </div>
           </div>
         </div>
 
@@ -196,18 +214,28 @@ export function CircuitTrainingSelector({
                     {/* Label */}
                     <div className="flex-1 min-w-0">
                       <div
-                        className={
-                          "text-sm leading-tight truncate " +
-                          (item.id === activeId
-                            ? "text-white font-medium"
-                            : "text-white/70")
-                        }
                         style={{
-                          fontFamily: 'var(--font-display)',
-                          color: item.id === activeId ? item.rail : undefined,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0 6px',
+                          borderRadius: '6px',
+                          background: `rgba(0, 0, 0, ${item.id === activeId ? 0.40 : 0.30})`,
+                          maxWidth: '100%',
                         }}
                       >
-                        {item.label}
+                        <div
+                          className={
+                            "text-sm truncate " +
+                            (item.id === activeId ? "font-medium" : "")
+                          }
+                          style={{
+                            fontFamily: 'var(--font-display)',
+                            color: item.id === activeId ? item.rail : 'rgba(255, 255, 255, 0.82)',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {item.label}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -221,4 +249,3 @@ export function CircuitTrainingSelector({
     </div>
   );
 }
-
