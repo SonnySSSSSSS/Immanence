@@ -210,7 +210,7 @@ export function DevPanel({
         if (!isOpen || !isDev) return undefined;
         const onKeyDown = (event) => {
             const key = String(event.key || '').toLowerCase();
-            if (event.ctrlKey && event.shiftKey && key === 'p') {
+            if (event.ctrlKey && event.altKey && event.shiftKey && key === 'k') {
                 event.preventDefault();
                 setPeekMode(v => !v);
             }
@@ -267,7 +267,7 @@ export function DevPanel({
                         Click any marked card in the UI, then confirm to return to the panel.
                     </div>
                     <div className="text-[10px] text-white/50 mb-3">
-                        Shortcut: <span className="font-mono text-white/80">Ctrl+Shift+P</span>
+                        Shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
                     </div>
                     <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
                         Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
@@ -495,7 +495,7 @@ export function DevPanel({
                                     Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
                                 </div>
                                 <div className="text-[10px] text-white/50 mb-3">
-                                    Quick peek shortcut: <span className="font-mono text-white/80">Ctrl+Shift+P</span>
+                                    Quick peek shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
                                 </div>
 
                                 <div className="space-y-2 mb-3">
