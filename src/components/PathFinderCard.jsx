@@ -68,7 +68,7 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
     // Collapsed state
     if (!isExpanded) {
         return (
-            <div className="w-full">
+            <div className="im-card w-full" data-tutorial="navigation-path-finder" data-card="true" data-card-id="pathFinder">
                 <button
                     onClick={() => setIsExpanded(true)}
                     className="w-full text-center py-3 rounded-xl transition-all border"
@@ -96,7 +96,7 @@ export function PathFinderCard({ onPathRecommended, selectedPathId }) {
 
     // Expanded state
     return (
-        <div className="w-full">
+        <div className="im-card w-full" data-tutorial="navigation-path-finder" data-card="true" data-card-id="pathFinder">
             <div
                 className="relative rounded-3xl p-8 overflow-hidden"
                 style={{

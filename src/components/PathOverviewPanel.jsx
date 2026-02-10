@@ -137,7 +137,9 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     return (
         <div
             data-testid="path-overview-panel"
-            className="w-full max-w-2xl mx-auto p-8 relative"
+            data-card="true"
+            data-card-id="pathOverviewPanel"
+            className="im-card w-full max-w-2xl mx-auto p-8 relative"
             style={{
                 // No background/border/shadow - handled by wrapper in NavigationSection
             }}

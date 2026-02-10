@@ -67,6 +67,50 @@ import { useProgressStore } from '../state/progressStore.js';
 
 const DEV_FX_GALLERY_ENABLED = true;
 
+const DevCompleteNowOverlay =
+  import.meta.env.DEV === true
+    ? function DevCompleteNowOverlay({ isRunning, onCompleteNow }) {
+        if (!isRunning) return null;
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              right: 14,
+              bottom: 14,
+              zIndex: 10050,
+              display: 'flex',
+              alignItems: 'flex-end',
+              pointerEvents: 'none',
+            }}
+          >
+            <button
+              type="button"
+              onClick={onCompleteNow}
+              style={{
+                pointerEvents: 'auto',
+                padding: '8px 10px',
+                borderRadius: 10,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(0,0,0,0.65)',
+                color: 'rgba(255,255,255,0.92)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+              title="DEV: Immediately complete the active practice using normal completion logic"
+            >
+              DEV: Complete Now
+            </button>
+          </div>
+        );
+      }
+    : function DevCompleteNowOverlay() {
+        return null;
+      };
+
 // Safe practice config lookup that resolves old IDs
 const getPracticeConfig = (id) => {
   const resolvedId = resolvePracticeId(id);
@@ -150,6 +194,7 @@ function PracticeSelector({ selectedId, onSelect }) {
 
   return (
     <CircuitTrainingSelector 
+      data-tutorial="practice-selector"
       items={items}
       value={selectedId}
       onChange={onSelect}
@@ -2157,6 +2202,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   return (
     <>
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
+      <DevCompleteNowOverlay
+        isRunning={isRunning}
+        onCompleteNow={() => handleStop({ completed: true })}
+      />
       {sessionView}
       {summaryView}
       

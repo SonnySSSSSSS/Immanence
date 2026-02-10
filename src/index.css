@@ -122,3 +122,33 @@ body::-webkit-scrollbar {
   pointer-events: none;
   z-index: 0;
 }
+
+:root {
+  --card-tint-h: 220;
+  --card-tint-s: 20%;
+  --card-tint-l: 12%;
+  --card-alpha: 0.22;
+  --card-border-alpha: 0.28;
+  --card-blur: 16px;
+}
+
+.dev-card-tuner-enabled .im-card {
+  background: hsla(var(--card-tint-h), var(--card-tint-s), var(--card-tint-l), var(--card-alpha)) !important;
+  border: 1px solid hsla(var(--card-tint-h), var(--card-tint-s), 85%, var(--card-border-alpha)) !important;
+  backdrop-filter: blur(var(--card-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--card-blur)) !important;
+}
+
+.dev-card-picker-active,
+.dev-card-picker-active * {
+  cursor: crosshair !important;
+}
+
+.dev-card-picker-active [data-card="true"] {
+  cursor: pointer !important;
+}
+
+.dev-card-selected {
+  outline: 2px solid rgba(255, 210, 120, 0.95);
+  outline-offset: 2px;
+}

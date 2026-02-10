@@ -202,6 +202,9 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
         >
           {/* Hearth: max 430px; Sanctuary: max 760px - both centered */}
           <div
+            data-card="true"
+            data-card-id="pathOverview"
+            className="im-card"
             style={{
               width: '100%',
               maxWidth: isHearth ? '430px' : '760px',

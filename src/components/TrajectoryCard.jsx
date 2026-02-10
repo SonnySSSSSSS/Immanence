@@ -83,8 +83,10 @@ export function TrajectoryCard({ onTap }) {
 
     return (
         <div
+            data-card="true"
+            data-card-id="trajectory"
             onClick={() => onTap?.(REPORT_DOMAINS.PRACTICE)}
-            className="w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-all duration-700 cursor-pointer hover:shadow-2xl active:scale-[0.99]"
+            className="im-card w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-all duration-700 cursor-pointer hover:shadow-2xl active:scale-[0.99]"
             style={{
                 maxWidth: '430px',
                 margin: '0 auto',

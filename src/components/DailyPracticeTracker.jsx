@@ -3,6 +3,70 @@ import React from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 
+const DevAdvanceDayControls =
+    import.meta.env.DEV === true
+        ? function DevAdvanceDayControls({ dayNumber, canAdvance, isLight }) {
+            const [overrideIncomplete, setOverrideIncomplete] = React.useState(false);
+            const devSetDay = useCurriculumStore(s => s._devSetDay);
+
+            const disabled = !overrideIncomplete && !canAdvance;
+            const nextDay = (Number(dayNumber) || 1) + 1;
+            const border = isLight ? 'rgba(60, 50, 35, 0.18)' : 'rgba(255, 255, 255, 0.18)';
+            const enabledBg = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.12)';
+            const disabledBg = isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)';
+            const enabledFg = isLight ? 'rgba(60, 50, 35, 0.92)' : 'rgba(255, 255, 255, 0.92)';
+            const disabledFg = isLight ? 'rgba(60, 50, 35, 0.45)' : 'rgba(255, 255, 255, 0.45)';
+
+            return (
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => devSetDay(nextDay)}
+                        className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all"
+                        style={{
+                            background: disabled ? disabledBg : enabledBg,
+                            border: `1px solid ${border}`,
+                            color: disabled ? disabledFg : enabledFg,
+                            cursor: disabled ? 'not-allowed' : 'pointer',
+                        }}
+                        title={
+                            disabled
+                                ? 'DEV: Complete all legs (or enable override) to advance'
+                                : 'DEV: Advance the curriculum run to the next day'
+                        }
+                    >
+                        DEV: Advance Day
+                    </button>
+
+                    <label
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: isLight ? 'rgba(60, 50, 35, 0.70)' : 'rgba(255, 255, 255, 0.70)',
+                            userSelect: 'none',
+                        }}
+                        title="DEV: Allow advancing even if the day is incomplete"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={overrideIncomplete}
+                            onChange={(e) => setOverrideIncomplete(e.target.checked)}
+                        />
+                        Override
+                    </label>
+                </div>
+            );
+        }
+        : function DevAdvanceDayControls() {
+            return null;
+        };
+
 export function DailyPracticeTracker() {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -29,6 +93,7 @@ export function DailyPracticeTracker() {
     };
 
     const completedCount = legs.filter(l => l.completed).length;
+    const canAdvanceDay = legs.length > 0 && completedCount === legs.length;
 
     return (
         <div
@@ -68,6 +133,8 @@ export function DailyPracticeTracker() {
                         }}>
                             Day {dayNumber} of 14
                         </div>
+
+                        <DevAdvanceDayControls dayNumber={dayNumber} canAdvance={canAdvanceDay} isLight={isLight} />
                     </div>
 
                     {streak > 1 && (

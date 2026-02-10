@@ -7,7 +7,7 @@ import { useProgressStore } from '../state/progressStore.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
-import { addDaysToDateKey, getLocalDateKey } from '../utils/dateUtils.js';
+import { addDaysToDateKey, getLocalDateKey, parseDateKeyToUtcMs } from '../utils/dateUtils.js';
 import { getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
@@ -302,7 +302,16 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const todayKey = getLocalDateKey();
     const sessionsV2 = useProgressStore(s => s.sessionsV2 || []);
 
-    const todaySessions = useMemo(() => {
+    const startDayKey = useMemo(() => {
+        if (!activePath?.startedAt) return todayKey;
+        const d = new Date(activePath.startedAt);
+        if (Number.isNaN(d.getTime())) return todayKey;
+        return getLocalDateKey(d);
+    }, [activePath?.startedAt, todayKey]);
+
+    const displayDayKey = useMemo(() => {
+        if (times.length === 0 || !activePath?.startedAt) return todayKey;
+
         const activeRunId = activePath?.runId ?? null;
         const activePathIdForRun = activePath?.activePathId ?? null;
         const activePathStartMs = activePath?.startedAt ? new Date(activePath.startedAt).getTime() : NaN;
@@ -313,7 +322,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 return sessionRunId === activeRunId;
             }
 
-            // Fallback for legacy/orphaned records missing runId.
             const sessionPathId = session?.pathContext?.activePathId ?? null;
             if (!activePathIdForRun || !sessionPathId || sessionPathId !== activePathIdForRun) return false;
 
@@ -324,37 +332,71 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
         };
 
-        return sessionsV2.filter((s) => {
-            const sessionAnchorIso = s?.startedAt || s?.endedAt || null;
-            if (!sessionAnchorIso) return false;
-            if (getLocalDateKey(new Date(sessionAnchorIso)) !== todayKey) return false;
-            return isSessionInActiveRun(s);
-        });
-    }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt, todayKey]);
+        const baseKey = startDayKey > todayKey ? startDayKey : todayKey;
+        const isFutureScheduledDay = baseKey > todayKey;
 
-    const completedTodayCount = useMemo(
-        () => todaySessions.filter(s => s.completion === "completed").length,
-        [todaySessions]
-    );
+        const dayIndexForKey = (() => {
+            const fromMs = parseDateKeyToUtcMs(startDayKey);
+            const toMs = parseDateKeyToUtcMs(baseKey);
+            if (Number.isNaN(fromMs) || Number.isNaN(toMs)) return 1;
+            return Math.max(1, Math.round((toMs - fromMs) / (24 * 60 * 60 * 1000)) + 1);
+        })();
 
-    const displayDayKey = useMemo(() => {
-        if (times.length === 0 || !activePath?.startedAt) return todayKey;
+        const completedSlots = new Set();
+        for (const s of sessionsV2) {
+            if (s?.completion !== 'completed') continue;
+            if (!isSessionInActiveRun(s)) continue;
 
-        let cycleStartKey = todayKey;
-        const firstSlotScheduledAt = localDateTimeFromDateKeyAndTime(todayKey, times[0]);
-        if (firstSlotScheduledAt) {
-            const { expired } = getStartWindowState({ now: new Date(), scheduledAt: firstSlotScheduledAt });
-            if (expired) {
-                cycleStartKey = addDaysToDateKey(todayKey, 1) || todayKey;
+            const sessionDayIndexRaw = s?.pathContext?.dayIndex;
+            const sessionDayIndex = Number(sessionDayIndexRaw);
+            const hasSessionDayIndex = Number.isFinite(sessionDayIndex);
+            if (hasSessionDayIndex && sessionDayIndex !== dayIndexForKey) continue;
+
+            if (!hasSessionDayIndex) {
+                const sessionAnchorIso = s?.startedAt || s?.endedAt || null;
+                if (!sessionAnchorIso) continue;
+                if (getLocalDateKey(new Date(sessionAnchorIso)) !== baseKey) continue;
+            }
+
+            const slotIndexRaw = s?.pathContext?.slotIndex;
+            const slotIndex = Number(slotIndexRaw);
+            if (Number.isFinite(slotIndex) && slotIndex >= 0 && slotIndex < times.length) {
+                completedSlots.add(slotIndex);
+                continue;
+            }
+
+            const slotTime = typeof s?.pathContext?.slotTime === 'string' ? s.pathContext.slotTime.substring(0, 5) : null;
+            if (slotTime) {
+                const idx = times.indexOf(slotTime);
+                if (idx >= 0) completedSlots.add(idx);
             }
         }
 
-        if (completedTodayCount >= times.length) {
-            cycleStartKey = addDaysToDateKey(cycleStartKey, 1) || cycleStartKey;
+        const completedAllSlots = completedSlots.size >= times.length && times.length > 0;
+        if (!isFutureScheduledDay && completedAllSlots) {
+            return addDaysToDateKey(baseKey, 1) || baseKey;
         }
 
-        return cycleStartKey;
-    }, [times, activePath?.startedAt, todayKey, completedTodayCount]);
+        const lastSlotTime = times[times.length - 1];
+        const lastSlotScheduledAt = localDateTimeFromDateKeyAndTime(baseKey, lastSlotTime);
+        const { expired } = lastSlotScheduledAt
+            ? getStartWindowState({ now: new Date(), scheduledAt: lastSlotScheduledAt })
+            : { expired: false };
+
+        if (!isFutureScheduledDay && expired && completedSlots.size < times.length) {
+            return addDaysToDateKey(baseKey, 1) || baseKey;
+        }
+
+        return baseKey;
+    }, [times, activePath?.startedAt, activePath?.runId, activePath?.activePathId, sessionsV2, todayKey, startDayKey]);
+
+    const displayDayIndex = useMemo(() => {
+        if (!activePath?.startedAt) return 1;
+        const fromMs = parseDateKeyToUtcMs(startDayKey);
+        const toMs = parseDateKeyToUtcMs(displayDayKey);
+        if (Number.isNaN(fromMs) || Number.isNaN(toMs)) return 1;
+        return Math.max(1, Math.round((toMs - fromMs) / (24 * 60 * 60 * 1000)) + 1);
+    }, [activePath?.startedAt, startDayKey, displayDayKey]);
 
     const displaySessions = useMemo(() => {
         const activeRunId = activePath?.runId || null;
@@ -379,20 +421,51 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         };
 
         return sessionsV2.filter((s) => {
-            const sessionAnchorIso = s?.startedAt || s?.endedAt || null;
-            if (!sessionAnchorIso) return false;
-            if (getLocalDateKey(new Date(sessionAnchorIso)) !== displayDayKey) return false;
             return isSessionInActiveRun(s);
         });
-    }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt, displayDayKey]);
+    }, [sessionsV2, activePath?.runId, activePath?.activePathId, activePath?.startedAt]);
 
-    const completedCount = useMemo(
-        () => displaySessions.filter(s => s.completion === "completed").length,
-        [displaySessions]
-    );
+    const completedSlotIndices = useMemo(() => {
+        const set = new Set();
+        for (const s of displaySessions) {
+            if (s?.completion !== 'completed') continue;
 
-    const nextIndex = Math.min(completedCount, times.length);
-    
+            const sessionDayIndexRaw = s?.pathContext?.dayIndex;
+            const sessionDayIndex = Number(sessionDayIndexRaw);
+            const hasSessionDayIndex = Number.isFinite(sessionDayIndex);
+            if (hasSessionDayIndex && sessionDayIndex !== displayDayIndex) continue;
+
+            if (!hasSessionDayIndex) {
+                const sessionAnchorIso = s?.startedAt || s?.endedAt || null;
+                if (!sessionAnchorIso) continue;
+                if (getLocalDateKey(new Date(sessionAnchorIso)) !== displayDayKey) continue;
+            }
+
+            const slotIndexRaw = s?.pathContext?.slotIndex;
+            const slotIndex = Number(slotIndexRaw);
+            if (Number.isFinite(slotIndex) && slotIndex >= 0 && slotIndex < times.length) {
+                set.add(slotIndex);
+                continue;
+            }
+
+            const slotTime = typeof s?.pathContext?.slotTime === 'string' ? s.pathContext.slotTime.substring(0, 5) : null;
+            if (slotTime) {
+                const idx = times.indexOf(slotTime);
+                if (idx >= 0) set.add(idx);
+            }
+        }
+        return set;
+    }, [displaySessions, displayDayIndex, displayDayKey, times]);
+
+    const completedCount = completedSlotIndices.size;
+
+    const nextIndex = useMemo(() => {
+        for (let i = 0; i < times.length; i++) {
+            if (!completedSlotIndices.has(i)) return i;
+        }
+        return times.length;
+    }, [times.length, completedSlotIndices]);
+     
     // Deterministic "today complete" flag: all expected slots completed
     const isScheduleComplete = useMemo(
         () => times.length > 0 && completedCount >= times.length,
@@ -568,6 +641,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     if (hasActivePath || needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
+        const isSetupEmptyState = !activePathObj;
 
         return (
             <div
@@ -590,17 +664,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                             : `0 18px 40px rgba(0,0,0,0.28), 0 6px 14px rgba(0,0,0,0.18), 0 0 18px ${primaryHex}22`),
                     }}
                 >
-                <div
-                    className="w-full relative dpBlurSurface"
-                    style={{
-                        borderRadius: '24px',
-                        overflow: clipOverflow,
-                        background: isLight ? 'rgba(250, 246, 238, 0.92)' : 'rgba(10, 12, 16, 0.58)',
-                        border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
-                        '--dp-radius': '24px',
-                        // Set inset-only shadow via CSS var + !important class to prevent accidental depth shadows on this layer.
-                        '--dp-inset-shadow': isLight
-                            ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
+                 <div
+                     data-card="true"
+                     data-card-id="dailyPractice"
+                     className="im-card w-full relative dpBlurSurface"
+                     style={{
+                         borderRadius: '24px',
+                         overflow: clipOverflow,
+                        background: isLight
+                            ? (isSetupEmptyState ? 'rgba(250, 246, 238, 0.96)' : 'rgba(250, 246, 238, 0.92)')
+                            : (isSetupEmptyState ? 'rgba(10, 12, 16, 0.72)' : 'rgba(10, 12, 16, 0.58)'),
+                         border: maybeBorder(isLight ? '1px solid rgba(160, 120, 60, 0.2)' : '1px solid var(--accent-30)'),
+                         '--dp-radius': '24px',
+                         // Set inset-only shadow via CSS var + !important class to prevent accidental depth shadows on this layer.
+                         '--dp-inset-shadow': isLight
+                             ? 'inset 0 1px 0 rgba(255,255,255,0.22)'
                             : 'inset 0 1px 0 rgba(255,255,255,0.06)',
                         backdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
                         WebkitBackdropFilter: isLight ? 'none' : maybeBlur('blur(16px)'),
@@ -628,15 +706,20 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 backgroundImage: `url(${bgAssetUrl})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
-                                filter: isLight ? 'saturate(1.1)' : 'none',
+                                opacity: isSetupEmptyState ? 0.72 : 1,
+                                filter: isLight ? (isSetupEmptyState ? 'saturate(0.95)' : 'saturate(1.1)') : 'none',
                                 transition: 'all 0.7s ease-in-out',
                             }}
                         />
 
                         <div className="absolute inset-0 pointer-events-none dpRadiusInherit" style={{
                             background: isLight
-                                ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)'
-                                : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)'
+                                ? (isSetupEmptyState
+                                    ? 'linear-gradient(180deg, rgba(250, 246, 238, 0.58) 0%, rgba(250, 246, 238, 0.78) 100%)'
+                                    : 'linear-gradient(180deg, rgba(250, 246, 238, 0.42) 0%, rgba(250, 246, 238, 0.62) 100%)')
+                                : (isSetupEmptyState
+                                    ? 'linear-gradient(180deg, rgba(20, 15, 25, 0.66) 0%, rgba(20, 15, 25, 0.84) 100%)'
+                                    : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)')
                         }} />
 
                         {/* Left strip instrumentation - vertical meters */}
@@ -698,7 +781,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         <div
                             className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
                             style={{
-                                background: 'transparent',
+                                background: isSetupEmptyState
+                                    ? (isLight ? 'rgba(250, 246, 238, 0.55)' : 'rgba(0, 0, 0, 0.18)')
+                                    : 'transparent',
                                 borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
                                 color: isLight ? '#3c3020' : '#fdfbf5',
                             }}
@@ -714,40 +799,46 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 />
                             )}
 
-                            <div className="px-6 sm:px-7 pt-4 sm:pt-5 pb-4 relative z-10">
-                                <div className="absolute inset-0 pointer-events-none" style={{ background: isLight ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)' : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)' }} />
+                            <div className="px-6 sm:px-7 pt-4 sm:pt-5 pb-4 sm:pb-5 relative z-10 flex flex-col flex-1">
+                                <div className="absolute inset-0 pointer-events-none" style={{
+                                    background: isLight
+                                        ? (isSetupEmptyState
+                                            ? 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.06), transparent 32%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.06), transparent 32%)'
+                                            : 'radial-gradient(circle at 10% 10%, rgba(180, 140, 60, 0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(180, 140, 60, 0.12), transparent 30%)')
+                                        : (isSetupEmptyState
+                                            ? 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.03), transparent 32%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.03), transparent 32%)'
+                                            : 'radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.06), transparent 30%), radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.06), transparent 30%)')
+                                }} />
 
                                 {!activePathObj ? (
-                                    <>
+                                    <div className="flex flex-col justify-center flex-1">
                                         <div>
                                             <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-60" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>
                                                 Today's Practice
                                             </div>
                                             <div className="text-lg font-black tracking-wide" style={{ color: isLight ? '#3c3020' : '#fdfbf5', fontFamily: 'var(--font-display)' }}>
-                                                NO CURRICULUM DATA
+                                                Setup required
                                             </div>
-                                            <div className="text-[11px] opacity-70 leading-snug mt-3" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
-                                                This browser has no onboarding/curriculum saved yet.
+                                            <div className="text-[12px] opacity-80 leading-snug mt-3" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                                No curriculum is saved in this browser yet. Start setup to choose a path and set your practice times.
                                             </div>
                                         </div>
 
-                                        <div className="mt-auto">
+                                        <div className="mt-6 sm:mt-7 -translate-y-2.5 transform">
                                             <button
+                                                type="button"
                                                 onClick={() => onStartSetup?.()}
-                                                className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105"
+                                                className="px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-60)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                                                 style={{
                                                     background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
                                                     color: '#fff',
                                                     boxShadow: '0 3px 10px var(--accent-30)',
                                                 }}
                                             >
-                                                START SETUP
+                                                Start Setup
                                             </button>
-                                            <p className="mt-4 text-[11px] text-white/60">
-                                                Click &quot;Start Setup&quot; to begin your journey
-                                            </p>
                                         </div>
-                                    </>
+                                    </div>
                                 ) : missState.broken ? (
                                     <div className="text-center">
                                         <div className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 35, 0.6)' : 'rgba(253,251,245,0.6)' }}>PATH STATUS</div>
@@ -816,7 +907,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                         <div className="mt-4 space-y-5">
                                             {times.map((time, idx) => {
-                                                const isDone = idx < completedCount;
+                                                const isDone = completedSlotIndices.has(idx);
                                                 const slotDateKey = slotDates[idx] || todayKey;
                                                 // Check time window for this slot using the correct date
                                                 const scheduledAt = localDateTimeFromDateKeyAndTime(slotDateKey, time);
@@ -1105,7 +1196,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 }}
             >
                 <div
-                    className="w-full relative dpBlurSurface"
+                    data-card="true"
+                    data-card-id="dailyPracticeComplete"
+                    className="im-card w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
                         overflow: clipOverflow,
@@ -1236,7 +1329,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 }}
             >
                 <div
-                    className="w-full"
+                    data-card="true"
+                    data-card-id="dailyPracticeFallback"
+                    className="im-card w-full"
                     style={{
                         borderRadius: '24px',
                         padding: '20px',
@@ -1258,7 +1353,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     {activePathObj && times.length > 0 ? (
                         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {times.map((time, idx) => {
-                                const isDone = idx < completedCount;
+                                const isDone = completedSlotIndices.has(idx);
                                 const isNext = idx === nextIndex;
                                 return (
                                     <div
@@ -1433,7 +1528,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             >
                 {/* MIDDLE: Container */}
                 <div
-                    className="w-full relative dpBlurSurface"
+                    data-card="true"
+                    data-card-id="dailyPractice"
+                    className="im-card w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
                         overflow: clipOverflow,

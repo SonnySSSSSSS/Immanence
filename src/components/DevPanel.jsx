@@ -14,6 +14,19 @@ import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
 import * as devHelpers from '../utils/devHelpers.js';
+import {
+    CARD_TUNER_DEFAULTS,
+    initCardTuner,
+    subscribeCardTuner,
+    setPickMode,
+    applyGlobal,
+    applySelected,
+    saveGlobal,
+    saveSelected,
+    resetGlobal,
+    resetSelected,
+    clearAll,
+} from '../dev/cardTuner.js';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -74,6 +87,7 @@ export function DevPanel({
     const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
     const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
+    const isDev = import.meta.env.DEV;
     const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const isPlaygroundPath = currentPathname === '/__playground';
 
@@ -102,6 +116,7 @@ export function DevPanel({
     // Collapsible sections
     const [expandedSections, setExpandedSections] = useState({
         avatar: true,
+        cardTuner: true,
         playground: false,
         curriculum: false,
         tracking: false,
@@ -115,6 +130,18 @@ export function DevPanel({
     // Inspector modal
     const [inspectorOpen, setInspectorOpen] = useState(false);
     const [storeSnapshot, setStoreSnapshot] = useState(null);
+    const [cardApplyToAll, setCardApplyToAll] = useState(false);
+    const [peekMode, setPeekMode] = useState(false);
+    const [cardState, setCardState] = useState({
+        pickMode: false,
+        hasSelected: false,
+        selectedCardId: null,
+        selectedLabel: null,
+        globalSettings: { ...CARD_TUNER_DEFAULTS },
+        selectedSettings: null,
+    });
+    const [globalDraft, setGlobalDraft] = useState({ ...CARD_TUNER_DEFAULTS });
+    const [selectedDraft, setSelectedDraft] = useState({ ...CARD_TUNER_DEFAULTS });
 
     const isTutorialAdminOn = localStorage.getItem("immanence.tutorial.admin") === "1";
 
@@ -164,7 +191,105 @@ export function DevPanel({
         window.location.assign(returnPath);
     };
 
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        initCardTuner();
+        const un = subscribeCardTuner((next) => {
+            setCardState(next);
+            if (next.globalSettings) setGlobalDraft(next.globalSettings);
+            if (next.selectedSettings) setSelectedDraft(next.selectedSettings);
+        });
+        return () => {
+            setPickMode(false);
+            setPeekMode(false);
+            un();
+        };
+    }, [isOpen, isDev]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        const onKeyDown = (event) => {
+            const key = String(event.key || '').toLowerCase();
+            if (event.ctrlKey && event.shiftKey && key === 'p') {
+                event.preventDefault();
+                setPeekMode(v => !v);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, isDev]);
+
+    const activeDraft = cardApplyToAll
+        ? globalDraft
+        : (cardState.hasSelected ? selectedDraft : globalDraft);
+
+    const selectedDisabled = !cardApplyToAll && !cardState.hasSelected;
+
+    const onChangeCardSetting = (key, value) => {
+        if (cardApplyToAll) {
+            const next = { ...globalDraft, [key]: value };
+            setGlobalDraft(next);
+            applyGlobal(next);
+            return;
+        }
+        if (!cardState.hasSelected) return;
+        const next = { ...selectedDraft, [key]: value };
+        setSelectedDraft(next);
+        applySelected(next);
+    };
+
+    const handleStartPickFlow = () => {
+        setPickMode(true);
+        setPeekMode(true);
+    };
+
+    const handleStopPickFlow = () => {
+        setPickMode(false);
+    };
+
+    const handleConfirmPickFlow = () => {
+        setPickMode(false);
+        setPeekMode(false);
+    };
+
+    const handleTogglePeek = () => {
+        setPeekMode(v => !v);
+    };
+
     if (!isOpen) return null;
+
+    if (peekMode) {
+        return (
+            <div className="fixed inset-0 z-[9999] pointer-events-none">
+                <div className="absolute top-3 right-3 pointer-events-auto w-[280px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
+                    <div className="text-[11px] text-white/80 mb-2">Card Picker Active</div>
+                    <div className="text-[10px] text-white/55 mb-3">
+                        Click any marked card in the UI, then confirm to return to the panel.
+                    </div>
+                    <div className="text-[10px] text-white/50 mb-3">
+                        Shortcut: <span className="font-mono text-white/80">Ctrl+Shift+P</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
+                        Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={handleConfirmPickFlow}
+                            className="rounded-lg px-3 py-2 text-xs bg-amber-500/20 border border-amber-400/50 text-amber-200"
+                        >
+                            {cardState.hasSelected ? 'Confirm + Return' : 'Return'}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70"
+                        >
+                            Close Panel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-[9999] flex">
@@ -191,7 +316,11 @@ export function DevPanel({
                         }}>DEVELOPER PANEL</span>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={() => {
+                            setPickMode(false);
+                            setPeekMode(false);
+                            onClose();
+                        }}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
                         style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)' }}
                     >
@@ -317,6 +446,97 @@ export function DevPanel({
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* UI PLAYGROUND SECTION */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="Card Styling Tuner"
+                        expanded={expandedSections.cardTuner}
+                        onToggle={() => toggleSection('cardTuner')}
+                        isLight={isLight}
+                    >
+                        {!isDev ? (
+                            <div className="text-xs text-white/50">DEV-only</div>
+                        ) : (
+                            <>
+                                <div className="text-[10px] text-white/50 mb-2">
+                                    Pick a <span className="font-mono">data-card="true"</span> target and tune vars live.
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    <button
+                                        onClick={() => (cardState.pickMode ? handleStopPickFlow() : handleStartPickFlow())}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardState.pickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        {cardState.pickMode ? 'Stop Picking' : 'Pick Card'}
+                                    </button>
+                                    <button
+                                        onClick={() => setCardApplyToAll(v => !v)}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        {cardApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    <button
+                                        onClick={handleTogglePeek}
+                                        className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                                    >
+                                        Peek UI
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmPickFlow}
+                                        disabled={!cardState.pickMode}
+                                        className={`rounded-lg px-3 py-2 text-xs transition-all ${cardState.pickMode
+                                            ? 'bg-amber-500/20 border border-amber-400/50 text-amber-200'
+                                            : 'bg-white/5 border border-white/10 text-white/35 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        Confirm Pick
+                                    </button>
+                                </div>
+                                <div className="mb-3 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                    Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
+                                </div>
+                                <div className="text-[10px] text-white/50 mb-3">
+                                    Quick peek shortcut: <span className="font-mono text-white/80">Ctrl+Shift+P</span>
+                                </div>
+
+                                <div className="space-y-2 mb-3">
+                                    <RangeControl label="Tint H" value={activeDraft.cardTintH} min={0} max={360} step={1} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintH', v)} />
+                                    <RangeControl label="Tint S" value={activeDraft.cardTintS} min={0} max={100} step={1} suffix="%" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintS', v)} />
+                                    <RangeControl label="Tint L" value={activeDraft.cardTintL} min={0} max={100} step={1} suffix="%" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintL', v)} />
+                                    <RangeControl label="Alpha" value={activeDraft.cardAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardAlpha', v)} />
+                                    <RangeControl label="Border A" value={activeDraft.cardBorderAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBorderAlpha', v)} />
+                                    <RangeControl label="Blur" value={activeDraft.cardBlur} min={0} max={60} step={1} suffix="px" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBlur', v)} />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <DevButton onClick={() => saveGlobal(globalDraft)}>Save Global</DevButton>
+                                    <button
+                                        onClick={() => saveSelected(selectedDraft)}
+                                        disabled={!cardState.hasSelected || !cardState.selectedCardId}
+                                        className={`rounded-lg px-3 py-2 text-xs transition-all ${(!cardState.hasSelected || !cardState.selectedCardId) ? 'bg-white/5 text-white/30 border border-white/10 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/70'}`}
+                                    >
+                                        Save Selected
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <DevButton onClick={resetGlobal}>Reset Global</DevButton>
+                                    <button
+                                        onClick={resetSelected}
+                                        disabled={!cardState.hasSelected}
+                                        className={`rounded-lg px-3 py-2 text-xs transition-all ${!cardState.hasSelected ? 'bg-white/5 text-white/30 border border-white/10 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/70'}`}
+                                    >
+                                        Reset Selected
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={clearAll}
+                                    className="w-full rounded-lg px-3 py-2 text-xs bg-red-500/10 border border-red-500/30 text-red-400/70 hover:bg-red-500/20 transition-all"
+                                >
+                                    Clear All
+                                </button>
+                            </>
+                        )}
+                    </Section>
+
                     <Section
                         title="UI Playground"
                         expanded={expandedSections.playground}
@@ -1188,6 +1408,28 @@ function DevButton({ onClick, children }) {
         >
             {children}
         </button>
+    );
+}
+
+function RangeControl({ label, value, min, max, step, onChange, disabled = false, suffix = '' }) {
+    const displayValue = Number(step) < 1 ? Number(value).toFixed(2) : String(Math.round(value));
+    return (
+        <label className={`block text-[11px] ${disabled ? 'opacity-45' : ''}`}>
+            <div className="flex items-center justify-between mb-1">
+                <span className="text-white/70">{label}</span>
+                <span className="font-mono text-white/85">{displayValue}{suffix}</span>
+            </div>
+            <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                disabled={disabled}
+                onChange={(e) => onChange(Number(e.target.value))}
+                className="w-full accent-amber-400 disabled:cursor-not-allowed"
+            />
+        </label>
     );
 }
 
