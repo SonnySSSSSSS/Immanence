@@ -6,6 +6,146 @@
 - Primary surfaces: **HomeHub** (dashboard), **NavigationSection** (path/program selection), **PracticeSection** (practice runner + configuration), **WisdomSection** (library), plus modal overlays for onboarding and dev tools.
 - Display framing uses `displayModeStore` for **sanctuary** vs **hearth** widths and **dark** vs **light** color schemes. App container targets `maxWidth: 820px` (sanctuary) or `430px` (hearth).
 
+## UI Architecture — Primitive System
+
+This repo uses a small set of visual primitives (identified via CSS classes) and token groups (CSS variables). The DevPanel tuners override token groups behind dev-only classes for isolation.
+
+### UI Primitives Map
+
+**1) Card Surface**
+Definition: A rectangular surface with background, border, shadow, and visual elevation. Used to group content and controls.
+Tokenized Properties: `--card-*` (ex: `--card-tint-*`, `--card-alpha`, `--card-border-alpha`, `--card-blur`).
+Identifier: `im-card` class with optional `data-card-id` for DevPanel selection.
+
+Examples:
+- Practice Options panel
+- Collapsed practice selector surface
+- Video tokens
+- Treatise list area
+- Bookmark list
+- Chapter modal wrapper
+
+**2) Navigation Button**
+Definition: A standalone interactive button used for high-level navigation. Uses transparency, stroke, blur and glow instead of solid fill.
+Tokenized Properties:
+
+```
+--nav-btn-bg
+--nav-btn-bg-alpha
+--nav-btn-border
+--nav-btn-border-width
+--nav-btn-glow
+--nav-btn-text-color
+--nav-btn-text-glow
+--nav-btn-backdrop-blur
+```
+
+Identifier: `im-nav-btn` class for tuner wiring.
+
+Examples:
+- Dropdown-style section selectors (Wisdom / Navigation)
+- Stroke/blur/glass navigation buttons (not content cards)
+
+**3) Panel Container**
+Definition: A layout grouping that is not a card (does not receive elevation style), but organizes multiple surfaces.
+Role: Layout-only, no visual theming.
+
+**4) Modal Surface**
+Definition: A focused overlay surface above the main UI. Visually a card but with modal behaviors (backdrop, trap focus).
+Inherit: `im-card` token + additional modal behavior.
+
+**5) Selector Control**
+Definition: A control that expands/collapses to present options. May be a button container that becomes a menu.
+
+**6) Token Group**
+Definition: A set of CSS variables that define theming for a class of primitives.
+Examples:
+- Card token group (`--card-*`)
+- Navigation button token group (`--nav-btn-*`)
+
+**7) Utility Classes**
+Definition: Supportive classes that don’t define new primitives but augment visuals.
+Examples: `text-muted`, `backdrop-blur`, `focus-ring`, etc.
+
+### Surface-to-Primitive Mapping Rules
+
+- If a UI block has elevation/background/border, it must use the Card Surface primitive (`im-card`) and consume `--card-*` tokens. Avoid hardcoded visuals in surface roots.
+- If a button visually uses stroke/blur transparency, it must use the Navigation Button primitive (`im-nav-btn`) and consume `--nav-btn-*` tokens.
+- If a container only arranges layout, it remains a Panel Container (no surface token consumption).
+- Modal surfaces combine Card Surface tokens with modal behavior.
+
+### Token Consumption Model
+
+```
+Token Groups → Applied to Primitives → Rendered in Sections
+
+--card-*     → .im-card     → Practice / Wisdom / Navigation / Home
+--nav-btn-*  → .im-nav-btn  → Navigation Controls
+```
+
+### UI Primitive Hierarchy (Structural Diagram)
+
+```
+Immanence OS UI System
+│
+├── 1. Layout Layer
+│     ├── App Frame (Sanctuary / Hearth width)
+│     ├── Section Containers
+│     └── Panel Containers (layout only, no visual identity)
+│
+├── 2. Surface Primitives
+│     │
+│     ├── Card Surface (im-card)
+│     │     ├── Content Cards
+│     │     ├── Practice Panels
+│     │     ├── Video Tokens
+│     │     ├── Treatise Lists
+│     │     ├── Bookmark Surfaces
+│     │     └── Modal Wrappers
+│     │
+│     ├── Navigation Button (im-nav-btn)
+│     │     ├── Top-level navigation buttons
+│     │     ├── Mode selectors
+│     │     └── Stroke/blur/glass buttons
+│     │
+│     └── Selector Control
+│           ├── Practice selector
+│           ├── Dropdown menus
+│           └── Expand/collapse controls
+│
+├── 3. Token Groups (Theme Variables)
+│     │
+│     ├── Card Token Group (--card-*)
+│     │     ├── background
+│     │     ├── border
+│     │     ├── blur
+│     │     └── tint/alpha
+│     │
+│     └── Navigation Button Token Group (--nav-btn-*)
+│           ├── background + alpha
+│           ├── border color + width
+│           ├── glow intensity
+│           ├── text color + glow
+│           └── backdrop blur
+│
+└── 4. Behavioral Layers
+      ├── DevPanel Token Overrides
+      │     ├── .dev-card-tuner-enabled
+      │     └── .dev-nav-btn-tuner-enabled
+      ├── Hover / Focus States
+      └── Modal Interaction Layer
+```
+
+### Glossary (UI Primitives)
+
+- Card Surface: A tokenized elevated surface identified by `im-card`.
+- Navigation Button: A tokenized navigation control identified by `im-nav-btn`.
+- Panel Container: Layout-only grouping without surface identity.
+- Modal Surface: A Card Surface used in an overlay context (with modal behavior).
+- Selector Control: A control that expands/collapses to present choices.
+- Token Group: A named set of CSS variables applied to a primitive.
+- Utility Class: A supporting class that augments visuals but does not define a primitive.
+
 ## App-Wide State Domains (Zustand Slices)
 
 The app is organized into four primary state domains, plus a small transient UI orchestration store (`uiStore`) used for cross-section deep links and one-shot launch overrides.

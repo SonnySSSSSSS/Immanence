@@ -2378,6 +2378,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     iconName={mode.id}
                     onClick={() => setBreathSubmode(mode.id)}
                     selected={breathSubmode === mode.id}
+                    data-ui="practice-button"
+                    data-practice-type={mode.id}
+                    data-practice-id={`practice-submode:${mode.id}`}
                   />
                 ))}
               </div>
@@ -2389,6 +2392,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
           const activeMode = practiceParams[practiceId]?.activeMode || practice.defaultSubMode;
           const buttonCount = Object.keys(practice.subModes).length;
+          const practiceTypeForFx = practiceId === 'perception' ? 'visual' : (practiceId === 'resonance' ? 'sound' : practiceId);
 
           return (
             <div
@@ -2410,6 +2414,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     iconName={iconName}
                     onClick={() => updateParams(practiceId, { activeMode: modeKey })}
                     selected={isActive}
+                    data-ui="practice-button"
+                    data-practice-type={practiceTypeForFx}
+                    data-practice-id={`practice-submode:${practiceId}:${modeKey}`}
                   />
                 );
               })}

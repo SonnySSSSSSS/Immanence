@@ -123,9 +123,9 @@ test('DEV — Card picker coverage + carousel follow', async ({ page }) => {
   // Practice page: pick practice options card.
   await page.getByRole('button', { name: 'Practice', exact: true }).first().click();
   await expect(page.locator('.practice-section-container')).toBeVisible();
-  await pickByCardId(page, 'practiceOptions');
+  await pickByCardId(page, 'practice-options');
   await closeDevPanel(page);
-  await snap(page, '03_practice_practiceOptions.png');
+  await snap(page, '03_practice_practice-options.png');
 
   // Wisdom page: pick a category card.
   await gotoHub(page);

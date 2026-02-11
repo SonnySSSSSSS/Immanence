@@ -141,9 +141,9 @@ export function PracticeOptionsCard({
     >
       {/* Glassmorphic Main Panel */}
       <div 
-        className="relative PracticePanelShell overflow-x-hidden"
+        className="relative PracticePanelShell overflow-x-hidden im-card"
         data-card="true"
-        data-card-id="practiceOptions"
+        data-card-id="practice-options"
         style={{
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',

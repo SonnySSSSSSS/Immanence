@@ -119,7 +119,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
         <button
           onClick={() => setNavModalOpen(true)}
           data-testid="navigation-selector-button"
-          className="type-label px-6 py-3 rounded-full"
+          className="type-label px-6 py-3 rounded-full im-nav-btn"
           style={{
             color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
             display: 'flex',

@@ -197,7 +197,9 @@ function ChapterModal({
       style={{ animation: "fadeIn 300ms ease-out" }}
     >
       <div
-        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)] relative"
+        className="bg-[#0a0a12] border border-[var(--accent-20)] rounded-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.8)] relative im-card"
+        data-card="true"
+        data-card-id="chapter-modal"
         style={{ 
           animation: "scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)",
           maxWidth: displayMode === 'sanctuary' ? '820px' : '430px'
@@ -1370,7 +1372,11 @@ export function WisdomSection() {
     // If searching, show flat results
     if (filteredChapters) {
       return (
-        <div className="space-y-5">
+        <div
+          className="space-y-5 im-card"
+          data-card="true"
+          data-card-id="treatise-list"
+        >
           {/* Search */}
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
@@ -1441,7 +1447,11 @@ export function WisdomSection() {
 
     // Normal view - Parts accordion
     return (
-      <div className="space-y-5">
+      <div
+        className="space-y-5 im-card"
+        data-card="true"
+        data-card-id="treatise-list"
+      >
         {/* Header */}
         <div className="text-center pb-5 border-b border-[var(--accent-10)]">
           <h2
@@ -1515,7 +1525,9 @@ export function WisdomSection() {
     if (bookmarkedChapters.length === 0) {
       return (
         <div
-          className="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden"
+          className="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden im-card"
+          data-card="true"
+          data-card-id="bookmark-list"
           style={{
             background:
               "radial-gradient(ellipse at center, rgba(10,5,20,0.95) 0%, rgba(5,2,10,1) 100%)",
@@ -1583,7 +1595,9 @@ export function WisdomSection() {
     // Constellation view: Stars with connecting lines
     return (
       <div
-        className="relative min-h-[350px] rounded-2xl p-6 overflow-hidden"
+        className="relative min-h-[350px] rounded-2xl p-6 overflow-hidden im-card"
+        data-card="true"
+        data-card-id="bookmark-list"
         style={{
           background:
             "radial-gradient(ellipse at center top, rgba(15,10,30,0.95) 0%, rgba(5,2,10,1) 100%)",
@@ -1796,7 +1810,7 @@ export function WisdomSection() {
             </div>
             <button
               onClick={() => setWisdomModalOpen(true)}
-              className="px-6 py-3 rounded-full"
+              className="px-6 py-3 rounded-full im-nav-btn"
               style={{
                 fontFamily: "var(--font-display)",
                 fontSize: "13px",

@@ -28,6 +28,14 @@ import {
     resetSelected,
     clearAll,
 } from '../dev/cardTuner.js';
+import {
+    NAV_BUTTON_TUNER_DEFAULTS,
+    initNavButtonTuner,
+    subscribeNavButtonTuner,
+    setNavButtonTunerEnabled,
+    applyNavButtonSettings,
+    resetNavButtonSettings,
+} from '../dev/navButtonTuner.js';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -130,6 +138,7 @@ export function DevPanel({
         avatar: true,
         avatarCompositeTuner: true,
         cardTuner: true,
+        navBtnTuner: false,
         playground: false,
         curriculum: false,
         tracking: false,
@@ -160,6 +169,11 @@ export function DevPanel({
     });
     const [globalDraft, setGlobalDraft] = useState({ ...CARD_TUNER_DEFAULTS });
     const [selectedDraft, setSelectedDraft] = useState({ ...CARD_TUNER_DEFAULTS });
+    const [navBtnState, setNavBtnState] = useState({
+        enabled: false,
+        settings: { ...NAV_BUTTON_TUNER_DEFAULTS },
+    });
+    const [navBtnDraft, setNavBtnDraft] = useState({ ...NAV_BUTTON_TUNER_DEFAULTS });
 
     const isTutorialAdminOn = localStorage.getItem("immanence.tutorial.admin") === "1";
 
@@ -226,6 +240,16 @@ export function DevPanel({
 
     useEffect(() => {
         if (!isOpen || !isDev) return undefined;
+        initNavButtonTuner();
+        const un = subscribeNavButtonTuner((next) => {
+            setNavBtnState(next);
+            if (next?.settings) setNavBtnDraft(next.settings);
+        });
+        return () => un();
+    }, [isOpen, isDev]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
         const onKeyDown = (event) => {
             const key = String(event.key || '').toLowerCase();
             if (event.ctrlKey && event.altKey && event.shiftKey && key === 'k') {
@@ -259,6 +283,12 @@ export function DevPanel({
     const handleStartPickFlow = () => {
         setPickMode(true);
         setPeekMode(true);
+    };
+
+    const onChangeNavBtnSetting = (key, value) => {
+        const next = { ...navBtnDraft, [key]: value };
+        setNavBtnDraft(next);
+        applyNavButtonSettings(next);
     };
 
     const handleStopPickFlow = () => {
@@ -681,6 +711,109 @@ export function DevPanel({
                                     className="w-full rounded-lg px-3 py-2 text-xs bg-red-500/10 border border-red-500/30 text-red-400/70 hover:bg-red-500/20 transition-all"
                                 >
                                     Clear All
+                                </button>
+                            </>
+                        )}
+                    </Section>
+
+                    <Section
+                        title="Navigation Button FX Tuner"
+                        expanded={expandedSections.navBtnTuner}
+                        onToggle={() => toggleSection('navBtnTuner')}
+                        isLight={isLight}
+                    >
+                        {!isDev ? (
+                            <div className="text-xs text-white/50">DEV-only</div>
+                        ) : (
+                            <>
+                                <div className="text-[10px] text-white/50 mb-2">
+                                    Targets <span className="font-mono">.im-nav-btn</span> only. Uses <span className="font-mono">--nav-btn-*</span> tokens.
+                                </div>
+                                <button
+                                    onClick={() => setNavButtonTunerEnabled(!navBtnState.enabled)}
+                                    className={`w-full mb-3 px-3 py-2 rounded-lg text-xs border transition-all ${navBtnState.enabled ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                >
+                                    {navBtnState.enabled ? 'Nav Button Tuner: ON' : 'Nav Button Tuner: OFF'}
+                                </button>
+
+                                <div className="space-y-3">
+                                    <RangeControl
+                                        label="Transparency"
+                                        value={navBtnDraft.navBtnOpacity}
+                                        min={0}
+                                        max={1}
+                                        step={0.02}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnOpacity', v)}
+                                        disabled={!navBtnState.enabled}
+                                    />
+                                    <RangeControl
+                                        label="Background alpha"
+                                        value={navBtnDraft.navBtnBgAlpha}
+                                        min={0}
+                                        max={0.3}
+                                        step={0.01}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnBgAlpha', v)}
+                                        disabled={!navBtnState.enabled}
+                                    />
+                                    <RangeControl
+                                        label="Stroke thickness"
+                                        value={navBtnDraft.navBtnBorderWidth}
+                                        min={0}
+                                        max={4}
+                                        step={0.25}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnBorderWidth', v)}
+                                        disabled={!navBtnState.enabled}
+                                        suffix="px"
+                                    />
+                                    <RangeControl
+                                        label="Stroke glow"
+                                        value={navBtnDraft.navBtnGlow}
+                                        min={0}
+                                        max={60}
+                                        step={1}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnGlow', v)}
+                                        disabled={!navBtnState.enabled}
+                                        suffix="px"
+                                    />
+                                    <RangeControl
+                                        label="Blur"
+                                        value={navBtnDraft.navBtnBackdropBlur}
+                                        min={0}
+                                        max={20}
+                                        step={1}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnBackdropBlur', v)}
+                                        disabled={!navBtnState.enabled}
+                                        suffix="px"
+                                    />
+                                    <RangeControl
+                                        label="Text glow"
+                                        value={navBtnDraft.navBtnTextGlow}
+                                        min={0}
+                                        max={60}
+                                        step={1}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnTextGlow', v)}
+                                        disabled={!navBtnState.enabled}
+                                        suffix="px"
+                                    />
+                                    <RangeControl
+                                        label="Hover intensity"
+                                        value={navBtnDraft.navBtnHoverIntensity}
+                                        min={0}
+                                        max={1.5}
+                                        step={0.05}
+                                        onChange={(v) => onChangeNavBtnSetting('navBtnHoverIntensity', v)}
+                                        disabled={!navBtnState.enabled}
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        resetNavButtonSettings();
+                                    }}
+                                    disabled={!navBtnState.enabled}
+                                    className={`w-full mt-3 rounded-lg px-3 py-2 text-xs transition-all ${!navBtnState.enabled ? 'bg-white/5 text-white/30 border border-white/10 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/70'}`}
+                                >
+                                    Reset Nav Button FX
                                 </button>
                             </>
                         )}

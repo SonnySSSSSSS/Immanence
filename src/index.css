@@ -157,3 +157,38 @@ body::-webkit-scrollbar {
   outline: 2px dashed rgba(255, 80, 80, 0.95);
   outline-offset: 2px;
 }
+
+:root {
+  --nav-btn-bg: 255, 255, 255;
+  --nav-btn-bg-alpha: 0.08;
+  --nav-btn-border: rgba(255, 255, 255, 0.2);
+  --nav-btn-border-width: 1px;
+  --nav-btn-glow: 25px;
+  --nav-btn-text-color: rgba(245, 209, 138, 1);
+  --nav-btn-text-glow: 10px;
+  --nav-btn-backdrop-blur: 8px;
+  --nav-btn-opacity: 1;
+  --nav-btn-hover-intensity: 0.25;
+}
+
+.dev-nav-btn-tuner-enabled .im-nav-btn {
+  --_nav-btn-hover-mult: 1;
+  opacity: var(--nav-btn-opacity, 1) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--nav-btn-bg, 255, 255, 255), var(--nav-btn-bg-alpha, 0.08)) 0%,
+    rgba(var(--nav-btn-bg, 255, 255, 255), 0) 100%
+  ) !important;
+  border: var(--nav-btn-border-width, 1px) solid var(--nav-btn-border, rgba(255, 255, 255, 0.2)) !important;
+  backdrop-filter: blur(var(--nav-btn-backdrop-blur, 8px)) !important;
+  -webkit-backdrop-filter: blur(var(--nav-btn-backdrop-blur, 8px)) !important;
+  box-shadow: 0 0 calc(var(--nav-btn-glow, 0px) * var(--_nav-btn-hover-mult))
+    var(--nav-btn-border, rgba(255, 255, 255, 0.2)) !important;
+  color: var(--nav-btn-text-color, inherit) !important;
+  text-shadow: 0 0 calc(var(--nav-btn-text-glow, 0px) * var(--_nav-btn-hover-mult))
+    var(--nav-btn-text-color, currentColor) !important;
+}
+
+.dev-nav-btn-tuner-enabled .im-nav-btn:hover {
+  --_nav-btn-hover-mult: calc(1 + var(--nav-btn-hover-intensity, 0));
+}

@@ -161,7 +161,9 @@ function VideoToken({ video, isSelected, onClick, isLight }) {
     return (
         <button
             onClick={() => onClick(video)}
-            className="flex-shrink-0 w-40 p-3 text-left transition-all duration-200 rounded-lg border"
+            data-card="true"
+            data-card-id="video-token"
+            className="flex-shrink-0 w-40 p-3 text-left transition-all duration-200 rounded-lg border im-card"
             style={{
                 background: isSelected
                     ? isLight

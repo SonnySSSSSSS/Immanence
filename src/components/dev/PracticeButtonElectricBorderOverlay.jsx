@@ -5,7 +5,7 @@ import { useSettingsStore } from "../../state/settingsStore.js";
 import { ElectricBorder } from "./ElectricBorder.jsx";
 
 const TARGET_SELECTOR = '[data-ui="practice-button"]';
-const BORDER_OFFSET_PX = 14; // Button-sized: 14–18 recommended
+const BORDER_OFFSET_PX = 16; // Button-sized: 14–18 recommended
 const PICK_STORAGE_KEY = "immanence.dev.practiceButtonFxPicker";
 const PICK_EVENT = "immanence-practice-button-fx-picker";
 
@@ -177,8 +177,8 @@ export function PracticeButtonElectricBorderOverlay() {
   const overlays = useMemo(() => {
     if (!enabled) return [];
 
-    const speed = reduceMotionSetting ? 0 : 0.045;
-    const chaos = 0.06;
+    const speed = reduceMotionSetting ? 0 : 0.052;
+    const chaos = 0.095;
 
     return targets.map((t) => {
       const r = t.rect;
@@ -222,7 +222,7 @@ export function PracticeButtonElectricBorderOverlay() {
             color={o.color}
             speed={o.speed}
             chaos={o.chaos}
-            thickness={1.8}
+            thickness={2}
             showSparks={false}
           />
         </div>

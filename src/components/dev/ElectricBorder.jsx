@@ -115,7 +115,7 @@ export function ElectricBorder({
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const baseAmp = 1.2 + chaos * 14;
+    const baseAmp = 2 + chaos * 22;
 
     const draw = (tSec) => {
       ctx.clearRect(0, 0, width, height);
@@ -125,16 +125,16 @@ export function ElectricBorder({
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.06;
-      ctx.lineWidth = thickness + 4;
+      ctx.globalAlpha = 0.14;
+      ctx.lineWidth = thickness + 6;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 16;
       ctx.beginPath();
       for (let i = 0; i < points.length; i += 1) {
         const p = points[i];
         const n = hash01(i * 1.31, tSec * 1.1 + phaseRef.current);
         const s = Math.sin((tSec * 4.0 + i * 0.22) * (1 + chaos * 1.1));
-        const jitter = (n * 2 - 1) * baseAmp * 0.45 + s * baseAmp * 0.18;
+        const jitter = (n * 2 - 1) * baseAmp * 0.5 + s * baseAmp * 0.22;
         const px = p.x + p.nx * jitter;
         const py = p.y + p.ny * jitter;
         if (i === 0) ctx.moveTo(px, py);
@@ -148,16 +148,16 @@ export function ElectricBorder({
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.48;
+      ctx.globalAlpha = 0.62;
       ctx.lineWidth = thickness;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 3.5;
+      ctx.shadowBlur = 5;
       ctx.beginPath();
       for (let i = 0; i < points.length; i += 1) {
         const p = points[i];
         const n = hash01(i * 2.03, tSec * 2.2 + 9.1 + phaseRef.current);
         const s = Math.sin((tSec * 6.0 + i * 0.35) * (1 + chaos * 1.55));
-        const jitter = (n * 2 - 1) * baseAmp * 0.28 + s * baseAmp * 0.14;
+        const jitter = (n * 2 - 1) * baseAmp * 0.32 + s * baseAmp * 0.18;
         const px = p.x + p.nx * jitter;
         const py = p.y + p.ny * jitter;
         if (i === 0) ctx.moveTo(px, py);
