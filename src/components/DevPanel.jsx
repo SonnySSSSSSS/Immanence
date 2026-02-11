@@ -85,6 +85,10 @@ export function DevPanel({
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
+    const practiceButtonFxEnabled = useSettingsStore(s => s.practiceButtonFxEnabled);
+    const setPracticeButtonFxEnabled = useSettingsStore(s => s.setPracticeButtonFxEnabled);
+    const cardElectricBorderEnabled = useSettingsStore(s => s.cardElectricBorderEnabled);
+    const setCardElectricBorderEnabled = useSettingsStore(s => s.setCardElectricBorderEnabled);
     const _lightModeRingType = useSettingsStore(s => s.lightModeRingType);
     const _setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
     const photic = useSettingsStore(s => s.photic);
@@ -141,11 +145,16 @@ export function DevPanel({
     const [storeSnapshot, setStoreSnapshot] = useState(null);
     const [cardApplyToAll, setCardApplyToAll] = useState(false);
     const [peekMode, setPeekMode] = useState(false);
+    const [practiceButtonPickMode, setPracticeButtonPickMode] = useState(false);
+    const [practiceButtonApplyToAll, setPracticeButtonApplyToAll] = useState(true);
+    const [practiceButtonSelectedKey, setPracticeButtonSelectedKey] = useState(null);
     const [cardState, setCardState] = useState({
         pickMode: false,
         hasSelected: false,
         selectedCardId: null,
+        selectedCardCarouselId: null,
         selectedLabel: null,
+        lastPickFailure: null,
         globalSettings: { ...CARD_TUNER_DEFAULTS },
         selectedSettings: null,
     });
@@ -265,11 +274,85 @@ export function DevPanel({
         setPeekMode(v => !v);
     };
 
+    const PRACTICE_BUTTON_PICK_STORAGE_KEY = "immanence.dev.practiceButtonFxPicker";
+    const PRACTICE_BUTTON_PICK_EVENT = "immanence-practice-button-fx-picker";
+
+    const broadcastPracticeButtonPicker = useCallback((next) => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem(PRACTICE_BUTTON_PICK_STORAGE_KEY, JSON.stringify(next));
+        } catch {
+            // ignore storage errors
+        }
+        try {
+            window.dispatchEvent(new CustomEvent(PRACTICE_BUTTON_PICK_EVENT, { detail: next }));
+        } catch {
+            // ignore
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        try {
+            const raw = window.localStorage.getItem(PRACTICE_BUTTON_PICK_STORAGE_KEY);
+            if (!raw) return undefined;
+            const parsed = JSON.parse(raw);
+            setPracticeButtonApplyToAll(parsed?.applyToAll !== false);
+            setPracticeButtonSelectedKey(typeof parsed?.selectedKey === 'string' ? parsed.selectedKey : null);
+        } catch {
+            // ignore
+        }
+        return undefined;
+    }, [isOpen, isDev]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        broadcastPracticeButtonPicker({
+            applyToAll: practiceButtonApplyToAll,
+            selectedKey: practiceButtonSelectedKey,
+        });
+        return undefined;
+    }, [isOpen, isDev, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        if (!practiceButtonPickMode) return undefined;
+
+        const normalizePracticeType = (raw) => {
+            const t = String(raw || '').trim().toLowerCase();
+            if (!t) return null;
+            if (t === 'perception') return 'visual';
+            if (t === 'resonance') return 'sound';
+            return t;
+        };
+
+        const onClickCapture = (event) => {
+            const target = event?.target;
+            if (!(target instanceof Element)) return;
+            const el = target.closest('[data-ui="practice-button"]');
+            if (!el) return;
+
+            // Picker should not trigger the UI action underneath.
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+
+            const practiceType = normalizePracticeType(el.getAttribute('data-practice-type'));
+            const id = el.getAttribute('data-practice-id') || el.id || practiceType || 'practice';
+            const key = `${practiceType || 'practice'}:${id}`;
+            setPracticeButtonSelectedKey(key);
+            setPracticeButtonApplyToAll(false);
+        };
+
+        document.addEventListener('click', onClickCapture, true);
+        return () => document.removeEventListener('click', onClickCapture, true);
+    }, [isOpen, isDev, practiceButtonPickMode]);
+
     if (!isOpen) return null;
 
     if (peekMode) {
         return (
-            <div className="fixed inset-0 z-[9999] pointer-events-none">
+            <div data-testid="devpanel-peek" className="fixed inset-0 z-[9999] pointer-events-none">
                 <div className="absolute top-3 right-3 pointer-events-auto w-[280px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
                     <div className="text-[11px] text-white/80 mb-2">Card Picker Active</div>
                     <div className="text-[10px] text-white/55 mb-3">
@@ -278,9 +361,14 @@ export function DevPanel({
                     <div className="text-[10px] text-white/50 mb-3">
                         Shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
                     </div>
-                    <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
+                <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
                         Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
                     </div>
+                    {cardState.lastPickFailure?.message && (
+                        <div className="text-[10px] mb-3 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
+                            {cardState.lastPickFailure.message}
+                        </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={handleConfirmPickFlow}
@@ -301,9 +389,10 @@ export function DevPanel({
     }
 
     return (
-        <div className="fixed inset-0 z-[9999] flex">
+        <div data-testid="devpanel-root" className="fixed inset-0 z-[9999] flex">
             {/* Backdrop */}
             <div
+                data-testid="devpanel-backdrop"
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
@@ -330,6 +419,7 @@ export function DevPanel({
                             setPeekMode(false);
                             onClose();
                         }}
+                        data-testid="devpanel-close"
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
                         style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)' }}
                     >
@@ -520,6 +610,50 @@ export function DevPanel({
                                     <RangeControl label="Alpha" value={activeDraft.cardAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardAlpha', v)} />
                                     <RangeControl label="Border A" value={activeDraft.cardBorderAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBorderAlpha', v)} />
                                     <RangeControl label="Blur" value={activeDraft.cardBlur} min={0} max={60} step={1} suffix="px" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBlur', v)} />
+                                </div>
+
+                                <div className="border-t border-white/10 pt-3 mt-3 mb-3">
+                                    <div className="text-[11px] text-white/80 font-semibold mb-2">FX: Selected Card Electric Border</div>
+                                    <button
+                                        onClick={() => setCardElectricBorderEnabled(!cardElectricBorderEnabled)}
+                                        disabled={!cardState.hasSelected}
+                                        className={`w-full px-3 py-2 rounded-lg text-xs border transition-all ${cardElectricBorderEnabled ? 'bg-amber-500/20 text-amber-200 border-amber-400/50' : 'bg-white/5 text-white/70 border-white/15'} ${!cardState.hasSelected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        {cardElectricBorderEnabled ? 'Enable Selected Card FX: ON' : 'Enable Selected Card FX: OFF'}
+                                    </button>
+                                    <div className="text-[10px] text-white/45 mt-2">
+                                        Target: current <span className="font-mono">selectedCardId</span>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-white/10 pt-3 mt-3 mb-3">
+                                    <div className="text-[11px] text-white/80 font-semibold mb-2">FX: Practice Button Electric Border</div>
+                                    <button
+                                        onClick={() => setPracticeButtonFxEnabled(!practiceButtonFxEnabled)}
+                                        className={`w-full px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonFxEnabled ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/50' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        {practiceButtonFxEnabled ? 'Enable Practice Button FX: ON' : 'Enable Practice Button FX: OFF'}
+                                    </button>
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                        <button
+                                            onClick={() => setPracticeButtonPickMode(v => !v)}
+                                            className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonPickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                        >
+                                            {practiceButtonPickMode ? 'Stop Picking' : 'Pick Button'}
+                                        </button>
+                                        <button
+                                            onClick={() => setPracticeButtonApplyToAll(v => !v)}
+                                            className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                        >
+                                            {practiceButtonApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
+                                        </button>
+                                    </div>
+                                    <div className="mt-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                        Selected: {practiceButtonSelectedKey || 'none'}
+                                    </div>
+                                    <div className="text-[10px] text-white/45 mt-2">
+                                        Targets: <span className="font-mono">data-ui=&quot;practice-button&quot;</span>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 mb-2">

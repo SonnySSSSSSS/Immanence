@@ -100,6 +100,8 @@ export function SigilSealingArea() {
             {/* Sigil Drawing Canvas */}
             <div
                 className="relative w-full aspect-square max-w-md mx-auto rounded-[2rem] overflow-hidden border-2 shadow-2xl"
+                data-card="true"
+                data-card-id="sigilSealingCanvas"
                 style={{
                     background: isLight
                         ? 'linear-gradient(135deg, rgba(255, 250, 240, 0.95), rgba(248, 244, 235, 0.9))'

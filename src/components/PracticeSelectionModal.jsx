@@ -39,6 +39,8 @@ export function PracticeSelectionModal({
         >
             <div
                 className="relative p-8 rounded-[2rem] max-w-md w-full mx-4 glass-capsule"
+                data-card="true"
+                data-card-id="modal:practiceSelection"
                 style={{
                     animation: 'slideUp 300ms ease-out',
                 }}

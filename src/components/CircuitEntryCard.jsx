@@ -46,6 +46,8 @@ export function CircuitEntryCard({ entry }) {
     return (
         <>
             <div
+                data-card="true"
+                data-card-id={`circuitEntry:${entry?.id ?? 'unknown'}`}
                 style={{
                     background: bgColor,
                     border: `1px solid ${borderColor}`,

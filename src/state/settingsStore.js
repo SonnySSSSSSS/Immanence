@@ -40,6 +40,8 @@ export const useSettingsStore = create(
             devPanelOpen: false,
             showFxGallery: false,
             showCoordinateHelper: false,
+            practiceButtonFxEnabled: false,
+            cardElectricBorderEnabled: false,
             lightModeRingType: 'astrolabe', // 'astrolabe' or 'rune'
             useNewAvatars: false, // false = old naming (Flame-Dhyana.png), true = new (avatar-flame-dhyana-ekagrata_00001_.png)
 
@@ -89,6 +91,10 @@ export const useSettingsStore = create(
             setShowFxGallery: (show) => set({ showFxGallery: show }),
 
             setBreathSoundEnabled: (enabled) => set({ breathSoundEnabled: enabled }),
+
+            setPracticeButtonFxEnabled: (enabled) => set({ practiceButtonFxEnabled: Boolean(enabled) }),
+
+            setCardElectricBorderEnabled: (enabled) => set({ cardElectricBorderEnabled: Boolean(enabled) }),
 
             // Photic settings actions
             setPhoticSetting: (key, value) => set((state) => {

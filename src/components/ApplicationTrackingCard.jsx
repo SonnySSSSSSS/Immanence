@@ -65,6 +65,8 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
     return (
         <div
             ref={cardRef}
+            data-card="true"
+            data-card-id="applicationTracking"
             className="w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-all duration-700 ease-in-out"
             style={{
                 maxWidth: '430px',

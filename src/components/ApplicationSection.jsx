@@ -24,7 +24,11 @@ export function ApplicationSection({ onNavigate }) {
     return (
       <div data-tutorial="application-root" className="w-full max-w-4xl mx-auto space-y-8 pb-12">
         {/* Empty State */}
-        <div className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]">
+        <div
+          className="bg-[#0f0f1a] border rounded-3xl p-12 text-center border-[var(--accent-15)]"
+          data-card="true"
+          data-card-id="applicationEmpty"
+        >
           <h2
             className="type-h2 mb-4 text-[var(--accent-color)]"
           >

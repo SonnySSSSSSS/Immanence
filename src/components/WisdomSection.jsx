@@ -907,6 +907,8 @@ function CategoryCard({ category, isSelected, onClick, isLight }) {
   return (
     <button
       onClick={onClick}
+      data-card="true"
+      data-card-id={`wisdomCategory:${category?.key ?? 'unknown'}`}
       className="relative p-4 rounded-2xl border text-left transition-all overflow-hidden"
       style={{
         background: cardBg,
@@ -1107,6 +1109,8 @@ export function WisdomSection() {
               return (
                 <div
                   key={idx}
+                  data-card="true"
+                  data-card-id={`wisdomRec:${chapter?.id ?? idx}`}
                   className="p-5 rounded-2xl border cursor-pointer transition-all group"
                   style={{
                     background: THEME_CONFIG.cardBg,
@@ -1289,6 +1293,8 @@ export function WisdomSection() {
               <button
                 key={cat.key}
                 onClick={() => setSelectedCategory(cat.key)}
+                data-card="true"
+                data-card-id={`wisdomNode:${cat.key}`}
                 className="absolute flex flex-col items-center justify-center transition-all hover:scale-110 group"
                 style={{
                   width: `${nodeDiameter}px`,

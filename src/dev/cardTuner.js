@@ -2,6 +2,7 @@ const CARD_SELECTOR = '[data-card="true"]';
 const ROOT_ENABLED_CLASS = 'dev-card-tuner-enabled';
 const PICK_MODE_CLASS = 'dev-card-picker-active';
 const SELECTED_CLASS = 'dev-card-selected';
+const PICK_FAILED_CLASS = 'dev-card-pick-failed';
 
 const GLOBAL_PRESET_KEY = 'dev.cardTuner.global.v1';
 const CARD_PRESET_KEY = 'dev.cardTuner.cards.v1';
@@ -16,10 +17,12 @@ const DEFAULTS = Object.freeze({
 });
 
 let selectedEl = null;
+let selectedCarouselId = null;
 let pickMode = false;
 let globalSettings = { ...DEFAULTS };
 let cardPresets = {};
 const subscribers = new Set();
+let lastPickFailure = null;
 
 const CSS_VAR_MAP = {
   cardTintH: '--card-tint-h',
@@ -101,12 +104,86 @@ function applyCardPresets() {
   });
 }
 
+function describeEl(el) {
+  if (!(el instanceof Element)) return 'unknown';
+  const tag = el.tagName?.toLowerCase?.() || 'element';
+  const id = el.id ? `#${el.id}` : '';
+  const cls = typeof el.className === 'string' && el.className.trim() ? `.${el.className.trim().split(/\s+/g).slice(0, 3).join('.')}` : '';
+  return `${tag}${id}${cls}`;
+}
+
+function flashPickFailed(el) {
+  if (!hasDom()) return;
+  if (!(el instanceof Element)) return;
+  el.classList.add(PICK_FAILED_CLASS);
+  window.setTimeout(() => el.classList.remove(PICK_FAILED_CLASS), 750);
+}
+
+function findCardFromEvent(event) {
+  if (!hasDom()) return null;
+
+  const directTarget = event?.target instanceof Element ? event.target : null;
+
+  // 1) composedPath (handles overlays / slotted content more reliably than `closest()` alone)
+  const path = typeof event?.composedPath === 'function' ? event.composedPath() : null;
+  if (Array.isArray(path)) {
+    for (const n of path) {
+      if (n instanceof Element && n.matches?.(CARD_SELECTOR)) return n;
+    }
+  }
+
+  // 2) closest() fallback
+  const viaClosest = directTarget?.closest?.(CARD_SELECTOR) || null;
+  if (viaClosest) return viaClosest;
+
+  // 3) elementsFromPoint fallback (helps when click lands on an overlay sibling)
+  const x = Number(event?.clientX);
+  const y = Number(event?.clientY);
+  if (Number.isFinite(x) && Number.isFinite(y) && typeof document.elementsFromPoint === 'function') {
+    const stack = document.elementsFromPoint(x, y);
+    for (const el of stack) {
+      if (!(el instanceof Element)) continue;
+      if (el.matches?.(CARD_SELECTOR)) return el;
+      const nested = el.closest?.(CARD_SELECTOR);
+      if (nested) return nested;
+    }
+  }
+
+  return null;
+}
+
+function isDevPanelUiEvent(event) {
+  const path = typeof event?.composedPath === 'function' ? event.composedPath() : null;
+  if (!Array.isArray(path)) return false;
+  for (const n of path) {
+    if (!(n instanceof Element)) continue;
+    const testId = n.getAttribute?.('data-testid');
+    if (testId === 'devpanel-root' || testId === 'devpanel-peek') return true;
+  }
+  return false;
+}
+
 function onPickClick(event) {
   if (!pickMode) return;
-  const target = event.target instanceof Element ? event.target.closest(CARD_SELECTOR) : null;
-  if (!target) return;
+  if (isDevPanelUiEvent(event)) return;
+  const target = findCardFromEvent(event);
+  if (!target) {
+    event.preventDefault();
+    event.stopPropagation();
+    const x = Number(event?.clientX);
+    const y = Number(event?.clientY);
+    const topEl = Number.isFinite(x) && Number.isFinite(y) ? document.elementFromPoint(x, y) : null;
+    flashPickFailed(topEl);
+    lastPickFailure = {
+      reason: 'no-data-card-ancestor',
+      message: `Pick failed: no data-card ancestor found (clicked ${describeEl(topEl || event?.target)}).`,
+    };
+    emit();
+    return;
+  }
   event.preventDefault();
   event.stopPropagation();
+  lastPickFailure = null;
   selectCard(target);
 }
 
@@ -140,8 +217,13 @@ export function selectCard(el) {
   if (!hasDom()) return;
   if (selectedEl) selectedEl.classList.remove(SELECTED_CLASS);
   selectedEl = el?.closest?.(CARD_SELECTOR) || null;
+  selectedCarouselId = null;
   if (selectedEl) {
     selectedEl.classList.add(SELECTED_CLASS);
+    selectedCarouselId =
+      selectedEl.closest?.('[data-card-carousel-root]')?.getAttribute?.('data-card-carousel-root') ||
+      selectedEl.getAttribute?.('data-card-carousel') ||
+      null;
     if (!selectedEl.classList.contains('im-card')) {
       console.info('[cardTuner] Card not using tunable vars');
     }
@@ -209,8 +291,10 @@ export function getCardTunerState() {
   return {
     pickMode,
     selectedCardId: selectedEl?.dataset?.cardId || null,
+    selectedCardCarouselId: selectedCarouselId,
     selectedLabel: selectedEl?.dataset?.cardId || selectedEl?.tagName?.toLowerCase() || null,
     hasSelected: Boolean(selectedEl),
+    lastPickFailure,
     globalSettings: { ...globalSettings },
     selectedSettings: selectedEl ? readSettings(selectedEl) : null,
   };

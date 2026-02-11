@@ -35,6 +35,8 @@ export function FoundationCard() {
         >
             <div
                 className="relative rounded-3xl p-8 text-center transition-all duration-300 overflow-hidden"
+                data-card="true"
+                data-card-id="foundationIntro"
                 style={{
                     background: isLight
                         ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%)'

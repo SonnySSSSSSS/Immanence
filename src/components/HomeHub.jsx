@@ -125,6 +125,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [homeSwipeHeight, setHomeSwipeHeight] = useState(null);
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('dev:card-carousel-change', { detail: { carouselId: 'homeHubSwipe', page: homeSwipePage } }));
+  }, [homeSwipePage]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const raw = window.localStorage.getItem('immanenceOS.curriculum');
@@ -516,6 +522,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           >
               <div
                 ref={homeSwipeRailRef}
+                data-card-carousel-root="homeHubSwipe"
                 className="flex w-full items-start gap-0 overflow-x-auto no-scrollbar"
                 style={{
                   scrollSnapType: 'x mandatory',
@@ -570,6 +577,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     onStartPractice={handleStartPractice}
                     onViewCurriculum={openCurriculumHub}
                     onNavigate={handleSelectSection}
+                    devCardActive={homeSwipePage === 0}
+                    devCardCarouselId="homeHubSwipe"
                     hasPersistedCurriculumData={hasPersistedCurriculumData}
                     onboardingComplete={curriculumOnboardingComplete}
                     practiceTimeSlots={practiceTimeSlots}
@@ -620,6 +629,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       tiles={hubTiles}
                       onOpenDetails={() => openArchive(ARCHIVE_TABS.REPORTS)}
                       isSanctuary={isSanctuary}
+                      devCardActive={homeSwipePage === 1}
+                      devCardCarouselId="homeHubSwipe"
                     />
                   );
                 })()}
@@ -723,6 +734,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   {/* PANEL - now always mounts to avoid "ghosted app" state */}
                   <div 
                     className="w-full max-w-5xl px-4 overflow-hidden rounded-[28px] flex flex-col shadow-2xl"
+                    data-card="true"
+                    data-card-id="modal:curriculumHub"
                     style={{
                       background: isLight ? '#f6f1e6' : 'rgba(10, 10, 15, 1)',
                       maxHeight: 'calc(100vh - 48px)',

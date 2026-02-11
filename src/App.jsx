@@ -13,6 +13,8 @@ import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.js
 import { Background } from "./components/Background.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
 import { DevPanel } from "./components/DevPanel.jsx";
+import { PracticeButtonElectricBorderOverlay } from "./components/dev/PracticeButtonElectricBorderOverlay.jsx";
+import { SelectedCardElectricBorderOverlay } from "./components/dev/SelectedCardElectricBorderOverlay.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
@@ -447,6 +449,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         avatarAttention={previewAttention}
         setAvatarAttention={setPreviewAttention}
       />
+
+      <PracticeButtonElectricBorderOverlay />
+      {import.meta.env.DEV && <SelectedCardElectricBorderOverlay />}
 
       {/* Outer Layout Container - Adapts to display mode */}
       <div

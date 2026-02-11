@@ -285,12 +285,15 @@ function resolvePracticeLaunchFromEntry(entry) {
     return null;
 }
 
-export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false }) {
+export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false, devCardActive = null, devCardCarouselId = null }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
     const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
+
+    const dataCardActive = import.meta.env.DEV && typeof devCardActive === 'boolean' ? String(devCardActive) : undefined;
+    const dataCardCarousel = import.meta.env.DEV && devCardCarouselId ? String(devCardCarouselId) : undefined;
     
     // Navigation path fallback
     const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
@@ -657,6 +660,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                  <div
                      data-card="true"
                      data-card-id="dailyPractice"
+                     data-card-active={dataCardActive}
+                     data-card-carousel={dataCardCarousel}
                      className="im-card w-full relative dpBlurSurface"
                      style={{
                          borderRadius: '24px',
@@ -1042,6 +1047,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                             }
                                                                         }}
                                                                         disabled={isOutsideWindow || benchmarkMissing}
+                                                                        data-ui="practice-button"
+                                                                        data-practice-type={slotLaunches[idx]?.practiceId === 'perception' ? 'visual' : (slotLaunches[idx]?.practiceId === 'resonance' ? 'sound' : (slotLaunches[idx]?.practiceId || undefined))}
+                                                                        data-practice-id={slotLaunches[idx]?.practiceId ? `daily-slot:${idx}:${slotLaunches[idx].practiceId}` : undefined}
                                                                         className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                         style={{
                                                                             background: (isOutsideWindow || benchmarkMissing)
@@ -1188,6 +1196,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 <div
                     data-card="true"
                     data-card-id="dailyPracticeComplete"
+                    data-card-active={dataCardActive}
+                    data-card-carousel={dataCardCarousel}
                     className="im-card w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',
@@ -1321,6 +1331,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 <div
                     data-card="true"
                     data-card-id="dailyPracticeFallback"
+                    data-card-active={dataCardActive}
+                    data-card-carousel={dataCardCarousel}
                     className="im-card w-full"
                     style={{
                         borderRadius: '24px',
@@ -1520,6 +1532,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 <div
                     data-card="true"
                     data-card-id="dailyPractice"
+                    data-card-active={dataCardActive}
+                    data-card-carousel={dataCardCarousel}
                     className="im-card w-full relative dpBlurSurface"
                     style={{
                         borderRadius: '24px',

@@ -244,7 +244,14 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
  * @param {Function} props.onOpenDetails - Optional callback when details button clicked (hub variants only)
  * @param {boolean} props.isSanctuary - Sanctuary mode flag for layout adjustments
  */
-export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDetails = null, isSanctuary = false }) {
+export function QuickDashboardTiles({
+    tiles = {},
+    variant = 'default',
+    onOpenDetails = null,
+    isSanctuary = false,
+    devCardActive = null,
+    devCardCarouselId = null,
+}) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
@@ -288,6 +295,10 @@ export function QuickDashboardTiles({ tiles = {}, variant = 'default', onOpenDet
         return (
             <div
                 className={isFirefox ? '' : 'glassCardShadowWrap'}
+                data-card="true"
+                data-card-id="homeHubProgress"
+                data-card-active={import.meta.env.DEV && typeof devCardActive === 'boolean' ? String(devCardActive) : undefined}
+                data-card-carousel={import.meta.env.DEV && devCardCarouselId ? String(devCardCarouselId) : undefined}
                 style={{
                     position: 'relative',
                     marginBottom: '8px',

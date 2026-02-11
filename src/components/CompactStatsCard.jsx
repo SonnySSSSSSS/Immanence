@@ -531,6 +531,8 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
             {/* OUTER: Golden Border Frame - Using reliable box-shadow for depth */}
             <div
                 className="w-full relative"
+                data-card="true"
+                data-card-id="compactStats"
                 style={{
                     borderRadius: '24px',
                     border: isLight

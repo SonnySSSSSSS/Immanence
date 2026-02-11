@@ -54,6 +54,8 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                         <button
                             key={entry.id}
                             data-testid={!entry.isProgram ? `path-card-${entry.id}` : undefined}
+                            data-card="true"
+                            data-card-id={`${entry.isProgram ? 'program' : 'path'}:${entry.id}`}
                             onClick={() => {
                                 if (entry.isProgram) {
                                     entry.onClick();

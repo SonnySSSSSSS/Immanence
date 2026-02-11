@@ -152,3 +152,8 @@ body::-webkit-scrollbar {
   outline: 2px solid rgba(255, 210, 120, 0.95);
   outline-offset: 2px;
 }
+
+.dev-card-pick-failed {
+  outline: 2px dashed rgba(255, 80, 80, 0.95);
+  outline-offset: 2px;
+}
