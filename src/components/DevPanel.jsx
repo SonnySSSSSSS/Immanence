@@ -34,6 +34,7 @@ import {
 import { isDevtoolsEnabled } from '../dev/uiDevtoolsGate.js';
 import { validateUiTargetRoot } from '../dev/uiTargetContract.js';
 import { attach as attachControlsCapture, detach as detachControlsCapture, startControlsPicking, stopControlsPicking } from '../dev/uiControlsCaptureManager.js';
+import { CONTROLS_FX_DEFAULTS, getControlsFxPreset, resetControlsFxPreset, setControlsFxPreset } from '../dev/controlsFxPresets.js';
 import {
     NAV_BUTTON_TUNER_DEFAULTS,
     initNavButtonTuner,
@@ -185,6 +186,7 @@ export function DevPanel({
 
     const controlsElectricBorderEnabled = useSettingsStore((s) => Boolean(s.controlsElectricBorderEnabled));
     const setControlsElectricBorderEnabled = useSettingsStore((s) => s.setControlsElectricBorderEnabled);
+    const [controlsFxDraft, setControlsFxDraft] = useState({ ...CONTROLS_FX_DEFAULTS });
 
     const CONTROLS_PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
     const CONTROLS_PICK_EVENT = "immanence-controls-fx-picker";
@@ -619,6 +621,12 @@ export function DevPanel({
         broadcastControlsPicker({ selectedId: controlsSelectedId || null });
         return undefined;
     }, [isOpen, devtoolsEnabled, controlsSelectedId, broadcastControlsPicker]);
+
+    useEffect(() => {
+        if (!isOpen || !devtoolsEnabled) return undefined;
+        setControlsFxDraft(getControlsFxPreset(controlsSelectedId));
+        return undefined;
+    }, [isOpen, devtoolsEnabled, controlsSelectedId]);
 
     useEffect(() => {
         if (!isOpen || !devtoolsEnabled) return undefined;
@@ -1082,6 +1090,112 @@ export function DevPanel({
                                             </button>
                                             <div className="text-[10px] text-white/45 mt-2">
                                                 Target: current <span className="font-mono">data-ui-id</span> (role-scope)
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 mt-3">
+                                                <RangeControl
+                                                    label="Thickness"
+                                                    value={controlsFxDraft.thickness}
+                                                    min={1}
+                                                    max={12}
+                                                    step={1}
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, thickness: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { thickness: v });
+                                                    }}
+                                                />
+                                                <RangeControl
+                                                    label="Offset"
+                                                    value={controlsFxDraft.offsetPx}
+                                                    min={0}
+                                                    max={40}
+                                                    step={1}
+                                                    suffix="px"
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, offsetPx: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { offsetPx: v });
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <RangeControl
+                                                    label="Speed"
+                                                    value={controlsFxDraft.speed}
+                                                    min={0}
+                                                    max={0.2}
+                                                    step={0.005}
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, speed: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { speed: v });
+                                                    }}
+                                                />
+                                                <RangeControl
+                                                    label="Chaos"
+                                                    value={controlsFxDraft.chaos}
+                                                    min={0}
+                                                    max={0.3}
+                                                    step={0.005}
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, chaos: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { chaos: v });
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="mt-2 grid grid-cols-2 gap-2 items-center">
+                                                <div className="text-[10px] text-white/55">Color</div>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <input
+                                                        type="color"
+                                                        value={(typeof controlsFxDraft.color === 'string' && controlsFxDraft.color.startsWith('#')) ? controlsFxDraft.color : '#ffffff'}
+                                                        disabled={!controlsSelectedId}
+                                                        onChange={(e) => {
+                                                            const value = e?.target?.value || null;
+                                                            const next = { ...controlsFxDraft, color: value };
+                                                            setControlsFxDraft(next);
+                                                            if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { color: value });
+                                                        }}
+                                                        className="h-8 w-12 p-0 border border-white/15 rounded"
+                                                        style={{ background: 'transparent' }}
+                                                    />
+                                                    <button
+                                                        disabled={!controlsSelectedId}
+                                                        onClick={() => {
+                                                            const next = { ...controlsFxDraft, color: null };
+                                                            setControlsFxDraft(next);
+                                                            if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { color: null });
+                                                        }}
+                                                        className={`px-2 py-2 rounded-lg text-[10px] border transition-all ${!controlsSelectedId ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-white/35' : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10'}`}
+                                                    >
+                                                        Use role color
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <button
+                                                    disabled={!controlsSelectedId}
+                                                    onClick={() => {
+                                                        if (!controlsSelectedId) return;
+                                                        resetControlsFxPreset(controlsSelectedId);
+                                                        setControlsFxDraft(getControlsFxPreset(controlsSelectedId));
+                                                    }}
+                                                    className={`px-3 py-2 rounded-lg text-xs border transition-all ${!controlsSelectedId ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/10 text-white/35' : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10'}`}
+                                                >
+                                                    Reset Preset
+                                                </button>
+                                                <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                    Preset: {controlsSelectedId ? 'saved' : 'n/a'}
+                                                </div>
                                             </div>
                                         </div>
 

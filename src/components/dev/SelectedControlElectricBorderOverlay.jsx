@@ -3,10 +3,10 @@ import { createPortal } from "react-dom";
 
 import { isDevtoolsEnabled } from "../../dev/uiDevtoolsGate.js";
 import { resolveFxSurface } from "../../dev/uiTargetContract.js";
+import { getControlsFxPreset, subscribeControlsFxPresets } from "../../dev/controlsFxPresets.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
 import { ElectricBorder } from "./ElectricBorder.jsx";
 
-const BORDER_OFFSET_PX = 16;
 const PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
 const PICK_EVENT = "immanence-controls-fx-picker";
 
@@ -42,7 +42,7 @@ function readPickConfig() {
   }
 }
 
-function toOverlayModel(rootEl) {
+function toOverlayModel(rootEl, preset) {
   if (!(rootEl instanceof Element)) return null;
   const surfaceRes = resolveFxSurface(rootEl);
   if (!surfaceRes.ok || !(surfaceRes.surfaceEl instanceof Element)) return null;
@@ -51,7 +51,9 @@ function toOverlayModel(rootEl) {
   if (!rect || rect.width < 2 || rect.height < 2) return null;
 
   const roleGroup = rootEl.getAttribute("data-ui-role-group") || "unknown";
-  const color = ROLE_GROUP_COLORS[roleGroup] || ROLE_GROUP_COLORS.practice;
+  const color = (preset?.color && String(preset.color).trim().length)
+    ? preset.color
+    : (ROLE_GROUP_COLORS[roleGroup] || ROLE_GROUP_COLORS.practice);
   const id = rootEl.getAttribute("data-ui-id") || "control";
 
   return {
@@ -64,6 +66,7 @@ function toOverlayModel(rootEl) {
       height: rect.height,
     },
     radius: readTargetRadiusPx(surfaceRes.surfaceEl),
+    preset: preset || null,
   };
 }
 
@@ -71,6 +74,7 @@ export function SelectedControlElectricBorderOverlay() {
   const enabled = useSettingsStore((s) => Boolean(s.controlsElectricBorderEnabled));
   const reduceMotionSetting = useSettingsStore((s) => Boolean(s.reduceMotion));
   const [pickConfig, setPickConfig] = useState(() => readPickConfig());
+  const [preset, setPreset] = useState(() => getControlsFxPreset(pickConfig.selectedId));
 
   const [targets, setTargets] = useState([]);
   const roRef = useRef(null);
@@ -87,9 +91,12 @@ export function SelectedControlElectricBorderOverlay() {
         return;
       }
 
+      const nextPreset = getControlsFxPreset(pickConfig.selectedId);
+      setPreset(nextPreset);
+
       const selector = `[data-ui-target="true"][data-ui-id="${CSS.escape(pickConfig.selectedId)}"]`;
       const roots = Array.from(document.querySelectorAll(selector));
-      const models = roots.map(toOverlayModel).filter(Boolean);
+      const models = roots.map((el) => toOverlayModel(el, nextPreset)).filter(Boolean);
       setTargets(models);
 
       if (roRef.current) {
@@ -117,6 +124,11 @@ export function SelectedControlElectricBorderOverlay() {
 
     window.addEventListener(PICK_EVENT, onPickUpdate);
     return () => window.removeEventListener(PICK_EVENT, onPickUpdate);
+  }, [scheduleScan]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    return subscribeControlsFxPresets(() => scheduleScan());
   }, [scheduleScan]);
 
   useEffect(() => {
@@ -162,8 +174,10 @@ export function SelectedControlElectricBorderOverlay() {
   const overlays = useMemo(() => {
     if (!enabled || !isDevtoolsEnabled()) return [];
 
-    const speed = reduceMotionSetting ? 0 : 0.052;
-    const chaos = 0.095;
+    const effectiveSpeed = reduceMotionSetting ? 0 : (preset?.speed ?? 0.052);
+    const effectiveChaos = preset?.chaos ?? 0.095;
+    const thickness = preset?.thickness ?? 2;
+    const offsetPx = preset?.offsetPx ?? 16;
 
     return targets.map((t) => {
       const r = t.rect;
@@ -171,28 +185,29 @@ export function SelectedControlElectricBorderOverlay() {
         key: t.key,
         style: {
           position: "fixed",
-          left: `${r.left - BORDER_OFFSET_PX}px`,
-          top: `${r.top - BORDER_OFFSET_PX}px`,
-          width: `${r.width + BORDER_OFFSET_PX * 2}px`,
-          height: `${r.height + BORDER_OFFSET_PX * 2}px`,
+          left: `${r.left - offsetPx}px`,
+          top: `${r.top - offsetPx}px`,
+          width: `${r.width + offsetPx * 2}px`,
+          height: `${r.height + offsetPx * 2}px`,
           pointerEvents: "none",
           zIndex: 9997,
         },
-        width: r.width + BORDER_OFFSET_PX * 2,
-        height: r.height + BORDER_OFFSET_PX * 2,
+        width: r.width + offsetPx * 2,
+        height: r.height + offsetPx * 2,
         innerRect: {
-          x: BORDER_OFFSET_PX,
-          y: BORDER_OFFSET_PX,
+          x: offsetPx,
+          y: offsetPx,
           width: r.width,
           height: r.height,
           radius: t.radius,
         },
         color: t.color,
-        speed,
-        chaos,
+        speed: effectiveSpeed,
+        chaos: effectiveChaos,
+        thickness,
       };
     });
-  }, [enabled, reduceMotionSetting, targets]);
+  }, [enabled, reduceMotionSetting, preset, targets]);
 
   if (!enabled || !isDevtoolsEnabled() || overlays.length === 0) return null;
 
@@ -207,7 +222,7 @@ export function SelectedControlElectricBorderOverlay() {
             color={o.color}
             speed={o.speed}
             chaos={o.chaos}
-            thickness={2}
+            thickness={o.thickness}
             showSparks={false}
           />
         </div>
@@ -218,4 +233,3 @@ export function SelectedControlElectricBorderOverlay() {
 }
 
 export default SelectedControlElectricBorderOverlay;
-
