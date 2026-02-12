@@ -183,6 +183,26 @@ export function DevPanel({
     const practiceButtonPickHandlerRef = useRef(null);
     const universalPickHandlerRef = useRef(null);
 
+    const controlsElectricBorderEnabled = useSettingsStore((s) => Boolean(s.controlsElectricBorderEnabled));
+    const setControlsElectricBorderEnabled = useSettingsStore((s) => s.setControlsElectricBorderEnabled);
+
+    const CONTROLS_PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
+    const CONTROLS_PICK_EVENT = "immanence-controls-fx-picker";
+
+    const broadcastControlsPicker = useCallback((next) => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem(CONTROLS_PICK_STORAGE_KEY, JSON.stringify(next));
+        } catch {
+            // ignore storage errors
+        }
+        try {
+            window.dispatchEvent(new CustomEvent(CONTROLS_PICK_EVENT, { detail: next }));
+        } catch {
+            // ignore
+        }
+    }, []);
+
     const logNearestAncestors = useCallback((label, eventTarget) => {
         if (!import.meta.env.DEV) return;
         try {
@@ -593,6 +613,12 @@ export function DevPanel({
         });
         return undefined;
     }, [isOpen, devtoolsEnabled, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
+
+    useEffect(() => {
+        if (!isOpen || !devtoolsEnabled) return undefined;
+        broadcastControlsPicker({ selectedId: controlsSelectedId || null });
+        return undefined;
+    }, [isOpen, devtoolsEnabled, controlsSelectedId, broadcastControlsPicker]);
 
     useEffect(() => {
         if (!isOpen || !devtoolsEnabled) return undefined;
@@ -1042,6 +1068,20 @@ export function DevPanel({
                                             </div>
                                             <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
                                                 Surface node: {controlsSurfaceDebug ? `${controlsSurfaceDebug.tag}${controlsSurfaceDebug.className ? `.${String(controlsSurfaceDebug.className).trim().split(/\s+/g).slice(0, 3).join('.')}` : ''}` : 'null'}
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-white/10 pt-3 mt-3 mb-3">
+                                            <div className="text-[11px] text-white/80 font-semibold mb-2">FX: Selected Control Electric Border</div>
+                                            <button
+                                                onClick={() => setControlsElectricBorderEnabled(!controlsElectricBorderEnabled)}
+                                                disabled={!controlsSelectedId}
+                                                className={`w-full px-3 py-2 rounded-lg text-xs border transition-all ${controlsElectricBorderEnabled ? 'bg-amber-500/20 text-amber-200 border-amber-400/50' : 'bg-white/5 text-white/70 border-white/15'} ${!controlsSelectedId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                {controlsElectricBorderEnabled ? 'Enable Selected Control FX: ON' : 'Enable Selected Control FX: OFF'}
+                                            </button>
+                                            <div className="text-[10px] text-white/45 mt-2">
+                                                Target: current <span className="font-mono">data-ui-id</span> (role-scope)
                                             </div>
                                         </div>
 

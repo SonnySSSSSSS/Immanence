@@ -41,6 +41,7 @@ export const useSettingsStore = create(
             showFxGallery: false,
             showCoordinateHelper: false,
             practiceButtonFxEnabled: false,
+            controlsElectricBorderEnabled: false,
             cardElectricBorderEnabled: false,
             lightModeRingType: 'astrolabe', // 'astrolabe' or 'rune'
             useNewAvatars: false, // false = old naming (Flame-Dhyana.png), true = new (avatar-flame-dhyana-ekagrata_00001_.png)
@@ -93,6 +94,8 @@ export const useSettingsStore = create(
             setBreathSoundEnabled: (enabled) => set({ breathSoundEnabled: enabled }),
 
             setPracticeButtonFxEnabled: (enabled) => set({ practiceButtonFxEnabled: Boolean(enabled) }),
+
+            setControlsElectricBorderEnabled: (enabled) => set({ controlsElectricBorderEnabled: Boolean(enabled) }),
 
             setCardElectricBorderEnabled: (enabled) => set({ cardElectricBorderEnabled: Boolean(enabled) }),
 
