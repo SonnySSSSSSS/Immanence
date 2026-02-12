@@ -3,6 +3,7 @@
 // Light mode: Unified stacking (Parchment -> Clouds -> Aurora -> Textures)
 
 import { useState, useEffect } from "react";
+import { getStageWallpaperUrl } from "./bg/wallpaperUrl.js";
 import { useDisplayModeStore } from "../state/displayModeStore";
 
 // Vignette edge colors for each stage
@@ -36,14 +37,14 @@ export function Background({ stage = 'flame', showBottomLayer = true }) {
   // Cloud background state (synced with DevPanel)
   const [cloudBackground, setCloudBackground] = useState('cloudier');
 
-  // Bottom layer state with fallback handling
-  const stageBottomUrl = `${import.meta.env.BASE_URL}bg/bg-${stageLower}-bottom.png`;
+  // Bottom layer state with fallback handling (using shared helper)
+  const stageBottomUrl = getStageWallpaperUrl(stageLower);
   const [bottomSrc, setBottomSrc] = useState(stageBottomUrl);
 
   // Reset bottom src when stage changes
   useEffect(() => {
-    setBottomSrc(stageBottomUrl);
-  }, [stageBottomUrl]);
+    setBottomSrc(getStageWallpaperUrl(stageLower));
+  }, [stageLower]);
 
   useEffect(() => {
     // Listen for DevPanel cloud background changes

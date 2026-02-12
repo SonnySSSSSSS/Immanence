@@ -1,6 +1,33 @@
 // src/components/DevPanel.jsx
 // Developer-only lab for testing Immanence OS systems
 // Access: Ctrl+Shift+D or tap version 5 times
+// Per-card wallpaper diagnostics (devtools only)
+function PracticeCardWallpaperDiagnostics({ stageKey }) {
+    const [status, setStatus] = React.useState('pending');
+    const [url, setUrl] = React.useState('');
+    const [baseUrl, setBaseUrl] = React.useState('');
+    React.useEffect(() => {
+        if (!stageKey) return;
+        const base = import.meta.env.BASE_URL || '/';
+        setBaseUrl(base);
+        const wallpaperUrl = getStageWallpaperUrl(stageKey);
+        setUrl(wallpaperUrl);
+        const img = new window.Image();
+        img.onload = () => setStatus('loaded');
+        img.onerror = () => setStatus('error');
+        img.src = wallpaperUrl;
+        // eslint-disable-next-line
+    }, [stageKey]);
+    return (
+        <div style={{ fontSize: 11, fontFamily: 'monospace', background: '#181818', color: '#b5f4ff', borderRadius: 6, padding: 8, margin: '8px 0' }}>
+            <div><b>Practice Card Wallpaper Diagnostics</b></div>
+            <div>stageKey: <span style={{ color: '#fff' }}>{stageKey}</span></div>
+            <div>BASE_URL: <span style={{ color: '#fff' }}>{baseUrl}</span></div>
+            <div>wallpaperUrl: <span style={{ color: '#fff' }}>{url}</span></div>
+            <div>status: <span style={{ color: status === 'loaded' ? '#7fff7f' : status === 'error' ? '#ff7f7f' : '#fff' }}>{status}</span></div>
+        </div>
+    );
+}
 
 import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
@@ -105,6 +132,7 @@ export function DevPanel({
     avatarAttention: avatarAttentionProp,
     setAvatarAttention: setAvatarAttentionProp,
 }) {
+    const currentStageKey = (avatarStageProp || 'seedling').toLowerCase();
     // Settings store state
     const showCoordinateHelper = useSettingsStore(s => s.showCoordinateHelper);
     const setCoordinateHelper = useSettingsStore(s => s.setCoordinateHelper);
@@ -793,39 +821,43 @@ export function DevPanel({
 
     if (peekMode) {
         return (
-            <div data-testid="devpanel-peek" className="fixed inset-0 z-[9999] pointer-events-none">
-                <div className="absolute top-3 right-3 pointer-events-auto w-[280px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
-                    <div className="text-[11px] text-white/80 mb-2">Card Picker Active</div>
-                    <div className="text-[10px] text-white/55 mb-3">
-                        Click any marked card in the UI, then confirm to return to the panel.
-                    </div>
-                    <div className="text-[10px] text-white/50 mb-3">
-                        Shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
-                    </div>
-                <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
-                        Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
-                    </div>
-                    {cardState.lastPickFailure?.message && (
-                        <div className="text-[10px] mb-3 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
-                            {cardState.lastPickFailure.message}
+            <>
+                {/* Practice Card Wallpaper Diagnostics (devtools only) */}
+                <PracticeCardWallpaperDiagnostics stageKey={currentStageKey} />
+                <div data-testid="devpanel-peek" className="fixed inset-0 z-[9999] pointer-events-none">
+                    <div className="absolute top-3 right-3 pointer-events-auto w-[280px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
+                        <div className="text-[11px] text-white/80 mb-2">Card Picker Active</div>
+                        <div className="text-[10px] text-white/55 mb-3">
+                            Click any marked card in the UI, then confirm to return to the panel.
                         </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={handleConfirmPickFlow}
-                            className="rounded-lg px-3 py-2 text-xs bg-amber-500/20 border border-amber-400/50 text-amber-200"
-                        >
-                            {cardState.hasSelected ? 'Confirm + Return' : 'Return'}
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70"
-                        >
-                            Close Panel
-                        </button>
+                        <div className="text-[10px] text-white/50 mb-3">
+                            Shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
+                        </div>
+                        <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
+                            Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
+                        </div>
+                        {cardState.lastPickFailure?.message && (
+                            <div className="text-[10px] mb-3 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
+                                {cardState.lastPickFailure.message}
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={handleConfirmPickFlow}
+                                className="rounded-lg px-3 py-2 text-xs bg-amber-500/20 border border-amber-400/50 text-amber-200"
+                            >
+                                {cardState.hasSelected ? 'Confirm + Return' : 'Return'}
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70"
+                            >
+                                Close Panel
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </>
         );
     }
 

@@ -376,7 +376,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   //   }
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
-  // Note: CSS variables now set by ThemeProvider based on avatarStage
+
+  // v3.25.63 - Fixed Background Wallpaper in practice cards
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
