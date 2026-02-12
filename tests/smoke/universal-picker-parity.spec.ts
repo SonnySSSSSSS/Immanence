@@ -65,6 +65,8 @@ test('DEV — Universal picker parity: controls + card', async ({ page }) => {
   const selectedNav = page.getByText(/Selected:\s+homeHub:mode:navigation/i);
   await selectedNav.scrollIntoViewIfNeeded();
   await expect(selectedNav).toBeVisible();
+  await expect(page.getByTestId('controls-presets-export')).toBeVisible();
+  await expect(page.getByTestId('controls-presets-import')).toBeVisible();
   const stopPick = page.getByRole('button', { name: 'Stop Picking', exact: true });
   await stopPick.scrollIntoViewIfNeeded();
   await stopPick.click();

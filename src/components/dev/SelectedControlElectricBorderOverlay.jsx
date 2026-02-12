@@ -9,6 +9,7 @@ import { ElectricBorder } from "./ElectricBorder.jsx";
 
 const PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
 const PICK_EVENT = "immanence-controls-fx-picker";
+const SURFACE_CLASS = "dev-controls-fx-surface";
 
 const ROLE_GROUP_COLORS = {
   homeHub: "rgba(255, 210, 120, 1)", // warm gold
@@ -208,6 +209,42 @@ export function SelectedControlElectricBorderOverlay() {
       };
     });
   }, [enabled, reduceMotionSetting, preset, targets]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const styled = new Set();
+
+    if (enabled && isDevtoolsEnabled() && pickConfig.selectedId) {
+      const selector = `[data-ui-target="true"][data-ui-id="${CSS.escape(pickConfig.selectedId)}"]`;
+      const roots = Array.from(document.querySelectorAll(selector));
+      for (const root of roots) {
+        const surfaceRes = resolveFxSurface(root);
+        const surface = surfaceRes.ok && surfaceRes.surfaceEl instanceof Element ? surfaceRes.surfaceEl : null;
+        if (!surface) continue;
+        styled.add(surface);
+
+        const color = (preset?.color && String(preset.color).trim().length)
+          ? preset.color
+          : (ROLE_GROUP_COLORS[root.getAttribute("data-ui-role-group") || "unknown"] || ROLE_GROUP_COLORS.practice);
+
+        surface.classList.add(SURFACE_CLASS);
+        surface.style.setProperty("--dev-controls-fx-glow", `${Number(preset?.glow ?? 18)}px`);
+        surface.style.setProperty("--dev-controls-fx-blur", `${Number(preset?.blur ?? 6)}px`);
+        surface.style.setProperty("--dev-controls-fx-opacity", `${Number(preset?.opacity ?? 1)}`);
+        surface.style.setProperty("--dev-controls-fx-color", color);
+      }
+    }
+
+    return () => {
+      styled.forEach((surface) => {
+        surface.classList.remove(SURFACE_CLASS);
+        surface.style.removeProperty("--dev-controls-fx-glow");
+        surface.style.removeProperty("--dev-controls-fx-blur");
+        surface.style.removeProperty("--dev-controls-fx-opacity");
+        surface.style.removeProperty("--dev-controls-fx-color");
+      });
+    };
+  }, [enabled, pickConfig.selectedId, preset]);
 
   if (!enabled || !isDevtoolsEnabled() || overlays.length === 0) return null;
 

@@ -133,6 +133,20 @@ body::-webkit-scrollbar {
 }
 .dev-nav-pill-probe .im-nav-pill { outline: 4px solid #ff00ff !important; box-shadow: 0 0 0 8px rgba(255,0,255,0.35) !important; }
 .dev-ui-target-probe [data-ui-target="true"] { outline: 4px solid #ff00ff !important; box-shadow: 0 0 0 8px rgba(255,0,255,0.35) !important; }
+.dev-controls-fx-surface {
+  position: relative !important;
+  isolation: isolate;
+}
+.dev-controls-fx-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--dev-controls-fx-opacity, 1);
+  box-shadow: 0 0 var(--dev-controls-fx-glow, 0px) var(--dev-controls-fx-color, rgba(105, 235, 255, 1));
+  filter: blur(var(--dev-controls-fx-blur, 0px));
+}
 
 .dev-card-tuner-enabled .im-card {
   background: hsla(var(--card-tint-h), var(--card-tint-s), var(--card-tint-l), var(--card-alpha)) !important;

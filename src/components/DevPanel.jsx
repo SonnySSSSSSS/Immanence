@@ -34,7 +34,15 @@ import {
 import { isDevtoolsEnabled } from '../dev/uiDevtoolsGate.js';
 import { validateUiTargetRoot } from '../dev/uiTargetContract.js';
 import { attach as attachControlsCapture, detach as detachControlsCapture, startControlsPicking, stopControlsPicking } from '../dev/uiControlsCaptureManager.js';
-import { CONTROLS_FX_DEFAULTS, getControlsFxPreset, resetControlsFxPreset, setControlsFxPreset } from '../dev/controlsFxPresets.js';
+import {
+    CONTROLS_FX_DEFAULTS,
+    exportControlsFxPresetsJson,
+    getControlsFxPreset,
+    importControlsFxPresetsJson,
+    resetAllControlsFxPresets,
+    resetControlsFxPreset,
+    setControlsFxPreset
+} from '../dev/controlsFxPresets.js';
 import {
     NAV_BUTTON_TUNER_DEFAULTS,
     initNavButtonTuner,
@@ -187,6 +195,8 @@ export function DevPanel({
     const controlsElectricBorderEnabled = useSettingsStore((s) => Boolean(s.controlsElectricBorderEnabled));
     const setControlsElectricBorderEnabled = useSettingsStore((s) => s.setControlsElectricBorderEnabled);
     const [controlsFxDraft, setControlsFxDraft] = useState({ ...CONTROLS_FX_DEFAULTS });
+    const [controlsPresetJson, setControlsPresetJson] = useState('');
+    const [controlsPresetStatus, setControlsPresetStatus] = useState('');
 
     const CONTROLS_PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
     const CONTROLS_PICK_EVENT = "immanence-controls-fx-picker";
@@ -1151,6 +1161,53 @@ export function DevPanel({
                                                 />
                                             </div>
 
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <RangeControl
+                                                    label="Glow"
+                                                    value={controlsFxDraft.glow}
+                                                    min={0}
+                                                    max={64}
+                                                    step={1}
+                                                    suffix="px"
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, glow: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { glow: v });
+                                                    }}
+                                                />
+                                                <RangeControl
+                                                    label="Blur"
+                                                    value={controlsFxDraft.blur}
+                                                    min={0}
+                                                    max={24}
+                                                    step={1}
+                                                    suffix="px"
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, blur: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { blur: v });
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="mt-2">
+                                                <RangeControl
+                                                    label="Opacity"
+                                                    value={controlsFxDraft.opacity}
+                                                    min={0.1}
+                                                    max={1}
+                                                    step={0.01}
+                                                    disabled={!controlsSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...controlsFxDraft, opacity: v };
+                                                        setControlsFxDraft(next);
+                                                        if (controlsSelectedId) setControlsFxPreset(controlsSelectedId, { opacity: v });
+                                                    }}
+                                                />
+                                            </div>
+
                                             <div className="mt-2 grid grid-cols-2 gap-2 items-center">
                                                 <div className="text-[10px] text-white/55">Color</div>
                                                 <div className="flex items-center justify-end gap-2">
@@ -1195,6 +1252,60 @@ export function DevPanel({
                                                 </button>
                                                 <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
                                                     Preset: {controlsSelectedId ? 'saved' : 'n/a'}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-2 text-[10px] text-white/55">Presets JSON</div>
+                                            <textarea
+                                                data-testid="controls-presets-json"
+                                                value={controlsPresetJson}
+                                                onChange={(e) => setControlsPresetJson(e?.target?.value || '')}
+                                                className="w-full mt-1 rounded-lg border border-white/15 bg-white/5 text-white/80 p-2 text-[11px] font-mono"
+                                                rows={5}
+                                                placeholder='{"version":2,"presets":{"homeHub:mode:navigation":{"glow":24}}}'
+                                            />
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <button
+                                                    data-testid="controls-presets-export"
+                                                    onClick={() => {
+                                                        const json = exportControlsFxPresetsJson();
+                                                        setControlsPresetJson(json);
+                                                        setControlsPresetStatus('Exported presets JSON.');
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg text-xs border transition-all bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                                                >
+                                                    Export Presets
+                                                </button>
+                                                <button
+                                                    data-testid="controls-presets-import"
+                                                    onClick={() => {
+                                                        const result = importControlsFxPresetsJson(controlsPresetJson, { replace: true });
+                                                        if (!result?.ok) {
+                                                            setControlsPresetStatus('Import failed: invalid JSON.');
+                                                            return;
+                                                        }
+                                                        setControlsFxDraft(getControlsFxPreset(controlsSelectedId));
+                                                        setControlsPresetStatus(`Imported ${result.count} preset(s).`);
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg text-xs border transition-all bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                                                >
+                                                    Import Presets
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <button
+                                                    data-testid="controls-presets-reset-all"
+                                                    onClick={() => {
+                                                        resetAllControlsFxPresets();
+                                                        setControlsFxDraft(getControlsFxPreset(controlsSelectedId));
+                                                        setControlsPresetStatus('Reset all control presets.');
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg text-xs border transition-all bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                                                >
+                                                    Reset All Presets
+                                                </button>
+                                                <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                    {controlsPresetStatus || 'No preset action yet.'}
                                                 </div>
                                             </div>
                                         </div>

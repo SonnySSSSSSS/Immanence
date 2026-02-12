@@ -68,5 +68,36 @@ test('DEV — Controls picker readout + probes', async ({ page }) => {
   await expect(page.getByText(/Role group:\s+homeHub/i)).toBeVisible();
   await expect(page.getByText(/Surface:\s+descendant/i)).toBeVisible();
 
+  await expect(page.getByTestId('controls-presets-json')).toBeVisible();
+  await expect(page.getByTestId('controls-presets-export')).toBeVisible();
+  await expect(page.getByTestId('controls-presets-import')).toBeVisible();
+  await expect(page.getByTestId('controls-presets-reset-all')).toBeVisible();
+
+  const samplePreset = {
+    version: 2,
+    presets: {
+      'homeHub:mode:navigation': {
+        thickness: 4,
+        speed: 0.04,
+        chaos: 0.12,
+        offsetPx: 10,
+        color: '#11aaee',
+        glow: 30,
+        blur: 8,
+        opacity: 0.62,
+      },
+    },
+  };
+
+  await page.getByTestId('controls-presets-json').fill(JSON.stringify(samplePreset));
+  await page.getByTestId('controls-presets-import').click();
+  await page.getByTestId('controls-presets-export').click();
+
+  const exported = await page.getByTestId('controls-presets-json').inputValue();
+  expect(exported).toContain('"homeHub:mode:navigation"');
+  expect(exported).toContain('"glow": 30');
+  expect(exported).toContain('"blur": 8');
+  expect(exported).toContain('"opacity": 0.62');
+
   await page.getByRole('button', { name: 'Stop Picking', exact: true }).click();
 });
