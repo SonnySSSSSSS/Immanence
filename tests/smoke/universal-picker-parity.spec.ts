@@ -27,38 +27,62 @@ async function ensureSectionExpanded(page: Page, title: string, expandedHint: Re
   await expect(hint).toBeVisible();
 }
 
-test('DEV — Universal picker parity: card + practice button', async ({ page }) => {
+async function ensureHubReady(page: Page): Promise<void> {
+  await expect
+    .poll(async () => {
+      const labels = ['Practice', 'Wisdom', 'Application', 'Navigation'] as const;
+      for (const label of labels) {
+        const visible = await page.getByRole('button', { name: label, exact: true }).first().isVisible().catch(() => false);
+        if (!visible) return false;
+      }
+      return true;
+    })
+    .toBe(true);
+}
+
+test('DEV — Universal picker parity: controls + card', async ({ page }) => {
   await startFromCleanState(page);
 
-  // Navigate to a page with practice buttons first (pick mode captures clicks).
-  await page.getByRole('button', { name: 'Practice', exact: true }).first().click();
-  await expect(page.locator('.practice-section-container')).toBeVisible();
+  await ensureHubReady(page);
 
   await openDevPanel(page);
   await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
+  await page.getByRole('button', { name: /Inspector \(NEW\)/i }).scrollIntoViewIfNeeded();
 
-  // Practice button pick.
-  await page.getByRole('button', { name: 'Practice Buttons', exact: true }).click();
+  // Controls pick (home hub nav pill circle).
+  await page.getByRole('button', { name: 'Controls', exact: true }).click();
   await page.getByRole('button', { name: 'Pick Target', exact: true }).click();
-  await expect(page.getByText('Universal Picker Active', { exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/dev-ui-controls-picking-active/);
+  await expect(page.locator('html')).toHaveClass(/dev-ui-controls-capture-attached/);
 
-  const practiceButton = page.locator('[data-ui="practice-button"]').first();
-  await expect(practiceButton).toBeVisible();
-  await practiceButton.click({ force: true });
+  const nav = page.locator('[data-ui-id="homeHub:mode:navigation"]').first();
+  await expect(nav).toBeVisible();
+  await expect(nav).toHaveAttribute('data-ui-target', 'true');
+  await nav.dispatchEvent('pointerdown', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10, pointerType: 'mouse' });
+  await nav.dispatchEvent('pointerup', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10, pointerType: 'mouse' });
+  await nav.dispatchEvent('click', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10 });
 
-  await expect(page.getByTestId('devpanel-universal-peek').getByText(/Selected:\s+(?!none)/i)).toBeVisible();
-  await page.getByRole('button', { name: 'Confirm + Return', exact: true }).click();
-  await expect(page.getByText('DEVELOPER PANEL', { exact: true })).toBeVisible();
-  await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
-  await expect(page.getByText(/Selected:\s+(?!none)/i).first()).toBeVisible();
+  const selectedNav = page.getByText(/Selected:\s+homeHub:mode:navigation/i);
+  await selectedNav.scrollIntoViewIfNeeded();
+  await expect(selectedNav).toBeVisible();
+  const stopPick = page.getByRole('button', { name: 'Stop Picking', exact: true });
+  await stopPick.scrollIntoViewIfNeeded();
+  await stopPick.click();
 
   // Card pick.
+  await page.getByRole('button', { name: 'Practice', exact: true }).first().click();
+  await expect(page.locator('.practice-section-container')).toBeVisible();
+
   await page.getByRole('button', { name: 'Cards', exact: true }).click();
   await page.getByRole('button', { name: 'Pick Target', exact: true }).click();
-  await expect(page.getByText('Universal Picker Active', { exact: true })).toBeVisible();
 
-  await page.locator('[data-card="true"][data-card-id="practice-options"]').first().click({ force: true });
-  await expect(page.getByTestId('devpanel-universal-peek').getByText('Selected: practice-options', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Confirm + Return', exact: true }).click();
-  await expect(page.getByText('DEVELOPER PANEL', { exact: true })).toBeVisible();
+  const practiceOptions = page.locator('[data-card="true"][data-card-id="practice-options"]').first();
+  await expect(practiceOptions).toBeVisible();
+  await practiceOptions.dispatchEvent('click', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10 });
+  const selectedCard = page.getByText(/Selected:\s+practice-options/i).first();
+  await selectedCard.scrollIntoViewIfNeeded();
+  await expect(selectedCard).toBeVisible();
+  const stopPick2 = page.getByRole('button', { name: 'Stop Picking', exact: true });
+  await stopPick2.scrollIntoViewIfNeeded();
+  await stopPick2.click();
 });

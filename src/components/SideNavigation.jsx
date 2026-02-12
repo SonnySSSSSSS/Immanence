@@ -110,6 +110,7 @@ export function SideNavigation({ onNavigate, className = "" }) {
             {/* Navigation Buttons */}
             {navigationItems.map((item) => {
                 const pos = getArcPosition(item.angle);
+                const buttonClassName = "group relative overflow-hidden im-nav-pill";
 
                 return (
                     <div
@@ -124,7 +125,7 @@ export function SideNavigation({ onNavigate, className = "" }) {
                         <button
                             type="button"
                             onClick={() => handleClick(item.key)}
-                            className="group relative overflow-hidden im-nav-pill"
+                            className={buttonClassName}
                             data-nav-pill-id={`bottom:${item.key}`}
                             style={{
                                 width: `${buttonSize}px`,

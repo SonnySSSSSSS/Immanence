@@ -12,6 +12,7 @@ import { getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortT
 import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition } from '../data/programRegistry.js';
+import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
 
 /**
  * THEME CONFIGURATION
@@ -1007,6 +1008,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 }}>
                                                                     <button
                                                                         onClick={(e) => {
+                                                                            if (isUiPickingActive()) return;
                                                                             if (!e.shiftKey) {
                                                                                 const slot = slotLaunches[idx];
                                                                                 const practiceId = slot?.practiceId;
@@ -1047,6 +1049,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                             }
                                                                         }}
                                                                         disabled={isOutsideWindow || benchmarkMissing}
+                                                                        data-ui-target="true"
+                                                                        data-ui-scope="role"
+                                                                        data-ui-role-group="dailyPractice"
+                                                                        data-ui-id="dailyPractice:legStatusPill"
+                                                                        data-ui-fx-surface="true"
                                                                         data-ui="practice-button"
                                                                         data-practice-type={slotLaunches[idx]?.practiceId === 'perception' ? 'visual' : (slotLaunches[idx]?.practiceId === 'resonance' ? 'sound' : (slotLaunches[idx]?.practiceId || undefined))}
                                                                         data-practice-id={slotLaunches[idx]?.practiceId ? `daily-slot:${idx}:${slotLaunches[idx].practiceId}` : undefined}
@@ -1781,11 +1788,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         }}>
                                                             <button
                                                                 onClick={(e) => {
+                                                                    if (isUiPickingActive()) return;
                                                                     if (!e.shiftKey) {
                                                                         handleStartLeg(leg, e);
                                                                     }
                                                                 }}
                                                                 disabled={isLockedLeg || isSoftLocked}
+                                                                data-ui-target="true"
+                                                                data-ui-scope="role"
+                                                                data-ui-role-group="dailyPractice"
+                                                                data-ui-id="dailyPractice:legStatusPill"
+                                                                data-ui-fx-surface="true"
                                                                 className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 style={{
                                                                     background: (isLockedLeg || isSoftLocked)

@@ -40,70 +40,33 @@ async function ensureSectionExpanded(page: Page, title: string, expandedHint: Re
   await expect(hint).toBeVisible();
 }
 
-test('DEV — Pick Debug logs (nav pill + recommendations)', async ({ page }) => {
-  const pickDebugLines: string[] = [];
-  page.on('console', (msg) => {
-    const text = msg.text();
-    if (text.startsWith('[pick-debug] ')) pickDebugLines.push(text);
-  });
-
+test('DEV — Controls picker readout + probes', async ({ page }) => {
   await startFromCleanState(page);
-
-  // Ensure there are nav pills in the DOM (Navigation page has `.im-nav-pill` elements).
   await ensureHubReady(page);
-  await page.getByRole('button', { name: 'Navigation', exact: true }).first().click();
-  await expect(page.getByRole('button', { name: /◈ Compass|◇ Paths/i })).toBeVisible();
 
-  // Open DevPanel + enable Pick Debug.
   await openDevPanel(page);
   await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
-  await page.getByRole('button', { name: /Pick Debug/i }).click();
 
-  // Probes ON (helps manual verification; here just ensures toggles are wired).
-  await page.getByRole('button', { name: 'Probe: Nav Pills', exact: true }).click();
+  await page.getByRole('button', { name: 'Probe: Targets', exact: true }).click();
   await page.getByRole('button', { name: 'Probe: Cards', exact: true }).click();
 
-  // NAV PILL pick.
-  await page.getByRole('button', { name: 'Nav Pills', exact: true }).click();
+  await page.getByRole('button', { name: 'Controls', exact: true }).click();
   await page.getByRole('button', { name: 'Pick Target', exact: true }).click();
-  await expect(page.getByText('Universal Picker Active', { exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/dev-ui-controls-picking-active/);
+  await expect(page.locator('html')).toHaveClass(/dev-ui-controls-capture-attached/);
 
-  const navPill = page.locator('.im-nav-pill').first();
-  await expect(navPill).toBeVisible();
-  await navPill.click({ force: true });
+  const nav = page.locator('[data-ui-id="homeHub:mode:navigation"]').first();
+  await expect(nav).toBeVisible();
+  await nav.dispatchEvent('pointerdown', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10, pointerType: 'mouse' });
+  await nav.dispatchEvent('pointerup', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10, pointerType: 'mouse' });
+  await nav.dispatchEvent('click', { bubbles: true, cancelable: true, composed: true, button: 0, clientX: 10, clientY: 10 });
 
-  await expect(page.getByTestId('devpanel-universal-peek').getByText(/Selected:\s+(?!none)/i)).toBeVisible();
-  await page.getByRole('button', { name: 'Confirm + Return', exact: true }).click();
-  await expect(page.getByText('DEVELOPER PANEL', { exact: true })).toBeVisible();
+  const selected = page.getByText(/Selected:\s+homeHub:mode:navigation/i);
+  await selected.scrollIntoViewIfNeeded();
+  await expect(selected).toBeVisible();
+  await expect(page.getByText(/Selected:\s+homeHub:mode:navigation/i)).toBeVisible();
+  await expect(page.getByText(/Role group:\s+homeHub/i)).toBeVisible();
+  await expect(page.getByText(/Surface:\s+descendant/i)).toBeVisible();
 
-  // Navigate to Wisdom page (outside pick mode).
-  await page.goto('/');
-  await page.waitForLoadState('domcontentloaded');
-  await ensureHubReady(page);
-  await page.getByRole('button', { name: 'Wisdom', exact: true }).first().click();
-  await expect(page.getByText('Wisdom', { exact: false }).first()).toBeVisible();
-
-  // RECOMMENDATIONS pick.
-  await openDevPanel(page);
-  await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
-  await page.getByRole('button', { name: 'Cards', exact: true }).click();
-  await page.getByRole('button', { name: 'Pick Target', exact: true }).click();
-  await expect(page.getByText('Universal Picker Active', { exact: true })).toBeVisible();
-
-  const recommendationsPanel = page.locator('[data-card-id="wisdom:recommendationsPanel"]').first();
-  await expect(recommendationsPanel).toBeVisible();
-  await recommendationsPanel.click({ force: true });
-  await expect(page.getByTestId('devpanel-universal-peek').getByText(/Selected:\s+(?!none)/i)).toBeVisible();
-  await page.getByRole('button', { name: 'Confirm + Return', exact: true }).click();
-  await expect(page.getByText('DEVELOPER PANEL', { exact: true })).toBeVisible();
-
-  // Print 1 nav-pill and 1 recommendations debug line as ground-truth artifacts.
-  const navLine = pickDebugLines.find((l) => l.includes('"mode":"universal:nav-pill"')) || null;
-  const recLine = pickDebugLines.find((l) => l.includes('"resolvedId":"wisdom:recommendationsPanel"')) || null;
-
-  console.log('PICK_DEBUG_NAV_PILL', navLine);
-  console.log('PICK_DEBUG_RECOMMENDATIONS', recLine);
-
-  expect(navLine).toBeTruthy();
-  expect(recLine).toBeTruthy();
+  await page.getByRole('button', { name: 'Stop Picking', exact: true }).click();
 });

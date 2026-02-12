@@ -132,6 +132,7 @@ body::-webkit-scrollbar {
   --card-blur: 16px;
 }
 .dev-nav-pill-probe .im-nav-pill { outline: 4px solid #ff00ff !important; box-shadow: 0 0 0 8px rgba(255,0,255,0.35) !important; }
+.dev-ui-target-probe [data-ui-target="true"] { outline: 4px solid #ff00ff !important; box-shadow: 0 0 0 8px rgba(255,0,255,0.35) !important; }
 
 .dev-card-tuner-enabled .im-card {
   background: hsla(var(--card-tint-h), var(--card-tint-s), var(--card-tint-l), var(--card-alpha)) !important;

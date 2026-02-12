@@ -1,3 +1,5 @@
+import { isDevtoolsEnabled } from './uiDevtoolsGate.js';
+
 const CARD_PICK_SELECTOR = '[data-card-id]';
 const ROOT_ENABLED_CLASS = 'dev-card-tuner-enabled';
 const PICK_MODE_CLASS = 'dev-card-picker-active';
@@ -35,7 +37,7 @@ const CSS_VAR_MAP = {
 };
 
 function hasDom() {
-  return typeof window !== 'undefined' && typeof document !== 'undefined' && import.meta.env.DEV;
+  return typeof window !== 'undefined' && typeof document !== 'undefined' && isDevtoolsEnabled();
 }
 
 function normalize(settings = {}) {
@@ -177,6 +179,7 @@ function isDevPanelUiEvent(event) {
   if (!Array.isArray(path)) return false;
   for (const n of path) {
     if (!(n instanceof Element)) continue;
+    if (n.getAttribute?.('data-devpanel-root') === 'true') return true;
     const testId = n.getAttribute?.('data-testid');
     if (testId === 'devpanel-root' || testId === 'devpanel-peek') return true;
   }
@@ -186,9 +189,9 @@ function isDevPanelUiEvent(event) {
 function onPickClick(event) {
   if (!pickMode) return;
   if (isDevPanelUiEvent(event)) return;
-  const target = findCardFromEvent(event);
-  debugLogPick(event, target);
-  if (!target) {
+  const el = findCardFromEvent(event);
+  debugLogPick(event, el);
+  if (!el) {
     lastPickFailure = {
       reason: 'no-card-marker-ancestor',
       message: `Pick failed: no [data-card-id] ancestor found (clicked ${describeEl(event?.target)}).`,
@@ -196,10 +199,14 @@ function onPickClick(event) {
     emit();
     return;
   }
+  const cardId = el.getAttribute('data-card-id');
+  if (!cardId) return;
+  selectCard(el);
   event.preventDefault();
   event.stopPropagation();
+  if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
   lastPickFailure = null;
-  selectCard(target);
+  emit();
 }
 
 export function initCardTuner() {

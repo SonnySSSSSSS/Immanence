@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
 import { PracticeSection } from "./components/PracticeSection.jsx";
@@ -32,6 +32,7 @@ import { ShadowScanOverlay } from "./components/debug/ShadowScanOverlay.jsx";
 import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
+import { hasDevtoolsQueryFlag, isDevtoolsEnabled, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -137,6 +138,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const showFxGallery = true; // FX Gallery dev mode
   const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
+  const [devtoolsGateTick, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
   // GRAVEYARD: Top layer removed
@@ -147,6 +149,25 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [isMinimized] = useState(false);
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const isDev = import.meta.env.DEV;
+  const devtoolsEnabled = isDevtoolsEnabled();
+  const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
+
+  useEffect(() => {
+    if (!devtoolsEnabled && showDevPanel) setShowDevPanel(false);
+  }, [devtoolsEnabled, showDevPanel, devtoolsGateTick]);
+
+  useEffect(() => {
+    if (!devtoolsEnabled) return undefined;
+    const onKeyDown = (event) => {
+      const key = String(event.key || '').toLowerCase();
+      if (event.ctrlKey && event.shiftKey && key === 'd') {
+        event.preventDefault();
+        setShowDevPanel((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [devtoolsEnabled, devtoolsGateTick]);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -437,18 +458,20 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       />
 
       {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}
-      <DevPanel
-        isOpen={showDevPanel}
-        onClose={() => setShowDevPanel(false)}
-        avatarStage={effectivePreviewStage}
-        setAvatarStage={handlePreviewStageChange}
-        avatarPath={effectivePreviewPath}
-        setAvatarPath={handlePreviewPathChange}
-        showCore={previewShowCore}
-        setShowCore={setPreviewShowCore}
-        avatarAttention={previewAttention}
-        setAvatarAttention={setPreviewAttention}
-      />
+      {devtoolsEnabled && (
+        <DevPanel
+          isOpen={showDevPanel}
+          onClose={() => setShowDevPanel(false)}
+          avatarStage={effectivePreviewStage}
+          setAvatarStage={handlePreviewStageChange}
+          avatarPath={effectivePreviewPath}
+          setAvatarPath={handlePreviewPathChange}
+          showCore={previewShowCore}
+          setShowCore={setPreviewShowCore}
+          avatarAttention={previewAttention}
+          setAvatarAttention={setPreviewAttention}
+        />
+      )}
 
       <PracticeButtonElectricBorderOverlay />
       {import.meta.env.DEV && <SelectedCardElectricBorderOverlay />}
@@ -556,15 +579,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     >
                       ⚙️
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowDevPanel(v => !v)}
-                      className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
-                      title="Dev Panel (Ctrl+Shift+D)"
-                      style={{ color: showDevPanel ? 'var(--accent-color)' : undefined }}
-                    >
-                      🎨
-                    </button>
+                    {devtoolsEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDevPanel(v => !v)}
+                        className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
+                        title="Dev Panel (Ctrl+Shift+D)"
+                        style={{ color: showDevPanel ? 'var(--accent-color)' : undefined }}
+                      >
+                        🎨
+                      </button>
+                    )}
                     <button
                       type="button"
                       data-tutorial="global-tutorial-button"
@@ -587,6 +612,23 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         onClick={(e) => {
                           if (e.altKey && e.shiftKey) toggleBuildProbe();
                           if (e.altKey && (e.ctrlKey || e.metaKey)) toggleDebugFlag('disableDailyCard');
+                          if (!hasDevtoolsQueryFlag()) return;
+                          const now = Date.now();
+                          const state = devtoolsTapRef.current;
+                          if (!state.firstTs || (now - state.firstTs) > 3000) {
+                            state.firstTs = now;
+                            state.count = 0;
+                          }
+                          state.count += 1;
+                          if (state.count >= 7) {
+                            state.count = 0;
+                            state.firstTs = 0;
+                            if (!isDevtoolsUnlocked()) {
+                              setDevtoolsUnlocked(true);
+                              setDevtoolsGateTick(t => t + 1);
+                              console.info('[devtools] unlocked');
+                            }
+                          }
                         }}
                         style={{ background: 'transparent' }}
                       >

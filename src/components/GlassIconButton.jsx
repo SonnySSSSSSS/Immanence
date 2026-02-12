@@ -5,6 +5,7 @@
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
 
 // Icon name mapping for subModes
 export const SUB_MODE_ICON_MAP = {
@@ -35,7 +36,9 @@ export function GlassIconButton({
   iconName,
   onClick,
   selected = false,
-  disabled = false
+  disabled = false,
+  className = '',
+  ...buttonProps
 }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
@@ -229,6 +232,7 @@ export function GlassIconButton({
 
   const handleClick = () => {
     if (disabled) return;
+    if (isUiPickingActive()) return;
     if (onClick) onClick();
   };
 
@@ -252,7 +256,7 @@ export function GlassIconButton({
       type="button"
       onClick={handleClick}
       onPointerDown={handlePressFeedback}
-      className="group relative flex flex-col items-center"
+      className={`group relative flex flex-col items-center ${className}`.trim()}
       style={{
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.45 : 1,
@@ -261,9 +265,11 @@ export function GlassIconButton({
       aria-label={label}
       aria-disabled={disabled}
       aria-pressed={selected}
+      {...buttonProps}
     >
       <div
         className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
+        data-ui-fx-surface="true"
         style={{
           width: '76px',
           height: '76px',

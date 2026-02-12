@@ -2406,6 +2406,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               {Object.entries(practice.subModes).map(([modeKey, modeConfig]) => {
                 const isActive = activeMode === modeKey;
                 const iconName = SUB_MODE_ICON_MAP[modeKey] || SUB_MODE_ICON_MAP[modeConfig.id] || 'cognitive';
+                const utcSubmodeId = practiceId === 'awareness'
+                  ? (modeKey === 'insight'
+                    ? 'practice:submode:cognitive'
+                    : (modeKey === 'bodyscan'
+                      ? 'practice:submode:somatic'
+                      : (modeKey === 'feeling' ? 'practice:submode:emotion' : null)))
+                  : null;
 
                 return (
                   <GlassIconButton
@@ -2417,6 +2424,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     data-ui="practice-button"
                     data-practice-type={practiceTypeForFx}
                     data-practice-id={`practice-submode:${practiceId}:${modeKey}`}
+                    {...(utcSubmodeId ? {
+                      'data-ui-target': 'true',
+                      'data-ui-scope': 'role',
+                      'data-ui-role-group': 'practice',
+                      'data-ui-id': utcSubmodeId,
+                    } : {})}
                   />
                 );
               })}

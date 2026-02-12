@@ -1,6 +1,7 @@
 import React from "react";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
+import { isUiPickingActive } from "../../dev/uiControlsCaptureManager.js";
 
 // Import config components directly to avoid circular dependencies
 import { CircuitConfig } from "../Cycle/CircuitConfig.jsx";
@@ -182,8 +183,16 @@ function PracticeMenu({
     {showStartButton && (
       <div className="flex flex-col items-center" style={{ marginTop: '32px', marginBottom: '24px' }}>
     <button
-      onClick={onStart}
+      onClick={() => {
+        if (isUiPickingActive()) return;
+        onStart?.();
+      }}
       className="group transition-all duration-300 relative overflow-hidden begin-button"
+      data-ui-target="true"
+      data-ui-scope="role"
+      data-ui-role-group="practice"
+      data-ui-id="practice:cta:begin"
+      data-ui-fx-surface="true"
       style={{
              width: '100%',
              maxWidth: '400px',

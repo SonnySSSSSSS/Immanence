@@ -4,8 +4,17 @@
 import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
 
-export function SimpleModeButton({ title, onClick, icon, disabled = false, isActive = false }) {
+export function SimpleModeButton({
+    title,
+    onClick,
+    icon,
+    disabled = false,
+    isActive = false,
+    className = '',
+    ...buttonProps
+}) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const [isPressing, setIsPressing] = React.useState(false);
@@ -76,6 +85,7 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
 
     const handleClick = () => {
         if (disabled) return;
+        if (isUiPickingActive()) return;
         if (onClick) onClick();
     };
 
@@ -111,7 +121,7 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
             type="button"
             onClick={handleClick}
             onPointerDown={handlePressFeedback}
-            className="group relative flex flex-col items-center"
+            className={`group relative flex flex-col items-center ${className}`.trim()}
             style={{
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.45 : 1,
@@ -119,9 +129,11 @@ export function SimpleModeButton({ title, onClick, icon, disabled = false, isAct
             }}
             aria-label={title}
             aria-disabled={disabled}
+            {...buttonProps}
         >
             <div
                 className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
+                data-ui-fx-surface="true"
                 style={{
                     width: '76px',
                     height: '76px',

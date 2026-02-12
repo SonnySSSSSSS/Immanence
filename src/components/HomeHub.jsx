@@ -484,6 +484,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               disabled={lockToHub}
               icon="practice"
               isActive={activeSection === 'practice'}
+              className="im-nav-pill"
+              data-nav-pill-id="home:practice"
+              data-ui-target="true"
+              data-ui-scope="role"
+              data-ui-role-group="homeHub"
+              data-ui-id="homeHub:mode:practice"
             />
             <SimpleModeButton
               title="Wisdom"
@@ -491,6 +497,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               disabled={lockToHub}
               icon="wisdom"
               isActive={activeSection === 'wisdom'}
+              className="im-nav-pill"
+              data-nav-pill-id="home:wisdom"
+              data-ui-target="true"
+              data-ui-scope="role"
+              data-ui-role-group="homeHub"
+              data-ui-id="homeHub:mode:wisdom"
             />
             <SimpleModeButton
               title="Application"
@@ -498,6 +510,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               disabled={lockToHub}
               icon="application"
               isActive={activeSection === 'application'}
+              className="im-nav-pill"
+              data-nav-pill-id="home:application"
+              data-ui-target="true"
+              data-ui-scope="role"
+              data-ui-role-group="homeHub"
+              data-ui-id="homeHub:mode:application"
             />
             <SimpleModeButton
               title="Navigation"
@@ -505,6 +523,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               disabled={lockToHub}
               icon="navigation"
               isActive={activeSection === 'navigation'}
+              className="im-nav-pill"
+              data-nav-pill-id="home:navigation"
+              data-ui-target="true"
+              data-ui-scope="role"
+              data-ui-role-group="homeHub"
+              data-ui-id="homeHub:mode:navigation"
             />
           </div>
         </div>

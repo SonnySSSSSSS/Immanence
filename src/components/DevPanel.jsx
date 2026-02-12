@@ -31,6 +31,9 @@ import {
     resetSelected,
     clearAll,
 } from '../dev/cardTuner.js';
+import { isDevtoolsEnabled } from '../dev/uiDevtoolsGate.js';
+import { validateUiTargetRoot } from '../dev/uiTargetContract.js';
+import { attach as attachControlsCapture, detach as detachControlsCapture, startControlsPicking, stopControlsPicking } from '../dev/uiControlsCaptureManager.js';
 import {
     NAV_BUTTON_TUNER_DEFAULTS,
     initNavButtonTuner,
@@ -110,7 +113,8 @@ export function DevPanel({
     const stageAssetStyle = useDisplayModeStore(s => s.stageAssetStyle);
     const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
-    const isDev = import.meta.env.DEV;
+    const isDevBuild = import.meta.env.DEV;
+    const devtoolsEnabled = isDevtoolsEnabled();
     const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const isPlaygroundPath = currentPathname === '/__playground';
 
@@ -166,11 +170,14 @@ export function DevPanel({
     const PICK_DEBUG_FLAG_KEY = "immanence.dev.pickers.pickDebug.enabled";
     const [pickDebugEnabled, setPickDebugEnabledLocal] = useState(false);
     const [cardIdProbeEnabled, setCardIdProbeEnabled] = useState(false);
-    const [universalPickerKind, setUniversalPickerKind] = useState('card'); // 'card' | 'practice-button' | 'nav-pill'
+    const [universalPickerKind, setUniversalPickerKind] = useState('controls'); // 'controls' | 'card' (legacy modes remain elsewhere)
     const [universalPickMode, setUniversalPickMode] = useState(false);
-    const [universalPeekMode, setUniversalPeekMode] = useState(false);
-    const [universalLastPickFailure, setUniversalLastPickFailure] = useState(null);
-    const [universalNavPillSelectedId, setUniversalNavPillSelectedId] = useState(null);
+    const [uiTargetProbeEnabled, setUiTargetProbeEnabled] = useState(false);
+    const [utcViolations, setUtcViolations] = useState([]);
+    const [controlsSelectedId, setControlsSelectedId] = useState(null);
+    const [controlsSelectedRoleGroup, setControlsSelectedRoleGroup] = useState(null);
+    const [controlsSurfaceIsRoot, setControlsSurfaceIsRoot] = useState(false);
+    const [controlsSurfaceDebug, setControlsSurfaceDebug] = useState(null);
     const [pickDebugResolvedMode, setPickDebugResolvedMode] = useState(null);
     const [pickDebugResolvedId, setPickDebugResolvedId] = useState(null);
     const practiceButtonPickHandlerRef = useRef(null);
@@ -215,9 +222,40 @@ export function DevPanel({
         return chain;
     }, [toNodeDebug]);
 
+    useEffect(() => {
+        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!uiTargetProbeEnabled && !universalPickMode) {
+            setUtcViolations([]);
+            return undefined;
+        }
+
+        let raf = 0;
+        raf = window.requestAnimationFrame(() => {
+            try {
+                const roots = Array.from(document.querySelectorAll('[data-ui-target="true"]'));
+                const violations = [];
+                for (const root of roots) {
+                    const res = validateUiTargetRoot(root);
+                    if (res.ok) continue;
+                    violations.push({
+                        violationKey: res.violationKey || 'UNKNOWN',
+                        reasons: Array.isArray(res.reasons) ? res.reasons : ['invalid'],
+                    });
+                }
+                setUtcViolations(violations);
+            } catch {
+                setUtcViolations([]);
+            }
+        });
+
+        return () => {
+            if (raf) window.cancelAnimationFrame(raf);
+        };
+    }, [isOpen, devtoolsEnabled, uiTargetProbeEnabled, universalPickMode]);
+
     const debugLogPick = useCallback((mode, picker, event, resolvedEl) => {
         if (!pickDebugEnabled) return;
-        if (!import.meta.env.DEV) return;
+        if (!isDevBuild) return;
         try {
             const target = event?.target instanceof Element ? event.target : null;
             const payload = {
@@ -226,8 +264,8 @@ export function DevPanel({
                 target: toNodeDebug(target),
                 ancestors: toAncestorDebug(target, 12),
                 resolved: toNodeDebug(resolvedEl),
-                resolvedId: resolvedEl?.getAttribute?.('data-card-id') ||
-                    resolvedEl?.getAttribute?.('data-nav-pill-id') ||
+                resolvedId: resolvedEl?.getAttribute?.('data-ui-id') ||
+                    resolvedEl?.getAttribute?.('data-card-id') ||
                     null,
             };
             console.info(`[pick-debug] ${JSON.stringify(payload)}`);
@@ -317,7 +355,7 @@ export function DevPanel({
     };
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         initCardTuner();
         const un = subscribeCardTuner((next) => {
             setCardState(next);
@@ -329,10 +367,10 @@ export function DevPanel({
             setPeekMode(false);
             un();
         };
-    }, [isOpen, isDev]);
+    }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         try {
             const raw = window.localStorage.getItem(PICK_DEBUG_FLAG_KEY);
             if (raw === "1") setPickDebugEnabledLocal(true);
@@ -341,10 +379,10 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, isDev]);
+    }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         try {
             window.localStorage.setItem(PICK_DEBUG_FLAG_KEY, pickDebugEnabled ? "1" : "0");
         } catch {
@@ -356,32 +394,32 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, isDev, pickDebugEnabled]);
+    }, [isOpen, devtoolsEnabled, pickDebugEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         document.body.classList.toggle('dev-card-id-probe', cardIdProbeEnabled);
         return () => document.body.classList.remove('dev-card-id-probe');
-    }, [isOpen, isDev, cardIdProbeEnabled]);
+    }, [isOpen, devtoolsEnabled, cardIdProbeEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         initNavButtonTuner();
         const un = subscribeNavButtonTuner((next) => {
             setNavBtnState(next);
             if (next?.settings) setNavBtnDraft(next.settings);
         });
         return () => un();
-    }, [isOpen, isDev]);
+    }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isDev) return undefined;
+        if (!devtoolsEnabled) return undefined;
         document.body.classList.toggle('dev-nav-btn-probe', navBtnProbeEnabled);
         return () => document.body.classList.remove('dev-nav-btn-probe');
-    }, [isDev, navBtnProbeEnabled]);
+    }, [devtoolsEnabled, navBtnProbeEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         const onKeyDown = (event) => {
             const key = String(event.key || '').toLowerCase();
             if (event.ctrlKey && event.altKey && event.shiftKey && key === 'k') {
@@ -391,7 +429,7 @@ export function DevPanel({
         };
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [isOpen, isDev]);
+    }, [isOpen, devtoolsEnabled]);
 
     const activeDraft = cardApplyToAll
         ? globalDraft
@@ -416,7 +454,6 @@ export function DevPanel({
         stopUniversalPickCaptureImmediate();
         stopPracticeButtonPickCaptureImmediate();
         setUniversalPickMode(false);
-        setUniversalPeekMode(false);
         setPracticeButtonPickMode(false);
         setPickMode(true);
         setPeekMode(true);
@@ -443,18 +480,41 @@ export function DevPanel({
         setPeekMode(false);
         stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
-        setUniversalLastPickFailure(null);
-        setUniversalNavPillSelectedId(null);
+        setControlsSelectedId(null);
+        setControlsSelectedRoleGroup(null);
+        setControlsSurfaceIsRoot(false);
+        setControlsSurfaceDebug(null);
         setPickDebugResolvedMode(null);
         setPickDebugResolvedId(null);
         setUniversalPickMode(true);
-        setUniversalPeekMode(true);
+
+        if (universalPickerKind === 'controls') {
+            stopUniversalPickCaptureImmediate();
+            stopControlsPicking();
+            attachControlsCapture();
+            startControlsPicking({
+                onPick: (validation) => {
+                    setPickDebugResolvedMode('universal:controls');
+                    setPickDebugResolvedId(validation?.rootId || null);
+                    setControlsSelectedId(validation?.rootId || null);
+                    setControlsSelectedRoleGroup(validation?.roleGroup || null);
+                    setControlsSurfaceIsRoot(Boolean(validation?.surfaceIsRoot));
+                    const surface = validation?.surfaceEl && typeof validation.surfaceEl.tagName === 'string' ? validation.surfaceEl : null;
+                    setControlsSurfaceDebug(surface ? {
+                        tag: String(surface.tagName || '').toLowerCase(),
+                        className: typeof surface.className === 'string' ? surface.className : null,
+                    } : null);
+                },
+            });
+        }
     };
 
     const handleStopUniversalPickFlow = () => {
+        stopControlsPicking();
+        detachControlsCapture();
         stopUniversalPickCaptureImmediate();
+        setPickMode(false);
         setUniversalPickMode(false);
-        setUniversalPeekMode(false);
     };
 
     const handleTogglePeek = () => {
@@ -479,7 +539,7 @@ export function DevPanel({
     }, []);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         try {
             const raw = window.localStorage.getItem(PRACTICE_BUTTON_PICK_STORAGE_KEY);
             if (!raw) return undefined;
@@ -490,10 +550,10 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, isDev]);
+    }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         try {
             const raw = window.localStorage.getItem(LEGACY_PICKERS_FLAG_KEY);
             if (raw === "0") setLegacyPickersEnabled(false);
@@ -502,20 +562,20 @@ export function DevPanel({
             // ignore
         }
         return undefined;
-    }, [isOpen, isDev]);
+    }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         try {
             window.localStorage.setItem(LEGACY_PICKERS_FLAG_KEY, legacyPickersEnabled ? "1" : "0");
         } catch {
             // ignore
         }
         return undefined;
-    }, [isOpen, isDev, legacyPickersEnabled]);
+    }, [isOpen, devtoolsEnabled, legacyPickersEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         if (legacyPickersEnabled) return undefined;
         // If legacy pickers are hidden, ensure their capture listeners are off.
         setPickMode(false);
@@ -523,26 +583,25 @@ export function DevPanel({
         stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
         return undefined;
-    }, [isOpen, isDev, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
+    }, [isOpen, devtoolsEnabled, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         broadcastPracticeButtonPicker({
             applyToAll: practiceButtonApplyToAll,
             selectedKey: practiceButtonSelectedKey,
         });
         return undefined;
-    }, [isOpen, isDev, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
+    }, [isOpen, devtoolsEnabled, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         if (!practiceButtonPickMode) return undefined;
 
         // Conflict prevention: never allow two global capture listeners at once.
         setPickMode(false);
         setPeekMode(false);
         setUniversalPickMode(false);
-        setUniversalPeekMode(false);
 
         const normalizePracticeType = (raw) => {
             const t = String(raw || '').trim().toLowerCase();
@@ -587,144 +646,104 @@ export function DevPanel({
                 practiceButtonPickHandlerRef.current = null;
             }
         };
-    }, [isOpen, isDev, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
+    }, [isOpen, devtoolsEnabled, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
-        if (!universalPickMode) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
+
+        // Always keep capture listeners off when not actively picking.
+        if (!universalPickMode) {
+            stopControlsPicking();
+            detachControlsCapture();
+            stopUniversalPickCaptureImmediate();
+            return undefined;
+        }
 
         // Conflict prevention: never allow two global capture listeners at once.
         setPickMode(false);
         setPeekMode(false);
+        stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
 
-        const isDevPanelUiEvent = (event) => {
-            const path = typeof event?.composedPath === 'function' ? event.composedPath() : null;
-            if (!Array.isArray(path)) return false;
-            for (const n of path) {
-                if (!(n instanceof Element)) continue;
-                const testId = n.getAttribute?.('data-testid');
-                if (testId === 'devpanel-root' || testId === 'devpanel-peek' || testId === 'devpanel-universal-peek') return true;
-            }
-            return false;
-        };
+        if (universalPickerKind === 'controls') {
+            stopUniversalPickCaptureImmediate();
+            stopControlsPicking();
+            attachControlsCapture();
+            startControlsPicking({
+                onPick: (validation) => {
+                    setPickDebugResolvedMode('universal:controls');
+                    setPickDebugResolvedId(validation?.rootId || null);
+                    setControlsSelectedId(validation?.rootId || null);
+                    setControlsSelectedRoleGroup(validation?.roleGroup || null);
+                    setControlsSurfaceIsRoot(Boolean(validation?.surfaceIsRoot));
+                    const surface = validation?.surfaceEl && typeof validation.surfaceEl.tagName === 'string' ? validation.surfaceEl : null;
+                    setControlsSurfaceDebug(surface ? {
+                        tag: String(surface.tagName || '').toLowerCase(),
+                        className: typeof surface.className === 'string' ? surface.className : null,
+                    } : null);
+                },
+            });
+            return () => {
+                stopControlsPicking();
+                detachControlsCapture();
+            };
+        }
 
-        const normalizePracticeType = (raw) => {
-            const t = String(raw || '').trim().toLowerCase();
-            if (!t) return null;
-            if (t === 'perception') return 'visual';
-            if (t === 'resonance') return 'sound';
-            return t;
-        };
+        if (universalPickerKind === 'card') {
+            stopUniversalPickCaptureImmediate();
+            stopControlsPicking();
+            detachControlsCapture();
 
-        const findPracticeButtonFromEvent = (event) => {
-            const target = event?.target instanceof Element ? event.target : null;
-            return target?.closest?.('[data-ui="practice-button"]') || null;
-        };
-
-        const onClickCapture = (event) => {
-            const mode = `universal:${universalPickerKind}`;
-            const target = event?.target instanceof Element ? event.target : null;
-            const resolvedEl = universalPickerKind === 'card'
-                ? findCardFromEvent(event)
-                : universalPickerKind === 'practice-button'
-                    ? findPracticeButtonFromEvent(event)
-                    : universalPickerKind === 'nav-pill'
-                        ? (target?.closest?.('.im-nav-pill') || null)
-                        : null;
-
-            debugLogPick(mode, 'universal', event, resolvedEl);
-            setPickDebugResolvedMode(mode);
-            if (universalPickerKind === 'card') {
-                setPickDebugResolvedId(resolvedEl?.getAttribute?.('data-card-id') || null);
-            } else if (universalPickerKind === 'practice-button') {
-                const practiceType = normalizePracticeType(resolvedEl?.getAttribute?.('data-practice-type'));
-                const id = resolvedEl?.getAttribute?.('data-practice-id') || resolvedEl?.id || practiceType || null;
-                setPickDebugResolvedId(id ? `${practiceType || 'practice'}:${id}` : null);
-            } else if (universalPickerKind === 'nav-pill') {
-                setPickDebugResolvedId(resolvedEl?.getAttribute?.('data-nav-pill-id') || null);
-            } else {
-                setPickDebugResolvedId(null);
-            }
-
-            if (isDevPanelUiEvent(event)) return;
-
-            if (universalPickerKind === 'card') {
-                const el = resolvedEl;
-                if (!el) return; // deterministic: no fallback, no blocking
+            const onClickCapture = (event) => {
+                const target = event?.target instanceof Element ? event.target : null;
+                if (!target) return;
+                if (target.closest?.('[data-devpanel-root="true"]')) return;
+                const el = findCardFromEvent(event);
+                debugLogPick('universal:card', 'universal', event, el);
+                setPickDebugResolvedMode('universal:card');
+                setPickDebugResolvedId(el?.getAttribute?.('data-card-id') || null);
+                if (!el) return;
                 event.preventDefault();
                 event.stopPropagation();
                 if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-                setUniversalLastPickFailure(null);
                 selectCard(el);
-                return;
-            }
+            };
 
-            if (universalPickerKind === 'practice-button') {
-                const el = resolvedEl;
-                if (!el) return; // deterministic: no fallback, no blocking
-                event.preventDefault();
-                event.stopPropagation();
-                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-                setUniversalLastPickFailure(null);
+            universalPickHandlerRef.current = onClickCapture;
+            window.addEventListener('click', onClickCapture, true);
+            return () => {
+                window.removeEventListener('click', onClickCapture, true);
+                if (universalPickHandlerRef.current === onClickCapture) {
+                    universalPickHandlerRef.current = null;
+                }
+            };
+        }
 
-                const practiceType = normalizePracticeType(el.getAttribute('data-practice-type'));
-                const id = el.getAttribute('data-practice-id') || el.id || practiceType || 'practice';
-                const key = `${practiceType || 'practice'}:${id}`;
-                setPracticeButtonSelectedKey(key);
-                setPracticeButtonApplyToAll(false);
-                return;
-            }
-
-            if (universalPickerKind === 'nav-pill') {
-                const el = resolvedEl;
-                if (!el) return; // deterministic: ignore if not a pill (no fallback)
-
-                event.preventDefault();
-                event.stopPropagation();
-                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-                setUniversalLastPickFailure(null);
-
-                const id = el.getAttribute('data-nav-pill-id') || el.id || el.textContent?.trim?.() || 'nav-pill';
-                setUniversalNavPillSelectedId(id);
-            }
-        };
-
-        // Ensure we never accidentally keep two listeners around.
-        stopUniversalPickCaptureImmediate();
-        universalPickHandlerRef.current = onClickCapture;
-        document.addEventListener('click', onClickCapture, true);
-        return () => {
-            document.removeEventListener('click', onClickCapture, true);
-            if (universalPickHandlerRef.current === onClickCapture) {
-                universalPickHandlerRef.current = null;
-            }
-        };
-    }, [isOpen, isDev, universalPickMode, universalPickerKind, debugLogPick, logNearestAncestors, stopUniversalPickCaptureImmediate]);
+        return undefined;
+    }, [
+        isOpen,
+        devtoolsEnabled,
+        universalPickMode,
+        universalPickerKind,
+        debugLogPick,
+        stopPracticeButtonPickCaptureImmediate,
+        stopUniversalPickCaptureImmediate,
+    ]);
 
     useEffect(() => {
-        if (!isOpen || !isDev) return undefined;
+        if (!isOpen || !devtoolsEnabled) return undefined;
         if (!cardState?.pickMode) return undefined;
         // Conflict prevention: never allow two global capture listeners at once.
         setPracticeButtonPickMode(false);
         setUniversalPickMode(false);
-        setUniversalPeekMode(false);
         return undefined;
-    }, [isOpen, isDev, cardState?.pickMode]);
+    }, [isOpen, devtoolsEnabled, cardState?.pickMode]);
 
-    const [navPillProbeEnabled, setNavPillProbeEnabled] = useState(false);
     useEffect(() => {
-        document.body.classList.toggle('dev-nav-pill-probe', navPillProbeEnabled);
-        return () => document.body.classList.remove('dev-nav-pill-probe');
-    }, [navPillProbeEnabled]);
-
-    const isPickerOrProbeActive = Boolean(
-        cardState?.pickMode ||
-        practiceButtonPickMode ||
-        universalPickMode ||
-        navPillProbeEnabled ||
-        navBtnProbeEnabled
-    );
+        if (!isOpen || !devtoolsEnabled) return undefined;
+        document.body.classList.toggle('dev-ui-target-probe', uiTargetProbeEnabled);
+        return () => document.body.classList.remove('dev-ui-target-probe');
+    }, [isOpen, devtoolsEnabled, uiTargetProbeEnabled]);
 
     if (!isOpen) return null;
 
@@ -766,73 +785,19 @@ export function DevPanel({
         );
     }
 
-    if (universalPeekMode) {
-        const selectedLabel = universalPickerKind === 'card'
-            ? (cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none')
-            : universalPickerKind === 'practice-button'
-                ? (practiceButtonSelectedKey || 'none')
-                : (universalNavPillSelectedId || 'none');
-
-        return (
-            <div data-testid="devpanel-universal-peek" className="fixed inset-0 z-[9999] pointer-events-none">
-                <div className="absolute top-3 right-3 pointer-events-auto w-[300px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
-                    <div className="text-[11px] text-white/80 mb-2">Universal Picker Active</div>
-                    <div className="text-[10px] text-white/55 mb-3">
-                        Mode: <span className="font-mono text-white/80">{universalPickerKind}</span>
-                    </div>
-                    <div className="text-[10px] text-white/55 mb-3">
-                        Click a target in the UI, then confirm to return to the panel.
-                    </div>
-                    <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
-                        Selected: {selectedLabel}
-                    </div>
-                    {universalLastPickFailure && (
-                        <div className="text-[10px] mb-3 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
-                            {universalLastPickFailure}
-                        </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={handleStopUniversalPickFlow}
-                            className="rounded-lg px-3 py-2 text-xs bg-amber-500/20 border border-amber-400/50 text-amber-200"
-                        >
-                            Confirm + Return
-                        </button>
-                        <button
-                            onClick={() => {
-                                handleStopUniversalPickFlow();
-                                onClose();
-                            }}
-                            className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70"
-                        >
-                            Close Panel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div
             data-testid="devpanel-root"
-            className={`fixed inset-0 z-[9999] flex ${isPickerOrProbeActive ? 'pointer-events-none' : ''}`}
+            data-devpanel-root="true"
+            className="fixed inset-0 z-[9999] flex pointer-events-none"
         >
-            {isDev && (
+            {devtoolsEnabled && (
                 <style>{`
                     .dev-card-id-probe [data-card-id] {
                         outline: 4px solid #00ffff !important;
                         box-shadow: 0 0 0 8px rgba(0, 255, 255, 0.25) !important;
                     }
                 `}</style>
-            )}
-            {/* Backdrop */}
-            {!isPickerOrProbeActive && (
-                <div
-                    data-testid="devpanel-backdrop"
-                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                    onClick={onClose}
-                />
             )}
 
             {/* Panel */}
@@ -857,9 +822,10 @@ export function DevPanel({
                               setPeekMode(false);
                               stopPracticeButtonPickCaptureImmediate();
                               setPracticeButtonPickMode(false);
+                              stopControlsPicking();
+                              detachControlsCapture();
                               stopUniversalPickCaptureImmediate();
                               setUniversalPickMode(false);
-                              setUniversalPeekMode(false);
                               onClose();
                           }}
                          data-testid="devpanel-close"
@@ -1000,32 +966,26 @@ export function DevPanel({
                         onToggle={() => toggleSection('inspectorNew')}
                         isLight={isLight}
                     >
-                        {!isDev ? (
-                            <div className="text-xs text-white/50">DEV-only</div>
+                        {!devtoolsEnabled ? (
+                            <div className="text-xs text-white/50">Locked</div>
                         ) : (
                             <>
                                 <div className="text-[10px] text-white/50 mb-2">
-                                    Universal picker (parity phase): cards + practice buttons (+ nav pills). Conflict rule: only one global capture listener active.
+                                    Universal picker (parity phase): controls + cards. Conflict rule: only one global capture listener active.
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2 mb-2">
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <button
+                                        onClick={() => setUniversalPickerKind('controls')}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'controls' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Controls
+                                    </button>
                                     <button
                                         onClick={() => setUniversalPickerKind('card')}
                                         className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'card' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
                                     >
                                         Cards
-                                    </button>
-                                    <button
-                                        onClick={() => setUniversalPickerKind('practice-button')}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'practice-button' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Practice Buttons
-                                    </button>
-                                    <button
-                                        onClick={() => setUniversalPickerKind('nav-pill')}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'nav-pill' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Nav Pills
                                     </button>
                                 </div>
 
@@ -1051,10 +1011,10 @@ export function DevPanel({
                                         Pick Debug {pickDebugEnabled ? 'ON' : 'OFF'}
                                     </button>
                                     <button
-                                        onClick={() => setNavPillProbeEnabled(v => !v)}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${navPillProbeEnabled ? 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                        onClick={() => setUiTargetProbeEnabled(v => !v)}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${uiTargetProbeEnabled ? 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
                                     >
-                                        Probe: Nav Pills
+                                        Probe: Targets
                                     </button>
                                     <button
                                         onClick={() => setCardIdProbeEnabled(v => !v)}
@@ -1067,6 +1027,35 @@ export function DevPanel({
                                 <div className="mb-3 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
                                     Debug resolved: {pickDebugResolvedMode ? `${pickDebugResolvedMode} → ${pickDebugResolvedId || 'null'}` : 'none'}
                                 </div>
+
+                                {universalPickerKind === 'controls' && (
+                                    <>
+                                        <div className="space-y-2 mb-3">
+                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                Selected: {controlsSelectedId || 'none'}
+                                            </div>
+                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                Role group: {controlsSelectedRoleGroup || 'null'}
+                                            </div>
+                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                Surface: {controlsSelectedId ? (controlsSurfaceIsRoot ? 'root' : 'descendant') : 'n/a'}
+                                            </div>
+                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                Surface node: {controlsSurfaceDebug ? `${controlsSurfaceDebug.tag}${controlsSurfaceDebug.className ? `.${String(controlsSurfaceDebug.className).trim().split(/\s+/g).slice(0, 3).join('.')}` : ''}` : 'null'}
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 mb-2">
+                                            UTC Violations: {utcViolations.length}
+                                        </div>
+                                        {utcViolations.slice(0, 5).map((v) => (
+                                            <div key={v.violationKey} className="text-[10px] mb-1 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
+                                                <div className="font-mono">{v.violationKey}</div>
+                                                <div className="text-red-200/70">{v.reasons.join(', ')}</div>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
 
                                 {universalPickerKind === 'card' && (
                                     <>
@@ -1093,41 +1082,6 @@ export function DevPanel({
                                     </>
                                 )}
 
-                                {universalPickerKind === 'practice-button' && (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-2 mb-2">
-                                            <button
-                                                onClick={() => setPracticeButtonFxEnabled(!practiceButtonFxEnabled)}
-                                                className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonFxEnabled ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/50' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                            >
-                                                {practiceButtonFxEnabled ? 'FX: ON' : 'FX: OFF'}
-                                            </button>
-                                            <button
-                                                onClick={() => setPracticeButtonApplyToAll(v => !v)}
-                                                className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                            >
-                                                {practiceButtonApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
-                                            </button>
-                                        </div>
-                                        <div className="text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                                            Selected: {practiceButtonSelectedKey || 'none'}
-                                        </div>
-                                        <div className="text-[10px] text-white/45 mt-2">
-                                            Targets: <span className="font-mono">data-ui=&quot;practice-button&quot;</span>
-                                        </div>
-                                    </>
-                                )}
-
-                                {universalPickerKind === 'nav-pill' && (
-                                    <>
-                                        <div className="text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                                            Selected: {universalNavPillSelectedId || 'none'}
-                                        </div>
-                                        <div className="text-[10px] text-white/45 mt-2">
-                                            Targets: <span className="font-mono">.im-nav-pill</span>
-                                        </div>
-                                    </>
-                                )}
                             </>
                         )}
                     </Section>
@@ -1141,8 +1095,8 @@ export function DevPanel({
                         onToggle={() => toggleSection('cardTuner')}
                         isLight={isLight}
                     >
-                        {!isDev ? (
-                            <div className="text-xs text-white/50">DEV-only</div>
+                        {!devtoolsEnabled ? (
+                            <div className="text-xs text-white/50">Locked</div>
                         ) : (
                             <>
                                 <div className="text-[10px] text-white/50 mb-2">
@@ -1236,7 +1190,6 @@ export function DevPanel({
                                                     // Conflict prevention: never allow two global capture listeners at once.
                                                     stopUniversalPickCaptureImmediate();
                                                     setUniversalPickMode(false);
-                                                    setUniversalPeekMode(false);
                                                     setPickMode(false);
                                                     setPeekMode(false);
                                                 }
@@ -1298,8 +1251,8 @@ export function DevPanel({
                         onToggle={() => toggleSection('navBtnTuner')}
                         isLight={isLight}
                     >
-                        {!isDev ? (
-                            <div className="text-xs text-white/50">DEV-only</div>
+                        {!devtoolsEnabled ? (
+                            <div className="text-xs text-white/50">Locked</div>
                         ) : (
                             <>
                                 <div className="text-[10px] text-white/50 mb-2">

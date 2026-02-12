@@ -59,10 +59,14 @@ function readPickConfig() {
 
 function toOverlayModel(el) {
   if (!(el instanceof Element)) return null;
-  const rect = el.getBoundingClientRect();
+  const surface =
+    el.matches?.('[data-ui-fx-surface="true"]')
+      ? el
+      : (el.querySelector?.('[data-ui-fx-surface="true"]') || el);
+  const rect = surface.getBoundingClientRect();
   if (!rect || rect.width < 2 || rect.height < 2) return null;
 
-  const radius = readTargetRadiusPx(el);
+  const radius = readTargetRadiusPx(surface);
   const practiceType = normalizePracticeType(el.getAttribute("data-practice-type"));
   const color = PRESET_COLORS[practiceType] || PRESET_COLORS.awareness;
   const id = el.getAttribute("data-practice-id") || el.id || practiceType || "practice";
