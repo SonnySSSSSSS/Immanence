@@ -1,4 +1,4 @@
-const CARD_SELECTOR = '[data-card="true"]';
+const CARD_PICK_SELECTOR = '[data-card-id]';
 const ROOT_ENABLED_CLASS = 'dev-card-tuner-enabled';
 const PICK_MODE_CLASS = 'dev-card-picker-active';
 const SELECTED_CLASS = 'dev-card-selected';
@@ -19,6 +19,7 @@ const DEFAULTS = Object.freeze({
 let selectedEl = null;
 let selectedCarouselId = null;
 let pickMode = false;
+let pickDebug = false;
 let globalSettings = { ...DEFAULTS };
 let cardPresets = {};
 const subscribers = new Set();
@@ -98,7 +99,7 @@ function clearFromStyle(style) {
 function applyCardPresets() {
   if (!hasDom()) return;
   Object.entries(cardPresets).forEach(([cardId, settings]) => {
-    document.querySelectorAll(`${CARD_SELECTOR}[data-card-id="${cardId}"]`).forEach((el) => {
+    document.querySelectorAll(`[data-card-id="${cardId}"]`).forEach((el) => {
       applyToStyle(el.style, normalize(settings));
     });
   });
@@ -112,6 +113,51 @@ function describeEl(el) {
   return `${tag}${id}${cls}`;
 }
 
+function describeDataset(el) {
+  if (!(el instanceof Element)) return {};
+  try {
+    return el.dataset ? { ...el.dataset } : {};
+  } catch {
+    return {};
+  }
+}
+
+function describeChain(start, limit = 12) {
+  const chain = [];
+  let cur = start instanceof Element ? start : null;
+  while (cur && chain.length < limit) {
+    chain.push({
+      tag: String(cur.tagName || '').toLowerCase(),
+      class: typeof cur.className === 'string' ? cur.className : null,
+      dataset: describeDataset(cur),
+    });
+    cur = cur.parentElement;
+  }
+  return chain;
+}
+
+function debugLogPick(event, resolvedEl) {
+  if (!pickDebug || !hasDom()) return;
+  try {
+    const target = event?.target instanceof Element ? event.target : null;
+    const payload = {
+      mode: 'card',
+      picker: 'legacy',
+      target: target
+        ? { tag: target.tagName.toLowerCase(), class: typeof target.className === 'string' ? target.className : null, dataset: describeDataset(target) }
+        : null,
+      ancestors: describeChain(target, 12),
+      resolved: resolvedEl
+        ? { tag: resolvedEl.tagName.toLowerCase(), class: typeof resolvedEl.className === 'string' ? resolvedEl.className : null, dataset: describeDataset(resolvedEl) }
+        : null,
+      resolvedId: resolvedEl?.getAttribute?.('data-card-id') || null,
+    };
+    console.info(`[pick-debug] ${JSON.stringify(payload)}`);
+  } catch (err) {
+    console.info('[pick-debug] failed to log', err);
+  }
+}
+
 function flashPickFailed(el) {
   if (!hasDom()) return;
   if (!(el instanceof Element)) return;
@@ -119,37 +165,11 @@ function flashPickFailed(el) {
   window.setTimeout(() => el.classList.remove(PICK_FAILED_CLASS), 750);
 }
 
-function findCardFromEvent(event) {
+export function findCardFromEvent(event) {
   if (!hasDom()) return null;
-
-  const directTarget = event?.target instanceof Element ? event.target : null;
-
-  // 1) composedPath (handles overlays / slotted content more reliably than `closest()` alone)
-  const path = typeof event?.composedPath === 'function' ? event.composedPath() : null;
-  if (Array.isArray(path)) {
-    for (const n of path) {
-      if (n instanceof Element && n.matches?.(CARD_SELECTOR)) return n;
-    }
-  }
-
-  // 2) closest() fallback
-  const viaClosest = directTarget?.closest?.(CARD_SELECTOR) || null;
-  if (viaClosest) return viaClosest;
-
-  // 3) elementsFromPoint fallback (helps when click lands on an overlay sibling)
-  const x = Number(event?.clientX);
-  const y = Number(event?.clientY);
-  if (Number.isFinite(x) && Number.isFinite(y) && typeof document.elementsFromPoint === 'function') {
-    const stack = document.elementsFromPoint(x, y);
-    for (const el of stack) {
-      if (!(el instanceof Element)) continue;
-      if (el.matches?.(CARD_SELECTOR)) return el;
-      const nested = el.closest?.(CARD_SELECTOR);
-      if (nested) return nested;
-    }
-  }
-
-  return null;
+  const target = event?.target instanceof Element ? event.target : null;
+  if (!target) return null;
+  return target.closest('[data-card-id]');
 }
 
 function isDevPanelUiEvent(event) {
@@ -167,16 +187,11 @@ function onPickClick(event) {
   if (!pickMode) return;
   if (isDevPanelUiEvent(event)) return;
   const target = findCardFromEvent(event);
+  debugLogPick(event, target);
   if (!target) {
-    event.preventDefault();
-    event.stopPropagation();
-    const x = Number(event?.clientX);
-    const y = Number(event?.clientY);
-    const topEl = Number.isFinite(x) && Number.isFinite(y) ? document.elementFromPoint(x, y) : null;
-    flashPickFailed(topEl);
     lastPickFailure = {
-      reason: 'no-data-card-ancestor',
-      message: `Pick failed: no data-card ancestor found (clicked ${describeEl(topEl || event?.target)}).`,
+      reason: 'no-card-marker-ancestor',
+      message: `Pick failed: no [data-card-id] ancestor found (clicked ${describeEl(event?.target)}).`,
     };
     emit();
     return;
@@ -213,10 +228,14 @@ export function setPickMode(enabled) {
   emit();
 }
 
+export function setPickDebugEnabled(enabled) {
+  pickDebug = Boolean(enabled);
+}
+
 export function selectCard(el) {
   if (!hasDom()) return;
   if (selectedEl) selectedEl.classList.remove(SELECTED_CLASS);
-  selectedEl = el?.closest?.(CARD_SELECTOR) || null;
+  selectedEl = el?.closest?.(CARD_PICK_SELECTOR) || null;
   selectedCarouselId = null;
   if (selectedEl) {
     selectedEl.classList.add(SELECTED_CLASS);
@@ -283,7 +302,7 @@ export function clearAll() {
   cardPresets = {};
   globalSettings = { ...DEFAULTS };
   applyGlobal(globalSettings);
-  document.querySelectorAll(CARD_SELECTOR).forEach((el) => clearFromStyle(el.style));
+  document.querySelectorAll(CARD_PICK_SELECTOR).forEach((el) => clearFromStyle(el.style));
   emit();
 }
 

@@ -24,7 +24,7 @@ export function SelfKnowledgeView() {
     // If showing Big Five assessment
     if (showAssessment && assessmentType === 'bigFive') {
         return (
-            <div className="space-y-6">
+            <div className="space-y-6 im-card" data-card-id="wisdom:selfKnowledgePanel">
                 {draftScores && (
                     <div className="px-2 pt-4">
                         <PersonalityWave scores={draftScores} height={100} />
@@ -60,7 +60,7 @@ export function SelfKnowledgeView() {
     const traits = getTraitSummary();
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 im-card" data-card-id="wisdom:selfKnowledgePanel">
             {/* Header / Wave Visualization */}
             <div className="relative pt-2 pb-6">
                 <div className="text-center mb-6">

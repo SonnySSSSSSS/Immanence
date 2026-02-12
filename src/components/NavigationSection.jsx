@@ -120,25 +120,29 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           onClick={() => setNavModalOpen(true)}
           data-testid="navigation-selector-button"
           className="type-label px-6 py-3 rounded-full im-nav-btn"
-          style={{
-            color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            background: isLight
-              ? 'rgba(255, 255, 255, 0.4)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-            border: isLight
-              ? (showCodex ? '1px solid rgba(140, 100, 40, 0.4)' : '1px solid rgba(180, 140, 90, 0.4)')
-              : (showCodex ? '1px solid rgba(220, 210, 180, 0.4)' : '1px solid rgba(250, 208, 120, 0.4)'),
-            boxShadow: isLight
-              ? '0 4px 12px rgba(180, 140, 90, 0.1)'
-              : (showCodex
-                ? '0 0 25px rgba(220, 210, 180, 0.15), inset 0 0 20px rgba(220, 210, 180, 0.08)'
-                : '0 0 25px rgba(250, 208, 120, 0.15), inset 0 0 20px rgba(250, 208, 120, 0.08)'),
-            transform: navModalOpen ? 'scale(1.06)' : 'scale(1)',
-            transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
-          }}
+            onClick={() => setNavModalOpen(true)}
+            data-testid="navigation-selector-button"
+            className="type-label px-6 py-3 rounded-full im-nav-btn im-nav-pill"
+            data-nav-pill-id="nav:paths"
+            style={{
+              color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: isLight
+                ? 'rgba(255, 255, 255, 0.4)'
+                : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+              border: isLight
+                ? (showCodex ? '1px solid rgba(140, 100, 40, 0.4)' : '1px solid rgba(180, 140, 90, 0.4)')
+                : (showCodex ? '1px solid rgba(220, 210, 180, 0.4)' : '1px solid rgba(250, 208, 120, 0.4)'),
+              boxShadow: isLight
+                ? '0 4px 12px rgba(180, 140, 90, 0.1)'
+                : (showCodex
+                  ? '0 0 25px rgba(220, 210, 180, 0.15), inset 0 0 20px rgba(220, 210, 180, 0.08)'
+                  : '0 0 25px rgba(250, 208, 120, 0.15), inset 0 0 20px rgba(250, 208, 120, 0.08)'),
+              transform: navModalOpen ? 'scale(1.06)' : 'scale(1)',
+              transition: 'transform 300ms ease-out, background 300ms ease-out, box-shadow 300ms ease-out',
+            }}
         >
           <span>{showCodex ? '◈ Compass' : '◇ Paths'}</span>
           {/* Chevron */}
@@ -166,7 +170,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
 
             {/* Active Path Display - shows current path progress inline */}
             {activePath && (
-                <div className="mt-8">
+                <div className="mt-8 im-card" data-card-id="navigation:activePathPanel">
                 {/* Active Path Header */}
                 <div
                   className="type-label mb-3"

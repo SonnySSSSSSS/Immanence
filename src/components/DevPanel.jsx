@@ -2,7 +2,7 @@
 // Developer-only lab for testing Immanence OS systems
 // Access: Ctrl+Shift+D or tap version 5 times
 
-import React, { useState, useCallback, useEffect, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
@@ -19,7 +19,10 @@ import {
     CARD_TUNER_DEFAULTS,
     initCardTuner,
     subscribeCardTuner,
+    findCardFromEvent,
     setPickMode,
+    setPickDebugEnabled,
+    selectCard,
     applyGlobal,
     applySelected,
     saveGlobal,
@@ -35,7 +38,7 @@ import {
     setNavButtonTunerEnabled,
     applyNavButtonSettings,
     resetNavButtonSettings,
-} from '../dev/navButtonTuner.js';
+} from '../state/navButtonTuner.js';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -137,6 +140,7 @@ export function DevPanel({
     const [expandedSections, setExpandedSections] = useState({
         avatar: true,
         avatarCompositeTuner: true,
+        inspectorNew: false,
         cardTuner: true,
         navBtnTuner: false,
         playground: false,
@@ -157,6 +161,94 @@ export function DevPanel({
     const [practiceButtonPickMode, setPracticeButtonPickMode] = useState(false);
     const [practiceButtonApplyToAll, setPracticeButtonApplyToAll] = useState(true);
     const [practiceButtonSelectedKey, setPracticeButtonSelectedKey] = useState(null);
+    const LEGACY_PICKERS_FLAG_KEY = "immanence.dev.pickers.legacy.enabled";
+    const [legacyPickersEnabled, setLegacyPickersEnabled] = useState(true);
+    const PICK_DEBUG_FLAG_KEY = "immanence.dev.pickers.pickDebug.enabled";
+    const [pickDebugEnabled, setPickDebugEnabledLocal] = useState(false);
+    const [cardIdProbeEnabled, setCardIdProbeEnabled] = useState(false);
+    const [universalPickerKind, setUniversalPickerKind] = useState('card'); // 'card' | 'practice-button' | 'nav-pill'
+    const [universalPickMode, setUniversalPickMode] = useState(false);
+    const [universalPeekMode, setUniversalPeekMode] = useState(false);
+    const [universalLastPickFailure, setUniversalLastPickFailure] = useState(null);
+    const [universalNavPillSelectedId, setUniversalNavPillSelectedId] = useState(null);
+    const [pickDebugResolvedMode, setPickDebugResolvedMode] = useState(null);
+    const [pickDebugResolvedId, setPickDebugResolvedId] = useState(null);
+    const practiceButtonPickHandlerRef = useRef(null);
+    const universalPickHandlerRef = useRef(null);
+
+    const logNearestAncestors = useCallback((label, eventTarget) => {
+        if (!import.meta.env.DEV) return;
+        try {
+            const start = eventTarget instanceof Element ? eventTarget : null;
+            const chain = [];
+            let cur = start;
+            while (cur && chain.length < 5) {
+                const dataset = cur.dataset ? { ...cur.dataset } : {};
+                chain.push({
+                    tag: String(cur.tagName || '').toLowerCase(),
+                    dataset,
+                });
+                cur = cur.parentElement;
+            }
+            console.info(`[picker][${label}] resolver miss — nearest ancestors`, chain);
+        } catch (err) {
+            console.info(`[picker][${label}] resolver miss — failed to log ancestors`, err);
+        }
+    }, []);
+
+    const toNodeDebug = useCallback((el) => {
+        if (!(el instanceof Element)) return null;
+        return {
+            tag: String(el.tagName || '').toLowerCase(),
+            class: typeof el.className === 'string' ? el.className : null,
+            dataset: el.dataset ? { ...el.dataset } : {},
+        };
+    }, []);
+
+    const toAncestorDebug = useCallback((eventTarget, limit = 12) => {
+        const chain = [];
+        let cur = eventTarget instanceof Element ? eventTarget : null;
+        while (cur && chain.length < limit) {
+            chain.push(toNodeDebug(cur));
+            cur = cur.parentElement;
+        }
+        return chain;
+    }, [toNodeDebug]);
+
+    const debugLogPick = useCallback((mode, picker, event, resolvedEl) => {
+        if (!pickDebugEnabled) return;
+        if (!import.meta.env.DEV) return;
+        try {
+            const target = event?.target instanceof Element ? event.target : null;
+            const payload = {
+                mode,
+                picker,
+                target: toNodeDebug(target),
+                ancestors: toAncestorDebug(target, 12),
+                resolved: toNodeDebug(resolvedEl),
+                resolvedId: resolvedEl?.getAttribute?.('data-card-id') ||
+                    resolvedEl?.getAttribute?.('data-nav-pill-id') ||
+                    null,
+            };
+            console.info(`[pick-debug] ${JSON.stringify(payload)}`);
+        } catch (err) {
+            console.info('[pick-debug] failed to log', err);
+        }
+    }, [pickDebugEnabled, toAncestorDebug, toNodeDebug]);
+
+    const stopPracticeButtonPickCaptureImmediate = useCallback(() => {
+        const handler = practiceButtonPickHandlerRef.current;
+        if (!handler) return;
+        document.removeEventListener('click', handler, true);
+        practiceButtonPickHandlerRef.current = null;
+    }, []);
+
+    const stopUniversalPickCaptureImmediate = useCallback(() => {
+        const handler = universalPickHandlerRef.current;
+        if (!handler) return;
+        document.removeEventListener('click', handler, true);
+        universalPickHandlerRef.current = null;
+    }, []);
     const [cardState, setCardState] = useState({
         pickMode: false,
         hasSelected: false,
@@ -174,6 +266,7 @@ export function DevPanel({
         settings: { ...NAV_BUTTON_TUNER_DEFAULTS },
     });
     const [navBtnDraft, setNavBtnDraft] = useState({ ...NAV_BUTTON_TUNER_DEFAULTS });
+    const [navBtnProbeEnabled, setNavBtnProbeEnabled] = useState(false);
 
     const isTutorialAdminOn = localStorage.getItem("immanence.tutorial.admin") === "1";
 
@@ -240,6 +333,39 @@ export function DevPanel({
 
     useEffect(() => {
         if (!isOpen || !isDev) return undefined;
+        try {
+            const raw = window.localStorage.getItem(PICK_DEBUG_FLAG_KEY);
+            if (raw === "1") setPickDebugEnabledLocal(true);
+            if (raw === "0") setPickDebugEnabledLocal(false);
+        } catch {
+            // ignore
+        }
+        return undefined;
+    }, [isOpen, isDev]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        try {
+            window.localStorage.setItem(PICK_DEBUG_FLAG_KEY, pickDebugEnabled ? "1" : "0");
+        } catch {
+            // ignore
+        }
+        try {
+            setPickDebugEnabled(Boolean(pickDebugEnabled));
+        } catch {
+            // ignore
+        }
+        return undefined;
+    }, [isOpen, isDev, pickDebugEnabled]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        document.body.classList.toggle('dev-card-id-probe', cardIdProbeEnabled);
+        return () => document.body.classList.remove('dev-card-id-probe');
+    }, [isOpen, isDev, cardIdProbeEnabled]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
         initNavButtonTuner();
         const un = subscribeNavButtonTuner((next) => {
             setNavBtnState(next);
@@ -247,6 +373,12 @@ export function DevPanel({
         });
         return () => un();
     }, [isOpen, isDev]);
+
+    useEffect(() => {
+        if (!isDev) return undefined;
+        document.body.classList.toggle('dev-nav-btn-probe', navBtnProbeEnabled);
+        return () => document.body.classList.remove('dev-nav-btn-probe');
+    }, [isDev, navBtnProbeEnabled]);
 
     useEffect(() => {
         if (!isOpen || !isDev) return undefined;
@@ -281,6 +413,11 @@ export function DevPanel({
     };
 
     const handleStartPickFlow = () => {
+        stopUniversalPickCaptureImmediate();
+        stopPracticeButtonPickCaptureImmediate();
+        setUniversalPickMode(false);
+        setUniversalPeekMode(false);
+        setPracticeButtonPickMode(false);
         setPickMode(true);
         setPeekMode(true);
     };
@@ -298,6 +435,26 @@ export function DevPanel({
     const handleConfirmPickFlow = () => {
         setPickMode(false);
         setPeekMode(false);
+    };
+
+    const handleStartUniversalPickFlow = () => {
+        // Conflict prevention: remove any other capture listeners synchronously first.
+        setPickMode(false);
+        setPeekMode(false);
+        stopPracticeButtonPickCaptureImmediate();
+        setPracticeButtonPickMode(false);
+        setUniversalLastPickFailure(null);
+        setUniversalNavPillSelectedId(null);
+        setPickDebugResolvedMode(null);
+        setPickDebugResolvedId(null);
+        setUniversalPickMode(true);
+        setUniversalPeekMode(true);
+    };
+
+    const handleStopUniversalPickFlow = () => {
+        stopUniversalPickCaptureImmediate();
+        setUniversalPickMode(false);
+        setUniversalPeekMode(false);
     };
 
     const handleTogglePeek = () => {
@@ -337,6 +494,39 @@ export function DevPanel({
 
     useEffect(() => {
         if (!isOpen || !isDev) return undefined;
+        try {
+            const raw = window.localStorage.getItem(LEGACY_PICKERS_FLAG_KEY);
+            if (raw === "0") setLegacyPickersEnabled(false);
+            if (raw === "1") setLegacyPickersEnabled(true);
+        } catch {
+            // ignore
+        }
+        return undefined;
+    }, [isOpen, isDev]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        try {
+            window.localStorage.setItem(LEGACY_PICKERS_FLAG_KEY, legacyPickersEnabled ? "1" : "0");
+        } catch {
+            // ignore
+        }
+        return undefined;
+    }, [isOpen, isDev, legacyPickersEnabled]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        if (legacyPickersEnabled) return undefined;
+        // If legacy pickers are hidden, ensure their capture listeners are off.
+        setPickMode(false);
+        setPeekMode(false);
+        stopPracticeButtonPickCaptureImmediate();
+        setPracticeButtonPickMode(false);
+        return undefined;
+    }, [isOpen, isDev, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
         broadcastPracticeButtonPicker({
             applyToAll: practiceButtonApplyToAll,
             selectedKey: practiceButtonSelectedKey,
@@ -348,6 +538,12 @@ export function DevPanel({
         if (!isOpen || !isDev) return undefined;
         if (!practiceButtonPickMode) return undefined;
 
+        // Conflict prevention: never allow two global capture listeners at once.
+        setPickMode(false);
+        setPeekMode(false);
+        setUniversalPickMode(false);
+        setUniversalPeekMode(false);
+
         const normalizePracticeType = (raw) => {
             const t = String(raw || '').trim().toLowerCase();
             if (!t) return null;
@@ -357,10 +553,16 @@ export function DevPanel({
         };
 
         const onClickCapture = (event) => {
-            const target = event?.target;
-            if (!(target instanceof Element)) return;
+            const target = event?.target instanceof Element ? event.target : null;
+            if (!target) return;
             const el = target.closest('[data-ui="practice-button"]');
-            if (!el) return;
+            debugLogPick('legacy:practice-button', 'legacy', event, el);
+            setPickDebugResolvedMode('legacy:practice-button');
+            setPickDebugResolvedId(null);
+            if (!el) {
+                logNearestAncestors('practice-button', target);
+                return;
+            }
 
             // Picker should not trigger the UI action underneath.
             event.preventDefault();
@@ -370,13 +572,159 @@ export function DevPanel({
             const practiceType = normalizePracticeType(el.getAttribute('data-practice-type'));
             const id = el.getAttribute('data-practice-id') || el.id || practiceType || 'practice';
             const key = `${practiceType || 'practice'}:${id}`;
+            setPickDebugResolvedId(key);
             setPracticeButtonSelectedKey(key);
             setPracticeButtonApplyToAll(false);
         };
 
+        // Ensure we never accidentally keep two listeners around.
+        stopPracticeButtonPickCaptureImmediate();
+        practiceButtonPickHandlerRef.current = onClickCapture;
         document.addEventListener('click', onClickCapture, true);
-        return () => document.removeEventListener('click', onClickCapture, true);
-    }, [isOpen, isDev, practiceButtonPickMode]);
+        return () => {
+            document.removeEventListener('click', onClickCapture, true);
+            if (practiceButtonPickHandlerRef.current === onClickCapture) {
+                practiceButtonPickHandlerRef.current = null;
+            }
+        };
+    }, [isOpen, isDev, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        if (!universalPickMode) return undefined;
+
+        // Conflict prevention: never allow two global capture listeners at once.
+        setPickMode(false);
+        setPeekMode(false);
+        setPracticeButtonPickMode(false);
+
+        const isDevPanelUiEvent = (event) => {
+            const path = typeof event?.composedPath === 'function' ? event.composedPath() : null;
+            if (!Array.isArray(path)) return false;
+            for (const n of path) {
+                if (!(n instanceof Element)) continue;
+                const testId = n.getAttribute?.('data-testid');
+                if (testId === 'devpanel-root' || testId === 'devpanel-peek' || testId === 'devpanel-universal-peek') return true;
+            }
+            return false;
+        };
+
+        const normalizePracticeType = (raw) => {
+            const t = String(raw || '').trim().toLowerCase();
+            if (!t) return null;
+            if (t === 'perception') return 'visual';
+            if (t === 'resonance') return 'sound';
+            return t;
+        };
+
+        const findPracticeButtonFromEvent = (event) => {
+            const target = event?.target instanceof Element ? event.target : null;
+            return target?.closest?.('[data-ui="practice-button"]') || null;
+        };
+
+        const onClickCapture = (event) => {
+            const mode = `universal:${universalPickerKind}`;
+            const target = event?.target instanceof Element ? event.target : null;
+            const resolvedEl = universalPickerKind === 'card'
+                ? findCardFromEvent(event)
+                : universalPickerKind === 'practice-button'
+                    ? findPracticeButtonFromEvent(event)
+                    : universalPickerKind === 'nav-pill'
+                        ? (target?.closest?.('.im-nav-pill') || null)
+                        : null;
+
+            debugLogPick(mode, 'universal', event, resolvedEl);
+            setPickDebugResolvedMode(mode);
+            if (universalPickerKind === 'card') {
+                setPickDebugResolvedId(resolvedEl?.getAttribute?.('data-card-id') || null);
+            } else if (universalPickerKind === 'practice-button') {
+                const practiceType = normalizePracticeType(resolvedEl?.getAttribute?.('data-practice-type'));
+                const id = resolvedEl?.getAttribute?.('data-practice-id') || resolvedEl?.id || practiceType || null;
+                setPickDebugResolvedId(id ? `${practiceType || 'practice'}:${id}` : null);
+            } else if (universalPickerKind === 'nav-pill') {
+                setPickDebugResolvedId(resolvedEl?.getAttribute?.('data-nav-pill-id') || null);
+            } else {
+                setPickDebugResolvedId(null);
+            }
+
+            if (isDevPanelUiEvent(event)) return;
+
+            if (universalPickerKind === 'card') {
+                const el = resolvedEl;
+                if (!el) return; // deterministic: no fallback, no blocking
+                event.preventDefault();
+                event.stopPropagation();
+                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+                setUniversalLastPickFailure(null);
+                selectCard(el);
+                return;
+            }
+
+            if (universalPickerKind === 'practice-button') {
+                const el = resolvedEl;
+                if (!el) return; // deterministic: no fallback, no blocking
+                event.preventDefault();
+                event.stopPropagation();
+                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+                setUniversalLastPickFailure(null);
+
+                const practiceType = normalizePracticeType(el.getAttribute('data-practice-type'));
+                const id = el.getAttribute('data-practice-id') || el.id || practiceType || 'practice';
+                const key = `${practiceType || 'practice'}:${id}`;
+                setPracticeButtonSelectedKey(key);
+                setPracticeButtonApplyToAll(false);
+                return;
+            }
+
+            if (universalPickerKind === 'nav-pill') {
+                const el = resolvedEl;
+                if (!el) return; // deterministic: ignore if not a pill (no fallback)
+
+                event.preventDefault();
+                event.stopPropagation();
+                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+                setUniversalLastPickFailure(null);
+
+                const id = el.getAttribute('data-nav-pill-id') || el.id || el.textContent?.trim?.() || 'nav-pill';
+                setUniversalNavPillSelectedId(id);
+            }
+        };
+
+        // Ensure we never accidentally keep two listeners around.
+        stopUniversalPickCaptureImmediate();
+        universalPickHandlerRef.current = onClickCapture;
+        document.addEventListener('click', onClickCapture, true);
+        return () => {
+            document.removeEventListener('click', onClickCapture, true);
+            if (universalPickHandlerRef.current === onClickCapture) {
+                universalPickHandlerRef.current = null;
+            }
+        };
+    }, [isOpen, isDev, universalPickMode, universalPickerKind, debugLogPick, logNearestAncestors, stopUniversalPickCaptureImmediate]);
+
+    useEffect(() => {
+        if (!isOpen || !isDev) return undefined;
+        if (!cardState?.pickMode) return undefined;
+        // Conflict prevention: never allow two global capture listeners at once.
+        setPracticeButtonPickMode(false);
+        setUniversalPickMode(false);
+        setUniversalPeekMode(false);
+        return undefined;
+    }, [isOpen, isDev, cardState?.pickMode]);
+
+    const [navPillProbeEnabled, setNavPillProbeEnabled] = useState(false);
+    useEffect(() => {
+        document.body.classList.toggle('dev-nav-pill-probe', navPillProbeEnabled);
+        return () => document.body.classList.remove('dev-nav-pill-probe');
+    }, [navPillProbeEnabled]);
+
+    const isPickerOrProbeActive = Boolean(
+        cardState?.pickMode ||
+        practiceButtonPickMode ||
+        universalPickMode ||
+        navPillProbeEnabled ||
+        navBtnProbeEnabled
+    );
 
     if (!isOpen) return null;
 
@@ -418,17 +766,77 @@ export function DevPanel({
         );
     }
 
+    if (universalPeekMode) {
+        const selectedLabel = universalPickerKind === 'card'
+            ? (cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none')
+            : universalPickerKind === 'practice-button'
+                ? (practiceButtonSelectedKey || 'none')
+                : (universalNavPillSelectedId || 'none');
+
+        return (
+            <div data-testid="devpanel-universal-peek" className="fixed inset-0 z-[9999] pointer-events-none">
+                <div className="absolute top-3 right-3 pointer-events-auto w-[300px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
+                    <div className="text-[11px] text-white/80 mb-2">Universal Picker Active</div>
+                    <div className="text-[10px] text-white/55 mb-3">
+                        Mode: <span className="font-mono text-white/80">{universalPickerKind}</span>
+                    </div>
+                    <div className="text-[10px] text-white/55 mb-3">
+                        Click a target in the UI, then confirm to return to the panel.
+                    </div>
+                    <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
+                        Selected: {selectedLabel}
+                    </div>
+                    {universalLastPickFailure && (
+                        <div className="text-[10px] mb-3 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
+                            {universalLastPickFailure}
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={handleStopUniversalPickFlow}
+                            className="rounded-lg px-3 py-2 text-xs bg-amber-500/20 border border-amber-400/50 text-amber-200"
+                        >
+                            Confirm + Return
+                        </button>
+                        <button
+                            onClick={() => {
+                                handleStopUniversalPickFlow();
+                                onClose();
+                            }}
+                            className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70"
+                        >
+                            Close Panel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div data-testid="devpanel-root" className="fixed inset-0 z-[9999] flex">
+        <div
+            data-testid="devpanel-root"
+            className={`fixed inset-0 z-[9999] flex ${isPickerOrProbeActive ? 'pointer-events-none' : ''}`}
+        >
+            {isDev && (
+                <style>{`
+                    .dev-card-id-probe [data-card-id] {
+                        outline: 4px solid #00ffff !important;
+                        box-shadow: 0 0 0 8px rgba(0, 255, 255, 0.25) !important;
+                    }
+                `}</style>
+            )}
             {/* Backdrop */}
-            <div
-                data-testid="devpanel-backdrop"
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={onClose}
-            />
+            {!isPickerOrProbeActive && (
+                <div
+                    data-testid="devpanel-backdrop"
+                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                    onClick={onClose}
+                />
+            )}
 
             {/* Panel */}
-            <div className="relative ml-auto w-[400px] h-full border-l overflow-y-auto no-scrollbar" style={{
+            <div className="relative pointer-events-auto ml-auto w-[400px] h-full border-l overflow-y-auto no-scrollbar" style={{
                 background: isLight ? '#F5F0E6' : '#0a0a12',
                 borderColor: isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(255, 255, 255, 0.1)'
             }}>
@@ -444,14 +852,19 @@ export function DevPanel({
                         }}>DEVELOPER PANEL</span>
                     </div>
                     <button
-                        onClick={() => {
-                            setPickMode(false);
-                            setPeekMode(false);
-                            onClose();
-                        }}
-                        data-testid="devpanel-close"
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-                        style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)' }}
+                          onClick={() => {
+                              setPickMode(false);
+                              setPeekMode(false);
+                              stopPracticeButtonPickCaptureImmediate();
+                              setPracticeButtonPickMode(false);
+                              stopUniversalPickCaptureImmediate();
+                              setUniversalPickMode(false);
+                              setUniversalPeekMode(false);
+                              onClose();
+                          }}
+                         data-testid="devpanel-close"
+                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+                         style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(255, 255, 255, 0.6)' }}
                     >
                         ✕
                     </button>
@@ -579,6 +992,147 @@ export function DevPanel({
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* INSPECTOR (NEW) — Universal Picker */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    <Section
+                        title="Inspector (NEW)"
+                        expanded={expandedSections.inspectorNew}
+                        onToggle={() => toggleSection('inspectorNew')}
+                        isLight={isLight}
+                    >
+                        {!isDev ? (
+                            <div className="text-xs text-white/50">DEV-only</div>
+                        ) : (
+                            <>
+                                <div className="text-[10px] text-white/50 mb-2">
+                                    Universal picker (parity phase): cards + practice buttons (+ nav pills). Conflict rule: only one global capture listener active.
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 mb-2">
+                                    <button
+                                        onClick={() => setUniversalPickerKind('card')}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'card' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Cards
+                                    </button>
+                                    <button
+                                        onClick={() => setUniversalPickerKind('practice-button')}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'practice-button' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Practice Buttons
+                                    </button>
+                                    <button
+                                        onClick={() => setUniversalPickerKind('nav-pill')}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'nav-pill' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Nav Pills
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={() => (universalPickMode ? handleStopUniversalPickFlow() : handleStartUniversalPickFlow())}
+                                    className={`w-full mb-3 px-3 py-2 rounded-lg text-xs border transition-all ${universalPickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                >
+                                    {universalPickMode ? 'Stop Picking' : 'Pick Target'}
+                                </button>
+
+                                <button
+                                    onClick={() => setLegacyPickersEnabled(v => !v)}
+                                    className={`w-full mb-3 px-3 py-2 rounded-lg text-xs border transition-all ${legacyPickersEnabled ? 'bg-white/5 text-white/70 border-white/15 hover:bg-white/10' : 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60'}`}
+                                >
+                                    {legacyPickersEnabled ? 'Legacy pickers: ON' : 'Legacy pickers: OFF'}
+                                </button>
+
+                                <div className="grid grid-cols-3 gap-2 mb-3">
+                                    <button
+                                        onClick={() => setPickDebugEnabledLocal(v => !v)}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${pickDebugEnabled ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Pick Debug {pickDebugEnabled ? 'ON' : 'OFF'}
+                                    </button>
+                                    <button
+                                        onClick={() => setNavPillProbeEnabled(v => !v)}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${navPillProbeEnabled ? 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Probe: Nav Pills
+                                    </button>
+                                    <button
+                                        onClick={() => setCardIdProbeEnabled(v => !v)}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardIdProbeEnabled ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/50' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Probe: Cards
+                                    </button>
+                                </div>
+
+                                <div className="mb-3 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                    Debug resolved: {pickDebugResolvedMode ? `${pickDebugResolvedMode} → ${pickDebugResolvedId || 'null'}` : 'none'}
+                                </div>
+
+                                {universalPickerKind === 'card' && (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            <button
+                                                onClick={() => setCardApplyToAll(v => !v)}
+                                                className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                            >
+                                                {cardApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
+                                            </button>
+                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <RangeControl label="Tint H" value={activeDraft.cardTintH} min={0} max={360} step={1} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintH', v)} />
+                                            <RangeControl label="Tint S" value={activeDraft.cardTintS} min={0} max={100} step={1} suffix="%" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintS', v)} />
+                                            <RangeControl label="Tint L" value={activeDraft.cardTintL} min={0} max={100} step={1} suffix="%" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintL', v)} />
+                                            <RangeControl label="Alpha" value={activeDraft.cardAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardAlpha', v)} />
+                                            <RangeControl label="Border A" value={activeDraft.cardBorderAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBorderAlpha', v)} />
+                                            <RangeControl label="Blur" value={activeDraft.cardBlur} min={0} max={60} step={1} suffix="px" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBlur', v)} />
+                                        </div>
+                                    </>
+                                )}
+
+                                {universalPickerKind === 'practice-button' && (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-2 mb-2">
+                                            <button
+                                                onClick={() => setPracticeButtonFxEnabled(!practiceButtonFxEnabled)}
+                                                className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonFxEnabled ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/50' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                            >
+                                                {practiceButtonFxEnabled ? 'FX: ON' : 'FX: OFF'}
+                                            </button>
+                                            <button
+                                                onClick={() => setPracticeButtonApplyToAll(v => !v)}
+                                                className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                            >
+                                                {practiceButtonApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
+                                            </button>
+                                        </div>
+                                        <div className="text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                            Selected: {practiceButtonSelectedKey || 'none'}
+                                        </div>
+                                        <div className="text-[10px] text-white/45 mt-2">
+                                            Targets: <span className="font-mono">data-ui=&quot;practice-button&quot;</span>
+                                        </div>
+                                    </>
+                                )}
+
+                                {universalPickerKind === 'nav-pill' && (
+                                    <>
+                                        <div className="text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                            Selected: {universalNavPillSelectedId || 'none'}
+                                        </div>
+                                        <div className="text-[10px] text-white/45 mt-2">
+                                            Targets: <span className="font-mono">.im-nav-pill</span>
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </Section>
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* UI PLAYGROUND SECTION */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
@@ -594,13 +1148,20 @@ export function DevPanel({
                                 <div className="text-[10px] text-white/50 mb-2">
                                     Pick a <span className="font-mono">data-card="true"</span> target and tune vars live.
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 mb-3">
-                                    <button
-                                        onClick={() => (cardState.pickMode ? handleStopPickFlow() : handleStartPickFlow())}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardState.pickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        {cardState.pickMode ? 'Stop Picking' : 'Pick Card'}
-                                    </button>
+                                {!legacyPickersEnabled && (
+                                    <div className="text-[10px] text-white/45 mb-2">
+                                        Legacy pick controls hidden. Use <span className="font-mono">Inspector (NEW)</span> to pick targets.
+                                    </div>
+                                )}
+                                <div className={`grid ${legacyPickersEnabled ? 'grid-cols-2' : 'grid-cols-1'} gap-2 mb-3`}>
+                                    {legacyPickersEnabled && (
+                                        <button
+                                            onClick={() => (cardState.pickMode ? handleStopPickFlow() : handleStartPickFlow())}
+                                            className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardState.pickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                        >
+                                            {cardState.pickMode ? 'Stop Picking' : 'Pick Card'}
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setCardApplyToAll(v => !v)}
                                         className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
@@ -608,24 +1169,26 @@ export function DevPanel({
                                         {cardApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 mb-3">
-                                    <button
-                                        onClick={handleTogglePeek}
-                                        className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
-                                    >
-                                        Peek UI
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmPickFlow}
-                                        disabled={!cardState.pickMode}
-                                        className={`rounded-lg px-3 py-2 text-xs transition-all ${cardState.pickMode
-                                            ? 'bg-amber-500/20 border border-amber-400/50 text-amber-200'
-                                            : 'bg-white/5 border border-white/10 text-white/35 cursor-not-allowed'
-                                            }`}
-                                    >
-                                        Confirm Pick
-                                    </button>
-                                </div>
+                                {legacyPickersEnabled && (
+                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                        <button
+                                            onClick={handleTogglePeek}
+                                            className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                                        >
+                                            Peek UI
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmPickFlow}
+                                            disabled={!cardState.pickMode}
+                                            className={`rounded-lg px-3 py-2 text-xs transition-all ${cardState.pickMode
+                                                ? 'bg-amber-500/20 border border-amber-400/50 text-amber-200'
+                                                : 'bg-white/5 border border-white/10 text-white/35 cursor-not-allowed'
+                                                }`}
+                                        >
+                                            Confirm Pick
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="mb-3 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
                                     Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
                                 </div>
@@ -665,12 +1228,25 @@ export function DevPanel({
                                         {practiceButtonFxEnabled ? 'Enable Practice Button FX: ON' : 'Enable Practice Button FX: OFF'}
                                     </button>
                                     <div className="grid grid-cols-2 gap-2 mt-2">
+                                    {legacyPickersEnabled && (
                                         <button
-                                            onClick={() => setPracticeButtonPickMode(v => !v)}
+                                            onClick={() => setPracticeButtonPickMode((v) => {
+                                                const next = !v;
+                                                if (next) {
+                                                    // Conflict prevention: never allow two global capture listeners at once.
+                                                    stopUniversalPickCaptureImmediate();
+                                                    setUniversalPickMode(false);
+                                                    setUniversalPeekMode(false);
+                                                    setPickMode(false);
+                                                    setPeekMode(false);
+                                                }
+                                                return next;
+                                            })}
                                             className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonPickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
                                         >
                                             {practiceButtonPickMode ? 'Stop Picking' : 'Pick Button'}
                                         </button>
+                                    )}
                                         <button
                                             onClick={() => setPracticeButtonApplyToAll(v => !v)}
                                             className={`px-3 py-2 rounded-lg text-xs border transition-all ${practiceButtonApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
@@ -730,6 +1306,12 @@ export function DevPanel({
                                     Targets <span className="font-mono">.im-nav-btn</span> only. Uses <span className="font-mono">--nav-btn-*</span> tokens.
                                 </div>
                                 <button
+                                    onClick={() => setNavBtnProbeEnabled(v => !v)}
+                                    className={`w-full mb-2 px-3 py-2 rounded-lg text-xs border transition-all ${navBtnProbeEnabled ? 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                >
+                                    {navBtnProbeEnabled ? 'Nav Button Probe: ON' : 'Nav Button Probe: OFF'}
+                                </button>
+                                <button
                                     onClick={() => setNavButtonTunerEnabled(!navBtnState.enabled)}
                                     className={`w-full mb-3 px-3 py-2 rounded-lg text-xs border transition-all ${navBtnState.enabled ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
                                 >
@@ -737,6 +1319,29 @@ export function DevPanel({
                                 </button>
 
                                 <div className="space-y-3">
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <TextControl
+                                            label="Border color"
+                                            value={navBtnDraft.navBtnBorder}
+                                            onChange={(v) => onChangeNavBtnSetting('navBtnBorder', v)}
+                                            disabled={!navBtnState.enabled}
+                                            placeholder="e.g. var(--accent-30) or rgba(255,255,255,0.2)"
+                                        />
+                                        <TextControl
+                                            label="Text color"
+                                            value={navBtnDraft.navBtnTextColor}
+                                            onChange={(v) => onChangeNavBtnSetting('navBtnTextColor', v)}
+                                            disabled={!navBtnState.enabled}
+                                            placeholder="e.g. var(--accent-color)"
+                                        />
+                                        <TextControl
+                                            label="Background RGB"
+                                            value={navBtnDraft.navBtnBg}
+                                            onChange={(v) => onChangeNavBtnSetting('navBtnBg', v)}
+                                            disabled={!navBtnState.enabled}
+                                            placeholder="e.g. 255, 255, 255"
+                                        />
+                                    </div>
                                     <RangeControl
                                         label="Transparency"
                                         value={navBtnDraft.navBtnOpacity}
@@ -2043,6 +2648,24 @@ function RangeControl({ label, value, min, max, step, onChange, disabled = false
                 disabled={disabled}
                 onChange={(e) => onChange(Number(e.target.value))}
                 className="w-full accent-amber-400 disabled:cursor-not-allowed"
+            />
+        </label>
+    );
+}
+
+function TextControl({ label, value, onChange, disabled = false, placeholder = '', mono = true }) {
+    return (
+        <label className={`block text-[11px] ${disabled ? 'opacity-45' : ''}`}>
+            <div className="flex items-center justify-between mb-1">
+                <span className="text-white/70">{label}</span>
+            </div>
+            <input
+                type="text"
+                value={value ?? ''}
+                placeholder={placeholder}
+                disabled={disabled}
+                onChange={(e) => onChange(String(e.target.value))}
+                className={`w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white/90 ${mono ? 'font-mono' : ''}`}
             />
         </label>
     );

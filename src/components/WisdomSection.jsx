@@ -1080,7 +1080,7 @@ export function WisdomSection() {
     if (currentCategory) {
       // Expanded view - show back button and recommendations
       return (
-        <div className="space-y-5">
+        <div className="space-y-5 im-card" data-card-id="wisdom:recommendationsPanel">
           <button
             onClick={() => setSelectedCategory(null)}
             className="flex items-center gap-2 text-sm transition-all"
@@ -1201,7 +1201,7 @@ export function WisdomSection() {
     const nodeDiameter = Math.max(36, Math.min(size * 0.12, 54));
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 im-card" data-card-id="wisdom:recommendationsPanel">
         {/* Central question */}
         <div className="text-center mb-2">
           <h2
@@ -1375,7 +1375,7 @@ export function WisdomSection() {
         <div
           className="space-y-5 im-card"
           data-card="true"
-          data-card-id="treatise-list"
+          data-card-id="wisdom:treatisePanel"
         >
           {/* Search */}
           <div className="flex items-center gap-2">
@@ -1450,7 +1450,7 @@ export function WisdomSection() {
       <div
         className="space-y-5 im-card"
         data-card="true"
-        data-card-id="treatise-list"
+        data-card-id="wisdom:treatisePanel"
       >
         {/* Header */}
         <div className="text-center pb-5 border-b border-[var(--accent-10)]">
@@ -1527,7 +1527,7 @@ export function WisdomSection() {
         <div
           className="relative min-h-[300px] flex flex-col items-center justify-center rounded-2xl overflow-hidden im-card"
           data-card="true"
-          data-card-id="bookmark-list"
+          data-card-id="wisdom:bookmarksPanel"
           style={{
             background:
               "radial-gradient(ellipse at center, rgba(10,5,20,0.95) 0%, rgba(5,2,10,1) 100%)",
@@ -1597,7 +1597,7 @@ export function WisdomSection() {
       <div
         className="relative min-h-[350px] rounded-2xl p-6 overflow-hidden im-card"
         data-card="true"
-        data-card-id="bookmark-list"
+        data-card-id="wisdom:bookmarksPanel"
         style={{
           background:
             "radial-gradient(ellipse at center top, rgba(15,10,30,0.95) 0%, rgba(5,2,10,1) 100%)",
@@ -1735,10 +1735,12 @@ export function WisdomSection() {
   // VIDEOS VIEW - Now uses VideoLibrary component
   // ─────────────────────────────────────────────────────────────────────────
   const renderVideosView = () => (
-    <VideoLibrary
-      initialVideoId={initialVideoId}
-      initialVideoBudgetMin={initialVideoBudgetMin}
-    />
+    <div className="im-card" data-card-id="wisdom:videosPanel">
+      <VideoLibrary
+        initialVideoId={initialVideoId}
+        initialVideoBudgetMin={initialVideoBudgetMin}
+      />
+    </div>
   );
 
   // ─────────────────────────────────────────────────────────────────────────

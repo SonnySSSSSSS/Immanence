@@ -124,7 +124,8 @@ export function SideNavigation({ onNavigate, className = "" }) {
                         <button
                             type="button"
                             onClick={() => handleClick(item.key)}
-                            className="group relative overflow-hidden"
+                            className="group relative overflow-hidden im-nav-pill"
+                            data-nav-pill-id={`bottom:${item.key}`}
                             style={{
                                 width: `${buttonSize}px`,
                                 height: `${buttonSize}px`,
@@ -168,30 +169,6 @@ export function SideNavigation({ onNavigate, className = "" }) {
                                     mixBlendMode: isLight ? 'multiply' : 'normal',
                                 }}
                             />
-
-                            {/* Specular Shimmer Effect */}
-                            <div
-                                className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    borderRadius: '50%',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                <div
-                                    className="shimmer-gradient"
-                                    style={{
-                                        position: 'absolute',
-                                        top: '-50%',
-                                        left: '-50%',
-                                        width: '200%',
-                                        height: '200%',
-                                        background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)',
-                                        transform: 'translateX(-100%) rotate(45deg)',
-                                        animation: 'shimmer 10s infinite linear',
-                                    }}
-                                />
-                            </div>
-
                             {/* Label overlay */}
                             <div
                                 className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-1.5"
