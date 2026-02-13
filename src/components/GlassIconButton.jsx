@@ -250,6 +250,13 @@ export function GlassIconButton({
 
   const baseLabelOpacity = selected ? 0.41 : 0.31;
   const labelOpacity = Math.min(0.5, baseLabelOpacity + (isPressing ? 0.09 : 0));
+  const controlTargetProps = {};
+  const rootButtonProps = { ...buttonProps };
+  for (const key of ['data-ui-target', 'data-ui-id', 'data-ui-scope', 'data-ui-role-group']) {
+    if (!Object.prototype.hasOwnProperty.call(rootButtonProps, key)) continue;
+    controlTargetProps[key] = rootButtonProps[key];
+    delete rootButtonProps[key];
+  }
 
   return (
     <button
@@ -265,11 +272,11 @@ export function GlassIconButton({
       aria-label={label}
       aria-disabled={disabled}
       aria-pressed={selected}
-      {...buttonProps}
+      {...rootButtonProps}
     >
       <div
         className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
-        data-ui-fx-surface="true"
+        {...controlTargetProps}
         style={{
           width: '76px',
           height: '76px',
@@ -307,6 +314,7 @@ export function GlassIconButton({
                 : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`);
         }}
       >
+        <div data-ui-fx-surface="true" className="absolute inset-0 rounded-full pointer-events-none" />
         {/* Dark overlay for text legibility (dark mode only) */}
         {!isLight && (
           <div
@@ -328,6 +336,11 @@ export function GlassIconButton({
         {getIcon()}
       </div>
       <div
+        data-ui-target="true"
+        data-ui-id={`practice:plate:submode:${iconName}`}
+        data-ui-scope="role"
+        data-ui-role-group="practice"
+        data-ui-fx-surface="true"
         style={{
           marginTop: '5px',
           marginLeft: '4px',

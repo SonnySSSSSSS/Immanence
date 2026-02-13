@@ -78,6 +78,12 @@ import {
     applyNavButtonSettings,
     resetNavButtonSettings,
 } from '../state/navButtonTuner.js';
+import {
+    PLATES_FX_DEFAULTS,
+    getPlatesFxPreset,
+    setPlatesFxPreset,
+    subscribePlatesFxPresets
+} from '../dev/plateFxPresets.js';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -225,6 +231,12 @@ export function DevPanel({
     const [controlsFxDraft, setControlsFxDraft] = useState({ ...CONTROLS_FX_DEFAULTS });
     const [controlsPresetJson, setControlsPresetJson] = useState('');
     const [controlsPresetStatus, setControlsPresetStatus] = useState('');
+
+    // Plates state
+    const [platesSelectedId, setPlatesSelectedId] = useState(null);
+    const [platesFxDraft, setPlatesFxDraft] = useState({ ...PLATES_FX_DEFAULTS });
+    const platesFxEnabled = useSettingsStore((s) => Boolean(s.platesFxEnabled));
+    const setPlatesFxEnabled = useSettingsStore((s) => s.setPlatesFxEnabled);
 
     const CONTROLS_PICK_STORAGE_KEY = "immanence.dev.controlsFxPicker";
     const CONTROLS_PICK_EVENT = "immanence-controls-fx-picker";
@@ -546,33 +558,14 @@ export function DevPanel({
         setControlsSurfaceDebug(null);
         setPickDebugResolvedMode(null);
         setPickDebugResolvedId(null);
-        setUniversalPickMode(true);
+        setPlatesSelectedId(null);
 
-        if (universalPickerKind === 'controls') {
-            stopUniversalPickCaptureImmediate();
-            stopControlsPicking();
-            attachControlsCapture();
-            startControlsPicking({
-                onPick: (validation) => {
-                    setPickDebugResolvedMode('universal:controls');
-                    setPickDebugResolvedId(validation?.rootId || null);
-                    setControlsSelectedId(validation?.rootId || null);
-                    setControlsSelectedRoleGroup(validation?.roleGroup || null);
-                    setControlsSurfaceIsRoot(Boolean(validation?.surfaceIsRoot));
-                    const surface = validation?.surfaceEl && typeof validation.surfaceEl.tagName === 'string' ? validation.surfaceEl : null;
-                    setControlsSurfaceDebug(surface ? {
-                        tag: String(surface.tagName || '').toLowerCase(),
-                        className: typeof surface.className === 'string' ? surface.className : null,
-                    } : null);
-                },
-            });
-        }
+        // Effect will handle attach/start based on universalPickMode and universalPickerKind
+        setUniversalPickMode(true);
     };
 
     const handleStopUniversalPickFlow = () => {
-        stopControlsPicking();
-        detachControlsCapture();
-        stopUniversalPickCaptureImmediate();
+        // Effect will handle cleanup when universalPickMode becomes false
         setPickMode(false);
         setUniversalPickMode(false);
     };
@@ -721,13 +714,28 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled, practiceButtonPickMode, debugLogPick, logNearestAncestors, stopPracticeButtonPickCaptureImmediate]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        const removePlatesPickerClass = () => {
+            try {
+                document.body.classList.remove('dev-plates-picker-active');
+            } catch {
+                // ignore
+            }
+        };
 
-        // Always keep capture listeners off when not actively picking.
+        if (!isOpen || !devtoolsEnabled) {
+            stopControlsPicking();
+            detachControlsCapture();
+            stopUniversalPickCaptureImmediate();
+            removePlatesPickerClass();
+            return undefined;
+        }
+
+        // Always keep picking OFF when not actively picking.
         if (!universalPickMode) {
             stopControlsPicking();
             detachControlsCapture();
             stopUniversalPickCaptureImmediate();
+            removePlatesPickerClass();
             return undefined;
         }
 
@@ -737,34 +745,64 @@ export function DevPanel({
         stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
 
-        if (universalPickerKind === 'controls') {
+        if (universalPickerKind === 'controls' || universalPickerKind === 'plates') {
             stopUniversalPickCaptureImmediate();
-            stopControlsPicking();
             attachControlsCapture();
+
+            if (universalPickerKind === 'plates') {
+                try {
+                    document.body.classList.add('dev-plates-picker-active');
+                } catch {
+                    // ignore
+                }
+            } else {
+                removePlatesPickerClass();
+            }
+
             startControlsPicking({
-                onPick: (validation) => {
-                    setPickDebugResolvedMode('universal:controls');
-                    setPickDebugResolvedId(validation?.rootId || null);
-                    setControlsSelectedId(validation?.rootId || null);
-                    setControlsSelectedRoleGroup(validation?.roleGroup || null);
-                    setControlsSurfaceIsRoot(Boolean(validation?.surfaceIsRoot));
-                    const surface = validation?.surfaceEl && typeof validation.surfaceEl.tagName === 'string' ? validation.surfaceEl : null;
-                    setControlsSurfaceDebug(surface ? {
-                        tag: String(surface.tagName || '').toLowerCase(),
-                        className: typeof surface.className === 'string' ? surface.className : null,
-                    } : null);
+                kind: universalPickerKind,
+                onPick: ({ validation }) => {
+                    const resolvedId = validation?.rootId || null;
+                    if (!resolvedId) return;
+
+                    if (universalPickerKind === 'controls') {
+                        setPickDebugResolvedMode('universal:controls');
+                        setPickDebugResolvedId(resolvedId);
+                        setControlsSelectedId(resolvedId);
+                        setControlsSelectedRoleGroup(validation?.roleGroup || null);
+                        setControlsSurfaceIsRoot(Boolean(validation?.surfaceIsRoot));
+                        const surface = validation?.surfaceEl && typeof validation.surfaceEl.tagName === 'string' ? validation.surfaceEl : null;
+                        setControlsSurfaceDebug(surface ? {
+                            tag: String(surface.tagName || '').toLowerCase(),
+                            className: typeof surface.className === 'string' ? surface.className : null,
+                        } : null);
+                        return;
+                    }
+
+                    setPickDebugResolvedMode('universal:plates');
+                    setPickDebugResolvedId(resolvedId);
+                    setPlatesSelectedId(resolvedId);
+                    try {
+                        window.localStorage.setItem('immanence.dev.platesFxPicker', JSON.stringify({ selectedId: resolvedId }));
+                        window.dispatchEvent(new CustomEvent('immanence-plates-fx-picker', { detail: { selectedId: resolvedId } }));
+                    } catch {
+                        // ignore
+                    }
                 },
             });
+
             return () => {
                 stopControlsPicking();
                 detachControlsCapture();
+                removePlatesPickerClass();
             };
         }
 
         if (universalPickerKind === 'card') {
-            stopUniversalPickCaptureImmediate();
             stopControlsPicking();
             detachControlsCapture();
+            removePlatesPickerClass();
+            stopUniversalPickCaptureImmediate();
 
             const onClickCapture = (event) => {
                 const target = event?.target instanceof Element ? event.target : null;
@@ -791,6 +829,10 @@ export function DevPanel({
             };
         }
 
+        stopControlsPicking();
+        detachControlsCapture();
+        stopUniversalPickCaptureImmediate();
+        removePlatesPickerClass();
         return undefined;
     }, [
         isOpen,
@@ -801,6 +843,12 @@ export function DevPanel({
         stopPracticeButtonPickCaptureImmediate,
         stopUniversalPickCaptureImmediate,
     ]);
+
+    useEffect(() => {
+        if (!isOpen || !devtoolsEnabled) return undefined;
+        setPlatesFxDraft(getPlatesFxPreset(platesSelectedId));
+        return undefined;
+    }, [isOpen, devtoolsEnabled, platesSelectedId]);
 
     useEffect(() => {
         if (!isOpen || !devtoolsEnabled) return undefined;
@@ -898,8 +946,6 @@ export function DevPanel({
                               setPeekMode(false);
                               stopPracticeButtonPickCaptureImmediate();
                               setPracticeButtonPickMode(false);
-                              stopControlsPicking();
-                              detachControlsCapture();
                               stopUniversalPickCaptureImmediate();
                               setUniversalPickMode(false);
                               onClose();
@@ -1047,10 +1093,10 @@ export function DevPanel({
                         ) : (
                             <>
                                 <div className="text-[10px] text-white/50 mb-2">
-                                    Universal picker (parity phase): controls + cards. Conflict rule: only one global capture listener active.
+                                    Universal picker (parity phase): controls + plates + cards. Conflict rule: only one global capture listener active.
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                <div className="grid grid-cols-3 gap-2 mb-2">
                                     <button
                                         onClick={() => setUniversalPickerKind('controls')}
                                         className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'controls' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
@@ -1062,6 +1108,12 @@ export function DevPanel({
                                         className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'card' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
                                     >
                                         Cards
+                                    </button>
+                                    <button
+                                        onClick={() => setUniversalPickerKind('plates')}
+                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'plates' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
+                                    >
+                                        Plates
                                     </button>
                                 </div>
 
@@ -1351,6 +1403,132 @@ export function DevPanel({
                                                 <div className="text-red-200/70">{v.reasons.join(', ')}</div>
                                             </div>
                                         ))}
+                                    </>
+                                )}
+
+                                {universalPickerKind === 'plates' && (
+                                    <>
+                                        <div className="space-y-2 mb-3">
+                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
+                                                Selected: {platesSelectedId || 'none'}
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-white/10 pt-3 mt-3 mb-3">
+                                            <div className="text-[11px] text-white/80 font-semibold mb-2">Plates (Caption Tuner)</div>
+                                            <button
+                                                onClick={() => setPlatesFxEnabled(!platesFxEnabled)}
+                                                disabled={!platesSelectedId}
+                                                className={`w-full px-3 py-2 rounded-lg text-xs border transition-all ${platesFxEnabled ? 'bg-amber-500/20 text-amber-200 border-amber-400/50' : 'bg-white/5 text-white/70 border-white/15'} ${!platesSelectedId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                {platesFxEnabled ? 'Enable Selected Plate FX: ON' : 'Enable Selected Plate FX: OFF'}
+                                            </button>
+
+                                            <label className="flex items-center gap-2 text-xs text-white/70 mt-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={platesFxDraft.enabled}
+                                                    disabled={!platesSelectedId}
+                                                    onChange={(e) => {
+                                                        const next = { ...platesFxDraft, enabled: e.target.checked };
+                                                        setPlatesFxDraft(next);
+                                                        if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { enabled: e.target.checked });
+                                                    }}
+                                                    className="rounded border-white/20"
+                                                />
+                                                Enabled for this plate
+                                            </label>
+
+                                            <div className="grid grid-cols-3 gap-2 mt-3">
+                                                <RangeControl
+                                                    label="Border Thickness"
+                                                    value={platesFxDraft.borderW}
+                                                    min={1}
+                                                    max={6}
+                                                    step={0.5}
+                                                    disabled={!platesSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...platesFxDraft, borderW: v };
+                                                        setPlatesFxDraft(next);
+                                                        if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { borderW: v });
+                                                    }}
+                                                />
+                                                <RangeControl
+                                                    label="Speed"
+                                                    value={platesFxDraft.speed}
+                                                    min={1}
+                                                    max={8}
+                                                    step={0.5}
+                                                    disabled={!platesSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...platesFxDraft, speed: v };
+                                                        setPlatesFxDraft(next);
+                                                        if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { speed: v });
+                                                    }}
+                                                    suffix="s"
+                                                />
+                                                <RangeControl
+                                                    label="Opacity"
+                                                    value={platesFxDraft.opacity}
+                                                    min={0}
+                                                    max={1}
+                                                    step={0.05}
+                                                    disabled={!platesSelectedId}
+                                                    onChange={(v) => {
+                                                        const next = { ...platesFxDraft, opacity: v };
+                                                        setPlatesFxDraft(next);
+                                                        if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { opacity: v });
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2 mt-3">
+                                                <div className="text-[10px] text-white/55">Color Mode</div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        disabled={!platesSelectedId}
+                                                        onClick={() => {
+                                                            const next = { ...platesFxDraft, colorMode: 'stage' };
+                                                            setPlatesFxDraft(next);
+                                                            if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { colorMode: 'stage' });
+                                                        }}
+                                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${platesFxDraft.colorMode === 'stage' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'} ${!platesSelectedId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        Stage Accent
+                                                    </button>
+                                                    <button
+                                                        disabled={!platesSelectedId}
+                                                        onClick={() => {
+                                                            const next = { ...platesFxDraft, colorMode: 'custom' };
+                                                            setPlatesFxDraft(next);
+                                                            if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { colorMode: 'custom' });
+                                                        }}
+                                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${platesFxDraft.colorMode === 'custom' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'} ${!platesSelectedId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        Custom
+                                                    </button>
+                                                </div>
+
+                                                {platesFxDraft.colorMode === 'custom' && (
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <input
+                                                            type="color"
+                                                            value={platesFxDraft.color || '#FFD278'}
+                                                            disabled={!platesSelectedId}
+                                                            onChange={(e) => {
+                                                                const value = e?.target?.value || null;
+                                                                const next = { ...platesFxDraft, color: value };
+                                                                setPlatesFxDraft(next);
+                                                                if (platesSelectedId) setPlatesFxPreset(platesSelectedId, { color: value });
+                                                            }}
+                                                            className="h-8 w-12 p-0 border border-white/15 rounded"
+                                                            style={{ background: 'transparent' }}
+                                                        />
+                                                        <span className="text-xs text-white/50 font-mono">{platesFxDraft.color || '#FFD278'}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </>
                                 )}
 

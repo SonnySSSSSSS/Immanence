@@ -115,6 +115,13 @@ export function SimpleModeButton({
     const hoverShadow = isLight
         ? `0 10px 28px rgba(100, 80, 60, 0.3), 0 6px 12px rgba(100, 80, 60, 0.2), 0 0 25px ${primaryHex}40`
         : `0 10px 32px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 35px ${primaryHex}60`;
+    const controlTargetProps = {};
+    const rootButtonProps = { ...buttonProps };
+    for (const key of ['data-ui-target', 'data-ui-id', 'data-ui-scope', 'data-ui-role-group']) {
+        if (!Object.prototype.hasOwnProperty.call(rootButtonProps, key)) continue;
+        controlTargetProps[key] = rootButtonProps[key];
+        delete rootButtonProps[key];
+    }
 
     return (
         <button
@@ -129,11 +136,11 @@ export function SimpleModeButton({
             }}
             aria-label={title}
             aria-disabled={disabled}
-            {...buttonProps}
+            {...rootButtonProps}
         >
             <div
                 className="relative flex items-center justify-center transition-all duration-300 overflow-hidden"
-                data-ui-fx-surface="true"
+                {...controlTargetProps}
                 style={{
                     width: '76px',
                     height: '76px',
@@ -158,6 +165,7 @@ export function SimpleModeButton({
                     e.currentTarget.style.boxShadow = isNavHeroActive ? activeNavShadow : baseShadow;
                 }}
             >
+                <div data-ui-fx-surface="true" className="absolute inset-0 rounded-full pointer-events-none" />
                 {/* Dark overlay for text legibility (dark mode only) */}
                 {!isLight && (
                     <div
@@ -188,6 +196,11 @@ export function SimpleModeButton({
                 {getIcon()}
             </div>
             <div
+                data-ui-target="true"
+                data-ui-id={`homeHub:plate:mode:${icon}`}
+                data-ui-scope="role"
+                data-ui-role-group="homeHub"
+                data-ui-fx-surface="true"
                 style={{
                     marginTop: '5px',
                     marginLeft: '4px',
