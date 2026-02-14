@@ -294,7 +294,7 @@ export function QuickDashboardTiles({
     if (variant === 'hubCard') {
         return (
             <div
-                className={isFirefox ? '' : 'glassCardShadowWrap'}
+                className={`im-card ${isFirefox ? '' : 'glassCardShadowWrap'}`}
                 data-card="true"
                 data-card-id="homeHubProgress"
                 data-card-active={import.meta.env.DEV && typeof devCardActive === 'boolean' ? String(devCardActive) : undefined}
