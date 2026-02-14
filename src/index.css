@@ -15,6 +15,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@property --plate-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 body {
   @apply bg-gradient-to-b from-bgStart to-bgEnd text-white;
   font-family: var(--font-sans);
@@ -159,6 +165,110 @@ body::-webkit-scrollbar {
   opacity: var(--dev-controls-fx-opacity, 1);
   box-shadow: 0 0 var(--dev-controls-fx-glow, 0px) var(--dev-controls-fx-color, rgba(105, 235, 255, 1));
   filter: blur(var(--dev-controls-fx-blur, 0px));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PLATES: Premium Animated Pill Border (Phase 2)
+   ═══════════════════════════════════════════════════════════════ */
+
+.ui-accent-plate {
+  position: relative;
+  border-radius: 999px;
+  isolation: isolate;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, calc(var(--plate-sheen, 0) * 0.08)),
+      rgba(255, 255, 255, 0) 42%
+    ),
+    rgba(10, 12, 16, var(--plate-bg-opacity, 0.18));
+}
+
+.ui-accent-plate > * {
+  position: relative;
+  z-index: 2;
+}
+
+.ui-accent-plate::before,
+.ui-accent-plate::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--plate-bw, 1.25px));
+  border-radius: inherit;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: opacity, filter;
+  background: conic-gradient(
+    from var(--plate-angle, 0deg),
+    var(--plate-c1, #ffe4a6),
+    var(--plate-c2, #ffc96e),
+    var(--plate-c3, #fff0cf),
+    var(--plate-c1, #ffe4a6)
+  );
+  animation-name: var(--plate-anim-name, plateFlow);
+  animation-duration: var(--plate-speed, 14s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.ui-accent-plate::before {
+  z-index: 0;
+  opacity: var(--plate-border-opacity, 0.65);
+  padding: var(--plate-bw, 1.25px);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(var(--plate-sheen, 0) * 0.10)),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.ui-accent-plate::after {
+  z-index: 1;
+  opacity: var(--plate-glow-opacity, 0.18);
+  filter: blur(var(--plate-glow, 6px));
+}
+
+@supports not ((-webkit-mask-composite: xor) or (mask-composite: exclude)) {
+  .ui-accent-plate::before {
+    inset: 0;
+    padding: 0;
+    border: var(--plate-bw, 1.25px) solid var(--plate-c1, #ffe4a6);
+    background: none;
+    box-shadow: none;
+  }
+  .ui-accent-plate::after {
+    display: none;
+  }
+}
+
+@keyframes plateFlow {
+  to {
+    --plate-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-accent-plate::before,
+  .ui-accent-plate::after {
+    animation-duration: calc(var(--plate-speed, 14s) * 2);
+  }
+}
+
+.dev-plates-picker-active,
+.dev-plates-picker-active * {
+  cursor: crosshair !important;
+}
+
+/* Force plate captions clickable during picking (override pointer-events: none) */
+.dev-plates-picker-active [data-ui-id^="homeHub:plate:"],
+.dev-plates-picker-active [data-ui-id^="practice:plate:"] {
+  pointer-events: auto !important;
 }
 
 .dev-card-tuner-enabled .im-card {

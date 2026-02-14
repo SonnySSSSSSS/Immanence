@@ -43,6 +43,7 @@ export const useSettingsStore = create(
             practiceButtonFxEnabled: false,
             controlsElectricBorderEnabled: false,
             cardElectricBorderEnabled: false,
+            platesFxEnabled: false,
             lightModeRingType: 'astrolabe', // 'astrolabe' or 'rune'
             useNewAvatars: false, // false = old naming (Flame-Dhyana.png), true = new (avatar-flame-dhyana-ekagrata_00001_.png)
 
@@ -98,6 +99,7 @@ export const useSettingsStore = create(
             setControlsElectricBorderEnabled: (enabled) => set({ controlsElectricBorderEnabled: Boolean(enabled) }),
 
             setCardElectricBorderEnabled: (enabled) => set({ cardElectricBorderEnabled: Boolean(enabled) }),
+            setPlatesFxEnabled: (enabled) => set({ platesFxEnabled: Boolean(enabled) }),
 
             // Photic settings actions
             setPhoticSetting: (key, value) => set((state) => {
@@ -181,6 +183,7 @@ export const useSettingsStore = create(
                     linkColors: true,
                     bgOpacity: 0.95,
                 },
+                platesFxEnabled: false,
             }),
         }),
         {
