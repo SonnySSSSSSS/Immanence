@@ -16,6 +16,7 @@ import { DevPanel } from "./components/DevPanel.jsx";
 import { PracticeButtonElectricBorderOverlay } from "./components/dev/PracticeButtonElectricBorderOverlay.jsx";
 import { SelectedCardElectricBorderOverlay } from "./components/dev/SelectedCardElectricBorderOverlay.jsx";
 import { SelectedControlElectricBorderOverlay } from "./components/dev/SelectedControlElectricBorderOverlay.jsx";
+import { SelectedPlateOverlay } from "./components/dev/SelectedPlateOverlay.jsx";
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
@@ -477,6 +478,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
       <PracticeButtonElectricBorderOverlay />
       <SelectedControlElectricBorderOverlay />
+      <SelectedPlateOverlay />
       {import.meta.env.DEV && <SelectedCardElectricBorderOverlay />}
 
       {/* Outer Layout Container - Adapts to display mode */}
@@ -635,7 +637,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.164
+                        v3.27.166
                       </button>
                     </div>
                   </div>
