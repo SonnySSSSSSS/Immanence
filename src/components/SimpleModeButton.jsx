@@ -33,12 +33,10 @@ export function SimpleModeButton({
     }, []);
 
     // Get appropriate background image based on mode and icon
-    // Using default themes: 'cosmic' for dark, 'watercolor' for light
+    // Note: mode_buttons/*.png assets no longer exist; fallback to gradient
     const getBackgroundImage = () => {
-        const buttonTheme = isLight ? 'watercolor' : 'cosmic';
-        const mode = isLight ? 'light' : 'dark';
-        const imagePath = `${import.meta.env.BASE_URL}mode_buttons/${icon}_${buttonTheme}_${mode}.png`;
-        return imagePath;
+        // Background images removed; component relies on CSS overlays and SVG icons
+        return 'none';
     };
 
     const getIcon = () => {

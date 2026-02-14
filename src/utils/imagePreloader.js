@@ -28,12 +28,7 @@ export function preloadImages(imagePaths, baseUrl = '') {
  * These are images that appear on first screen or are frequently used
  */
 export const CRITICAL_IMAGES = [
-    // Avatar cores (most commonly displayed)
-    'avatars/seedling-core.png',
-    'avatars/ember-core.png',
-    'avatars/flame-core.png',
-    'avatars/beacon-core.png',
-    'avatars/stellar-core.png',
+    // Note: Avatar cores no longer used; legacy preload removed
 ];
 
 /**
@@ -41,14 +36,7 @@ export const CRITICAL_IMAGES = [
  * These can load in background after initial render
  */
 export const SECONDARY_IMAGES = [
-    // Stage backgrounds (top layers)
-    'bg/bg-seedling.png',
-    'bg/bg-ember.png',
-    'bg/bg-flame.png',
-    'bg/bg-beacon.png',
-    'bg/bg-stellar.png',
-
-    // Stage backgrounds (bottom layers for blending)
+    // Stage backgrounds (bottom layers - note: top layers removed as they no longer exist)
     'bg/bg-seedling-bottom.png',
     'bg/bg-ember-bottom.png',
     'bg/bg-flame-bottom.png',

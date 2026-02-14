@@ -637,7 +637,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.166
+                        v3.27.167
                       </button>
                     </div>
                   </div>

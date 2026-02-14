@@ -137,9 +137,7 @@ function StatsCard({ domain, stats, isLight }) {
             ref={cardRef}
             className="relative overflow-hidden"
             style={{
-                backgroundImage: isLight 
-                    ? `url(${import.meta.env.BASE_URL}mode_buttons/light_mode_tracking_card_1767105882932.png)`
-                    : `url(${import.meta.env.BASE_URL}mode_buttons/dark_mode_tracking_card_1767105843256.png)`,
+                backgroundImage: 'none',
                 backgroundSize: '100% 100%',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
