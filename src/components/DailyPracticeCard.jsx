@@ -13,6 +13,7 @@ import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
+import { computeCurriculumCompletionState, shouldShowNoCurriculumSetupState } from './dailyPracticeCardLogic.js';
 
 /**
  * THEME CONFIGURATION
@@ -624,6 +625,21 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const onboardingComplete = onboardingCompleteProp ?? storeOnboardingComplete;
     const practiceTimeSlots = practiceTimeSlotsProp ?? storePracticeTimeSlots;
+    const progressSnapshot = getProgress();
+    const {
+        completed: curriculumCompletedCount,
+        total: curriculumTotalCount,
+        isCurriculumActive,
+        isCurriculumComplete,
+    } = computeCurriculumCompletionState({
+        activeCurriculumId,
+        progress: progressSnapshot,
+    });
+    const showNoCurriculumSetupState = shouldShowNoCurriculumSetupState({
+        activePathObj,
+        activeCurriculumId,
+        progress: progressSnapshot,
+    });
 
     const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
 
@@ -634,7 +650,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // regardless of onboarding status — prevents falling through to stale curriculum modal
     const hasActivePath = activePathObj && times.length > 0;
 
-    if (hasActivePath || needsSetup || (!onboardingComplete && hasPersistedCurriculumData === false)) {
+    if (hasActivePath || needsSetup || showNoCurriculumSetupState || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
         const isSetupEmptyState = !activePathObj;
 
@@ -1117,7 +1133,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const dayNumber = getCurrentDayNumber();
     const todaysPractice = getTodaysPractice();
-    const progress = getProgress();
+    const progress = progressSnapshot;
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
     const hasStartedCurriculum = !!activePracticeSession || (legCompletions && Object.keys(legCompletions).length > 0);
@@ -1189,7 +1205,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         return tooEarly;
     };
 
-    if (dayNumber > 14 || progress.completed >= progress.total) {
+    if ((isCurriculumActive && dayNumber > 14) || isCurriculumComplete) {
         const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
 
         return (
@@ -1269,7 +1285,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         Curriculum Complete!
                     </h3>
                     <p className="mb-6 opacity-70" style={{ color: config.textSub }}>
-                        You completed {progress.completed} of {progress.total} practices
+                        You completed {curriculumCompletedCount} of {curriculumTotalCount} practices
                     </p>
 
                     {/* Action buttons */}
