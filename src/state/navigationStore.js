@@ -6,6 +6,7 @@ import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
+import { reconcileCurriculumForNavigation } from './navigationCurriculumInvariant.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 import {
@@ -53,6 +54,18 @@ const selectedDaysFromOffDays = (offDays = []) => {
     // LEGACY migration helper only. Do not use this for new run contract authoring.
     const offSet = new Set(normalizeDayOfWeekList(offDays));
     return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
+};
+
+const isDevRuntime = () => typeof import.meta !== 'undefined' && Boolean(import.meta?.env?.DEV);
+
+const reconcileCurriculumWithNavigationPath = (activePath) => {
+    const curriculumState = useCurriculumStore.getState();
+    reconcileCurriculumForNavigation({
+        activePath,
+        curriculumState,
+        applyPatch: (patch) => useCurriculumStore.setState(patch),
+        isDev: isDevRuntime(),
+    });
 };
 
 export const useNavigationStore = create(
@@ -728,7 +741,17 @@ export const useNavigationStore = create(
                     // Fallback: copy from activePath.schedule.selectedTimes if it exists
                     curriculumState.setPracticeTimeSlots(state.activePath.schedule.selectedTimes);
                 }
+
+                reconcileCurriculumWithNavigationPath(state?.activePath || null);
             }
         }
     )
 );
+
+useNavigationStore.subscribe((state, prevState) => {
+    const hadActivePath = Boolean(prevState?.activePath);
+    const hasActivePath = Boolean(state?.activePath);
+    if (hadActivePath && !hasActivePath) {
+        reconcileCurriculumWithNavigationPath(null);
+    }
+});
