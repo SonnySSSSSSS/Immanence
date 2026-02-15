@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
 import { EVENING_TEST_CIRCUIT } from '../data/pilotTestProgram.js';
+import { EVENING_AWARENESS_CIRCUIT } from '../data/circuits/eveningAwarenessCircuit.js';
 import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { getCurriculumPrecisionRail } from '../services/infographics/curriculumRail.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
@@ -83,7 +84,7 @@ export const useCurriculumStore = create(
                 focus: { name: 'Focus Path', description: 'Concentration and mental clarity', exercises: [] },
                 body: { name: 'Body Path', description: 'Somatic awareness and embodied presence', exercises: [] },
             },
-            circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT],
+            circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT, EVENING_AWARENESS_CIRCUIT],
             progress: {},
 
             // ONBOARDING ACTIONS
@@ -547,7 +548,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                         focus: { name: 'Focus Path', description: '', exercises: [] },
                         body: { name: 'Body Path', description: '', exercises: [] },
                     },
-                    circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT],
+                    circuits: [FOUNDATION_CIRCUIT, EVENING_TEST_CIRCUIT, EVENING_AWARENESS_CIRCUIT],
                     progress: {},
                 });
             },

@@ -22,7 +22,7 @@ export const paths = [
 
         practices: [
             { type: "Breathing", pattern: "Box", duration: 7 },
-            { type: "Circuit", duration: 15 }
+            { type: "Circuit", duration: 14, circuitId: "evening-awareness-circuit" }
         ],
 
         chapters: [],
@@ -32,10 +32,10 @@ export const paths = [
             {
                 number: 1,
                 title: "Establish Daily Practice",
-                focus: "Morning breath (7min) + Evening circuit (15min)",
+                focus: "Morning breath (7min) + Evening circuit (14min)",
                 practices: [
                     "Morning: Box breathing (7min)",
-                    "Evening: Circuit: Breath (5m) → Visualization (5m) → Feeling (5m)"
+                    "Evening: Circuit: Sitting awareness (7m) -> Body scan (7m)"
                 ],
                 reading: [],
                 tracking: "Complete both sessions daily"
@@ -46,7 +46,7 @@ export const paths = [
                 focus: "Build consistency, notice effects",
                 practices: [
                     "Morning: Box breathing (7min)",
-                    "Evening: Circuit: Breath (5m) → Visualization (5m) → Feeling (5m)"
+                    "Evening: Circuit: Sitting awareness (7m) -> Body scan (7m)"
                 ],
                 reading: [],
                 tracking: "Final day: after your closing ritual, re-benchmark and compare your first and last attempts."
