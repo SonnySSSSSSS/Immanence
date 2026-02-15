@@ -1,13 +1,18 @@
 // src/state/navigationStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getDateKey, getLocalDateKey } from '../utils/dateUtils';
+import { addDaysToDateKey, getDateKey, getLocalDateKey } from '../utils/dateUtils';
 import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
+import {
+    computeContractMissState,
+    computeContractObligationSummary,
+    createPathRunSessionFilter,
+} from '../services/infographics/contractObligations.js';
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
 const SCHEDULE_MATCH_RADIUS_MIN = 90;
@@ -430,34 +435,34 @@ export const useNavigationStore = create(
                 const dayIndex = Math.min(Math.max(daysSinceStart + 1, 1), durationDays);
                 const timePct = Math.round((dayIndex / durationDays) * 100);
 
-                // Expected sessions so far
-                const expectedPerDay = state.activePath.schedule?.selectedTimes?.length || 0;
-                const expectedSessionsSoFar = Math.min(dayIndex, durationDays) * expectedPerDay;
+                // Contract obligations are the source of truth for expected/completed adherence metrics.
+                const progressState = useProgressStore.getState();
+                const curriculumState = useCurriculumStore.getState();
+                const isSessionInActiveRun = createPathRunSessionFilter({
+                    runId: state.activePath.runId || null,
+                    activePathId: state.activePath.activePathId || null,
+                    startedAt: state.activePath.startedAt || null,
+                });
 
-                // Completed sessions so far (scoped to current run)
-                const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
-                const activeRunId = state.activePath.runId || null;
-                const activePathId = state.activePath.activePathId || null;
-                const activePathStartMs = new Date(state.activePath.startedAt).getTime();
-                const isSessionInActiveRun = (session) => {
-                    const sessionRunId = session?.pathContext?.runId || null;
-                    if (activeRunId && sessionRunId) {
-                        return sessionRunId === activeRunId;
-                    }
+                const pathEndLocalKey = addDaysToDateKey(startedAtLocalKey, durationDays - 1);
+                const windowEndLocalKey = pathEndLocalKey && pathEndLocalKey < todayKey
+                    ? pathEndLocalKey
+                    : todayKey;
 
-                    // Fallback for orphaned/legacy sessions that lack runId.
-                    const sessionPathId = session?.pathContext?.activePathId || null;
-                    if (!activePathId || !sessionPathId || sessionPathId !== activePathId) return false;
+                let expectedSessionsSoFar = 0;
+                let completedSessionsSoFar = 0;
 
-                    const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
-                    if (!sessionAnchorIso) return false;
-                    const sessionMs = new Date(sessionAnchorIso).getTime();
-                    if (Number.isNaN(sessionMs)) return false;
-                    return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
-                };
-                const completedSessionsSoFar = sessionsV2.filter(
-                    s => isSessionInActiveRun(s) && (s.completion === "completed")
-                ).length;
+                if (windowEndLocalKey && startedAtLocalKey <= windowEndLocalKey) {
+                    const contractSummary = computeContractObligationSummary({
+                        windowStartLocalDateKey: startedAtLocalKey,
+                        windowEndLocalDateKey: windowEndLocalKey,
+                        curriculumStoreState: curriculumState,
+                        progressStoreState: progressState,
+                        isSessionEligible: isSessionInActiveRun,
+                    });
+                    expectedSessionsSoFar = contractSummary.totalObligations;
+                    completedSessionsSoFar = contractSummary.satisfiedObligations;
+                }
 
                 // Adherence %
                 const adherencePct = expectedSessionsSoFar === 0 
@@ -476,9 +481,8 @@ export const useNavigationStore = create(
 
             /**
              * Compute consecutive missed days and broken state
-             * A day is missed if: (1) expectedPerDay > 0, (2) no completed sessions that day
+             * Contract miss rule: a day is missed when it is an obligation day and not fully satisfied.
              * Path broken if: consecutiveMissedDays >= 2
-             * Uses local date keys to account for timezone
              */
             computeMissState: () => {
                 const state = get();
@@ -486,67 +490,33 @@ export const useNavigationStore = create(
                     return { consecutiveMissedDays: 0, broken: false };
                 }
 
-                const expectedPerDay = state.activePath.schedule?.selectedTimes?.length || 0;
-
-                if (!state.activePath.startedAt || expectedPerDay === 0) {
+                if (!state.activePath.startedAt) {
                     return { consecutiveMissedDays: 0, broken: false };
                 }
 
-                const sessionsV2 = useProgressStore.getState().sessionsV2 || [];
+                const progressState = useProgressStore.getState();
+                const curriculumState = useCurriculumStore.getState();
                 const startedAtLocalKey = getLocalDateKey(new Date(state.activePath.startedAt));
-                const activeRunId = state.activePath.runId || null;
-                const activePathId = state.activePath.activePathId || null;
-                const activePathStartMs = new Date(state.activePath.startedAt).getTime();
-                const isSessionInActiveRun = (session) => {
-                    const sessionRunId = session?.pathContext?.runId || null;
-                    if (activeRunId && sessionRunId) {
-                        return sessionRunId === activeRunId;
-                    }
-
-                    const sessionPathId = session?.pathContext?.activePathId || null;
-                    if (!activePathId || !sessionPathId || sessionPathId !== activePathId) return false;
-
-                    const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
-                    if (!sessionAnchorIso) return false;
-                    const sessionMs = new Date(sessionAnchorIso).getTime();
-                    if (Number.isNaN(sessionMs)) return false;
-                    return Number.isNaN(activePathStartMs) ? true : sessionMs >= activePathStartMs;
-                };
-                
-                // Build map of completed sessions by date (using local date keys, scoped to current run)
-                const completedByDate = {};
-                sessionsV2.forEach(s => {
-                    if (isSessionInActiveRun(s) && (s.completion === "completed")) {
-                        const dateKey = getLocalDateKey(new Date(s.startedAt || s.endedAt));
-                        if (dateKey) {
-                            completedByDate[dateKey] = (completedByDate[dateKey] || 0) + 1;
-                        }
-                    }
-                });
-
-                // Walk backwards from today to find consecutive misses
                 const todayKey = getLocalDateKey();
-                let consecutiveMissedDays = 0;
-                let currentDate = new Date(todayKey);
-                const startDate = new Date(startedAtLocalKey);
-
-                while (currentDate >= startDate) {
-                    const dateKey = getLocalDateKey(currentDate);
-                    const completed = completedByDate[dateKey] || 0;
-                    
-                    if (completed === 0) {
-                        consecutiveMissedDays++;
-                    } else {
-                        break; // Stop at first day with sessions
-                    }
-                    
-                    currentDate.setDate(currentDate.getDate() - 1);
+                if (startedAtLocalKey > todayKey) {
+                    return { consecutiveMissedDays: 0, broken: false };
                 }
 
-                return {
-                    consecutiveMissedDays,
-                    broken: consecutiveMissedDays >= 2
-                };
+                const isSessionInActiveRun = createPathRunSessionFilter({
+                    runId: state.activePath.runId || null,
+                    activePathId: state.activePath.activePathId || null,
+                    startedAt: state.activePath.startedAt || null,
+                });
+
+                const contractSummary = computeContractObligationSummary({
+                    windowStartLocalDateKey: startedAtLocalKey,
+                    windowEndLocalDateKey: todayKey,
+                    curriculumStoreState: curriculumState,
+                    progressStoreState: progressState,
+                    isSessionEligible: isSessionInActiveRun,
+                });
+
+                return computeContractMissState(contractSummary.dayStates);
             },
 
             /**
