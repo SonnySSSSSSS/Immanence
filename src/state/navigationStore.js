@@ -9,6 +9,7 @@ import { useCurriculumStore } from './curriculumStore';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 import {
+    computeContractDayCompletionStats,
     computeContractMissState,
     computeContractObligationSummary,
     createPathRunSessionFilter,
@@ -451,6 +452,9 @@ export const useNavigationStore = create(
 
                 let expectedSessionsSoFar = 0;
                 let completedSessionsSoFar = 0;
+                let daysPracticed = 0;
+                let streakCurrent = 0;
+                let streakBest = 0;
 
                 if (windowEndLocalKey && startedAtLocalKey <= windowEndLocalKey) {
                     const contractSummary = computeContractObligationSummary({
@@ -462,6 +466,10 @@ export const useNavigationStore = create(
                     });
                     expectedSessionsSoFar = contractSummary.totalObligations;
                     completedSessionsSoFar = contractSummary.satisfiedObligations;
+                    const completionStats = computeContractDayCompletionStats(contractSummary.dayStates);
+                    daysPracticed = completionStats.daysPracticed;
+                    streakCurrent = completionStats.streakCurrent;
+                    streakBest = completionStats.streakBest;
                 }
 
                 // Adherence %
@@ -475,7 +483,11 @@ export const useNavigationStore = create(
                     timePct,
                     expectedSessionsSoFar,
                     completedSessionsSoFar,
-                    adherencePct
+                    adherencePct,
+                    // Strict day integrity metrics (all obligations required for a practiced day).
+                    daysPracticed,
+                    streakCurrent,
+                    streakBest,
                 };
             },
 

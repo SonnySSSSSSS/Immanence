@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { MATCH_POLICY } from '../src/data/curriculumMatching.js';
 import {
+  computeContractDayCompletionStats,
   computeContractMissState,
   computeContractObligationSummary,
   CONTRACT_ADHERENCE_SATISFIED_STATUSES,
@@ -222,4 +223,77 @@ test('Scenario 3: contract summary and rail day statuses stay consistent over a 
     assert.ok(railDay.dayStatus === 'green' || railDay.dayStatus === 'red');
     assert.equal(dayState.daySatisfied, true);
   });
+});
+
+test('Strict day integrity: 2 obligations with 1 satisfied is a missed day; consecutive strict misses break streak', () => {
+  const windowStartLocalDateKey = '2026-02-09';
+  const windowEndLocalDateKey = '2026-02-12';
+
+  const curriculumStoreState = createCurriculumState({
+    curriculumStartDate: '2026-02-09T09:00:00.000Z',
+    practiceTimeSlots: ['09:00', '20:00'],
+    getCurriculumDay: (dayNumber) => ({
+      dayNumber,
+      legs: [
+        createRequiredLeg(1, 'breathwork'),
+        createRequiredLeg(2, 'awareness'),
+      ],
+    }),
+  });
+
+  const progressStoreState = createProgressState([
+    // Day 1: fully satisfied (both slots)
+    {
+      id: 'd1-leg1',
+      completion: 'completed',
+      startedAt: '2026-02-09T09:00:00',
+      scheduleMatched: { legNumber: 1, status: 'green', deltaMinutes: 0 },
+    },
+    {
+      id: 'd1-leg2',
+      completion: 'completed',
+      startedAt: '2026-02-09T20:10:00',
+      scheduleMatched: { legNumber: 2, status: 'green', deltaMinutes: 10 },
+    },
+    // Day 2: partial (1/2)
+    {
+      id: 'd2-leg1-only',
+      completion: 'completed',
+      startedAt: '2026-02-10T09:00:00',
+      scheduleMatched: { legNumber: 1, status: 'green', deltaMinutes: 0 },
+    },
+    // Day 3: partial (1/2, red still counts for obligation satisfaction but not day completion)
+    {
+      id: 'd3-leg1-only-red',
+      completion: 'completed',
+      startedAt: '2026-02-11T09:35:00',
+      scheduleMatched: { legNumber: 1, status: 'red', deltaMinutes: 35 },
+    },
+  ]);
+
+  const summary = computeContractObligationSummary({
+    windowStartLocalDateKey,
+    windowEndLocalDateKey,
+    curriculumStoreState,
+    progressStoreState,
+  });
+
+  const day2 = summary.dayStates.find((d) => d.dateKeyLocal === '2026-02-10');
+  const day3 = summary.dayStates.find((d) => d.dateKeyLocal === '2026-02-11');
+  assert.ok(day2 && day3);
+  assert.equal(day2.obligations, 2);
+  assert.equal(day2.satisfied, 1);
+  assert.equal(day2.daySatisfied, false);
+  assert.equal(day3.obligations, 2);
+  assert.equal(day3.satisfied, 1);
+  assert.equal(day3.daySatisfied, false);
+
+  const missState = computeContractMissState(summary.dayStates);
+  assert.equal(missState.consecutiveMissedDays, 3);
+  assert.equal(missState.broken, true);
+
+  const completionStats = computeContractDayCompletionStats(summary.dayStates);
+  assert.equal(completionStats.daysPracticed, 1);
+  assert.equal(completionStats.streakCurrent, 0);
+  assert.equal(completionStats.streakBest, 1);
 });

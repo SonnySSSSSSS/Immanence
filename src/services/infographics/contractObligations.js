@@ -431,3 +431,44 @@ export function computeContractMissState(dayStates = []) {
         broken: consecutiveMissedDays >= 2,
     };
 }
+
+/**
+ * Strict day-completion metrics:
+ * - daysPracticed: obligation days where all obligations are satisfied
+ * - streakCurrent: consecutive satisfied obligation days up to window end (off-days skipped)
+ * - streakBest: best consecutive satisfied obligation-day streak in window (off-days skipped)
+ */
+export function computeContractDayCompletionStats(dayStates = []) {
+    if (!Array.isArray(dayStates) || dayStates.length === 0) {
+        return { daysPracticed: 0, streakCurrent: 0, streakBest: 0 };
+    }
+
+    const obligationDays = dayStates.filter((day) => day?.isObligationDay);
+    if (obligationDays.length === 0) {
+        return { daysPracticed: 0, streakCurrent: 0, streakBest: 0 };
+    }
+
+    const daysPracticed = obligationDays.filter((day) => day.daySatisfied).length;
+
+    let streakBest = 0;
+    let running = 0;
+    for (const day of obligationDays) {
+        if (day.daySatisfied) {
+            running += 1;
+            if (running > streakBest) streakBest = running;
+        } else {
+            running = 0;
+        }
+    }
+
+    let streakCurrent = 0;
+    for (let i = obligationDays.length - 1; i >= 0; i--) {
+        if (obligationDays[i].daySatisfied) {
+            streakCurrent += 1;
+            continue;
+        }
+        break;
+    }
+
+    return { daysPracticed, streakCurrent, streakBest };
+}
