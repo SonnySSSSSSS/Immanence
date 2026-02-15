@@ -1,6 +1,52 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const EMPTY_LIFETIME_MAX = Object.freeze({
+    inhale: 0,
+    hold1: 0,
+    exhale: 0,
+    hold2: 0,
+    total: 0,
+});
+
+const normalizePositive = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.round(n);
+};
+
+const sanitizeBenchmarkInput = (results = {}) => {
+    const inhale = normalizePositive(results.inhale);
+    const hold1 = normalizePositive(results.hold1);
+    const exhale = normalizePositive(results.exhale);
+    const hold2 = normalizePositive(results.hold2);
+    const measuredAt = Number.isFinite(Number(results.measuredAt))
+        ? Number(results.measuredAt)
+        : Date.now();
+    const total = inhale + hold1 + exhale + hold2;
+
+    return {
+        inhale,
+        hold1,
+        exhale,
+        hold2,
+        total,
+        measuredAt,
+    };
+};
+
+const mergeLifetimeMax = (current = EMPTY_LIFETIME_MAX, snapshot = null) => {
+    if (!snapshot) return current;
+    const currentSafe = { ...EMPTY_LIFETIME_MAX, ...(current || {}) };
+    return {
+        inhale: Math.max(normalizePositive(currentSafe.inhale), normalizePositive(snapshot.inhale)),
+        hold1: Math.max(normalizePositive(currentSafe.hold1), normalizePositive(snapshot.hold1)),
+        exhale: Math.max(normalizePositive(currentSafe.exhale), normalizePositive(snapshot.exhale)),
+        hold2: Math.max(normalizePositive(currentSafe.hold2), normalizePositive(snapshot.hold2)),
+        total: Math.max(normalizePositive(currentSafe.total), normalizePositive(snapshot.total)),
+    };
+};
+
 /**
  * Breath Benchmark Store
  *
@@ -13,17 +59,51 @@ export const useBreathBenchmarkStore = create(
         (set, get) => ({
             // Benchmark data: user's max capacity for each phase (in seconds)
             benchmark: null, // { inhale, hold1, exhale, hold2, measuredAt }
+            benchmarksByRunId: {}, // { [runId]: { day1: snapshot, day14: snapshot } }
+            lifetimeMax: { ...EMPTY_LIFETIME_MAX },
 
             // Set benchmark after completing the 4-phase test
             setBenchmark: (results) => set({
-                benchmark: {
-                    inhale: results.inhale,
-                    hold1: results.hold1,
-                    exhale: results.exhale,
-                    hold2: results.hold2,
-                    measuredAt: Date.now(),
-                }
+                benchmark: sanitizeBenchmarkInput(results),
+                lifetimeMax: mergeLifetimeMax(get().lifetimeMax, sanitizeBenchmarkInput(results)),
             }),
+
+            // Save benchmark snapshot for a specific run and contract day (day1/day14)
+            saveRunBenchmark: ({ runId, dayNumber, results }) => set((state) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                const dayNum = Number(dayNumber);
+                const dayKey = dayNum === 1 ? 'day1' : dayNum === 14 ? 'day14' : null;
+                const snapshot = sanitizeBenchmarkInput(results);
+
+                if (!safeRunId || !dayKey) {
+                    return {
+                        benchmark: snapshot,
+                        lifetimeMax: mergeLifetimeMax(state.lifetimeMax, snapshot),
+                    };
+                }
+
+                const existingForRun = state.benchmarksByRunId?.[safeRunId] || {};
+                return {
+                    benchmark: snapshot,
+                    benchmarksByRunId: {
+                        ...(state.benchmarksByRunId || {}),
+                        [safeRunId]: {
+                            ...existingForRun,
+                            [dayKey]: snapshot,
+                        },
+                    },
+                    lifetimeMax: mergeLifetimeMax(state.lifetimeMax, snapshot),
+                };
+            }),
+
+            getRunBenchmark: (runId, dayNumber) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                if (!safeRunId) return null;
+                const dayNum = Number(dayNumber);
+                const dayKey = dayNum === 1 ? 'day1' : dayNum === 14 ? 'day14' : null;
+                if (!dayKey) return null;
+                return get().benchmarksByRunId?.[safeRunId]?.[dayKey] || null;
+            },
 
             // Clear benchmark data
             clearBenchmark: () => set({ benchmark: null }),
@@ -96,7 +176,27 @@ export const useBreathBenchmarkStore = create(
         }),
         {
             name: 'immanence-breath-benchmark',
-            version: 1,
+            version: 2,
+            migrate: (persistedState) => {
+                const next = persistedState || {};
+                const benchmark = next.benchmark ? sanitizeBenchmarkInput(next.benchmark) : null;
+                const benchmarksByRunId = next.benchmarksByRunId && typeof next.benchmarksByRunId === 'object'
+                    ? next.benchmarksByRunId
+                    : {};
+                const seedLifetime = next.lifetimeMax && typeof next.lifetimeMax === 'object'
+                    ? { ...EMPTY_LIFETIME_MAX, ...next.lifetimeMax }
+                    : { ...EMPTY_LIFETIME_MAX };
+                const lifetimeMax = benchmark
+                    ? mergeLifetimeMax(seedLifetime, benchmark)
+                    : seedLifetime;
+
+                return {
+                    ...next,
+                    benchmark,
+                    benchmarksByRunId,
+                    lifetimeMax,
+                };
+            },
         }
     )
 );

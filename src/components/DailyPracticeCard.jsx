@@ -299,6 +299,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Navigation path fallback
     const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
     const activePathObj = activePathId ? getPathById(activePathId) : null;
+    const isInitiationV2Path = activePathObj?.tracking?.curriculumId === 'ritual-initiation-14-v2';
     const activePath = useNavigationStore(s => s.activePath);
     const times = normalizeAndSortTimeSlots(activePath?.schedule?.selectedTimes || [], { maxCount: 3 }); // ["06:00","20:00"]
 
@@ -910,7 +911,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 const { tooEarly, expired } = scheduledAt ? getStartWindowState({ now: new Date(), scheduledAt }) : { tooEarly: false, expired: false };
                                                 const isOutsideWindow = tooEarly || expired;
                                                 // Check if benchmark is required but not completed
-                                                const requiresBenchmark = activePathObj?.showBreathBenchmark && slotLaunches[idx]?.practiceId === 'breath';
+                                                const requiresBenchmark = activePathObj?.showBreathBenchmark
+                                                    && !isInitiationV2Path
+                                                    && slotLaunches[idx]?.practiceId === 'breath';
                                                 const benchmarkMissing = requiresBenchmark && !hasBenchmark();
                                                 // Each slot opens independently based on its own time window (allows partial day completion)
                                                 const isActionable = !isDone && !isOutsideWindow && !benchmarkMissing && slotLaunches[idx]?.practiceId;

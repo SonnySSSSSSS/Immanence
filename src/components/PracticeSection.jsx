@@ -12,6 +12,7 @@ import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
 import { BreathBenchmark } from "./BreathBenchmark.jsx";
+import { BenchmarkBreathworkUI } from "./BenchmarkBreathworkUI.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
@@ -55,6 +56,7 @@ import ParallaxForest from "./ParallaxForest.jsx";
 import { SakshiVisual } from "./SakshiVisual.jsx";
 import { useAwarenessSceneStore } from "../state/awarenessSceneStore.js";
 import { recordPracticeSession } from "../services/sessionRecorder.js";
+import { getPathById } from "../data/navigationData.js";
 import { PRACTICE_REGISTRY, PRACTICE_IDS, GRID_PRACTICE_IDS, DURATIONS, OLD_TO_NEW_PRACTICE_MAP, resolvePracticeId, labelToPracticeId } from "./PracticeSection/constants.js";
 import { getRitualById } from "../data/bhaktiRituals.js";
 
@@ -358,6 +360,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Breath benchmark for progressive patterns
   const benchmark = useBreathBenchmarkStore(s => s.benchmark);
+  const benchmarksByRunId = useBreathBenchmarkStore(s => s.benchmarksByRunId);
   const hasBenchmark = Boolean(
     benchmark &&
     Number.isFinite(benchmark.inhale) && benchmark.inhale > 0 &&
@@ -366,8 +369,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     Number.isFinite(benchmark.hold2) && benchmark.hold2 > 0
   );
   const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
+  const saveRunBenchmark = useBreathBenchmarkStore(s => s.saveRunBenchmark);
   const hasSong = useTempoAudioStore((s) => s.hasSong);
   const isSongPlaying = useTempoAudioStore((s) => s.isPlaying);
+  const activePath = useNavigationStore(s => s.activePath);
   
   // Tempo sync state for music-synced breathing
   const tempoSyncEnabled = useTempoSyncStore(s => s.enabled);
@@ -410,6 +415,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [hasExpandedOnce, setHasExpandedOnce] = useState(!!initialPracticeId);
   const [duration, setDuration] = useState(savedPrefs.duration || 10);
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
+  const [showInitiationBenchmark, setShowInitiationBenchmark] = useState(false);
+  const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
@@ -430,6 +437,47 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
+
+  const resolveInitiationV2BenchmarkContext = useCallback((ctx) => {
+    if (!ctx || ctx.source !== 'dailySchedule' || ctx.practiceId !== 'breath') {
+      return null;
+    }
+
+    const pathCtx = ctx.pathContext || {};
+    const pathId = pathCtx.activePathId || activePath?.activePathId || null;
+    const pathDef = pathId ? getPathById(pathId) : null;
+    const curriculumId = pathDef?.tracking?.curriculumId || null;
+    if (curriculumId !== 'ritual-initiation-14-v2') {
+      return null;
+    }
+
+    const dayIndex = Number(pathCtx.dayIndex);
+    if (!(dayIndex === 1 || dayIndex === 14)) {
+      return null;
+    }
+
+    const slotIndexRaw = Number(pathCtx.slotIndex);
+    let isMorningLeg = Number.isFinite(slotIndexRaw) ? slotIndexRaw === 0 : false;
+    if (!Number.isFinite(slotIndexRaw)) {
+      const selectedTimes = Array.isArray(activePath?.schedule?.selectedTimes)
+        ? activePath.schedule.selectedTimes
+        : [];
+      const firstSlotTime = selectedTimes[0] || null;
+      const slotTime = typeof pathCtx.slotTime === 'string' ? pathCtx.slotTime.substring(0, 5) : null;
+      isMorningLeg = !!firstSlotTime && !!slotTime && firstSlotTime.substring(0, 5) === slotTime;
+    }
+    if (!isMorningLeg) {
+      return null;
+    }
+
+    return {
+      runId: pathCtx.runId || activePath?.runId || null,
+      activePathId: pathId,
+      dayIndex,
+      slotIndex: Number.isFinite(slotIndexRaw) ? slotIndexRaw : 0,
+      weekIndex: Number(pathCtx.weekIndex) || Math.ceil(dayIndex / 7),
+    };
+  }, [activePath]);
 
   const mergePracticeParamsPatch = useCallback((patch) => {
     if (!patch || typeof patch !== 'object') return;
@@ -467,6 +515,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleSelectPractice = useCallback((id) => {
     suppressPrefSaveRef.current = false;
     clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
+    setShowInitiationBenchmark(false);
+    setInitiationBenchmarkContext(null);
     setPracticeId(id);
     // Save immediately with current state
     savePreferences({
@@ -572,6 +622,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!practiceLaunchContext) return;
 
     const ctx = practiceLaunchContext;
+    const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
+    setInitiationBenchmarkContext(benchmarkCtx);
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
 
     // Apply session overrides + locks (ephemeral). This prevents global defaults (e.g. photic) from being mutated.
@@ -675,7 +727,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     clearPracticeLaunchContext?.();
-  }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit]);
+  }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit, resolveInitiationV2BenchmarkContext]);
 
   const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -1428,6 +1480,100 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   };
 
+  const initiationComparisonBaseline = useMemo(() => {
+    const runId = initiationBenchmarkContext?.runId || null;
+    if (!runId) return null;
+    return benchmarksByRunId?.[runId]?.day1 || null;
+  }, [benchmarksByRunId, initiationBenchmarkContext?.runId]);
+
+  const handleInitiationBenchmarkCancel = useCallback(() => {
+    setShowInitiationBenchmark(false);
+  }, []);
+
+  const handleInitiationBenchmarkSave = useCallback((results) => {
+    const ctx = initiationBenchmarkContext || {};
+    const runId = ctx.runId || activePathContextRef.current?.runId || activePath?.runId || null;
+    const activePathId = ctx.activePathId || activePathContextRef.current?.activePathId || activePath?.activePathId || null;
+    const dayIndex = Number(ctx.dayIndex || activePathContextRef.current?.dayIndex || 0);
+    const weekIndex = Number(ctx.weekIndex || activePathContextRef.current?.weekIndex || 0);
+
+    const snapshot = {
+      inhale: Math.max(0, Math.round(Number(results?.inhale) || 0)),
+      hold1: Math.max(0, Math.round(Number(results?.hold1) || 0)),
+      exhale: Math.max(0, Math.round(Number(results?.exhale) || 0)),
+      hold2: Math.max(0, Math.round(Number(results?.hold2) || 0)),
+    };
+    const totalDurationSec = snapshot.inhale + snapshot.hold1 + snapshot.exhale + snapshot.hold2;
+    const actualDurationSec = Math.max(1, totalDurationSec);
+    const actualDurationMinutes = Math.round((actualDurationSec / 60) * 10) / 10;
+
+    saveRunBenchmark?.({
+      runId,
+      dayNumber: dayIndex,
+      results: snapshot,
+    });
+
+    let recordedSession = null;
+    try {
+      const endedAtIso = new Date().toISOString();
+      const startedAtIso = new Date(Date.now() - (actualDurationSec * 1000)).toISOString();
+      recordedSession = recordPracticeSession({
+        domain: 'breathwork',
+        duration: actualDurationMinutes,
+        durationSec: actualDurationSec,
+        exitType: 'completed',
+        practiceId: 'breath',
+        practiceMode: breathSubmode ?? null,
+        configSnapshot: {
+          breathSubmode: breathSubmode ?? null,
+          benchmarkDay: dayIndex,
+          benchmarkType: 'initiation-v2',
+          isComparison: dayIndex === 14,
+          baselineDay1: dayIndex === 14 ? initiationComparisonBaseline || null : null,
+          snapshot,
+        },
+        startedAt: startedAtIso,
+        endedAt: endedAtIso,
+        activePathId,
+        runId,
+        dayIndex: Number.isFinite(dayIndex) && dayIndex > 0 ? dayIndex : null,
+        weekIndex: Number.isFinite(weekIndex) && weekIndex > 0 ? weekIndex : null,
+      });
+    } catch (e) {
+      console.error("Failed to save initiation benchmark session:", e);
+    }
+
+    setShowInitiationBenchmark(false);
+    setInitiationBenchmarkContext(null);
+
+    setSessionSummary({
+      practice: 'Breath & Stillness',
+      duration: actualDurationMinutes,
+      tapStats: null,
+      breathCount: 0,
+      exitType: 'completed',
+      curriculumDayNumber: null,
+      legNumber: null,
+      totalLegs: null,
+      benchmarkSnapshot: snapshot,
+      benchmarkDay: dayIndex,
+      sessionRecord: recordedSession,
+    });
+    setShowSummary(true);
+
+    if (recordedSession) {
+      setLastSessionId(recordedSession.id);
+      startMicroNote(recordedSession.id);
+    }
+  }, [
+    initiationBenchmarkContext,
+    activePath,
+    breathSubmode,
+    saveRunBenchmark,
+    initiationComparisonBaseline,
+    startMicroNote,
+  ]);
+
   // Declare executeStart before useEffect that calls it
   const executeStart = useCallback(() => {
     // Validate circuit for consecutive duplicate exercises
@@ -1574,6 +1720,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [circuitConfig, practiceId, circuitValidationError]);
 
   const handleStart = (durationOverrideSec = null, ritualOverride = null) => {
+    if (practiceId === 'breath' && initiationBenchmarkContext) {
+      const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
+      if (logScheduleAdherenceStart) {
+        logScheduleAdherenceStart({ actualStartTime: Date.now() });
+      }
+      setShowInitiationBenchmark(true);
+      return;
+    }
+
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
 
@@ -2202,6 +2357,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   return (
     <>
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
+      <BenchmarkBreathworkUI
+        isOpen={showInitiationBenchmark}
+        dayNumber={initiationBenchmarkContext?.dayIndex || 1}
+        comparisonBaseline={initiationComparisonBaseline}
+        onCancel={handleInitiationBenchmarkCancel}
+        onSave={handleInitiationBenchmarkSave}
+      />
       <DevCompleteNowOverlay
         isRunning={isRunning}
         onCompleteNow={() => handleStop({ completed: true })}
