@@ -4,12 +4,13 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // Skippable onboarding flow that introduces:
-// 1. Welcome & Philosophy
-// 2. Practice explanation
-// 3. 14-day curriculum overview
+// 1. Read framing
+// 2. Contract framing
+// 3. 14-day arc overview
 // 4. Practice day contract selection (5-7 days)
 // 5. Time selection for daily practice (exactly 2)
-// 6. Confirmation & start
+// 6. Benchmark explanation
+// 7. Confirmation & start
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -19,7 +20,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { DayOfWeekPicker } from './schedule/DayOfWeekPicker.jsx';
-import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
+import { RITUAL_INITIATION_14_V2 } from '../data/ritualInitiation14v2.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
 
@@ -60,25 +61,25 @@ function StepWelcome({ onNext, isLight }) {
                         textShadow: '0 0 20px var(--accent-20)',
                     }}
                 >
-                    Welcome to Your Practice
+                    Initiation Path
                 </h1>
 
                 <p className="text-[16px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    You're about to begin a 14-day journey into structured daily practice.
+                    This onboarding takes about 3 minutes.
                 </p>
 
                 <div className="w-32 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    This isn't about relaxation or stress relief.
+                    You are setting a fixed 14-day contract.
                 </p>
 
                 <p className="text-[16px] leading-relaxed font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.95)' }}>
-                    It's about building the capacity to <em>be present</em> — to expand your container for awareness itself.
+                    The rule is simple: show up for the sessions you commit to.
                 </p>
 
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                    Each day builds on the last. Consistency matters more than perfection.
+                    Continue when ready.
                 </p>
             </div>
 
@@ -100,7 +101,7 @@ function StepPracticeExplain({ onNext, onBack, isLight }) {
                         color: 'var(--accent-color)',
                     }}
                 >
-                    How Practice Works
+                    Contract Terms
                 </h2>
 
                 <div className="flex flex-col sm:grid sm:grid-cols-3 gap-4 py-4">
@@ -125,17 +126,17 @@ function StepPracticeExplain({ onNext, onBack, isLight }) {
                 </div>
 
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    You'll practice different techniques: breathing, body awareness, thought observation, and structured rituals.
+                    You commit to two daily slots: one morning breath leg and one evening awareness leg.
                 </p>
 
                 <div className="w-24 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    Some days are single practices. Others combine multiple techniques in a <strong>circuit</strong>.
+                    Completion is evaluated against your chosen days and times.
                 </p>
 
                 <p className="text-[14px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                    Sessions range from 5 to 18 minutes.
+                    Outside schedule sessions are still logged, but they are not credited.
                 </p>
             </div>
 
@@ -152,7 +153,7 @@ function StepPracticeExplain({ onNext, onBack, isLight }) {
 }
 
 function StepCurriculumOverview({ onNext, onBack, isLight }) {
-    const curriculum = RITUAL_FOUNDATION_14;
+    const curriculum = RITUAL_INITIATION_14_V2;
     
     return (
         <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
@@ -163,7 +164,7 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
                     color: 'var(--accent-color)',
                 }}
             >
-                Your 14-Day Path
+                The 14-Day Arc
             </h2>
 
             {/* Week Overview */}
@@ -175,9 +176,9 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
                         border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
-                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>Week 1: Settling</h3>
+                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>Week 1: Establish</h3>
                     <p className="text-xs" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                        Building the habit. Breath, body, and first circuits.
+                        Morning breath + evening circuit every obligation day.
                     </p>
                 </div>
                 <div 
@@ -187,9 +188,9 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
                         border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
                     }}
                 >
-                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>Week 2: Deepening</h3>
+                    <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent-color)' }}>Week 2: Consolidate</h3>
                     <p className="text-xs" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                        Expanding capacity. Rituals, sound, and integration.
+                        Same structure, tighter execution, no drift.
                     </p>
                 </div>
             </div>
@@ -212,11 +213,11 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
             </div>
 
             <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                You'll track each day's completion and reflect on your experience.
+                Day 1 captures your baseline breath benchmark.
             </p>
 
             <p className="text-[14px] leading-relaxed font-medium" style={{ color: isLight ? 'rgba(60, 50, 40, 0.9)' : 'rgba(253,251,245,0.9)' }}>
-                At the end, you'll receive a complete report of your journey.
+                Day 14 repeats it so you can compare your change directly.
             </p>
 
             <div className="flex gap-4 justify-center pt-2">
@@ -275,11 +276,11 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
                     color: 'var(--accent-color)',
                 }}
             >
-                Set Your Practice Times
+                Select Contract Times
             </h2>
 
             <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                Select exactly 2 times for your daily contract.
+                Choose exactly 2 daily slots: one morning and one evening.
             </p>
 
             <PracticeTimesPicker
@@ -308,6 +309,43 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
     );
 }
 
+function StepBenchmarkExplain({ onNext, onBack, isLight }) {
+    return (
+        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <h2
+                className="text-xl font-semibold tracking-wide"
+                style={{
+                    fontFamily: 'var(--font-display)',
+                    color: 'var(--accent-color)',
+                }}
+            >
+                Benchmark Rule
+            </h2>
+
+            <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                Day 1 morning: you run a breath benchmark and store a baseline.
+            </p>
+
+            <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                Day 14 morning: you repeat it and view the comparison.
+            </p>
+
+            <p className="text-[13px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}>
+                This is informational. Contract credit still depends on completing your scheduled legs.
+            </p>
+
+            <div className="flex gap-4 justify-center pt-2">
+                <PillButton onClick={onBack} variant="secondary" size="md">
+                    Back
+                </PillButton>
+                <PillButton onClick={onNext} variant="primary" size="md">
+                    Continue
+                </PillButton>
+            </div>
+        </div>
+    );
+}
+
 function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight }) {
     const now = new Date();
     const firstSlotTime = selectedTimes?.[0] || null;
@@ -325,12 +363,12 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight 
                     color: 'var(--accent-color)',
                 }}
             >
-                Ready to Begin
+                Final Contract Summary
             </h2>
 
             <div className="space-y-4">
                 <p className="text-[15px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.8)' : 'rgba(253,251,245,0.8)' }}>
-                    Your 14-day curriculum starts {startsTomorrow ? 'tomorrow' : 'today'}.
+                    Your 14-day contract starts {startsTomorrow ? 'tomorrow' : 'today'}.
                 </p>
 
                 <p className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
@@ -346,7 +384,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight 
                 <div className="w-24 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
                 <p className="text-[14px] leading-relaxed italic" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                    "The journey of a thousand miles begins with a single breath."
+                    This is about keeping your word, one day at a time.
                 </p>
             </div>
 
@@ -364,7 +402,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight 
                         letterSpacing: 'var(--tracking-mythic)',
                     }}
                 >
-                    Begin Journey
+                    Begin Contract
                 </PillButton>
             </div>
         </div>
@@ -442,12 +480,12 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         opacity: 0.7,
                     }}
                 >
-                    Skip for now
+                    I already understand
                 </button>
 
                 {/* Progress dots */}
                 <div className="flex justify-center gap-2 mb-8">
-                    {[1, 2, 3, 4, 5, 6].map(s => (
+                    {[1, 2, 3, 4, 5, 6, 7].map(s => (
                         <div
                             key={s}
                             className="w-2 h-2 rounded-full transition-all"
@@ -500,9 +538,16 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         />
                     )}
                     {step === 6 && (
+                        <StepBenchmarkExplain
+                            onNext={() => setStep(7)}
+                            onBack={() => setStep(5)}
+                            isLight={isLight}
+                        />
+                    )}
+                    {step === 7 && (
                         <StepConfirm 
                             onComplete={handleComplete} 
-                            onBack={() => setStep(5)} 
+                            onBack={() => setStep(6)} 
                             selectedTimes={selectedTimes}
                             selectedDays={selectedDays}
                             isLight={isLight} 
