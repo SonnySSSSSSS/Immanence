@@ -90,7 +90,7 @@ export const useCurriculumStore = create(
             // ONBOARDING ACTIONS
             completeOnboarding: (timeSlots = [], thoughts = [], selectedDaysOfWeek = null) => {
                 const nowDate = new Date();
-                const normalizedSlots = normalizeAndSortTimeSlots(timeSlots, { maxCount: 3 });
+                const normalizedSlots = normalizeAndSortTimeSlots(timeSlots, { maxCount: 2 });
                 const normalizedDays = normalizeDaysOfWeek(
                     selectedDaysOfWeek || get().selectedDaysOfWeekDraft || DEFAULT_SELECTED_DAYS_OF_WEEK
                 );
@@ -125,8 +125,8 @@ export const useCurriculumStore = create(
              * Set practice time slots (canonical schedule authoring point)
              * Normalizes input: filters falsy, converts to "HH:mm", limits to 3 slots
              */
-            setPracticeTimeSlots: (times = []) => {
-                set({ practiceTimeSlots: normalizeAndSortTimeSlots(times, { maxCount: 3 }) });
+            setPracticeTimeSlots: (times = [], { maxCount = 3 } = {}) => {
+                set({ practiceTimeSlots: normalizeAndSortTimeSlots(times, { maxCount }) });
             },
 
             /**
@@ -149,8 +149,8 @@ export const useCurriculumStore = create(
             /**
              * Get practice time slots (canonical schedule read point)
              */
-            getPracticeTimeSlots: () => {
-                return normalizeAndSortTimeSlots(get().practiceTimeSlots || [], { maxCount: 3 });
+            getPracticeTimeSlots: ({ maxCount = 3 } = {}) => {
+                return normalizeAndSortTimeSlots(get().practiceTimeSlots || [], { maxCount });
             },
 
             shouldShowOnboarding: () => {

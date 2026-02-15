@@ -69,9 +69,10 @@ export const paths = [
         id: "initiation-2",
         title: "Initiation Path 2",
         subtitle: "An alternate beginning",
-        description: "A 3-week journey focusing on resonance breathing and body awareness for deeper somatic integration.",
+        description: "A strict 14-day initiation contract built on consistency and attention stability.",
         glyph: "🌟",
-        duration: 3, // 3 weeks
+        duration: 2, // 14 days
+        showBreathBenchmark: true,
 
         practices: [
             { type: "Breathing", pattern: "Resonance", duration: 10 },
@@ -81,50 +82,29 @@ export const paths = [
         chapters: [],
         applicationItems: [],
 
-        weeks: [
-            {
-                number: 1,
-                title: "Ground in the Body",
-                focus: "Morning resonance breath (10min) + Evening body scan (12min)",
-                practices: [
-                    "Resonance breathing (10min upon waking)",
-                    "Body scan meditation (12min before sleep)"
-                ],
-                reading: [],
-                tracking: "Notice physical sensations throughout the day"
-            },
-            {
-                number: 2,
-                title: "Expand Awareness",
-                focus: "Lengthen practice, deepen attention",
-                practices: [
-                    "Resonance breathing (10min upon waking)",
-                    "Body scan with breath integration (12min)"
-                ],
-                reading: [],
-                tracking: "Journal: Where does tension live in your body?"
-            },
-            {
-                number: 3,
-                title: "Integrate the Practice",
-                focus: "Consolidate gains, establish rhythm",
-                practices: [
-                    "Resonance breathing (10min upon waking)",
-                    "Full body awareness circuit (15min evening)"
-                ],
-                reading: [],
-                tracking: "Reflect: How has your body awareness changed?"
-            }
-        ],
+        weeks: [],
+        scheduleSelection: {
+            requiredCount: 2,
+            maxCount: 2,
+            errorMessage: "Please select exactly 2 time slots to begin this path.",
+        },
+        contract: {
+            totalDays: 14,
+            practiceDaysPerWeek: 6,
+            requiredTimeSlots: 2,
+            maxLegsPerDay: 2,
+            requiredLegsPerDay: 2,
+        },
 
         tracking: {
-            durationDays: 21,
-            summary: "Three-week somatic integration with resonance and body awareness.",
+            curriculumId: 'ritual-initiation-14-v2',
+            durationDays: 14,
+            summary: "Strict 14-day initiation with two required daily legs.",
             defaultCommitment: {
                 frequency: "daily",
-                sessionsPerWeek: 7,
+                sessionsPerWeek: 6,
             },
-            allowedPractices: ["breath", "body_scan"],
+            allowedPractices: ["breath", "circuit"],
             tags: ["foundation", "initiation"],
         }
     }

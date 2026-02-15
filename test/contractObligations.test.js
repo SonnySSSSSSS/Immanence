@@ -360,3 +360,26 @@ test('contract freeze invariance: selectedDaysOfWeek controls obligations even i
   assert.deepEqual(after.dayStates, before.dayStates);
   assert.deepEqual(after.railDays.map((d) => d.dayStatus), before.railDays.map((d) => d.dayStatus));
 });
+
+test('selectedDaysOfWeek excludes Sunday obligations when Sunday is rest day', () => {
+  const summary = computeContractObligationSummary({
+    windowStartLocalDateKey: '2026-02-15', // Sunday
+    windowEndLocalDateKey: '2026-02-15',
+    selectedDaysOfWeek: [1, 2, 3, 4, 5, 6], // Mon-Sat active
+    selectedTimes: ['17:00', '21:00'],
+    curriculumStoreState: createCurriculumState({
+      curriculumStartDate: '2026-02-10T09:00:00.000Z',
+      practiceTimeSlots: ['17:00', '21:00'],
+      getCurriculumDay: (dayNumber) => ({
+        dayNumber,
+        legs: [createRequiredLeg(1, 'breathwork'), createRequiredLeg(2, 'awareness')],
+      }),
+    }),
+    progressStoreState: createProgressState([]),
+  });
+
+  assert.equal(summary.totalObligations, 0);
+  assert.equal(summary.satisfiedObligations, 0);
+  assert.equal(summary.dayStates[0].isObligationDay, false);
+  assert.equal(summary.railDays[0].dayStatus, 'gray');
+});

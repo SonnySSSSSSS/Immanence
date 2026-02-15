@@ -21,6 +21,7 @@ export function BreathBenchmark({ isOpen, onClose }) {
     const setBenchmark = useBreathBenchmarkStore(s => s.setBenchmark);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const isHearth = useDisplayModeStore(s => s.isHearth)();
 
     const [stage, setStage] = useState('intro'); // 'intro' | 'measuring' | 'results'
     const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
@@ -158,26 +159,31 @@ export function BreathBenchmark({ isOpen, onClose }) {
                 style={{
                     position: 'fixed',
                     top: 0,
+                    left: 0,
+                    right: 0,
                     bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '100%',
-                    maxWidth: '820px',
                     zIndex: 9999,
                     background: bgColor,
                     display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
                     justifyContent: 'center',
-                    color: textColor,
-                    fontFamily: 'var(--font-body)',
-                    cursor: stage === 'results' ? 'default' : 'pointer',
-                    padding: '24px 16px',
-                    boxSizing: 'border-box',
                     overflowY: 'auto',
                 }}
                 onClick={stage !== 'results' ? handleTap : undefined}
             >
+            <div style={{
+                width: '100%',
+                maxWidth: isHearth ? '430px' : '760px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: textColor,
+                fontFamily: 'var(--font-body)',
+                cursor: stage === 'results' ? 'default' : 'pointer',
+                padding: '24px 16px',
+                boxSizing: 'border-box',
+                position: 'relative',
+            }}>
                 {/* Close button */}
                 <button
                     onClick={(e) => { e.stopPropagation(); handleCancel(); }}
@@ -430,6 +436,7 @@ export function BreathBenchmark({ isOpen, onClose }) {
                         </div>
                     </motion.div>
                 )}
+            </div>
             </motion.div>
         </AnimatePresence>
     );

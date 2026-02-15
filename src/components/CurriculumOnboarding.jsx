@@ -22,7 +22,8 @@ import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
 import { DayOfWeekPicker } from './schedule/DayOfWeekPicker.jsx';
 import { RITUAL_INITIATION_14_V2 } from '../data/ritualInitiation14v2.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
-import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
+import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
+import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TIME SLOT OPTIONS
@@ -233,15 +234,15 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
 }
 
 function StepDaySelection({ onNext, onBack, selectedDays, setSelectedDays, isLight }) {
-    const isValid = selectedDays.length >= 5 && selectedDays.length <= 7;
+    const isValid = selectedDays.length === 6;
 
     return (
         <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <DayOfWeekPicker
                 value={selectedDays}
                 onChange={setSelectedDays}
-                minSelected={5}
-                maxSelected={7}
+                minSelected={6}
+                maxSelected={6}
                 title="Select Practice Days"
                 subtitle="This is a contract. Choose the days you will keep."
             />
@@ -257,7 +258,7 @@ function StepDaySelection({ onNext, onBack, selectedDays, setSelectedDays, isLig
 
             {!isValid && (
                 <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.7)' : 'rgba(255, 170, 140, 0.8)' }}>
-                    Choose 5-7 days to continue.
+                    Choose exactly 6 days to continue.
                 </p>
             )}
         </div>
@@ -346,7 +347,7 @@ function StepBenchmarkExplain({ onNext, onBack, isLight }) {
     );
 }
 
-function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight }) {
+function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight, benchmarkComplete }) {
     const now = new Date();
     const firstSlotTime = selectedTimes?.[0] || null;
     const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
@@ -380,6 +381,11 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight 
                 <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.75)' : 'rgba(255, 170, 140, 0.85)' }}>
                     Outside these days/times is logged but not credited.
                 </p>
+                {!benchmarkComplete && (
+                    <p className="text-[12px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.85)' : 'rgba(255, 180, 120, 0.95)' }}>
+                        Complete the breathing benchmark first.
+                    </p>
+                )}
 
                 <div className="w-24 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
@@ -396,6 +402,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight 
                     onClick={onComplete}
                     variant="primary"
                     size="lg"
+                    disabled={!benchmarkComplete}
                     style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
@@ -418,6 +425,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
     
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    const benchmarkComplete = useBreathBenchmarkStore(s => s.hasBenchmark());
     
     const {
         completeOnboarding,
@@ -428,7 +436,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
         setSelectedDaysOfWeekDraft,
         getSelectedDaysOfWeekDraft,
     } = useCurriculumStore();
-    const [selectedTimes, setSelectedTimes] = useState((practiceTimeSlots || []).slice(0, 2));
+    const [selectedTimes, setSelectedTimes] = useState(normalizeAndSortTimeSlots(practiceTimeSlots || [], { maxCount: 24 }));
     const [selectedDays, setSelectedDays] = useState(
         getSelectedDaysOfWeekDraft?.() || selectedDaysOfWeekDraft || [1, 2, 3, 4, 5, 6]
     );
@@ -444,6 +452,9 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
     };
 
     const handleComplete = () => {
+        if (selectedTimes.length !== 2 || selectedDays.length !== 6 || !benchmarkComplete) {
+            return;
+        }
         completeOnboarding(selectedTimes, [], selectedDays);
         onComplete?.();
     };
@@ -550,6 +561,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                             onBack={() => setStep(6)} 
                             selectedTimes={selectedTimes}
                             selectedDays={selectedDays}
+                            benchmarkComplete={benchmarkComplete}
                             isLight={isLight} 
                         />
                     )}

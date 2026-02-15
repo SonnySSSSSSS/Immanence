@@ -1,4 +1,5 @@
 import { getPathById } from '../data/navigationData.js';
+import { getPathContract } from './pathContract.js';
 
 const DEFAULT_MAX_COUNT = 3;
 const DEFAULT_MIN_COUNT = 1;
@@ -63,7 +64,15 @@ export function getScheduleConstraintForPath(pathId) {
     const path = pathId ? getPathById(pathId) : null;
     if (!path) return null;
     if (path.simple) return null;
-    return normalizeScheduleConstraint(path.scheduleSelection, { includeDefault: true });
+    const contract = getPathContract(path);
+    const requiredFromContract = contract.requiredTimeSlots;
+    const maxFromContract = contract.maxLegsPerDay;
+    const merged = {
+        ...(path.scheduleSelection || {}),
+        ...(Number.isInteger(requiredFromContract) ? { requiredCount: requiredFromContract } : {}),
+        ...(Number.isInteger(maxFromContract) ? { maxCount: maxFromContract } : {}),
+    };
+    return normalizeScheduleConstraint(merged, { includeDefault: true });
 }
 
 export function validateSelectedTimes(selectedTimes, constraint) {
@@ -103,4 +112,3 @@ export function canToggleTime(nextSelectedTimes, constraint) {
     const count = Array.isArray(nextSelectedTimes) ? nextSelectedTimes.length : 0;
     return count <= maxCount;
 }
-

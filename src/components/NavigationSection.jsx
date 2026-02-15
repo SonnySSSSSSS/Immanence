@@ -242,8 +242,11 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
               <PathOverviewPanel
                 path={overlayPath}
                 onBegin={(pathId) => {
-                  beginPath(pathId);
-                  closeOverlay();
+                  const result = beginPath(pathId);
+                  if (result?.ok !== false) {
+                    closeOverlay();
+                  }
+                  return result;
                 }}
                 onClose={closeOverlay}
                 onNavigate={onNavigate}

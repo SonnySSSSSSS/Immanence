@@ -6,9 +6,12 @@ import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
 import { useCurriculumStore } from './curriculumStore';
+import { useBreathBenchmarkStore } from './breathBenchmarkStore.js';
 import { reconcileCurriculumForNavigation } from './navigationCurriculumInvariant.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
+import { getPathContract, normalizePathSelections, validatePathActivationSelections } from '../utils/pathContract.js';
+import { validateBenchmarkPrerequisite, isContractComplete } from '../utils/pathActivationGuards.js';
 import {
     computeContractDayCompletionStats,
     computeContractMissState,
@@ -22,6 +25,8 @@ const SCHEDULE_MATCH_RADIUS_MIN = 90;
 const getPathDurationDays = (pathId) => {
     const path = getPathById(pathId);
     if (!path) return null;
+    const contract = getPathContract(path);
+    if (typeof contract?.totalDays === 'number') return contract.totalDays;
     if (typeof path?.tracking?.durationDays === 'number') return path.tracking.durationDays;
     if (typeof path?.duration === 'number') return path.duration * 7;
     return null;
@@ -45,7 +50,27 @@ const getTimezone = () => {
 
 const normalizeDayOfWeekList = (days = []) => {
     const normalized = Array.isArray(days)
-        ? days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        ? days.map((d) => {
+            if (Number.isInteger(d) && d >= 0 && d <= 6) return d;
+            if (Number.isInteger(d) && d >= 1 && d <= 7) return d % 7;
+            if (typeof d === 'string') {
+                const lower = d.trim().toLowerCase();
+                const byName = {
+                    sun: 0, sunday: 0,
+                    mon: 1, monday: 1,
+                    tue: 2, tues: 2, tuesday: 2,
+                    wed: 3, wednesday: 3,
+                    thu: 4, thur: 4, thurs: 4, thursday: 4,
+                    fri: 5, friday: 5,
+                    sat: 6, saturday: 6,
+                };
+                if (Object.prototype.hasOwnProperty.call(byName, lower)) return byName[lower];
+                const parsed = Number(lower);
+                if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 7) return parsed % 7;
+                if (Number.isInteger(parsed) && parsed >= 0 && parsed <= 6) return parsed;
+            }
+            return null;
+        }).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
         : [];
     return [...new Set(normalized)].sort((a, b) => a - b);
 };
@@ -94,17 +119,32 @@ export const useNavigationStore = create(
                 const selectedDaysRaw = curriculumState.getSelectedDaysOfWeekDraft?.()
                     || curriculumState.selectedDaysOfWeekDraft
                     || [];
-                const scheduleConstraint = getScheduleConstraintForPath(pathId);
-                const selectedTimes = normalizeAndSortTimeSlots(selectedTimesRaw, {
-                    maxCount: scheduleConstraint?.maxCount ?? 3,
+                const path = getPathById(pathId);
+                const contract = getPathContract(path);
+                const benchmarkCheck = validateBenchmarkPrerequisite({
+                    path,
+                    hasBenchmark: useBreathBenchmarkStore.getState().hasBenchmark(),
                 });
-                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(selectedDaysRaw);
+                if (!benchmarkCheck.ok) {
+                    return benchmarkCheck;
+                }
+                const scheduleConstraint = getScheduleConstraintForPath(pathId);
+                const normalizedSelections = normalizePathSelections({
+                    selectedTimes: selectedTimesRaw,
+                    selectedDaysOfWeek: selectedDaysRaw,
+                });
+                const selectedTimes = normalizedSelections.selectedTimes;
+                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(normalizedSelections.selectedDaysOfWeek);
                 const validation = validateSelectedTimes(selectedTimes, scheduleConstraint);
                 if (!validation.ok) {
                     return { ok: false, error: validation.error };
                 }
-                if (frozenSelectedDaysOfWeek.length < 5 || frozenSelectedDaysOfWeek.length > 7) {
-                    return { ok: false, error: 'Choose 5 to 7 practice days to begin this path.' };
+                const activationValidation = validatePathActivationSelections(path, {
+                    selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                    selectedTimes,
+                });
+                if (!activationValidation.ok) {
+                    return { ok: false, error: activationValidation.error };
                 }
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
@@ -126,6 +166,11 @@ export const useNavigationStore = create(
                         schedule: {
                             selectedTimes,
                             selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                            activeDays: frozenSelectedDaysOfWeek,
+                            practiceDaysPerWeek: contract.practiceDaysPerWeek ?? null,
+                            requiredTimeSlots: contract.requiredTimeSlots ?? null,
+                            requiredLegsPerDay: contract.requiredLegsPerDay ?? null,
+                            maxLegsPerDay: contract.maxLegsPerDay ?? null,
                             timezone: getTimezone(),
                         },
                         progress: {
@@ -276,11 +321,13 @@ export const useNavigationStore = create(
                 // Extract times from slot objects
                 const times = slots
                     .filter(slot => slot && slot.time)
-                    .map(slot => slot.time)
-                    .slice(0, maxAllowed);
+                    .map(slot => slot.time);
+                if (times.length > maxAllowed) {
+                    return false;
+                }
 
                 // Write to canonical curriculum store
-                useCurriculumStore.getState().setPracticeTimeSlots(times);
+                useCurriculumStore.getState().setPracticeTimeSlots(times, { maxCount: maxAllowed });
 
                 // Update activePath.schedule.selectedTimes for consistency
                 set((state) => ({
@@ -293,6 +340,7 @@ export const useNavigationStore = create(
                         }
                     } : state.activePath
                 }));
+                return true;
             },
 
             /**
@@ -487,7 +535,7 @@ export const useNavigationStore = create(
                     : [0, 1, 2, 3, 4, 5, 6];
                 const frozenSelectedTimes = normalizeAndSortTimeSlots(
                     state.activePath.schedule?.selectedTimes || [],
-                    { maxCount: 3 }
+                    { maxCount: state.activePath.schedule?.maxLegsPerDay ?? 3 }
                 );
 
                 const pathEndLocalKey = addDaysToDateKey(startedAtLocalKey, durationDays - 1);
@@ -507,6 +555,7 @@ export const useNavigationStore = create(
                         windowEndLocalDateKey: windowEndLocalKey,
                         selectedDaysOfWeek: selectedDaysArg,
                         selectedTimes: frozenSelectedTimes,
+                        maxLegsPerDay: state.activePath.schedule?.maxLegsPerDay ?? null,
                         curriculumStoreState: curriculumState,
                         progressStoreState: progressState,
                         isSessionEligible: isSessionInActiveRun,
@@ -519,9 +568,28 @@ export const useNavigationStore = create(
                     streakBest = completionStats.streakBest;
                 }
 
+                // Full-contract obligation totals (all days, not clipped to today).
+                let totalSessionsInContract = expectedSessionsSoFar;
+                let completedSessionsInContract = completedSessionsSoFar;
+                const isWindowClipped = pathEndLocalKey && windowEndLocalKey < pathEndLocalKey;
+                if (isWindowClipped && startedAtLocalKey <= pathEndLocalKey) {
+                    const fullContractSummary = computeContractObligationSummary({
+                        windowStartLocalDateKey: startedAtLocalKey,
+                        windowEndLocalDateKey: pathEndLocalKey,
+                        selectedDaysOfWeek: selectedDaysArg,
+                        selectedTimes: frozenSelectedTimes,
+                        maxLegsPerDay: state.activePath.schedule?.maxLegsPerDay ?? null,
+                        curriculumStoreState: curriculumState,
+                        progressStoreState: progressState,
+                        isSessionEligible: isSessionInActiveRun,
+                    });
+                    totalSessionsInContract = fullContractSummary.totalObligations;
+                    completedSessionsInContract = fullContractSummary.satisfiedObligations;
+                }
+
                 // Adherence %
-                const adherencePct = expectedSessionsSoFar === 0 
-                    ? 0 
+                const adherencePct = expectedSessionsSoFar === 0
+                    ? 0
                     : Math.min(Math.round((completedSessionsSoFar / expectedSessionsSoFar) * 100), 100);
 
                 return {
@@ -535,6 +603,10 @@ export const useNavigationStore = create(
                     daysPracticed,
                     streakCurrent,
                     streakBest,
+                    contractComplete: isContractComplete({
+                        totalObligations: totalSessionsInContract,
+                        satisfiedObligations: completedSessionsInContract,
+                    }),
                 };
             },
 
@@ -574,7 +646,7 @@ export const useNavigationStore = create(
                     : [0, 1, 2, 3, 4, 5, 6];
                 const frozenSelectedTimes = normalizeAndSortTimeSlots(
                     state.activePath.schedule?.selectedTimes || [],
-                    { maxCount: 3 }
+                    { maxCount: state.activePath.schedule?.maxLegsPerDay ?? 3 }
                 );
 
                 const contractSummary = computeContractObligationSummary({
@@ -582,6 +654,7 @@ export const useNavigationStore = create(
                     windowEndLocalDateKey: todayKey,
                     selectedDaysOfWeek: selectedDaysArg,
                     selectedTimes: frozenSelectedTimes,
+                    maxLegsPerDay: state.activePath.schedule?.maxLegsPerDay ?? null,
                     curriculumStoreState: curriculumState,
                     progressStoreState: progressState,
                     isSessionEligible: isSessionInActiveRun,
@@ -606,7 +679,7 @@ export const useNavigationStore = create(
                 const durationDays = getPathDurationDays(pathId);
                 const scheduleConstraint = getScheduleConstraintForPath(pathId);
                 const selectedTimes = normalizeAndSortTimeSlots(state.activePath.schedule?.selectedTimes || [], {
-                    maxCount: scheduleConstraint?.maxCount ?? 3,
+                    maxCount: scheduleConstraint?.maxCount ?? state.activePath.schedule?.maxLegsPerDay ?? 3,
                 });
                 const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
                     state.activePath.schedule?.selectedDaysOfWeek || []
@@ -636,6 +709,9 @@ export const useNavigationStore = create(
                             selectedDaysOfWeek: frozenSelectedDaysOfWeek.length > 0
                                 ? frozenSelectedDaysOfWeek
                                 : fallbackSelectedDays,
+                            activeDays: frozenSelectedDaysOfWeek.length > 0
+                                ? frozenSelectedDaysOfWeek
+                                : fallbackSelectedDays,
                         },
                         progress: {
                             sessionsCompleted: 0,
@@ -660,7 +736,7 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 5,  // Bumped for run-frozen selectedDaysOfWeek schedule migration
+            version: 6,  // Bumped for canonical activeDays + selectedDaysOfWeek freeze migration
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
                 const { selectedPathId, ...rest } = state;
@@ -675,20 +751,31 @@ export const useNavigationStore = create(
                 if (rest?.activePath) {
                     const { pathId: _, startDate: __, currentWeek: ___, completedWeeks: ____, ...cleanPath } = rest.activePath;
                     const scheduleConstraint = getScheduleConstraintForPath(cleanPath?.activePathId);
+                    const contract = getPathContract(cleanPath?.activePathId);
                     const selectedTimes = normalizeAndSortTimeSlots(cleanPath?.schedule?.selectedTimes || [], {
-                        maxCount: scheduleConstraint?.maxCount ?? 3,
+                        maxCount: scheduleConstraint?.maxCount ?? contract.maxLegsPerDay ?? 3,
                     });
                     const selectedDaysOfWeek = normalizeDayOfWeekList(cleanPath?.schedule?.selectedDaysOfWeek || []);
+                    const activeDays = normalizeDayOfWeekList(cleanPath?.schedule?.activeDays || []);
                     const frozenSelectedDaysOfWeek = selectedDaysOfWeek.length > 0
                         ? selectedDaysOfWeek
-                        // One-time legacy fallback only for persisted runs created before selectedDaysOfWeek existed.
-                        : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
+                        : (
+                            activeDays.length > 0
+                                ? activeDays
+                                // One-time legacy fallback only for persisted runs created before selectedDaysOfWeek existed.
+                                : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0])
+                        );
                     rest.activePath = {
                         ...cleanPath,
                         schedule: {
                             ...(cleanPath.schedule || {}),
                             selectedTimes,
                             selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                            activeDays: frozenSelectedDaysOfWeek,
+                            practiceDaysPerWeek: cleanPath?.schedule?.practiceDaysPerWeek ?? contract.practiceDaysPerWeek ?? null,
+                            requiredTimeSlots: cleanPath?.schedule?.requiredTimeSlots ?? contract.requiredTimeSlots ?? null,
+                            requiredLegsPerDay: cleanPath?.schedule?.requiredLegsPerDay ?? contract.requiredLegsPerDay ?? null,
+                            maxLegsPerDay: cleanPath?.schedule?.maxLegsPerDay ?? contract.maxLegsPerDay ?? null,
                         },
                     };
                 }
@@ -709,21 +796,42 @@ export const useNavigationStore = create(
                             delete state.activePath[key];
                         }
                     });
+                    const contract = getPathContract(state.activePath.activePathId);
 
                     const selectedDays = normalizeDayOfWeekList(state.activePath?.schedule?.selectedDaysOfWeek || []);
+                    const activeDays = normalizeDayOfWeekList(state.activePath?.schedule?.activeDays || []);
                     if (selectedDays.length === 0) {
                         // One-time legacy freeze migration for old runs missing selectedDaysOfWeek.
-                        const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
+                        const frozenSelectedDaysOfWeek = activeDays.length > 0
+                            ? activeDays
+                            : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                         const nextActivePath = {
                             ...state.activePath,
                             schedule: {
                                 ...(state.activePath.schedule || {}),
                                 selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                                activeDays: frozenSelectedDaysOfWeek,
+                                practiceDaysPerWeek: state.activePath?.schedule?.practiceDaysPerWeek ?? contract.practiceDaysPerWeek ?? null,
+                                requiredTimeSlots: state.activePath?.schedule?.requiredTimeSlots ?? contract.requiredTimeSlots ?? null,
+                                requiredLegsPerDay: state.activePath?.schedule?.requiredLegsPerDay ?? contract.requiredLegsPerDay ?? null,
+                                maxLegsPerDay: state.activePath?.schedule?.maxLegsPerDay ?? contract.maxLegsPerDay ?? null,
                             },
                         };
                         state.activePath = nextActivePath;
                         // Persist the one-time freeze migration so future reloads stay stable.
                         useNavigationStore.setState({ activePath: nextActivePath });
+                    } else {
+                        state.activePath = {
+                            ...state.activePath,
+                            schedule: {
+                                ...(state.activePath.schedule || {}),
+                                activeDays: selectedDays,
+                                practiceDaysPerWeek: state.activePath?.schedule?.practiceDaysPerWeek ?? contract.practiceDaysPerWeek ?? null,
+                                requiredTimeSlots: state.activePath?.schedule?.requiredTimeSlots ?? contract.requiredTimeSlots ?? null,
+                                requiredLegsPerDay: state.activePath?.schedule?.requiredLegsPerDay ?? contract.requiredLegsPerDay ?? null,
+                                maxLegsPerDay: state.activePath?.schedule?.maxLegsPerDay ?? contract.maxLegsPerDay ?? null,
+                            },
+                        };
                     }
                 }
 
@@ -739,7 +847,10 @@ export const useNavigationStore = create(
                     }
                 } else if (curriculumTimes.length === 0 && state?.activePath?.schedule?.selectedTimes && state.activePath.schedule.selectedTimes.length > 0) {
                     // Fallback: copy from activePath.schedule.selectedTimes if it exists
-                    curriculumState.setPracticeTimeSlots(state.activePath.schedule.selectedTimes);
+                    curriculumState.setPracticeTimeSlots(
+                        state.activePath.schedule.selectedTimes,
+                        { maxCount: state.activePath?.schedule?.maxLegsPerDay ?? 3 }
+                    );
                 }
 
                 reconcileCurriculumWithNavigationPath(state?.activePath || null);

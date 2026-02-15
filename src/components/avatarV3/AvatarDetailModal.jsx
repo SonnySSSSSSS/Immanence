@@ -20,6 +20,7 @@ export function AvatarDetailModal({ isOpen, onClose, stage, modeWeights }) {
     <AccessibleModal isOpen={isOpen} onClose={onClose} ariaLabel="Avatar details">
       <div
         style={{
+          maxWidth: '95vw',
           background: isLight
             ? 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(245,240,230,0.95) 100%)'
             : 'linear-gradient(180deg, rgba(18, 12, 18, 0.98) 0%, rgba(12, 8, 14, 0.98) 100%)',

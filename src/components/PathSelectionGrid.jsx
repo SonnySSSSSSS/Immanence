@@ -5,6 +5,7 @@ import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { ThoughtDetachmentOnboarding } from './ThoughtDetachmentOnboarding.jsx';
+import { getPathContract } from '../utils/pathContract.js';
 
 export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const allPaths = getAllPaths();
@@ -49,6 +50,10 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                     const isSelected = selectedPathId === entry.id;
                     const hasActivePathMatch = activePath && activePath.activePathId === entry.id;
                     const isPlaceholder = entry.placeholder;
+                    const contract = getPathContract(entry);
+                    const durationLabel = Number.isInteger(contract.totalDays)
+                        ? `${contract.totalDays} days`
+                        : (typeof entry.duration === 'number' ? `${entry.duration} weeks` : `${entry.duration} · Ongoing`);
 
                     return (
                         <button
@@ -201,7 +206,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                         className="type-label font-bold"
                                         style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
                                     >
-                                        {typeof entry.duration === 'number' ? `${entry.duration} weeks` : `${entry.duration} · Ongoing`}
+                                        {durationLabel}
                                     </div>
                                 )}
 

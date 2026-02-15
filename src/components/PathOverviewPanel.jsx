@@ -9,6 +9,7 @@ import { useUiStore } from '../state/uiStore.js';
 import { BreathBenchmark } from './BreathBenchmark.jsx';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
+import { getPathContract, validatePathActivationSelections } from '../utils/pathContract.js';
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -17,14 +18,57 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const goldLabelColor = isLight ? 'rgba(180, 120, 40, 0.75)' : 'var(--gold-80)';
 
     const { beginPath } = useNavigationStore();
-    const { practiceTimeSlots, setPracticeTimeSlots } = useCurriculumStore();
+    const {
+        practiceTimeSlots,
+        setPracticeTimeSlots,
+        selectedDaysOfWeekDraft,
+        setSelectedDaysOfWeekDraft,
+        getSelectedDaysOfWeekDraft,
+    } = useCurriculumStore();
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleError, setScheduleError] = useState(null);
+    const [daysError, setDaysError] = useState(null);
+    const [benchmarkError, setBenchmarkError] = useState(null);
     const [showBenchmark, setShowBenchmark] = useState(false);
     const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
     const needsRebenchmark = useBreathBenchmarkStore(s => s.needsRebenchmark());
+    const activePath = useNavigationStore(s => s.activePath);
+    const computeProgressMetrics = useNavigationStore(s => s.computeProgressMetrics);
+    const metrics = activePath?.activePathId === path?.id ? computeProgressMetrics() : null;
+    const contractComplete = metrics?.contractComplete ?? false;
 
     if (!path || path.placeholder) return null;
+    const isInitiationPath = String(path.id || '').startsWith('initiation');
+    const contract = getPathContract(path);
+    const orderedDayOptions = [
+        { value: 1, label: 'Mon' },
+        { value: 2, label: 'Tue' },
+        { value: 3, label: 'Wed' },
+        { value: 4, label: 'Thu' },
+        { value: 5, label: 'Fri' },
+        { value: 6, label: 'Sat' },
+        { value: 0, label: 'Sun' },
+    ];
+    const selectedDays = (() => {
+        const fromGetter = getSelectedDaysOfWeekDraft?.();
+        const base = Array.isArray(fromGetter) ? fromGetter : selectedDaysOfWeekDraft;
+        const normalized = Array.isArray(base)
+            ? base.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+            : [];
+        return [...new Set(normalized)].sort((a, b) => a - b);
+    })();
+    const toggleSelectedDay = (dayValue) => {
+        const isSelected = selectedDays.includes(dayValue);
+        if (isSelected) {
+            setSelectedDaysOfWeekDraft(selectedDays.filter((d) => d !== dayValue));
+            return;
+        }
+        const maxDays = contract.practiceDaysPerWeek ?? 7;
+        if (selectedDays.length >= maxDays) {
+            return;
+        }
+        setSelectedDaysOfWeekDraft([...selectedDays, dayValue].sort((a, b) => a - b));
+    };
 
     const toggleWeek = (weekNumber) => {
         setExpandedWeeks(prev =>
@@ -37,18 +81,34 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const scheduleTimes = (practiceTimeSlots || []).filter(Boolean);
     const scheduleConstraint = getScheduleConstraintForPath(path.id);
     const scheduleValidation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
-    const canBeginPath = scheduleValidation.ok;
+    const requiredDays = contract.practiceDaysPerWeek;
+    const daysValidation = isInitiationPath && Number.isInteger(requiredDays)
+        ? {
+            ok: selectedDays.length === requiredDays,
+            error: selectedDays.length !== requiredDays
+                ? `Select exactly ${requiredDays} active practice days. One rest day is required.`
+                : null,
+        }
+        : { ok: true, error: null };
+    const benchmarkValidation = path.showBreathBenchmark
+        ? {
+            ok: hasBenchmark,
+            error: hasBenchmark ? null : 'Complete the breathing benchmark first.',
+        }
+        : { ok: true, error: null };
+    const canBeginPath = scheduleValidation.ok && daysValidation.ok && benchmarkValidation.ok;
     const scheduleInstruction = scheduleConstraint?.requiredCount === 2 && scheduleConstraint?.maxCount === 2
-        ? 'Select 2 time slots for practice that you can attend consistently for 2 weeks.'
+        ? 'Select exactly 2 time slots for practice (morning and evening).'
         : 'Choose at least one time to begin this path.';
 
     const handleScheduleChange = (nextTimes) => {
         const normalizedTimes = Array.isArray(nextTimes) ? nextTimes.filter(Boolean) : [];
-        const constrainedTimes = scheduleConstraint?.maxCount
-            ? normalizedTimes.slice(0, scheduleConstraint.maxCount)
-            : normalizedTimes;
+        if (scheduleConstraint?.maxCount && normalizedTimes.length > scheduleConstraint.maxCount) {
+            setScheduleError(scheduleConstraint.errorMessage || scheduleValidation.error);
+            return;
+        }
         setScheduleError(null);
-        setPracticeTimeSlots(constrainedTimes);
+        setPracticeTimeSlots(normalizedTimes, { maxCount: scheduleConstraint?.maxCount ?? 3 });
     };
 
     const handleConstraintViolation = (errorMessage) => {
@@ -57,13 +117,38 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
     const handleBegin = () => {
         const validation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
+        const activationValidation = validatePathActivationSelections(path, {
+            selectedDaysOfWeek: selectedDays,
+            selectedTimes: scheduleTimes,
+        });
+        if (!daysValidation.ok) {
+            setDaysError(daysValidation.error);
+        } else {
+            setDaysError(null);
+        }
         if (!validation.ok) {
             setScheduleError(validation.error);
             return;
         }
+        if (!benchmarkValidation.ok) {
+            setBenchmarkError(benchmarkValidation.error);
+            return;
+        }
+        if (!daysValidation.ok) {
+            return;
+        }
+        if (!activationValidation.ok) {
+            setScheduleError(activationValidation.error);
+            return;
+        }
         setScheduleError(null);
+        setDaysError(null);
+        setBenchmarkError(null);
         if (onBegin) {
-            onBegin(path.id);
+            const result = onBegin(path.id);
+            if (result?.ok === false) {
+                setScheduleError(result.error || validation.error);
+            }
         } else {
             const beginResult = beginPath(path.id);
             if (beginResult?.ok === false) {
@@ -187,9 +272,32 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                         className="text-sm uppercase tracking-[0.2em]"
                         style={{ color: isLight ? 'rgba(140, 100, 40, 0.6)' : 'var(--accent-60)' }}
                     >
-                        {path.duration} WEEK INITIATION
+                        {Number.isInteger(contract.totalDays)
+                            ? `${contract.totalDays}-DAY INITIATION`
+                            : `${path.duration} WEEK INITIATION`}
                     </p>
                 </div>
+                {isInitiationPath && (
+                    <div
+                        className="rounded-2xl p-4 mb-6 border"
+                        style={{
+                            background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.12)' : 'rgba(250, 208, 120, 0.1)',
+                        }}
+                    >
+                        <div
+                            className="text-[12px] uppercase tracking-[0.16em] mb-2"
+                            style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
+                        >
+                            What this trains:
+                        </div>
+                        <ul className="space-y-1 text-sm" style={{ color: isLight ? 'rgba(60, 52, 37, 0.85)' : 'rgba(253,251,245,0.88)' }}>
+                            <li>• Feel your body more clearly</li>
+                            <li>• Keep your attention steady</li>
+                            <li>• Notice tension before it controls you</li>
+                        </ul>
+                    </div>
+                )}
                 <div
                     className="rounded-2xl p-6 mb-8 border"
                     style={{
@@ -210,7 +318,33 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             </div>
 
-            {/* Intentionally omit overview + practice summary to keep this surface short. */}
+            {isInitiationPath && (
+                <div className="mb-8">
+                    <h3
+                        className="text-base font-bold mb-3 tracking-wide"
+                        style={{
+                            fontFamily: 'var(--font-display)',
+                            color: goldLabelColor,
+                        }}
+                    >
+                        Daily Protocol
+                    </h3>
+                    <div
+                        className="rounded-xl p-4 border"
+                        style={{
+                            background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.14)' : 'rgba(250, 208, 120, 0.1)',
+                            color: isLight ? 'rgba(60, 52, 37, 0.85)' : 'rgba(253,251,245,0.88)',
+                        }}
+                    >
+                        <div className="font-semibold mb-1">Morning (10 min)</div>
+                        <div className="mb-3">• Resonance breathing</div>
+                        <div className="font-semibold mb-1">Evening Circuit (14 min)</div>
+                        <div>• 7 min stillness meditation</div>
+                        <div>• 7 min body scan</div>
+                    </div>
+                </div>
+            )}
 
             {/* Wisdom Section */}
             {path.chapters.length > 0 && (
@@ -265,7 +399,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             )}
 
             {/* Weekly Breakdown */}
-            {path.weeks.length > 0 && (
+            {!isInitiationPath && path.weeks.length > 0 && (
                 <div className="mb-8">
                     <h3
                         className="text-base font-bold mb-4 flex items-center gap-2"
@@ -412,6 +546,69 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
+            {isInitiationPath && (
+                <div className="mb-8">
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
+                        Tracking Focus
+                    </div>
+                    <div
+                        className="rounded-xl p-4 border text-sm"
+                        style={{
+                            background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                            borderColor: isLight ? 'rgba(180, 140, 90, 0.14)' : 'rgba(250, 208, 120, 0.1)',
+                            color: isLight ? 'rgba(60, 52, 37, 0.85)' : 'rgba(253,251,245,0.88)',
+                        }}
+                    >
+                        <div className="mb-1">Each day, notice:</div>
+                        <div>• Where tension shows up in your body</div>
+                        <div>• How steady your attention stays</div>
+                    </div>
+                </div>
+            )}
+
+            {isInitiationPath && (
+                <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
+                        Step 1: Select Active Days
+                    </div>
+                    <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
+                        Select {requiredDays ?? 6} active practice days. One rest day is required.
+                    </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                        {orderedDayOptions.map((day) => {
+                            const isSelected = selectedDays.includes(day.value);
+                            return (
+                                <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => toggleSelectedDay(day.value)}
+                                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                                    style={{
+                                        background: isSelected
+                                            ? 'var(--accent-color)'
+                                            : isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
+                                        color: isSelected
+                                            ? (isLight ? '#fff' : '#050508')
+                                            : isLight ? 'rgba(60, 50, 40, 0.85)' : 'rgba(253,251,245,0.85)',
+                                        border: `1px solid ${isSelected ? 'var(--accent-color)' : 'transparent'}`,
+                                    }}
+                                >
+                                    {day.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-3 text-[13px]" style={{ color: daysValidation.ok ? 'var(--accent-color)' : (isLight ? 'rgba(140, 80, 40, 0.8)' : 'rgba(255, 170, 140, 0.85)') }}>
+                        {selectedDays.length}/7 selected
+                    </div>
+                    {(daysError || daysValidation.error) && (
+                        <div className="mt-2 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                            {daysError || daysValidation.error}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {path.showBreathBenchmark && (
                 <div className="mb-8">
                     <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
@@ -442,12 +639,12 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                 background: "transparent",
                                 border: `1px solid ${hasBenchmark ? "var(--accent-color)" : "var(--accent-10)"}`,
                                 color: hasBenchmark ? "var(--accent-color)" : "var(--text-muted)",
-                                boxShadow: needsRebenchmark ? '0 0 12px var(--accent-15)' : "none",
-                                animation: needsRebenchmark ? 'benchmarkRadiate 2s ease-in-out infinite' : 'none',
+                                boxShadow: (needsRebenchmark && contractComplete) ? '0 0 12px var(--accent-15)' : "none",
+                                animation: (needsRebenchmark && contractComplete) ? 'benchmarkRadiate 2s ease-in-out infinite' : 'none',
                                 transition: 'background 400ms ease, border-color 400ms ease, color 400ms ease',
                             }}
                         >
-                            {hasBenchmark ? '🔄 Re-benchmark' : '📏 Benchmark'}
+                            {contractComplete && hasBenchmark ? '🔄 Re-benchmark' : hasBenchmark ? '✓ Benchmark complete' : '📏 Take benchmark'}
                         </button>
                     </div>
                 </div>
@@ -456,7 +653,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             {/* Practice Times */}
             <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
-                    Step 2: Select Time Slots
+                    {isInitiationPath ? 'Step 2: Select Time Slots' : 'Step 2: Select Time Slots'}
                 </div>
                 <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
                     Select your practice times
@@ -475,6 +672,16 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 {scheduleError && (
                     <div className="mt-3 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
                         {scheduleError}
+                    </div>
+                )}
+                {!scheduleValidation.ok && !scheduleError && (
+                    <div className="mt-3 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                        {scheduleValidation.error}
+                    </div>
+                )}
+                {!benchmarkValidation.ok && (
+                    <div className="mt-3 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                        {benchmarkError || benchmarkValidation.error}
                     </div>
                 )}
             </div>
@@ -518,7 +725,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                     className="text-center text-xs mt-4 italic"
                     style={{ color: isLight ? 'rgba(140, 100, 40, 0.5)' : 'var(--accent-40)' }}
                 >
-                    This will become your active focus for the next {path.duration} weeks.
+                    This will become your active focus for the next {contract.totalDays ?? (path.duration * 7)} days.
                 </p>
             </div>
 
