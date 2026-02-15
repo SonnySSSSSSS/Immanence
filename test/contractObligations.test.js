@@ -297,3 +297,66 @@ test('Strict day integrity: 2 obligations with 1 satisfied is a missed day; cons
   assert.equal(completionStats.streakCurrent, 0);
   assert.equal(completionStats.streakBest, 1);
 });
+
+test('contract freeze invariance: selectedDaysOfWeek controls obligations even if offDaysOfWeek changes', () => {
+  const windowStartLocalDateKey = '2026-02-10';
+  const windowEndLocalDateKey = '2026-02-13';
+  const selectedDaysOfWeek = [1, 2, 3, 4, 5, 6]; // Sunday off, frozen
+  const selectedTimes = ['09:00', '20:00'];
+
+  const getCurriculumDay = (dayNumber) => ({
+    dayNumber,
+    legs: [
+      createRequiredLeg(1, 'breathwork'),
+      createRequiredLeg(2, 'awareness'),
+    ],
+  });
+
+  const progressStoreState = createProgressState([
+    {
+      id: 'd1a',
+      completion: 'completed',
+      startedAt: '2026-02-10T09:05:00',
+      scheduleMatched: { legNumber: 1, status: 'green', deltaMinutes: 5 },
+    },
+    {
+      id: 'd1b',
+      completion: 'completed',
+      startedAt: '2026-02-10T20:05:00',
+      scheduleMatched: { legNumber: 2, status: 'green', deltaMinutes: 5 },
+    },
+  ]);
+
+  const before = computeContractObligationSummary({
+    windowStartLocalDateKey,
+    windowEndLocalDateKey,
+    selectedDaysOfWeek,
+    selectedTimes,
+    curriculumStoreState: createCurriculumState({
+      curriculumStartDate: '2026-02-10T09:00:00.000Z',
+      offDaysOfWeek: [0], // legacy source differs but should be ignored
+      practiceTimeSlots: selectedTimes,
+      getCurriculumDay,
+    }),
+    progressStoreState,
+  });
+
+  const after = computeContractObligationSummary({
+    windowStartLocalDateKey,
+    windowEndLocalDateKey,
+    selectedDaysOfWeek,
+    selectedTimes,
+    curriculumStoreState: createCurriculumState({
+      curriculumStartDate: '2026-02-10T09:00:00.000Z',
+      offDaysOfWeek: [3, 4], // mutated live setting must not affect frozen run
+      practiceTimeSlots: ['06:00'], // mutated times also must not affect frozen run
+      getCurriculumDay,
+    }),
+    progressStoreState,
+  });
+
+  assert.equal(after.totalObligations, before.totalObligations);
+  assert.equal(after.satisfiedObligations, before.satisfiedObligations);
+  assert.deepEqual(after.dayStates, before.dayStates);
+  assert.deepEqual(after.railDays.map((d) => d.dayStatus), before.railDays.map((d) => d.dayStatus));
+});

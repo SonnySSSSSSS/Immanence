@@ -35,6 +35,8 @@ import { computeContractObligationSummary } from './contractObligations.js';
 export function getCurriculumPrecisionRail({
     today = new Date(),
     windowDays = 14,
+    selectedDaysOfWeek = null,
+    selectedTimes = null,
     curriculumStoreState = null,
     progressStoreState = null,
     sessions = null,
@@ -46,6 +48,8 @@ export function getCurriculumPrecisionRail({
     const summary = computeContractObligationSummary({
         today,
         windowDays,
+        selectedDaysOfWeek,
+        selectedTimes,
         curriculumStoreState: curriculumStore,
         progressStoreState: progressStore,
         sessions,

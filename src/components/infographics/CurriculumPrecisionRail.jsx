@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { useCurriculumStore } from '../../state/curriculumStore.js';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
+import { useNavigationStore } from '../../state/navigationStore.js';
 
 /**
  * Format leg details for tooltip
@@ -112,9 +113,16 @@ export function CurriculumPrecisionRail() {
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [tooltipPos, setTooltipPos] = useState(null);
     const [showLegend, setShowLegend] = useState(false);
+    const activePath = useNavigationStore(s => s.activePath);
 
     // Fetch the 14-day rail
-    const rail = useCurriculumStore(s => s.getPrecisionRailWindow)(14);
+    const rail = useCurriculumStore(s => s.getPrecisionRailWindow)(14, {
+        selectedDaysOfWeek: Array.isArray(activePath?.schedule?.selectedDaysOfWeek) &&
+            activePath.schedule.selectedDaysOfWeek.length > 0
+            ? activePath.schedule.selectedDaysOfWeek
+            : null,
+        selectedTimes: activePath?.schedule?.selectedTimes || null,
+    });
 
     if (!rail || rail.length === 0) {
         return null; // No rail data; don't render

@@ -189,6 +189,8 @@ export function computeContractObligationSummary({
     windowDays = 14,
     windowStartLocalDateKey = null,
     windowEndLocalDateKey = null,
+    selectedDaysOfWeek = null,
+    selectedTimes = null,
     curriculumStoreState = null,
     progressStoreState = null,
     sessions = null,
@@ -203,8 +205,18 @@ export function computeContractObligationSummary({
 
     const dayKeys = enumerateDateKeys(range.windowStartLocalDateKey, range.windowEndLocalDateKey);
     const precisionMode = curriculumStoreState?.precisionMode || 'curriculum';
-    const offDaysOfWeek = curriculumStoreState?.offDaysOfWeek || [0];
-    const practiceTimeSlots = curriculumStoreState?.practiceTimeSlots || [];
+    const hasFrozenSelectedDays = Array.isArray(selectedDaysOfWeek) && selectedDaysOfWeek.length > 0;
+    const normalizedSelectedDays = hasFrozenSelectedDays
+        ? selectedDaysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        : [];
+    const offDaysOfWeek = hasFrozenSelectedDays
+        // Active-run path: derive off-days from frozen selected days only.
+        ? [0, 1, 2, 3, 4, 5, 6].filter((d) => !normalizedSelectedDays.includes(d))
+        // Legacy/non-run fallback path only.
+        : (curriculumStoreState?.offDaysOfWeek || [0]);
+    const practiceTimeSlots = Array.isArray(selectedTimes)
+        ? selectedTimes
+        : (curriculumStoreState?.practiceTimeSlots || []);
     const curriculumStartDate = curriculumStoreState?.curriculumStartDate || null;
     const getCurriculumDay = curriculumStoreState?.getCurriculumDay;
     const isVacation = progressStoreState?.vacation?.active || false;

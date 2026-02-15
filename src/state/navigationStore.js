@@ -42,6 +42,18 @@ const getTimezone = () => {
     }
 };
 
+const normalizeDayOfWeekList = (days = []) => {
+    const normalized = Array.isArray(days)
+        ? days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        : [];
+    return [...new Set(normalized)].sort((a, b) => a - b);
+};
+
+const selectedDaysFromOffDays = (offDays = []) => {
+    const offSet = new Set(normalizeDayOfWeekList(offDays));
+    return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
+};
+
 export const useNavigationStore = create(
     persist(
         (set, get) => ({
@@ -68,6 +80,7 @@ export const useNavigationStore = create(
                 const selectedTimes = normalizeAndSortTimeSlots(selectedTimesRaw, {
                     maxCount: scheduleConstraint?.maxCount ?? 3,
                 });
+                const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                 const validation = validateSelectedTimes(selectedTimes, scheduleConstraint);
                 if (!validation.ok) {
                     return { ok: false, error: validation.error };
@@ -91,6 +104,7 @@ export const useNavigationStore = create(
                         status: 'active',
                         schedule: {
                             selectedTimes,
+                            selectedDaysOfWeek: frozenSelectedDaysOfWeek,
                             timezone: getTimezone(),
                         },
                         progress: {
@@ -444,6 +458,14 @@ export const useNavigationStore = create(
                     activePathId: state.activePath.activePathId || null,
                     startedAt: state.activePath.startedAt || null,
                 });
+                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
+                    state.activePath.schedule?.selectedDaysOfWeek || []
+                );
+                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0 ? frozenSelectedDaysOfWeek : null;
+                const frozenSelectedTimes = normalizeAndSortTimeSlots(
+                    state.activePath.schedule?.selectedTimes || [],
+                    { maxCount: 3 }
+                );
 
                 const pathEndLocalKey = addDaysToDateKey(startedAtLocalKey, durationDays - 1);
                 const windowEndLocalKey = pathEndLocalKey && pathEndLocalKey < todayKey
@@ -460,6 +482,8 @@ export const useNavigationStore = create(
                     const contractSummary = computeContractObligationSummary({
                         windowStartLocalDateKey: startedAtLocalKey,
                         windowEndLocalDateKey: windowEndLocalKey,
+                        selectedDaysOfWeek: selectedDaysArg,
+                        selectedTimes: frozenSelectedTimes,
                         curriculumStoreState: curriculumState,
                         progressStoreState: progressState,
                         isSessionEligible: isSessionInActiveRun,
@@ -519,10 +543,20 @@ export const useNavigationStore = create(
                     activePathId: state.activePath.activePathId || null,
                     startedAt: state.activePath.startedAt || null,
                 });
+                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
+                    state.activePath.schedule?.selectedDaysOfWeek || []
+                );
+                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0 ? frozenSelectedDaysOfWeek : null;
+                const frozenSelectedTimes = normalizeAndSortTimeSlots(
+                    state.activePath.schedule?.selectedTimes || [],
+                    { maxCount: 3 }
+                );
 
                 const contractSummary = computeContractObligationSummary({
                     windowStartLocalDateKey: startedAtLocalKey,
                     windowEndLocalDateKey: todayKey,
+                    selectedDaysOfWeek: selectedDaysArg,
+                    selectedTimes: frozenSelectedTimes,
                     curriculumStoreState: curriculumState,
                     progressStoreState: progressState,
                     isSessionEligible: isSessionInActiveRun,
@@ -549,6 +583,7 @@ export const useNavigationStore = create(
                 const selectedTimes = normalizeAndSortTimeSlots(state.activePath.schedule?.selectedTimes || [], {
                     maxCount: scheduleConstraint?.maxCount ?? 3,
                 });
+                const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
                     firstSlotTime: selectedTimes[0],
@@ -566,6 +601,7 @@ export const useNavigationStore = create(
                         schedule: {
                             ...(state.activePath.schedule || {}),
                             selectedTimes,
+                            selectedDaysOfWeek: frozenSelectedDaysOfWeek,
                         },
                         progress: {
                             sessionsCompleted: 0,
@@ -590,7 +626,7 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 4,  // Bumped for schedule time normalization
+            version: 5,  // Bumped for run-frozen selectedDaysOfWeek schedule migration
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
                 const { selectedPathId, ...rest } = state;
@@ -608,11 +644,16 @@ export const useNavigationStore = create(
                     const selectedTimes = normalizeAndSortTimeSlots(cleanPath?.schedule?.selectedTimes || [], {
                         maxCount: scheduleConstraint?.maxCount ?? 3,
                     });
+                    const selectedDaysOfWeek = normalizeDayOfWeekList(cleanPath?.schedule?.selectedDaysOfWeek || []);
+                    const frozenSelectedDaysOfWeek = selectedDaysOfWeek.length > 0
+                        ? selectedDaysOfWeek
+                        : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                     rest.activePath = {
                         ...cleanPath,
                         schedule: {
                             ...(cleanPath.schedule || {}),
                             selectedTimes,
+                            selectedDaysOfWeek: frozenSelectedDaysOfWeek,
                         },
                     };
                 }
@@ -633,6 +674,21 @@ export const useNavigationStore = create(
                             delete state.activePath[key];
                         }
                     });
+
+                    const selectedDays = normalizeDayOfWeekList(state.activePath?.schedule?.selectedDaysOfWeek || []);
+                    if (selectedDays.length === 0) {
+                        const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
+                        const nextActivePath = {
+                            ...state.activePath,
+                            schedule: {
+                                ...(state.activePath.schedule || {}),
+                                selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                            },
+                        };
+                        state.activePath = nextActivePath;
+                        // Persist the one-time freeze migration so future reloads stay stable.
+                        useNavigationStore.setState({ activePath: nextActivePath });
+                    }
                 }
 
                 // One-time migration: nav schedule → curriculum store (canonical)

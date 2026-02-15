@@ -550,10 +550,10 @@ getNextLeg: (dayNumber, offset = 1) => {
                 set({ offDaysOfWeek: normalized });
             },
 
-            getPrecisionRailWindow: (windowDays = 14) => {
+            getPrecisionRailWindow: (windowDays = 14, options = {}) => {
                 // Wrapper around getCurriculumPrecisionRail service
                 // Computes 14-day (or custom window) rolling precision rail
-                return getCurriculumPrecisionRail({ windowDays });
+                return getCurriculumPrecisionRail({ windowDays, ...(options || {}) });
             },
         }),
         {
