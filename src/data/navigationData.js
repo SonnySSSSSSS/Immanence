@@ -54,6 +54,7 @@ export const paths = [
         ],
 
         tracking: {
+            curriculumId: 'ritual-initiation-14-v2',
             durationDays: 14,
             summary: "Foundational two-week rhythm for daily practice.",
             defaultCommitment: {

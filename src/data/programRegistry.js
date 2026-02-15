@@ -2,6 +2,7 @@
 // Central registry for programs, curriculum legs, and launcher metadata
 import { RITUAL_FOUNDATION_14 } from './ritualFoundation14.js';
 import { PILOT_TEST_PROGRAM } from './pilotTestProgram.js';
+import { RITUAL_INITIATION_14_V2 } from './ritualInitiation14v2.js';
 
 // Helper to merge default and day-specific leg overrides
 const mergeLegOverrides = (baseLegs = [], overrides = {}, dayNumber) => {
@@ -42,6 +43,11 @@ export const programRegistry = {
         },
       },
     },
+  },
+  'ritual-initiation-14-v2': {
+    id: 'ritual-initiation-14-v2',
+    name: 'Ritual Initiation v2',
+    curriculum: RITUAL_INITIATION_14_V2,
   },
 };
 
