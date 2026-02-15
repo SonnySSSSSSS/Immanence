@@ -14,12 +14,14 @@ import { useApplicationStore } from '../state/applicationStore.js';
 import { useModeTrainingStore } from '../state/modeTrainingStore.js';
 import { useChainStore } from '../state/chainStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { useCurriculumStore } from '../state/curriculumStore.js';
 import { CircuitEntryCard } from './CircuitEntryCard.jsx';
 import { CircuitInsightsView } from './CircuitInsightsView.jsx';
 import { SessionEntryEditModal } from './SessionEntryEditModal.jsx';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal.jsx';
 import { ExportArchiveButton } from './ExportArchiveButton.jsx';
-import { getDateKey } from '../utils/dateUtils';
+import { getDateKey, getLocalDateKey } from '../utils/dateUtils';
+import { computeContractObligationSummary, createPathRunSessionFilter } from '../services/infographics/contractObligations.js';
 import { ReportsPanel } from './tracking/reports/index.js';
 import {
     PracticeDashboardHeader,
@@ -39,6 +41,8 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     const getAllStats = useProgressStore(s => s.getAllStats);
     const getTrajectory = useProgressStore(s => s.getTrajectory);
     const { deleteSession } = useProgressStore();
+    const sessionsV2 = useProgressStore(s => s.sessionsV2);
+    const vacation = useProgressStore(s => s.vacation);
 
     const readingSessions = useWisdomStore(s => s.readingSessions);
     const quizAttempts = useWisdomStore(s => s.quizAttempts);
@@ -110,6 +114,57 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     }), [getApplicationStats, applicationLogs]);
     const patternStats = useMemo(() => getPatternStats?.() || null, [getPatternStats, completedChains]);
     const trajectory8 = useMemo(() => getTrajectory?.(8) || { weeks: [], trends: {}, insights: {} }, [getTrajectory, allSessions]);
+
+    const outsideScheduleSessionIds = (() => {
+        if (!navigationActivePath?.startedAt) return new Set();
+        const selectedDays = navigationActivePath?.schedule?.selectedDaysOfWeek || [];
+        const selectedTimes = navigationActivePath?.schedule?.selectedTimes || [];
+        if (!Array.isArray(selectedDays) || selectedDays.length === 0) return new Set();
+        if (!Array.isArray(selectedTimes) || selectedTimes.length === 0) return new Set();
+
+        const runSessions = Array.isArray(sessionsV2) ? sessionsV2 : [];
+        if (runSessions.length === 0) return new Set();
+
+        const windowStartLocalDateKey = getLocalDateKey(new Date(navigationActivePath.startedAt));
+        const windowEndLocalDateKey = getLocalDateKey();
+        if (windowStartLocalDateKey > windowEndLocalDateKey) return new Set();
+
+        const curriculumState = useCurriculumStore.getState();
+        const isSessionInActiveRun = createPathRunSessionFilter({
+            runId: navigationActivePath.runId || null,
+            activePathId: navigationActivePath.activePathId || null,
+            startedAt: navigationActivePath.startedAt || null,
+        });
+
+        const summary = computeContractObligationSummary({
+            windowStartLocalDateKey,
+            windowEndLocalDateKey,
+            selectedDaysOfWeek: selectedDays,
+            selectedTimes,
+            curriculumStoreState: curriculumState,
+            progressStoreState: { vacation, sessionsV2: runSessions },
+            sessions: runSessions,
+            isSessionEligible: isSessionInActiveRun,
+        });
+
+        const matchedSessionIds = new Set(
+            summary.railDays
+                .flatMap((day) => day?.satisfiedSlots || [])
+                .map((slot) => slot?.matchedSessionId)
+                .filter(Boolean)
+        );
+
+        const outside = new Set();
+        runSessions.forEach((session) => {
+            if (!isSessionInActiveRun(session)) return;
+            if (session?.completion !== 'completed') return;
+            if (!session?.id) return;
+            if (!matchedSessionIds.has(session.id)) {
+                outside.add(session.id);
+            }
+        });
+        return outside;
+    })();
 
     const [activeTab, setActiveTab] = useState(initialTab || ARCHIVE_TABS.ALL);
     const [filterDate, setFilterDate] = useState(null);
@@ -417,6 +472,7 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
     const renderPracticeEntry = (entry) => {
         const session = entry.data;
         const hasJournal = !!session.journal;
+        const isOutsideSchedule = outsideScheduleSessionIds.has(session.id);
         return (
             <div key={entry.id} style={{ 
                 background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)', 
@@ -444,11 +500,30 @@ export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, ini
                                     Journaled
                                 </span>
                             )}
+                            {isOutsideSchedule && (
+                                <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    padding: '2px 6px',
+                                    borderRadius: '999px',
+                                    border: `1px solid ${borderColor}`,
+                                    background: isLight ? 'rgba(100, 100, 100, 0.08)' : 'rgba(180, 180, 180, 0.12)',
+                                    opacity: 0.85
+                                }}>
+                                    Outside schedule
+                                </span>
+                            )}
                         </div>
                         <div style={{ fontSize: '12px', opacity: 0.6 }}>
                             {formatDate(entry.dateKey)}
                             {session.journal?.editedAt && <span> (edited)</span>}
                         </div>
+                        {isOutsideSchedule && (
+                            <div style={{ marginTop: '4px', fontSize: '12px', opacity: 0.7 }}>
+                                Logged for records. Not part of your schedule.
+                            </div>
+                        )}
                     </div>
                     <div style={{
                         padding: '6px 12px',

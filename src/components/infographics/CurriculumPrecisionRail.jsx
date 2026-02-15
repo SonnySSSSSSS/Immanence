@@ -120,7 +120,7 @@ export function CurriculumPrecisionRail() {
         selectedDaysOfWeek: Array.isArray(activePath?.schedule?.selectedDaysOfWeek) &&
             activePath.schedule.selectedDaysOfWeek.length > 0
             ? activePath.schedule.selectedDaysOfWeek
-            : null,
+            : (activePath ? [0, 1, 2, 3, 4, 5, 6] : null),
         selectedTimes: activePath?.schedule?.selectedTimes || null,
     });
 

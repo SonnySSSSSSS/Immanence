@@ -50,6 +50,7 @@ const normalizeDayOfWeekList = (days = []) => {
 };
 
 const selectedDaysFromOffDays = (offDays = []) => {
+    // LEGACY migration helper only. Do not use this for new run contract authoring.
     const offSet = new Set(normalizeDayOfWeekList(offDays));
     return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
 };
@@ -75,15 +76,22 @@ export const useNavigationStore = create(
                 const runId = crypto?.randomUUID?.() || String(Date.now());
                 // Align Day 1 to the selected first slot time:
                 // if the first slot window has already passed today, Day 1 begins tomorrow.
-                const selectedTimesRaw = useCurriculumStore.getState().getPracticeTimeSlots() || [];
+                const curriculumState = useCurriculumStore.getState();
+                const selectedTimesRaw = curriculumState.getPracticeTimeSlots?.() || [];
+                const selectedDaysRaw = curriculumState.getSelectedDaysOfWeekDraft?.()
+                    || curriculumState.selectedDaysOfWeekDraft
+                    || [];
                 const scheduleConstraint = getScheduleConstraintForPath(pathId);
                 const selectedTimes = normalizeAndSortTimeSlots(selectedTimesRaw, {
                     maxCount: scheduleConstraint?.maxCount ?? 3,
                 });
-                const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
+                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(selectedDaysRaw);
                 const validation = validateSelectedTimes(selectedTimes, scheduleConstraint);
                 if (!validation.ok) {
                     return { ok: false, error: validation.error };
+                }
+                if (frozenSelectedDaysOfWeek.length < 5 || frozenSelectedDaysOfWeek.length > 7) {
+                    return { ok: false, error: 'Choose 5 to 7 practice days to begin this path.' };
                 }
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
@@ -461,7 +469,9 @@ export const useNavigationStore = create(
                 const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
                     state.activePath.schedule?.selectedDaysOfWeek || []
                 );
-                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0 ? frozenSelectedDaysOfWeek : null;
+                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0
+                    ? frozenSelectedDaysOfWeek
+                    : [0, 1, 2, 3, 4, 5, 6];
                 const frozenSelectedTimes = normalizeAndSortTimeSlots(
                     state.activePath.schedule?.selectedTimes || [],
                     { maxCount: 3 }
@@ -546,7 +556,9 @@ export const useNavigationStore = create(
                 const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
                     state.activePath.schedule?.selectedDaysOfWeek || []
                 );
-                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0 ? frozenSelectedDaysOfWeek : null;
+                const selectedDaysArg = frozenSelectedDaysOfWeek.length > 0
+                    ? frozenSelectedDaysOfWeek
+                    : [0, 1, 2, 3, 4, 5, 6];
                 const frozenSelectedTimes = normalizeAndSortTimeSlots(
                     state.activePath.schedule?.selectedTimes || [],
                     { maxCount: 3 }
@@ -583,7 +595,14 @@ export const useNavigationStore = create(
                 const selectedTimes = normalizeAndSortTimeSlots(state.activePath.schedule?.selectedTimes || [], {
                     maxCount: scheduleConstraint?.maxCount ?? 3,
                 });
-                const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
+                const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(
+                    state.activePath.schedule?.selectedDaysOfWeek || []
+                );
+                const fallbackSelectedDays = normalizeDayOfWeekList(
+                    useCurriculumStore.getState().getSelectedDaysOfWeekDraft?.()
+                    || useCurriculumStore.getState().selectedDaysOfWeekDraft
+                    || []
+                );
                 const startedAtDate = computeScheduleAnchorStartAt({
                     now: new Date(),
                     firstSlotTime: selectedTimes[0],
@@ -601,7 +620,9 @@ export const useNavigationStore = create(
                         schedule: {
                             ...(state.activePath.schedule || {}),
                             selectedTimes,
-                            selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                            selectedDaysOfWeek: frozenSelectedDaysOfWeek.length > 0
+                                ? frozenSelectedDaysOfWeek
+                                : fallbackSelectedDays,
                         },
                         progress: {
                             sessionsCompleted: 0,
@@ -647,6 +668,7 @@ export const useNavigationStore = create(
                     const selectedDaysOfWeek = normalizeDayOfWeekList(cleanPath?.schedule?.selectedDaysOfWeek || []);
                     const frozenSelectedDaysOfWeek = selectedDaysOfWeek.length > 0
                         ? selectedDaysOfWeek
+                        // One-time legacy fallback only for persisted runs created before selectedDaysOfWeek existed.
                         : selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                     rest.activePath = {
                         ...cleanPath,
@@ -677,6 +699,7 @@ export const useNavigationStore = create(
 
                     const selectedDays = normalizeDayOfWeekList(state.activePath?.schedule?.selectedDaysOfWeek || []);
                     if (selectedDays.length === 0) {
+                        // One-time legacy freeze migration for old runs missing selectedDaysOfWeek.
                         const frozenSelectedDaysOfWeek = selectedDaysFromOffDays(useCurriculumStore.getState().offDaysOfWeek || [0]);
                         const nextActivePath = {
                             ...state.activePath,

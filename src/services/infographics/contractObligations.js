@@ -212,7 +212,7 @@ export function computeContractObligationSummary({
     const offDaysOfWeek = hasFrozenSelectedDays
         // Active-run path: derive off-days from frozen selected days only.
         ? [0, 1, 2, 3, 4, 5, 6].filter((d) => !normalizedSelectedDays.includes(d))
-        // Legacy/non-run fallback path only.
+        // Legacy/non-run fallback only. Do not use live offDaysOfWeek for path contracts.
         : (curriculumStoreState?.offDaysOfWeek || [0]);
     const practiceTimeSlots = Array.isArray(selectedTimes)
         ? selectedTimes

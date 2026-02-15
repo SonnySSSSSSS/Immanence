@@ -7,6 +7,15 @@ import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js'
 import { getCurriculumPrecisionRail } from '../services/infographics/curriculumRail.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 
+const DEFAULT_SELECTED_DAYS_OF_WEEK = [1, 2, 3, 4, 5, 6]; // Mon-Sat
+
+const normalizeDaysOfWeek = (days = []) => {
+    const normalized = Array.isArray(days)
+        ? days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        : [];
+    return [...new Set(normalized)].sort((a, b) => a - b);
+};
+
 export const FOUNDATION_CIRCUIT = {
     id: 'intro_circuit',
     name: 'Foundation Circuit',
@@ -49,6 +58,7 @@ export const useCurriculumStore = create(
             onboardingDismissed: false,
             onboardingDismissedAt: null,
             practiceTimeSlots: [],
+            selectedDaysOfWeekDraft: DEFAULT_SELECTED_DAYS_OF_WEEK,
             thoughtCatalog: [], // User's 5-8 personal thoughts for ritual observation
 
             // CURRICULUM STATE
@@ -65,7 +75,7 @@ export const useCurriculumStore = create(
 
             // PRECISION RAIL CONFIGURATION
             precisionMode: 'curriculum', // 'curriculum' or 'advanced' (if 'advanced', all days are GRAY)
-            offDaysOfWeek: [0], // 0=Sunday..6=Saturday; days in this list render GRAY (no measurement required)
+            offDaysOfWeek: [0], // LEGACY preference only; active path contracts must use selectedDaysOfWeek on the run schedule.
 
             // LEGACY STATE
             paths: {
@@ -77,9 +87,12 @@ export const useCurriculumStore = create(
             progress: {},
 
             // ONBOARDING ACTIONS
-            completeOnboarding: (timeSlots = [], thoughts = []) => {
+            completeOnboarding: (timeSlots = [], thoughts = [], selectedDaysOfWeek = null) => {
                 const nowDate = new Date();
                 const normalizedSlots = normalizeAndSortTimeSlots(timeSlots, { maxCount: 3 });
+                const normalizedDays = normalizeDaysOfWeek(
+                    selectedDaysOfWeek || get().selectedDaysOfWeekDraft || DEFAULT_SELECTED_DAYS_OF_WEEK
+                );
                 const startAt = computeScheduleAnchorStartAt({
                     now: nowDate,
                     firstSlotTime: normalizedSlots[0] ?? null,
@@ -89,6 +102,7 @@ export const useCurriculumStore = create(
                     onboardingComplete: true,
                     onboardingDismissed: false,
                     practiceTimeSlots: normalizedSlots,
+                    selectedDaysOfWeekDraft: normalizedDays.length > 0 ? normalizedDays : DEFAULT_SELECTED_DAYS_OF_WEEK,
                     thoughtCatalog: thoughts.map((t, idx) => ({
                         id: `thought-${Date.now()}-${idx}`,
                         text: t.text,
@@ -112,6 +126,23 @@ export const useCurriculumStore = create(
              */
             setPracticeTimeSlots: (times = []) => {
                 set({ practiceTimeSlots: normalizeAndSortTimeSlots(times, { maxCount: 3 }) });
+            },
+
+            /**
+             * Set onboarding draft schedule days (path contract authoring input).
+             * This is staging state only; run-freeze happens in navigationStore.beginPath.
+             */
+            setSelectedDaysOfWeekDraft: (days = []) => {
+                const normalized = normalizeDaysOfWeek(days);
+                set({ selectedDaysOfWeekDraft: normalized });
+            },
+
+            /**
+             * Get onboarding draft schedule days as normalized sorted array (0=Sun..6=Sat).
+             */
+            getSelectedDaysOfWeekDraft: () => {
+                const normalized = normalizeDaysOfWeek(get().selectedDaysOfWeekDraft || []);
+                return normalized.length > 0 ? normalized : DEFAULT_SELECTED_DAYS_OF_WEEK;
             },
 
             /**
@@ -501,6 +532,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                     onboardingDismissed: false,
                     onboardingDismissedAt: null,
                     practiceTimeSlots: [],
+                    selectedDaysOfWeekDraft: DEFAULT_SELECTED_DAYS_OF_WEEK,
                     thoughtCatalog: [],
                     activeCurriculumId: 'pilot-test-program',
                     curriculumStartDate: null,
@@ -547,6 +579,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                 const normalized = Array.isArray(days)
                     ? days.filter(d => typeof d === 'number' && d >= 0 && d <= 6)
                     : [];
+                // Legacy-only knob; do not use for active path contract obligations.
                 set({ offDaysOfWeek: normalized });
             },
 
@@ -561,9 +594,13 @@ getNextLeg: (dayNumber, offset = 1) => {
             version: 4,
             migrate: (persistedState) => {
                 const next = persistedState || {};
+                const selectedDaysOfWeekDraft = normalizeDaysOfWeek(next.selectedDaysOfWeekDraft || []);
                 return {
                     ...next,
                     practiceTimeSlots: normalizeAndSortTimeSlots(next.practiceTimeSlots || [], { maxCount: 3 }),
+                    selectedDaysOfWeekDraft: selectedDaysOfWeekDraft.length > 0
+                        ? selectedDaysOfWeekDraft
+                        : DEFAULT_SELECTED_DAYS_OF_WEEK,
                 };
             },
         }

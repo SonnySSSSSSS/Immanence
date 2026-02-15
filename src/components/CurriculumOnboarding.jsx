@@ -7,8 +7,9 @@
 // 1. Welcome & Philosophy
 // 2. Practice explanation
 // 3. 14-day curriculum overview
-// 4. Time selection for daily practice
-// 5. Confirmation & start
+// 4. Practice day contract selection (5-7 days)
+// 5. Time selection for daily practice (exactly 2)
+// 6. Confirmation & start
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -17,6 +18,7 @@ import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { PillButton } from './ui/PillButton';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
+import { DayOfWeekPicker } from './schedule/DayOfWeekPicker.jsx';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt } from '../utils/scheduleUtils.js';
@@ -39,6 +41,8 @@ const TIME_OPTIONS = [
     { value: '21:00', label: '9:00 PM', period: 'night' },
     { value: '22:00', label: '10:00 PM', period: 'night' },
 ];
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STEP COMPONENTS
@@ -227,7 +231,41 @@ function StepCurriculumOverview({ onNext, onBack, isLight }) {
     );
 }
 
+function StepDaySelection({ onNext, onBack, selectedDays, setSelectedDays, isLight }) {
+    const isValid = selectedDays.length >= 5 && selectedDays.length <= 7;
+
+    return (
+        <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
+            <DayOfWeekPicker
+                value={selectedDays}
+                onChange={setSelectedDays}
+                minSelected={5}
+                maxSelected={7}
+                title="Select Practice Days"
+                subtitle="This is a contract. Choose the days you will keep."
+            />
+
+            <div className="flex gap-4 justify-center pt-2">
+                <PillButton onClick={onBack} variant="secondary" size="md">
+                    Back
+                </PillButton>
+                <PillButton onClick={onNext} variant="primary" size="md" disabled={!isValid}>
+                    Continue
+                </PillButton>
+            </div>
+
+            {!isValid && (
+                <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.7)' : 'rgba(255, 170, 140, 0.8)' }}>
+                    Choose 5-7 days to continue.
+                </p>
+            )}
+        </div>
+    );
+}
+
 function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, isLight }) {
+    const hasRequiredTimes = selectedTimes.length === 2;
+
     return (
         <div className="space-y-6 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
             <h2
@@ -241,11 +279,7 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
             </h2>
 
             <p className="text-[14px] leading-relaxed" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
-                Select up to 2 times when you'd like to be reminded to practice.
-            </p>
-
-            <p className="text-[12px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.5)' }}>
-                (Optional — you can skip this)
+                Select exactly 2 times for your daily contract.
             </p>
 
             <PracticeTimesPicker
@@ -260,19 +294,27 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
                 <PillButton onClick={onBack} variant="secondary" size="md">
                     Back
                 </PillButton>
-                <PillButton onClick={onNext} variant="primary" size="md">
-                    {selectedTimes.length > 0 ? 'Continue' : 'Skip'}
+                <PillButton onClick={onNext} variant="primary" size="md" disabled={!hasRequiredTimes}>
+                    Continue
                 </PillButton>
             </div>
+
+            {!hasRequiredTimes && (
+                <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.7)' : 'rgba(255, 170, 140, 0.8)' }}>
+                    Choose exactly 2 times to continue.
+                </p>
+            )}
         </div>
     );
 }
 
-function StepConfirm({ onComplete, onBack, selectedTimes, isLight }) {
+function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight }) {
     const now = new Date();
     const firstSlotTime = selectedTimes?.[0] || null;
     const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
     const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey(now);
+    const selectedDayLabels = (selectedDays || []).map((d) => DAY_LABELS[d]).filter(Boolean).join(' ');
+    const selectedTimeLabels = selectedTimes.map(t => TIME_OPTIONS.find(o => o.value === t)?.label || t).join(' and ');
 
     return (
         <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>
@@ -291,11 +333,15 @@ function StepConfirm({ onComplete, onBack, selectedTimes, isLight }) {
                     Your 14-day curriculum starts {startsTomorrow ? 'tomorrow' : 'today'}.
                 </p>
 
-                {selectedTimes.length > 0 && (
-                    <p className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)' }}>
-                        Practice times: {selectedTimes.map(t => TIME_OPTIONS.find(o => o.value === t)?.label).join(' & ')}
-                    </p>
-                )}
+                <p className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
+                    Days: {selectedDayLabels}
+                </p>
+                <p className="text-[14px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(253,251,245,0.7)' }}>
+                    Times: {selectedTimeLabels}
+                </p>
+                <p className="text-[12px]" style={{ color: isLight ? 'rgba(140, 80, 40, 0.75)' : 'rgba(255, 170, 140, 0.85)' }}>
+                    Outside these days/times is logged but not credited.
+                </p>
 
                 <div className="w-24 h-px mx-auto" style={{ background: 'linear-gradient(to right, transparent, var(--accent-40), transparent)' }} />
 
@@ -331,17 +377,36 @@ function StepConfirm({ onComplete, onBack, selectedTimes, isLight }) {
 
 export function CurriculumOnboarding({ onDismiss, onComplete }) {
     const [step, setStep] = useState(1);
-    const [selectedTimes, setSelectedTimes] = useState([]);
     
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     
-    const { completeOnboarding, dismissOnboarding } = useCurriculumStore();
+    const {
+        completeOnboarding,
+        dismissOnboarding,
+        practiceTimeSlots,
+        selectedDaysOfWeekDraft,
+        setPracticeTimeSlots,
+        setSelectedDaysOfWeekDraft,
+        getSelectedDaysOfWeekDraft,
+    } = useCurriculumStore();
+    const [selectedTimes, setSelectedTimes] = useState((practiceTimeSlots || []).slice(0, 2));
+    const [selectedDays, setSelectedDays] = useState(
+        getSelectedDaysOfWeekDraft?.() || selectedDaysOfWeekDraft || [1, 2, 3, 4, 5, 6]
+    );
+
+    const handleSelectedDaysChange = (days) => {
+        setSelectedDays(days);
+        setSelectedDaysOfWeekDraft?.(days);
+    };
+
+    const handleSelectedTimesChange = (times) => {
+        setSelectedTimes(times);
+        setPracticeTimeSlots?.(times);
+    };
 
     const handleComplete = () => {
-        // Store selected times as strings (e.g., "08:00")
-        // This ensures DailyPracticeCard can render them correctly
-        completeOnboarding(selectedTimes);
+        completeOnboarding(selectedTimes, [], selectedDays);
         onComplete?.();
     };
 
@@ -382,7 +447,7 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
 
                 {/* Progress dots */}
                 <div className="flex justify-center gap-2 mb-8">
-                    {[1, 2, 3, 4, 5].map(s => (
+                    {[1, 2, 3, 4, 5, 6].map(s => (
                         <div
                             key={s}
                             className="w-2 h-2 rounded-full transition-all"
@@ -417,19 +482,29 @@ export function CurriculumOnboarding({ onDismiss, onComplete }) {
                         />
                     )}
                     {step === 4 && (
-                        <StepTimeSelection 
-                            onNext={() => setStep(5)} 
-                            onBack={() => setStep(3)} 
-                            selectedTimes={selectedTimes}
-                            setSelectedTimes={setSelectedTimes}
-                            isLight={isLight} 
+                        <StepDaySelection
+                            onNext={() => setStep(5)}
+                            onBack={() => setStep(3)}
+                            selectedDays={selectedDays}
+                            setSelectedDays={handleSelectedDaysChange}
+                            isLight={isLight}
                         />
                     )}
                     {step === 5 && (
-                        <StepConfirm 
-                            onComplete={handleComplete} 
+                        <StepTimeSelection 
+                            onNext={() => setStep(6)} 
                             onBack={() => setStep(4)} 
                             selectedTimes={selectedTimes}
+                            setSelectedTimes={handleSelectedTimesChange}
+                            isLight={isLight} 
+                        />
+                    )}
+                    {step === 6 && (
+                        <StepConfirm 
+                            onComplete={handleComplete} 
+                            onBack={() => setStep(5)} 
+                            selectedTimes={selectedTimes}
+                            selectedDays={selectedDays}
                             isLight={isLight} 
                         />
                     )}
