@@ -2,7 +2,8 @@
 // Read-only infographic: 14-day rolling precision rail visualization
 // Shows dayStatus and leg-level details on hover
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useCurriculumStore } from '../../state/curriculumStore.js';
 import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { useNavigationStore } from '../../state/navigationStore.js';
@@ -113,6 +114,8 @@ export function CurriculumPrecisionRail() {
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const [tooltipPos, setTooltipPos] = useState(null);
     const [showLegend, setShowLegend] = useState(false);
+    const gridRef = useRef(null);
+    const [gridRect, setGridRect] = useState(null);
     const activePath = useNavigationStore(s => s.activePath);
 
     // Fetch the 14-day rail
@@ -122,6 +125,7 @@ export function CurriculumPrecisionRail() {
             ? activePath.schedule.selectedDaysOfWeek
             : (activePath ? [0, 1, 2, 3, 4, 5, 6] : null),
         selectedTimes: activePath?.schedule?.selectedTimes || null,
+        maxLegsPerDay: activePath?.schedule?.maxLegsPerDay ?? null,
     });
 
     if (!rail || rail.length === 0) {
@@ -143,8 +147,14 @@ export function CurriculumPrecisionRail() {
         setTooltipPos(null);
     };
 
-    const handleGridMouseEnter = () => setShowLegend(true);
-    const handleGridMouseLeave = () => setShowLegend(false);
+    const handleGridMouseEnter = () => {
+        setShowLegend(true);
+        if (gridRef.current) setGridRect(gridRef.current.getBoundingClientRect());
+    };
+    const handleGridMouseLeave = () => {
+        setShowLegend(false);
+        setGridRect(null);
+    };
 
     return (
         <div style={{ position: 'relative' }}>
@@ -173,6 +183,7 @@ export function CurriculumPrecisionRail() {
 
                 {/* Rail cells (14 cells, oldest on left, newest on right) */}
                 <div
+                    ref={gridRef}
                     onMouseEnter={handleGridMouseEnter}
                     onMouseLeave={handleGridMouseLeave}
                     style={{
@@ -207,14 +218,13 @@ export function CurriculumPrecisionRail() {
                 </div>
             </div>
 
-            {/* Legend popup - appears on hover over grid, positioned absolutely */}
-            {showLegend && (
+            {/* Legend popup - portal-rendered to escape overflow:hidden parents */}
+            {showLegend && gridRect && createPortal(
                 <div
                     style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: '0',
-                        marginTop: '6px',
+                        position: 'fixed',
+                        top: gridRect.bottom + 6,
+                        left: gridRect.left,
                         fontSize: '9px',
                         color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'rgba(255, 255, 255, 0.6)',
                         display: 'flex',
@@ -225,7 +235,7 @@ export function CurriculumPrecisionRail() {
                         borderRadius: '6px',
                         padding: '8px 12px',
                         backdropFilter: 'blur(8px)',
-                        zIndex: 10,
+                        zIndex: 9999,
                         pointerEvents: 'none',
                         animation: 'fadeIn 150ms ease-out',
                     }}
@@ -293,7 +303,8 @@ export function CurriculumPrecisionRail() {
                         />
                         off/pause
                     </span>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

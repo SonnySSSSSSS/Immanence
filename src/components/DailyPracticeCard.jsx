@@ -13,7 +13,12 @@ import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
-import { computeCurriculumCompletionState, shouldShowNoCurriculumSetupState } from './dailyPracticeCardLogic.js';
+import {
+    computeCurriculumCompletionState,
+    isScheduleActiveDay,
+    normalizeScheduleActiveDays,
+    shouldShowNoCurriculumSetupState,
+} from './dailyPracticeCardLogic.js';
 
 /**
  * THEME CONFIGURATION
@@ -302,7 +307,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const activePathObj = activePathId ? getPathById(activePathId) : null;
     const isInitiationV2Path = activePathObj?.tracking?.curriculumId === 'ritual-initiation-14-v2';
     const activePath = useNavigationStore(s => s.activePath);
-    const times = normalizeAndSortTimeSlots(activePath?.schedule?.selectedTimes || [], { maxCount: 3 }); // ["06:00","20:00"]
+    const todayDow = new Date().getDay();
+    const frozenActiveDays = normalizeScheduleActiveDays(
+        activePath?.schedule?.selectedDaysOfWeek
+            || activePath?.schedule?.activeDays
+            || []
+    );
+    const isActiveDay = isScheduleActiveDay({ activeDays: frozenActiveDays, todayDow });
+    const isRestDayToday = Boolean(activePathObj) && !isActiveDay;
+    const times = normalizeAndSortTimeSlots(
+        activePath?.schedule?.selectedTimes || [],
+        { maxCount: activePath?.schedule?.maxLegsPerDay ?? 3 }
+    ); // ["06:00","20:00"]
 
     // Today's session tracking (using local date key for timezone correctness, scoped to current run)
     const todayKey = getLocalDateKey();
@@ -489,17 +505,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     
     const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
 
-    const pathDayIndexDisplay = useMemo(() => {
-        if (!activePath?.startedAt || !metrics.durationDays) return 0;
-
-        const fromMs = parseDateKeyToUtcMs(startDayKey);
-        const toMs = parseDateKeyToUtcMs(todayKey);
-        if (Number.isNaN(fromMs) || Number.isNaN(toMs)) return 0;
-
-        // Day meter reflects completed days, so Day 1 becomes "1/N" only after that day ends.
-        const completedDays = Math.floor((toMs - fromMs) / (24 * 60 * 60 * 1000));
-        return Math.max(0, Math.min(completedDays, metrics.durationDays));
-    }, [activePath?.startedAt, metrics.durationDays, startDayKey, todayKey]);
+    const pathDayIndexDisplay = metrics?.dayIndex ?? 1;
 
     const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
     const missState = useMemo(() => computeMissState(), [
@@ -735,69 +741,72 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                     : 'linear-gradient(180deg, rgba(20, 15, 25, 0.48) 0%, rgba(20, 15, 25, 0.72) 100%)')
                         }} />
 
-                        {/* Left strip instrumentation - vertical meters */}
-                        <div
-                            className="absolute"
-                            style={{
-                                top: 0,
-                                left: 0,
-                                bottom: 0,
-                                right: 'clamp(320px, 70%, 380px)',
-                                zIndex: 5,
-                                pointerEvents: 'none',
-                            }}
-                        >
-                            <div className="w-full h-full relative">
-                                <div
-                                    className="absolute flex flex-col pointer-events-none"
-                                    style={{
-                                        top: '12px',
-                                        left: '12px',
-                                        right: '12px',
-                                        bottom: '12px',
-                                        justifyContent: 'flex-start',
-                                        alignItems: showSessionMeter ? 'center' : 'stretch',
-                                        gap: showSessionMeter ? '12px' : '0px',
-                                    }}
-                                >
-                                    {showSessionMeter && (
-                                        <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
-                                            <VerticalMeter
-                                                label="SESSION"
-                                                valueText={`${completedCount}/${times.length}`}
-                                                progressRatio={times.length > 0 ? completedCount / times.length : 0}
-                                                isLight={isLight}
-                                                progressBarColor={progressBarColor}
-                                                isHighlighted={shouldHighlightCompletion}
-                                            />
-                                        </div>
-                                    )}
+                        {!isSetupEmptyState && (
+                            <div
+                                className="absolute"
+                                style={{
+                                    top: 0,
+                                    left: 0,
+                                    bottom: 0,
+                                    right: 'clamp(320px, 70%, 380px)',
+                                    zIndex: 5,
+                                    pointerEvents: 'none',
+                                }}
+                            >
+                                <div className="w-full h-full relative">
+                                    <div
+                                        className="absolute flex flex-col pointer-events-none"
+                                        style={{
+                                            top: '12px',
+                                            left: '12px',
+                                            right: '12px',
+                                            bottom: '12px',
+                                            justifyContent: 'flex-start',
+                                            alignItems: showSessionMeter ? 'center' : 'stretch',
+                                            gap: showSessionMeter ? '12px' : '0px',
+                                        }}
+                                    >
+                                        {showSessionMeter && (
+                                            <div style={{ width: '72px', flex: 2, minHeight: '110px' }}>
+                                                <VerticalMeter
+                                                    label="SESSION"
+                                                    valueText={`${completedCount}/${times.length}`}
+                                                    progressRatio={times.length > 0 ? completedCount / times.length : 0}
+                                                    isLight={isLight}
+                                                    progressBarColor={progressBarColor}
+                                                    isHighlighted={shouldHighlightCompletion}
+                                                />
+                                            </div>
+                                        )}
 
-                                    {metrics.durationDays > 0 && (
-                                        <div style={showSessionMeter ? { width: '72px', flex: 3, minHeight: '140px' } : { width: '100%', flex: 1, minHeight: '100%', height: '100%' }}>
-                                            <VerticalMeter
-                                                label="DAY"
-                                                valueText={`${pathDayIndexDisplay}/${metrics.durationDays}`}
-                                                progressRatio={pathDayProgressRatio}
-                                                isLight={isLight}
-                                                progressBarColor={progressBarColor}
-                                                isHighlighted={pathDayProgressRatio >= 1}
-                                            />
-                                        </div>
-                                    )}
+                                        {metrics.durationDays > 0 && (
+                                            <div style={showSessionMeter ? { width: '72px', flex: 3, minHeight: '140px' } : { width: '100%', flex: 1, minHeight: '100%', height: '100%' }}>
+                                                <VerticalMeter
+                                                    label="DAY"
+                                                    valueText={`${pathDayIndexDisplay}/${metrics.durationDays}`}
+                                                    progressRatio={pathDayProgressRatio}
+                                                    isLight={isLight}
+                                                    progressBarColor={progressBarColor}
+                                                    isHighlighted={pathDayProgressRatio >= 1}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                         </div>
 
                         {/* Right content panel */}
                         <div
-                            className="relative z-10 ml-auto w-[380px] max-w-[70%] min-w-[320px] overflow-hidden flex flex-col"
+                            className={`relative z-10 overflow-hidden flex flex-col ${isSetupEmptyState ? 'w-full max-w-full min-w-0' : 'ml-auto w-[380px] max-w-[70%] min-w-[320px]'}`}
                             style={{
                                 background: isSetupEmptyState
                                     ? (isLight ? 'rgba(250, 246, 238, 0.55)' : 'rgba(0, 0, 0, 0.18)')
                                     : 'transparent',
-                                borderLeft: isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)',
+                                borderLeft: isSetupEmptyState
+                                    ? 'none'
+                                    : (isLight ? '1px solid rgba(160, 120, 60, 0.1)' : '1px solid var(--accent-15)'),
                                 color: isLight ? '#3c3020' : '#fdfbf5',
                             }}
                         >
@@ -837,7 +846,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 sm:mt-7 -translate-y-2.5 transform">
+                                        <div className="mt-6 sm:mt-7 -translate-y-2.5 transform flex justify-center">
                                             <button
                                                 type="button"
                                                 onClick={() => onStartSetup?.()}
@@ -850,6 +859,19 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             >
                                                 Start Setup
                                             </button>
+                                        </div>
+
+                                        <div className="mt-6 w-full">
+                                            <img
+                                                src={`${import.meta.env.BASE_URL}enter%20temple.png`}
+                                                alt="Enter temple"
+                                                style={{
+                                                    width: '100%',
+                                                    maxHeight: '180px',
+                                                    objectFit: 'contain',
+                                                    opacity: isLight ? 0.82 : 0.72,
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                 ) : missState.broken ? (
@@ -888,6 +910,34 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             >
                                                 Abandon Path
                                             </button>
+                                        </div>
+                                    </div>
+                                ) : isRestDayToday ? (
+                                    <div className="text-center">
+                                        <div className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{
+                                            color: isLight ? 'rgba(60, 50, 35, 0.5)' : 'var(--accent-60)',
+                                            letterSpacing: '0.08em'
+                                        }}>
+                                            Today's Practice
+                                        </div>
+                                        <div className="mt-2 text-xl font-bold tracking-tight" style={{
+                                            fontFamily: 'var(--font-display)',
+                                            color: isLight ? '#3c3020' : 'var(--accent-color)',
+                                        }}>
+                                            Rest Day
+                                        </div>
+                                        <div className="mt-2 text-sm opacity-80" style={{ color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                                            No contract obligations today.
+                                        </div>
+                                        <div style={{ marginTop: '20px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                            <img
+                                                src={`${import.meta.env.BASE_URL}off%20day.png`}
+                                                alt="Rest day"
+                                                style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '16px', opacity: 0.9 }}
+                                            />
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t" style={{ borderColor: isLight ? 'rgba(180, 140, 60, 0.15)' : 'rgba(255, 255, 255, 0.05)' }}>
+                                            <CurriculumPrecisionRail />
                                         </div>
                                     </div>
                                 ) : allDone ? (

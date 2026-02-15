@@ -12,6 +12,7 @@ import { usePathStore } from '../state/pathStore';
 import { logPractice } from './cycleManager';
 import { resolveCategoryIdFromSessionV2 } from './infographics/sessionCategory.js';
 import { MATCH_POLICY } from '../data/curriculumMatching.js';
+import { getPathContract } from '../utils/pathContract.js';
 
 // DEV-only regression guard: prevent legacy writer reintroduction
 if (import.meta.env.DEV) {
@@ -190,6 +191,7 @@ function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode
 
     const curriculumStore = useCurriculumStore.getState();
     const progressStore = useProgressStore.getState();
+    const navigationStore = useNavigationStore.getState();
 
     // Gate: check early conditions that make precision rail unavailable
     if (curriculumStore.precisionMode === 'advanced') return null;
@@ -207,6 +209,15 @@ function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode
 
     // Extract required legs
     const requiredLegs = (dayDef.legs || []).filter(leg => leg.required === true);
+    const activePathId = navigationStore?.activePath?.activePathId || null;
+    const activePathMaxLegs = navigationStore?.activePath?.schedule?.maxLegsPerDay ?? null;
+    const contractMaxLegs = getPathContract(activePathId).maxLegsPerDay;
+    const legLimit = Number.isInteger(activePathMaxLegs) ? activePathMaxLegs : contractMaxLegs;
+    if (Number.isInteger(legLimit) && requiredLegs.length > legLimit) {
+        throw new Error(
+            `[computeScheduleMatchedSnapshot] required legs (${requiredLegs.length}) exceed maxLegsPerDay (${legLimit})`
+        );
+    }
     if (requiredLegs.length === 0) return null;
 
     // Resolve session category
@@ -365,6 +376,12 @@ export function recordPracticeSession(payload = {}, options = {}) {
             practiceMode,
         }) : null,
     };
+
+    // Explicit obligation satisfaction flag: true only when scheduleMatched produced
+    // a countable status (green or red). Out-of-time sessions (null match) get false.
+    const sm = normalizedSession.scheduleMatched;
+    normalizedSession.satisfiedObligation = sm !== null
+        && (sm.status === 'green' || sm.status === 'red');
 
     // DEV-ONLY: Guard against missing runId when activePath exists
     if (isDev && activePath && !resolvedRunId) {

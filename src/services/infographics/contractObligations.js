@@ -191,6 +191,7 @@ export function computeContractObligationSummary({
     windowEndLocalDateKey = null,
     selectedDaysOfWeek = null,
     selectedTimes = null,
+    maxLegsPerDay = null,
     curriculumStoreState = null,
     progressStoreState = null,
     sessions = null,
@@ -266,6 +267,12 @@ export function computeContractObligationSummary({
                     dayStatus = 'gray';
                 } else {
                     const requiredLegs = (curriculumDay.legs || []).filter((leg) => leg.required === true);
+                    const legLimit = Number.isInteger(maxLegsPerDay) ? maxLegsPerDay : null;
+                    if (legLimit !== null && requiredLegs.length > legLimit) {
+                        throw new Error(
+                            `[contractObligations] required legs (${requiredLegs.length}) exceed maxLegsPerDay (${legLimit}) for ${dateKeyLocal}`
+                        );
+                    }
 
                     if (requiredLegs.length === 0) {
                         dayStatus = 'gray';
@@ -300,6 +307,8 @@ export function computeContractObligationSummary({
 
                             for (const session of sessionsThisDay) {
                                 if (usedSessionIds.has(session.id)) continue;
+                                // Defense-in-depth: skip sessions explicitly marked as not satisfying obligation
+                                if (session.satisfiedObligation === false) continue;
 
                                 if (session.scheduleMatched) {
                                     if (
