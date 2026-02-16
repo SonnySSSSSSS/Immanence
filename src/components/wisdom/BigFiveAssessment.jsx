@@ -3,7 +3,6 @@
 // Based on Gosling, Rentfrow, & Swann (2003) - validated 10-item measure
 
 import React, { useState } from 'react';
-import { useWaveStore } from '../../state/waveStore.js';
 
 // TIPI Items (public domain alternative to copyrighted measures)
 // Each item: text, dimension, reversed (whether to reverse score)
@@ -64,14 +63,39 @@ function calculateScores(responses) {
     return scores;
 }
 
-export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
+function getTraitSummary(scores) {
+    if (!scores) return [];
+
+    const traits = [];
+    if (scores.openness > 0.6) traits.push('open to experience');
+    if (scores.openness < 0.4) traits.push('practical, conventional');
+    if (scores.conscientiousness > 0.6) traits.push('organized, disciplined');
+    if (scores.conscientiousness < 0.4) traits.push('flexible, spontaneous');
+    if (scores.extraversion > 0.6) traits.push('socially energized');
+    if (scores.extraversion < 0.4) traits.push('reserved, reflective');
+    if (scores.agreeableness > 0.6) traits.push('cooperative, trusting');
+    if (scores.agreeableness < 0.4) traits.push('skeptical, direct');
+    if (scores.neuroticism > 0.6) traits.push('emotionally sensitive');
+    if (scores.neuroticism < 0.4) traits.push('emotionally stable');
+
+    return traits;
+}
+
+function buildBigFiveProfile(scores, version = 'tipi-10') {
+    const reliability = version === 'bfi-44' ? 'high' : version === 'ipip-20' ? 'medium' : 'low';
+    return {
+        scores,
+        version,
+        reliability,
+        completedAt: Date.now(),
+    };
+}
+
+export function BigFiveAssessment({ onComplete, onCancel, onUpdate, onSave }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [responses, setResponses] = useState({});
     const [showResults, setShowResults] = useState(false);
     const [scores, setScores] = useState(null);
-
-    const setBigFive = useWaveStore(state => state.setBigFive);
-    const getTraitSummary = useWaveStore(state => state.getTraitSummary);
 
     const currentItem = TIPI_ITEMS[currentIndex];
     const progress = Object.keys(responses).length / TIPI_ITEMS.length;
@@ -95,8 +119,9 @@ export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
 
     const handleFinish = () => {
         const calculated = calculateScores(responses);
+        const profile = buildBigFiveProfile(calculated, 'tipi-10');
         setScores(calculated);
-        setBigFive(calculated, 'tipi-10');
+        onSave?.(profile);
         setShowResults(true);
     };
 
@@ -106,7 +131,7 @@ export function BigFiveAssessment({ onComplete, onCancel, onUpdate }) {
 
     // Results view
     if (showResults && scores) {
-        const traits = getTraitSummary();
+        const traits = getTraitSummary(scores);
 
         return (
             <div className="space-y-6">

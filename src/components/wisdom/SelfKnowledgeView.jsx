@@ -3,23 +3,45 @@
 // Houses personality assessments and profile display
 
 import { useState } from 'react';
-import { useWaveStore } from '../../state/waveStore.js';
 import { BigFiveAssessment } from './BigFiveAssessment.jsx';
 import { PersonalityWave } from './PersonalityWave.jsx';
+
+function getDefaultProfile() {
+    return {
+        bigFive: null,
+        selfDescribedTags: [],
+    };
+}
+
+function getTraitSummary(scores) {
+    if (!scores) return [];
+
+    const traits = [];
+    if (scores.openness > 0.6) traits.push('open to experience');
+    if (scores.openness < 0.4) traits.push('practical, conventional');
+    if (scores.conscientiousness > 0.6) traits.push('organized, disciplined');
+    if (scores.conscientiousness < 0.4) traits.push('flexible, spontaneous');
+    if (scores.extraversion > 0.6) traits.push('socially energized');
+    if (scores.extraversion < 0.4) traits.push('reserved, reflective');
+    if (scores.agreeableness > 0.6) traits.push('cooperative, trusting');
+    if (scores.agreeableness < 0.4) traits.push('skeptical, direct');
+    if (scores.neuroticism > 0.6) traits.push('emotionally sensitive');
+    if (scores.neuroticism < 0.4) traits.push('emotionally stable');
+
+    return traits;
+}
 
 export function SelfKnowledgeView() {
     const [showAssessment, setShowAssessment] = useState(false);
     const [assessmentType, setAssessmentType] = useState(null);
     const [draftScores, setDraftScores] = useState(null);
-
-    const bigFive = useWaveStore(state => state.bigFive);
-    const selfDescribedTags = useWaveStore(state => state.selfDescribedTags);
-    const isMinimumViable = useWaveStore(state => state.isMinimumViable);
-    const getTraitSummary = useWaveStore(state => state.getTraitSummary);
-    const addSelfDescribedTag = useWaveStore(state => state.addSelfDescribedTag);
-    const removeSelfDescribedTag = useWaveStore(state => state.removeSelfDescribedTag);
+    const [profile, setProfile] = useState(getDefaultProfile);
 
     const [newTag, setNewTag] = useState('');
+
+    const bigFive = profile.bigFive;
+    const selfDescribedTags = profile.selfDescribedTags;
+    const isMinimumViable = Boolean(bigFive);
 
     // If showing Big Five assessment
     if (showAssessment && assessmentType === 'bigFive') {
@@ -35,6 +57,9 @@ export function SelfKnowledgeView() {
                 )}
                 <BigFiveAssessment
                     onUpdate={(scores) => setDraftScores(scores)}
+                    onSave={(nextBigFive) => {
+                        setProfile((current) => ({ ...current, bigFive: nextBigFive }));
+                    }}
                     onComplete={() => {
                         setShowAssessment(false);
                         setAssessmentType(null);
@@ -51,13 +76,28 @@ export function SelfKnowledgeView() {
     }
 
     const handleAddTag = () => {
-        if (newTag.trim()) {
-            addSelfDescribedTag(newTag);
-            setNewTag('');
-        }
+        const normalized = newTag.trim().toLowerCase().slice(0, 30);
+        if (!normalized) return;
+        if (selfDescribedTags.length >= 10) return;
+        if (selfDescribedTags.includes(normalized)) return;
+
+        const nextProfile = {
+            ...profile,
+            selfDescribedTags: [...selfDescribedTags, normalized],
+        };
+        setProfile(nextProfile);
+        setNewTag('');
     };
 
-    const traits = getTraitSummary();
+    const handleRemoveTag = (tag) => {
+        const nextProfile = {
+            ...profile,
+            selfDescribedTags: selfDescribedTags.filter((existingTag) => existingTag !== tag),
+        };
+        setProfile(nextProfile);
+    };
+
+    const traits = getTraitSummary(bigFive?.scores);
 
     return (
         <div className="space-y-6 im-card" data-card-id="wisdom:selfKnowledgePanel">
@@ -111,18 +151,18 @@ export function SelfKnowledgeView() {
             <div
                 className="flex items-center justify-center gap-2 py-2 px-4 rounded-full mx-auto w-fit"
                 style={{
-                    background: isMinimumViable() ? 'rgba(74, 222, 128, 0.1)' : 'rgba(251, 191, 36, 0.1)',
-                    border: `1px solid ${isMinimumViable() ? 'rgba(74, 222, 128, 0.3)' : 'rgba(251, 191, 36, 0.3)'}`,
+                    background: isMinimumViable ? 'rgba(74, 222, 128, 0.1)' : 'rgba(251, 191, 36, 0.1)',
+                    border: `1px solid ${isMinimumViable ? 'rgba(74, 222, 128, 0.3)' : 'rgba(251, 191, 36, 0.3)'}`,
                 }}
             >
-                <span style={{ color: isMinimumViable() ? '#4ade80' : '#fbbf24' }}>
-                    {isMinimumViable() ? '✓' : '○'}
+                <span style={{ color: isMinimumViable ? '#4ade80' : '#fbbf24' }}>
+                    {isMinimumViable ? '✓' : '○'}
                 </span>
                 <span
                     className="text-[11px] uppercase tracking-wider"
-                    style={{ color: isMinimumViable() ? '#4ade80' : '#fbbf24' }}
+                    style={{ color: isMinimumViable ? '#4ade80' : '#fbbf24' }}
                 >
-                    {isMinimumViable() ? 'Profile Active' : 'Setup Required'}
+                    {isMinimumViable ? 'Profile Active' : 'Setup Required'}
                 </span>
             </div>
 
@@ -334,7 +374,7 @@ export function SelfKnowledgeView() {
                                         {tag}
                                     </span>
                                     <button
-                                        onClick={() => removeSelfDescribedTag(tag)}
+                                        onClick={() => handleRemoveTag(tag)}
                                         className="hover:text-red-400 transition-colors"
                                         style={{ color: 'rgba(253,251,245,0.3)' }}
                                     >

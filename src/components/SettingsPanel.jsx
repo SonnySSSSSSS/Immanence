@@ -36,6 +36,15 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     }
   };
 
+  const handleClearWaveFunctionData = () => {
+    try {
+      localStorage.removeItem('immanenceOS.waveFunction');
+      console.log('Cleared localStorage key: immanenceOS.waveFunction');
+    } catch (error) {
+      console.warn('Failed to clear wave function data:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     if (ENABLE_AUTH) {
       const supabase = await getSupabase();
@@ -118,6 +127,23 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
           }}
         >
           Reset Local Data
+        </button>
+
+        <button
+          onClick={handleClearWaveFunctionData}
+          className="w-full px-4 py-3 rounded-lg font-bold text-sm transition-all mb-4"
+          style={{
+            background: isLight
+              ? 'rgba(60, 50, 35, 0.08)'
+              : 'rgba(255, 255, 255, 0.08)',
+            border: isLight
+              ? '1px solid rgba(60, 50, 35, 0.15)'
+              : '1px solid rgba(255, 255, 255, 0.15)',
+            color: isLight ? '#3c3020' : '#fdfbf5',
+            fontFamily: 'var(--font-display)',
+          }}
+        >
+          Clear Wave Function Data
         </button>
 
         {/* Logout Button */}
