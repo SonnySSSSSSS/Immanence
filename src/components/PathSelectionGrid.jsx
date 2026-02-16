@@ -11,7 +11,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const allPaths = getAllPaths();
     // Show all paths (initiation and initiation-2 for testing)
     const paths = allPaths.filter(p => p.id.startsWith('initiation'));
-    const { activePath, abandonPath } = useNavigationStore();
+    const { activePath, abandonPath, setSelectedPath } = useNavigationStore();
     const { onboardingComplete } = useCurriculumStore();
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -65,6 +65,7 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                 if (entry.isProgram) {
                                     entry.onClick();
                                 } else if (!isPlaceholder) {
+                                    setSelectedPath(entry.id);
                                     // Clear activePath if it's for a different path
                                     if (activePath && activePath.activePathId !== entry.id) {
                                         abandonPath();

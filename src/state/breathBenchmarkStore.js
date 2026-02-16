@@ -9,6 +9,13 @@ const EMPTY_LIFETIME_MAX = Object.freeze({
     total: 0,
 });
 
+const ATTEMPT_STATUS = Object.freeze({
+    NOT_STARTED: 'not_started',
+    SATISFIED: 'satisfied',
+});
+
+const DEFAULT_REUSE_MAX_AGE_DAYS = 14;
+
 const normalizePositive = (value) => {
     const n = Number(value);
     if (!Number.isFinite(n) || n < 0) return 0;
@@ -58,14 +65,22 @@ export const useBreathBenchmarkStore = create(
     persist(
         (set, get) => ({
             // Benchmark data: user's max capacity for each phase (in seconds)
-            benchmark: null, // { inhale, hold1, exhale, hold2, measuredAt }
+            benchmark: null, // compatibility alias for current effective benchmark
+            lastBenchmark: null, // latest completed benchmark snapshot
+            benchmarkHistory: [], // append-only snapshots
             benchmarksByRunId: {}, // { [runId]: { day1: snapshot, day14: snapshot } }
+            attemptBenchmarksByRunId: {}, // { [runId]: { status, benchmark, source, createdAt, updatedAt } }
             lifetimeMax: { ...EMPTY_LIFETIME_MAX },
 
             // Set benchmark after completing the 4-phase test
-            setBenchmark: (results) => set({
-                benchmark: sanitizeBenchmarkInput(results),
-                lifetimeMax: mergeLifetimeMax(get().lifetimeMax, sanitizeBenchmarkInput(results)),
+            setBenchmark: (results) => set((state) => {
+                const snapshot = sanitizeBenchmarkInput(results);
+                return {
+                    benchmark: snapshot,
+                    lastBenchmark: snapshot,
+                    benchmarkHistory: [...(state.benchmarkHistory || []), snapshot],
+                    lifetimeMax: mergeLifetimeMax(state.lifetimeMax, snapshot),
+                };
             }),
 
             // Save benchmark snapshot for a specific run and contract day (day1/day14)
@@ -78,6 +93,8 @@ export const useBreathBenchmarkStore = create(
                 if (!safeRunId || !dayKey) {
                     return {
                         benchmark: snapshot,
+                        lastBenchmark: snapshot,
+                        benchmarkHistory: [...(state.benchmarkHistory || []), snapshot],
                         lifetimeMax: mergeLifetimeMax(state.lifetimeMax, snapshot),
                     };
                 }
@@ -85,6 +102,8 @@ export const useBreathBenchmarkStore = create(
                 const existingForRun = state.benchmarksByRunId?.[safeRunId] || {};
                 return {
                     benchmark: snapshot,
+                    lastBenchmark: snapshot,
+                    benchmarkHistory: [...(state.benchmarkHistory || []), snapshot],
                     benchmarksByRunId: {
                         ...(state.benchmarksByRunId || {}),
                         [safeRunId]: {
@@ -95,6 +114,92 @@ export const useBreathBenchmarkStore = create(
                     lifetimeMax: mergeLifetimeMax(state.lifetimeMax, snapshot),
                 };
             }),
+
+            resetAttemptBenchmark: (runId) => set((state) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                if (!safeRunId) return {};
+                const now = Date.now();
+                return {
+                    attemptBenchmarksByRunId: {
+                        ...(state.attemptBenchmarksByRunId || {}),
+                        [safeRunId]: {
+                            status: ATTEMPT_STATUS.NOT_STARTED,
+                            benchmark: null,
+                            source: null,
+                            createdAt: now,
+                            updatedAt: now,
+                        },
+                    },
+                };
+            }),
+
+            completeAttemptBenchmark: ({ runId, results, source = 'fresh' }) => set((state) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                if (!safeRunId) return {};
+                const now = Date.now();
+                const snapshot = sanitizeBenchmarkInput(results);
+                return {
+                    benchmark: snapshot,
+                    lastBenchmark: snapshot,
+                    benchmarkHistory: [...(state.benchmarkHistory || []), snapshot],
+                    attemptBenchmarksByRunId: {
+                        ...(state.attemptBenchmarksByRunId || {}),
+                        [safeRunId]: {
+                            status: ATTEMPT_STATUS.SATISFIED,
+                            benchmark: snapshot,
+                            source,
+                            createdAt: state.attemptBenchmarksByRunId?.[safeRunId]?.createdAt || now,
+                            updatedAt: now,
+                        },
+                    },
+                    lifetimeMax: mergeLifetimeMax(state.lifetimeMax, snapshot),
+                };
+            }),
+
+            canReuseLastBenchmark: (maxAgeDays = DEFAULT_REUSE_MAX_AGE_DAYS) => {
+                const { lastBenchmark } = get();
+                if (!lastBenchmark?.measuredAt) return false;
+                const maxAgeMs = Number(maxAgeDays) * 24 * 60 * 60 * 1000;
+                if (!Number.isFinite(maxAgeMs) || maxAgeMs <= 0) return false;
+                return (Date.now() - Number(lastBenchmark.measuredAt)) <= maxAgeMs;
+            },
+
+            reuseLastBenchmarkForAttempt: (runId, { maxAgeDays = DEFAULT_REUSE_MAX_AGE_DAYS } = {}) => set((state) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                const last = state.lastBenchmark || null;
+                if (!safeRunId || !last?.measuredAt) return {};
+                const maxAgeMs = Number(maxAgeDays) * 24 * 60 * 60 * 1000;
+                if (!Number.isFinite(maxAgeMs) || maxAgeMs <= 0) return {};
+                if ((Date.now() - Number(last.measuredAt)) > maxAgeMs) return {};
+
+                const now = Date.now();
+                return {
+                    benchmark: last,
+                    attemptBenchmarksByRunId: {
+                        ...(state.attemptBenchmarksByRunId || {}),
+                        [safeRunId]: {
+                            status: ATTEMPT_STATUS.SATISFIED,
+                            benchmark: last,
+                            source: 'reuse',
+                            createdAt: state.attemptBenchmarksByRunId?.[safeRunId]?.createdAt || now,
+                            updatedAt: now,
+                        },
+                    },
+                };
+            }),
+
+            hasBenchmarkForRun: (runId) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                if (!safeRunId) return false;
+                const attempt = get().attemptBenchmarksByRunId?.[safeRunId];
+                return Boolean(attempt?.status === ATTEMPT_STATUS.SATISFIED && attempt?.benchmark);
+            },
+
+            getAttemptBenchmark: (runId) => {
+                const safeRunId = typeof runId === 'string' ? runId : null;
+                if (!safeRunId) return null;
+                return get().attemptBenchmarksByRunId?.[safeRunId] || null;
+            },
 
             getRunBenchmark: (runId, dayNumber) => {
                 const safeRunId = typeof runId === 'string' ? runId : null;
@@ -176,24 +281,37 @@ export const useBreathBenchmarkStore = create(
         }),
         {
             name: 'immanence-breath-benchmark',
-            version: 2,
+            version: 3,
             migrate: (persistedState) => {
                 const next = persistedState || {};
                 const benchmark = next.benchmark ? sanitizeBenchmarkInput(next.benchmark) : null;
+                const lastBenchmark = next.lastBenchmark
+                    ? sanitizeBenchmarkInput(next.lastBenchmark)
+                    : benchmark;
+                const benchmarkHistory = Array.isArray(next.benchmarkHistory)
+                    ? next.benchmarkHistory
+                        .map((entry) => (entry ? sanitizeBenchmarkInput(entry) : null))
+                        .filter(Boolean)
+                    : (lastBenchmark ? [lastBenchmark] : []);
                 const benchmarksByRunId = next.benchmarksByRunId && typeof next.benchmarksByRunId === 'object'
                     ? next.benchmarksByRunId
+                    : {};
+                const attemptBenchmarksByRunId = next.attemptBenchmarksByRunId && typeof next.attemptBenchmarksByRunId === 'object'
+                    ? next.attemptBenchmarksByRunId
                     : {};
                 const seedLifetime = next.lifetimeMax && typeof next.lifetimeMax === 'object'
                     ? { ...EMPTY_LIFETIME_MAX, ...next.lifetimeMax }
                     : { ...EMPTY_LIFETIME_MAX };
-                const lifetimeMax = benchmark
-                    ? mergeLifetimeMax(seedLifetime, benchmark)
-                    : seedLifetime;
+                const lifetimeMax = (benchmarkHistory.length > 0 ? benchmarkHistory : [lastBenchmark].filter(Boolean))
+                    .reduce((acc, snapshot) => mergeLifetimeMax(acc, snapshot), seedLifetime);
 
                 return {
                     ...next,
-                    benchmark,
+                    benchmark: benchmark || lastBenchmark || null,
+                    lastBenchmark: lastBenchmark || null,
+                    benchmarkHistory,
                     benchmarksByRunId,
+                    attemptBenchmarksByRunId,
                     lifetimeMax,
                 };
             },

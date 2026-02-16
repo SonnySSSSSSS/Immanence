@@ -30,12 +30,18 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const [daysError, setDaysError] = useState(null);
     const [benchmarkError, setBenchmarkError] = useState(null);
     const [showBenchmark, setShowBenchmark] = useState(false);
-    const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark());
-    const needsRebenchmark = useBreathBenchmarkStore(s => s.needsRebenchmark());
-    const activePath = useNavigationStore(s => s.activePath);
-    const computeProgressMetrics = useNavigationStore(s => s.computeProgressMetrics);
-    const metrics = activePath?.activePathId === path?.id ? computeProgressMetrics() : null;
-    const contractComplete = metrics?.contractComplete ?? false;
+    const lastBenchmark = useBreathBenchmarkStore(s => s.lastBenchmark);
+    const completeAttemptBenchmark = useBreathBenchmarkStore(s => s.completeAttemptBenchmark);
+    const canReuseLastBenchmark = useBreathBenchmarkStore(s => s.canReuseLastBenchmark);
+    const reuseLastBenchmarkForAttempt = useBreathBenchmarkStore(s => s.reuseLastBenchmarkForAttempt);
+    const getAttemptBenchmark = useBreathBenchmarkStore(s => s.getAttemptBenchmark);
+    const selectedPathId = useNavigationStore(s => s.selectedPathId);
+    const selectedAttemptRunId = useNavigationStore(s => s.selectedAttemptRunId);
+    const attemptRunId = selectedPathId === path?.id ? selectedAttemptRunId : null;
+    const attemptBenchmark = getAttemptBenchmark(attemptRunId);
+    const attemptBenchmarkDone = Boolean(attemptBenchmark?.status === 'satisfied' && attemptBenchmark?.benchmark);
+    const attemptUsesPrevious = attemptBenchmark?.source === 'reuse';
+    const canReuseForAttempt = Boolean(attemptRunId && canReuseLastBenchmark(14));
 
     if (!path || path.placeholder) return null;
     const isInitiationPath = String(path.id || '').startsWith('initiation');
@@ -92,8 +98,8 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         : { ok: true, error: null };
     const benchmarkValidation = path.showBreathBenchmark
         ? {
-            ok: hasBenchmark,
-            error: hasBenchmark ? null : 'Complete the breathing benchmark first.',
+            ok: attemptBenchmarkDone,
+            error: attemptBenchmarkDone ? null : 'Complete the breathing benchmark first.',
         }
         : { ok: true, error: null };
     const canBeginPath = scheduleValidation.ok && daysValidation.ok && benchmarkValidation.ok;
@@ -113,6 +119,22 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
     const handleConstraintViolation = (errorMessage) => {
         setScheduleError(errorMessage || scheduleValidation.error);
+    };
+
+    const handleBenchmarkSave = (results) => {
+        if (!attemptRunId || !path?.showBreathBenchmark) return;
+        completeAttemptBenchmark({
+            runId: attemptRunId,
+            results,
+            source: 'fresh',
+        });
+        setBenchmarkError(null);
+    };
+
+    const handleReusePreviousBenchmark = () => {
+        if (!attemptRunId || !canReuseForAttempt) return;
+        reuseLastBenchmarkForAttempt(attemptRunId, { maxAgeDays: 14 });
+        setBenchmarkError(null);
     };
 
     const handleBegin = () => {
@@ -229,7 +251,11 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 // No background/border/shadow - handled by wrapper in NavigationSection
             }}
         >
-            <BreathBenchmark isOpen={showBenchmark} onClose={() => setShowBenchmark(false)} />
+            <BreathBenchmark
+                isOpen={showBenchmark}
+                onSave={handleBenchmarkSave}
+                onClose={() => setShowBenchmark(false)}
+            />
             {/* Center top ornament */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />
@@ -637,16 +663,38 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                 letterSpacing: "var(--tracking-mythic)",
                                 textTransform: "uppercase",
                                 background: "transparent",
-                                border: `1px solid ${hasBenchmark ? "var(--accent-color)" : "var(--accent-10)"}`,
-                                color: hasBenchmark ? "var(--accent-color)" : "var(--text-muted)",
-                                boxShadow: (needsRebenchmark && contractComplete) ? '0 0 12px var(--accent-15)' : "none",
-                                animation: (needsRebenchmark && contractComplete) ? 'benchmarkRadiate 2s ease-in-out infinite' : 'none',
+                                border: `1px solid ${attemptBenchmarkDone ? "var(--accent-color)" : "var(--accent-10)"}`,
+                                color: attemptBenchmarkDone ? "var(--accent-color)" : "var(--text-muted)",
                                 transition: 'background 400ms ease, border-color 400ms ease, color 400ms ease',
                             }}
                         >
-                            {contractComplete && hasBenchmark ? '🔄 Re-benchmark' : hasBenchmark ? '✓ Benchmark complete' : '📏 Take benchmark'}
+                            {attemptBenchmarkDone ? '✓ Benchmark complete' : '📏 Run benchmark'}
                         </button>
                     </div>
+                    {canReuseForAttempt && !attemptBenchmarkDone && (
+                        <div className="mt-3 flex justify-center">
+                            <button
+                                onClick={handleReusePreviousBenchmark}
+                                className="rounded-full px-4 py-2 text-[10px] uppercase"
+                                style={{
+                                    fontFamily: "var(--font-display)",
+                                    fontWeight: 600,
+                                    letterSpacing: "var(--tracking-mythic)",
+                                    background: "transparent",
+                                    border: "1px solid var(--accent-20)",
+                                    color: "var(--text-muted)",
+                                    transition: 'background 250ms ease, border-color 250ms ease, color 250ms ease',
+                                }}
+                            >
+                                {`Use previous benchmark (${new Date(lastBenchmark?.measuredAt || Date.now()).toLocaleDateString()})`}
+                            </button>
+                        </div>
+                    )}
+                    {attemptUsesPrevious && (
+                        <div className="mt-2 text-center text-[11px]" style={{ color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.65)' }}>
+                            Using previous benchmark
+                        </div>
+                    )}
                 </div>
             )}
 

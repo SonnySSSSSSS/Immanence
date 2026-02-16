@@ -1,7 +1,7 @@
 // src/state/navigationStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { addDaysToDateKey, getDateKey, getLocalDateKey } from '../utils/dateUtils';
+import { addDaysToDateKey, getDateKey, getLocalDateKey } from '../utils/dateUtils.js';
 import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
@@ -98,10 +98,19 @@ export const useNavigationStore = create(
         (set, get) => ({
             // Selection state (before beginning a path)
             selectedPathId: null,
+            selectedAttemptRunId: null,
             setSelectedPath: (id) => {
                 console.log("[navigationStore] setSelectedPath ->", id);
                 console.trace("[navigationStore] setSelectedPath stack");
-                set({ selectedPathId: id });
+                const path = id ? getPathById(id) : null;
+                const requiresBenchmark = Boolean(path?.showBreathBenchmark);
+                const selectedAttemptRunId = requiresBenchmark
+                    ? (crypto?.randomUUID?.() || String(Date.now()))
+                    : null;
+                if (requiresBenchmark && selectedAttemptRunId) {
+                    useBreathBenchmarkStore.getState().resetAttemptBenchmark(selectedAttemptRunId);
+                }
+                set({ selectedPathId: id, selectedAttemptRunId });
             },
             
             // Pilot session tracking moved to curriculumStore
@@ -111,7 +120,11 @@ export const useNavigationStore = create(
 
             // Begin a new path
             beginPath: (pathId) => {
-                const runId = crypto?.randomUUID?.() || String(Date.now());
+                const state = get();
+                const hasSelectedAttempt = state.selectedPathId === pathId && typeof state.selectedAttemptRunId === 'string';
+                const runId = hasSelectedAttempt
+                    ? state.selectedAttemptRunId
+                    : (crypto?.randomUUID?.() || String(Date.now()));
                 // Align Day 1 to the selected first slot time:
                 // if the first slot window has already passed today, Day 1 begins tomorrow.
                 const curriculumState = useCurriculumStore.getState();
@@ -123,7 +136,7 @@ export const useNavigationStore = create(
                 const contract = getPathContract(path);
                 const benchmarkCheck = validateBenchmarkPrerequisite({
                     path,
-                    hasBenchmark: useBreathBenchmarkStore.getState().hasBenchmark(),
+                    hasBenchmark: useBreathBenchmarkStore.getState().hasBenchmarkForRun(runId),
                 });
                 if (!benchmarkCheck.ok) {
                     return benchmarkCheck;
@@ -183,7 +196,8 @@ export const useNavigationStore = create(
                         },
                         weekCompletionDates: {} // { 1: "2024-01-15", 2: "2024-01-22", ... }
                     },
-                    selectedPathId: pathId // Keep selection synced
+                    selectedPathId: pathId, // Keep selection synced
+                    selectedAttemptRunId: null,
                 });
 
                 return { ok: true };
@@ -227,7 +241,8 @@ export const useNavigationStore = create(
             abandonPath: () => {
                 set({
                     activePath: null,
-                    selectedPathId: null
+                    selectedPathId: null,
+                    selectedAttemptRunId: null,
                 });
             },
 
@@ -674,6 +689,7 @@ export const useNavigationStore = create(
                 if (!state.activePath) return;
 
                 const runId = crypto.randomUUID();
+                useBreathBenchmarkStore.getState().resetAttemptBenchmark(runId);
                 console.log('[restartPath] NEW RUN', runId);
                 const pathId = state.activePath.activePathId;
                 const durationDays = getPathDurationDays(pathId);
@@ -736,16 +752,21 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 6,  // Bumped for canonical activeDays + selectedDaysOfWeek freeze migration
+            version: 7,  // Bumped for selectedAttemptRunId transient attempt migration
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
-                const { selectedPathId, ...rest } = state;
+                const { selectedPathId, selectedAttemptRunId, ...rest } = state;
                 void selectedPathId;
+                void selectedAttemptRunId;
                 return rest;
             },
             migrate: (persistedState) => {
                 // Drop any legacy selections to prevent auto-open after hydration
-                const { selectedPathId: _legacySelection, ...rest } = persistedState || {};
+                const {
+                    selectedPathId: _legacySelection,
+                    selectedAttemptRunId: _legacySelectedAttemptRunId,
+                    ...rest
+                } = persistedState || {};
                 
                 // Clean up legacy fields from activePath if present
                 if (rest?.activePath) {
@@ -780,12 +801,15 @@ export const useNavigationStore = create(
                     };
                 }
                  
-                return { ...rest, selectedPathId: null };
+                return { ...rest, selectedPathId: null, selectedAttemptRunId: null };
             },
             onRehydrateStorage: () => (state) => {
                 // Force-clear selection after every hydration cycle
                 if (state?.selectedPathId) {
                     state.selectedPathId = null;
+                }
+                if (state?.selectedAttemptRunId) {
+                    state.selectedAttemptRunId = null;
                 }
 
                 // Ensure no legacy fields in activePath after rehydration

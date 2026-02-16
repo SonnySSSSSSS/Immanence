@@ -17,7 +17,7 @@ const PHASES = [
  *
  * Flow: intro → 4 phases (tap to advance) → results (with retry option)
  */
-export function BreathBenchmark({ isOpen, onClose }) {
+export function BreathBenchmark({ isOpen, onClose, onSave = null }) {
     const setBenchmark = useBreathBenchmarkStore(s => s.setBenchmark);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -111,7 +111,11 @@ export function BreathBenchmark({ isOpen, onClose }) {
     }, [isOpen]);
 
     const handleAccept = () => {
-        setBenchmark(results);
+        if (typeof onSave === 'function') {
+            onSave(results);
+        } else {
+            setBenchmark(results);
+        }
         onClose(results);
     };
 
