@@ -29,7 +29,7 @@ function PracticeCardWallpaperDiagnostics({ stageKey }) {
     );
 }
 
-import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
@@ -38,6 +38,7 @@ import { useCurriculumStore } from '../state/curriculumStore';
 import { useNavigationStore } from '../state/navigationStore';
 import { useTutorialStore } from '../state/tutorialStore';
 import { AVATAR_COMPOSITE_LAYER_IDS, useDevPanelStore } from '../state/devPanelStore.js';
+import { normalizeStageKey } from '../config/avatarStageAssets.js';
 import { CoordinateHelper } from './dev/CoordinateHelper.jsx';
 import { TutorialEditor } from './dev/TutorialEditor.jsx';
 import { getQuickDashboardTiles, getCurriculumPracticeBreakdown, getPracticeDetailMetrics } from '../reporting/dashboardProjection.js';
@@ -97,9 +98,19 @@ const PATH_OPTIONS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 const AVATAR_COMPOSITE_LINK_OPTIONS = ['none', ...AVATAR_COMPOSITE_LAYER_IDS];
 const AVATAR_COMPOSITE_LAYER_LABELS = {
     bg: 'Background',
-    stage: 'Stage',
+    stage: 'Plant / Foreground',
     glass: 'Glass',
     ring: 'Rune Ring',
+};
+const DEFAULT_ROLE_RESET = {
+    enabled: true,
+    opacity: 1,
+    scale: 1,
+    rotateDeg: 0,
+    x: 0,
+    y: 0,
+    linkTo: null,
+    linkOpacity: false,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1109,6 +1120,7 @@ export function DevPanel({
                         expanded={expandedSections.avatarCompositeTuner}
                         onToggle={() => toggleSection('avatarCompositeTuner')}
                         isLight={isLight}
+                        editingStageKey={normalizeStageKey(avatarStage)}
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -2780,17 +2792,19 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
     );
 }
 
-function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
+function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false, editingStageKey = 'seedling' }) {
     const avatarComposite = useDevPanelStore(s => s.avatarComposite);
     const setAvatarCompositeEnabled = useDevPanelStore(s => s.setAvatarCompositeEnabled);
     const setAvatarCompositeDebugOverlay = useDevPanelStore(s => s.setAvatarCompositeDebugOverlay);
-    const setAvatarCompositeLayerEnabled = useDevPanelStore(s => s.setAvatarCompositeLayerEnabled);
-    const setAvatarCompositeLayerValue = useDevPanelStore(s => s.setAvatarCompositeLayerValue);
-    const setAvatarCompositeLayerLink = useDevPanelStore(s => s.setAvatarCompositeLayerLink);
-    const setAvatarCompositeLayerLinkOpacity = useDevPanelStore(s => s.setAvatarCompositeLayerLinkOpacity);
-    const resetAvatarCompositeLayer = useDevPanelStore(s => s.resetAvatarCompositeLayer);
-    const resetAvatarCompositeAll = useDevPanelStore(s => s.resetAvatarCompositeAll);
-    const linkAllAvatarCompositeTo = useDevPanelStore(s => s.linkAllAvatarCompositeTo);
+    const getAvatarCompositeRoleTransform = useDevPanelStore(s => s.getAvatarCompositeRoleTransform);
+    const setAvatarCompositeRoleTransform = useDevPanelStore(s => s.setAvatarCompositeRoleTransform);
+    const setAvatarCompositeRoleTransformEnabled = useDevPanelStore(s => s.setAvatarCompositeRoleTransformEnabled);
+    const setAvatarCompositeRoleTransformValue = useDevPanelStore(s => s.setAvatarCompositeRoleTransformValue);
+    const setAvatarCompositeRoleTransformLink = useDevPanelStore(s => s.setAvatarCompositeRoleTransformLink);
+    const setAvatarCompositeRoleTransformLinkOpacity = useDevPanelStore(s => s.setAvatarCompositeRoleTransformLinkOpacity);
+    const resetAvatarCompositeStage = useDevPanelStore(s => s.resetAvatarCompositeStage);
+    const copyAvatarCompositeStage = useDevPanelStore(s => s.copyAvatarCompositeStage);
+    const copyAvatarCompositeStageToAll = useDevPanelStore(s => s.copyAvatarCompositeStageToAll);
     const getAvatarCompositeSettingsJSON = useDevPanelStore(s => s.getAvatarCompositeSettingsJSON);
     const setAvatarCompositeSettingsJSON = useDevPanelStore(s => s.setAvatarCompositeSettingsJSON);
 
@@ -2804,7 +2818,15 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
     const [jsonDraft, setJsonDraft] = useState('');
     const [jsonStatus, setJsonStatus] = useState('');
 
-    const layers = avatarComposite?.layers || {};
+    const normalizedEditingStageKey = normalizeStageKey(editingStageKey);
+    const editingStageLabel = normalizedEditingStageKey.charAt(0).toUpperCase() + normalizedEditingStageKey.slice(1);
+    const layers = useMemo(() => {
+        const nextLayers = {};
+        AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
+            nextLayers[layerId] = getAvatarCompositeRoleTransform(normalizedEditingStageKey, layerId);
+        });
+        return nextLayers;
+    }, [avatarComposite, getAvatarCompositeRoleTransform, normalizedEditingStageKey]);
     const tunerEnabled = avatarComposite?.enabled !== false;
     const showDebugOverlay = Boolean(avatarComposite?.showDebugOverlay);
 
@@ -2815,18 +2837,18 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
     const nudgeRotation = (layerId, delta) => {
         const layer = layers[layerId];
         if (!layer) return;
-        setAvatarCompositeLayerValue(layerId, 'rotateDeg', layer.rotateDeg + delta);
+        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', layer.rotateDeg + delta);
     };
 
     const resetTransforms = (layerId) => {
-        setAvatarCompositeLayerValue(layerId, 'scale', 1);
-        setAvatarCompositeLayerValue(layerId, 'rotateDeg', 0);
-        setAvatarCompositeLayerValue(layerId, 'x', 0);
-        setAvatarCompositeLayerValue(layerId, 'y', 0);
+        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'scale', 1);
+        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', 0);
+        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'x', 0);
+        setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'y', 0);
     };
 
     const copySettings = async () => {
-        const json = getAvatarCompositeSettingsJSON();
+        const json = getAvatarCompositeSettingsJSON(normalizedEditingStageKey);
         setJsonDraft(json);
         if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
             try {
@@ -2841,8 +2863,16 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
     };
 
     const applySettings = () => {
-        const result = setAvatarCompositeSettingsJSON(jsonDraft);
+        const result = setAvatarCompositeSettingsJSON(normalizedEditingStageKey, jsonDraft);
         setJsonStatus(result?.ok ? 'Settings applied.' : `Paste failed: ${result?.error || 'Unknown error'}`);
+    };
+
+    const applyLinkAllForCurrentStage = () => {
+        const master = linkAllTarget === 'none' ? null : linkAllTarget;
+        AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
+            const linkTo = master && layerId !== master ? master : null;
+            setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, linkTo);
+        });
     };
 
     return (
@@ -2854,6 +2884,9 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
         >
             <div className="text-xs text-white/50 mb-3">
                 Dev-only live tuning for `bg`, `stage`, `glass`, and `ring` layers.
+            </div>
+            <div className="text-[11px] text-white/70 mb-3">
+                Editing stage: <span className="font-semibold text-white/90">{editingStageLabel}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -2890,7 +2923,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                     ))}
                 </select>
                 <button
-                    onClick={() => linkAllAvatarCompositeTo(linkAllTarget === 'none' ? null : linkAllTarget)}
+                    onClick={applyLinkAllForCurrentStage}
                     className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                 >
                     Apply
@@ -2899,16 +2932,31 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
 
             <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
-                    onClick={resetAvatarCompositeAll}
+                    onClick={() => copyAvatarCompositeStage('seedling', normalizedEditingStageKey)}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                >
+                    Copy Seedling -&gt; Current Stage
+                </button>
+                <button
+                    onClick={() => copyAvatarCompositeStageToAll(normalizedEditingStageKey)}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                >
+                    Copy Current Stage -&gt; All Stages
+                </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-4">
+                <button
+                    onClick={() => resetAvatarCompositeStage(normalizedEditingStageKey)}
                     className="rounded-lg px-3 py-2 text-xs bg-red-500/10 border border-red-500/35 text-red-300/80 hover:bg-red-500/20 transition-all"
                 >
-                    Reset All
+                    Reset Current Stage
                 </button>
                 <button
                     onClick={copySettings}
                     className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                 >
-                    Copy Settings JSON
+                    Copy Current Stage JSON
                 </button>
             </div>
 
@@ -2946,13 +2994,13 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                 <div className="px-3 pb-3 space-y-2 border-t border-white/10">
                                     <div className="grid grid-cols-2 gap-2 pt-2">
                                         <button
-                                            onClick={() => setAvatarCompositeLayerEnabled(layerId, !layer.enabled)}
+                                            onClick={() => setAvatarCompositeRoleTransformEnabled(normalizedEditingStageKey, layerId, !layer.enabled)}
                                             className={`rounded-lg px-2 py-1.5 text-[11px] border transition-all ${layer.enabled ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-100' : 'bg-white/5 border-white/15 text-white/65'}`}
                                         >
                                             {layer.enabled ? 'Layer On' : 'Layer Off'}
                                         </button>
                                         <button
-                                            onClick={() => resetAvatarCompositeLayer(layerId)}
+                                            onClick={() => setAvatarCompositeRoleTransform(normalizedEditingStageKey, layerId, DEFAULT_ROLE_RESET)}
                                             className="rounded-lg px-2 py-1.5 text-[11px] bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                                         >
                                             Reset Layer
@@ -2962,7 +3010,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                     <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                                         <select
                                             value={linkToValue}
-                                            onChange={(e) => setAvatarCompositeLayerLink(layerId, e.target.value === 'none' ? null : e.target.value)}
+                                            onChange={(e) => setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, e.target.value === 'none' ? null : e.target.value)}
                                             className="w-full rounded-lg px-2 py-1.5 text-[11px]"
                                             style={{
                                                 background: isLight ? 'rgba(255, 255, 255, 0.9)' : '#0a0a12',
@@ -2983,7 +3031,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                         </select>
                                         {isLinked && (
                                             <button
-                                                onClick={() => setAvatarCompositeLayerLinkOpacity(layerId, !layer.linkOpacity)}
+                                                onClick={() => setAvatarCompositeRoleTransformLinkOpacity(normalizedEditingStageKey, layerId, !layer.linkOpacity)}
                                                 className={`rounded-lg px-2 py-1.5 text-[11px] border transition-all ${layer.linkOpacity ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100' : 'bg-white/5 border-white/15 text-white/70'}`}
                                             >
                                                 {layer.linkOpacity ? 'Opacity Linked' : 'Opacity Free'}
@@ -2998,7 +3046,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                         max={1}
                                         step={0.01}
                                         disabled={!tunerEnabled || !layer.enabled || opacityLocked}
-                                        onChange={(value) => setAvatarCompositeLayerValue(layerId, 'opacity', value)}
+                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'opacity', value)}
                                     />
                                     <RangeControl
                                         label="Scale"
@@ -3007,7 +3055,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                         max={2}
                                         step={0.01}
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeLayerValue(layerId, 'scale', value)}
+                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'scale', value)}
                                     />
                                     <RangeControl
                                         label="Rotate"
@@ -3017,7 +3065,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                         step={1}
                                         suffix="deg"
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeLayerValue(layerId, 'rotateDeg', value)}
+                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', value)}
                                     />
                                     <div className="grid grid-cols-3 gap-2">
                                         <button
@@ -3035,7 +3083,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                             +5 deg
                                         </button>
                                         <button
-                                            onClick={() => setAvatarCompositeLayerValue(layerId, 'rotateDeg', 0)}
+                                            onClick={() => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'rotateDeg', 0)}
                                             disabled={!tunerEnabled || !layer.enabled || transformsLocked}
                                             className="rounded-lg px-2 py-1.5 text-[11px] bg-white/5 border border-white/15 text-white/70 disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
@@ -3050,7 +3098,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                         step={1}
                                         suffix="px"
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeLayerValue(layerId, 'x', value)}
+                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'x', value)}
                                     />
                                     <RangeControl
                                         label="Y"
@@ -3060,7 +3108,7 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false }) {
                                         step={1}
                                         suffix="px"
                                         disabled={!tunerEnabled || !layer.enabled || transformsLocked}
-                                        onChange={(value) => setAvatarCompositeLayerValue(layerId, 'y', value)}
+                                        onChange={(value) => setAvatarCompositeRoleTransformValue(normalizedEditingStageKey, layerId, 'y', value)}
                                     />
                                     <button
                                         onClick={() => resetTransforms(layerId)}

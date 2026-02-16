@@ -1,25 +1,8 @@
 import React, { useMemo } from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
+import { getStageAssets, normalizeStageKey } from '../../config/avatarStageAssets.js';
 
-const BASE_AVATAR_PATH = `${import.meta.env.BASE_URL}assets/avatar/`;
-
-// Assets are served from `/public/assets/...`. Filenames include spaces, so we URL-encode.
-function assetUrl(filename) {
-  return `${BASE_AVATAR_PATH}${encodeURIComponent(filename)}`;
-}
-
-const BACKGROUND_ASSET = assetUrl('background composite.png');
-const GLASS_ASSET = assetUrl('glass ring composite.png');
-const DEFAULT_RING_ASSET = assetUrl('rune ring composite.png');
-
-const STAGE_ASSETS = {
-  seedling: assetUrl('seedling composite.png'),
-  flame: assetUrl('flame composite.png'),
-  stellar: assetUrl('stellar composite.png'),
-};
-
-const RING_BY_PATH = {};
 const LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
 const DEFAULT_LAYER = {
   enabled: true,
@@ -39,7 +22,6 @@ const BASE_TRANSFORM_BY_LAYER = {
 };
 
 function handleLayerImageError(event) {
-  // Useful when stage-specific assets are missing (e.g. flame/stellar placeholders).
   // eslint-disable-next-line no-console
   console.error('AvatarComposite failed to load:', event?.target?.src);
 }
@@ -120,34 +102,52 @@ function resolveSizeStyle(size) {
   return { width: '100%', height: '100%' };
 }
 
-export function AvatarComposite({ stage, path, size }) {
-  const normalizedStage = normalizeKey(stage);
-  const normalizedPath = normalizeKey(path);
-  const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
-  const isDev = import.meta.env.DEV;
+function resolvePublicAssetUrl(publicPath) {
+  const base = import.meta.env.BASE_URL || '/';
+  const baseUrl = base.endsWith('/') ? base : `${base}/`;
+  const normalizedPath = String(publicPath || '').replace(/^\/+/, '');
+  return `${baseUrl}${encodeURI(normalizedPath)}`;
+}
 
-  const stageSrc = STAGE_ASSETS[normalizedStage] ?? STAGE_ASSETS.seedling;
-  const ringAsset = RING_BY_PATH[normalizedPath] || DEFAULT_RING_ASSET;
+function getLastPathSegment(publicPath) {
+  const value = String(publicPath || '');
+  const normalized = value.replace(/\/+$/, '');
+  const index = normalized.lastIndexOf('/');
+  return index === -1 ? normalized : normalized.slice(index + 1);
+}
+
+export function AvatarComposite({ stage, size }) {
+  const normalizedStage = normalizeStageKey(stage);
+  const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
+  const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
+  const isDev = import.meta.env.DEV;
+  const stageAssets = getStageAssets(normalizedStage);
+
+  const backgroundSrc = resolvePublicAssetUrl(stageAssets.background);
+  const stageSrc = resolvePublicAssetUrl(stageAssets.plantForeground);
+  const glassSrc = resolvePublicAssetUrl(stageAssets.glassRing);
+  const ringSrc = resolvePublicAssetUrl(stageAssets.runeRing);
   const compositeSizeStyle = resolveSizeStyle(size);
   const tunerEnabled = Boolean(isDev && avatarCompositeDevState?.enabled);
   const showDebugOverlay = Boolean(tunerEnabled && avatarCompositeDevState?.showDebugOverlay);
 
   const effectiveLayers = useMemo(() => {
-    const mergedLayers = mergeLayers(avatarCompositeDevState?.layers);
+    const stageLayers = {};
+    LAYER_IDS.forEach((layerId) => {
+      stageLayers[layerId] = getAvatarCompositeRoleTransform(normalizedStage, layerId);
+    });
+    const mergedLayers = mergeLayers(stageLayers);
     const resolved = {};
     LAYER_IDS.forEach((layerId) => {
       resolved[layerId] = resolveEffectiveLayer(layerId, mergedLayers);
     });
     return resolved;
-  }, [avatarCompositeDevState]);
+  }, [avatarCompositeDevState, getAvatarCompositeRoleTransform, normalizedStage]);
 
   const bgStyle = tunerEnabled ? getDevStyleForLayer('bg', effectiveLayers.bg) : undefined;
   const stageStyle = tunerEnabled ? getDevStyleForLayer('stage', effectiveLayers.stage) : undefined;
   const glassStyle = tunerEnabled ? getDevStyleForLayer('glass', effectiveLayers.glass) : undefined;
   const ringStyle = tunerEnabled ? getDevStyleForLayer('ring', effectiveLayers.ring) : undefined;
-  const glassBaseOpacity = typeof glassStyle?.opacity === 'number' ? glassStyle.opacity : 1;
-  const glassPulseStyle = { '--avatar-composite-glass-base-opacity': glassBaseOpacity };
-  const glassImageStyle = glassStyle ? { ...glassStyle, opacity: 1 } : undefined;
 
   return (
     <div
@@ -158,7 +158,7 @@ export function AvatarComposite({ stage, path, size }) {
       <div className="avatar-composite__globe-clip">
         <img
           className="avatar-composite__layer avatar-composite__layer--bg"
-          src={BACKGROUND_ASSET}
+          src={backgroundSrc}
           alt=""
           draggable="false"
           style={bgStyle}
@@ -172,23 +172,19 @@ export function AvatarComposite({ stage, path, size }) {
           style={stageStyle}
           onError={handleLayerImageError}
         />
-        <div className="avatar-composite__layer avatar-composite__inner-glow" />
-        <div className="avatar-composite__glass-pulse" style={glassPulseStyle}>
-          <img
-            className="avatar-composite__layer avatar-composite__layer--glass"
-            src={GLASS_ASSET}
-            alt=""
-            draggable="false"
-            style={glassImageStyle}
-            onError={handleLayerImageError}
-          />
-        </div>
-        <div className="avatar-composite__layer avatar-composite__vignette" />
+        <img
+          className="avatar-composite__layer avatar-composite__layer--glass"
+          src={glassSrc}
+          alt=""
+          draggable="false"
+          style={glassStyle}
+          onError={handleLayerImageError}
+        />
       </div>
       <div className="avatar-composite__ring-spin">
         <img
           className="avatar-composite__ring"
-          src={ringAsset}
+          src={ringSrc}
           alt=""
           draggable="false"
           style={ringStyle}
@@ -208,6 +204,24 @@ export function AvatarComposite({ stage, path, size }) {
           </div>
           <div className="avatar-composite__debug-line avatar-composite__debug-line--ring">
             ring o:{effectiveLayers.ring.opacity.toFixed(2)} s:{effectiveLayers.ring.scale.toFixed(2)} r:{effectiveLayers.ring.rotateDeg.toFixed(0)} x:{effectiveLayers.ring.x.toFixed(0)} y:{effectiveLayers.ring.y.toFixed(0)}
+          </div>
+          <div className="avatar-composite__debug-line">
+            stage key:{normalizedStage}
+          </div>
+          <div className="avatar-composite__debug-line">
+            wallpaper:{getLastPathSegment(stageAssets.wallpaper)}
+          </div>
+          <div className="avatar-composite__debug-line">
+            background:{getLastPathSegment(stageAssets.background)}
+          </div>
+          <div className="avatar-composite__debug-line">
+            plant:{getLastPathSegment(stageAssets.plantForeground)}
+          </div>
+          <div className="avatar-composite__debug-line">
+            glass:{getLastPathSegment(stageAssets.glassRing)}
+          </div>
+          <div className="avatar-composite__debug-line">
+            rune:{getLastPathSegment(stageAssets.runeRing)}
           </div>
         </div>
       )}

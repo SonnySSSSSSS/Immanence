@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { getStageWallpaperUrl } from "./bg/wallpaperUrl.js";
 import { useDisplayModeStore } from "../state/displayModeStore";
+import { normalizeStageKey } from "../config/avatarStageAssets.js";
 
 // Vignette edge colors for each stage
 const STAGE_VIGNETTE_COLOR = {
@@ -24,12 +25,12 @@ const STAGE_VIGNETTE_LIGHT = {
   stellar: 'rgba(160, 150, 180, 0.10)',
 };
 
-export function Background({ stage = 'flame', showBottomLayer = true }) {
+export function Background({ stage = 'seedling', showBottomLayer = true }) {
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const isLight = colorScheme === 'light';
 
 
-  const stageLower = (stage || 'flame').toLowerCase();
+  const stageLower = normalizeStageKey(stage);
   const vignetteColor = isLight
     ? (STAGE_VIGNETTE_LIGHT[stageLower] ?? 'rgba(180, 155, 110, 0.12)')
     : (STAGE_VIGNETTE_COLOR[stageLower] ?? 'rgba(150, 40, 20, 0.3)');

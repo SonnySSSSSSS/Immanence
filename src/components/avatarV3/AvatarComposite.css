@@ -43,46 +43,12 @@
   z-index: 2;
 }
 
-.avatar-composite__inner-glow {
-  z-index: 3;
-  background:
-    radial-gradient(
-      circle at 50% 44%,
-      rgba(172, 236, 165, 0.22) 0%,
-      rgba(88, 217, 205, 0.14) 36%,
-      rgba(236, 198, 128, 0.1) 58%,
-      rgba(0, 0, 0, 0) 78%
-    );
-  mix-blend-mode: screen;
-  opacity: 0.92;
-}
-
 .avatar-composite__layer--glass {
-  z-index: 4;
-}
-
-.avatar-composite__vignette {
-  z-index: 5;
-  background:
-    radial-gradient(
-      circle at 50% 52%,
-      rgba(0, 0, 0, 0) 53%,
-      rgba(32, 26, 20, 0.16) 75%,
-      rgba(7, 8, 10, 0.34) 100%
-    );
+  z-index: 3;
 }
 
 .avatar-composite__ring {
   z-index: 6;
-}
-
-.avatar-composite__glass-pulse {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-  opacity: calc(var(--avatar-composite-glass-base-opacity, 1) * var(--avatar-composite-glass-pulse, 1));
-  animation: avatar-composite-glass-pulse 20s ease-in-out infinite;
 }
 
 .avatar-composite__ring-spin {
@@ -154,10 +120,4 @@
 @keyframes avatar-composite-ring-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-@keyframes avatar-composite-glass-pulse {
-  0% { --avatar-composite-glass-pulse: 0.95; }
-  50% { --avatar-composite-glass-pulse: 1.05; }
-  100% { --avatar-composite-glass-pulse: 0.95; }
 }

@@ -1,9 +1,15 @@
-// Shared helper to construct stage wallpaper URLs using Vite's BASE_URL
+// Shared helper to construct stage wallpaper URLs using Vite's BASE_URL.
 // Usage: getStageWallpaperUrl('seedling')
 
-export function getStageWallpaperUrl(stageKey) {
+import { getStageAssets } from '../../config/avatarStageAssets.js';
+
+function withBaseUrl(publicPath) {
   const base = import.meta.env.BASE_URL || '/';
-  // Ensure trailing slash
-  const baseUrl = base.endsWith('/') ? base : base + '/';
-  return `${baseUrl}bg/bg-${stageKey.toLowerCase()}-bottom.png`;
+  const baseUrl = base.endsWith('/') ? base : `${base}/`;
+  const normalizedPath = String(publicPath || '').replace(/^\/+/, '');
+  return `${baseUrl}${encodeURI(normalizedPath)}`;
+}
+
+export function getStageWallpaperUrl(stageKey) {
+  return withBaseUrl(getStageAssets(stageKey).wallpaper);
 }
