@@ -18,6 +18,7 @@ if (!globalThis.localStorage) {
 }
 
 const { useBreathBenchmarkStore } = await import('../src/state/breathBenchmarkStore.js');
+const { useNavigationStore } = await import('../src/state/navigationStore.js');
 
 function resetBreathStore() {
   useBreathBenchmarkStore.setState({
@@ -32,6 +33,12 @@ function resetBreathStore() {
 
 beforeEach(() => {
   resetBreathStore();
+  useNavigationStore.setState({
+    selectedPathId: null,
+    pendingAttemptRunId: null,
+    pendingAttemptPathId: null,
+    activePath: null,
+  });
 });
 
 test('attempt reset helper sets benchmark state to NOT_STARTED', () => {
@@ -115,4 +122,26 @@ test('attempt benchmark completion survives simulated persist rehydrate', () => 
   assert.equal(next.getAttemptBenchmark(runId)?.status, 'satisfied');
   assert.equal(next.hasBenchmarkForRun(runId), true);
   assert.equal(next.getAttemptBenchmark(runId)?.benchmark?.inhale, 7);
+});
+
+test('pending attempt survives generic overlay close and rehydrate', () => {
+  const nav = useNavigationStore.getState();
+  nav.setSelectedPath('initiation-2');
+
+  const before = useNavigationStore.getState();
+  assert.equal(before.pendingAttemptPathId, 'initiation-2');
+  assert.ok(typeof before.pendingAttemptRunId === 'string' && before.pendingAttemptRunId.length > 0);
+
+  // Simulate generic overlay close: no explicit cancel/clear action dispatched.
+  const persistedNavSnapshot = JSON.parse(JSON.stringify(useNavigationStore.getState()));
+  useNavigationStore.setState({
+    selectedPathId: null,
+    pendingAttemptRunId: null,
+    pendingAttemptPathId: null,
+  });
+  useNavigationStore.setState(persistedNavSnapshot);
+
+  const after = useNavigationStore.getState();
+  assert.equal(after.pendingAttemptPathId, 'initiation-2');
+  assert.equal(after.pendingAttemptRunId, before.pendingAttemptRunId);
 });

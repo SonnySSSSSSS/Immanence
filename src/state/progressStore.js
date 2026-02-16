@@ -4,8 +4,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils';
-import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking';
+import { getDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils.js';
+import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking.js';
 
 // ========================================
 // V2 COMPATIBILITY HELPERS
@@ -133,7 +133,7 @@ export const useProgressStore = create(
     persist(
         (set, get) => {
             // DEV assertion: Catch legacy sessions field regression
-            if (import.meta.env.DEV) {
+            if (typeof import.meta !== 'undefined' && Boolean(import.meta?.env?.DEV)) {
                 const state = get?.() || {};
                 if (state.sessions && Array.isArray(state.sessions)) {
                     console.error('[LEGACY] progressStore.sessions still exists in state');
