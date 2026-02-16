@@ -19,6 +19,7 @@ import { useProgressStore } from "../state/progressStore.js";
 import { useLunarStore } from "../state/lunarStore.js";
 import { STAGES } from "../state/stageConfig.js";
 import { useDisplayModeStore } from "../state/displayModeStore.js";
+import { useUserModeStore } from "../state/userModeStore.js";
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from "../utils/dynamicLighting.js";
 import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
@@ -62,6 +63,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.viewportMode);
+  const userMode = useUserModeStore((s) => s.userMode);
   const isLight = colorScheme === 'light';
   const isSanctuary = displayMode === 'sanctuary';
 
@@ -370,6 +372,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // Compute dashboard policy for tiles
   const hubPolicy = getHomeDashboardPolicy({
     activeRunId: activePath?.runId,
+    userMode,
   });
 
   return (
@@ -462,76 +465,78 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       <div className="w-full px-4 flex flex-col items-center gap-3 pb-4">
 
         {/* EXPLORE MODES - Navigation Buttons */}
-        <div
-          className="w-full transition-all duration-700"
-          style={isSanctuary ? SANCTUARY_RAIL_STYLE : {
-            maxWidth: 'min(430px, 94vw)',
-            margin: '0 auto',
-          }}
-        >
-
-          {/* Horizontal Row - Simple circular buttons - DISTRIBUTES ACROSS RAIL */}
+        {userMode !== 'student' && (
           <div
-            className="flex flex-row items-center w-full"
-            style={{
-              justifyContent: 'space-between',
-              gap: '0',
+            className="w-full transition-all duration-700"
+            style={isSanctuary ? SANCTUARY_RAIL_STYLE : {
+              maxWidth: 'min(430px, 94vw)',
+              margin: '0 auto',
             }}
           >
-            <SimpleModeButton
-              title="Practice"
-              onClick={() => handleSelectSection("practice")}
-              disabled={lockToHub}
-              icon="practice"
-              isActive={activeSection === 'practice'}
-              className="im-nav-pill"
-              data-nav-pill-id="home:practice"
-              data-ui-target="true"
-              data-ui-scope="role"
-              data-ui-role-group="homeHub"
-              data-ui-id="homeHub:mode:practice"
-            />
-            <SimpleModeButton
-              title="Wisdom"
-              onClick={() => handleSelectSection("wisdom")}
-              disabled={lockToHub}
-              icon="wisdom"
-              isActive={activeSection === 'wisdom'}
-              className="im-nav-pill"
-              data-nav-pill-id="home:wisdom"
-              data-ui-target="true"
-              data-ui-scope="role"
-              data-ui-role-group="homeHub"
-              data-ui-id="homeHub:mode:wisdom"
-            />
-            <SimpleModeButton
-              title="Application"
-              onClick={() => handleSelectSection("application")}
-              disabled={lockToHub}
-              icon="application"
-              isActive={activeSection === 'application'}
-              className="im-nav-pill"
-              data-nav-pill-id="home:application"
-              data-ui-target="true"
-              data-ui-scope="role"
-              data-ui-role-group="homeHub"
-              data-ui-id="homeHub:mode:application"
-            />
-            <SimpleModeButton
-              title="Navigation"
-              onClick={() => handleSelectSection("navigation")}
-              disabled={lockToHub}
-              icon="navigation"
-              isActive={activeSection === 'navigation'}
-              className="im-nav-pill"
-              data-nav-pill-id="home:navigation"
-              data-ui-target="true"
-              data-ui-scope="role"
-              data-ui-role-group="homeHub"
-              data-ui-id="homeHub:mode:navigation"
-            />
+
+            {/* Horizontal Row - Simple circular buttons - DISTRIBUTES ACROSS RAIL */}
+            <div
+              className="flex flex-row items-center w-full"
+              style={{
+                justifyContent: 'space-between',
+                gap: '0',
+              }}
+            >
+              <SimpleModeButton
+                title="Practice"
+                onClick={() => handleSelectSection("practice")}
+                disabled={lockToHub}
+                icon="practice"
+                isActive={activeSection === 'practice'}
+                className="im-nav-pill"
+                data-nav-pill-id="home:practice"
+                data-ui-target="true"
+                data-ui-scope="role"
+                data-ui-role-group="homeHub"
+                data-ui-id="homeHub:mode:practice"
+              />
+              <SimpleModeButton
+                title="Wisdom"
+                onClick={() => handleSelectSection("wisdom")}
+                disabled={lockToHub}
+                icon="wisdom"
+                isActive={activeSection === 'wisdom'}
+                className="im-nav-pill"
+                data-nav-pill-id="home:wisdom"
+                data-ui-target="true"
+                data-ui-scope="role"
+                data-ui-role-group="homeHub"
+                data-ui-id="homeHub:mode:wisdom"
+              />
+              <SimpleModeButton
+                title="Application"
+                onClick={() => handleSelectSection("application")}
+                disabled={lockToHub}
+                icon="application"
+                isActive={activeSection === 'application'}
+                className="im-nav-pill"
+                data-nav-pill-id="home:application"
+                data-ui-target="true"
+                data-ui-scope="role"
+                data-ui-role-group="homeHub"
+                data-ui-id="homeHub:mode:application"
+              />
+              <SimpleModeButton
+                title="Navigation"
+                onClick={() => handleSelectSection("navigation")}
+                disabled={lockToHub}
+                icon="navigation"
+                isActive={activeSection === 'navigation'}
+                className="im-nav-pill"
+                data-nav-pill-id="home:navigation"
+                data-ui-target="true"
+                data-ui-scope="role"
+                data-ui-role-group="homeHub"
+                data-ui-id="homeHub:mode:navigation"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
         <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
@@ -639,10 +644,10 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 >
                 <div ref={homeSwipeProgressRef} className="w-full">
                 {(() => {
-                  // Fetch hub variant tiles with 90d range
+                  // Fetch hub variant tiles with policy range
                   const hubTiles = getQuickDashboardTiles({
                     scope: hubPolicy.scope,
-                    range: '90d',
+                    range: hubPolicy.range,
                     includeHonor: hubPolicy.includeHonor,
                     activeRunId: hubPolicy.activeRunId,
                   });
@@ -652,6 +657,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       variant="hubCard"
                       tiles={hubTiles}
                       onOpenDetails={() => openArchive(ARCHIVE_TABS.REPORTS)}
+                      metricOrder={hubPolicy.primaryMetricIds}
+                      isStudent={userMode === 'student'}
                       isSanctuary={isSanctuary}
                       devCardActive={homeSwipePage === 1}
                       devCardCarouselId="homeHubSwipe"

@@ -248,6 +248,8 @@ export function QuickDashboardTiles({
     tiles = {},
     variant = 'default',
     onOpenDetails = null,
+    metricOrder = null,
+    isStudent = false,
     isSanctuary = false,
     devCardActive = null,
     devCardCarouselId = null,
@@ -292,6 +294,12 @@ export function QuickDashboardTiles({
     }));
 
     if (variant === 'hubCard') {
+        const shouldUseStudentHubOrder =
+            isStudent === true &&
+            Array.isArray(metricOrder) &&
+            metricOrder.includes('completion_rate') &&
+            metricOrder.includes('on_time_rate');
+
         return (
             <div
                 className={`im-card ${isFirefox ? '' : 'glassCardShadowWrap'}`}
@@ -393,10 +401,21 @@ export function QuickDashboardTiles({
                         gap: '16px',
                     }}
                 >
-                    <SessionsModule value={tiles.sessions_total || 0} isLight={isLight} isSanctuary={isSanctuary} />
-                    <ActiveDaysModule value={tiles.days_active || 0} isLight={isLight} isSanctuary={isSanctuary} />
-                    <RateRingModule value={tiles.completion_rate ?? null} label="Completion" isLight={isLight} isSanctuary={isSanctuary} />
-                    <RateRingModule value={tiles.on_time_rate ?? null} label="On-Time" isLight={isLight} isSanctuary={isSanctuary} />
+                    {shouldUseStudentHubOrder ? (
+                        <>
+                            <RateRingModule value={tiles.completion_rate ?? null} label="Completion" isLight={isLight} isSanctuary={isSanctuary} />
+                            <RateRingModule value={tiles.on_time_rate ?? null} label="On-Time" isLight={isLight} isSanctuary={isSanctuary} />
+                            <SessionsModule value={tiles.sessions_total || 0} isLight={isLight} isSanctuary={isSanctuary} />
+                            <ActiveDaysModule value={tiles.days_active || 0} isLight={isLight} isSanctuary={isSanctuary} />
+                        </>
+                    ) : (
+                        <>
+                            <SessionsModule value={tiles.sessions_total || 0} isLight={isLight} isSanctuary={isSanctuary} />
+                            <ActiveDaysModule value={tiles.days_active || 0} isLight={isLight} isSanctuary={isSanctuary} />
+                            <RateRingModule value={tiles.completion_rate ?? null} label="Completion" isLight={isLight} isSanctuary={isSanctuary} />
+                            <RateRingModule value={tiles.on_time_rate ?? null} label="On-Time" isLight={isLight} isSanctuary={isSanctuary} />
+                        </>
+                    )}
                 </div>
 
                 {/* Details button - matches START SETUP styling */}

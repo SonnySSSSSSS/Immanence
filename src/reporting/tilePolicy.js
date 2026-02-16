@@ -7,25 +7,31 @@
  * Pure function: no side effects, no store reads
  * @param {Object} options
  * @param {string} options.activeRunId - Optional active run ID
- * @returns {Object} - { scope, range, includeHonor } policy object
+ * @param {string} options.userMode - User mode ('student' | 'explorer')
+ * @returns {Object} - Home dashboard policy object
  */
 export function getHomeDashboardPolicy(options = {}) {
-    const { activeRunId = null } = options;
+    const { activeRunId = null, userMode = 'explorer' } = options;
 
     // Scope logic: if active run exists, use it; else lifetime
     const scope = activeRunId ? 'runId' : 'lifetime';
 
-    // Range: default to 30d for home dashboard
-    const range = '30d';
+    // Range is mode-aware: student=14d, explorer=90d
+    const range = userMode === 'student' ? '14d' : '90d';
 
     // Include honor logs: true by default for comprehensive view
     const includeHonor = true;
+    const variant = 'hubCard';
+    const primaryMetricIds = userMode === 'student'
+        ? ['completion_rate', 'on_time_rate']
+        : ['sessions_total', 'days_active'];
 
     return {
         scope,
         range,
         includeHonor,
-        // Pass activeRunId for 'runId' scope resolution
         activeRunId,
+        variant,
+        primaryMetricIds,
     };
 }
