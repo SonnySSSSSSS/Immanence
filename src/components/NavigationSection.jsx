@@ -17,7 +17,7 @@ import { useAvatarV3State } from '../state/avatarV3Store.js';
 import { usePathStore } from '../state/pathStore.js';
 
 export function NavigationSection({ currentStage, previewPath, onNavigate, isPracticing = false }) {
-  const { activePath, beginPath } = useNavigationStore();
+  const { activePath, beginPath, clearPendingAttempt } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
@@ -44,6 +44,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
   };
 
   const closeOverlay = () => {
+    clearPendingAttempt(overlayPathId);
     setOverlayPathId(null);
   };
 

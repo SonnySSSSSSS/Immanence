@@ -98,19 +98,41 @@ export const useNavigationStore = create(
         (set, get) => ({
             // Selection state (before beginning a path)
             selectedPathId: null,
-            selectedAttemptRunId: null,
+            pendingAttemptRunId: null,
+            pendingAttemptPathId: null,
             setSelectedPath: (id) => {
                 console.log("[navigationStore] setSelectedPath ->", id);
                 console.trace("[navigationStore] setSelectedPath stack");
                 const path = id ? getPathById(id) : null;
                 const requiresBenchmark = Boolean(path?.showBreathBenchmark);
-                const selectedAttemptRunId = requiresBenchmark
-                    ? (crypto?.randomUUID?.() || String(Date.now()))
-                    : null;
-                if (requiresBenchmark && selectedAttemptRunId) {
-                    useBreathBenchmarkStore.getState().resetAttemptBenchmark(selectedAttemptRunId);
+                const state = get();
+                const keepExistingPending =
+                    requiresBenchmark &&
+                    state.pendingAttemptPathId === id &&
+                    typeof state.pendingAttemptRunId === 'string' &&
+                    state.pendingAttemptRunId.length > 0;
+                const pendingAttemptRunId = keepExistingPending
+                    ? state.pendingAttemptRunId
+                    : (requiresBenchmark ? (crypto?.randomUUID?.() || String(Date.now())) : null);
+                if (!keepExistingPending && requiresBenchmark && pendingAttemptRunId) {
+                    useBreathBenchmarkStore.getState().resetAttemptBenchmark(pendingAttemptRunId);
                 }
-                set({ selectedPathId: id, selectedAttemptRunId });
+                set({
+                    selectedPathId: id,
+                    pendingAttemptRunId,
+                    pendingAttemptPathId: requiresBenchmark ? id : null,
+                });
+            },
+
+            clearPendingAttempt: (pathId = null) => {
+                const state = get();
+                const shouldClear = !pathId || state.pendingAttemptPathId === pathId;
+                if (!shouldClear) return;
+                set({
+                    selectedPathId: null,
+                    pendingAttemptRunId: null,
+                    pendingAttemptPathId: null,
+                });
             },
             
             // Pilot session tracking moved to curriculumStore
@@ -121,9 +143,12 @@ export const useNavigationStore = create(
             // Begin a new path
             beginPath: (pathId) => {
                 const state = get();
-                const hasSelectedAttempt = state.selectedPathId === pathId && typeof state.selectedAttemptRunId === 'string';
-                const runId = hasSelectedAttempt
-                    ? state.selectedAttemptRunId
+                const hasPendingAttempt =
+                    state.pendingAttemptPathId === pathId &&
+                    typeof state.pendingAttemptRunId === 'string' &&
+                    state.pendingAttemptRunId.length > 0;
+                const runId = hasPendingAttempt
+                    ? state.pendingAttemptRunId
                     : (crypto?.randomUUID?.() || String(Date.now()));
                 // Align Day 1 to the selected first slot time:
                 // if the first slot window has already passed today, Day 1 begins tomorrow.
@@ -197,7 +222,8 @@ export const useNavigationStore = create(
                         weekCompletionDates: {} // { 1: "2024-01-15", 2: "2024-01-22", ... }
                     },
                     selectedPathId: pathId, // Keep selection synced
-                    selectedAttemptRunId: null,
+                    pendingAttemptRunId: null,
+                    pendingAttemptPathId: null,
                 });
 
                 return { ok: true };
@@ -242,7 +268,8 @@ export const useNavigationStore = create(
                 set({
                     activePath: null,
                     selectedPathId: null,
-                    selectedAttemptRunId: null,
+                    pendingAttemptRunId: null,
+                    pendingAttemptPathId: null,
                 });
             },
 
@@ -752,12 +779,11 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 7,  // Bumped for selectedAttemptRunId transient attempt migration
+            version: 8,  // Bumped for persisted pending attempt runId/pathId
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
-                const { selectedPathId, selectedAttemptRunId, ...rest } = state;
+                const { selectedPathId, ...rest } = state;
                 void selectedPathId;
-                void selectedAttemptRunId;
                 return rest;
             },
             migrate: (persistedState) => {
@@ -801,15 +827,17 @@ export const useNavigationStore = create(
                     };
                 }
                  
-                return { ...rest, selectedPathId: null, selectedAttemptRunId: null };
+                return {
+                    ...rest,
+                    selectedPathId: null,
+                    pendingAttemptRunId: rest?.pendingAttemptRunId || null,
+                    pendingAttemptPathId: rest?.pendingAttemptPathId || null,
+                };
             },
             onRehydrateStorage: () => (state) => {
                 // Force-clear selection after every hydration cycle
                 if (state?.selectedPathId) {
                     state.selectedPathId = null;
-                }
-                if (state?.selectedAttemptRunId) {
-                    state.selectedAttemptRunId = null;
                 }
 
                 // Ensure no legacy fields in activePath after rehydration

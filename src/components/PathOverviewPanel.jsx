@@ -35,9 +35,10 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const canReuseLastBenchmark = useBreathBenchmarkStore(s => s.canReuseLastBenchmark);
     const reuseLastBenchmarkForAttempt = useBreathBenchmarkStore(s => s.reuseLastBenchmarkForAttempt);
     const getAttemptBenchmark = useBreathBenchmarkStore(s => s.getAttemptBenchmark);
-    const selectedPathId = useNavigationStore(s => s.selectedPathId);
-    const selectedAttemptRunId = useNavigationStore(s => s.selectedAttemptRunId);
-    const attemptRunId = selectedPathId === path?.id ? selectedAttemptRunId : null;
+    const pendingAttemptRunId = useNavigationStore(s => s.pendingAttemptRunId);
+    const pendingAttemptPathId = useNavigationStore(s => s.pendingAttemptPathId);
+    const clearPendingAttempt = useNavigationStore(s => s.clearPendingAttempt);
+    const attemptRunId = pendingAttemptPathId === path?.id ? pendingAttemptRunId : null;
     const attemptBenchmark = getAttemptBenchmark(attemptRunId);
     const attemptBenchmarkDone = Boolean(attemptBenchmark?.status === 'satisfied' && attemptBenchmark?.benchmark);
     const attemptUsesPrevious = attemptBenchmark?.source === 'reuse';
@@ -137,6 +138,11 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         setBenchmarkError(null);
     };
 
+    const handleClose = () => {
+        clearPendingAttempt(path?.id || null);
+        onClose?.();
+    };
+
     const handleBegin = () => {
         const validation = validateSelectedTimes(scheduleTimes, scheduleConstraint);
         const activationValidation = validatePathActivationSelections(path, {
@@ -187,7 +193,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             chapterId,
             durationMin: typeof durationMin === 'number' ? durationMin : undefined,
         });
-        onClose?.();
+        handleClose();
         onNavigate?.('wisdom');
     };
 
@@ -199,7 +205,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             videoId,
             durationMin: typeof durationMin === 'number' ? durationMin : undefined,
         });
-        onClose?.();
+        handleClose();
         onNavigate?.('wisdom');
     };
 
@@ -263,7 +269,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {/* Close Button */}
             <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full transition-colors"
                 style={{
                     background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',

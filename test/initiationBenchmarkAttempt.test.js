@@ -96,3 +96,23 @@ test('fresh attempt benchmark appends history and updates lastBenchmark', () => 
   assert.equal(next.lastBenchmark?.hold2, 11);
   assert.equal(next.benchmarkHistory.length, historyBefore + 1);
 });
+
+test('attempt benchmark completion survives simulated persist rehydrate', () => {
+  const runId = 'attempt-rehydrate-1';
+  const store = useBreathBenchmarkStore.getState();
+  store.resetAttemptBenchmark(runId);
+  store.completeAttemptBenchmark({
+    runId,
+    source: 'fresh',
+    results: { inhale: 7, hold1: 8, exhale: 9, hold2: 10 },
+  });
+
+  const persistedSnapshot = JSON.parse(JSON.stringify(useBreathBenchmarkStore.getState()));
+  resetBreathStore();
+  useBreathBenchmarkStore.setState(persistedSnapshot);
+
+  const next = useBreathBenchmarkStore.getState();
+  assert.equal(next.getAttemptBenchmark(runId)?.status, 'satisfied');
+  assert.equal(next.hasBenchmarkForRun(runId), true);
+  assert.equal(next.getAttemptBenchmark(runId)?.benchmark?.inhale, 7);
+});
