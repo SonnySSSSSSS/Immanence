@@ -20,6 +20,9 @@ import { SelectedPlateOverlay } from "./components/dev/SelectedPlateOverlay.jsx"
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
+import { useUserModeStore } from "./state/userModeStore.js";
+import { useUiStore } from "./state/uiStore.js";
+import { useCurriculumStore } from "./state/curriculumStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
@@ -96,6 +99,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const overridePath = useDevOverrideStore((s) => s.avatarPath);
   const setOverrideStage = useDevOverrideStore((s) => s.setStage);
   const setOverridePath = useDevOverrideStore((s) => s.setAvatarPath);
+  const userMode = useUserModeStore((s) => s.userMode);
+  const hasChosenUserMode = useUserModeStore((s) => s.hasChosenUserMode);
+  const setUserMode = useUserModeStore((s) => s.setUserMode);
+  const practiceLaunchContext = useUiStore((s) => s.practiceLaunchContext);
+  const onboardingComplete = useCurriculumStore((s) => s.onboardingComplete);
+  const practiceTimeSlots = useCurriculumStore((s) => s.practiceTimeSlots);
+  const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
   const isLight = colorScheme === 'light';
 
   const outerBackground = isLight
@@ -349,8 +359,27 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       setActiveSection(null);
       return;
     }
-    setActiveSection(section);
-  }, [playgroundMode]);
+    if (userMode !== 'student') {
+      setActiveSection(section);
+      return;
+    }
+    if (section === null) {
+      setActiveSection(null);
+      return;
+    }
+    if (section === 'navigation') {
+      if (needsSetup) {
+        setActiveSection('navigation');
+      }
+      return;
+    }
+    if (section === 'practice') {
+      if (practiceLaunchContext) {
+        setActiveSection('practice');
+      }
+      return;
+    }
+  }, [needsSetup, playgroundMode, practiceLaunchContext, userMode]);
 
   // Sync avatarStage with previewStage so theme colors update
   useEffect(() => {
@@ -664,7 +693,26 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               }}
               inert={isMinimized ? "" : undefined}
             >
-              {(isHub || playgroundMode) ? (
+              {!hasChosenUserMode ? (
+                <div className="min-h-screen w-full flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setUserMode('student')}
+                      className="px-4 py-2 rounded border border-white/20"
+                    >
+                      Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserMode('explorer')}
+                      className="px-4 py-2 rounded border border-white/20"
+                    >
+                      Explorer
+                    </button>
+                  </div>
+                </div>
+              ) : (isHub || playgroundMode) ? (
                 <div key="hub" className="section-enter">
                   {(debugBuildProbe && debugShadowScan) && (
                     <div
@@ -857,3 +905,4 @@ function AppWithBoundary(props) {
 }
 
 export default AppWithBoundary;
+
