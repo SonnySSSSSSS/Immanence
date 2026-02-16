@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
-  <polygon points="512 252 737.16 382 737.16 642 512 772 286.84 642 286.84 382" stroke-width="19" />
-  <g transform="translate(0 -3)">
-    <polygon points="512 312 685.2 412 685.2 612 512 712 338.8 612 338.8 412" />
-    <circle cx="512" cy="512" r="70" />
-    <line x1="350" y1="350" x2="674" y2="674" />
-    <line x1="674" y1="350" x2="350" y2="674" />
-  </g>
-</svg>
