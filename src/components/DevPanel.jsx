@@ -97,6 +97,7 @@ import ControlsFxSection from './devpanel/sections/ControlsFxSection.jsx';
 import PlatesFxSection from './devpanel/sections/PlatesFxSection.jsx';
 import CardTunerSection from './devpanel/sections/CardTunerSection.jsx';
 import NavButtonTunerSection from './devpanel/sections/NavButtonTunerSection.jsx';
+import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
@@ -164,6 +165,7 @@ export function DevPanel({
     const isLight = colorScheme === 'light';
     const isDevBuild = import.meta.env.DEV;
     const devtoolsEnabled = isDevtoolsEnabled();
+    const canRunDevEffects = useDevPanelGate(isOpen, devtoolsEnabled);
     const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const isPlaygroundPath = currentPathname === '/__playground';
 
@@ -297,7 +299,7 @@ export function DevPanel({
     }, [toNodeDebug]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         if (!uiTargetProbeEnabled && !universalPickMode) {
             setUtcViolations([]);
             return undefined;
@@ -429,7 +431,7 @@ export function DevPanel({
     };
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         initCardTuner();
         const un = subscribeCardTuner((next) => {
             setCardState(next);
@@ -444,7 +446,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         try {
             const raw = window.localStorage.getItem(PICK_DEBUG_FLAG_KEY);
             if (raw === "1") setPickDebugEnabledLocal(true);
@@ -456,7 +458,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         try {
             window.localStorage.setItem(PICK_DEBUG_FLAG_KEY, pickDebugEnabled ? "1" : "0");
         } catch {
@@ -471,13 +473,13 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled, pickDebugEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         document.body.classList.toggle('dev-card-id-probe', cardIdProbeEnabled);
         return () => document.body.classList.remove('dev-card-id-probe');
     }, [isOpen, devtoolsEnabled, cardIdProbeEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         initNavButtonTuner();
         const un = subscribeNavButtonTuner((next) => {
             setNavBtnState(next);
@@ -493,7 +495,7 @@ export function DevPanel({
     }, [devtoolsEnabled, navBtnProbeEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         const onKeyDown = (event) => {
             const key = String(event.key || '').toLowerCase();
             if (event.ctrlKey && event.altKey && event.shiftKey && key === 'k') {
@@ -589,7 +591,7 @@ export function DevPanel({
     }, []);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         try {
             const raw = window.localStorage.getItem(PRACTICE_BUTTON_PICK_STORAGE_KEY);
             if (!raw) return undefined;
@@ -603,7 +605,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         try {
             const raw = window.localStorage.getItem(LEGACY_PICKERS_FLAG_KEY);
             if (raw === "0") setLegacyPickersEnabled(false);
@@ -615,7 +617,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         try {
             window.localStorage.setItem(LEGACY_PICKERS_FLAG_KEY, legacyPickersEnabled ? "1" : "0");
         } catch {
@@ -625,7 +627,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled, legacyPickersEnabled]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         if (legacyPickersEnabled) return undefined;
         // If legacy pickers are hidden, ensure their capture listeners are off.
         setPickMode(false);
@@ -636,7 +638,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled, legacyPickersEnabled, stopPracticeButtonPickCaptureImmediate]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         broadcastPracticeButtonPicker({
             applyToAll: practiceButtonApplyToAll,
             selectedKey: practiceButtonSelectedKey,
@@ -645,19 +647,19 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled, practiceButtonApplyToAll, practiceButtonSelectedKey, broadcastPracticeButtonPicker]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         broadcastControlsPicker({ selectedId: controlsSelectedId || null });
         return undefined;
     }, [isOpen, devtoolsEnabled, controlsSelectedId, broadcastControlsPicker]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         setControlsFxDraft(getControlsFxPreset(controlsSelectedId));
         return undefined;
     }, [isOpen, devtoolsEnabled, controlsSelectedId]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         if (!practiceButtonPickMode) return undefined;
 
         // Conflict prevention: never allow two global capture listeners at once.
@@ -841,7 +843,7 @@ export function DevPanel({
     ]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         setPlatesFxDraft(getPlatesFxPreset(platesSelectedId));
         setPlatesAdvancedOpen(false);
         return undefined;
@@ -869,7 +871,7 @@ export function DevPanel({
     }, [platesSelectedId]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         if (!cardState?.pickMode) return undefined;
         // Conflict prevention: never allow two global capture listeners at once.
         setPracticeButtonPickMode(false);
@@ -878,7 +880,7 @@ export function DevPanel({
     }, [isOpen, devtoolsEnabled, cardState?.pickMode]);
 
     useEffect(() => {
-        if (!isOpen || !devtoolsEnabled) return undefined;
+        if (!canRunDevEffects) return undefined;
         document.body.classList.toggle('dev-ui-target-probe', uiTargetProbeEnabled);
         return () => document.body.classList.remove('dev-ui-target-probe');
     }, [isOpen, devtoolsEnabled, uiTargetProbeEnabled]);
@@ -2142,4 +2144,5 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
 }
 
 export default DevPanel;
+
 
