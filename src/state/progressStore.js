@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getDateKey, getWeekStart, addDaysToDateKey, diffDateKeysInDays } from '../utils/dateUtils.js';
+import { isDevBuild } from '../dev/runtimeGate.js';
 import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetimeTracking.js';
 
 // ========================================
@@ -12,7 +13,7 @@ import { updateAnnualRollups, updateLifetimeMilestones } from '../utils/lifetime
 // ========================================
 
 const IS_DEV =
-    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) ||
+    isDevBuild() ||
     (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production');
 
 let hasWarnedLegacyOnly = false;
