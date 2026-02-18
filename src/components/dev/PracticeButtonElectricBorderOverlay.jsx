@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { readPickerSelection, subscribeToPicker } from "../../dev/pickerChannel.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
 import { ElectricBorder } from "./ElectricBorder.jsx";
 
@@ -45,9 +46,8 @@ function readPickConfig() {
   }
 
   try {
-    const raw = window.localStorage.getItem(PICK_STORAGE_KEY);
-    if (!raw) return { applyToAll: true, selectedKey: null };
-    const parsed = JSON.parse(raw);
+    const parsed = readPickerSelection(PICK_STORAGE_KEY);
+    if (!parsed) return { applyToAll: true, selectedKey: null };
     return {
       applyToAll: parsed?.applyToAll !== false,
       selectedKey: typeof parsed?.selectedKey === "string" && parsed.selectedKey.length ? parsed.selectedKey : null,
@@ -135,8 +135,7 @@ export function PracticeButtonElectricBorderOverlay() {
       scheduleScan();
     };
 
-    window.addEventListener(PICK_EVENT, onPickUpdate);
-    return () => window.removeEventListener(PICK_EVENT, onPickUpdate);
+    return subscribeToPicker(PICK_EVENT, onPickUpdate);
   }, [scheduleScan]);
 
   useEffect(() => {
