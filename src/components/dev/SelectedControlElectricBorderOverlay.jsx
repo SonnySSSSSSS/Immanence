@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { isDevtoolsEnabled } from "../../dev/runtimeGate.js";
 import { resolveFxSurface } from "../../dev/uiTargetContract.js";
 import { getControlsFxPreset, subscribeControlsFxPresets } from "../../dev/controlsFxPresets.js";
+import { readPickerSelection, subscribeToPicker } from "../../dev/pickerChannel.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
 import { ElectricBorder } from "./ElectricBorder.jsx";
 
@@ -32,9 +33,8 @@ function readTargetRadiusPx(targetEl) {
 function readPickConfig() {
   if (typeof window === "undefined") return { selectedId: null };
   try {
-    const raw = window.localStorage.getItem(PICK_STORAGE_KEY);
-    if (!raw) return { selectedId: null };
-    const parsed = JSON.parse(raw);
+    const parsed = readPickerSelection(PICK_STORAGE_KEY);
+    if (!parsed) return { selectedId: null };
     return {
       selectedId: typeof parsed?.selectedId === "string" && parsed.selectedId.length ? parsed.selectedId : null,
     };
@@ -123,8 +123,7 @@ export function SelectedControlElectricBorderOverlay() {
       scheduleScan();
     };
 
-    window.addEventListener(PICK_EVENT, onPickUpdate);
-    return () => window.removeEventListener(PICK_EVENT, onPickUpdate);
+    return subscribeToPicker(PICK_EVENT, onPickUpdate);
   }, [scheduleScan]);
 
   useEffect(() => {
