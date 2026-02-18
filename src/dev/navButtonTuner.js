@@ -1,3 +1,5 @@
+import { isBrowserEnvironment, isDevBuild } from './runtimeGate.js';
+
 const ROOT_ENABLED_CLASS = 'dev-nav-btn-tuner-enabled';
 
 const STORAGE_KEY = 'dev.navButtonTuner.global.v1';
@@ -33,7 +35,7 @@ const CSS_VAR_MAP = {
 };
 
 function hasDom() {
-  return typeof window !== 'undefined' && typeof document !== 'undefined' && import.meta.env.DEV;
+  return isBrowserEnvironment() && isDevBuild();
 }
 
 function clamp(min, v, max) {
@@ -147,4 +149,3 @@ export function resetNavButtonSettings() {
   saveJson(STORAGE_KEY, settings);
   emit();
 }
-
