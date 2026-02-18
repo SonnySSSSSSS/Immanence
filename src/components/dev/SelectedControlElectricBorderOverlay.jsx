@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { isDevtoolsEnabled } from "../../dev/uiDevtoolsGate.js";
+import { isDevtoolsEnabled } from "../../dev/runtimeGate.js";
 import { resolveFxSurface } from "../../dev/uiTargetContract.js";
 import { getControlsFxPreset, subscribeControlsFxPresets } from "../../dev/controlsFxPresets.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
