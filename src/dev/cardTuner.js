@@ -1,4 +1,4 @@
-import { isDevtoolsEnabled } from './uiDevtoolsGate.js';
+import { isDevtoolsEnabled } from './runtimeGate.js';
 
 const CARD_PICK_SELECTOR = '[data-card-id]';
 const ROOT_ENABLED_CLASS = 'dev-card-tuner-enabled';
