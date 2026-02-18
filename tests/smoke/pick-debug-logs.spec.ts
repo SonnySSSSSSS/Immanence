@@ -52,7 +52,7 @@ test('DEV — Controls picker readout + probes', async ({ page }) => {
   await ensureHubReady(page);
 
   await openDevPanel(page);
-  await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
+  await ensureSectionExpanded(page, 'Inspector', /Universal picker \(parity phase\)/i);
 
   await page.getByRole('button', { name: 'Probe: Targets', exact: true }).click();
   await page.getByRole('button', { name: 'Probe: Cards', exact: true }).click();

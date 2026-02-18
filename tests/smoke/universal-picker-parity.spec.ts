@@ -53,8 +53,8 @@ test('DEV — Universal picker parity: controls + card', async ({ page }) => {
   await ensureHubReady(page);
 
   await openDevPanel(page);
-  await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
-  await page.getByRole('button', { name: /Inspector \(NEW\)/i }).scrollIntoViewIfNeeded();
+  await ensureSectionExpanded(page, 'Inspector', /Universal picker \(parity phase\)/i);
+  await page.getByRole('button', { name: /Inspector/i }).scrollIntoViewIfNeeded();
 
   // Controls pick (home hub nav pill circle).
   await page.getByRole('button', { name: 'Controls', exact: true }).click();

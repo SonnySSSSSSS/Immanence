@@ -74,7 +74,7 @@ async function gotoHub(page: Page): Promise<void> {
 
 async function startPick(page: Page): Promise<void> {
   await ensureDevPanelOpen(page);
-  await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
+  await ensureSectionExpanded(page, 'Inspector', /Universal picker \(parity phase\)/i);
   await page.getByRole('button', { name: 'Cards', exact: true }).click();
 
   const pickOrStop = page.getByRole('button', { name: /Pick Target|Stop Picking/i }).first();

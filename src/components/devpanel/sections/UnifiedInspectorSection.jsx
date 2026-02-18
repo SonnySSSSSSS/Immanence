@@ -97,7 +97,7 @@ function UnifiedInspectorSection({
 }) {
   return (
     <Section
-      title="Inspector (NEW)"
+      title="Inspector"
       expanded={expanded}
       onToggle={onToggle}
       isLight={isLight}
