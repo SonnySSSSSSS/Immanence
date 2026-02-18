@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { isDevtoolsEnabled } from "../../dev/runtimeGate.js";
 import { getAllPlatesFxPresets, resolvePlatesFxPreset, subscribePlatesFxPresets } from "../../dev/plateFxPresets.js";
+import { readPickerSelection, subscribeToPicker } from "../../dev/pickerChannel.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
 import { useTheme } from "../../context/ThemeContext.jsx";
 
@@ -114,9 +115,8 @@ function deriveColorTriplet(baseColor) {
 function readPickConfig() {
   if (typeof window === "undefined") return { selectedId: null };
   try {
-    const raw = window.localStorage.getItem(PICK_STORAGE_KEY);
-    if (!raw) return { selectedId: null };
-    const parsed = JSON.parse(raw);
+    const parsed = readPickerSelection(PICK_STORAGE_KEY);
+    if (!parsed) return { selectedId: null };
     return {
       selectedId: typeof parsed?.selectedId === "string" && parsed.selectedId.length ? parsed.selectedId : null,
     };
@@ -205,8 +205,7 @@ export function SelectedPlateOverlay() {
       });
     };
 
-    window.addEventListener(PICK_EVENT, onPickUpdate);
-    return () => window.removeEventListener(PICK_EVENT, onPickUpdate);
+    return subscribeToPicker(PICK_EVENT, onPickUpdate);
   }, []);
 
   useEffect(() => {
