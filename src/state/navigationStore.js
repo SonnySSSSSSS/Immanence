@@ -82,7 +82,7 @@ const selectedDaysFromOffDays = (offDays = []) => {
     return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
 };
 
-const isDevRuntime = () => typeof import.meta !== 'undefined' && Boolean(import.meta?.env?.DEV) && isDevBuild();
+const isDevRuntime = () => isDevBuild();
 
 const reconcileCurriculumWithNavigationPath = (activePath) => {
     const curriculumState = useCurriculumStore.getState();
