@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { isDevtoolsEnabled } from "../../dev/uiDevtoolsGate.js";
+import { isDevtoolsEnabled } from "../../dev/runtimeGate.js";
 import { getAllPlatesFxPresets, resolvePlatesFxPreset, subscribePlatesFxPresets } from "../../dev/plateFxPresets.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
 import { useTheme } from "../../context/ThemeContext.jsx";
