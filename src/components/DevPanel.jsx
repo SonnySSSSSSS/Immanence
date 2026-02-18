@@ -89,6 +89,11 @@ import {
     setPlatesFxPreset,
     subscribePlatesFxPresets
 } from '../dev/plateFxPresets.js';
+import Section from './devpanel/ui/Section.jsx';
+import DevButton from './devpanel/ui/DevButton.jsx';
+import RangeControl from './devpanel/ui/RangeControl.jsx';
+import TextControl from './devpanel/ui/TextControl.jsx';
+import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -3148,95 +3153,6 @@ function AvatarCompositeTunerSection({ expanded, onToggle, isLight = false, edit
                 {!!jsonStatus && <div className="text-[10px] text-white/55">{jsonStatus}</div>}
             </div>
         </Section>
-    );
-}
-
-function Section({ title, expanded, onToggle, children, isLight = false }) {
-    return (
-        <div className="border rounded-xl overflow-hidden" style={{
-            background: isLight ? 'rgba(180, 155, 110, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-            borderColor: isLight ? 'rgba(180, 155, 110, 0.2)' : 'rgba(255, 255, 255, 0.1)'
-        }}>
-            <button
-                onClick={onToggle}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
-            >
-                <span className="text-sm font-medium" style={{
-                    color: isLight ? 'rgba(45, 40, 35, 0.85)' : 'rgba(255, 255, 255, 0.8)'
-                }}>{title}</span>
-                <span style={{ color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(255, 255, 255, 0.4)' }}>{expanded ? '▼' : '▶'}</span>
-            </button>
-            {expanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-white/5">
-                    {children}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function DevButton({ onClick, children }) {
-    return (
-        <button
-            onClick={onClick}
-            className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-xs text-white/70 hover:text-white/90 transition-all"
-        >
-            {children}
-        </button>
-    );
-}
-
-function RangeControl({ label, value, min, max, step, onChange, disabled = false, suffix = '' }) {
-    const displayValue = Number(step) < 1 ? Number(value).toFixed(2) : String(Math.round(value));
-    return (
-        <label className={`block text-[11px] ${disabled ? 'opacity-45' : ''}`}>
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-white/70">{label}</span>
-                <span className="font-mono text-white/85">{displayValue}{suffix}</span>
-            </div>
-            <input
-                type="range"
-                min={min}
-                max={max}
-                step={step}
-                value={value}
-                disabled={disabled}
-                onChange={(e) => onChange(Number(e.target.value))}
-                className="w-full accent-amber-400 disabled:cursor-not-allowed"
-            />
-        </label>
-    );
-}
-
-function TextControl({ label, value, onChange, disabled = false, placeholder = '', mono = true }) {
-    return (
-        <label className={`block text-[11px] ${disabled ? 'opacity-45' : ''}`}>
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-white/70">{label}</span>
-            </div>
-            <input
-                type="text"
-                value={value ?? ''}
-                placeholder={placeholder}
-                disabled={disabled}
-                onChange={(e) => onChange(String(e.target.value))}
-                className={`w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white/90 ${mono ? 'font-mono' : ''}`}
-            />
-        </label>
-    );
-}
-
-function DestructiveButton({ label, armed, onArm }) {
-    return (
-        <button
-            onClick={onArm}
-            className={`w-full rounded-lg px-3 py-2 text-xs font-medium transition-all ${armed
-                ? 'bg-red-500/30 border-2 border-red-500 text-red-300 animate-pulse'
-                : 'bg-red-500/10 border border-red-500/30 text-red-400/70 hover:bg-red-500/20'
-                }`}
-        >
-            {armed ? `⚠️ CONFIRM: ${label}?` : label}
-        </button>
     );
 }
 
