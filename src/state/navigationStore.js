@@ -1,6 +1,7 @@
 // src/state/navigationStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isDevBuild } from '../dev/runtimeGate.js';
 import { addDaysToDateKey, getDateKey, getLocalDateKey } from '../utils/dateUtils.js';
 import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore.js';
@@ -81,7 +82,7 @@ const selectedDaysFromOffDays = (offDays = []) => {
     return [0, 1, 2, 3, 4, 5, 6].filter((day) => !offSet.has(day));
 };
 
-const isDevRuntime = () => typeof import.meta !== 'undefined' && Boolean(import.meta?.env?.DEV);
+const isDevRuntime = () => typeof import.meta !== 'undefined' && Boolean(import.meta?.env?.DEV) && isDevBuild();
 
 const reconcileCurriculumWithNavigationPath = (activePath) => {
     const curriculumState = useCurriculumStore.getState();
