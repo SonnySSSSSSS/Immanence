@@ -60,6 +60,7 @@ import {
     clearAll,
 } from '../dev/cardTuner.js';
 import { isDevtoolsEnabled } from '../dev/uiDevtoolsGate.js';
+import { emitPickerSelection } from '../dev/pickerChannel.js';
 import { validateUiTargetRoot } from '../dev/uiTargetContract.js';
 import { attach as attachControlsCapture, detach as detachControlsCapture, startControlsPicking, stopControlsPicking } from '../dev/uiControlsCaptureManager.js';
 import {
@@ -259,12 +260,7 @@ export function DevPanel({
     const broadcastControlsPicker = useCallback((next) => {
         if (typeof window === 'undefined') return;
         try {
-            window.localStorage.setItem(CONTROLS_PICK_STORAGE_KEY, JSON.stringify(next));
-        } catch {
-            // ignore storage errors
-        }
-        try {
-            window.dispatchEvent(new CustomEvent(CONTROLS_PICK_EVENT, { detail: next }));
+            emitPickerSelection(CONTROLS_PICK_STORAGE_KEY, CONTROLS_PICK_EVENT, next);
         } catch {
             // ignore
         }
@@ -595,12 +591,7 @@ export function DevPanel({
     const broadcastPracticeButtonPicker = useCallback((next) => {
         if (typeof window === 'undefined') return;
         try {
-            window.localStorage.setItem(PRACTICE_BUTTON_PICK_STORAGE_KEY, JSON.stringify(next));
-        } catch {
-            // ignore storage errors
-        }
-        try {
-            window.dispatchEvent(new CustomEvent(PRACTICE_BUTTON_PICK_EVENT, { detail: next }));
+            emitPickerSelection(PRACTICE_BUTTON_PICK_STORAGE_KEY, PRACTICE_BUTTON_PICK_EVENT, next);
         } catch {
             // ignore
         }
@@ -798,8 +789,7 @@ export function DevPanel({
                     setPickDebugResolvedId(resolvedId);
                     setPlatesSelectedId(resolvedId);
                     try {
-                        window.localStorage.setItem('immanence.dev.platesFxPicker', JSON.stringify({ selectedId: resolvedId }));
-                        window.dispatchEvent(new CustomEvent('immanence-plates-fx-picker', { detail: { selectedId: resolvedId } }));
+                        emitPickerSelection('immanence.dev.platesFxPicker', 'immanence-plates-fx-picker', { selectedId: resolvedId });
                     } catch {
                         // ignore
                     }
