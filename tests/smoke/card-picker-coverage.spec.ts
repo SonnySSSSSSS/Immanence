@@ -13,6 +13,13 @@ async function startFromCleanState(page: Page): Promise<void> {
   await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
+    window.localStorage.setItem(
+      'immanence-user-mode',
+      JSON.stringify({
+        state: { userMode: 'explorer', hasChosenUserMode: true },
+        version: 0,
+      })
+    );
   });
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
@@ -27,6 +34,14 @@ async function ensureDevPanelOpen(page: Page): Promise<void> {
   const isOpen = await page.getByText('DEVELOPER PANEL', { exact: true }).isVisible().catch(() => false);
   if (isOpen) return;
   await openDevPanel(page);
+}
+
+async function ensureSectionExpanded(page: Page, title: string, expandedHint: RegExp): Promise<void> {
+  const hint = page.getByText(expandedHint);
+  if (await hint.isVisible().catch(() => false)) return;
+  const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await page.getByRole('button', { name: new RegExp(escaped, 'i') }).click();
+  await expect(hint).toBeVisible();
 }
 
 async function closeDevPanel(page: Page): Promise<void> {
@@ -58,35 +73,34 @@ async function gotoHub(page: Page): Promise<void> {
 }
 
 async function startPick(page: Page): Promise<void> {
-  if (await page.getByText('Card Picker Active', { exact: true }).isVisible().catch(() => false)) {
-    await confirmPick(page);
-  }
-
   await ensureDevPanelOpen(page);
+  await ensureSectionExpanded(page, 'Inspector (NEW)', /Universal picker \(parity phase\)/i);
+  await page.getByRole('button', { name: 'Cards', exact: true }).click();
 
-  const pickOrStop = page.getByRole('button', { name: /Pick Card|Stop Picking/i }).first();
+  const pickOrStop = page.getByRole('button', { name: /Pick Target|Stop Picking/i }).first();
   await pickOrStop.scrollIntoViewIfNeeded();
   const label = await pickOrStop.textContent();
   if (label && /stop picking/i.test(label)) {
     await pickOrStop.click();
   }
 
-  const pick = page.getByRole('button', { name: 'Pick Card', exact: true }).first();
+  const pick = page.getByRole('button', { name: 'Pick Target', exact: true }).first();
   await pick.scrollIntoViewIfNeeded();
   await pick.click();
-  await expect(page.getByText('Card Picker Active', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Stop Picking', exact: true }).first()).toBeVisible();
 }
 
 async function confirmPick(page: Page): Promise<void> {
-  const btn = page.getByRole('button', { name: /Confirm \+ Return|Return/i });
-  await btn.click();
-  await expect(page.getByText('DEVELOPER PANEL', { exact: true })).toBeVisible();
+  const stop = page.getByRole('button', { name: 'Stop Picking', exact: true }).first();
+  if (await stop.isVisible().catch(() => false)) {
+    await stop.click();
+  }
 }
 
 async function pickByCardId(page: Page, cardId: string): Promise<void> {
   await startPick(page);
   await page.locator(`[data-card="true"][data-card-id="${cardId}"]`).first().click({ force: true });
-  await expect(page.getByText(`Selected: ${cardId}`, { exact: true })).toBeVisible();
+  await expect(page.getByText(`Selected: ${cardId}`, { exact: false }).first()).toBeVisible();
   await confirmPick(page);
 }
 
@@ -135,7 +149,7 @@ test('DEV — Card picker coverage + carousel follow', async ({ page }) => {
   await expect(firstWisdomNode).toBeVisible();
   await startPick(page);
   await firstWisdomNode.click({ force: true });
-  await expect(page.getByText(/Selected:\s+wisdomNode:/i)).toBeVisible();
+  await expect(page.getByText(/Selected:\s+wisdomNode:/i).first()).toBeVisible();
   await confirmPick(page);
   await closeDevPanel(page);
   await snap(page, '04_wisdom_categoryCard.png');

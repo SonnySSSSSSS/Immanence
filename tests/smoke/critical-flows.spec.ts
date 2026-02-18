@@ -13,6 +13,42 @@ async function startFromCleanState(page: Page): Promise<void> {
   await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
+    const measuredAt = Date.now();
+    const benchmark = {
+      inhale: 4,
+      hold1: 4,
+      exhale: 4,
+      hold2: 4,
+      total: 16,
+      measuredAt,
+    };
+    window.localStorage.setItem(
+      'immanence-user-mode',
+      JSON.stringify({
+        state: { userMode: 'explorer', hasChosenUserMode: true },
+        version: 0,
+      })
+    );
+    window.localStorage.setItem(
+      'immanence-breath-benchmark',
+      JSON.stringify({
+        state: {
+          benchmark,
+          lastBenchmark: benchmark,
+          benchmarkHistory: [benchmark],
+          benchmarksByRunId: {},
+          attemptBenchmarksByRunId: {},
+          lifetimeMax: {
+            inhale: 4,
+            hold1: 4,
+            exhale: 4,
+            hold2: 4,
+            total: 16,
+          },
+        },
+        version: 3,
+      })
+    );
   });
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
@@ -64,6 +100,25 @@ async function openInitiationPathOverlay(page: Page): Promise<void> {
   await page.getByTestId('path-card-initiation').click();
   await expect(page.getByTestId('path-overview-overlay')).toBeVisible();
   await expect(page.getByText('Step 2: Select Time Slots', { exact: true })).toBeVisible();
+  await page.evaluate(async () => {
+    const navMod = await import('/src/state/navigationStore.js');
+    const benchmarkMod = await import('/src/state/breathBenchmarkStore.js');
+    const navState = navMod.useNavigationStore.getState();
+    const runId = navState?.pendingAttemptRunId;
+    const pathId = navState?.pendingAttemptPathId;
+    if (!runId || !pathId) return;
+    benchmarkMod.useBreathBenchmarkStore.getState().completeAttemptBenchmark({
+      runId,
+      source: 'fresh',
+      results: {
+        inhale: 4,
+        hold1: 4,
+        exhale: 4,
+        hold2: 4,
+        measuredAt: Date.now(),
+      },
+    });
+  });
 }
 
 function getTimeSlotButtons(page: Page) {

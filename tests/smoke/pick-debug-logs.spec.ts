@@ -9,6 +9,13 @@ async function startFromCleanState(page: Page): Promise<void> {
   await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
+    window.localStorage.setItem(
+      'immanence-user-mode',
+      JSON.stringify({
+        state: { userMode: 'explorer', hasChosenUserMode: true },
+        version: 0,
+      })
+    );
   });
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
