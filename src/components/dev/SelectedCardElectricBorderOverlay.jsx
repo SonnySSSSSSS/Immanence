@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 
 import { subscribeCardTuner } from "../../dev/cardTuner.js";
+import { isDevBuild } from "../../dev/runtimeGate.js";
 import { useSettingsStore } from "../../state/settingsStore.js";
 import { ElectricBorder } from "./ElectricBorder.jsx";
 
@@ -83,7 +84,7 @@ export function SelectedCardElectricBorderOverlay() {
       const { targetEl, carouselRoot } = resolveSelectedCardEl({ selectedCardId, selectedCardCarouselId });
       if (!(targetEl instanceof Element)) {
         setModel(null);
-        if (import.meta.env.DEV && !warnOnceRef.current) {
+        if (isDevBuild() && !warnOnceRef.current) {
           warnOnceRef.current = true;
           // eslint-disable-next-line no-console
           console.warn("[SelectedCardElectricBorderOverlay] No selected card element found for:", {
@@ -156,7 +157,7 @@ export function SelectedCardElectricBorderOverlay() {
   }, [enabled, reduceMotionSetting, snapshot]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return undefined;
+    if (!isDevBuild()) return undefined;
     const un = subscribeCardTuner((next) => setSnapshot(next));
     return () => un();
   }, []);
@@ -233,4 +234,3 @@ export function SelectedCardElectricBorderOverlay() {
 }
 
 export default SelectedCardElectricBorderOverlay;
-
