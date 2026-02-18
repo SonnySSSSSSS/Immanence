@@ -407,7 +407,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.25.63 - Fixed Background Wallpaper in practice cards
+  // v3.27.171 - Documentation overhaul (README + ARCHITECTURE)
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
@@ -666,7 +666,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.170
+                        v3.27.171
                       </button>
                     </div>
                   </div>

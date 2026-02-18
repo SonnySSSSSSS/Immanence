@@ -1,340 +1,156 @@
-# Immanence OS - Practice Journal System
+# Immanence OS
 
-Test docs change for CI lane validation.
+A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing — without cloud dependency or data collection.
 
-Complete circuit training practice journal with insights, editing, and export functionality.
+## What It Is
 
-## Overview
+Immanence OS is a practice instrument for building attentional and regulatory capacity. It treats meditation not as relaxation software but as structured skill development — breath control first, then awareness, then integration.
 
-Immanence OS circuit journal system captures detailed practice data across sequential exercises (circuits), stores assessments, and provides visual insights into attention quality, challenges faced, and exercise performance patterns.
+The system provides two usage modes, a curriculum engine with capacity-based gating, symbolic identity progression, and a full internal developer tooling layer for rapid iteration.
 
-### Key Features
+All data stays on your device. No accounts. No telemetry. No backend.
 
-- **Circuit Tracking**: Log multi-exercise practice sessions with per-exercise timing
-- **Rich Assessments**: Capture attention quality, challenges, and detailed notes
-- **Visual Insights**: Line charts (attention trends), bar charts (challenge frequency), heatmaps (exercise performance)
-- **Edit & Delete**: Safely modify or remove entries with confirmations
-- **Export Data**: Download as JSON or CSV for analysis
-- **Dark/Light Mode**: Adaptive UI matching application theme
-- **Accessibility**: ARIA labels, keyboard navigation, screen reader support
-- **Error Handling**: Graceful error boundaries with user-friendly messages
+## Core Philosophy
+
+**Breath as foundation.** Every training path begins with breathwork. Regulatory capacity is the prerequisite for attentional training — not the other way around.
+
+**Skill-stacking.** Practices build on each other. Body scan requires breath stability. Insight work requires somatic awareness. The curriculum enforces this sequencing rather than offering a buffet.
+
+**Capacity over calmness.** The goal is not to feel relaxed. It is to develop attentional bandwidth, filtering ability, interoceptive precision, and regulatory control that transfers outside the app.
+
+**Structured progression.** Stages advance based on sustained consistency, not single-session performance. Identity markers (avatar, rune, stage) reflect long-term commitment.
+
+## Dual Mode System
+
+### Student Mode
+
+Guardrailed curriculum with sequential unlocks. Practices gate behind prerequisite completion. The dashboard emphasizes completion rate and on-time adherence over raw volume.
+
+- Sections locked until curriculum progression allows access
+- Practice sessions launch from curriculum cards, not open browsing
+- 14-day data window for focused progress tracking
+- Breath benchmark required before advancing to secondary practices
+
+### Explorer Mode
+
+Open access to all practices and sections. Self-directed with tutorial guidance available. Tracking is enabled but nothing is gated.
+
+- All sections and practices accessible immediately
+- 90-day data window for long-term pattern recognition
+- Volume and consistency as primary dashboard metrics
+- Full navigation between Practice, Wisdom, Application, and Settings
+
+On first launch, the user chooses their mode. This choice persists but can be reset.
+
+## Training Domains
+
+### Regulation
+
+Breathwork with configurable patterns — Box, 4-7-8, Resonance, Pranayama, Kumbhaka, and more. Tap-timing accuracy tracking. Breath benchmarking as a gating mechanism.
+
+### Awareness
+
+Body Scan (progressive somatic attention), Vipassana (cognitive observation with themed visuals), and Insight practices. Sensory configuration for different observation modes.
+
+### Entrainment
+
+Sound Bath (binaural beats, isochronic tones, solfeggio frequencies at 100–500Hz). Cymatics (audio-reactive visual patterns). Photonic practices (photic driving with visual geometry).
+
+### Visualization
+
+Sacred geometry rendering — Flower of Life, Sri Yantra, Kasina objects. 3D rendering via React Three Fiber.
+
+### Ritual & Behavioral Tracking
+
+Multi-step guided practices with dwell-time enforcement. Awareness compass (gesture-based directional logging). Temporal tracking model: Gesture → Trace → Pattern → Direction.
+
+### Cognitive Processing (Four Modes)
+
+Sequential chain: Mirror → Prism → Wave → Sword. Each mode gates behind the previous. LLM-validated (local Ollama) at each step:
+
+- **Mirror**: Neutral observation with E-Prime compliance checking
+- **Prism**: Interpretation separation (supported vs. unsupported)
+- **Wave**: Emotional capacity with somatic tracking
+- **Sword**: Committed action with value alignment
+
+### Circuit Mode
+
+Multi-practice sequential sessions. Compose breath, awareness, and entrainment exercises into ordered circuits with per-exercise journaling.
+
+## Progression & Identity
+
+Five stages tied to sustained practice over time:
+
+| Stage | Timeline | Character |
+|-------|----------|-----------|
+| Seedling | Day 0+ | Beginning |
+| Ember | Day 90+ | Establishing |
+| Flame | Day 180+ | Deepening |
+| Beacon | Day 270+ | Stabilizing |
+| Stellar | Day 360+ | Integrating |
+
+Each stage has a distinct rune ring, color palette, and avatar composition. Four practice paths (Yantra, Kaya, Chitra, Nada) emerge from sustained behavioral signal — inferred from practice patterns over 90-day windows, not chosen from a menu.
+
+Cycle system enforces consistency: Foundation (14-day), Transformation (90-day), and Integration (180-day) cycles with checkpoint reviews every 14 days.
+
+## Internal Developer Mode
+
+Immanence OS includes a full developer panel (`Ctrl+Shift+D`) used as internal design and debugging infrastructure to accelerate iteration:
+
+- **Avatar Composite Tuner** — Live layer manipulation (background, stage, glass, rune ring) with per-layer opacity, scale, and position controls
+- **Stage/Path Preview** — Instant switching between all stage and path combinations
+- **Curriculum Simulation** — Day/leg completion injection, onboarding replay, schedule override
+- **Tracking Hub** — Live state inspection for all tracking stores
+- **Reporting Diagnostics** — Dashboard tile queries, metric previews, policy testing
+- **UI Playground** — Component isolation, card styling tuner, navigation button FX tuner
+- **Breathing Ring Lab** — Phase-accurate breath ring prototyping
+- **Tutorial Tools** — Tutorial state reset and step-through
+- **Data Management** — Export, import, and reset all localStorage state
+- **Design & Diagnostic** — Inspector overlays, layout debugging
+
+Not production-facing. Dev-only tooling gated behind feature flag.
+
+## Tech Stack
+
+- **React 19** with JSX (no TypeScript)
+- **Vite** (Rolldown variant) for builds
+- **Zustand** with localStorage persistence (25+ stores)
+- **React Three Fiber** for 3D rendering
+- **Framer Motion** for animation
+- **Tailwind CSS 3.4** + custom CSS
+- **Ollama** (local LLM) for cognitive mode validation
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start dev server (localhost:5175/Immanence/)
+npm run dev
+
+# Lint
+npm run lint
+
+# Production build
+npm run build
+
+# Deploy to GitHub Pages
+npm run deploy
+```
+
+Dev panel: `Ctrl+Shift+D` or tap the version number 5 times.
+
+LLM features require Ollama running locally with `gemma3:1b` model:
+
+```bash
+ollama pull gemma3:1b
+```
 
 ## Architecture
 
-### State Management (Zustand Stores)
-
-- **circuitManager** - Circuit definitions and session execution tracking
-- **circuitJournalStore** - Journal entries with assessments and metadata
-- **progressStore** - Overall practice session logging
-- **lunarStore** - Lunar phase metadata
-- **displayModeStore** - UI theme preferences
-
-### Components
-
-#### Core Components
-
-- `CircuitTrainer` - Select preset or custom circuits
-- `CircuitJournalForm` - Capture post-circuit assessments
-- `SessionHistoryView` - Archive modal with tabs (All/Circuits/Sessions/Insights)
-
-#### Phase 3: Insights
-
-- `CircuitInsightsView` - Three-chart visualization dashboard
-  - Line chart: Attention Quality Trend
-  - Bar chart: Challenge Frequency
-  - Heatmap: Exercise Performance by Type
-
-#### Phase 4: Polish
-
-- `CircuitEntryCard` - Individual entry display with edit/delete
-- `CircuitEntryEditModal` - Update assessments and notes
-- `DeleteConfirmationModal` - Safe deletion with confirmation
-- `ExportArchiveButton` - JSON/CSV export menu
-
-#### Phase 5: Final Polish
-
-- `ErrorBoundary` - Catch and display errors gracefully
-- `AccessibleModal` - ARIA-compliant modal wrapper
-- `LoadingIndicator` - Loading states with accessibility
-
-### Integration Layer
-
-- `circuitIntegration.js` - Bridges CircuitTrainer UI to Zustand stores
-  - `initializeCircuitSession()` - Start circuit in store
-  - `completeCircuitSession()` - End circuit, log to progressStore
-  - `saveCircuitJournal()` - Save assessment from form
-  - Export/query functions for archive
-
-## Data Flow
-
-### Circuit Completion → Journaling
-
-```
-User completes circuit
-  ↓
-circuitManager.completeCircuit()
-  → Returns completedCircuitLog
-  ↓
-PostSessionJournal detects circuit
-  → Routes to CircuitJournalForm
-  ↓
-User submits assessment
-  → circuitJournalStore.createEntry()
-  → circuitJournalStore.updateOverallAssessment()
-  → circuitManager.linkJournalEntry()
-  ↓
-Entry appears in SessionHistoryView archive
-```
-
-### Data Storage
-
-All data persists to localStorage via Zustand `persist` middleware:
-
-- **Circuit entries**: ~0.5-2KB per entry
-- **100 circuits over 6 months**: ~50-100KB total
-- **localStorage limit**: 5-10MB (no concerns)
-
-## Usage
-
-### Starting a Circuit
-
-```javascript
-import { CircuitTrainer } from "./components/Cycle/CircuitTrainer";
-import { initializeCircuitSession } from "./services/circuitIntegration";
-
-function PracticeScreen() {
-  const handleCircuitSelected = (circuit) => {
-    const result = initializeCircuitSession(circuit);
-    if (result.success) {
-      // Navigate to practice UI with result.session
-    }
-  };
-
-  return <CircuitTrainer onSelectCircuit={handleCircuitSelected} />;
-}
-```
-
-### Viewing Archive & Insights
-
-```javascript
-import { SessionHistoryView } from "./components/SessionHistoryView";
-
-function StatsCard() {
-  const [showArchive, setShowArchive] = useState(false);
-
-  return (
-    <>
-      <button onClick={() => setShowArchive(true)}>VIEW ARCHIVE</button>
-      {showArchive && (
-        <SessionHistoryView onClose={() => setShowArchive(false)} />
-      )}
-    </>
-  );
-}
-```
-
-## API Reference
-
-### circuitManager Store
-
-```javascript
-// Create circuit definition
-createCircuit({ name, description, exercises });
-
-// Start session
-beginCircuit(circuitId, sessionMode);
-
-// Complete session
-completeCircuit();
-
-// Get all circuits
-getAllCircuits();
-
-// Get specific circuit
-getCircuit(circuitId);
-```
-
-### circuitJournalStore
-
-```javascript
-// Create entry
-createEntry({ circuitId, circuitName, exercises, ... })
-
-// Update overall assessment
-updateOverallAssessment(entryId, { attentionQuality, challenges, ... })
-
-// Update exercise assessment
-updateExerciseAssessment(entryId, exerciseIndex, { attentionQuality, ... })
-
-// Get entries
-getAllEntries()
-getEntriesForDate(dateKey)
-getCircuitHistory(circuitId)
-
-// Edit/Delete
-editEntry(entryId, updates)
-deleteEntry(entryId)
-
-// Export
-exportAsJSON(entryIds?)
-exportAsCSV(entryIds?)
-```
-
-### circuitIntegration Service
-
-```javascript
-// Initialize
-initializeCircuitSession(circuit)
-
-// Complete
-completeCircuitSession()
-
-// Save journal
-saveCircuitJournal(completedCircuitId, assessment)
-
-// Get data
-getActiveCircuitSession()
-getCircuitArchive()
-getCircuitEntriesForDate(dateKey)
-getCircuitHistory(circuitId)
-
-// Export
-exportCircuitData(format, entryIds?)
-```
-
-## Performance Optimizations
-
-### Memoization (`useEntryMemoization.js`)
-
-- `useCircuitEntriesMemo()` - Filter/sort with dependencies
-- `useChallengeMemo()` - Challenge statistics
-- `useAttentionTrendMemo()` - Trend calculations
-- `useExerciseStatsMemo()` - Exercise performance
-
-Prevents unnecessary recalculations on parent re-renders.
-
-### Code Splitting
-
-Each major feature is in its own component file:
-
-- Phase 2: Circuit integration (323 lines)
-- Phase 3: Insights visualization (486 lines)
-- Phase 4: Edit/delete/export (440+ lines)
-- Phase 5: Error handling, accessibility (200+ lines)
-
-## Error Handling
-
-### ErrorBoundary
-
-Wraps entire app to catch React errors:
-
-```javascript
-<ErrorBoundary>
-  <App />
-</ErrorBoundary>
-```
-
-Displays user-friendly error message with collapsible technical details.
-
-### Try/Catch in Services
-
-All integration functions return `{ success, error }` objects:
-
-```javascript
-const result = initializeCircuitSession(circuit);
-if (!result.success) {
-  console.error(result.error);
-  showUserMessage("Failed to start circuit");
-}
-```
-
-## Accessibility
-
-### ARIA Labels
-
-- Modals: `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
-- Loading states: `role="status"`, `aria-live="polite"`, `aria-busy`
-- Buttons: `aria-label` for icon-only buttons
-
-### Keyboard Navigation
-
-- **Escape**: Close modals
-- **Tab**: Navigate through form fields
-- **Enter**: Submit forms
-- **Space**: Toggle checkboxes/buttons
-
-### Focus Management
-
-- Focus trap in modals
-- Focus restoration when closing
-- Visible focus indicators
-
-## Testing
-
-### Unit Tests (Recommended)
-
-```javascript
-// Test store functions
-test('createEntry creates entry with correct structure', () => {
-    const entry = circuitJournalStore.getState().createEntry({...});
-    expect(entry.id).toBeDefined();
-    expect(entry.createdAt).toBeDefined();
-});
-
-// Test memoization
-test('useCircuitEntriesMemo returns filtered entries', () => {
-    const entries = useCircuitEntriesMemo(allEntries, { dateKey: '2025-01-02' });
-    expect(entries).toBeSorted();
-});
-```
-
-### Integration Tests (Recommended)
-
-```javascript
-// Test full flow
-test("Circuit completion saves journal entry", () => {
-  const session = initializeCircuitSession(circuit);
-  const completed = completeCircuitSession();
-  const saved = saveCircuitJournal(completed.completedLog.id, assessment);
-  expect(saved.success).toBe(true);
-});
-```
-
-## Browser Support
-
-- Chrome/Edge: Full support
-- Firefox: Full support
-- Safari: Full support
-- Mobile browsers: Full support with responsive design
-
-## Storage
-
-All data stored in localStorage under these keys:
-
-- `circuit-manager-store`
-- `circuit-journal-store`
-- `progress-store`
-- `lunar-store`
-
-Clear with:
-
-```javascript
-localStorage.removeItem("circuit-journal-store");
-```
-
-## Future Enhancements
-
-- [ ] Server-side sync (cloud backup)
-- [ ] Share entries with coach/mentor
-- [ ] AI-powered recommendations
-- [ ] Mobile app (React Native)
-- [ ] Wearable integration (heart rate, sleep)
-- [ ] Social features (practice groups)
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for technical system documentation.
 
 ## License
 
-Part of Immanence OS project
-
-## Support
-
-For issues or questions, refer to the main Immanence OS documentation.
+Private project. All rights reserved.

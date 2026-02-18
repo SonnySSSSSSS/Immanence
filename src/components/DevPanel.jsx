@@ -90,15 +90,10 @@ import {
 } from '../dev/plateFxPresets.js';
 import Section from './devpanel/ui/Section.jsx';
 import DevButton from './devpanel/ui/DevButton.jsx';
-import RangeControl from './devpanel/ui/RangeControl.jsx';
-import TextControl from './devpanel/ui/TextControl.jsx';
 import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
-import ControlsFxSection from './devpanel/sections/ControlsFxSection.jsx';
-import PlatesFxSection from './devpanel/sections/PlatesFxSection.jsx';
-import CardTunerSection from './devpanel/sections/CardTunerSection.jsx';
-import NavButtonTunerSection from './devpanel/sections/NavButtonTunerSection.jsx';
 import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
+import UnifiedInspectorSection from './devpanel/sections/UnifiedInspectorSection.jsx';
 
 // Lazy-loaded lab component (code-split, only loads when DevPanel opens)
 const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
@@ -1109,165 +1104,67 @@ export function DevPanel({
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* INSPECTOR (NEW) — Universal Picker */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="Inspector (NEW)"
+                    <UnifiedInspectorSection
                         expanded={expandedSections.inspectorNew}
                         onToggle={() => toggleSection('inspectorNew')}
                         isLight={isLight}
-                    >
-                        {!devtoolsEnabled ? (
-                            <div className="text-xs text-white/50">Locked</div>
-                        ) : (
-                            <>
-                                <div className="text-[10px] text-white/50 mb-2">
-                                    Universal picker (parity phase): controls + plates + cards. Conflict rule: only one global capture listener active.
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-2 mb-2">
-                                    <button
-                                        onClick={() => setUniversalPickerKind('controls')}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'controls' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Controls
-                                    </button>
-                                    <button
-                                        onClick={() => setUniversalPickerKind('card')}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'card' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Cards
-                                    </button>
-                                    <button
-                                        onClick={() => setUniversalPickerKind('plates')}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${universalPickerKind === 'plates' ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Plates
-                                    </button>
-                                </div>
-
-                                <button
-                                    onClick={() => (universalPickMode ? handleStopUniversalPickFlow() : handleStartUniversalPickFlow())}
-                                    className={`w-full mb-3 px-3 py-2 rounded-lg text-xs border transition-all ${universalPickMode ? 'bg-amber-500/25 text-amber-200 border-amber-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                >
-                                    {universalPickMode ? 'Stop Picking' : 'Pick Target'}
-                                </button>
-
-                                <button
-                                    onClick={() => setLegacyPickersEnabled(v => !v)}
-                                    className={`w-full mb-3 px-3 py-2 rounded-lg text-xs border transition-all ${legacyPickersEnabled ? 'bg-white/5 text-white/70 border-white/15 hover:bg-white/10' : 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60'}`}
-                                >
-                                    {legacyPickersEnabled ? 'Legacy pickers: ON' : 'Legacy pickers: OFF'}
-                                </button>
-
-                                <div className="grid grid-cols-3 gap-2 mb-3">
-                                    <button
-                                        onClick={() => setPickDebugEnabledLocal(v => !v)}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${pickDebugEnabled ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Pick Debug {pickDebugEnabled ? 'ON' : 'OFF'}
-                                    </button>
-                                    <button
-                                        onClick={() => setUiTargetProbeEnabled(v => !v)}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${uiTargetProbeEnabled ? 'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Probe: Targets
-                                    </button>
-                                    <button
-                                        onClick={() => setCardIdProbeEnabled(v => !v)}
-                                        className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardIdProbeEnabled ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/50' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                    >
-                                        Probe: Cards
-                                    </button>
-                                </div>
-
-                                <div className="mb-3 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                                    Debug resolved: {pickDebugResolvedMode ? `${pickDebugResolvedMode} → ${pickDebugResolvedId || 'null'}` : 'none'}
-                                </div>
-
-                                <ControlsFxSection
-                                    universalPickerKind={universalPickerKind}
-                                    controlsSelectedId={controlsSelectedId}
-                                    controlsSelectedRoleGroup={controlsSelectedRoleGroup}
-                                    controlsSurfaceIsRoot={controlsSurfaceIsRoot}
-                                    controlsSurfaceDebug={controlsSurfaceDebug}
-                                    controlsElectricBorderEnabled={controlsElectricBorderEnabled}
-                                    setControlsElectricBorderEnabled={setControlsElectricBorderEnabled}
-                                    controlsFxDraft={controlsFxDraft}
-                                    setControlsFxDraft={setControlsFxDraft}
-                                    setControlsFxPreset={setControlsFxPreset}
-                                    resetControlsFxPreset={resetControlsFxPreset}
-                                    getControlsFxPreset={getControlsFxPreset}
-                                    controlsPresetJson={controlsPresetJson}
-                                    setControlsPresetJson={setControlsPresetJson}
-                                    controlsPresetStatus={controlsPresetStatus}
-                                    setControlsPresetStatus={setControlsPresetStatus}
-                                    exportControlsFxPresetsJson={exportControlsFxPresetsJson}
-                                    importControlsFxPresetsJson={importControlsFxPresetsJson}
-                                    resetAllControlsFxPresets={resetAllControlsFxPresets}
-                                    utcViolations={utcViolations}
-                                />
-
-                                <PlatesFxSection
-                                    universalPickerKind={universalPickerKind}
-                                    platesSelectedId={platesSelectedId}
-                                    platesFxEnabled={platesFxEnabled}
-                                    setPlatesFxEnabled={setPlatesFxEnabled}
-                                    platesFxDraft={platesFxDraft}
-                                    patchSelectedPlatePreset={patchSelectedPlatePreset}
-                                    platesResolved={platesResolved}
-                                    platesAdvancedOpen={platesAdvancedOpen}
-                                    setPlatesAdvancedOpen={setPlatesAdvancedOpen}
-                                    activePlateOverrideCount={activePlateOverrideCount}
-                                    resetSelectedPlateOverrides={resetSelectedPlateOverrides}
-                                />
-
-                                {universalPickerKind === 'card' && (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-2 mb-3">
-                                            <button
-                                                onClick={() => setCardApplyToAll(v => !v)}
-                                                className={`px-3 py-2 rounded-lg text-xs border transition-all ${cardApplyToAll ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400/60' : 'bg-white/5 text-white/70 border-white/15'}`}
-                                            >
-                                                {cardApplyToAll ? 'Apply to all: ON' : 'Apply to all: OFF'}
-                                            </button>
-                                            <div className="rounded-lg px-3 py-2 text-[11px] text-white/70 font-mono bg-white/5 border border-white/10">
-                                                Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <RangeControl label="Tint H" value={activeDraft.cardTintH} min={0} max={360} step={1} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintH', v)} />
-                                            <RangeControl label="Tint S" value={activeDraft.cardTintS} min={0} max={100} step={1} suffix="%" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintS', v)} />
-                                            <RangeControl label="Tint L" value={activeDraft.cardTintL} min={0} max={100} step={1} suffix="%" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardTintL', v)} />
-                                            <RangeControl label="Alpha" value={activeDraft.cardAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardAlpha', v)} />
-                                            <RangeControl label="Border A" value={activeDraft.cardBorderAlpha} min={0} max={1} step={0.01} disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBorderAlpha', v)} />
-                                            <RangeControl label="Blur" value={activeDraft.cardBlur} min={0} max={60} step={1} suffix="px" disabled={selectedDisabled} onChange={(v) => onChangeCardSetting('cardBlur', v)} />
-                                        </div>
-                                    </>
-                                )}
-
-                            </>
-                        )}
-                    </Section>
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* UI PLAYGROUND SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <CardTunerSection
-                        expanded={expandedSections.cardTuner}
-                        onToggle={() => toggleSection('cardTuner')}
-                        isLight={isLight}
                         devtoolsEnabled={devtoolsEnabled}
+                        universalPickerKind={universalPickerKind}
+                        setUniversalPickerKind={setUniversalPickerKind}
+                        universalPickMode={universalPickMode}
+                        handleStopUniversalPickFlow={handleStopUniversalPickFlow}
+                        handleStartUniversalPickFlow={handleStartUniversalPickFlow}
                         legacyPickersEnabled={legacyPickersEnabled}
-                        cardState={cardState}
-                        handleStopPickFlow={handleStopPickFlow}
-                        handleStartPickFlow={handleStartPickFlow}
+                        setLegacyPickersEnabled={setLegacyPickersEnabled}
+                        pickDebugEnabled={pickDebugEnabled}
+                        setPickDebugEnabledLocal={setPickDebugEnabledLocal}
+                        uiTargetProbeEnabled={uiTargetProbeEnabled}
+                        setUiTargetProbeEnabled={setUiTargetProbeEnabled}
+                        cardIdProbeEnabled={cardIdProbeEnabled}
+                        setCardIdProbeEnabled={setCardIdProbeEnabled}
+                        pickDebugResolvedMode={pickDebugResolvedMode}
+                        pickDebugResolvedId={pickDebugResolvedId}
+                        controlsSelectedId={controlsSelectedId}
+                        controlsSelectedRoleGroup={controlsSelectedRoleGroup}
+                        controlsSurfaceIsRoot={controlsSurfaceIsRoot}
+                        controlsSurfaceDebug={controlsSurfaceDebug}
+                        controlsElectricBorderEnabled={controlsElectricBorderEnabled}
+                        setControlsElectricBorderEnabled={setControlsElectricBorderEnabled}
+                        controlsFxDraft={controlsFxDraft}
+                        setControlsFxDraft={setControlsFxDraft}
+                        setControlsFxPreset={setControlsFxPreset}
+                        resetControlsFxPreset={resetControlsFxPreset}
+                        getControlsFxPreset={getControlsFxPreset}
+                        controlsPresetJson={controlsPresetJson}
+                        setControlsPresetJson={setControlsPresetJson}
+                        controlsPresetStatus={controlsPresetStatus}
+                        setControlsPresetStatus={setControlsPresetStatus}
+                        exportControlsFxPresetsJson={exportControlsFxPresetsJson}
+                        importControlsFxPresetsJson={importControlsFxPresetsJson}
+                        resetAllControlsFxPresets={resetAllControlsFxPresets}
+                        utcViolations={utcViolations}
+                        platesSelectedId={platesSelectedId}
+                        platesFxEnabled={platesFxEnabled}
+                        setPlatesFxEnabled={setPlatesFxEnabled}
+                        platesFxDraft={platesFxDraft}
+                        patchSelectedPlatePreset={patchSelectedPlatePreset}
+                        platesResolved={platesResolved}
+                        platesAdvancedOpen={platesAdvancedOpen}
+                        setPlatesAdvancedOpen={setPlatesAdvancedOpen}
+                        activePlateOverrideCount={activePlateOverrideCount}
+                        resetSelectedPlateOverrides={resetSelectedPlateOverrides}
                         cardApplyToAll={cardApplyToAll}
                         setCardApplyToAll={setCardApplyToAll}
-                        handleTogglePeek={handleTogglePeek}
-                        handleConfirmPickFlow={handleConfirmPickFlow}
+                        cardState={cardState}
                         activeDraft={activeDraft}
                         selectedDisabled={selectedDisabled}
                         onChangeCardSetting={onChangeCardSetting}
+                        cardTunerExpanded={expandedSections.cardTuner}
+                        onToggleCardTuner={() => toggleSection('cardTuner')}
+                        handleStopPickFlow={handleStopPickFlow}
+                        handleStartPickFlow={handleStartPickFlow}
+                        handleTogglePeek={handleTogglePeek}
+                        handleConfirmPickFlow={handleConfirmPickFlow}
                         cardElectricBorderEnabled={cardElectricBorderEnabled}
                         setCardElectricBorderEnabled={setCardElectricBorderEnabled}
                         practiceButtonFxEnabled={practiceButtonFxEnabled}
@@ -1288,13 +1185,8 @@ export function DevPanel({
                         resetGlobal={resetGlobal}
                         resetSelected={resetSelected}
                         clearAll={clearAll}
-                    />
-
-                    <NavButtonTunerSection
-                        expanded={expandedSections.navBtnTuner}
-                        onToggle={() => toggleSection('navBtnTuner')}
-                        isLight={isLight}
-                        devtoolsEnabled={devtoolsEnabled}
+                        navBtnTunerExpanded={expandedSections.navBtnTuner}
+                        onToggleNavBtnTuner={() => toggleSection('navBtnTuner')}
                         navBtnProbeEnabled={navBtnProbeEnabled}
                         setNavBtnProbeEnabled={setNavBtnProbeEnabled}
                         navBtnState={navBtnState}
@@ -1303,6 +1195,10 @@ export function DevPanel({
                         onChangeNavBtnSetting={onChangeNavBtnSetting}
                         resetNavButtonSettings={resetNavButtonSettings}
                     />
+
+                    {/* ═══════════════════════════════════════════════════════════════ */}
+                    {/* UI PLAYGROUND SECTION */}
+                    {/* ═══════════════════════════════════════════════════════════════ */}
 
                     <Section
                         title="UI Playground"
