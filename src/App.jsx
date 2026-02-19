@@ -407,7 +407,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.176 - fix(breathing-ring): require startTime and wire RitualPortal
+  // v3.27.177 - fix(breathing-ring): require startTime and wire RitualPortal
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
@@ -666,7 +666,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.176
+                        v3.27.177
                       </button>
                     </div>
                   </div>

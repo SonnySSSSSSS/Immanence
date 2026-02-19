@@ -25,15 +25,16 @@ import * as THREE from 'three';
 // Production-portable: accepts a plain params object, no lab UI coupling.
 //
 // Props:
-//   enabled       – show/hide the trail (no side effects when false)
-//   accentColor   – hex string, drives all particle color
-//   intensity     – 0–2, overall brightness multiplier.
-//                   Audio-driveable: pass amplitude envelope directly as this prop;
-//                   no architectural changes required (it's a plain number per frame).
-//   length        – 5–80, number of main trail particles
-//   spread        – 0–0.2, radial jitter around arc
-//   speed         – angular velocity (rad/s)
-//   sparkle       – 0–1, secondary tiny-particle density
+//   enabled     – show/hide the trail (no side effects when false)
+//   trailLin    – linear RGB object {r,g,b} for main trail particles (from palette)
+//   sparkleLin  – linear RGB object {r,g,b} for sparkle particles (from palette)
+//   intensity   – 0–2, overall brightness multiplier.
+//                 Audio-driveable: pass amplitude envelope directly as this prop;
+//                 no architectural changes required (it's a plain number per frame).
+//   length      – 5–80, number of main trail particles
+//   spread      – 0–0.2, radial jitter around arc
+//   speed       – angular velocity (rad/s)
+//   sparkle     – 0–1, secondary tiny-particle density
 //
 // Composition: additive blending, depthWrite:false, toneMapped:false
 // → Bloom picks it up naturally; sits in front of ring geometry (z=0.05).
@@ -41,12 +42,46 @@ import * as THREE from 'three';
 // Smoothstep easing [0,1] → [0,1]. Used by breathDriver phase→wave mapping.
 const easeInOut = p => { const c = Math.max(0, Math.min(1, p)); return c * c * (3 - 2 * c); };
 
+// ─── Accent palette helpers ───────────────────────────────────────────────────
+// Mix in linear RGB. Output as sRGB hex — safe for R3F material color props
+// regardless of Three.js colorManagement state. Only handles #RRGGBB input;
+// falls back to Beacon cyan (#22d3ee) for invalid/missing values.
+function sRGBtoLinear(v255) {
+  const v = v255 / 255;
+  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+function linearToSRGB(v) {
+  v = Math.max(0, Math.min(1, v));
+  return Math.round((v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
+}
+function hexToLin(hex) {
+  if (!hex || typeof hex !== 'string') return hexToLin('#22d3ee');
+  const h = hex.replace('#', '');
+  if (h.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(h)) return hexToLin('#22d3ee');
+  return {
+    r: sRGBtoLinear(parseInt(h.slice(0, 2), 16)),
+    g: sRGBtoLinear(parseInt(h.slice(2, 4), 16)),
+    b: sRGBtoLinear(parseInt(h.slice(4, 6), 16)),
+  };
+}
+function linToHex({ r, g, b }) {
+  const R = linearToSRGB(r), G = linearToSRGB(g), B = linearToSRGB(b);
+  return `#${R.toString(16).padStart(2, '0')}${G.toString(16).padStart(2, '0')}${B.toString(16).padStart(2, '0')}`;
+}
+function mixLin(a, b, t) {
+  return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
+}
+const W_LIN = { r: 1, g: 1, b: 1 }; // white in linear
+const B_LIN = { r: 0, g: 0, b: 0 }; // black in linear
+function tintLin(a, t) { return mixLin(a, W_LIN, t); }
+function shadeLin(a, t) { return mixLin(a, B_LIN, t); }
+
 const MAX_TRAIL   = 80;
 const MAX_SPARKLE = 40;
 const ARC_RADIUS  = 1.02;  // just outside the main ring (radius ~1.0)
 const ARC_SPAN    = Math.PI * 0.65;  // ~117° tail
 
-function TrailArc({ enabled, accentColor, intensity, length, spread, speed, sparkle }) {
+function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle }) {
   const trailRef   = useRef(null);
   const sparkleRef = useRef(null);
 
@@ -56,22 +91,8 @@ function TrailArc({ enabled, accentColor, intensity, length, spread, speed, spar
   const sparklePositions = useMemo(() => new Float32Array(MAX_SPARKLE * 3), []);
   const sparkleColors    = useMemo(() => new Float32Array(MAX_SPARKLE * 3), []);
 
-  // Decode hex accent + compute hue compensation once per accentColor change.
-  // High-luminance hues (Flame #fcd34d L≈0.82, Beacon #22d3ee L≈0.69) wash out
-  // faster under additive blending + bloom. hueCompensation softens them so the
-  // perceived hue survives at high Radiance settings.
-  const { accentRGB, hueCompensation } = useMemo(() => {
-    const hex = accentColor.replace('#', '');
-    if (hex.length !== 6) return { accentRGB: { r: 1, g: 1, b: 1 }, hueCompensation: 1.0 };
-    const r = parseInt(hex.slice(0, 2), 16) / 255;
-    const g = parseInt(hex.slice(2, 4), 16) / 255;
-    const b = parseInt(hex.slice(4, 6), 16) / 255;
-    // Perceived luminance (rec. 709)
-    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    // Hard-clamped to [0.85, 1.0]: only ever a subtle darkening, never amplification.
-    const hueComp = Math.max(0.85, Math.min(1.0, 0.70 / Math.max(lum, 0.30)));
-    return { accentRGB: { r, g, b }, hueCompensation: hueComp };
-  }, [accentColor]);
+  // trailLin / sparkleLin are pre-computed linear RGB objects from the palette.
+  // bloomDim compensation and tint/shade are already baked in — no local decoding needed.
 
   useFrame(({ clock }) => {
     if (!enabled) return;
@@ -99,12 +120,12 @@ function TrailArc({ enabled, accentColor, intensity, length, spread, speed, spar
           posAttr.array[i * 3 + 2] = 0.05;
 
           // Non-linear falloff: head bright, tail near-zero.
-          // Clamp at 0.90 so the trail head never forces a full-frame bloom clip
-          // at high Radiance. hueCompensation tames warm/bright stages (Flame, Beacon).
-          const brightness = Math.min(Math.pow(1 - frac, 1.8) * intensity * hueCompensation, 0.90);
-          colAttr.array[i * 3]     = accentRGB.r * brightness;
-          colAttr.array[i * 3 + 1] = accentRGB.g * brightness;
-          colAttr.array[i * 3 + 2] = accentRGB.b * brightness;
+          // Clamp at 0.90 so the trail head never forces a full-frame bloom clip.
+          // bloomDim compensation is already baked into trailLin from the palette.
+          const brightness = Math.min(Math.pow(1 - frac, 1.8) * intensity, 0.90);
+          colAttr.array[i * 3]     = trailLin.r * brightness;
+          colAttr.array[i * 3 + 1] = trailLin.g * brightness;
+          colAttr.array[i * 3 + 2] = trailLin.b * brightness;
         } else {
           // Park unused particles behind the camera
           posAttr.array[i * 3 + 2] = -100;
@@ -136,11 +157,12 @@ function TrailArc({ enabled, accentColor, intensity, length, spread, speed, spar
           posAttr.array[i * 3 + 2] = 0.06;
 
           const flicker    = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(i * 11.3 + t * 4.7));
-          // Sparkle ceiling slightly lower (0.75) — accent, not dominant
-          const brightness = Math.min(flicker * intensity * 0.55 * hueCompensation, 0.75);
-          colAttr.array[i * 3]     = accentRGB.r * brightness;
-          colAttr.array[i * 3 + 1] = accentRGB.g * brightness;
-          colAttr.array[i * 3 + 2] = accentRGB.b * brightness;
+          // Sparkle ceiling slightly lower (0.75) — accent, not dominant.
+          // bloomDim compensation is already baked into sparkleLin from the palette.
+          const brightness = Math.min(flicker * intensity * 0.55, 0.75);
+          colAttr.array[i * 3]     = sparkleLin.r * brightness;
+          colAttr.array[i * 3 + 1] = sparkleLin.g * brightness;
+          colAttr.array[i * 3 + 2] = sparkleLin.b * brightness;
         } else {
           posAttr.array[i * 3 + 2] = -100;
           colAttr.array[i * 3]     = 0;
@@ -307,6 +329,7 @@ function RingScene({
   accentColor = '#ffffff',
   mode = 'production',
   breathDriver = null,
+  palette = null,
 }) {
   const isAvatar = mode === 'avatar';
   const coreRef        = useRef(null);
@@ -419,7 +442,7 @@ function RingScene({
           </mesh>
           <mesh position={[0, 0, 0.002]}>
             <circleGeometry args={[0.12, 64]} />
-            <meshBasicMaterial color="#FFFFFF" transparent opacity={0.05} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+            <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.05} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
           </mesh>
         </group>
       )}
@@ -428,7 +451,7 @@ function RingScene({
       {!isAvatar && (
         <mesh ref={godRayLightRef} position={[0, raySunY, raySunZ]}>
           <sphereGeometry args={[raySunRadius, 16, 16]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.9} toneMapped={false} />
+          <meshBasicMaterial color={palette?.nucleus ?? '#ffffff'} transparent opacity={0.9} toneMapped={false} />
         </mesh>
       )}
 
@@ -463,7 +486,7 @@ function RingScene({
       {!isAvatar && (
         <mesh ref={coreRef} position={[0, 0, 0.01]}>
           <ringGeometry args={[0.98, 1.05, 128]} />
-          <meshBasicMaterial color="#FFFFFF" toneMapped={false} />
+          <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} toneMapped={false} />
         </mesh>
       )}
 
@@ -487,26 +510,26 @@ function RingScene({
           <group name="centerNucleus">
             <mesh position={[0, 0, 0.012]}>
               <circleGeometry args={[0.085, 128]} />
-              <meshBasicMaterial color="#FFF2E8" transparent opacity={0.06} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+              <meshBasicMaterial color={palette?.nucleus ?? '#fff2e8'} transparent opacity={0.06} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
             </mesh>
             <mesh ref={nucleusSunRef} position={[0, 0, 0.013]}>
               <circleGeometry args={[0.03, 128]} />
-              <meshBasicMaterial color="#FFFFFF" transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+              <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
             </mesh>
           </group>
           <mesh position={[0, 0, -0.003]}>
             <circleGeometry args={[0.14, 128]} />
-            <meshBasicMaterial color="#FFF0E0" transparent opacity={0.06} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+            <meshBasicMaterial color={palette?.aperture ?? '#fff0e0'} transparent opacity={0.06} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
           </mesh>
           {/* Ring A */}
           <mesh><ringGeometry args={[0.16, 0.175, 128]} /><meshBasicMaterial color={accentColor} transparent opacity={0.10} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.16, 0.175, 128]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.16, 0.175, 128]} /><meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           {/* Ring B */}
           <mesh><ringGeometry args={[0.26, 0.275, 128]} /><meshBasicMaterial color={accentColor} transparent opacity={0.10} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.26, 0.275, 128]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.26, 0.275, 128]} /><meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           {/* Ring C */}
           <mesh><ringGeometry args={[0.36, 0.372, 128]} /><meshBasicMaterial color={accentColor} transparent opacity={0.10} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.36, 0.372, 128]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.36, 0.372, 128]} /><meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
         </group>
       )}
 
@@ -519,7 +542,7 @@ function RingScene({
           </mesh>
           <mesh>
             <ringGeometry args={[0.98, 1.05, 128]} />
-            <meshBasicMaterial color="#FFFFFF" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+            <meshBasicMaterial color={palette?.streakHot ?? '#ffffff'} transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
           </mesh>
         </group>
       )}
@@ -537,8 +560,8 @@ function RingScene({
               const rad = (angle * Math.PI) / 180;
               return (
                 <group key={`major-${angle}`} position={[Math.cos(rad) * radius, Math.sin(rad) * radius, 0]} rotation={[0, 0, rad]}>
-                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color="#FFF8F0" transparent opacity={0.07 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.18 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.07 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.18 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
                 </group>
               );
             })}
@@ -553,28 +576,28 @@ function RingScene({
               const rad = (angle * Math.PI) / 180;
               return (
                 <group key={`minor-${angle}`} position={[Math.cos(rad) * radius, Math.sin(rad) * radius, 0]} rotation={[0, 0, rad]}>
-                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color="#FFF8F0" transparent opacity={0.07 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.18 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.07 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.18 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
                 </group>
               );
             })}
           </group>
           {/* Crosshair lines */}
           <group position={[0, 1.50, 0]}>
-            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color="#FFF8F0" transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
           <group position={[0, -1.50, 0]}>
-            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color="#FFF8F0" transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
           <group position={[-1.35, 0, 0]}>
-            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color="#FFF8F0" transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.31} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.31} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
           <group position={[1.35, 0, 0]}>
-            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color="#FFF8F0" transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color="#FFFFFF" transparent opacity={0.31} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.31} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
         </group>
       )}
@@ -627,6 +650,35 @@ export default function BloomRingRenderer({
   const nucleusSunRef  = useRef(null);
   const godRayLightRef = useRef(null);
 
+  // Accent palette — all tints/shades of accentColor mixed in linear RGB space.
+  // Ensures every rendered pixel is hue-matched to the active stage accent.
+  const accentLin = useMemo(() => hexToLin(accentColor), [accentColor]);
+  const palette = useMemo(() => {
+    const a = accentLin;
+    // Luminance-based bloom compensation (scalar, no hue change).
+    // Prevents high-luminance accents (Flame #fcd34d, Beacon #22d3ee) from
+    // washing out under additive blending. Clamped [0.85, 1.0] — only dims, never amplifies.
+    const lum = 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b;
+    const bloomDim = Math.max(0.85, Math.min(1.0, 0.70 / Math.max(lum, 0.30)));
+    const aDimmed = { r: a.r * bloomDim, g: a.g * bloomDim, b: a.b * bloomDim };
+    // Linear RGB objects for TrailArc buffer writes (avoids hex→linear round trip per frame).
+    const trailLin   = tintLin(aDimmed, 0.20);
+    const sparkleLin = tintLin(aDimmed, 0.45);
+    return {
+      // Hex strings for R3F material color props:
+      core:          linToHex(a),                  // pure accent (≈ accentColor)
+      coreHot:       linToHex(tintLin(a, 0.25)),   // +25% toward white — bright core/nucleus
+      aperture:      linToHex(shadeLin(a, 0.10)),  // slight shade — depth, not pastel
+      nucleus:       linToHex(tintLin(a, 0.30)),   // +30% tint — glow center
+      reticle:       linToHex(shadeLin(a, 0.05)),  // slight shade — thin lines read cleaner
+      reticleBright: linToHex(tintLin(a, 0.45)),   // +45% tint — inner highlight
+      streakHot:     linToHex(tintLin(a, 0.40)),   // +40% tint — streak proxy bright ring
+      // Linear RGB objects for TrailArc particle buffer writes:
+      trailLin,
+      sparkleLin,
+    };
+  }, [accentLin]);
+
   const isAvatar           = mode === 'avatar';
   const cappedBloomStrength = Math.min(bloomStrength, 2.4);
 
@@ -670,13 +722,15 @@ export default function BloomRingRenderer({
         accentColor={accentColor}
         mode={mode}
         breathDriver={breathDriver}
+        palette={palette}
       />
 
       {/* TrailArc — sits before EffectComposer so Bloom picks it up */}
       {!isAvatar && (
         <TrailArc
           enabled={trailEnabled}
-          accentColor={accentColor}
+          trailLin={palette.trailLin}
+          sparkleLin={palette.sparkleLin}
           intensity={trailIntensity}
           length={trailLength}
           spread={trailSpread}
