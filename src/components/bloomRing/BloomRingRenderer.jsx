@@ -71,6 +71,9 @@ function linToHex({ r, g, b }) {
 function mixLin(a, b, t) {
   return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
 }
+function linLuma(c) {
+  return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
 const W_LIN = { r: 1, g: 1, b: 1 }; // white in linear
 const B_LIN = { r: 0, g: 0, b: 0 }; // black in linear
 function tintLin(a, t) { return mixLin(a, W_LIN, t); }
@@ -89,7 +92,7 @@ const OUTER_RING_MAX_R = 1.12;
 const MAX_STREAK_X_SCALE = SCENE_MAX_RADIUS / OUTER_RING_MAX_R;
 const MAX_OCCLUDER_SCALE = SCENE_MAX_RADIUS / 1.8;
 
-function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null }) {
+function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null, glowGain = 1.0 }) {
   const trailRef = useRef(null);
   const materialRef = useRef(null);
   const instanceCount = MAX_TRAIL * 3;
@@ -166,6 +169,8 @@ function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, sp
       let brightness = tail * intensity * flicker * (0.35 + 0.65 * sizeNorm);
       const isHot = randomData.hotSeed[i] < hotChance;
       if (isHot) brightness *= hotBoost;
+      if (isHot) brightness *= glowGain;
+      else brightness *= (0.85 + 0.15 * glowGain);
       brightness = Math.max(0, Math.min(2.4, brightness));
 
       const s = (0.006 + 0.020 * Math.pow(1 - un, 1.4)) * randomData.size[i];
@@ -424,6 +429,7 @@ function RingScene({
   mode = 'production',
   breathDriver = null,
   orbitalAngleRef = null,
+  glowGain = 1.0,
   palette = null,
   autoFit = true,
   fitFill = 0.88,
@@ -546,7 +552,8 @@ function RingScene({
       );
       const breathPhase  = Math.sin(t);
       const nucleusPulse = 1.0 + 0.03 * breathPhase;
-      nucleusSunRef.current.material.opacity = 0.22 * nucleusPulse;
+      const orbOpacity = 0.22 * glowGain * nucleusPulse;
+      nucleusSunRef.current.material.opacity = Math.min(orbOpacity, 0.55);
     }
     if (nucleusHotRef.current) {
       nucleusHotRef.current.position.set(
@@ -556,7 +563,8 @@ function RingScene({
       );
       const breathPhase  = Math.sin(t);
       const nucleusPulse = 1.0 + 0.03 * breathPhase;
-      nucleusHotRef.current.material.opacity = 0.55 * nucleusPulse;
+      const orbHotOpacity = 0.55 * glowGain * nucleusPulse;
+      nucleusHotRef.current.material.opacity = Math.min(orbHotOpacity, 0.85);
     }
 
     if (isAvatar && avatarGlowRef.current) {
@@ -795,10 +803,13 @@ export default function BloomRingRenderer({
   const accentLin = useMemo(() => hexToLin(accentColor), [accentColor]);
   const palette = useMemo(() => {
     const a = accentLin;
+    const l = linLuma(a);
+    const target = 0.55;
+    const glowGain = Math.min(2.2, Math.max(0.85, target / Math.max(l, 1e-4)));
     // Luminance-based bloom compensation (scalar, no hue change).
     // Prevents high-luminance accents (Flame #fcd34d, Beacon #22d3ee) from
     // washing out under additive blending. Clamped [0.85, 1.0] — only dims, never amplifies.
-    const lum = 0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b;
+    const lum = linLuma(a);
     const bloomDim = Math.max(0.85, Math.min(1.0, 0.70 / Math.max(lum, 0.30)));
     const aDimmed = { r: a.r * bloomDim, g: a.g * bloomDim, b: a.b * bloomDim };
     // Linear RGB objects for TrailArc buffer writes (avoids hex→linear round trip per frame).
@@ -816,6 +827,7 @@ export default function BloomRingRenderer({
       // Linear RGB objects for TrailArc particle buffer writes:
       trailLin,
       sparkleLin,
+      glowGain,
     };
   }, [accentLin]);
 
@@ -864,6 +876,7 @@ export default function BloomRingRenderer({
         mode={mode}
         breathDriver={breathDriver}
         orbitalAngleRef={orbitalAngleRef}
+        glowGain={palette.glowGain}
         palette={palette}
         autoFit={autoFit}
         fitFill={fitFill}
@@ -881,6 +894,7 @@ export default function BloomRingRenderer({
           speed={trailSpeed}
           sparkle={trailSparkle}
           orbitalAngleRef={orbitalAngleRef}
+          glowGain={palette.glowGain}
         />
       )}
 
