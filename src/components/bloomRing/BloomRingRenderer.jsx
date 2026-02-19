@@ -130,7 +130,8 @@ function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, sp
     const sparkleCount = Math.max(0, Math.floor(sparkle * MAX_SPARKLE));
     const trailNorm = Math.max(0, Math.min(1, trailCount / MAX_TRAIL));
     const sparkleNorm = Math.max(0, Math.min(1, sparkleCount / MAX_SPARKLE));
-    const hotChance = Math.max(0.06, Math.min(0.22, 0.06 + sparkleNorm * 0.16));
+    // Rare hot pixels: avoid a minimum clamp that forces constant glitter.
+    const hotChance = Math.max(0.015, Math.min(0.18, 0.01 + sparkleNorm * 0.17));
     const hotBoost = 1.8 + sparkleNorm * 0.6;
     const canSetColor = typeof mesh.setColorAt === 'function';
 
@@ -435,7 +436,34 @@ function RingScene({
   const avatarGlowRef  = useRef(null);
   const nucleusHotRef  = useRef(null);
   const baseShoulderOpacity = 0.35;
+  const RETICLE_OPACITY_SCALE = 0.82;
   const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
+
+  const coreRingGeom = useMemo(() => {
+    // Spatial, deterministic modulation to de-vector the rim.
+    // No per-frame allocations: geometry + color attribute created once per accent.
+    const g = new THREE.RingGeometry(0.98, 1.05, 128);
+    const pos = g.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const twoPi = Math.PI * 2;
+    const base = tintLin(hexToLin(accentColor), 0.25); // matches palette.coreHot intent in linear
+
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const theta = Math.atan2(y, x); // [-pi, pi]
+      const u = (theta + Math.PI) / twoPi; // [0,1]
+      const p = u * twoPi;
+      const m = 0.88 + 0.12 * (0.5 + 0.5 * Math.sin(p * 7.0 + Math.sin(p * 3.0) * 0.6));
+
+      colors[i * 3 + 0] = base.r * m;
+      colors[i * 3 + 1] = base.g * m;
+      colors[i * 3 + 2] = base.b * m;
+    }
+
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    return g;
+  }, [accentColor]);
 
   useFrame(({ clock, viewport }, delta) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
@@ -472,7 +500,7 @@ function RingScene({
       reticleRef.current.children.forEach((line) => {
         line.children.forEach((mesh, meshIndex) => {
           if (mesh.material) {
-            const baseOpacity = meshIndex === 0 ? 0.12 : 0.35;
+            const baseOpacity = (meshIndex === 0 ? 0.12 : 0.35) * RETICLE_OPACITY_SCALE;
             mesh.material.opacity = baseOpacity * reticleOpacityMod;
           }
         });
@@ -612,8 +640,8 @@ function RingScene({
       {/* Hot core ring — non-avatar only */}
       {!isAvatar && (
         <mesh ref={coreRef} position={[0, 0, 0.01]}>
-          <ringGeometry args={[0.98, 1.05, 128]} />
-          <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} toneMapped={false} />
+          <primitive object={coreRingGeom} attach="geometry" />
+          <meshBasicMaterial vertexColors toneMapped={false} />
         </mesh>
       )}
 
@@ -669,8 +697,8 @@ function RingScene({
               const rad = (angle * Math.PI) / 180;
               return (
                 <group key={`major-${angle}`} position={[Math.cos(rad) * radius, Math.sin(rad) * radius, 0]} rotation={[0, 0, rad]}>
-                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.07 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.18 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.07 * dim * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.18 * dim * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
                 </group>
               );
             })}
@@ -685,28 +713,28 @@ function RingScene({
               const rad = (angle * Math.PI) / 180;
               return (
                 <group key={`minor-${angle}`} position={[Math.cos(rad) * radius, Math.sin(rad) * radius, 0]} rotation={[0, 0, rad]}>
-                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.07 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.18 * dim} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh><planeGeometry args={[length, 0.010]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.07 * dim * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+                  <mesh position={[0, 0, 0.001]}><planeGeometry args={[length, 0.004]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.18 * dim * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
                 </group>
               );
             })}
           </group>
           {/* Crosshair lines */}
           <group position={[0, 1.50, 0]}>
-            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.35 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
           <group position={[0, -1.50, 0]}>
-            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.35} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.015, 0.55]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.006, 0.55]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.35 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
           <group position={[-1.35, 0, 0]}>
-            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.31} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.31 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
           <group position={[1.35, 0, 0]}>
-            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.31} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh><planeGeometry args={[0.22, 0.015]} /><meshBasicMaterial color={palette?.reticle ?? '#fff8f0'} transparent opacity={0.12 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
+            <mesh position={[0, 0, 0.001]}><planeGeometry args={[0.22, 0.006]} /><meshBasicMaterial color={palette?.reticleBright ?? '#ffffff'} transparent opacity={0.31 * RETICLE_OPACITY_SCALE} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
           </group>
         </group>
       )}
