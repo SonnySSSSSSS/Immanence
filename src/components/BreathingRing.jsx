@@ -533,12 +533,25 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             position: "relative",
             width: "320px",
             height: "320px",
+            padding: "24px",
+            boxSizing: "border-box",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             marginTop: "6px",
           }}
         >
+          {/* Inner stage: padding-buffered to avoid practice-layout crop (plate overflow hidden) */}
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
 
         {/* WebGL bloom ring — single shared renderer (BloomRingRenderer) */}
         <div
@@ -625,6 +638,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           })()}
         </div>
 
+        </div>
         </div>
         </div>
 
