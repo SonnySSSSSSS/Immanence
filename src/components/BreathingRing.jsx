@@ -74,6 +74,9 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10).replace(/\\.0$/, "");
   };
   const patternText = `${formatSec(inhale)}-${formatSec(holdTop)}-${formatSec(exhale)}-${formatSec(holdBottom)}s`;
+  const nebulaBgUrl = `${import.meta.env.BASE_URL}assets/celestial_blue_nebula.png`;
+  const grainBgUrl = `${import.meta.env.BASE_URL}assets/canvas_grain.png`;
+  const showSubjectPhotoLayer = false;
 
   // Total cycle duration - derived from the effective (locked or initial) pattern
   // This is used for phase boundary calculations
@@ -508,13 +511,14 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           margin: 0,
           padding: "28px 14px 18px",
           borderRadius: 0,
-          background: "rgba(0,0,0,0.52)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          boxShadow: "0 22px 60px rgba(0,0,0,0.55)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
           position: "relative",
           overflow: "hidden",
+          isolation: "isolate",
           // Target mobile portrait; let it grow on tall screens (e.g. 1080x1920) without pushing the Stop button off smaller viewports.
           minHeight: "clamp(520px, 62vh, 980px)",
           display: "flex",
@@ -523,14 +527,62 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           justifyContent: "center",
         }}
       >
-        {/* Soft vignette for focus */}
+        {/* Layer 1: nebula background */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 pointer-events-none"
           style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            backgroundImage: `url(${nebulaBgUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            transform: "scale(1.03)",
+            filter: "saturate(1.15) contrast(1.05) brightness(0.78)",
+          }}
+        />
+        {/* Single vignette source (practice compositing): keep extremely subtle */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            pointerEvents: "none",
             background:
-              "radial-gradient(circle at 50% 42%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.22) 55%, rgba(0,0,0,0.38) 100%)",
-            opacity: 1,
+              "radial-gradient(circle at 50% 40%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.42) 100%)",
+            opacity: 0.55,
+          }}
+        />
+        {/* Layer 2 (optional placeholder): subject photo layer (wired, off by default) */}
+        {showSubjectPhotoLayer && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 2,
+              pointerEvents: "none",
+              display: "none",
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          />
+        )}
+        {/* Layer 1.5: subtle grain on background only */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 3,
+            pointerEvents: "none",
+            backgroundImage: `url(${grainBgUrl})`,
+            backgroundSize: "420px 420px",
+            backgroundRepeat: "repeat",
+            opacity: 0.055,
+            mixBlendMode: "overlay",
           }}
         />
 
