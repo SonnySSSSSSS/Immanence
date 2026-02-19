@@ -600,7 +600,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             justifyContent: "center",
             marginTop: "6px",
           }}
-        >
+          >
           {/* Inner stage: padding-buffered to avoid practice-layout crop (plate overflow hidden) */}
           <div
             style={{
@@ -612,6 +612,19 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               justifyContent: "center",
             }}
           >
+            {/* Contrast window (atmospheric, not a plate): improves halo band separation from nebula */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 6,
+                pointerEvents: "none",
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.00) 34%, rgba(0,0,0,0.26) 58%, rgba(0,0,0,0.00) 86%)",
+                opacity: 0.75,
+              }}
+            />
 
         {/* WebGL bloom ring — single shared renderer (BloomRingRenderer) */}
         <div
