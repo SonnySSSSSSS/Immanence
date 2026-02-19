@@ -13,6 +13,7 @@ import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
 import { SessionHistoryView } from "./SessionHistoryView.jsx";
+import { TrackingHub } from "./TrackingHub.jsx";
 import { SideNavigation } from "./SideNavigation.jsx";
 import { noiseOverlayStyle, sheenOverlayStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
@@ -125,6 +126,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const homeSwipePracticeRef = useRef(null);
   const homeSwipeProgressRef = useRef(null);
   const [homeSwipeHeight, setHomeSwipeHeight] = useState(null);
+  void homeSwipeHeight;
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -252,7 +254,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // Honor log modal state (moved from TrackingHub)
   const [showHonorModal, setShowHonorModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTrackingHub, setShowTrackingHub] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
+  const trackerLaunchContext = useUiStore(s => s.trackerLaunchContext);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const streakInfo = getStreakInfo();
@@ -364,6 +368,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     window.addEventListener('immanence-open-archive', handler);
     return () => window.removeEventListener('immanence-open-archive', handler);
   }, []);
+
+  useEffect(() => {
+    if (trackerLaunchContext?.target === 'applicationHeatmap') {
+      setShowTrackingHub(true);
+    }
+  }, [trackerLaunchContext]);
 
   const activeLauncher = launcherContext
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
@@ -830,6 +840,42 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           initialTab={archiveOptions.initialTab}
           initialReportDomain={archiveOptions.initialReportDomain}
         />
+      )}
+      {showTrackingHub && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowTrackingHub(false)}
+        >
+          <div
+            className="relative w-full"
+            style={{
+              maxWidth: isSanctuary ? '820px' : '430px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              borderRadius: '28px',
+              background: isLight ? 'rgba(246, 241, 230, 0.98)' : 'rgba(10, 10, 15, 0.98)',
+              border: isLight ? '1px solid rgba(180, 140, 90, 0.25)' : '1px solid rgba(255,255,255,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowTrackingHub(false)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+                color: isLight ? 'rgba(60,52,37,0.9)' : 'rgba(253,251,245,0.9)',
+              }}
+              aria-label="Close tracker hub"
+            >
+              ×
+            </button>
+            <div className="p-4 pt-10">
+              <TrackingHub streakInfo={streakInfo} />
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

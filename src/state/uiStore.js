@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 
-export const useUiStore = create((set) => ({
+export const useUiStore = create((set, get) => ({
     // Practice launch context from schedule / paths / recommendations.
     // This should be treated as transient (consume then clear).
     //
@@ -51,6 +51,25 @@ export const useUiStore = create((set) => ({
     setContentLaunchContext: (ctx) => set({ contentLaunchContext: ctx }),
 
     clearContentLaunchContext: () => set({ contentLaunchContext: null }),
+
+    // Tracker launch context for deep-linking into the heatmap panel.
+    // Shape:
+    // {
+    //   target: 'applicationHeatmap',
+    //   source: string,
+    //   ts: number
+    // }
+    trackerLaunchContext: null,
+
+    setTrackerLaunchContext: (ctx) => set({ trackerLaunchContext: ctx }),
+
+    consumeTrackerLaunchContext: () => {
+        const current = get().trackerLaunchContext;
+        if (current) {
+            set({ trackerLaunchContext: null });
+        }
+        return current || null;
+    },
     
     // Can extend with other UI state as needed
 }));

@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { useUiStore } from '../state/uiStore.js';
 import { getPathById } from '../data/navigationData.js';
 import { calculateGradientAngle, getAvatarCenter, getDynamicGoldGradient } from '../utils/dynamicLighting.js';
 import { ARCHIVE_TABS } from './tracking/archiveLinkConstants.js';
@@ -208,7 +209,21 @@ export function ApplicationTrackingCard({ onOpenArchive }) {
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-center px-2">
+            <div className="flex flex-col items-center justify-center px-2 gap-2">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        useUiStore.getState().setTrackerLaunchContext({
+                            target: 'applicationHeatmap',
+                            source: 'applicationCard',
+                            ts: Date.now(),
+                        });
+                    }}
+                    className="text-[8px] font-black uppercase tracking-[0.35em] opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
+                    style={{ color: isLight ? 'rgba(60, 45, 35, 0.95)' : 'rgba(253, 251, 245, 0.95)' }}
+                >
+                    OPEN TRACKER
+                </button>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();

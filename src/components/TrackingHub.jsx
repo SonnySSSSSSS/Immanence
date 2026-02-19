@@ -1,8 +1,9 @@
 // src/components/TrackingHub.jsx
 // Swipeable stats dashboard showing domain-specific progress
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useProgressStore } from '../state/progressStore.js';
+import { useApplicationStore } from '../state/applicationStore.js';
 import { DishonorBadge } from './DishonorBadge.jsx';
 import { Icon } from '../icons/Icon.jsx';
 import SevenDayTrendCurve from './SevenDayTrendCurve.jsx';
@@ -13,6 +14,8 @@ import { SessionHistoryView } from './SessionHistoryView.jsx';
 import { AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ARCHIVE_TABS } from './tracking/archiveLinkConstants.js';
+import { addDaysToDateKey, getLocalDateKey } from '../utils/dateUtils.js';
+import { useUiStore } from '../state/uiStore.js';
 
 // Domain configuration - using icon names for Icon component
 const DOMAINS = [
@@ -20,6 +23,36 @@ const DOMAINS = [
     { id: 'visualization', label: 'Visualization', iconName: 'visualization' },
     { id: 'wisdom', label: 'Wisdom', iconName: 'wisdom' }
 ];
+
+const REACTED_COLOR = '#b45309';
+const CHOSE_COLOR = '#0d9488';
+const T_REF = 12;
+const HEATMAP_DAYS = 84;
+
+const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+
+function hexToRgb(hex) {
+    const clean = String(hex || '').replace('#', '');
+    if (clean.length !== 6) return { r: 128, g: 128, b: 128 };
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return {
+        r: Number.isFinite(r) ? r : 128,
+        g: Number.isFinite(g) ? g : 128,
+        b: Number.isFinite(b) ? b : 128,
+    };
+}
+
+function interpolateHexColor(start, end, t) {
+    const s = hexToRgb(start);
+    const e = hexToRgb(end);
+    const ratio = clamp(t, 0, 1);
+    const r = Math.round(s.r + ((e.r - s.r) * ratio));
+    const g = Math.round(s.g + ((e.g - s.g) * ratio));
+    const b = Math.round(s.b + ((e.b - s.b) * ratio));
+    return { r, g, b };
+}
 
 // Cymatic glyphs - sacred geometry for each domain
 const CYMATIC_GLYPHS = {
@@ -592,15 +625,56 @@ function DomainInsights({ domain, stats }) {
     );
 }
 
+function getHeatmapCellStyle(cell, isLight) {
+    if (!cell || cell.total === 0) {
+        return {
+            backgroundColor: isLight ? 'rgba(90, 77, 60, 0.08)' : 'rgba(253, 251, 245, 0.08)',
+            border: isLight ? '1px solid rgba(90, 77, 60, 0.1)' : '1px solid rgba(253, 251, 245, 0.12)',
+            boxShadow: 'none',
+        };
+    }
+
+    const mixed = interpolateHexColor(REACTED_COLOR, CHOSE_COLOR, cell.dominance);
+    const alpha = clamp(0.15 + (cell.intensity * 0.85), 0, 1);
+    return {
+        backgroundColor: `rgba(${mixed.r}, ${mixed.g}, ${mixed.b}, ${alpha})`,
+        border: isLight ? '1px solid rgba(90, 77, 60, 0.2)' : '1px solid rgba(253, 251, 245, 0.18)',
+        boxShadow: cell.intensity > 0.7 ? `0 0 8px rgba(${mixed.r}, ${mixed.g}, ${mixed.b}, 0.35)` : 'none',
+    };
+}
+
 export function TrackingHub({ streakInfo: propStreakInfo }) {
     const {
         getDomainStats,
         getPrimaryDomain
     } = useProgressStore();
+    const trackerItemsRaw = useApplicationStore(s => s.trackerConfig?.items || []);
+    const trackerByDate = useApplicationStore(s => s.trackerDaily?.byDate || {});
+    const addTrackerItem = useApplicationStore(s => s.addTrackerItem);
+    const updateTrackerItemLabel = useApplicationStore(s => s.updateTrackerItemLabel);
+    const reorderTrackerItems = useApplicationStore(s => s.reorderTrackerItems);
+    const removeTrackerItem = useApplicationStore(s => s.removeTrackerItem);
+    const logTrackerCount = useApplicationStore(s => s.logTrackerCount);
+    const getTrackerRange = useApplicationStore(s => s.getTrackerRange);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const [showHistory, setShowHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState(ARCHIVE_TABS.ALL);
+    const [isHeatmapOpen, setIsHeatmapOpen] = useState(() => trackerItemsRaw.length > 0);
+    const [newItemLabel, setNewItemLabel] = useState('');
+    const [itemLabelDrafts, setItemLabelDrafts] = useState({});
+    const autoOpenedFromItemsRef = useRef(false);
+    const heatmapAnchorRef = useRef(null);
+
+    const trackerItems = useMemo(
+        () => [...trackerItemsRaw].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+        [trackerItemsRaw]
+    );
+    const todayDateKey = getLocalDateKey(new Date());
+    const endDateKey = todayDateKey;
+    const startDateKey = addDaysToDateKey(endDateKey, -(HEATMAP_DAYS - 1));
+    void trackerByDate;
+    const trackerRange = getTrackerRange({ startDateKey, endDateKey });
 
     // Get primary domain stats
     const primaryDomain = getPrimaryDomain();
@@ -609,6 +683,58 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
 
     // Derived data - use prop if provided, otherwise get from store
     void propStreakInfo;
+
+    useEffect(() => {
+        if (!autoOpenedFromItemsRef.current && trackerItems.length > 0) {
+            autoOpenedFromItemsRef.current = true;
+            const frame = requestAnimationFrame(() => {
+                setIsHeatmapOpen(true);
+            });
+            return () => cancelAnimationFrame(frame);
+        }
+    }, [trackerItems.length]);
+
+    useEffect(() => {
+        const launchCtx = useUiStore.getState().consumeTrackerLaunchContext();
+        if (launchCtx?.target !== 'applicationHeatmap') return;
+        const frame = requestAnimationFrame(() => {
+            setIsHeatmapOpen(true);
+            heatmapAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        return () => cancelAnimationFrame(frame);
+    }, []);
+
+    const commitItemLabel = (itemId) => {
+        const nextLabel = String(itemLabelDrafts[itemId] ?? '').trim();
+        const currentItem = trackerItems.find((item) => item.id === itemId);
+        if (!currentItem) return;
+        if (!nextLabel) {
+            setItemLabelDrafts((prev) => ({ ...prev, [itemId]: currentItem.label }));
+            return;
+        }
+        if (nextLabel !== currentItem.label) {
+            updateTrackerItemLabel(itemId, nextLabel);
+        }
+    };
+
+    const moveTrackerItem = (itemId, direction) => {
+        const ids = trackerItems.map((item) => item.id);
+        const currentIndex = ids.indexOf(itemId);
+        const nextIndex = currentIndex + direction;
+        if (currentIndex < 0 || nextIndex < 0 || nextIndex >= ids.length) return;
+        [ids[currentIndex], ids[nextIndex]] = [ids[nextIndex], ids[currentIndex]];
+        reorderTrackerItems(ids);
+    };
+
+    const handleAddTrackerItem = () => {
+        const label = String(newItemLabel || '').trim();
+        if (!label) return;
+        const created = addTrackerItem(label);
+        if (created) {
+            setNewItemLabel('');
+            setIsHeatmapOpen(true);
+        }
+    };
 
     return (
         <div className="w-full max-w-md mx-auto">
@@ -625,6 +751,230 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
 
             {/* Single domain stats card */}
             <StatsCard domain={primaryDomainObj} stats={stats} isLight={isLight} />
+
+            <div
+                ref={heatmapAnchorRef}
+                className="mt-6 rounded-2xl p-4"
+                style={{
+                    background: isLight ? 'rgba(255, 250, 240, 0.8)' : 'rgba(253, 251, 245, 0.04)',
+                    border: isLight ? '1px solid rgba(90, 77, 60, 0.15)' : '1px solid rgba(253, 251, 245, 0.1)',
+                }}
+            >
+                <button
+                    type="button"
+                    onClick={() => setIsHeatmapOpen((open) => !open)}
+                    className="w-full flex items-center justify-between"
+                >
+                    <div
+                        className="text-[10px] uppercase font-black tracking-[0.2em]"
+                        style={{ color: isLight ? 'rgba(60, 45, 35, 0.85)' : 'rgba(253, 251, 245, 0.85)' }}
+                    >
+                        Application Heatmap
+                    </div>
+                    <div
+                        className="text-xs font-black"
+                        style={{ color: isLight ? 'rgba(60, 45, 35, 0.7)' : 'rgba(253, 251, 245, 0.7)' }}
+                    >
+                        {isHeatmapOpen ? '▾' : '▸'}
+                    </div>
+                </button>
+
+                {isHeatmapOpen && (
+                    <div className="mt-4 space-y-3">
+                        <div
+                            className="text-[8px] uppercase tracking-[0.15em]"
+                            style={{ color: isLight ? 'rgba(60, 45, 35, 0.55)' : 'rgba(253, 251, 245, 0.55)' }}
+                        >
+                            Last 84 local days · Reacted vs Chose · T_REF={T_REF}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={newItemLabel}
+                                onChange={(e) => setNewItemLabel(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleAddTrackerItem();
+                                }}
+                                disabled={trackerItems.length >= 4}
+                                placeholder={trackerItems.length >= 4 ? 'Max 4 tracker items' : 'Add tracker item'}
+                                className="flex-1 rounded-lg px-3 py-2 text-[11px] outline-none"
+                                style={{
+                                    background: isLight ? 'rgba(255,255,255,0.8)' : 'rgba(10, 15, 25, 0.6)',
+                                    border: isLight ? '1px solid rgba(90, 77, 60, 0.22)' : '1px solid rgba(253,251,245,0.12)',
+                                    color: isLight ? 'rgba(60,45,35,0.9)' : 'rgba(253,251,245,0.9)',
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddTrackerItem}
+                                disabled={trackerItems.length >= 4}
+                                className="px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] disabled:opacity-40"
+                                style={{
+                                    background: isLight ? 'rgba(90, 77, 60, 0.12)' : 'rgba(253,251,245,0.12)',
+                                    color: isLight ? 'rgba(60,45,35,0.85)' : 'rgba(253,251,245,0.85)',
+                                }}
+                            >
+                                Add
+                            </button>
+                        </div>
+
+                        {trackerItems.length === 0 && (
+                            <div
+                                className="rounded-xl px-3 py-4 text-[11px]"
+                                style={{
+                                    background: isLight ? 'rgba(90, 77, 60, 0.08)' : 'rgba(253, 251, 245, 0.08)',
+                                    color: isLight ? 'rgba(60, 45, 35, 0.65)' : 'rgba(253, 251, 245, 0.65)',
+                                }}
+                            >
+                                Add a tracker item to begin.
+                            </div>
+                        )}
+
+                        {trackerItems.length > 0 && (
+                            <div className="overflow-x-auto pb-2">
+                                <div className="min-w-max space-y-2">
+                                    <div className="flex gap-2 items-center">
+                                        <div
+                                            className="w-52 shrink-0 text-[8px] uppercase tracking-[0.15em]"
+                                            style={{ color: isLight ? 'rgba(60,45,35,0.5)' : 'rgba(253,251,245,0.5)' }}
+                                        >
+                                            Item / Today Controls
+                                        </div>
+                                        <div
+                                            className="grid gap-1"
+                                            style={{ gridTemplateColumns: `repeat(${trackerRange.dates.length}, minmax(10px, 10px))` }}
+                                        >
+                                            {trackerRange.dates.map((dateKey, idx) => (
+                                                <div
+                                                    key={`date-${dateKey}`}
+                                                    className="h-4 text-[7px] flex items-center justify-center"
+                                                    style={{ color: isLight ? 'rgba(60,45,35,0.45)' : 'rgba(253,251,245,0.45)' }}
+                                                >
+                                                    {idx % 7 === 0 ? dateKey.slice(5).replace('-', '/') : ''}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {trackerRange.rows.map((row, rowIndex) => {
+                                        const isFirst = rowIndex === 0;
+                                        const isLast = rowIndex === trackerRange.rows.length - 1;
+                                        const draftValue = itemLabelDrafts[row.itemId] ?? row.label;
+                                        return (
+                                            <div key={row.itemId} className="flex gap-2 items-start">
+                                                <div
+                                                    className="w-52 shrink-0 rounded-xl p-2"
+                                                    style={{
+                                                        background: isLight ? 'rgba(90, 77, 60, 0.06)' : 'rgba(253, 251, 245, 0.06)',
+                                                        border: isLight ? '1px solid rgba(90,77,60,0.12)' : '1px solid rgba(253,251,245,0.1)',
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="text"
+                                                        value={draftValue}
+                                                        onChange={(e) => setItemLabelDrafts((prev) => ({ ...prev, [row.itemId]: e.target.value }))}
+                                                        onBlur={() => commitItemLabel(row.itemId)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                commitItemLabel(row.itemId);
+                                                                e.currentTarget.blur();
+                                                            }
+                                                        }}
+                                                        className="w-full bg-transparent text-[11px] font-semibold outline-none"
+                                                        style={{ color: isLight ? 'rgba(60,45,35,0.9)' : 'rgba(253,251,245,0.9)' }}
+                                                    />
+                                                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => logTrackerCount({ itemId: row.itemId, dateKey: todayDateKey, reactedDelta: 1 })}
+                                                            className="px-2 py-1 rounded text-[9px] font-black"
+                                                            style={{
+                                                                background: 'rgba(180, 83, 9, 0.2)',
+                                                                color: isLight ? 'rgba(120, 60, 20, 0.95)' : 'rgba(255, 225, 190, 0.95)',
+                                                            }}
+                                                        >
+                                                            +Reacted
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => logTrackerCount({ itemId: row.itemId, dateKey: todayDateKey, choseDelta: 1 })}
+                                                            className="px-2 py-1 rounded text-[9px] font-black"
+                                                            style={{
+                                                                background: 'rgba(13, 148, 136, 0.22)',
+                                                                color: isLight ? 'rgba(10, 95, 85, 0.95)' : 'rgba(198, 252, 247, 0.95)',
+                                                            }}
+                                                        >
+                                                            +Chose
+                                                        </button>
+                                                    </div>
+                                                    <div className="mt-2 flex items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            disabled={isFirst}
+                                                            onClick={() => moveTrackerItem(row.itemId, -1)}
+                                                            className="px-1.5 py-0.5 rounded text-[9px] disabled:opacity-35"
+                                                            style={{
+                                                                background: isLight ? 'rgba(90,77,60,0.15)' : 'rgba(253,251,245,0.15)',
+                                                                color: isLight ? 'rgba(60,45,35,0.75)' : 'rgba(253,251,245,0.75)',
+                                                            }}
+                                                        >
+                                                            ↑
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={isLast}
+                                                            onClick={() => moveTrackerItem(row.itemId, 1)}
+                                                            className="px-1.5 py-0.5 rounded text-[9px] disabled:opacity-35"
+                                                            style={{
+                                                                background: isLight ? 'rgba(90,77,60,0.15)' : 'rgba(253,251,245,0.15)',
+                                                                color: isLight ? 'rgba(60,45,35,0.75)' : 'rgba(253,251,245,0.75)',
+                                                            }}
+                                                        >
+                                                            ↓
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeTrackerItem(row.itemId)}
+                                                            className="px-1.5 py-0.5 rounded text-[9px]"
+                                                            style={{
+                                                                background: isLight ? 'rgba(120, 40, 40, 0.15)' : 'rgba(255, 120, 120, 0.15)',
+                                                                color: isLight ? 'rgba(120,40,40,0.9)' : 'rgba(255,195,195,0.95)',
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    className="grid gap-1"
+                                                    style={{ gridTemplateColumns: `repeat(${row.cells.length}, minmax(10px, 10px))` }}
+                                                >
+                                                    {row.cells.map((cell) => (
+                                                        <div
+                                                            key={`${row.itemId}-${cell.dateKey}`}
+                                                            className="w-[10px] h-[10px] rounded-[2px]"
+                                                            style={getHeatmapCellStyle(cell, isLight)}
+                                                            title={`${row.label} · ${cell.dateKey} · Reacted ${cell.reacted} · Chose ${cell.chose}`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <div
+                            className="text-[8px] uppercase tracking-[0.15em]"
+                            style={{ color: isLight ? 'rgba(60,45,35,0.45)' : 'rgba(253,251,245,0.45)' }}
+                        >
+                            Max Daily Total: {trackerRange.maxTotal} · T_REF: {trackerRange.tRef}
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* History Button */}
             <button
