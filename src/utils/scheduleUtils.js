@@ -96,6 +96,17 @@ export function computeScheduleAnchorStartAt({
   return todayAtFirst;
 }
 
+export function timeStringToMinutes(str) {
+  const parsed = parseHHMM(str);
+  if (!parsed) return null;
+  return parsed.hours * 60 + parsed.minutes;
+}
+
+export function minutesToTimeString(min) {
+  if (min === null || min === undefined || !Number.isFinite(min)) return null;
+  return formatHHMM({ hours: Math.floor(min / 60), minutes: min % 60 });
+}
+
 export function getStartWindowState({
   now = new Date(),
   scheduledAt,

@@ -3,7 +3,7 @@ import { resolveCategoryIdFromSessionV2 } from './sessionCategory.js';
 import { MATCH_POLICY } from '../../data/curriculumMatching.js';
 
 // Adherence contract uses "did the obligation happen", not "was it perfectly on time":
-// GREEN + RED both count as satisfied because RED is still within the 60-minute rail window.
+// GREEN + RED both count as satisfied because RED is still within the 30-minute rail window.
 export const CONTRACT_ADHERENCE_SATISFIED_STATUSES = Object.freeze(['green', 'red']);
 
 /**
@@ -42,13 +42,14 @@ function computeDeltaMinutes(actualMinutes, scheduledMinutes) {
 /**
  * Determine status based on time delta
  * GREEN: |delta| <= 15
- * RED: 15 < |delta| <= 60
- * null (does not count): |delta| > 60
+ * RED: 15 < |delta| <= 30
+ * null (does not count): |delta| > 30
  */
+// SLOT_TOLERANCE_MINUTES = 30 — keep in sync with sessionRecorder.js
 function getDeltaStatus(deltaMinutes) {
     const absDelta = Math.abs(deltaMinutes);
     if (absDelta <= 15) return 'green';
-    if (absDelta <= 60) return 'red';
+    if (absDelta <= 30) return 'red';
     return null;
 }
 
@@ -337,7 +338,7 @@ export function computeContractObligationSummary({
 
                                 const deltaMin = computeDeltaMinutes(actualMinutes, scheduledMinutes);
                                 const absDelta = Math.abs(deltaMin);
-                                if (absDelta > 60) continue;
+                                if (absDelta > 30) continue; // SLOT_TOLERANCE_MINUTES
 
                                 if (absDelta < bestAbsDelta) {
                                     bestAbsDelta = absDelta;

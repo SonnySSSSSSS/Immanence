@@ -600,10 +600,10 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
 
             {isInitiationPath && (
                 <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
-                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
+                    <div className="text-[10px] uppercase tracking-[0.18em] mb-2 text-center" style={{ color: goldLabelColor }}>
                         Step 1: Select Active Days
                     </div>
-                    <div className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
+                    <div className="text-sm font-semibold mb-3 text-center" style={{ fontFamily: 'var(--font-display)', color: isLight ? 'rgba(180, 120, 40, 0.9)' : 'var(--accent-color)' }}>
                         Select {requiredDays ?? 6} active practice days. One rest day is required.
                     </div>
                     <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
@@ -614,7 +614,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                                     key={day.value}
                                     type="button"
                                     onClick={() => toggleSelectedDay(day.value)}
-                                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                                    className="inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-all"
                                     style={{
                                         background: isSelected
                                             ? 'var(--accent-color)'

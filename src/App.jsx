@@ -407,7 +407,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.171 - Documentation overhaul (README + ARCHITECTURE)
+  // v3.27.172 - Replace preset time grid with native time inputs; 30-min slot tolerance
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
@@ -666,7 +666,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.171
+                        v3.27.172
                       </button>
                     </div>
                   </div>

@@ -25,25 +25,6 @@ import { getLocalDateKey } from '../utils/dateUtils.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// TIME SLOT OPTIONS
-// ═══════════════════════════════════════════════════════════════════════════
-
-const TIME_OPTIONS = [
-    { value: '05:00', label: '5:00 AM', period: 'early' },
-    { value: '06:00', label: '6:00 AM', period: 'morning' },
-    { value: '07:00', label: '7:00 AM', period: 'morning' },
-    { value: '08:00', label: '8:00 AM', period: 'morning' },
-    { value: '09:00', label: '9:00 AM', period: 'morning' },
-    { value: '12:00', label: '12:00 PM', period: 'midday' },
-    { value: '17:00', label: '5:00 PM', period: 'evening' },
-    { value: '18:00', label: '6:00 PM', period: 'evening' },
-    { value: '19:00', label: '7:00 PM', period: 'evening' },
-    { value: '20:00', label: '8:00 PM', period: 'evening' },
-    { value: '21:00', label: '9:00 PM', period: 'night' },
-    { value: '22:00', label: '10:00 PM', period: 'night' },
-];
-
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -287,8 +268,6 @@ function StepTimeSelection({ onNext, onBack, selectedTimes, setSelectedTimes, is
             <PracticeTimesPicker
                 value={selectedTimes}
                 onChange={setSelectedTimes}
-                maxSlots={2}
-                timeOptions={TIME_OPTIONS.map(option => option.value)}
                 title={null}
             />
 

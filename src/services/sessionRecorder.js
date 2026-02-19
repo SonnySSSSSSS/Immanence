@@ -249,8 +249,8 @@ function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode
         const deltaMin = computeDeltaMinutes(actualMinutes, scheduledMinutes);
         const absDelta = Math.abs(deltaMin);
 
-        // Outside acceptable range (>60 min)
-        if (absDelta > 60) continue;
+        // Outside acceptable range — SLOT_TOLERANCE_MINUTES = 30 (keep in sync with contractObligations.js)
+        if (absDelta > 30) continue;
 
         // Pick best match (closest time, or lower legNumber on tie)
         if (absDelta < bestAbsDelta) {
@@ -269,8 +269,8 @@ function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode
 
     // DEV-only safety checks
     if (import.meta.env.DEV && bestMatch) {
-        if (Math.abs(bestMatch.deltaMinutes) > 60) {
-            console.error('[computeScheduleMatchedSnapshot] BUG: deltaMinutes exceeds 60', bestMatch);
+        if (Math.abs(bestMatch.deltaMinutes) > 30) {
+            console.error('[computeScheduleMatchedSnapshot] BUG: deltaMinutes exceeds 30', bestMatch);
         }
         if (!bestMatch.status) {
             console.error('[computeScheduleMatchedSnapshot] BUG: missing status', bestMatch);
