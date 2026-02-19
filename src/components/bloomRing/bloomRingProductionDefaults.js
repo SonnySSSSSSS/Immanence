@@ -1,7 +1,7 @@
 // src/components/bloomRing/bloomRingProductionDefaults.js
 // Canonical production params for the bloom ring renderer.
 // Matches the "Soft" preset from BloomRingLab — conservative, no god rays,
-// no trail, clean bloom. breathSpeed is computed per-component from the
+// clean bloom. breathSpeed is computed per-component from the
 // active breath pattern total; all other fields are stable defaults.
 
 export const PRODUCTION_RING_DEFAULTS = {
@@ -26,12 +26,12 @@ export const PRODUCTION_RING_DEFAULTS = {
   occluderScale:       1.2,
   occluderDepthOffset: -1.5,
   debugOccluders:      false,
-  trailEnabled:        false,
-  trailIntensity:      0.5,
-  trailLength:         30,
-  trailSpread:         0.02,
+  trailEnabled:        true,
+  trailIntensity:      0.95,
+  trailLength:         42,
+  trailSpread:         0.05,
   trailSpeed:          0.4,
-  trailSparkle:        0.1,
+  trailSparkle:        0.08,
 };
 
 // Neutral stage accent — Beacon cyan.
