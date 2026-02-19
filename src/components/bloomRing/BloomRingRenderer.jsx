@@ -78,7 +78,7 @@ function shadeLin(a, t) { return mixLin(a, B_LIN, t); }
 
 const MAX_TRAIL   = 80;
 const MAX_SPARKLE = 40;
-const ARC_RADIUS  = 1.02;  // just outside the main ring (radius ~1.0)
+const ARC_RADIUS  = 1.05;  // core ring outer rim alignment
 const ARC_SPAN    = Math.PI * 0.65;  // ~117° tail
 
 // The farthest point any geometry reaches in RingScene local space.
@@ -89,140 +89,224 @@ const OUTER_RING_MAX_R = 1.12;
 const MAX_STREAK_X_SCALE = SCENE_MAX_RADIUS / OUTER_RING_MAX_R;
 const MAX_OCCLUDER_SCALE = SCENE_MAX_RADIUS / 1.8;
 
-function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle }) {
-  const trailRef   = useRef(null);
-  const sparkleRef = useRef(null);
+function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null }) {
+  const trailRef = useRef(null);
+  const materialRef = useRef(null);
+  const instanceCount = MAX_TRAIL * 3;
 
-  // Fixed-size GPU buffers — never reallocated, only written each frame
-  const trailPositions   = useMemo(() => new Float32Array(MAX_TRAIL   * 3), []);
-  const trailColors      = useMemo(() => new Float32Array(MAX_TRAIL   * 3), []);
-  const sparklePositions = useMemo(() => new Float32Array(MAX_SPARKLE * 3), []);
-  const sparkleColors    = useMemo(() => new Float32Array(MAX_SPARKLE * 3), []);
+  const randomData = useMemo(() => {
+    const along = new Float32Array(instanceCount);
+    const radiusJitter = new Float32Array(instanceCount);
+    const angleJitter = new Float32Array(instanceCount);
+    const size = new Float32Array(instanceCount);
+    const hotSeed = new Float32Array(instanceCount);
 
-  // trailLin / sparkleLin are pre-computed linear RGB objects from the palette.
-  // bloomDim compensation and tint/shade are already baked in — no local decoding needed.
+    for (let i = 0; i < instanceCount; i++) {
+      // Stratified distribution keeps density even while avoiding a vector-like band.
+      along[i] = Math.min(1, Math.max(0, (i + Math.random()) / instanceCount));
+      radiusJitter[i] = Math.random() * 2 - 1;
+      angleJitter[i] = Math.random() * 2 - 1;
+      size[i] = 0.6 + Math.random() * 0.8;
+      hotSeed[i] = Math.random();
+    }
+
+    return { along, radiusJitter, angleJitter, size, hotSeed };
+  }, [instanceCount]);
+
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const baseColor = useMemo(() => new THREE.Color(), []);
+  const sparkleColor = useMemo(() => new THREE.Color(), []);
+  const whiteColor = useMemo(() => new THREE.Color(1, 1, 1), []);
+  const workColor = useMemo(() => new THREE.Color(), []);
 
   useFrame(({ clock }) => {
-    if (!enabled) return;
+    if (!enabled || !trailRef.current) return;
 
-    const t          = clock.elapsedTime;
-    const headAngle  = (t * speed) % (Math.PI * 2);
-    const trailCount   = Math.max(5,  Math.floor(length));
-    const sparkleCount = Math.max(0,  Math.floor(sparkle * MAX_SPARKLE));
+    const mesh = trailRef.current;
+    const t = clock.elapsedTime;
+    const syncedAngle = orbitalAngleRef?.current;
+    const headAngle = Number.isFinite(syncedAngle) ? syncedAngle : (t * speed) % (Math.PI * 2);
+    const trailCount = Math.max(5, Math.floor(length));
+    const sparkleCount = Math.max(0, Math.floor(sparkle * MAX_SPARKLE));
+    const trailNorm = Math.max(0, Math.min(1, trailCount / MAX_TRAIL));
+    const sparkleNorm = Math.max(0, Math.min(1, sparkleCount / MAX_SPARKLE));
+    const hotChance = Math.max(0.06, Math.min(0.22, 0.06 + sparkleNorm * 0.16));
+    const hotBoost = 1.8 + sparkleNorm * 0.6;
+    const canSetColor = typeof mesh.setColorAt === 'function';
 
-    // ── Main trail ────────────────────────────────────────────────────────────
-    if (trailRef.current) {
-      const posAttr = trailRef.current.geometry.attributes.position;
-      const colAttr = trailRef.current.geometry.attributes.color;
-
-      for (let i = 0; i < MAX_TRAIL; i++) {
-        if (i < trailCount) {
-          const frac  = i / Math.max(1, trailCount - 1); // 0=head, 1=tail
-          const angle = headAngle - frac * ARC_SPAN;
-          // Radial jitter: slow pseudo-random wobble (not sync'd to breath)
-          const jitter = Math.sin(i * 13.7 + t * 0.5) * spread * 0.5;
-          const r      = ARC_RADIUS + jitter;
-
-          posAttr.array[i * 3]     = Math.cos(angle) * r;
-          posAttr.array[i * 3 + 1] = Math.sin(angle) * r;
-          posAttr.array[i * 3 + 2] = 0.05;
-
-          // Non-linear falloff: head bright, tail near-zero.
-          // Clamp at 0.90 so the trail head never forces a full-frame bloom clip.
-          // bloomDim compensation is already baked into trailLin from the palette.
-          const brightness = Math.min(Math.pow(1 - frac, 1.8) * intensity, 0.90);
-          colAttr.array[i * 3]     = trailLin.r * brightness;
-          colAttr.array[i * 3 + 1] = trailLin.g * brightness;
-          colAttr.array[i * 3 + 2] = trailLin.b * brightness;
-        } else {
-          // Park unused particles behind the camera
-          posAttr.array[i * 3 + 2] = -100;
-          colAttr.array[i * 3]     = 0;
-          colAttr.array[i * 3 + 1] = 0;
-          colAttr.array[i * 3 + 2] = 0;
-        }
-      }
-
-      posAttr.needsUpdate = true;
-      colAttr.needsUpdate = true;
+    if (!canSetColor && materialRef.current) {
+      materialRef.current.color.setRGB(trailLin.r, trailLin.g, trailLin.b);
     }
 
-    // ── Sparkle (secondary tiny particles) ───────────────────────────────────
-    if (sparkleRef.current && sparkleCount > 0) {
-      const posAttr = sparkleRef.current.geometry.attributes.position;
-      const colAttr = sparkleRef.current.geometry.attributes.color;
+    baseColor.setRGB(trailLin.r, trailLin.g, trailLin.b);
+    sparkleColor.setRGB(sparkleLin.r, sparkleLin.g, sparkleLin.b);
 
-      for (let i = 0; i < MAX_SPARKLE; i++) {
-        if (i < sparkleCount) {
-          // Random-ish positions scattered near the arc, fast flicker
-          const angle = headAngle
-            - (i / sparkleCount) * ARC_SPAN
-            + Math.sin(i * 7.3  + t * 2.1) * 0.3;
-          const r = ARC_RADIUS + Math.sin(i * 19.1 + t * 1.7) * spread * 2;
+    for (let i = 0; i < instanceCount; i++) {
+      const u = randomData.along[i];
 
-          posAttr.array[i * 3]     = Math.cos(angle) * r;
-          posAttr.array[i * 3 + 1] = Math.sin(angle) * r;
-          posAttr.array[i * 3 + 2] = 0.06;
-
-          const flicker    = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(i * 11.3 + t * 4.7));
-          // Sparkle ceiling slightly lower (0.75) — accent, not dominant.
-          // bloomDim compensation is already baked into sparkleLin from the palette.
-          const brightness = Math.min(flicker * intensity * 0.55, 0.75);
-          colAttr.array[i * 3]     = sparkleLin.r * brightness;
-          colAttr.array[i * 3 + 1] = sparkleLin.g * brightness;
-          colAttr.array[i * 3 + 2] = sparkleLin.b * brightness;
-        } else {
-          posAttr.array[i * 3 + 2] = -100;
-          colAttr.array[i * 3]     = 0;
-          colAttr.array[i * 3 + 1] = 0;
-          colAttr.array[i * 3 + 2] = 0;
-        }
+      if (u > trailNorm || trailNorm <= 0) {
+        dummy.position.set(0, 0, -100);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(0.0001, 0.0001, 1);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+        if (canSetColor) mesh.setColorAt(i, baseColor.setRGB(0, 0, 0));
+        continue;
       }
 
-      posAttr.needsUpdate = true;
-      colAttr.needsUpdate = true;
+      const un = Math.max(0, Math.min(1, u / Math.max(trailNorm, 0.0001)));
+      const angle = headAngle - un * ARC_SPAN;
+      const radius = ARC_RADIUS + randomData.radiusJitter[i] * spread * 0.12;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      const tail = Math.pow(1 - un, 2.2);
+      const flicker = 0.85 + 0.15 * Math.sin(t * 4 + i * 12.9898);
+      const sizeNorm = (randomData.size[i] - 0.6) / 0.8;
+      let brightness = tail * intensity * flicker * (0.35 + 0.65 * sizeNorm);
+      const isHot = randomData.hotSeed[i] < hotChance;
+      if (isHot) brightness *= hotBoost;
+      brightness = Math.max(0, Math.min(2.4, brightness));
+
+      const s = (0.006 + 0.020 * Math.pow(1 - un, 1.4)) * randomData.size[i];
+      dummy.position.set(x, y, 0.02 + (isHot ? 0.0015 : 0));
+      dummy.rotation.set(0, 0, angle + Math.PI / 2 + randomData.angleJitter[i] * 0.12);
+      dummy.scale.set(s * 0.9, s * 1.3, 1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+
+      if (canSetColor) {
+        workColor.copy(baseColor);
+        if (isHot) {
+          workColor.lerp(sparkleColor, 0.35 + sparkleNorm * 0.35);
+          workColor.lerp(whiteColor, 0.20 + sparkleNorm * 0.25);
+        }
+        workColor.multiplyScalar(brightness);
+        mesh.setColorAt(i, workColor);
+      }
     }
+
+    mesh.instanceMatrix.needsUpdate = true;
+    if (canSetColor && mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   });
 
   if (!enabled) return null;
 
   return (
     <group name="trailArc">
-      {/* Main comet trail */}
-      <points ref={trailRef}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[trailPositions,  3]} />
-          <bufferAttribute attach="attributes-color"    args={[trailColors,     3]} />
-        </bufferGeometry>
-        <pointsMaterial
-          vertexColors
-          size={0.045}
-          sizeAttenuation
-          blending={THREE.AdditiveBlending}
+      <instancedMesh ref={trailRef} args={[null, null, instanceCount]} frustumCulled={false}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          ref={materialRef}
+          color="#ffffff"
           transparent
           depthWrite={false}
           toneMapped={false}
+          blending={THREE.AdditiveBlending}
         />
-      </points>
+      </instancedMesh>
+    </group>
+  );
+}
 
-      {/* Secondary sparkle particles */}
-      {sparkle > 0 && (
-        <points ref={sparkleRef}>
-          <bufferGeometry>
-            <bufferAttribute attach="attributes-position" args={[sparklePositions, 3]} />
-            <bufferAttribute attach="attributes-color"    args={[sparkleColors,    3]} />
-          </bufferGeometry>
-          <pointsMaterial
-            vertexColors
-            size={0.022}
-            sizeAttenuation
-            blending={THREE.AdditiveBlending}
-            transparent
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </points>
-      )}
+function HaloBand({ enabled, intensity, length, colorA, colorB }) {
+  if (!enabled) return null;
+
+  const bandRef = useRef(null);
+  const materialRef = useRef(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const baseColor = useMemo(() => new THREE.Color(), []);
+  const altColor = useMemo(() => new THREE.Color(), []);
+  const workColor = useMemo(() => new THREE.Color(), []);
+  const bandCount = 220;
+
+  const randomData = useMemo(() => {
+    const angle = new Float32Array(bandCount);
+    const radial = new Float32Array(bandCount);
+    const vertical = new Float32Array(bandCount);
+    const size = new Float32Array(bandCount);
+    const alpha = new Float32Array(bandCount);
+    const phase = new Float32Array(bandCount);
+    for (let i = 0; i < bandCount; i++) {
+      angle[i] = Math.random() * Math.PI * 2;
+      radial[i] = Math.random() * 2 - 1;
+      vertical[i] = Math.random() * 2 - 1;
+      size[i] = Math.random();
+      alpha[i] = Math.random();
+      phase[i] = Math.random() * Math.PI * 2;
+    }
+    return { angle, radial, vertical, size, alpha, phase };
+  }, [bandCount]);
+
+  useFrame(({ clock }) => {
+    if (!bandRef.current) return;
+
+    const mesh = bandRef.current;
+    const t = clock.elapsedTime;
+    const canSetColor = typeof mesh.setColorAt === 'function';
+    const density = Math.max(0.14, Math.min(0.92, 0.30 + length * 0.55));
+    const brightnessScale = Math.max(0.02, Math.min(0.34, 0.03 + intensity * 0.18));
+
+    if (!canSetColor && materialRef.current) {
+      materialRef.current.color.set(colorA);
+    }
+
+    baseColor.set(colorA);
+    altColor.set(colorB);
+
+    for (let i = 0; i < bandCount; i++) {
+      const a = randomData.angle[i];
+      const clump = 0.5 + 0.5 * Math.sin(a * 6 + randomData.phase[i]);
+      const visible = randomData.alpha[i] < density * (0.55 + 0.45 * clump);
+
+      if (!visible) {
+        dummy.position.set(0, 0, -100);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(0.0001, 0.0001, 1);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+        if (canSetColor) mesh.setColorAt(i, workColor.setRGB(0, 0, 0));
+        continue;
+      }
+
+      const rx = 1.58 + randomData.radial[i] * 0.08;
+      const ry = 0.52 + randomData.vertical[i] * 0.06;
+      const x = Math.cos(a) * rx;
+      const y = Math.sin(a) * ry;
+      const z = 0.008 + randomData.vertical[i] * 0.004;
+      const flicker = 0.88 + 0.12 * Math.sin(t * 0.8 + i * 5.17 + randomData.phase[i]);
+      const s = (0.006 + randomData.size[i] * 0.012) * (0.75 + 0.25 * clump);
+      const brightness = brightnessScale * (0.35 + 0.65 * randomData.alpha[i]) * flicker;
+
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(0, 0, a + Math.PI / 2 + randomData.vertical[i] * 0.2);
+      dummy.scale.set(s * 1.2, s * 0.8, 1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+
+      if (canSetColor) {
+        workColor.copy(baseColor).lerp(altColor, 0.2 + 0.4 * randomData.alpha[i]).multiplyScalar(brightness);
+        mesh.setColorAt(i, workColor);
+      }
+    }
+
+    mesh.instanceMatrix.needsUpdate = true;
+    if (canSetColor && mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  });
+
+  return (
+    <group name="haloBand" position={[0, 0, 0.015]}>
+      <instancedMesh ref={bandRef} args={[null, null, bandCount]} frustumCulled={false}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          ref={materialRef}
+          color={colorA}
+          transparent
+          opacity={0.45}
+          depthWrite={false}
+          toneMapped={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </instancedMesh>
     </group>
   );
 }
@@ -322,6 +406,7 @@ function RayOccluders({ enabled, pattern, scale, depthOffset, debug }) {
 // with the production BreathingRing wrapper component.
 function RingScene({
   breathSpeed = 0.8,
+  trailSpeed = 0.4,
   streakStrength = 0.20,
   streakLength = 0.65,
   nucleusSunRef,
@@ -337,6 +422,7 @@ function RingScene({
   accentColor = '#ffffff',
   mode = 'production',
   breathDriver = null,
+  orbitalAngleRef = null,
   palette = null,
   autoFit = true,
   fitFill = 0.88,
@@ -345,14 +431,12 @@ function RingScene({
   const sceneRootRef   = useRef(null);
   const coreRef        = useRef(null);
   const shoulderRef    = useRef(null);
-  const streakProxyRef = useRef(null);
   const reticleRef     = useRef(null);
-  const innerGroupRef  = useRef(null);
   const avatarGlowRef  = useRef(null);
   const baseShoulderOpacity = 0.35;
   const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
 
-  useFrame(({ clock, viewport }) => {
+  useFrame(({ clock, viewport }, delta) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
     // concentric, nucleus sun, avatar glow). When breathDriver is active, t is
     // NOT the breath clock — breathSpeed is irrelevant to the breath waveform.
@@ -382,22 +466,6 @@ function RingScene({
       shoulderRef.current.material.opacity = Math.max(0.15, opacityPulse);
     }
 
-    if (streakProxyRef.current && streakStrength > 0) {
-      const hotness           = 0.5 + 0.5 * w;
-      const horizontalStretch = 1 + streakLength * 6;
-      const clampedStretch    = Math.min(horizontalStretch, MAX_STREAK_X_SCALE);
-      streakProxyRef.current.scale.set(clampedStretch, 1, 1);
-      const driftPhase      = Math.sin(t * 0.06) * 0.05;
-      const edgeDecay       = 1.0 - Math.pow(Math.min(clampedStretch - 1, 4) / 4, 1.5) * 0.3;
-      const baseStreakOpacity = streakStrength * 0.072 * hotness * edgeDecay;
-      streakProxyRef.current.children.forEach((child, index) => {
-        if (child.material) {
-          const asymmetryFactor = index === 0 ? 0.65 + driftPhase : 1.0 - driftPhase;
-          child.material.opacity = baseStreakOpacity * asymmetryFactor;
-        }
-      });
-    }
-
     if (reticleRef.current) {
       const reticleOpacityMod = 1.0 + 0.025 * w;
       reticleRef.current.children.forEach((line) => {
@@ -410,17 +478,33 @@ function RingScene({
       });
     }
 
-    if (innerGroupRef.current) {
-      const breathPhase = Math.sin(t);
-      const innerPulse  = 1.0 + 0.015 * breathPhase;
-      innerGroupRef.current.children.forEach((mesh, index) => {
-        if (mesh.material && index > 0 && index % 2 === 0) {
-          mesh.material.opacity = 0.22 * innerPulse;
-        }
-      });
+    let orbitalAngle = (clock.elapsedTime * trailSpeed) % (Math.PI * 2);
+    if (orbitalAngleRef) {
+      if (breathDriver) {
+        const { phase, phaseProgress01 } = breathDriver;
+        const ep = easeInOut(phaseProgress01 ?? 0);
+        let phaseFactor;
+        if (phase === 'inhale')       phaseFactor = 0.85 + 0.35 * ep;
+        else if (phase === 'holdTop') phaseFactor = 0.22 + 0.04 * Math.sin(clock.elapsedTime * 0.8);
+        else if (phase === 'exhale')  phaseFactor = 1.00 - 0.20 * ep;
+        else                          phaseFactor = 0.30 + 0.04 * Math.sin(clock.elapsedTime * 0.8);
+
+        const omega = Math.max(0.05, trailSpeed) * phaseFactor;
+        orbitalAngleRef.current += delta * omega;
+        const twoPi = Math.PI * 2;
+        orbitalAngleRef.current = ((orbitalAngleRef.current % twoPi) + twoPi) % twoPi;
+      } else {
+        orbitalAngleRef.current = orbitalAngle;
+      }
+      orbitalAngle = orbitalAngleRef.current;
     }
 
     if (nucleusSunRef?.current) {
+      nucleusSunRef.current.position.set(
+        Math.cos(orbitalAngle) * ARC_RADIUS,
+        Math.sin(orbitalAngle) * ARC_RADIUS,
+        0.02
+      );
       const breathPhase  = Math.sin(t);
       const nucleusPulse = 1.0 + 0.03 * breathPhase;
       nucleusSunRef.current.material.opacity = 0.22 * nucleusPulse;
@@ -526,47 +610,23 @@ function RingScene({
         </>
       )}
 
-      {/* Inner concentric aperture stack — non-avatar only */}
+      {/* Orbital nucleus (center cleanup: orb-only) — non-avatar only */}
       {!isAvatar && (
-        <group ref={innerGroupRef} name="innerConcentric" position={[0, 0, -0.005]}>
-          <group name="centerNucleus">
-            <mesh position={[0, 0, 0.012]}>
-              <circleGeometry args={[0.085, 128]} />
-              <meshBasicMaterial color={palette?.nucleus ?? '#fff2e8'} transparent opacity={0.06} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-            </mesh>
-            <mesh ref={nucleusSunRef} position={[0, 0, 0.013]}>
-              <circleGeometry args={[0.03, 128]} />
-              <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-            </mesh>
-          </group>
-          <mesh position={[0, 0, -0.003]}>
-            <circleGeometry args={[0.14, 128]} />
-            <meshBasicMaterial color={palette?.aperture ?? '#fff0e0'} transparent opacity={0.06} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-          {/* Ring A */}
-          <mesh><ringGeometry args={[0.16, 0.175, 128]} /><meshBasicMaterial color={accentColor} transparent opacity={0.10} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.16, 0.175, 128]} /><meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          {/* Ring B */}
-          <mesh><ringGeometry args={[0.26, 0.275, 128]} /><meshBasicMaterial color={accentColor} transparent opacity={0.10} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.26, 0.275, 128]} /><meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          {/* Ring C */}
-          <mesh><ringGeometry args={[0.36, 0.372, 128]} /><meshBasicMaterial color={accentColor} transparent opacity={0.10} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-          <mesh position={[0, 0, 0.001]}><ringGeometry args={[0.36, 0.372, 128]} /><meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} /></mesh>
-        </group>
+        <mesh ref={nucleusSunRef} position={[ARC_RADIUS, 0, 0.02]}>
+          <circleGeometry args={[0.03, 128]} />
+          <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        </mesh>
       )}
 
-      {/* Streak proxy group — non-avatar only */}
+      {/* Halo band (particulate, non-stroke) — non-avatar only */}
       {!isAvatar && streakStrength > 0 && (
-        <group ref={streakProxyRef} position={[0, 0, 0.02]}>
-          <mesh>
-            <ringGeometry args={[0.92, 1.12, 128]} />
-            <meshBasicMaterial color={accentColor} transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-          <mesh>
-            <ringGeometry args={[0.98, 1.05, 128]} />
-            <meshBasicMaterial color={palette?.streakHot ?? '#ffffff'} transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-        </group>
+        <HaloBand
+          enabled={streakStrength > 0}
+          intensity={streakStrength}
+          length={streakLength}
+          colorA={palette?.streakHot ?? accentColor}
+          colorB={palette?.reticleBright ?? '#ffffff'}
+        />
       )}
 
       {/* Reticle geometry — non-avatar only */}
@@ -673,6 +733,7 @@ export default function BloomRingRenderer({
 
   const nucleusSunRef  = useRef(null);
   const godRayLightRef = useRef(null);
+  const orbitalAngleRef = useRef(0);
 
   // Accent palette — all tints/shades of accentColor mixed in linear RGB space.
   // Ensures every rendered pixel is hue-matched to the active stage accent.
@@ -731,6 +792,7 @@ export default function BloomRingRenderer({
     >
       <RingScene
         breathSpeed={breathSpeed}
+        trailSpeed={trailSpeed}
         streakStrength={streakStrength}
         streakLength={streakLength}
         nucleusSunRef={nucleusSunRef}
@@ -746,6 +808,7 @@ export default function BloomRingRenderer({
         accentColor={accentColor}
         mode={mode}
         breathDriver={breathDriver}
+        orbitalAngleRef={orbitalAngleRef}
         palette={palette}
         autoFit={autoFit}
         fitFill={fitFill}
@@ -762,6 +825,7 @@ export default function BloomRingRenderer({
           spread={trailSpread}
           speed={trailSpeed}
           sparkle={trailSparkle}
+          orbitalAngleRef={orbitalAngleRef}
         />
       )}
 
