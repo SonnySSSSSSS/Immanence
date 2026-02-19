@@ -85,6 +85,9 @@ const ARC_SPAN    = Math.PI * 0.65;  // ~117° tail
 // Crosshair verticals: center y=1.50, half-height 0.275 → tip at 1.775.
 // Used by autoFit to compute a camera-independent uniform scale each frame.
 const SCENE_MAX_RADIUS = 1.80;
+const OUTER_RING_MAX_R = 1.12;
+const MAX_STREAK_X_SCALE = SCENE_MAX_RADIUS / OUTER_RING_MAX_R;
+const MAX_OCCLUDER_SCALE = SCENE_MAX_RADIUS / 1.8;
 
 function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle }) {
   const trailRef   = useRef(null);
@@ -347,6 +350,7 @@ function RingScene({
   const innerGroupRef  = useRef(null);
   const avatarGlowRef  = useRef(null);
   const baseShoulderOpacity = 0.35;
+  const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
 
   useFrame(({ clock, viewport }) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
@@ -381,9 +385,10 @@ function RingScene({
     if (streakProxyRef.current && streakStrength > 0) {
       const hotness           = 0.5 + 0.5 * w;
       const horizontalStretch = 1 + streakLength * 6;
-      streakProxyRef.current.scale.set(horizontalStretch, 1, 1);
+      const clampedStretch    = Math.min(horizontalStretch, MAX_STREAK_X_SCALE);
+      streakProxyRef.current.scale.set(clampedStretch, 1, 1);
       const driftPhase      = Math.sin(t * 0.06) * 0.05;
-      const edgeDecay       = 1.0 - Math.pow(Math.min(horizontalStretch - 1, 4) / 4, 1.5) * 0.3;
+      const edgeDecay       = 1.0 - Math.pow(Math.min(clampedStretch - 1, 4) / 4, 1.5) * 0.3;
       const baseStreakOpacity = streakStrength * 0.072 * hotness * edgeDecay;
       streakProxyRef.current.children.forEach((child, index) => {
         if (child.material) {
@@ -473,11 +478,11 @@ function RingScene({
       )}
 
       {/* Ray occluders — non-avatar only */}
-      {!isAvatar && (
+      {!isAvatar && occluderEnabled && (
         <RayOccluders
           enabled={occluderEnabled}
           pattern={occluderPattern}
-          scale={occluderScale}
+          scale={occluderScaleClamped}
           depthOffset={occluderDepthOffset}
           debug={debugOccluders}
         />
