@@ -6,12 +6,45 @@
 // - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
 // - PATH FX: path-specific particle effects sync with breath
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { EnsoStroke } from "./EnsoStroke";
-import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
+import BloomRingRenderer from './bloomRing/BloomRingRenderer.jsx';
 
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, pathId, fxPreset, totalSessionDurationSec = null }) {
+// Production-default ring params — matches the "Soft" preset from BloomRingLab.
+// Stage accent wiring is deferred; Beacon (#22d3ee) is the neutral default.
+const PRODUCTION_RING_DEFAULTS = {
+  bloomStrength:      1.2,
+  bloomRadius:        0.60,
+  bloomThreshold:     0.50,
+  streakStrength:     0.0,
+  streakThreshold:    0.85,
+  streakLength:       0.65,
+  rayEnabled:         false,
+  rayExposure:        0.10,
+  rayWeight:          0.4,
+  rayDecay:           0.93,
+  raySamples:         40,
+  rayDensity:         0.5,
+  rayClampMax:        0.6,
+  raySunY:            0.45,
+  raySunZ:           -2.0,
+  raySunRadius:       0.10,
+  occluderEnabled:    false,
+  occluderPattern:   'cross',
+  occluderScale:      1.2,
+  occluderDepthOffset: -1.5,
+  debugOccluders:     false,
+  trailEnabled:       false,
+  trailIntensity:     0.5,
+  trailLength:        30,
+  trailSpread:        0.02,
+  trailSpeed:         0.4,
+  trailSparkle:       0.1,
+};
+const PRODUCTION_ACCENT = '#22d3ee'; // Beacon — neutral default
+
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null }) {
   const lockedPatternRef = useRef(null);
   const pendingPatternRef = useRef(null);
   const incomingPatternRef = useRef(breathPattern);
@@ -74,8 +107,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   // Total cycle duration - derived from the effective (locked or initial) pattern
   // This is used for phase boundary calculations
   const total = inhale + holdTop + exhale + holdBottom;
-  const minScale = 0.9;  // Decreased 10% from 1.0
-  const maxScale = 1.32; // Increased 10% from 1.2
 
   const [progress, setProgress] = useState(0);
   const [echo, setEcho] = useState(null);
@@ -145,24 +176,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     pattern: displayedPattern,
     isRunning: !!startTime,
   });
-
-  // Calculate current scale based on progress through cycle
-  let scale = minScale;
-  if (progress < tInhale) {
-    // INHALE: scale up from min to max
-    scale = minScale + (maxScale - minScale) * (progress / tInhale);
-  } else if (progress < tHoldTop) {
-    // HOLD TOP: stay at max
-    scale = maxScale;
-  } else if (progress < tExhale) {
-    // EXHALE: scale down from max to min
-    const exhaleProgress = (progress - tHoldTop) / (tExhale - tHoldTop);
-    scale = maxScale - (maxScale - minScale) * exhaleProgress;
-  } else {
-    // HOLD BOTTOM: stay at min
-    scale = minScale;
-  }
-
 
   // Trigger echo visual effect
   const triggerEcho = () => {
@@ -381,43 +394,12 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     onTap(errorMs);
   };
 
-  // Helper: Compute all glow blur layers with rhythm for current phase
-  const computeGlowLayers = () => {
-    let b1 = 8, b2 = 16, b3 = 24, b4 = 32;
-    
-    if (progress < tInhale) {
-      const inhaleRatio = progress / tInhale;
-      b1 = 8 + 1.6 * inhaleRatio;
-      b2 = 16 + 3.2 * inhaleRatio;
-      b3 = 24 + 4.8 * inhaleRatio;
-      b4 = 32 + 6.4 * inhaleRatio;
-    } else if (progress < tHoldTop) {
-      b1 = 9.6;
-      b2 = 19.2;
-      b3 = 28.8;
-      b4 = 38.4;
-    } else if (progress < tExhale) {
-      const exhaleRatio = (progress - tHoldTop) / (tExhale - tHoldTop);
-      b1 = 9.6 - 1.6 * exhaleRatio;
-      b2 = 19.2 - 3.2 * exhaleRatio;
-      b3 = 28.8 - 4.8 * exhaleRatio;
-      b4 = 38.4 - 6.4 * exhaleRatio;
-    } else {
-      b1 = 8;
-      b2 = 16;
-      b3 = 24;
-      b4 = 32;
-    }
-    
-    return { b1, b2, b3, b4 };
-  };
-
-  const glowLayers = computeGlowLayers();
-
-  // Read theme for dynamic colors
-  // Detect light mode to use subtle shadow instead of glow
-  const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const isLight = colorScheme === 'light';
+  // Production ring params — breathSpeed synced to cycle length so the WebGL
+  // sine oscillation period approximately matches the breath pattern total.
+  const productionParams = useMemo(() => ({
+    ...PRODUCTION_RING_DEFAULTS,
+    breathSpeed: (2 * Math.PI) / Math.max(0.5, inhale + holdTop + exhale + holdBottom),
+  }), [inhale, holdTop, exhale, holdBottom]);
 
   return (
     <div
@@ -527,61 +509,22 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           }}
         >
 
-        {/* Main breathing ring with EVENT HORIZON GLOW */}
-        <svg
-          viewBox="-50 -50 300 300"
-          className="w-80 h-80"
+        {/* WebGL bloom ring — single shared renderer (BloomRingRenderer) */}
+        <div
           style={{
-            display: "block",
+            position: "absolute",
+            inset: 0,
             zIndex: 10,
             pointerEvents: "none",
-            overflow: "visible",
-            position: "absolute",
-            // EVENT HORIZON GLOW - Clean layered box-shadow using theme colors
-            // Light mode: subtle dark shadow for definition
-            // Dark mode: full colored glow effect with rhythm modulation
-            filter: isLight
-              ? 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.1))'
-              : `drop-shadow(0 0 ${glowLayers.b1.toFixed(1)}px var(--accent-primary))
-                 drop-shadow(0 0 ${glowLayers.b2.toFixed(1)}px var(--accent-secondary))
-                 drop-shadow(0 0 ${glowLayers.b3.toFixed(1)}px var(--accent-muted))
-                 drop-shadow(0 0 ${glowLayers.b4.toFixed(1)}px var(--accent-glow))`
           }}
         >
-          <circle
-            cx="100"
-            cy="100"
-            r="80"
-            fill="none"
-            stroke="var(--accent-primary)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            style={{
-              transform: `scale(${scale})`,
-              transformOrigin: "100px 100px",
-              transition: "none",
-            }}
+          <BloomRingRenderer
+            params={productionParams}
+            accentColor={PRODUCTION_ACCENT}
+            mode="production"
+            style={{ width: '100%', height: '100%', display: 'block' }}
           />
-        </svg>
-        {/* PATH PARTICLES - Rendered ON TOP of the ring for visibility */}
-        {/* Canvas is 400x400 for headroom (prevents particle clipping), centered exactly over the ring */}
-        {pathId && fxPreset && fxPreset !== 'none' && (
-          <div
-            style={{
-              position: "absolute",
-              width: 400,
-              height: 400,
-              pointerEvents: 'none',
-              zIndex: 20,
-              overflow: 'visible',
-              left: "50%",
-              top: "50%",
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-            {/* PathParticles removed - will be rebuilt with avatar revamp */}
-          </div>
-        )}
+        </div>
 
         {/* Phase indicator - centered in circle for focus */}
         <div
