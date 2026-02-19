@@ -433,6 +433,7 @@ function RingScene({
   const shoulderRef    = useRef(null);
   const reticleRef     = useRef(null);
   const avatarGlowRef  = useRef(null);
+  const nucleusHotRef  = useRef(null);
   const baseShoulderOpacity = 0.35;
   const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
 
@@ -508,6 +509,16 @@ function RingScene({
       const breathPhase  = Math.sin(t);
       const nucleusPulse = 1.0 + 0.03 * breathPhase;
       nucleusSunRef.current.material.opacity = 0.22 * nucleusPulse;
+    }
+    if (nucleusHotRef.current) {
+      nucleusHotRef.current.position.set(
+        Math.cos(orbitalAngle) * ARC_RADIUS,
+        Math.sin(orbitalAngle) * ARC_RADIUS,
+        0.021
+      );
+      const breathPhase  = Math.sin(t);
+      const nucleusPulse = 1.0 + 0.03 * breathPhase;
+      nucleusHotRef.current.material.opacity = 0.55 * nucleusPulse;
     }
 
     if (isAvatar && avatarGlowRef.current) {
@@ -612,10 +623,16 @@ function RingScene({
 
       {/* Orbital nucleus (center cleanup: orb-only) — non-avatar only */}
       {!isAvatar && (
-        <mesh ref={nucleusSunRef} position={[ARC_RADIUS, 0, 0.02]}>
-          <circleGeometry args={[0.03, 128]} />
-          <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </mesh>
+        <>
+          <mesh ref={nucleusSunRef} position={[ARC_RADIUS, 0, 0.02]}>
+            <circleGeometry args={[0.03, 128]} />
+            <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+          </mesh>
+          <mesh ref={nucleusHotRef} position={[ARC_RADIUS, 0, 0.021]}>
+            <circleGeometry args={[0.014, 64]} />
+            <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+          </mesh>
+        </>
       )}
 
       {/* Halo band (particulate, non-stroke) — non-avatar only */}
