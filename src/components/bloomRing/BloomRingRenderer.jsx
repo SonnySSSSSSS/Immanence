@@ -214,6 +214,53 @@ function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, sp
   );
 }
 
+function OrbVisual({ colorLin, glowGain, z = 0.02 }) {
+  const base = linToHex(colorLin);
+
+  return (
+    <group position={[0, 0, z]}>
+      {/* Core */}
+      <mesh>
+        <circleGeometry args={[0.035, 64]} />
+        <meshBasicMaterial
+          color={base}
+          transparent
+          opacity={0.85}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Mid falloff */}
+      <mesh>
+        <circleGeometry args={[0.09, 64]} />
+        <meshBasicMaterial
+          color={base}
+          transparent
+          opacity={0.18 * glowGain}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Outer halo (this is what makes it glow) */}
+      <mesh>
+        <circleGeometry args={[0.22, 64]} />
+        <meshBasicMaterial
+          color={base}
+          transparent
+          opacity={0.07 * glowGain}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function HaloBand({ enabled, intensity, length, colorA, colorB }) {
   if (!enabled) return null;
 
@@ -415,7 +462,6 @@ function RingScene({
   trailSpeed = 0.4,
   streakStrength = 0.20,
   streakLength = 0.65,
-  nucleusSunRef,
   godRayLightRef,
   raySunY,
   raySunZ,
@@ -440,10 +486,11 @@ function RingScene({
   const shoulderRef    = useRef(null);
   const reticleRef     = useRef(null);
   const avatarGlowRef  = useRef(null);
-  const nucleusHotRef  = useRef(null);
+  const orbitalOrbRef  = useRef(null);
   const baseShoulderOpacity = 0.35;
   const RETICLE_OPACITY_SCALE = 0.82;
   const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
+  const orbAccentLin = useMemo(() => hexToLin(accentColor), [accentColor]);
 
   const coreRingGeom = useMemo(() => {
     // Spatial, deterministic modulation to de-vector the rim.
@@ -473,7 +520,7 @@ function RingScene({
 
   useFrame(({ clock, viewport }, delta) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
-    // concentric, nucleus sun, avatar glow). When breathDriver is active, t is
+    // concentric, layered orbital sun, avatar glow). When breathDriver is active, t is
     // NOT the breath clock — breathSpeed is irrelevant to the breath waveform.
     const t = clock.elapsedTime * breathSpeed;
 
@@ -544,27 +591,12 @@ function RingScene({
       orbitalAngle = orbitalAngleRef.current;
     }
 
-    if (nucleusSunRef?.current) {
-      nucleusSunRef.current.position.set(
+    if (orbitalOrbRef.current) {
+      orbitalOrbRef.current.position.set(
         Math.cos(orbitalAngle) * ARC_RADIUS,
         Math.sin(orbitalAngle) * ARC_RADIUS,
-        0.02
+        0
       );
-      const breathPhase  = Math.sin(t);
-      const nucleusPulse = 1.0 + 0.03 * breathPhase;
-      const orbOpacity = 0.22 * glowGain * nucleusPulse;
-      nucleusSunRef.current.material.opacity = Math.min(orbOpacity, 0.55);
-    }
-    if (nucleusHotRef.current) {
-      nucleusHotRef.current.position.set(
-        Math.cos(orbitalAngle) * ARC_RADIUS,
-        Math.sin(orbitalAngle) * ARC_RADIUS,
-        0.021
-      );
-      const breathPhase  = Math.sin(t);
-      const nucleusPulse = 1.0 + 0.03 * breathPhase;
-      const orbHotOpacity = 0.55 * glowGain * nucleusPulse;
-      nucleusHotRef.current.material.opacity = Math.min(orbHotOpacity, 0.85);
     }
 
     if (isAvatar && avatarGlowRef.current) {
@@ -629,14 +661,6 @@ function RingScene({
         />
       )}
 
-      {/* Dark center disc (halo effect) — non-avatar only */}
-      {!isAvatar && (
-        <mesh position={[0, 0, -0.01]}>
-          <circleGeometry args={[0.9, 128]} />
-          <meshBasicMaterial color="#000000" transparent opacity={0.9} depthWrite={false} />
-        </mesh>
-      )}
-
       {/* Soft shoulder ring — non-avatar only */}
       {!isAvatar && (
         <mesh ref={shoulderRef} position={[0, 0, 0]}>
@@ -667,18 +691,11 @@ function RingScene({
         </>
       )}
 
-      {/* Orbital nucleus (center cleanup: orb-only) — non-avatar only */}
+      {/* Orbital sun (layered additive falloff) — non-avatar only */}
       {!isAvatar && (
-        <>
-          <mesh ref={nucleusSunRef} position={[ARC_RADIUS, 0, 0.02]}>
-            <circleGeometry args={[0.03, 128]} />
-            <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-          <mesh ref={nucleusHotRef} position={[ARC_RADIUS, 0, 0.021]}>
-            <circleGeometry args={[0.014, 64]} />
-            <meshBasicMaterial color={palette?.coreHot ?? '#ffffff'} transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-          </mesh>
-        </>
+        <group ref={orbitalOrbRef} position={[ARC_RADIUS, 0, 0]}>
+          <OrbVisual colorLin={orbAccentLin} glowGain={glowGain} />
+        </group>
       )}
 
       {/* Halo band (particulate, non-stroke) — non-avatar only */}
@@ -794,7 +811,6 @@ export default function BloomRingRenderer({
     fitFill       = 0.88,
   } = params;
 
-  const nucleusSunRef  = useRef(null);
   const godRayLightRef = useRef(null);
   const orbitalAngleRef = useRef(0);
 
@@ -862,7 +878,6 @@ export default function BloomRingRenderer({
         trailSpeed={trailSpeed}
         streakStrength={streakStrength}
         streakLength={streakLength}
-        nucleusSunRef={nucleusSunRef}
         godRayLightRef={godRayLightRef}
         raySunY={raySunY}
         raySunZ={raySunZ}
