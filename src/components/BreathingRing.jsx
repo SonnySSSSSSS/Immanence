@@ -394,8 +394,16 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
       phase,
       cycleProgress01: p01,
       phaseProgress01: Math.max(0, Math.min(1, phaseProgress01)),
+      // Phase-clock orbit timing: 1 full revolution per phase duration.
+      // Derived from the same phase boundary fractions used for the UI countdown.
+      phaseDurationSec: (
+        currentPhase === 'inhale'     ? Math.max(0, tInhale * total) :
+        currentPhase === 'hold-top'   ? Math.max(0, (tHoldTop - tInhale) * total) :
+        currentPhase === 'exhale'     ? Math.max(0, (tExhale - tHoldTop) * total) :
+                                        Math.max(0, (1 - tExhale) * total)
+      ),
     };
-  }, [currentPhase, progress, tInhale, tHoldTop, tExhale]);
+  }, [currentPhase, progress, tInhale, tHoldTop, tExhale, total]);
 
   // Production ring params — phase-driven via breathDriver.
   const productionParams = useMemo(() => ({

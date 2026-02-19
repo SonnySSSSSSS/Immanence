@@ -481,19 +481,29 @@ function RingScene({
 
     let orbitalAngle = (clock.elapsedTime * trailSpeed) % (Math.PI * 2);
     if (orbitalAngleRef) {
+      if (!Number.isFinite(orbitalAngleRef.current)) orbitalAngleRef.current = orbitalAngle;
       if (breathDriver) {
-        const { phase, phaseProgress01 } = breathDriver;
-        const ep = easeInOut(phaseProgress01 ?? 0);
-        let phaseFactor;
-        if (phase === 'inhale')       phaseFactor = 0.85 + 0.35 * ep;
-        else if (phase === 'holdTop') phaseFactor = 0.22 + 0.04 * Math.sin(clock.elapsedTime * 0.8);
-        else if (phase === 'exhale')  phaseFactor = 1.00 - 0.20 * ep;
-        else                          phaseFactor = 0.30 + 0.04 * Math.sin(clock.elapsedTime * 0.8);
+        const phaseDurationSec = breathDriver?.phaseDurationSec;
+        if (Number.isFinite(phaseDurationSec) && phaseDurationSec > 0) {
+          // Clock orbit: exactly one full revolution per phase duration.
+          const omega = (Math.PI * 2) / phaseDurationSec;
+          orbitalAngleRef.current += delta * omega;
+          const twoPi = Math.PI * 2;
+          orbitalAngleRef.current = ((orbitalAngleRef.current % twoPi) + twoPi) % twoPi;
+        } else {
+          const { phase, phaseProgress01 } = breathDriver;
+          const ep = easeInOut(phaseProgress01 ?? 0);
+          let phaseFactor;
+          if (phase === 'inhale')       phaseFactor = 0.85 + 0.35 * ep;
+          else if (phase === 'holdTop') phaseFactor = 0.22 + 0.04 * Math.sin(clock.elapsedTime * 0.8);
+          else if (phase === 'exhale')  phaseFactor = 1.00 - 0.20 * ep;
+          else                          phaseFactor = 0.30 + 0.04 * Math.sin(clock.elapsedTime * 0.8);
 
-        const omega = Math.max(0.05, trailSpeed) * phaseFactor;
-        orbitalAngleRef.current += delta * omega;
-        const twoPi = Math.PI * 2;
-        orbitalAngleRef.current = ((orbitalAngleRef.current % twoPi) + twoPi) % twoPi;
+          const omega = Math.max(0.05, trailSpeed) * phaseFactor;
+          orbitalAngleRef.current += delta * omega;
+          const twoPi = Math.PI * 2;
+          orbitalAngleRef.current = ((orbitalAngleRef.current % twoPi) + twoPi) % twoPi;
+        }
       } else {
         orbitalAngleRef.current = orbitalAngle;
       }
