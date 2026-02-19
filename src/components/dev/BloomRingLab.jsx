@@ -212,6 +212,13 @@ export function BloomRingLab({ isLight = false }) {
   const [trailOpen,    setTrailOpen]    = useState(false);
   const [expertOpen,   setExpertOpen]   = useState(false);
 
+  // Phase Sim state — default false so lab opens with live sine animation.
+  // Enable to lock into a snapshot phase for phase language tuning.
+  const [simEnabled,       setSimEnabled]       = useState(false);
+  const [simPhase,         setSimPhase]         = useState('inhale');
+  const [simPhaseProgress, setSimPhaseProgress] = useState(0.0);
+  const [phaseSimOpen,     setPhaseSimOpen]     = useState(true);
+
   // Size measurement for Canvas mount gating
   const containerRef = useRef(null);
   const [measuredSize, setMeasuredSize] = useState({ w: 0, h: 0 });
@@ -343,6 +350,9 @@ export function BloomRingLab({ isLight = false }) {
               trailSpread,
               trailSpeed,
               trailSparkle,
+              ...(simEnabled
+                ? { breathDriver: { phase: simPhase, cycleProgress01: 0, phaseProgress01: simPhaseProgress } }
+                : {}),
             }}
             accentColor={accentColor}
             mode="lab"
@@ -459,6 +469,39 @@ export function BloomRingLab({ isLight = false }) {
             <ControlRow label="Spread"    min={0}    max={0.2}  step={0.005} value={trailSpread}   onChange={setTrailSpread}    isLight={isLight} format={(v) => v.toFixed(3)} />
             <ControlRow label="Speed"     min={0.05} max={2.0}  step={0.05}  value={trailSpeed}    onChange={setTrailSpeed}     isLight={isLight} />
             <ControlRow label="Sparkle"   min={0}    max={1}    step={0.05}  value={trailSparkle}  onChange={setTrailSparkle}   isLight={isLight} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Phase Sim Section ── */}
+      <div style={dividerStyle}>
+        <SectionHeader label="Phase Sim" open={phaseSimOpen} onToggle={() => setPhaseSimOpen(v => !v)} isLight={isLight} />
+        {phaseSimOpen && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '8px' }}>
+            <ToggleRow label="Use Phase Truth" checked={simEnabled} onChange={setSimEnabled} isLight={isLight} />
+            {simEnabled && (
+              <>
+                <SelectRow
+                  label="Phase"
+                  value={simPhase}
+                  onChange={setSimPhase}
+                  options={[
+                    { value: 'inhale',     label: 'Inhale' },
+                    { value: 'holdTop',    label: 'Hold Top' },
+                    { value: 'exhale',     label: 'Exhale' },
+                    { value: 'holdBottom', label: 'Hold Bottom' },
+                  ]}
+                  isLight={isLight}
+                />
+                <ControlRow
+                  label="Phase Prog"
+                  min={0} max={1} step={0.01}
+                  value={simPhaseProgress}
+                  onChange={setSimPhaseProgress}
+                  isLight={isLight}
+                />
+              </>
+            )}
           </div>
         )}
       </div>

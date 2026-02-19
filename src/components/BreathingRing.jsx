@@ -365,12 +365,43 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     onTap(errorMs);
   };
 
-  // Production ring params — breathSpeed synced to cycle length so the WebGL
-  // sine oscillation period approximately matches the breath pattern total.
+  // Deterministic breathDriver: maps existing phase truth into renderer format.
+  // phase strings: 'hold-top' → 'holdTop', 'hold-bottom' → 'holdBottom', others as-is.
+  const breathDriver = useMemo(() => {
+    if (!currentPhase) return null;
+    const p01 = ((progress % 1) + 1) % 1; // wrap-safe 0→1
+
+    const phase =
+      currentPhase === 'hold-top'    ? 'holdTop'    :
+      currentPhase === 'hold-bottom' ? 'holdBottom' :
+      currentPhase; // 'inhale' | 'exhale' unchanged
+
+    let phaseProgress01;
+    if (currentPhase === 'inhale') {
+      phaseProgress01 = tInhale > 0 ? p01 / tInhale : 1;
+    } else if (currentPhase === 'hold-top') {
+      const d = tHoldTop - tInhale;
+      phaseProgress01 = d > 0 ? (p01 - tInhale) / d : 1;
+    } else if (currentPhase === 'exhale') {
+      const d = tExhale - tHoldTop;
+      phaseProgress01 = d > 0 ? (p01 - tHoldTop) / d : 1;
+    } else { // hold-bottom
+      const d = 1 - tExhale;
+      phaseProgress01 = d > 0 ? (p01 - tExhale) / d : 1;
+    }
+
+    return {
+      phase,
+      cycleProgress01: p01,
+      phaseProgress01: Math.max(0, Math.min(1, phaseProgress01)),
+    };
+  }, [currentPhase, progress, tInhale, tHoldTop, tExhale]);
+
+  // Production ring params — phase-driven via breathDriver.
   const productionParams = useMemo(() => ({
     ...PRODUCTION_RING_DEFAULTS,
-    breathSpeed: (2 * Math.PI) / Math.max(0.5, inhale + holdTop + exhale + holdBottom),
-  }), [inhale, holdTop, exhale, holdBottom]);
+    breathDriver,
+  }), [breathDriver]);
 
   // DEV guard — must be after all hooks to satisfy Rules of Hooks.
   // Fires once on mount and whenever startTime changes.

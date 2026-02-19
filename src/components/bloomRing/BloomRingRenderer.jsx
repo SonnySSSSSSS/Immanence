@@ -38,6 +38,9 @@ import * as THREE from 'three';
 // Composition: additive blending, depthWrite:false, toneMapped:false
 // → Bloom picks it up naturally; sits in front of ring geometry (z=0.05).
 
+// Smoothstep easing [0,1] → [0,1]. Used by breathDriver phase→wave mapping.
+const easeInOut = p => { const c = Math.max(0, Math.min(1, p)); return c * c * (3 - 2 * c); };
+
 const MAX_TRAIL   = 80;
 const MAX_SPARKLE = 40;
 const ARC_RADIUS  = 1.02;  // just outside the main ring (radius ~1.0)
@@ -302,7 +305,8 @@ function RingScene({
   occluderDepthOffset,
   debugOccluders,
   accentColor = '#ffffff',
-  mode = 'production'
+  mode = 'production',
+  breathDriver = null,
 }) {
   const isAvatar = mode === 'avatar';
   const coreRef        = useRef(null);
@@ -314,20 +318,37 @@ function RingScene({
   const baseShoulderOpacity = 0.35;
 
   useFrame(({ clock }) => {
+    // t is always computed for secondary time-based effects (driftPhase, inner
+    // concentric, nucleus sun, avatar glow). When breathDriver is active, t is
+    // NOT the breath clock — breathSpeed is irrelevant to the breath waveform.
     const t = clock.elapsedTime * breathSpeed;
 
-    const scaleAmount = 1 + 0.015 * Math.sin(t);
+    // Compute breath wave w in [-1..+1].
+    // breathDriver present → deterministic from phase + phaseProgress01.
+    // Absent → sine fallback (preserves existing lab animation behavior).
+    let w;
+    if (breathDriver) {
+      const { phase, phaseProgress01 } = breathDriver;
+      const ep = easeInOut(phaseProgress01 ?? 0);
+      if (phase === 'inhale')       { w = ep * 2 - 1; }                              // -1 → +1
+      else if (phase === 'holdTop') { w = 1  + 0.02 * Math.sin(clock.elapsedTime * 0.8); } // plateau + micro shimmer
+      else if (phase === 'exhale')  { w = 1 - ep * 2; }                              // +1 → -1
+      else                          { w = -1 + 0.02 * Math.sin(clock.elapsedTime * 0.8); } // holdBottom + shimmer
+    } else {
+      w = Math.sin(t);
+    }
+
+    const scaleAmount = 1 + 0.015 * w;
     if (coreRef.current)     coreRef.current.scale.set(scaleAmount, scaleAmount, 1);
     if (shoulderRef.current) shoulderRef.current.scale.set(scaleAmount, scaleAmount, 1);
 
     if (shoulderRef.current) {
-      const opacityPulse = baseShoulderOpacity + 0.08 * Math.sin(t);
+      const opacityPulse = baseShoulderOpacity + 0.08 * w;
       shoulderRef.current.material.opacity = Math.max(0.15, opacityPulse);
     }
 
     if (streakProxyRef.current && streakStrength > 0) {
-      const breathPhase       = Math.sin(t);
-      const hotness           = 0.5 + 0.5 * breathPhase;
+      const hotness           = 0.5 + 0.5 * w;
       const horizontalStretch = 1 + streakLength * 6;
       streakProxyRef.current.scale.set(horizontalStretch, 1, 1);
       const driftPhase      = Math.sin(t * 0.06) * 0.05;
@@ -342,8 +363,7 @@ function RingScene({
     }
 
     if (reticleRef.current) {
-      const breathPhase       = Math.sin(t);
-      const reticleOpacityMod = 1.0 + 0.025 * breathPhase;
+      const reticleOpacityMod = 1.0 + 0.025 * w;
       reticleRef.current.children.forEach((line) => {
         line.children.forEach((mesh, meshIndex) => {
           if (mesh.material) {
@@ -601,6 +621,7 @@ export default function BloomRingRenderer({
     trailSpread   = 0.02,
     trailSpeed    = 0.4,
     trailSparkle  = 0.1,
+    breathDriver  = null,
   } = params;
 
   const nucleusSunRef  = useRef(null);
@@ -648,6 +669,7 @@ export default function BloomRingRenderer({
         debugOccluders={debugOccluders}
         accentColor={accentColor}
         mode={mode}
+        breathDriver={breathDriver}
       />
 
       {/* TrailArc — sits before EffectComposer so Bloom picks it up */}
