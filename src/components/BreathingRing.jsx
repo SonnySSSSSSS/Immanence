@@ -10,39 +10,7 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import { EnsoStroke } from "./EnsoStroke";
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 import BloomRingRenderer from './bloomRing/BloomRingRenderer.jsx';
-
-// Production-default ring params — matches the "Soft" preset from BloomRingLab.
-// Stage accent wiring is deferred; Beacon (#22d3ee) is the neutral default.
-const PRODUCTION_RING_DEFAULTS = {
-  bloomStrength:      1.2,
-  bloomRadius:        0.60,
-  bloomThreshold:     0.50,
-  streakStrength:     0.0,
-  streakThreshold:    0.85,
-  streakLength:       0.65,
-  rayEnabled:         false,
-  rayExposure:        0.10,
-  rayWeight:          0.4,
-  rayDecay:           0.93,
-  raySamples:         40,
-  rayDensity:         0.5,
-  rayClampMax:        0.6,
-  raySunY:            0.45,
-  raySunZ:           -2.0,
-  raySunRadius:       0.10,
-  occluderEnabled:    false,
-  occluderPattern:   'cross',
-  occluderScale:      1.2,
-  occluderDepthOffset: -1.5,
-  debugOccluders:     false,
-  trailEnabled:       false,
-  trailIntensity:     0.5,
-  trailLength:        30,
-  trailSpread:        0.02,
-  trailSpeed:         0.4,
-  trailSparkle:       0.1,
-};
-const PRODUCTION_ACCENT = '#22d3ee'; // Beacon — neutral default
+import { PRODUCTION_RING_DEFAULTS, PRODUCTION_ACCENT } from './bloomRing/bloomRingProductionDefaults.js';
 
 export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null }) {
   const lockedPatternRef = useRef(null);
