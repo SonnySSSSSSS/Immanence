@@ -81,6 +81,11 @@ const MAX_SPARKLE = 40;
 const ARC_RADIUS  = 1.02;  // just outside the main ring (radius ~1.0)
 const ARC_SPAN    = Math.PI * 0.65;  // ~117° tail
 
+// The farthest point any geometry reaches in RingScene local space.
+// Crosshair verticals: center y=1.50, half-height 0.275 → tip at 1.775.
+// Used by autoFit to compute a camera-independent uniform scale each frame.
+const SCENE_MAX_RADIUS = 1.80;
+
 function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle }) {
   const trailRef   = useRef(null);
   const sparkleRef = useRef(null);
@@ -330,8 +335,11 @@ function RingScene({
   mode = 'production',
   breathDriver = null,
   palette = null,
+  autoFit = true,
+  fitFill = 0.88,
 }) {
   const isAvatar = mode === 'avatar';
+  const sceneRootRef   = useRef(null);
   const coreRef        = useRef(null);
   const shoulderRef    = useRef(null);
   const streakProxyRef = useRef(null);
@@ -340,7 +348,7 @@ function RingScene({
   const avatarGlowRef  = useRef(null);
   const baseShoulderOpacity = 0.35;
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, viewport }) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
     // concentric, nucleus sun, avatar glow). When breathDriver is active, t is
     // NOT the breath clock — breathSpeed is irrelevant to the breath waveform.
@@ -425,10 +433,19 @@ function RingScene({
         }
       });
     }
+
+    // autoFit: scale the entire scene so SCENE_MAX_RADIUS fits within fitFill
+    // of the smaller viewport dimension. Camera-independent (uses world-unit viewport).
+    if (autoFit && sceneRootRef.current) {
+      const minV = Math.min(viewport.width, viewport.height);
+      if (isFinite(minV) && minV > 0) {
+        sceneRootRef.current.scale.setScalar((minV * fitFill) / 2 / SCENE_MAX_RADIUS);
+      }
+    }
   });
 
   return (
-    <group>
+    <group ref={sceneRootRef}>
       {/* Avatar mode: soft radial glow field */}
       {isAvatar && (
         <group ref={avatarGlowRef}>
@@ -645,6 +662,8 @@ export default function BloomRingRenderer({
     trailSpeed    = 0.4,
     trailSparkle  = 0.1,
     breathDriver  = null,
+    autoFit       = true,
+    fitFill       = 0.88,
   } = params;
 
   const nucleusSunRef  = useRef(null);
@@ -723,6 +742,8 @@ export default function BloomRingRenderer({
         mode={mode}
         breathDriver={breathDriver}
         palette={palette}
+        autoFit={autoFit}
+        fitFill={fitFill}
       />
 
       {/* TrailArc — sits before EffectComposer so Bloom picks it up */}
