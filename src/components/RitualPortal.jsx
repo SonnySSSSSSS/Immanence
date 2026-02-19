@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRitualStore } from '../state/ritualStore';
 import { RitualStepContainer } from './ritual/RitualStepContainer';
 import { RitualProgressBar } from './ritual/RitualProgressBar';
@@ -99,6 +99,8 @@ export function RitualPortal({ onComplete, onStop }) {
     const [showGuide, setShowGuide] = useState(true);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
+    // Stable performance.now() anchor for BreathingRing — created once on mount.
+    const breathStartTime = useRef(performance.now());
 
     useEffect(() => {
         if (status === 'idle') {
@@ -135,15 +137,14 @@ export function RitualPortal({ onComplete, onStop }) {
                     <div className="flex flex-col items-center gap-2 w-full">
                         {/* Breathing Ring - Visual only, no FX */}
                         <div className="scale-75">
-                            <BreathingRing 
+                            <BreathingRing
                                 breathPattern={{
                                     inhale: breathPattern.inhale,
                                     holdTop: breathPattern.hold1,
                                     exhale: breathPattern.exhale,
                                     holdBottom: breathPattern.hold2
                                 }}
-                                fxPreset="none"
-                                pathId={null}
+                                startTime={breathStartTime.current}
                                 onTap={null}
                                 onCycleComplete={null}
                             />

@@ -12,6 +12,9 @@ import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 import BloomRingRenderer from './bloomRing/BloomRingRenderer.jsx';
 import { PRODUCTION_RING_DEFAULTS, PRODUCTION_ACCENT } from './bloomRing/bloomRingProductionDefaults.js';
 
+// startTime is required and must be based on performance.now() so that
+// audio scheduling (Web Audio API) and the rAF animation loop share one
+// clock origin. Passing Date.now() will silently desync audio timing.
 export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null }) {
   const lockedPatternRef = useRef(null);
   const pendingPatternRef = useRef(null);
@@ -368,6 +371,35 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     ...PRODUCTION_RING_DEFAULTS,
     breathSpeed: (2 * Math.PI) / Math.max(0.5, inhale + holdTop + exhale + holdBottom),
   }), [inhale, holdTop, exhale, holdBottom]);
+
+  // DEV guard — must be after all hooks to satisfy Rules of Hooks.
+  // Fires once on mount and whenever startTime changes.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const now = performance.now();
+    if (startTime == null || !Number.isFinite(startTime)) {
+      console.error(
+        '[BreathingRing] startTime is required and must be a finite performance.now() timestamp. ' +
+        'The rAF loop and audio engine will not start without it.',
+        'Received:', startTime
+      );
+      return;
+    }
+    // Heuristic: flag timestamps that look like Date.now() or a stale value
+    if (startTime > now + 10_000 || startTime < now - 86_400_000) {
+      console.error(
+        '[BreathingRing] startTime looks wrong — expected a recent performance.now() value. ' +
+        'Using Date.now() instead of performance.now() will desync audio scheduling.',
+        'Received:', startTime, '| performance.now():', now,
+        '| diff (ms):', startTime - now
+      );
+    }
+  }, [startTime]);
+
+  // After all hooks: bail if startTime is absent so the rAF loop and audio
+  // engine never start with a missing clock anchor.
+  const startTimeValid = startTime != null && Number.isFinite(startTime);
+  if (!startTimeValid) return null;
 
   return (
     <div
