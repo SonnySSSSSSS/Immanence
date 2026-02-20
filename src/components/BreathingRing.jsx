@@ -445,7 +445,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   // engine never start with a missing clock anchor.
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   if (!startTimeValid) return null;
-  const ringSafePad = "clamp(28px, 4.5vmin, 56px)";
+  const ringSafePad = "clamp(16px, 2.5vmin, 30px)";
 
   return (
     <div
@@ -523,8 +523,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           position: "relative",
           overflow: "visible",
           isolation: "isolate",
-          // Target mobile portrait; let it grow on tall screens (e.g. 1080x1920) without pushing the Stop button off smaller viewports.
-          minHeight: "clamp(520px, 62vh, 980px)",
+          // Target mobile portrait; capped so STOP button always stays on-screen.
+          minHeight: "clamp(340px, 52vh, 600px)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -634,7 +634,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             className="relative"
             style={{
               position: "relative",
-              width: "min(72vw, 520px)",
+              width: "min(68vw, 420px)",
               aspectRatio: "1 / 1",
               overflow: "visible",
               marginTop: "6px",
