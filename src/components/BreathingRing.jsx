@@ -631,6 +631,9 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           style={{
             position: "absolute",
             inset: 0,
+            padding: "24px",
+            boxSizing: "border-box",
+            overflow: "visible",
             zIndex: 10,
             pointerEvents: "none",
           }}
