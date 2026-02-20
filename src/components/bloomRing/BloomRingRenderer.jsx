@@ -527,6 +527,7 @@ function RingScene({
   trailSpeed = 0.4,
   streakStrength = 0.20,
   streakLength = 0.65,
+  rayEnabled = false,
   godRayLightRef,
   raySunY,
   raySunZ,
@@ -943,6 +944,7 @@ export default function BloomRingRenderer({
         trailSpeed={trailSpeed}
         streakStrength={streakStrength}
         streakLength={streakLength}
+        rayEnabled={rayEnabled}
         godRayLightRef={godRayLightRef}
         raySunY={raySunY}
         raySunZ={raySunZ}
