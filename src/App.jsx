@@ -407,7 +407,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.178 - fix(breathing-ring): require startTime and wire RitualPortal
+  // v3.27.186 - feat(breathing-ring): energy rim (thin white rim + accent wedge) + confirm bloom renderer active
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
@@ -666,7 +666,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.178
+                        v3.27.186
                       </button>
                     </div>
                   </div>
@@ -905,4 +905,3 @@ function AppWithBoundary(props) {
 }
 
 export default AppWithBoundary;
-

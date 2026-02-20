@@ -92,6 +92,11 @@ const OUTER_RING_MAX_R = 1.12;
 const MAX_STREAK_X_SCALE = SCENE_MAX_RADIUS / OUTER_RING_MAX_R;
 const MAX_OCCLUDER_SCALE = SCENE_MAX_RADIUS / 1.8;
 
+// ─── Energy rim constants ─────────────────────────────────────────────────────
+const ENERGY_RIM_EXAGGERATE = true;    // Set false to tune down after approval
+const WEDGE_THETA_START     = Math.PI * 0.15;   // ~27° from right-axis (CCW)
+const WEDGE_THETA_LENGTH    = Math.PI * 0.60;   // ~108° arc span
+
 function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null, glowGain = 1.0 }) {
   const trailRef = useRef(null);
   const materialRef = useRef(null);
@@ -548,41 +553,15 @@ function RingScene({
 }) {
   const isAvatar = mode === 'avatar';
   const sceneRootRef   = useRef(null);
-  const coreRef        = useRef(null);
-  const shoulderRef    = useRef(null);
+  const ringGroupRef   = useRef(null);
   const reticleRef     = useRef(null);
   const avatarGlowRef  = useRef(null);
-  const orbitalOrbRef  = useRef(null);
-  const baseShoulderOpacity = 0.35;
+  const orbitalOrbRef    = useRef(null);
+  const wedgeMaterialRef = useRef(null);
+  const wedgeHaloRef     = useRef(null);
   const RETICLE_OPACITY_SCALE = 0.82;
   const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
   const orbAccentLin = useMemo(() => hexToLin(accentColor), [accentColor]);
-
-  const coreRingGeom = useMemo(() => {
-    // Spatial, deterministic modulation to de-vector the rim.
-    // No per-frame allocations: geometry + color attribute created once per accent.
-    const g = new THREE.RingGeometry(0.98, 1.05, 128);
-    const pos = g.attributes.position;
-    const colors = new Float32Array(pos.count * 3);
-    const twoPi = Math.PI * 2;
-    const base = tintLin(hexToLin(accentColor), 0.25); // matches palette.coreHot intent in linear
-
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const theta = Math.atan2(y, x); // [-pi, pi]
-      const u = (theta + Math.PI) / twoPi; // [0,1]
-      const p = u * twoPi;
-      const m = 0.88 + 0.12 * (0.5 + 0.5 * Math.sin(p * 7.0 + Math.sin(p * 3.0) * 0.6));
-
-      colors[i * 3 + 0] = base.r * m;
-      colors[i * 3 + 1] = base.g * m;
-      colors[i * 3 + 2] = base.b * m;
-    }
-
-    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    return g;
-  }, [accentColor]);
 
   useFrame(({ clock, viewport }, delta) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
@@ -606,13 +585,7 @@ function RingScene({
     }
 
     const scaleAmount = 1 + 0.015 * w;
-    if (coreRef.current)     coreRef.current.scale.set(scaleAmount, scaleAmount, 1);
-    if (shoulderRef.current) shoulderRef.current.scale.set(scaleAmount, scaleAmount, 1);
-
-    if (shoulderRef.current) {
-      const opacityPulse = baseShoulderOpacity + 0.08 * w;
-      shoulderRef.current.material.opacity = Math.max(0.15, opacityPulse);
-    }
+    if (ringGroupRef.current) ringGroupRef.current.scale.set(scaleAmount, scaleAmount, 1);
 
     if (reticleRef.current) {
       const reticleOpacityMod = 1.0 + 0.025 * w;
@@ -663,6 +636,24 @@ function RingScene({
         Math.sin(orbitalAngle) * ARC_RADIUS,
         0
       );
+    }
+
+    // Energy wedge: breathing-synced brightness modulation (no rotation)
+    if (wedgeMaterialRef.current) {
+      const flicker = 0.93 + 0.07 * Math.sin(clock.elapsedTime * 1.8);
+      let phaseBoost = 1.0;
+      if (breathDriver) {
+        const { phase, phaseProgress01: pp } = breathDriver;
+        const ep = easeInOut(pp ?? 0);
+        if (phase === 'inhale')       phaseBoost = 0.55 + ep * 0.45;
+        else if (phase === 'holdTop') phaseBoost = 1.0;
+        else if (phase === 'exhale')  phaseBoost = 1.0 - ep * 0.38;
+        else                          phaseBoost = 0.62;
+      }
+      const baseOp = ENERGY_RIM_EXAGGERATE ? 0.82 : 0.50;
+      const haloOp = ENERGY_RIM_EXAGGERATE ? 0.42 : 0.18;
+      wedgeMaterialRef.current.opacity = baseOp * phaseBoost * flicker;
+      if (wedgeHaloRef.current) wedgeHaloRef.current.opacity = haloOp * phaseBoost * flicker;
     }
 
     if (isAvatar && avatarGlowRef.current) {
@@ -727,34 +718,64 @@ function RingScene({
         />
       )}
 
-      {/* Soft shoulder ring — non-avatar only */}
+      {/* Energy rim — non-avatar only */}
       {!isAvatar && (
-        <mesh ref={shoulderRef} position={[0, 0, 0]}>
-          <ringGeometry args={[0.92, 1.12, 128]} />
-          <meshBasicMaterial color={accentColor} transparent opacity={baseShoulderOpacity} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </mesh>
-      )}
-
-      {/* Hot core ring — non-avatar only */}
-      {!isAvatar && (
-        <mesh ref={coreRef} position={[0, 0, 0.01]}>
-          <primitive object={coreRingGeom} attach="geometry" />
-          <meshBasicMaterial vertexColors toneMapped={false} />
-        </mesh>
-      )}
-
-      {/* Outer companion rings — non-avatar only */}
-      {!isAvatar && (
-        <>
-          <mesh position={[0, 0, -0.002]}>
-            <ringGeometry args={[0.90, 0.915, 128]} />
-            <meshBasicMaterial color={accentColor} transparent opacity={0.05} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        <group ref={ringGroupRef} position={[0, 0, 0]}>
+          {/* A) Inner void disc: near-black fill, masks background bleed */}
+          <mesh position={[0, 0, -0.003]}>
+            <circleGeometry args={[0.955, 128]} />
+            <meshBasicMaterial color="#020409" toneMapped={false} />
           </mesh>
-          <mesh position={[0, 0, -0.002]}>
-            <ringGeometry args={[1.08, 1.095, 128]} />
-            <meshBasicMaterial color={accentColor} transparent opacity={0.05} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+
+          {/* B) Thin white rim (crisp primary identity, normal blending) */}
+          <mesh position={[0, 0, 0.001]}>
+            <ringGeometry args={[0.964, 0.978, 128]} />
+            <meshBasicMaterial
+              color="#ffffff"
+              transparent
+              opacity={1.0}
+              blending={THREE.NormalBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
           </mesh>
-        </>
+
+          {/* C1) Energy wedge — wide soft halo (additive, behind core wedge) */}
+          <mesh position={[0, 0, 0.0005]}>
+            <ringGeometry args={[
+              ENERGY_RIM_EXAGGERATE ? 0.932 : 0.945,
+              ENERGY_RIM_EXAGGERATE ? 1.012 : 0.997,
+              64, 1, WEDGE_THETA_START, WEDGE_THETA_LENGTH
+            ]} />
+            <meshBasicMaterial
+              ref={wedgeHaloRef}
+              color={palette?.core ?? accentColor}
+              transparent
+              opacity={ENERGY_RIM_EXAGGERATE ? 0.42 : 0.18}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+
+          {/* C2) Energy wedge — core arc ("violent energy", additive) */}
+          <mesh position={[0, 0, 0.002]}>
+            <ringGeometry args={[
+              ENERGY_RIM_EXAGGERATE ? 0.950 : 0.960,
+              ENERGY_RIM_EXAGGERATE ? 0.992 : 0.980,
+              64, 1, WEDGE_THETA_START, WEDGE_THETA_LENGTH
+            ]} />
+            <meshBasicMaterial
+              ref={wedgeMaterialRef}
+              color={palette?.coreHot ?? accentColor}
+              transparent
+              opacity={ENERGY_RIM_EXAGGERATE ? 0.82 : 0.50}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
       )}
 
       {/* Orbital sun (layered additive falloff) — non-avatar only */}
@@ -901,6 +922,7 @@ export default function BloomRingRenderer({
       // Hex strings for R3F material color props:
       core:          linToHex(a),                  // pure accent (≈ accentColor)
       coreHot:       linToHex(tintLin(a, 0.25)),   // +25% toward white — bright core/nucleus
+      ringTeal:      linToHex(shadeLin(a, 0.30)),  // muted ring body for dual-ring profile
       aperture:      linToHex(shadeLin(a, 0.10)),  // slight shade — depth, not pastel
       nucleus:       linToHex(tintLin(a, 0.30)),   // +30% tint — glow center
       reticle:       linToHex(shadeLin(a, 0.05)),  // slight shade — thin lines read cleaner

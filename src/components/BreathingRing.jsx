@@ -10,12 +10,15 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import { EnsoStroke } from "./EnsoStroke";
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 import BloomRingRenderer from './bloomRing/BloomRingRenderer.jsx';
-import { PRODUCTION_RING_DEFAULTS, PRODUCTION_ACCENT } from './bloomRing/bloomRingProductionDefaults.js';
+import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefaults.js';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 // startTime is required and must be based on performance.now() so that
 // audio scheduling (Web Audio API) and the rAF animation loop share one
 // clock origin. Passing Date.now() will silently desync audio timing.
 export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null }) {
+  const theme = useTheme();
+  const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
   const lockedPatternRef = useRef(null);
   const pendingPatternRef = useRef(null);
   const incomingPatternRef = useRef(breathPattern);
@@ -614,6 +617,18 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             justifyContent: "center",
           }}
         >
+          {/* DEV: confirm active renderer */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div style={{
+              position: 'absolute', top: 8, left: 8, zIndex: 9999,
+              background: 'rgba(0,0,0,0.72)', color: '#00ff88',
+              fontFamily: 'monospace', fontSize: '11px',
+              padding: '3px 8px', borderRadius: '3px',
+              letterSpacing: '0.06em', pointerEvents: 'none',
+            }}>
+              BLOOM RING ACTIVE
+            </div>
+          )}
           {/* Ring stage */}
           <div
             className="relative"
@@ -659,7 +674,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         >
           <BloomRingRenderer
             params={productionParams}
-            accentColor={PRODUCTION_ACCENT}
+            accentColor={liveAccentColor}
             mode="production"
             style={{ width: '100%', height: '100%', display: 'block' }}
           />
