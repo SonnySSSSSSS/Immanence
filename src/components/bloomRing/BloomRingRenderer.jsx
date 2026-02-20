@@ -16,7 +16,7 @@
 
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, GodRays } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
@@ -83,19 +83,125 @@ const MAX_TRAIL   = 80;
 const MAX_SPARKLE = 40;
 const ARC_RADIUS  = 1.05;  // core ring outer rim alignment
 const ARC_SPAN    = Math.PI * 0.65;  // ~117° tail
+const ENERGY_CORE_INNER = 0.952;
+const ENERGY_CORE_OUTER = 0.962;
+const ENERGY_BAND_INNER = 0.968;
+const ENERGY_BAND_OUTER = 1.032;
+const ENERGY_GLOW_INNER = 0.964;
+const ENERGY_GLOW_OUTER = 1.084;
 
 // The farthest point any geometry reaches in RingScene local space.
 // Crosshair verticals: center y=1.50, half-height 0.275 → tip at 1.775.
 // Used by autoFit to compute a camera-independent uniform scale each frame.
 const SCENE_MAX_RADIUS = 1.80;
-const OUTER_RING_MAX_R = 1.12;
-const MAX_STREAK_X_SCALE = SCENE_MAX_RADIUS / OUTER_RING_MAX_R;
 const MAX_OCCLUDER_SCALE = SCENE_MAX_RADIUS / 1.8;
 
-// ─── Energy rim constants ─────────────────────────────────────────────────────
-const ENERGY_RIM_EXAGGERATE = true;    // Set false to tune down after approval
-const WEDGE_THETA_START     = Math.PI * 0.15;   // ~27° from right-axis (CCW)
-const WEDGE_THETA_LENGTH    = Math.PI * 0.60;   // ~108° arc span
+// Production mode: ring-only scene (no reticle/crosshairs extending to 1.80).
+const SCENE_MAX_RADIUS_PRODUCTION = 1.12;
+
+// ─── Energy band GLSL ────────────────────────────────────────────────────────
+const ENERGY_BAND_VERT = /* glsl */`
+uniform float uTime;
+uniform float uBreathIntensity;
+uniform float uInnerRadius;
+uniform float uOuterRadius;
+
+varying float vTheta;
+varying float vRadialT;
+
+float hash1(float x) {
+  return fract(sin(x * 127.1) * 43758.5453123);
+}
+
+float noise1(float x) {
+  float i = floor(x);
+  float f = fract(x);
+  float u = f * f * (3.0 - 2.0 * f);
+  return mix(hash1(i), hash1(i + 1.0), u);
+}
+
+void main() {
+  vec3 p = position;
+  float r = length(p.xy);
+  float theta = atan(p.y, p.x);
+  float t = clamp((r - uInnerRadius) / max(0.0001, (uOuterRadius - uInnerRadius)), 0.0, 1.0);
+
+  // Clockwise energy crawl with slight edge turbulence.
+  float n = noise1((theta + 3.14159265) * 5.5 - uTime * 0.55);
+  float spikes = smoothstep(0.82, 0.99, n);
+  float edgeBias = 0.40 + 0.60 * t;
+  // Middle-hybrid tuning: scale existing distortion coefficients down (~35%).
+  float noiseDistort = ((n - 0.5) * 0.0065 + spikes * 0.0052) * edgeBias;
+
+  // Breath thickens on inhale and tightens on exhale.
+  float breathThick = mix(-0.0035, 0.0045, clamp(uBreathIntensity, 0.0, 1.0));
+  float side = mix(-1.0, 1.0, t);
+  float dr = noiseDistort + side * breathThick;
+
+  vec2 dir = normalize(p.xy);
+  p.xy += dir * dr;
+
+  vTheta = theta;
+  vRadialT = t;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+}
+`;
+
+const ENERGY_BAND_FRAG = /* glsl */`
+uniform float uTime;
+uniform vec3 uAccentColor;
+uniform float uBreathIntensity;
+
+varying float vTheta;
+varying float vRadialT;
+
+float hash1(float x) {
+  return fract(sin(x * 127.1) * 43758.5453123);
+}
+
+float noise1(float x) {
+  float i = floor(x);
+  float f = fract(x);
+  float u = f * f * (3.0 - 2.0 * f);
+  return mix(hash1(i), hash1(i + 1.0), u);
+}
+
+void main() {
+  float breath = clamp(uBreathIntensity, 0.0, 1.0);
+
+  // Base band field (coherent crawl)
+  float n = noise1((vTheta + 3.14159265) * 6.3 - uTime * 0.62);
+  float spikes = smoothstep(0.74, 0.985, n);
+  float contrast = mix(0.52, 1.20, breath);
+  float band = clamp(0.5 + (n - 0.5) * contrast, 0.0, 1.0);
+
+  // Single flicker term (alive without layer soup)
+  float flicker = 0.972 + 0.025 * sin(uTime * 6.3 + vTheta * 2.2);
+
+  // Band mask — hard containment, minimal feather
+  float edgeMask = smoothstep(0.02, 0.12, vRadialT) * (1.0 - smoothstep(0.92, 1.0, vRadialT));
+
+  // Electric crackle: rare, thin sparks anchored to outer edge
+  float edgeOuter = smoothstep(0.78, 0.98, vRadialT);
+  float sparkField = noise1((vTheta + 3.14159265) * 18.0 + floor(uTime * 6.0));
+  float sparkGate = step(0.92, sparkField);
+  float tt = fract(uTime * 6.0);
+  float sparkPulse = smoothstep(0.0, 0.12, tt) * (1.0 - smoothstep(0.55, 1.0, tt));
+  float spark = sparkGate * sparkPulse * edgeOuter;
+
+  // Alpha: calmer base; sparks punch through
+  float alpha = (0.18 + band * 0.62 + spikes * 0.18) * edgeMask;
+  alpha += spark * (0.22 + 0.10 * breath);
+  alpha = clamp(alpha, 0.06, 1.0);
+
+  // Brightness: cohesive band + spike pressure + spark flash
+  float brightness = (0.85 + band * 1.45 + spikes * (1.25 + 0.40 * breath)) * flicker;
+  brightness += spark * (2.8 + 1.2 * breath);
+
+  vec3 color = uAccentColor * brightness;
+  gl_FragColor = vec4(color, alpha);
+}
+`;
 
 function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null, glowGain = 1.0 }) {
   const trailRef = useRef(null);
@@ -557,11 +663,20 @@ function RingScene({
   const reticleRef     = useRef(null);
   const avatarGlowRef  = useRef(null);
   const orbitalOrbRef    = useRef(null);
-  const wedgeMaterialRef = useRef(null);
-  const wedgeHaloRef     = useRef(null);
+  const energyBandMatRef = useRef(null);
+  const energyGlowRef    = useRef(null);
   const RETICLE_OPACITY_SCALE = 0.82;
   const occluderScaleClamped = Math.min(occluderScale, MAX_OCCLUDER_SCALE);
   const orbAccentLin = useMemo(() => hexToLin(accentColor), [accentColor]);
+
+  // Energy band shader uniforms (created once, updated per-frame)
+  const energyUniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uAccentColor: { value: new THREE.Color(accentColor) },
+    uBreathIntensity: { value: 0.5 },
+    uInnerRadius: { value: ENERGY_BAND_INNER },
+    uOuterRadius: { value: ENERGY_BAND_OUTER },
+  }), [accentColor]);
 
   useFrame(({ clock, viewport }, delta) => {
     // t is always computed for secondary time-based effects (driftPhase, inner
@@ -584,10 +699,20 @@ function RingScene({
       w = Math.sin(t);
     }
 
-    const scaleAmount = 1 + 0.015 * w;
-    if (ringGroupRef.current) ringGroupRef.current.scale.set(scaleAmount, scaleAmount, 1);
+    let bI = 0.5;
+    if (breathDriver) {
+      const { phase, phaseProgress01: pp } = breathDriver;
+      const ep = easeInOut(pp ?? 0);
+      if (phase === 'inhale')       bI = ep;
+      else if (phase === 'holdTop') bI = 1.0;
+      else if (phase === 'exhale')  bI = 1.0 - ep;
+      else                          bI = 0.0;
+    } else {
+      bI = Math.max(0, Math.min(1, (w + 1) * 0.5));
+    }
 
-    if (reticleRef.current) {
+    // Reticle opacity modulation — lab/avatar only (production hides reticle)
+    if (mode !== 'production' && reticleRef.current) {
       const reticleOpacityMod = 1.0 + 0.025 * w;
       reticleRef.current.children.forEach((line) => {
         line.children.forEach((mesh, meshIndex) => {
@@ -600,7 +725,7 @@ function RingScene({
     }
 
     let orbitalAngle = (clock.elapsedTime * trailSpeed) % (Math.PI * 2);
-    if (orbitalAngleRef) {
+    if (mode !== 'production' && orbitalAngleRef) {
       if (!Number.isFinite(orbitalAngleRef.current)) orbitalAngleRef.current = orbitalAngle;
       if (breathDriver) {
         const phaseDurationSec = breathDriver?.phaseDurationSec;
@@ -630,7 +755,7 @@ function RingScene({
       orbitalAngle = orbitalAngleRef.current;
     }
 
-    if (orbitalOrbRef.current) {
+    if (mode !== 'production' && orbitalOrbRef.current) {
       orbitalOrbRef.current.position.set(
         Math.cos(orbitalAngle) * ARC_RADIUS,
         Math.sin(orbitalAngle) * ARC_RADIUS,
@@ -638,22 +763,15 @@ function RingScene({
       );
     }
 
-    // Energy wedge: breathing-synced brightness modulation (no rotation)
-    if (wedgeMaterialRef.current) {
-      const flicker = 0.93 + 0.07 * Math.sin(clock.elapsedTime * 1.8);
-      let phaseBoost = 1.0;
-      if (breathDriver) {
-        const { phase, phaseProgress01: pp } = breathDriver;
-        const ep = easeInOut(pp ?? 0);
-        if (phase === 'inhale')       phaseBoost = 0.55 + ep * 0.45;
-        else if (phase === 'holdTop') phaseBoost = 1.0;
-        else if (phase === 'exhale')  phaseBoost = 1.0 - ep * 0.38;
-        else                          phaseBoost = 0.62;
-      }
-      const baseOp = ENERGY_RIM_EXAGGERATE ? 0.82 : 0.50;
-      const haloOp = ENERGY_RIM_EXAGGERATE ? 0.42 : 0.18;
-      wedgeMaterialRef.current.opacity = baseOp * phaseBoost * flicker;
-      if (wedgeHaloRef.current) wedgeHaloRef.current.opacity = haloOp * phaseBoost * flicker;
+    // Energy band: update shader uniforms per-frame
+    if (energyBandMatRef.current) {
+      energyBandMatRef.current.uniforms.uTime.value = clock.elapsedTime;
+      energyBandMatRef.current.uniforms.uAccentColor.value.set(accentColor);
+      energyBandMatRef.current.uniforms.uBreathIntensity.value = bI;
+    }
+    if (energyGlowRef.current?.material) {
+      const flicker = 0.972 + 0.025 * Math.sin(clock.elapsedTime * 5.4);
+      energyGlowRef.current.material.opacity = (0.24 + 0.22 * bI) * flicker;
     }
 
     if (isAvatar && avatarGlowRef.current) {
@@ -674,7 +792,8 @@ function RingScene({
     if (autoFit && sceneRootRef.current) {
       const minV = Math.min(viewport.width, viewport.height);
       if (isFinite(minV) && minV > 0) {
-        sceneRootRef.current.scale.setScalar((minV * fitFill) / 2 / SCENE_MAX_RADIUS);
+        const maxR = mode === 'production' ? SCENE_MAX_RADIUS_PRODUCTION : SCENE_MAX_RADIUS;
+        sceneRootRef.current.scale.setScalar((minV * fitFill) / 2 / maxR);
       }
     }
   });
@@ -718,75 +837,62 @@ function RingScene({
         />
       )}
 
-      {/* Energy rim — non-avatar only */}
+      {/* Plasma containment ring — non-avatar only */}
       {!isAvatar && (
         <group ref={ringGroupRef} position={[0, 0, 0]}>
-          {/* A) Inner void disc: near-black fill, masks background bleed */}
-          <mesh position={[0, 0, -0.003]}>
-            <circleGeometry args={[0.955, 128]} />
-            <meshBasicMaterial color="#020409" toneMapped={false} />
+          {/* Layer C: tight glow — lab/avatar only (production relies on Bloom for glow) */}
+          {mode !== "production" && (
+            <mesh ref={energyGlowRef} position={[0, 0, -0.001]}>
+              <ringGeometry args={[ENERGY_GLOW_INNER, ENERGY_GLOW_OUTER, 192]} />
+              <meshBasicMaterial
+                color={accentColor}
+                transparent
+                opacity={0.28}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+                toneMapped={false}
+              />
+            </mesh>
+          )}
+
+          {/* Layer B: noisy energy band */}
+          <mesh position={[0, 0, 0.001]}>
+            <ringGeometry args={[ENERGY_BAND_INNER, ENERGY_BAND_OUTER, 256]} />
+            <shaderMaterial
+              ref={energyBandMatRef}
+              vertexShader={ENERGY_BAND_VERT}
+              fragmentShader={ENERGY_BAND_FRAG}
+              uniforms={energyUniforms}
+              transparent
+              depthWrite={false}
+              toneMapped={false}
+              blending={THREE.AdditiveBlending}
+            />
           </mesh>
 
-          {/* B) Thin white rim (crisp primary identity, normal blending) */}
-          <mesh position={[0, 0, 0.001]}>
-            <ringGeometry args={[0.964, 0.978, 128]} />
+          {/* Layer A: white-hot core ring */}
+          <mesh position={[0, 0, 0.002]}>
+            <ringGeometry args={[ENERGY_CORE_INNER, ENERGY_CORE_OUTER, 192]} />
             <meshBasicMaterial
               color="#ffffff"
-              transparent
-              opacity={1.0}
+              transparent={false}
               blending={THREE.NormalBlending}
-              depthWrite={false}
-              toneMapped={false}
-            />
-          </mesh>
-
-          {/* C1) Energy wedge — wide soft halo (additive, behind core wedge) */}
-          <mesh position={[0, 0, 0.0005]}>
-            <ringGeometry args={[
-              ENERGY_RIM_EXAGGERATE ? 0.932 : 0.945,
-              ENERGY_RIM_EXAGGERATE ? 1.012 : 0.997,
-              64, 1, WEDGE_THETA_START, WEDGE_THETA_LENGTH
-            ]} />
-            <meshBasicMaterial
-              ref={wedgeHaloRef}
-              color={palette?.core ?? accentColor}
-              transparent
-              opacity={ENERGY_RIM_EXAGGERATE ? 0.42 : 0.18}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              toneMapped={false}
-            />
-          </mesh>
-
-          {/* C2) Energy wedge — core arc ("violent energy", additive) */}
-          <mesh position={[0, 0, 0.002]}>
-            <ringGeometry args={[
-              ENERGY_RIM_EXAGGERATE ? 0.950 : 0.960,
-              ENERGY_RIM_EXAGGERATE ? 0.992 : 0.980,
-              64, 1, WEDGE_THETA_START, WEDGE_THETA_LENGTH
-            ]} />
-            <meshBasicMaterial
-              ref={wedgeMaterialRef}
-              color={palette?.coreHot ?? accentColor}
-              transparent
-              opacity={ENERGY_RIM_EXAGGERATE ? 0.82 : 0.50}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
+              depthWrite={true}
               toneMapped={false}
             />
           </mesh>
         </group>
       )}
 
-      {/* Orbital sun (layered additive falloff) — non-avatar only */}
-      {!isAvatar && (
+      {/* Orbital sun (layered additive falloff) — lab only */}
+      {!isAvatar && mode !== 'production' && (
         <group ref={orbitalOrbRef} position={[ARC_RADIUS, 0, 0]}>
           <OrbVisual colorLin={orbAccentLin} glowGain={glowGain} />
         </group>
       )}
 
-      {/* Halo band (particulate, non-stroke) — non-avatar only */}
-      {!isAvatar && streakStrength > 0 && (
+      {/* Halo band (particulate, non-stroke) — lab only */}
+      {!isAvatar && mode !== 'production' && streakStrength > 0 && (
         <HaloBand
           enabled={streakStrength > 0}
           intensity={streakStrength}
@@ -796,8 +902,8 @@ function RingScene({
         />
       )}
 
-      {/* Reticle geometry — non-avatar only */}
-      {!isAvatar && (
+      {/* Reticle geometry — lab only */}
+      {!isAvatar && mode !== 'production' && (
         <group ref={reticleRef} position={[0, 0, -0.005]}>
           <group>
             {[
@@ -922,7 +1028,6 @@ export default function BloomRingRenderer({
       // Hex strings for R3F material color props:
       core:          linToHex(a),                  // pure accent (≈ accentColor)
       coreHot:       linToHex(tintLin(a, 0.25)),   // +25% toward white — bright core/nucleus
-      ringTeal:      linToHex(shadeLin(a, 0.30)),  // muted ring body for dual-ring profile
       aperture:      linToHex(shadeLin(a, 0.10)),  // slight shade — depth, not pastel
       nucleus:       linToHex(tintLin(a, 0.30)),   // +30% tint — glow center
       reticle:       linToHex(shadeLin(a, 0.05)),  // slight shade — thin lines read cleaner
@@ -986,8 +1091,8 @@ export default function BloomRingRenderer({
         fitFill={fitFill}
       />
 
-      {/* TrailArc — sits before EffectComposer so Bloom picks it up */}
-      {!isAvatar && (
+      {/* TrailArc — lab only (production strips all decorations) */}
+      {!isAvatar && mode !== 'production' && (
         <TrailArc
           enabled={trailEnabled}
           trailLin={palette.trailLin}
@@ -1017,16 +1122,16 @@ export default function BloomRingRenderer({
           />
         )}
 
-        {/* Tight bloom (crisp ring edges) */}
+        {/* Tight bloom — production: high intensity, small radius for energy glow */}
         <Bloom
-          intensity={isAvatar ? 0.6 : cappedBloomStrength * 0.8}
-          radius={isAvatar ? 0.5 : Math.min(bloomRadius, 0.35)}
-          luminanceThreshold={isAvatar ? 0.1 : Math.max(bloomThreshold, 0.45)}
+          intensity={isAvatar ? 0.6 : (mode === 'production' ? 1.9 : cappedBloomStrength * 0.8)}
+          radius={isAvatar ? 0.5 : (mode === 'production' ? 0.14 : Math.min(bloomRadius, 0.35))}
+          luminanceThreshold={isAvatar ? 0.1 : (mode === 'production' ? 0.32 : Math.max(bloomThreshold, 0.45))}
           luminanceSmoothing={isAvatar ? 0.4 : 0.015}
         />
 
-        {/* Wide bloom — non-avatar only */}
-        {!isAvatar && (
+        {/* Wide bloom — lab only */}
+        {!isAvatar && mode !== 'production' && (
           <Bloom
             intensity={cappedBloomStrength * 0.3}
             radius={0.65}
@@ -1035,8 +1140,8 @@ export default function BloomRingRenderer({
           />
         )}
 
-        {/* Streak bloom — non-avatar, param-gated */}
-        {!isAvatar && streakStrength > 0 && (
+        {/* Streak bloom — lab only */}
+        {!isAvatar && mode !== 'production' && streakStrength > 0 && (
           <Bloom
             intensity={streakStrength * 1.5}
             radius={streakLength * 2.0}
@@ -1045,18 +1150,13 @@ export default function BloomRingRenderer({
           />
         )}
 
-        {/* Film grain — non-avatar only */}
-        {!isAvatar && (
-          <Noise opacity={0.035} premultiply blendFunction={BlendFunction.OVERLAY} />
-        )}
-
-        {/* Chromatic aberration — non-avatar only */}
-        {!isAvatar && (
+        {/* Chromatic aberration — lab only */}
+        {!isAvatar && mode !== 'production' && (
           <ChromaticAberration offset={[0.0012, 0.0005]} radialModulation={true} modulationOffset={0.15} />
         )}
 
-        {/* Vignette — non-avatar only */}
-        {!isAvatar && (
+        {/* Vignette — lab only */}
+        {!isAvatar && mode !== 'production' && (
           <Vignette eskil={false} offset={0.25} darkness={0.45} />
         )}
       </EffectComposer>
