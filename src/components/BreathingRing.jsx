@@ -442,6 +442,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   // engine never start with a missing clock anchor.
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   if (!startTimeValid) return null;
+  const ringSafePad = "clamp(28px, 4.5vmin, 56px)";
 
   return (
     <div
@@ -517,7 +518,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           backdropFilter: "none",
           WebkitBackdropFilter: "none",
           position: "relative",
-          overflow: "hidden",
+          overflow: "visible",
           isolation: "isolate",
           // Target mobile portrait; let it grow on tall screens (e.g. 1080x1920) without pushing the Stop button off smaller viewports.
           minHeight: "clamp(520px, 62vh, 980px)",
@@ -527,89 +528,109 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           justifyContent: "center",
         }}
       >
-        {/* Layer 1: nebula background */}
+        {/* Background layer: clipped visuals only */}
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 0,
+            overflow: "hidden",
+            borderRadius: 0,
             pointerEvents: "none",
-            backgroundImage: `url(${nebulaBgUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            transform: "scale(1.03)",
-            filter: "saturate(1.15) contrast(1.05) brightness(0.78)",
           }}
-        />
-        {/* Single vignette source (practice compositing): keep extremely subtle */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            pointerEvents: "none",
-            background:
-              "radial-gradient(circle at 50% 40%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.42) 100%)",
-            opacity: 0.55,
-          }}
-        />
-        {/* Layer 2 (optional placeholder): subject photo layer (wired, off by default) */}
-        {showSubjectPhotoLayer && (
+        >
+          {/* Layer 1: nebula background */}
           <div
             aria-hidden="true"
             style={{
               position: "absolute",
               inset: 0,
-              zIndex: 2,
+              zIndex: 0,
               pointerEvents: "none",
-              display: "none",
-              backgroundPosition: "center",
+              backgroundImage: `url(${nebulaBgUrl})`,
               backgroundSize: "cover",
+              backgroundPosition: "center",
+              transform: "scale(1.03)",
+              filter: "saturate(1.15) contrast(1.05) brightness(0.78)",
             }}
           />
-        )}
-        {/* Layer 1.5: subtle grain on background only */}
+          {/* Single vignette source (practice compositing): keep extremely subtle */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 1,
+              pointerEvents: "none",
+              background:
+                "radial-gradient(circle at 50% 40%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.42) 100%)",
+              opacity: 0.55,
+            }}
+          />
+          {/* Layer 2 (optional placeholder): subject photo layer (wired, off by default) */}
+          {showSubjectPhotoLayer && (
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 2,
+                pointerEvents: "none",
+                display: "none",
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+              }}
+            />
+          )}
+          {/* Layer 1.5: subtle grain on background only */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 3,
+              pointerEvents: "none",
+              backgroundImage: `url(${grainBgUrl})`,
+              backgroundSize: "420px 420px",
+              backgroundRepeat: "repeat",
+              opacity: 0.055,
+              mixBlendMode: "overlay",
+            }}
+          />
+        </div>
+
+        {/* Overlay layer: never clipped */}
         <div
-          aria-hidden="true"
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 3,
+            zIndex: 10,
+            overflow: "visible",
             pointerEvents: "none",
-            backgroundImage: `url(${grainBgUrl})`,
-            backgroundSize: "420px 420px",
-            backgroundRepeat: "repeat",
-            opacity: 0.055,
-            mixBlendMode: "overlay",
-          }}
-        />
-
-        {/* Ring stage */}
-        <div
-          className="relative z-10"
-          style={{
-            position: "relative",
-            width: "320px",
-            height: "320px",
-            padding: "24px",
-            boxSizing: "border-box",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            marginTop: "6px",
           }}
-          >
-          {/* Inner stage: padding-buffered to avoid practice-layout crop (plate overflow hidden) */}
+        >
+          {/* Ring stage */}
           <div
+            className="relative"
             style={{
               position: "relative",
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              width: "min(72vw, 520px)",
+              aspectRatio: "1 / 1",
+              overflow: "visible",
+              marginTop: "6px",
+            }}
+          >
+          {/* Safe drawing box: expands renderer region beyond layout box */}
+          <div
+            style={{
+              position: "absolute",
+              inset: `calc(-1 * ${ringSafePad})`,
+              overflow: "visible",
             }}
           >
             {/* Contrast window (atmospheric, not a plate): improves halo band separation from nebula */}
@@ -617,7 +638,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               aria-hidden="true"
               style={{
                 position: "absolute",
-                inset: 0,
+                inset: ringSafePad,
                 zIndex: 6,
                 pointerEvents: "none",
                 background:
@@ -631,8 +652,6 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           style={{
             position: "absolute",
             inset: 0,
-            padding: "24px",
-            boxSizing: "border-box",
             overflow: "visible",
             zIndex: 10,
             pointerEvents: "none",
@@ -772,6 +791,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             </div>
           </div>
         )}
+      </div>
       </div>
 
       <style>{`
