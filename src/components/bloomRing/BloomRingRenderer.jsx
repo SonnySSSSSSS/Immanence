@@ -216,47 +216,112 @@ function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, sp
 
 function OrbVisual({ colorLin, glowGain, z = 0.02 }) {
   const base = linToHex(colorLin);
+  const coreRef = useRef(null);
+  const midRef = useRef(null);
+  const haloRef = useRef(null);
+
+  const softMap = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    const c = size * 0.5;
+    const g = ctx.createRadialGradient(c, c, 0, c, c, c);
+    g.addColorStop(0.00, 'rgba(255,255,255,1.00)');
+    g.addColorStop(0.28, 'rgba(255,255,255,0.78)');
+    g.addColorStop(0.62, 'rgba(255,255,255,0.18)');
+    g.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+
+    if (coreRef.current) {
+      coreRef.current.position.set(
+        Math.sin(t * 1.7) * 0.0009,
+        Math.cos(t * 1.3) * 0.0008,
+        0
+      );
+      const s = 0.12 * (0.98 + 0.02 * Math.sin(t * 2.3));
+      coreRef.current.scale.set(s, s, 1);
+      if (coreRef.current.material) coreRef.current.material.rotation = Math.sin(t * 0.7) * 0.06;
+    }
+
+    if (midRef.current) {
+      midRef.current.position.set(
+        Math.sin(t * 0.9 + 1.7) * 0.0016,
+        Math.cos(t * 1.1 + 0.9) * 0.0014,
+        0
+      );
+      const s = 0.25 * (0.985 + 0.015 * Math.sin(t * 1.5 + 0.4));
+      midRef.current.scale.set(s, s, 1);
+      if (midRef.current.material) midRef.current.material.rotation = Math.sin(t * 0.55 + 0.8) * 0.09;
+    }
+
+    if (haloRef.current) {
+      haloRef.current.position.set(
+        Math.sin(t * 0.6 + 2.2) * 0.0032,
+        Math.cos(t * 0.8 + 1.1) * 0.0028,
+        0
+      );
+      const s = 0.66 * (0.985 + 0.015 * Math.sin(t * 1.1 + 1.2));
+      haloRef.current.scale.set(s, s, 1);
+      if (haloRef.current.material) haloRef.current.material.rotation = Math.sin(t * 0.33 + 2.1) * 0.13;
+    }
+  });
 
   return (
     <group position={[0, 0, z]}>
-      {/* Core */}
-      <mesh>
-        <circleGeometry args={[0.035, 64]} />
-        <meshBasicMaterial
+      <sprite ref={coreRef} scale={[0.12, 0.12, 1]}>
+        <spriteMaterial
+          map={softMap}
           color={base}
           transparent
-          opacity={0.85}
+          opacity={0.88}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
         />
-      </mesh>
+      </sprite>
 
-      {/* Mid falloff */}
-      <mesh>
-        <circleGeometry args={[0.09, 64]} />
-        <meshBasicMaterial
+      <sprite ref={midRef} scale={[0.25, 0.25, 1]}>
+        <spriteMaterial
+          map={softMap}
           color={base}
           transparent
-          opacity={0.18 * glowGain}
+          opacity={0.22 * glowGain}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
         />
-      </mesh>
+      </sprite>
 
-      {/* Outer halo (this is what makes it glow) */}
-      <mesh>
-        <circleGeometry args={[0.28, 64]} />
-        <meshBasicMaterial
+      <sprite ref={haloRef} scale={[0.66, 0.66, 1]}>
+        <spriteMaterial
+          map={softMap}
           color={base}
           transparent
-          opacity={0.07 * glowGain}
+          opacity={0.08 * glowGain}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
         />
-      </mesh>
+      </sprite>
     </group>
   );
 }
