@@ -179,13 +179,13 @@ void main() {
   float flicker = 0.972 + 0.025 * sin(uTime * 6.3 + vTheta * 2.2);
 
   // Band mask — hard containment, minimal feather
-  float edgeMask = smoothstep(0.02, 0.12, vRadialT) * (1.0 - smoothstep(0.92, 1.0, vRadialT));
+  float edgeMask = smoothstep(0.02, 0.12, vRadialT) * (1.0 - smoothstep(0.86, 1.0, vRadialT));
 
   // Electric crackle: rare, thin sparks anchored to outer edge
   float edgeOuter = smoothstep(0.78, 0.98, vRadialT);
-  float sparkField = noise1((vTheta + 3.14159265) * 18.0 + floor(uTime * 6.0));
+  float sparkField = noise1((vTheta + 3.14159265) * 18.0 + floor(uTime * 0.6));
   float sparkGate = step(0.92, sparkField);
-  float tt = fract(uTime * 6.0);
+  float tt = fract(uTime * 0.6);
   float sparkPulse = smoothstep(0.0, 0.12, tt) * (1.0 - smoothstep(0.55, 1.0, tt));
   float spark = sparkGate * sparkPulse * edgeOuter;
 
