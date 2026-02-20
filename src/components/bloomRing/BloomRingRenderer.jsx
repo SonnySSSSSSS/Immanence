@@ -642,8 +642,8 @@ function RingScene({
         </group>
       )}
 
-      {/* God-ray emitter (sun proxy) — non-avatar only */}
-      {!isAvatar && (
+      {/* God-ray emitter (sun proxy) — non-avatar + ray-enabled only */}
+      {!isAvatar && rayEnabled && (
         <mesh ref={godRayLightRef} position={[0, raySunY, raySunZ]}>
           <sphereGeometry args={[raySunRadius, 16, 16]} />
           <meshBasicMaterial color={palette?.nucleus ?? '#ffffff'} transparent opacity={0.9} toneMapped={false} />
