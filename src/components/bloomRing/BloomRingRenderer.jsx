@@ -247,7 +247,7 @@ function OrbVisual({ colorLin, glowGain, z = 0.02 }) {
 
       {/* Outer halo (this is what makes it glow) */}
       <mesh>
-        <circleGeometry args={[0.22, 64]} />
+        <circleGeometry args={[0.28, 64]} />
         <meshBasicMaterial
           color={base}
           transparent
