@@ -12,11 +12,11 @@ import { NavigationSection } from "./components/NavigationSection.jsx";
 import { NavigationRitualLibrary } from "./components/NavigationRitualLibrary.jsx";
 import { Background } from "./components/Background.jsx";
 import { CurriculumCompletionReport } from "./components/CurriculumCompletionReport.jsx";
-import { DevPanel } from "./components/DevPanel.jsx";
-import { PracticeButtonElectricBorderOverlay } from "./components/dev/PracticeButtonElectricBorderOverlay.jsx";
-import { SelectedCardElectricBorderOverlay } from "./components/dev/SelectedCardElectricBorderOverlay.jsx";
-import { SelectedControlElectricBorderOverlay } from "./components/dev/SelectedControlElectricBorderOverlay.jsx";
-import { SelectedPlateOverlay } from "./components/dev/SelectedPlateOverlay.jsx";
+const DevPanel = lazy(() => import("./components/DevPanel.jsx").then(m => ({ default: m.DevPanel })));
+const PracticeButtonElectricBorderOverlay = lazy(() => import("./components/dev/PracticeButtonElectricBorderOverlay.jsx").then(m => ({ default: m.PracticeButtonElectricBorderOverlay })));
+const SelectedCardElectricBorderOverlay = lazy(() => import("./components/dev/SelectedCardElectricBorderOverlay.jsx").then(m => ({ default: m.SelectedCardElectricBorderOverlay })));
+const SelectedControlElectricBorderOverlay = lazy(() => import("./components/dev/SelectedControlElectricBorderOverlay.jsx").then(m => ({ default: m.SelectedControlElectricBorderOverlay })));
+const SelectedPlateOverlay = lazy(() => import("./components/dev/SelectedPlateOverlay.jsx").then(m => ({ default: m.SelectedPlateOverlay })));
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
 import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
@@ -42,7 +42,9 @@ import { hasDevtoolsQueryFlag, isDevtoolsEnabled, isDevtoolsUnlocked, setDevtool
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
-function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards }) {
+const DISABLE_SELECTION = false;
+
+function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards, isActiveBreathSession = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
   // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
@@ -59,6 +61,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
             avatarPath={previewPath} 
             showCore={previewShowCore}
             showFxGallery={showFxGallery} 
+            isActiveBreathSession={isActiveBreathSession}
             onNavigate={onNavigate} 
             onOpenPhotic={onOpenPhotic}
           />
@@ -162,14 +165,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const isDev = import.meta.env.DEV;
   const devtoolsEnabled = isDevtoolsEnabled();
+  const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
 
   useEffect(() => {
-    if (!devtoolsEnabled && showDevPanel) setShowDevPanel(false);
-  }, [devtoolsEnabled, showDevPanel, devtoolsGateTick]);
+    if (!selectionEnabled || !devtoolsEnabled) {
+      if (showDevPanel) setShowDevPanel(false);
+    }
+  }, [selectionEnabled, devtoolsEnabled, showDevPanel, devtoolsGateTick]);
 
   useEffect(() => {
-    if (!devtoolsEnabled) return undefined;
+    if (!selectionEnabled || !devtoolsEnabled) return undefined;
     const onKeyDown = (event) => {
       const key = String(event.key || '').toLowerCase();
       if (event.ctrlKey && event.shiftKey && key === 'd') {
@@ -179,7 +185,49 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [devtoolsEnabled, devtoolsGateTick]);
+  }, [selectionEnabled, devtoolsEnabled, devtoolsGateTick]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return undefined;
+
+    let mountCount = 0;
+    let unmountCount = 0;
+    const knownCanvases = new Set();
+
+    const syncGlobalCounts = () => {
+      window.__PROBE2_CANVAS_COUNTS__ = { mountCount, unmountCount };
+    };
+
+    const scanCanvases = () => {
+      const currentCanvases = new Set(Array.from(document.querySelectorAll("canvas")));
+
+      currentCanvases.forEach((canvasEl) => {
+        if (knownCanvases.has(canvasEl)) return;
+        knownCanvases.add(canvasEl);
+        mountCount += 1;
+        console.log(`Canvas mount #${mountCount}`);
+      });
+
+      Array.from(knownCanvases).forEach((canvasEl) => {
+        if (currentCanvases.has(canvasEl)) return;
+        knownCanvases.delete(canvasEl);
+        unmountCount += 1;
+        console.log(`Canvas unmount #${unmountCount}`);
+      });
+
+      syncGlobalCounts();
+    };
+
+    scanCanvases();
+    const observer = new MutationObserver(scanCanvases);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      knownCanvases.clear();
+      syncGlobalCounts();
+    };
+  }, []);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -407,7 +455,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.187 - fix(breathing-ring): reduce ring/plate size so composition stays within UI bounds
+  // v3.27.196 - feat(NeonWireRingRND): exaggeration pass A — darker OFF, HDR ON, inner-core disc, bloom active
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
@@ -431,6 +479,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       ? selectedPracticeId
       : null;
   const effectivePracticeId = runningPracticeId || menuPracticeId;
+  const isActiveBreathSession =
+    isPracticing === true &&
+    activeSection === 'practice' &&
+    activePracticeId === 'breath';
   const resolvedPracticeTutorialId = effectivePracticeId ? `practice:${effectivePracticeId}` : null;
   const practiceTutorialId =
     resolvedPracticeTutorialId && TUTORIALS[resolvedPracticeTutorialId]
@@ -490,25 +542,31 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       />
 
       {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}
-      {devtoolsEnabled && (
-        <DevPanel
-          isOpen={showDevPanel}
-          onClose={() => setShowDevPanel(false)}
-          avatarStage={effectivePreviewStage}
-          setAvatarStage={handlePreviewStageChange}
-          avatarPath={effectivePreviewPath}
-          setAvatarPath={handlePreviewPathChange}
-          showCore={previewShowCore}
-          setShowCore={setPreviewShowCore}
-          avatarAttention={previewAttention}
-          setAvatarAttention={setPreviewAttention}
-        />
+      {selectionEnabled && devtoolsEnabled && (
+        <Suspense fallback={null}>
+          <DevPanel
+            isOpen={showDevPanel}
+            onClose={() => setShowDevPanel(false)}
+            avatarStage={effectivePreviewStage}
+            setAvatarStage={handlePreviewStageChange}
+            avatarPath={effectivePreviewPath}
+            setAvatarPath={handlePreviewPathChange}
+            showCore={previewShowCore}
+            setShowCore={setPreviewShowCore}
+            avatarAttention={previewAttention}
+            setAvatarAttention={setPreviewAttention}
+          />
+        </Suspense>
       )}
 
-      <PracticeButtonElectricBorderOverlay />
-      <SelectedControlElectricBorderOverlay />
-      <SelectedPlateOverlay />
-      {import.meta.env.DEV && <SelectedCardElectricBorderOverlay />}
+      {selectionEnabled && (
+        <Suspense fallback={null}>
+          <PracticeButtonElectricBorderOverlay />
+          <SelectedControlElectricBorderOverlay />
+          <SelectedPlateOverlay />
+          {import.meta.env.DEV && <SelectedCardElectricBorderOverlay />}
+        </Suspense>
+      )}
 
       {/* Outer Layout Container - Adapts to display mode */}
       <div
@@ -575,7 +633,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible' style={isFirefox ? { transform: 'translateZ(0)' } : undefined}>
             {/* Fixed Dark Header Bar */}
             <header
-              className="sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500"
+              className={`sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500${isActiveBreathSession ? ' header--breath-active' : ''}`}
               style={{
                 background: isFirefox
                   ? (isLight ? 'rgba(200,185,165,0.95)' : 'rgba(10,10,15,0.95)')
@@ -593,7 +651,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                 {/* Left: Branding */}
                 <div className="flex-1 flex items-center justify-start">
                   <div
-                    className={`type-label ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
+                    className={`type-label app-header-brand ${isLight ? 'text-[#5A4D3C]/70' : 'text-white/60'}`}
                   >
                     IMMANENCE OS
                   </div>
@@ -601,7 +659,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
                 {/* Right: Controls & Home Button */}
                 <div className="flex-1 flex items-center justify-end gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 app-header-control-cluster">
                     <WidthToggle />
                     <DisplayModeToggle />
                     <button
@@ -613,7 +671,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     >
                       ⚙️
                     </button>
-                    {devtoolsEnabled && (
+                    {selectionEnabled && devtoolsEnabled && (
                       <button
                         type="button"
                         onClick={() => setShowDevPanel(v => !v)}
@@ -636,12 +694,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     >
                       ?
                     </button>
-                    <div
-                      className={`type-caption uppercase tracking-wide ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}
-                    >
+                    <div className={`type-caption uppercase tracking-wide app-header-version ${isLight ? 'text-[#5A4D3C]/50' : 'text-white/40'}`}>
                       <button
                         type="button"
-                        className="cursor-default"
+                        className="cursor-default app-header-version-button"
                         title="Debug: Alt+Shift+Click toggles buildProbe. Alt+Ctrl+Click toggles disableDailyCard."
                         onClick={(e) => {
                           if (e.altKey && e.shiftKey) toggleBuildProbe();
@@ -666,7 +722,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.187
+                        v3.27.196
                       </button>
                     </div>
                   </div>
@@ -675,7 +731,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     <button
                       type="button"
                       onClick={() => setActiveSection(null)}
-                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
+                      className={`type-label font-medium px-2 py-1 rounded-lg transition-colors app-header-home ${isLight ? 'text-[#5A4D3C]/70 hover:text-[#3D3425] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                     >
                       Home
                     </button>
@@ -858,6 +914,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   isPracticing={isPracticing}
                   currentPracticeId={activePracticeId}
                   isFullscreenExperience={isFullscreenExperience}
+                  isActiveBreathSession={isActiveBreathSession}
                   onPracticingChange={handlePracticingChange}
                   breathState={breathState}
                   onBreathStateChange={setBreathState}
