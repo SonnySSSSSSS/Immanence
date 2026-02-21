@@ -16,15 +16,15 @@
 //   EXHALE   – segments deactivate in reverse (clockwise → off), 24 → 0.
 //              Instant discrete off (no softness).
 //
-// Exaggeration pass A: OFF=near-black hardware, ON=HDR bloom-hot, inner-core added.
+// Pare-down pass B: premium restraint — device-grade, not nightclub.
 
 import { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
-// ── Debug toggles (remove after screenshot capture) ──────────────────────────
-const DEBUG_FORCE_PROGRESS = 0.35;  // null to drive from breathDriver
+// ── Debug toggles ─────────────────────────────────────────────────────────────
+const DEBUG_FORCE_PROGRESS = null;  // set to 0.35 for static screenshot capture
 const DEBUG_FORCE_PHASE    = 'inhale';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -42,22 +42,20 @@ const INSTRUMENT_FILL       = 0.86;
 // Fade-in rate: full bright in ~80ms at 60fps → rate = 1 / 0.08 = 12.5
 const FADE_IN_RATE = 13;
 
-// ── Exaggeration A — contrast & bloom parameters ─────────────────────────────
-// ON_BRIGHTNESS > 1.0 = HDR; will bloom through EffectComposer.
-// Pare-down to ~1.2 in commit B.
-const ON_BRIGHTNESS   = 2.4;
-const HOLD_BOOST_MAX  = 0.35;   // peak added to ON_BRIGHTNESS at holdTop midpoint
+// ── Pare-down B — device-grade parameters ────────────────────────────────────
+// ON_BRIGHTNESS ~1.15: lit segments are clearly powered but not nightclub-hot.
+const ON_BRIGHTNESS   = 1.15;
+const HOLD_BOOST_MAX  = 0.18;   // subtle breath pulse at holdTop midpoint
 
-// Bloom — low threshold so any lit segment halos. Raise threshold + lower
-// intensity significantly in pare-down commit B.
-const BLOOM_THRESHOLD = 0.12;
-const BLOOM_INTENSITY = 1.6;
-const BLOOM_RADIUS    = 0.38;
+// Bloom — higher threshold keeps halo tight; lower intensity = refined glow.
+const BLOOM_THRESHOLD = 0.45;
+const BLOOM_INTENSITY = 0.6;
+const BLOOM_RADIUS    = 0.26;
 
-// Inner-core disc: accent glow behind segments at ring centre.
-const CORE_RADIUS     = 0.38;   // world-space units (auto-scaled with ring)
-const CORE_Z          = -0.01;  // slightly behind segments
-const CORE_BRIGHTNESS = 0.55;   // fraction of accent color (base); not HDR so stays subtle
+// Inner-core disc: quiet accent presence — proportional to active count.
+const CORE_RADIUS     = 0.38;
+const CORE_Z          = -0.01;
+const CORE_BRIGHTNESS = 0.28;
 
 // ── AutoFitScene ──────────────────────────────────────────────────────────────
 function AutoFitScene({ maxRadius, fillFactor, children }) {
