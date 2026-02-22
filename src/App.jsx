@@ -309,13 +309,27 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
     const onKeyDown = (event) => {
       if (!event.ctrlKey || !event.shiftKey) return;
-      const key = String(event.key || "");
-      if (key === "9") {
+      const key = String(event.key || "").toLowerCase();
+      const code = String(event.code || "");
+      const isStressShortcut = (
+        code === "Digit9"
+        || code === "Numpad9"
+        || key === "9"
+        || key === "("
+      );
+      const isDumpShortcut = (
+        code === "Digit0"
+        || code === "Numpad0"
+        || key === "0"
+        || key === ")"
+      );
+
+      if (isStressShortcut) {
         event.preventDefault();
         runStressRunner();
         return;
       }
-      if (key === "0") {
+      if (isDumpShortcut) {
         event.preventDefault();
         dumpProbeState();
       }
