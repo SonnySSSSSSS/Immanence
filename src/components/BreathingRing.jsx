@@ -6,7 +6,7 @@
 // - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
 // - PATH FX: path-specific particle effects sync with breath
 
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { EnsoStroke } from "./EnsoStroke";
@@ -59,6 +59,19 @@ function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breat
 }
 
 function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style, isFrameActive = true }) {
+  const canvasElRef = useRef(null);
+
+  // Mark canvas for intentional teardown BEFORE R3F's useEffect cleanup
+  // calls gl.dispose() → loseContext().  useLayoutEffect cleanups run
+  // before useEffect cleanups in the same unmount cycle.
+  useLayoutEffect(() => {
+    return () => {
+      if (canvasElRef.current) {
+        canvasElRef.current.dataset.intentionalTeardown = '1';
+      }
+    };
+  }, []);
+
   return (
     <Canvas
       style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block', ...style }}
@@ -76,6 +89,57 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
+
+        const canvas = gl.domElement;
+        canvasElRef.current = canvas;
+
+        // ----------------------------------------------------------
+        // FIX: Intercept WEBGL_lose_context.loseContext() so that
+        // Three.js's dispose() cannot trigger a webglcontextlost
+        // event during intentional teardown (session end).
+        //
+        // Why this works:
+        //   Three.js WebGLRenderer.dispose() calls:
+        //     extensions.get('WEBGL_lose_context').loseContext()
+        //   which dispatches webglcontextlost synchronously.
+        //   Three.js registers its own listener in the constructor
+        //   (before onCreated), so a capturing listener added here
+        //   cannot fire before Three's — they share the same element
+        //   and Three registered first.
+        //
+        //   By making loseContext() a no-op when teardown is flagged,
+        //   the event never fires, Three never logs "Context Lost",
+        //   and Probe6 never records a CONTEXT_EVENT.
+        //
+        //   The raw GL context is garbage-collected when the canvas
+        //   node is removed from DOM — no resource leak.
+        // ----------------------------------------------------------
+        try {
+          const rawGl = gl.getContext();
+          const loseCtxExt = rawGl.getExtension('WEBGL_lose_context');
+          if (loseCtxExt) {
+            const originalLoseContext = loseCtxExt.loseContext.bind(loseCtxExt);
+            loseCtxExt.loseContext = () => {
+              const isIntentional = canvas.dataset?.intentionalTeardown === '1'
+                || window.__IMMANENCE_PRACTICE_ACTIVE__ === false
+                || window.__IMMANENCE_APP_MARKER__ === 'practice:idle';
+              if (isIntentional) {
+                if (import.meta.env.DEV) {
+                  console.info('[BreathingRing] suppressed loseContext() call (intentional teardown)');
+                }
+                return;
+              }
+              originalLoseContext();
+            };
+          }
+        } catch (e) {
+          // Non-fatal — if patching fails, context loss will still
+          // log but the app will function normally.
+          if (import.meta.env.DEV) {
+            console.warn('[BreathingRing] failed to patch WEBGL_lose_context', e);
+          }
+        }
+
         if (import.meta.env.DEV) {
           const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
           console.info(`[BreathingRing] canvas mount dpr=${appliedDpr} cap=${BREATH_RING_MAX_DPR.toFixed(2)}`);
