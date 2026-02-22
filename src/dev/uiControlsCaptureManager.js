@@ -1,4 +1,5 @@
 import { validateUiTargetRoot } from './uiTargetContract.js';
+import { DISABLE_UI_CONTROLS_CAPTURE } from '../config/renderProbeFlags.js';
 
 function hasDom() {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
@@ -13,6 +14,7 @@ const ID_ATTR = 'data-ui-id';
 const PLATE_TOKEN = ':plate:';
 
 export function isUiPickingActive() {
+  if (DISABLE_UI_CONTROLS_CAPTURE) return false;
   return pickingActive;
 }
 
@@ -21,6 +23,32 @@ let onResolvedPick = null;
 let pickingKind = 'controls';
 
 let suppressToken = null;
+let disabledLogged = false;
+
+function logDisabledOnce(source) {
+  if (disabledLogged) return;
+  disabledLogged = true;
+  console.info(`[uiControlsCapture] disabled by DISABLE_UI_CONTROLS_CAPTURE (${source})`);
+}
+
+function forceDisabledCleanup() {
+  if (!hasDom()) return;
+  pickingActive = false;
+  pickingKind = 'controls';
+  onResolvedPick = null;
+  clearSuppressToken();
+  try {
+    document.documentElement.classList.remove(ROOT_PICKING_CLASS);
+    document.documentElement.classList.remove(ROOT_ATTACHED_CLASS);
+  } catch {
+    // ignore
+  }
+  if (!attached) return;
+  attached = false;
+  window.removeEventListener('pointerdown', onPointerDownCapture, true);
+  window.removeEventListener('click', onClickCapture, true);
+  window.removeEventListener('pointercancel', onPointerCancelCapture, true);
+}
 
 function normalizePickingKind(kind) {
   return kind === 'plates' ? 'plates' : 'controls';
@@ -298,6 +326,11 @@ function onPointerCancelCapture() {
 }
 
 export function startControlsPicking({ onPick, kind = 'controls' } = {}) {
+  if (DISABLE_UI_CONTROLS_CAPTURE) {
+    logDisabledOnce('start');
+    forceDisabledCleanup();
+    return;
+  }
   if (!hasDom()) return;
   pickingActive = true;
   pickingKind = normalizePickingKind(kind);
@@ -311,6 +344,11 @@ export function startControlsPicking({ onPick, kind = 'controls' } = {}) {
 }
 
 export function stopControlsPicking() {
+  if (DISABLE_UI_CONTROLS_CAPTURE) {
+    logDisabledOnce('stop');
+    forceDisabledCleanup();
+    return;
+  }
   pickingActive = false;
   pickingKind = 'controls';
   console.log('[uiControlsCapture] stop picking');
@@ -324,6 +362,11 @@ export function stopControlsPicking() {
 }
 
 export function attach() {
+  if (DISABLE_UI_CONTROLS_CAPTURE) {
+    logDisabledOnce('attach');
+    forceDisabledCleanup();
+    return;
+  }
   if (!hasDom() || attached) return;
   attached = true;
   console.log('[uiControlsCapture] attach');
@@ -338,6 +381,11 @@ export function attach() {
 }
 
 export function detach() {
+  if (DISABLE_UI_CONTROLS_CAPTURE) {
+    logDisabledOnce('detach');
+    forceDisabledCleanup();
+    return;
+  }
   if (!hasDom() || !attached) return;
   attached = false;
   console.log('[uiControlsCapture] detach');

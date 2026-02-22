@@ -613,3 +613,35 @@ div.fixed.z-\[100000\] {
 .regionRailRow::-webkit-scrollbar {
   display: none;
 }
+
+/* Breath-session hierarchy lock: de-emphasize header while breath practice is active. */
+.header--breath-active {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.header--breath-active .app-header-brand {
+  opacity: 0.64;
+}
+
+.header--breath-active .app-header-control-cluster {
+  gap: 0.6rem;
+}
+
+.header--breath-active .app-header-control-cluster > * {
+  opacity: 0.78;
+  filter: saturate(0.85);
+}
+
+.header--breath-active .app-header-version {
+  opacity: 0.6;
+}
+
+.header--breath-active .app-header-version-button {
+  opacity: 0.9;
+}
+
+.header--breath-active .app-header-home {
+  opacity: 0.62;
+  font-weight: 500;
+}

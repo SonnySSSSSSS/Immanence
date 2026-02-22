@@ -1,9 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
+// ─── Reduced-motion detection ─────────────────────────────────────────────────
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
 
@@ -12,213 +9,107 @@ function usePrefersReducedMotion() {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(Boolean(media.matches));
     update();
-    if (typeof media.addEventListener === "function") media.addEventListener("change", update);
-    else media.addListener(update);
-    return () => {
-      if (typeof media.removeEventListener === "function") media.removeEventListener("change", update);
-      else media.removeListener(update);
-    };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
   }, []);
 
   return reduced;
 }
 
-function hash01(a, b) {
-  const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453123;
-  return x - Math.floor(x);
+// ─── One-time CSS keyframe injection ─────────────────────────────────────────
+// Injecting once avoids duplicated <style> tags across multiple instances.
+let _kfInjected = false;
+function ensureKeyframes() {
+  if (_kfInjected || typeof document === "undefined") return;
+  _kfInjected = true;
+  const style = document.createElement("style");
+  style.dataset.id = "electric-border-kf";
+  style.textContent = `
+    @keyframes electricBorderPulse {
+      0%   { opacity: 0.50; }
+      40%  { opacity: 1;    }
+      60%  { opacity: 0.95; }
+      100% { opacity: 0.50; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
-function buildRoundedPerimeterPoints({ x, y, w, h, r, step = 10 }) {
-  const radius = clamp(r, 0, Math.min(w, h) / 2);
-  const points = [];
-
-  const push = (px, py, nx, ny) => {
-    points.push({ x: px, y: py, nx, ny });
-  };
-
-  const topY = y;
-  const botY = y + h;
-  const leftX = x;
-  const rightX = x + w;
-
-  for (let px = leftX + radius; px <= rightX - radius; px += step) push(px, topY, 0, -1);
-  for (let a = -Math.PI / 2; a <= 0; a += Math.PI / 16) {
-    const cx = rightX - radius;
-    const cy = topY + radius;
-    push(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, Math.cos(a), Math.sin(a));
-  }
-  for (let py = topY + radius; py <= botY - radius; py += step) push(rightX, py, 1, 0);
-  for (let a = 0; a <= Math.PI / 2; a += Math.PI / 16) {
-    const cx = rightX - radius;
-    const cy = botY - radius;
-    push(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, Math.cos(a), Math.sin(a));
-  }
-  for (let px = rightX - radius; px >= leftX + radius; px -= step) push(px, botY, 0, 1);
-  for (let a = Math.PI / 2; a <= Math.PI; a += Math.PI / 16) {
-    const cx = leftX + radius;
-    const cy = botY - radius;
-    push(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, Math.cos(a), Math.sin(a));
-  }
-  for (let py = botY - radius; py >= topY + radius; py -= step) push(leftX, py, -1, 0);
-  for (let a = Math.PI; a <= Math.PI * 1.5; a += Math.PI / 16) {
-    const cx = leftX + radius;
-    const cy = topY + radius;
-    push(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, Math.cos(a), Math.sin(a));
-  }
-
-  return points;
-}
+// ─── ElectricBorder (CSS-only, no <canvas>) ──────────────────────────────────
+//
+// ROOT CAUSE FIX: The previous implementation used canvas.getContext("2d") with
+// ctx.shadowBlur + requestAnimationFrame, creating one GPU-composited texture
+// per overlay instance. When multiple ElectricBorder instances ran alongside the
+// WebGL bloom-ring canvas, GPU memory exhaustion triggered WebGL context loss.
+//
+// This implementation uses a plain <div> with CSS border + box-shadow.
+// ✓ No additional <canvas> — no GPU texture per overlay
+// ✓ No per-frame allocations
+// ✓ CSS animation handles the pulse (single keyframe, browser-optimised)
+// ✓ Props API is identical — all callers are unaffected.
+//
+// Props:
+//   width, height   – outer container size (informational; sizing is by caller div)
+//   innerRect       – { x, y, width, height, radius } where to place the border
+//   color           – CSS color string (rgba preferred)
+//   speed           – animation cycles per second (0 = static)
+//   chaos           – controls glow spread (higher → wider glow)
+//   thickness       – border width in px
+//   showSparks      – accepted but ignored (visual parity not required for dev tools)
 
 export function ElectricBorder({
-  width,
-  height,
   innerRect,
   color = "rgba(255, 210, 120, 1)",
   speed = 0.06,
   chaos = 0.12,
   thickness = 2,
-  showSparks = true,
+  // width, height, showSparks are accepted for API compatibility but unused in the CSS impl.
+  // eslint-disable-next-line no-unused-vars
+  width, height, showSparks, // noqa
 }) {
-  const canvasRef = useRef(null);
   const prefersReduced = usePrefersReducedMotion();
   const effectiveSpeed = prefersReduced ? 0 : speed;
-  const rafRef = useRef(0);
-  const lastTRef = useRef(0);
-  const phaseRef = useRef(0);
 
-  const points = useMemo(() => {
-    if (!innerRect) return null;
-    const r = Number(innerRect.radius) || 0;
-    const step = clamp(Math.floor(Math.min(innerRect.width, innerRect.height) / 26), 7, 14);
-    return buildRoundedPerimeterPoints({
-      x: innerRect.x,
-      y: innerRect.y,
-      w: innerRect.width,
-      h: innerRect.height,
-      r,
-      step,
-    });
-  }, [innerRect]);
+  // Inject CSS keyframes once per page load.
+  useEffect(() => { ensureKeyframes(); }, []);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
-    if (!width || !height || width < 2 || height < 2) return undefined;
-    if (!innerRect || !points || points.length < 20) return undefined;
+  if (!innerRect) return null;
 
-    const dpr = clamp(Math.floor(((typeof window !== "undefined" ? window.devicePixelRatio : 1) || 1)), 1, 2);
-    canvas.width = Math.max(1, Math.floor(width * dpr));
-    canvas.height = Math.max(1, Math.floor(height * dpr));
+  // Map chaos → glow radii (mirrors old canvas shadowBlur scaling).
+  const outerGlow = Math.round(4 + chaos * 22);
+  const innerGlow = Math.round(2 + chaos * 8);
 
-    const ctx = canvas.getContext("2d", { alpha: true });
-    if (!ctx) return undefined;
+  const shadow = [
+    `0 0 ${outerGlow}px ${color}`,
+    `0 0 ${innerGlow}px ${color}`,
+    `inset 0 0 ${innerGlow}px ${color}`,
+  ].join(", ");
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Animation period: speed = cycles/sec → period = 1/speed seconds.
+  const animDuration = effectiveSpeed > 0
+    ? `${(1 / effectiveSpeed).toFixed(2)}s`
+    : "0s";
 
-    const baseAmp = 2 + chaos * 22;
-
-    const draw = (tSec) => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.globalCompositeOperation = "lighter";
-
-      ctx.save();
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.14;
-      ctx.lineWidth = thickness + 6;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 16;
-      ctx.beginPath();
-      for (let i = 0; i < points.length; i += 1) {
-        const p = points[i];
-        const n = hash01(i * 1.31, tSec * 1.1 + phaseRef.current);
-        const s = Math.sin((tSec * 4.0 + i * 0.22) * (1 + chaos * 1.1));
-        const jitter = (n * 2 - 1) * baseAmp * 0.5 + s * baseAmp * 0.22;
-        const px = p.x + p.nx * jitter;
-        const py = p.y + p.ny * jitter;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.save();
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.62;
-      ctx.lineWidth = thickness;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 5;
-      ctx.beginPath();
-      for (let i = 0; i < points.length; i += 1) {
-        const p = points[i];
-        const n = hash01(i * 2.03, tSec * 2.2 + 9.1 + phaseRef.current);
-        const s = Math.sin((tSec * 6.0 + i * 0.35) * (1 + chaos * 1.55));
-        const jitter = (n * 2 - 1) * baseAmp * 0.32 + s * baseAmp * 0.18;
-        const px = p.x + p.nx * jitter;
-        const py = p.y + p.ny * jitter;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
-
-      if (showSparks) {
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.1;
-        for (let i = 0; i < points.length; i += 6) {
-          const p = points[i];
-          const n = hash01(i * 9.7, tSec * 3.0 + 3.7 + phaseRef.current);
-          if (n < 0.972) continue;
-          const len = 5 + n * 9;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x + p.nx * len, p.y + p.ny * len);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-
-      ctx.globalCompositeOperation = "source-over";
-    };
-
-    const tick = (tMs) => {
-      const t = tMs / 1000;
-      const last = lastTRef.current || t;
-      const dt = Math.min(0.05, Math.max(0, t - last));
-      lastTRef.current = t;
-      phaseRef.current += dt * (effectiveSpeed * 1.25);
-      draw(t);
-      rafRef.current = window.requestAnimationFrame(tick);
-    };
-
-    draw(lastTRef.current || 0);
-
-    if (effectiveSpeed > 0) {
-      rafRef.current = window.requestAnimationFrame(tick);
-    }
-
-    return () => {
-      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
-      rafRef.current = 0;
-    };
-  }, [width, height, innerRect, points, color, effectiveSpeed, chaos, thickness, showSparks]);
+  const borderStyle = {
+    position: "absolute",
+    left: innerRect.x,
+    top: innerRect.y,
+    width: innerRect.width,
+    height: innerRect.height,
+    borderRadius: innerRect.radius,
+    border: `${thickness}px solid ${color}`,
+    boxShadow: shadow,
+    pointerEvents: "none",
+    animation: effectiveSpeed > 0
+      ? `electricBorderPulse ${animDuration} ease-in-out infinite`
+      : "none",
+    opacity: 0.82,
+  };
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "block",
-      }}
-    />
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      <div style={borderStyle} />
+    </div>
   );
 }
 

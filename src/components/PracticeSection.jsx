@@ -346,7 +346,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
   const {
     startSession,
     endSession,
@@ -2208,7 +2208,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         />
 
         {/* FX Selector (dev tool) sits at the bottom under the Stop button */}
-        {showFxGallery && isBreathPractice && (
+        {showFxGallery && isBreathPractice && !isActiveBreathSession && (
           <div
             className="flex items-center gap-3 mt-6 px-4 py-2 rounded-full"
             style={{
@@ -2364,10 +2364,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         onCancel={handleInitiationBenchmarkCancel}
         onSave={handleInitiationBenchmarkSave}
       />
-      <DevCompleteNowOverlay
-        isRunning={isRunning}
-        onCompleteNow={() => handleStop({ completed: true })}
-      />
+      {!isActiveBreathSession && (
+        <DevCompleteNowOverlay
+          isRunning={isRunning}
+          onCompleteNow={() => handleStop({ completed: true })}
+        />
+      )}
       {sessionView}
       {summaryView}
       

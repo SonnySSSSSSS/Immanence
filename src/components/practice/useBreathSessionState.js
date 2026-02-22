@@ -220,7 +220,7 @@ export function useBreathSessionState({
 `;
 
   const breathingPatternText = useMemo(() => {
-    return `${formatSec(breathingPatternForRing.inhale)}-${formatSec(breathingPatternForRing.holdTop)}-${formatSec(breathingPatternForRing.exhale)}-${formatSec(breathingPatternForRing.holdBottom)}s`;
+    return `${formatSec(breathingPatternForRing.inhale)} · ${formatSec(breathingPatternForRing.holdTop)} · ${formatSec(breathingPatternForRing.exhale)} · ${formatSec(breathingPatternForRing.holdBottom)}`;
   }, [breathingPatternForRing]);
 
   const showBreathCount = breathCount > 0 && isBreathPractice;

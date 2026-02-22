@@ -94,9 +94,9 @@ import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
 import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
 import UnifiedInspectorSection from './devpanel/sections/UnifiedInspectorSection.jsx';
+import { BloomRingLab } from './dev/BloomRingLab.jsx';
 
-// Lazy-loaded lab component (code-split, only loads when DevPanel opens)
-const BloomRingLab = React.lazy(() => import('./dev/BloomRingLab.jsx').then(m => ({ default: m.BloomRingLab })));
+// Eager import: avoids transient dynamic-import failures in local dev.
 
 // Available stages and paths for dropdowns
 const STAGE_OPTIONS = ['Seedling', 'Ember', 'Flame', 'Beacon', 'Stellar'];
