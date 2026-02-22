@@ -285,6 +285,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         console.info("[StressRunner] already running");
         return;
       }
+      if (typeof window.__PROBE6_RESET_FIRST_LOSS__ === "function") {
+        try {
+          window.__PROBE6_RESET_FIRST_LOSS__();
+        } catch {
+          // ignore reset failures
+        }
+      }
       stressRunnerActiveRef.current = true;
       const scheduledDumpIds = [];
       const scheduleDump = (ms, label) => {
@@ -661,6 +668,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       console.log("[Probe6] DUMP __PROBE3_DIAGNOSTICS__", window.__PROBE3_DIAGNOSTICS__ || null);
       console.log("[Probe6] DUMP __FIRST_WEBGL_LOSS__", snapshot);
     };
+    const resetFirstLoss = () => {
+      firstLossSaved = false;
+      window.__FIRST_WEBGL_LOSS__ = null;
+      try {
+        window.sessionStorage?.removeItem("__PROBE6_FIRST_WEBGL_LOSS__");
+      } catch {
+        // ignore storage clear failures
+      }
+      console.info("[Probe6] first-loss reset");
+    };
+    window.__PROBE6_RESET_FIRST_LOSS__ = resetFirstLoss;
 
     const getProbe6State = (context) => {
       if (!context) return null;
@@ -1281,6 +1299,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       Array.from(observedCanvases).forEach((canvasEl) => detachResizeObserver(canvasEl));
       Array.from(contextListeners.keys()).forEach((canvasEl) => detachContextListeners(canvasEl));
       knownCanvases.clear();
+      delete window.__PROBE6_RESET_FIRST_LOSS__;
       syncGlobalCounts();
     };
   }, []);
