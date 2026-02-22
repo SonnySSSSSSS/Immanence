@@ -19,7 +19,17 @@ import { useTheme } from '../context/ThemeContext.jsx';
 
 const BREATH_RING_MAX_DPR = 1.5;
 
-function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver }) {
+function isRingFrameActive(practiceActive = true) {
+  if (!practiceActive) return false;
+  if (typeof window === 'undefined') return true;
+  if (window.__IMMANENCE_PRACTICE_ACTIVE__ === false) return false;
+  if (window.__IMMANENCE_APP_MARKER__ === 'practice:idle') return false;
+  return true;
+}
+
+function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver, isFrameActive = true }) {
+  if (!isFrameActive) return null;
+
   if (rndRingMode === 'orb') {
     return (
       <VolumetricGlassRingSceneContent
@@ -43,14 +53,16 @@ function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breat
       params={productionParams}
       accentColor={liveAccentColor}
       mode="production"
+      isFrameActive={isFrameActive}
     />
   );
 }
 
-function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style }) {
+function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style, isFrameActive = true }) {
   return (
     <Canvas
-      style={{ width: '100%', height: '100%', display: 'block', ...style }}
+      style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block', ...style }}
+      frameloop={isFrameActive ? 'always' : 'never'}
       dpr={[1, BREATH_RING_MAX_DPR]}
       camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
       gl={{
@@ -64,6 +76,10 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
+        if (import.meta.env.DEV) {
+          const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
+          console.info(`[BreathingRing] canvas mount dpr=${appliedDpr} cap=${BREATH_RING_MAX_DPR.toFixed(2)}`);
+        }
         if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
           window.__PROBE6_REGISTER_GL__({
             gl,
@@ -78,6 +94,7 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
         productionParams={productionParams}
         liveAccentColor={liveAccentColor}
         breathDriver={breathDriver}
+        isFrameActive={isFrameActive}
       />
     </Canvas>
   );
@@ -86,7 +103,7 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
 // startTime is required and must be based on performance.now() so that
 // audio scheduling (Web Audio API) and the rAF animation loop share one
 // clock origin. Passing Date.now() will silently desync audio timing.
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null, practiceActive = true }) {
   const theme = useTheme();
   const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
   const lockedPatternRef = useRef(null);
@@ -538,6 +555,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   // engine never start with a missing clock anchor.
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   if (!startTimeValid) return null;
+  const isFrameActive = isRingFrameActive(practiceActive);
   const ringSafePad = "20px";
 
   return (
@@ -801,6 +819,9 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             overflow: "hidden",
             zIndex: 10,
             pointerEvents: "none",
+            minWidth: "1px",
+            minHeight: "1px",
+            opacity: isFrameActive ? 1 : 0,
           }}
         >
           <PersistentBreathRingCanvas
@@ -808,7 +829,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             productionParams={productionParams}
             liveAccentColor={liveAccentColor}
             breathDriver={breathDriver}
-            style={{ width: '100%', height: '100%', display: 'block' }}
+            style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block' }}
+            isFrameActive={isFrameActive}
           />
         </div>
 

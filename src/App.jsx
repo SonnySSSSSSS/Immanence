@@ -187,10 +187,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       isDevPanelOpen: showDevPanel,
     };
     probeAppMarkerRef.current = `section:${activeSection ?? "home"}|devpanel:${showDevPanel ? "open" : "closed"}`;
+    if (typeof window !== "undefined") {
+      window.__IMMANENCE_APP_MARKER__ = probeAppMarkerRef.current;
+    }
   }, [displayMode, activeSection, showDevPanel]);
 
   useEffect(() => {
     probeAppMarkerRef.current = isPracticing ? "practice:running" : "practice:idle";
+    if (typeof window !== "undefined") {
+      window.__IMMANENCE_APP_MARKER__ = probeAppMarkerRef.current;
+      window.__IMMANENCE_PRACTICE_ACTIVE__ = Boolean(isPracticing);
+    }
   }, [isPracticing]);
 
   useEffect(() => {

@@ -814,6 +814,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [countdownValue, setCountdownValue] = useState(null);
   const circuitCountdownRef = useRef(null);
+  const queuePostSessionUi = useCallback((commit) => {
+    if (typeof commit !== 'function') return;
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      commit();
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        commit();
+      });
+    });
+  }, []);
 
   // Ring FX ephemeral state
   const [currentFxIndex, setCurrentFxIndex] = useState(0);
@@ -1157,18 +1169,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       console.error("Failed to save circuit session:", e);
     }
 
-    setSessionSummary({
-      type: 'circuit',
-      circuitName: 'Custom Circuit',
-      exercisesCompleted: circuitConfig.exercises.length,
-      totalDuration: totalDuration,
+    queuePostSessionUi(() => {
+      setSessionSummary({
+        type: 'circuit',
+        circuitName: 'Custom Circuit',
+        exercisesCompleted: circuitConfig.exercises.length,
+        totalDuration: totalDuration,
+      });
+      setShowSummary(true);
+
+      // Show evening feedback for evening circuit completion (pilot)
+      if (activeCircuitId === 'evening-test-circuit') {
+        setTimeout(() => setShowFeedbackModal(true), 500);
+      }
     });
-    setShowSummary(true);
-    
-    // Show evening feedback for evening circuit completion (pilot)
-    if (activeCircuitId === 'evening-test-circuit') {
-      setTimeout(() => setShowFeedbackModal(true), 500);
-    }
 
     if (recordedSession) {
       setLastSessionId(recordedSession.id);
@@ -1437,24 +1451,26 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         ? Math.round((recordedSession.durationSec / 60) * 10) / 10
         : Math.round((actualDurationSeconds / 60) * 10) / 10;
 
-      setSessionSummary({
-        practice: summaryPracticeLabel,
-        duration: recordedDurationMinutes,
-        tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-        breathCount,
-        exitType,
-        nextLeg: nextLegInfo,
-        curriculumDayNumber: wasFromCurriculum ? activeSessionDayNumber : null,
-        legNumber: currentLegNumber,
-        totalLegs: totalLegsForDay,
-        dailyStats: dailyStatsInfo,
-        practiceMode: isEmotionPractice ? emotionMode : null,
-        closingLine: emotionClosingLine,
-        emotionCompletionCount: emotionCompletionCount,
-        sakshiCompletionCount: sakshiCompletionCount,
-        sessionRecord: recordedSession,
+      queuePostSessionUi(() => {
+        setSessionSummary({
+          practice: summaryPracticeLabel,
+          duration: recordedDurationMinutes,
+          tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+          breathCount,
+          exitType,
+          nextLeg: nextLegInfo,
+          curriculumDayNumber: wasFromCurriculum ? activeSessionDayNumber : null,
+          legNumber: currentLegNumber,
+          totalLegs: totalLegsForDay,
+          dailyStats: dailyStatsInfo,
+          practiceMode: isEmotionPractice ? emotionMode : null,
+          closingLine: emotionClosingLine,
+          emotionCompletionCount: emotionCompletionCount,
+          sakshiCompletionCount: sakshiCompletionCount,
+          sessionRecord: recordedSession,
+        });
+        setShowSummary(true);
       });
-      setShowSummary(true);
 
       if (recordedSession) {
         setLastSessionId(recordedSession.id);
@@ -1546,20 +1562,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
 
-    setSessionSummary({
-      practice: 'Breath & Stillness',
-      duration: actualDurationMinutes,
-      tapStats: null,
-      breathCount: 0,
-      exitType: 'completed',
-      curriculumDayNumber: null,
-      legNumber: null,
-      totalLegs: null,
-      benchmarkSnapshot: snapshot,
-      benchmarkDay: dayIndex,
-      sessionRecord: recordedSession,
+    queuePostSessionUi(() => {
+      setSessionSummary({
+        practice: 'Breath & Stillness',
+        duration: actualDurationMinutes,
+        tapStats: null,
+        breathCount: 0,
+        exitType: 'completed',
+        curriculumDayNumber: null,
+        legNumber: null,
+        totalLegs: null,
+        benchmarkSnapshot: snapshot,
+        benchmarkDay: dayIndex,
+        sessionRecord: recordedSession,
+      });
+      setShowSummary(true);
     });
-    setShowSummary(true);
 
     if (recordedSession) {
       setLastSessionId(recordedSession.id);
@@ -1571,6 +1589,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     breathSubmode,
     saveRunBenchmark,
     initiationComparisonBaseline,
+    queuePostSessionUi,
     startMicroNote,
   ]);
 
@@ -2136,6 +2155,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 onTap={handleAccuracyTap}
                 onCycleComplete={() => setBreathCount(prev => prev + 1)}
                 startTime={sessionStartTime}
+                practiceActive={isRunning}
                 pathId={avatarPath}
                 fxPreset={currentFxPreset}
                 totalSessionDurationSec={duration}

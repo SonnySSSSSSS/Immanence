@@ -43,6 +43,14 @@ import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
 // Smoothstep easing [0,1] → [0,1]. Used by breathDriver phase→wave mapping.
 const easeInOut = p => { const c = Math.max(0, Math.min(1, p)); return c * c * (3 - 2 * c); };
 
+function shouldRenderRingFrame(isFrameActive = true) {
+  if (!isFrameActive) return false;
+  if (typeof window === 'undefined') return true;
+  if (window.__IMMANENCE_PRACTICE_ACTIVE__ === false) return false;
+  if (window.__IMMANENCE_APP_MARKER__ === 'practice:idle') return false;
+  return true;
+}
+
 // ─── Accent palette helpers ───────────────────────────────────────────────────
 // Mix in linear RGB. Output as sRGB hex — safe for R3F material color props
 // regardless of Three.js colorManagement state. Only handles #RRGGBB input;
@@ -217,7 +225,7 @@ void main() {
 }
 `;
 
-function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null, glowGain = 1.0 }) {
+function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, speed, sparkle, orbitalAngleRef = null, glowGain = 1.0, isFrameActive = true }) {
   const trailRef = useRef(null);
   const materialRef = useRef(null);
   const instanceCount = MAX_TRAIL * 3;
@@ -249,6 +257,7 @@ function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, sp
 
   useFrame(({ clock }) => {
     if (!enabled || !trailRef.current) return;
+    if (!shouldRenderRingFrame(isFrameActive)) return;
 
     const mesh = trailRef.current;
     const t = clock.elapsedTime;
@@ -339,7 +348,7 @@ function TrailArc({ enabled, trailLin, sparkleLin, intensity, length, spread, sp
   );
 }
 
-function OrbVisual({ colorLin, glowGain, z = 0.02 }) {
+function OrbVisual({ colorLin, glowGain, z = 0.02, isFrameActive = true }) {
   const base = linToHex(colorLin);
   const coreRef = useRef(null);
   const midRef = useRef(null);
@@ -374,6 +383,7 @@ function OrbVisual({ colorLin, glowGain, z = 0.02 }) {
   }, []);
 
   useFrame(({ clock }) => {
+    if (!shouldRenderRingFrame(isFrameActive)) return;
     const t = clock.elapsedTime;
 
     if (coreRef.current) {
@@ -451,7 +461,7 @@ function OrbVisual({ colorLin, glowGain, z = 0.02 }) {
   );
 }
 
-function HaloBand({ enabled, intensity, length, colorA, colorB }) {
+function HaloBand({ enabled, intensity, length, colorA, colorB, isFrameActive = true }) {
   if (!enabled) return null;
 
   const bandRef = useRef(null);
@@ -482,6 +492,7 @@ function HaloBand({ enabled, intensity, length, colorA, colorB }) {
 
   useFrame(({ clock }) => {
     if (!bandRef.current) return;
+    if (!shouldRenderRingFrame(isFrameActive)) return;
 
     const mesh = bandRef.current;
     const t = clock.elapsedTime;
@@ -670,6 +681,7 @@ function RingScene({
   palette = null,
   autoFit = true,
   fitFill = 0.88,
+  isFrameActive = true,
 }) {
   const isAvatar = mode === 'avatar';
   const sceneRootRef   = useRef(null);
@@ -695,6 +707,7 @@ function RingScene({
   }), [accentColor]);
 
   useFrame(({ clock, viewport }, delta) => {
+    if (!shouldRenderRingFrame(isFrameActive)) return;
     // t is always computed for secondary time-based effects (driftPhase, inner
     // concentric, layered orbital sun, avatar glow). When breathDriver is active, t is
     // NOT the breath clock — breathSpeed is irrelevant to the breath waveform.
@@ -908,7 +921,7 @@ function RingScene({
       {/* Orbital sun (layered additive falloff) — lab only */}
       {!isAvatar && mode !== 'production' && (
         <group ref={orbitalOrbRef} position={[ARC_RADIUS, 0, 0]}>
-          <OrbVisual colorLin={orbAccentLin} glowGain={glowGain} />
+          <OrbVisual colorLin={orbAccentLin} glowGain={glowGain} isFrameActive={isFrameActive} />
         </group>
       )}
 
@@ -920,6 +933,7 @@ function RingScene({
           length={streakLength}
           colorA={palette?.streakHot ?? accentColor}
           colorB={palette?.reticleBright ?? '#ffffff'}
+          isFrameActive={isFrameActive}
         />
       )}
 
@@ -985,6 +999,7 @@ export function BloomRingSceneContent({
   params = {},
   accentColor = '#ffffff',
   mode = 'production',
+  isFrameActive = true,
 }) {
   const {
     bloomStrength    = 1.2,
@@ -1084,6 +1099,7 @@ export function BloomRingSceneContent({
         palette={palette}
         autoFit={autoFit}
         fitFill={fitFill}
+        isFrameActive={isFrameActive}
       />
 
       {/* TrailArc — lab only (production strips all decorations) */}
@@ -1099,6 +1115,7 @@ export function BloomRingSceneContent({
           sparkle={trailSparkle}
           orbitalAngleRef={orbitalAngleRef}
           glowGain={palette.glowGain}
+          isFrameActive={isFrameActive}
         />
       )}
 
@@ -1168,6 +1185,7 @@ export default function BloomRingRenderer({
   className,
   style,
   mode = 'production',
+  isFrameActive = true,
 }) {
   const { width, height } = params;
 
@@ -1180,6 +1198,7 @@ export default function BloomRingRenderer({
     <Canvas
       style={canvasStyle}
       className={className}
+      frameloop={shouldRenderRingFrame(isFrameActive) ? 'always' : 'never'}
       dpr={[1, 1.5]}
       camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
       gl={{
@@ -1192,6 +1211,10 @@ export default function BloomRingRenderer({
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
+        if (import.meta.env.DEV) {
+          const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
+          console.info(`[BloomRingRenderer] mount dpr=${appliedDpr} cap=1.50`);
+        }
         if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
           window.__PROBE6_REGISTER_GL__({
             gl,
@@ -1201,7 +1224,7 @@ export default function BloomRingRenderer({
         }
       }}
     >
-      <BloomRingSceneContent params={params} accentColor={accentColor} mode={mode} />
+      <BloomRingSceneContent params={params} accentColor={accentColor} mode={mode} isFrameActive={isFrameActive} />
     </Canvas>
   );
 }
