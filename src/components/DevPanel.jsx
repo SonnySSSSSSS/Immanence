@@ -58,7 +58,6 @@ import {
     resetSelected,
     clearAll,
 } from '../dev/cardTuner.js';
-import { isDevtoolsEnabled } from '../dev/uiDevtoolsGate.js';
 import { emitPickerSelection } from '../dev/pickerChannel.js';
 import { validateUiTargetRoot } from '../dev/uiTargetContract.js';
 import { attach as attachControlsCapture, detach as detachControlsCapture, startControlsPicking, stopControlsPicking } from '../dev/uiControlsCaptureManager.js';
@@ -159,7 +158,8 @@ export function DevPanel({
     const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
     const isDevBuild = import.meta.env.DEV;
-    const devtoolsEnabled = isDevtoolsEnabled();
+    // DevPanel should be fully functional in dev builds; do not require extra devtools unlock gates.
+    const devtoolsEnabled = Boolean(isDevBuild);
     const canRunDevEffects = useDevPanelGate(isOpen, devtoolsEnabled);
     const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const isPlaygroundPath = currentPathname === '/__playground';

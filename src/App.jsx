@@ -169,13 +169,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
 
   useEffect(() => {
-    if (!selectionEnabled || !devtoolsEnabled) {
-      if (showDevPanel) setShowDevPanel(false);
-    }
-  }, [selectionEnabled, devtoolsEnabled, showDevPanel, devtoolsGateTick]);
-
-  useEffect(() => {
-    if (!selectionEnabled || !devtoolsEnabled) return undefined;
+    if (!isDev) return undefined;
     const onKeyDown = (event) => {
       const key = String(event.key || '').toLowerCase();
       if (event.ctrlKey && event.shiftKey && key === 'd') {
@@ -185,7 +179,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectionEnabled, devtoolsEnabled, devtoolsGateTick]);
+  }, [isDev]);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -500,7 +494,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       />
 
       {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}
-      {selectionEnabled && devtoolsEnabled && (
+      {import.meta.env.DEV && (
         <Suspense fallback={null}>
           <DevPanel
             isOpen={showDevPanel}
@@ -618,7 +612,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     >
                       ⚙️
                     </button>
-                    {selectionEnabled && devtoolsEnabled && (
+                    {import.meta.env.DEV && (
                       <button
                         type="button"
                         onClick={() => setShowDevPanel(v => !v)}

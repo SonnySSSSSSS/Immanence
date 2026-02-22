@@ -1,1 +1,1 @@
-export const DISABLE_UI_CONTROLS_CAPTURE = true;
+export const DISABLE_UI_CONTROLS_CAPTURE = false;

@@ -131,6 +131,9 @@ export function AvatarComposite({ stage, size }) {
   const tunerEnabled = Boolean(isDev && avatarCompositeDevState?.enabled);
   const showDebugOverlay = Boolean(tunerEnabled && avatarCompositeDevState?.showDebugOverlay);
 
+  // Dev-only visual probe to confirm AvatarComposite is re-rendering from store updates.
+  const PROBE = isDev ? (avatarCompositeDevState?.enabled ? 'red' : 'blue') : null;
+
   const effectiveLayers = useMemo(() => {
     const stageLayers = {};
     LAYER_IDS.forEach((layerId) => {
@@ -146,7 +149,10 @@ export function AvatarComposite({ stage, size }) {
 
   const bgStyle = tunerEnabled ? getDevStyleForLayer('bg', effectiveLayers.bg) : undefined;
   const stageStyle = tunerEnabled ? getDevStyleForLayer('stage', effectiveLayers.stage) : undefined;
-  const glassStyle = tunerEnabled ? getDevStyleForLayer('glass', effectiveLayers.glass) : undefined;
+  const glassProbeStyle = PROBE ? { border: `3px solid ${PROBE}` } : undefined;
+  const glassStyle = tunerEnabled
+    ? { ...getDevStyleForLayer('glass', effectiveLayers.glass), ...glassProbeStyle }
+    : glassProbeStyle;
   const ringStyle = tunerEnabled ? getDevStyleForLayer('ring', effectiveLayers.ring) : undefined;
 
   return (
