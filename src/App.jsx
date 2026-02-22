@@ -286,6 +286,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         return;
       }
       stressRunnerActiveRef.current = true;
+      const scheduledDumpIds = [];
+      const scheduleDump = (ms, label) => {
+        const id = window.setTimeout(() => {
+          if (isAborted()) return;
+          console.info(`[StressRunner] timed dump ${label}`);
+          dumpProbeState();
+        }, ms);
+        scheduledDumpIds.push(id);
+      };
+      scheduleDump(8000, "8s");
+      scheduleDump(16000, "16s");
       console.info("[StressRunner] start");
       try {
         await runDevPanelToggleStep();
@@ -298,6 +309,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       } catch (error) {
         console.error("[StressRunner] failed", error);
       } finally {
+        scheduledDumpIds.forEach((id) => window.clearTimeout(id));
         stressRunnerActiveRef.current = false;
       }
     };
