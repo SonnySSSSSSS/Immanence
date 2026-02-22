@@ -319,7 +319,15 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
     const dumpProbeState = () => {
       console.log("[Probe6] DUMP __PROBE3_DIAGNOSTICS__", window.__PROBE3_DIAGNOSTICS__ || null);
-      const firstLoss = window.__FIRST_WEBGL_LOSS__;
+      let firstLoss = window.__FIRST_WEBGL_LOSS__;
+      if (!firstLoss) {
+        try {
+          const raw = window.sessionStorage?.getItem("__PROBE6_FIRST_WEBGL_LOSS__");
+          if (raw) firstLoss = JSON.parse(raw);
+        } catch {
+          // ignore storage parse issues
+        }
+      }
       console.log("[Probe6] DUMP __FIRST_WEBGL_LOSS__", firstLoss || "none");
     };
     window.__PROBE6_DUMP__ = dumpProbeState;
@@ -361,6 +369,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => {
+      if (stressRunnerActiveRef.current) {
+        console.warn("[StressRunner] aborted reason=app_cleanup");
+        dumpProbeState();
+      }
       stressRunnerAbortRef.current = true;
       window.removeEventListener("keydown", onKeyDown);
       delete window.__PROBE6_DUMP__;
@@ -379,7 +391,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     const inventoryEnabled = Boolean(isDev && ENABLE_CANVAS_INVENTORY_LOGGER);
     const forensicsEnabled = Boolean(isDev);
     if (forensicsEnabled) {
-      window.__FIRST_WEBGL_LOSS__ = null;
+      if (typeof window.__FIRST_WEBGL_LOSS__ === "undefined" || window.__FIRST_WEBGL_LOSS__ == null) {
+        try {
+          const raw = window.sessionStorage?.getItem("__PROBE6_FIRST_WEBGL_LOSS__");
+          window.__FIRST_WEBGL_LOSS__ = raw ? JSON.parse(raw) : null;
+        } catch {
+          window.__FIRST_WEBGL_LOSS__ = null;
+        }
+      }
     }
     let mountCount = 0;
     let unmountCount = 0;
@@ -631,6 +650,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         rendererSnapshot: payload?.renderer || null,
       };
       window.__FIRST_WEBGL_LOSS__ = snapshot;
+      try {
+        window.sessionStorage?.setItem("__PROBE6_FIRST_WEBGL_LOSS__", JSON.stringify(snapshot));
+      } catch {
+        // ignore storage write failures
+      }
       firstLossSaved = true;
       console.warn("[Probe6] FIRST_LOSS_SAVED window.__FIRST_WEBGL_LOSS__");
       console.log("[Probe6] DUMP __PROBE3_DIAGNOSTICS__", window.__PROBE3_DIAGNOSTICS__ || null);
