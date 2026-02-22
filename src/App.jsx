@@ -308,14 +308,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
 
     const onKeyDown = (event) => {
-      if (!event.ctrlKey || !event.shiftKey) return;
+      if (!event.ctrlKey) return;
       const key = String(event.key || "").toLowerCase();
       const code = String(event.code || "");
       const isStressShortcut = (
+        event.shiftKey
+        && (
         code === "Digit9"
         || code === "Numpad9"
         || key === "9"
         || key === "("
+        )
       );
       const isDumpShortcut = (
         code === "Digit0"
