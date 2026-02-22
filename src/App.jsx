@@ -293,6 +293,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         await runResizeThrashStep();
         if (!isAborted()) {
           console.info("[StressRunner] completed");
+          dumpProbeState();
         }
       } catch (error) {
         console.error("[StressRunner] failed", error);
@@ -306,6 +307,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       const firstLoss = window.__FIRST_WEBGL_LOSS__;
       console.log("[Probe6] DUMP __FIRST_WEBGL_LOSS__", firstLoss || "none");
     };
+    window.__PROBE6_DUMP__ = dumpProbeState;
+    window.__PROBE6_RUN_STRESS__ = runStressRunner;
+    console.info("[Probe6] dump ready: window.__PROBE6_DUMP__()");
 
     const onKeyDown = (event) => {
       if (!event.ctrlKey) return;
@@ -325,6 +329,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         || code === "Numpad0"
         || key === "0"
         || key === ")"
+        || (event.shiftKey && (key === "x" || code === "KeyX"))
+        || (event.altKey && (key === "0" || key === ")" || code === "Digit0" || code === "Numpad0"))
       );
 
       if (isStressShortcut) {
@@ -342,6 +348,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     return () => {
       stressRunnerAbortRef.current = true;
       window.removeEventListener("keydown", onKeyDown);
+      delete window.__PROBE6_DUMP__;
+      delete window.__PROBE6_RUN_STRESS__;
     };
   }, [isDev]);
 
