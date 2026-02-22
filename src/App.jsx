@@ -249,7 +249,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           cancelable: true,
         }));
         console.log(`[StressRunner] ring preset switch ${i + 1}/10`);
-        await sleep(250);
+        await sleep(400);
       }
     };
 
@@ -633,6 +633,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       window.__FIRST_WEBGL_LOSS__ = snapshot;
       firstLossSaved = true;
       console.warn("[Probe6] FIRST_LOSS_SAVED window.__FIRST_WEBGL_LOSS__");
+      console.log("[Probe6] DUMP __PROBE3_DIAGNOSTICS__", window.__PROBE3_DIAGNOSTICS__ || null);
+      console.log("[Probe6] DUMP __FIRST_WEBGL_LOSS__", snapshot);
     };
 
     const getProbe6State = (context) => {
@@ -1057,6 +1059,56 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       logInventoryBlock("mutation");
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
+    const onGlobalContextLostCapture = (event) => {
+      const canvasEl = event?.target;
+      if (!(canvasEl instanceof HTMLCanvasElement)) return;
+      const uiState = probeUiStateRef.current || {};
+      const registration = probe6RegistrationByCanvas.get(canvasEl);
+      const context = registration?.context;
+      const state = context ? getProbe6State(context) : null;
+      const rect = canvasEl.getBoundingClientRect?.();
+      const canvasType = getCachedCanvasType(canvasEl) || getCanvasType(canvasEl, { allowDetect: false });
+      const payload = {
+        timestamp: new Date().toISOString(),
+        route: uiState.route || "/",
+        view: uiState.displayMode || "unknown",
+        section: uiState.activeSection || "home",
+        devPanelOpen: Boolean(uiState.isDevPanelOpen),
+        appMarker: probeAppMarkerRef.current || "-",
+        lastOp: state?.lastOp || "-",
+        lastArgsSummary: state?.lastArgsSummary || "-",
+        dpr: Number(window.devicePixelRatio || 1).toFixed(2),
+        canvasCss: rect ? `${Math.round(rect.width)}x${Math.round(rect.height)}` : "-",
+        canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
+        renderer: registration?.renderer ? getRendererSnapshot(registration.renderer) : null,
+        isContextLost: context && typeof context.isContextLost === "function" ? context.isContextLost() : null,
+        canvasMeta: describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), {
+          allowDetect: false,
+          typeOverride: canvasType,
+        }),
+      };
+      saveFirstLoss(payload, "global_capture_webglcontextlost");
+      console.warn("[Probe6] GLOBAL_CONTEXT_EVENT", payload);
+      try {
+        event.preventDefault?.();
+      } catch {
+        // ignore
+      }
+    };
+    const onGlobalContextRestoredCapture = (event) => {
+      const canvasEl = event?.target;
+      if (!(canvasEl instanceof HTMLCanvasElement)) return;
+      const uiState = probeUiStateRef.current || {};
+      console.info("[Probe6] GLOBAL_CONTEXT_RESTORED", {
+        timestamp: new Date().toISOString(),
+        route: uiState.route || "/",
+        view: uiState.displayMode || "unknown",
+        section: uiState.activeSection || "home",
+        canvasMeta: describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), { allowDetect: false }),
+      });
+    };
+    document.addEventListener("webglcontextlost", onGlobalContextLostCapture, true);
+    document.addEventListener("webglcontextrestored", onGlobalContextRestoredCapture, true);
     if (inventoryEnabled) {
       console.info("[Probe4] observer attached subtree=documentElement");
       logInventoryBlock("load", { force: true });
@@ -1164,6 +1216,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
     return () => {
       observer.disconnect();
+      document.removeEventListener("webglcontextlost", onGlobalContextLostCapture, true);
+      document.removeEventListener("webglcontextrestored", onGlobalContextRestoredCapture, true);
       if (previousProbe6Register) {
         window.__PROBE6_REGISTER_GL__ = previousProbe6Register;
       } else {
