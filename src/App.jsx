@@ -644,6 +644,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         lastOp: "-",
         lastArgsSummary: "-",
         lastOpAtMs: 0,
+        lastContextLost: false,
       };
       probe6ByGl.set(context, state);
       return state;
@@ -900,6 +901,36 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       const type = getCachedCanvasType(canvasEl) || "unknown";
       const removedRegistration = probe6RegistrationByCanvas.get(canvasEl);
       if (removedRegistration?.context) {
+        let lostOnRemove = false;
+        try {
+          lostOnRemove = typeof removedRegistration.context.isContextLost === "function"
+            ? removedRegistration.context.isContextLost()
+            : false;
+        } catch {
+          lostOnRemove = false;
+        }
+        if (lostOnRemove) {
+          const uiState = probeUiStateRef.current || {};
+          const payload = {
+            timestamp: new Date().toISOString(),
+            route: uiState.route || "/",
+            view: uiState.displayMode || "unknown",
+            section: uiState.activeSection || "home",
+            devPanelOpen: Boolean(uiState.isDevPanelOpen),
+            appMarker: probeAppMarkerRef.current || "-",
+            dpr: Number(window.devicePixelRatio || 1).toFixed(2),
+            canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
+            renderer: removedRegistration?.renderer ? getRendererSnapshot(removedRegistration.renderer) : null,
+            isContextLost: true,
+            canvasMeta: describeCanvasMeta(canvasEl, null, {
+              allowDetect: false,
+              ownerOverride: owner,
+              typeOverride: type,
+            }),
+          };
+          saveFirstLoss(payload, "canvas_remove_context_lost");
+          console.warn("[Probe6] CONTEXT_LOST_ON_REMOVE", payload);
+        }
         unpatchProbe6Context(removedRegistration.context);
       }
       probe6RegistrationByCanvas.delete(canvasEl);
@@ -1007,6 +1038,38 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           const rendererSnapshot = registration?.renderer ? getRendererSnapshot(registration.renderer) : null;
           const canvasType = getCachedCanvasType(canvasEl) || getCanvasType(canvasEl, { allowDetect: false });
           const lastOpAgeMs = state.lastOpAtMs ? Math.max(0, Math.round(performance.now() - state.lastOpAtMs)) : null;
+          let contextLostNow = false;
+          try {
+            contextLostNow = typeof context.isContextLost === "function" ? context.isContextLost() : false;
+          } catch {
+            contextLostNow = false;
+          }
+          const previousContextLost = Boolean(state.lastContextLost);
+          if (!previousContextLost && contextLostNow) {
+            const payload = {
+              timestamp: new Date().toISOString(),
+              route: uiState.route || "/",
+              view: uiState.displayMode || "unknown",
+              section: uiState.activeSection || "home",
+              devPanelOpen: Boolean(uiState.isDevPanelOpen),
+              appMarker: probeAppMarkerRef.current || "-",
+              lastOp: state.lastOp || "-",
+              lastArgsSummary: state.lastArgsSummary || "-",
+              lastOpAgeMs,
+              dpr: Number(window.devicePixelRatio || 1).toFixed(2),
+              canvasCss: rect ? `${Math.round(rect.width)}x${Math.round(rect.height)}` : "-",
+              canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
+              renderer: rendererSnapshot,
+              isContextLost: true,
+              canvasMeta: describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), {
+                allowDetect: false,
+                typeOverride: canvasType,
+              }),
+            };
+            saveFirstLoss(payload, "is_context_lost_transition");
+            console.warn("[Probe6] CONTEXT_LOST_STATE", payload);
+          }
+          state.lastContextLost = contextLostNow;
 
           if (previousError === 0 && errorCode !== 0) {
             const payload = {
@@ -1025,7 +1088,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               canvasCss: rect ? `${Math.round(rect.width)}x${Math.round(rect.height)}` : "-",
               canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
               renderer: rendererSnapshot,
-              isContextLost: typeof context.isContextLost === "function" ? context.isContextLost() : null,
+              isContextLost: contextLostNow,
               canvasMeta: describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), {
                 allowDetect: false,
                 typeOverride: canvasType,
