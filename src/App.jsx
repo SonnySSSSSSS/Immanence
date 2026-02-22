@@ -38,6 +38,7 @@ import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import { hasDevtoolsQueryFlag, isDevtoolsEnabled, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
+import { DISABLE_POSTPROCESS, ENABLE_CANVAS_INVENTORY_LOGGER, DISABLE_UI_CONTROLS_CAPTURE } from "./config/renderProbeFlags.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -167,6 +168,30 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const devtoolsEnabled = isDevtoolsEnabled();
   const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
+  const probeAppMarkerRef = useRef("app:init");
+  const stressRunnerActiveRef = useRef(false);
+  const stressRunnerAbortRef = useRef(false);
+  const probeUiStateRef = useRef({
+    route: "/",
+    displayMode: "unknown",
+    activeSection: "home",
+    isDevPanelOpen: false,
+  });
+
+  useEffect(() => {
+    const route = (typeof window !== "undefined" && window.location?.pathname) ? window.location.pathname : "/";
+    probeUiStateRef.current = {
+      route,
+      displayMode,
+      activeSection: activeSection ?? "home",
+      isDevPanelOpen: showDevPanel,
+    };
+    probeAppMarkerRef.current = `section:${activeSection ?? "home"}|devpanel:${showDevPanel ? "open" : "closed"}`;
+  }, [displayMode, activeSection, showDevPanel]);
+
+  useEffect(() => {
+    probeAppMarkerRef.current = isPracticing ? "practice:running" : "practice:idle";
+  }, [isPracticing]);
 
   useEffect(() => {
     if (!selectionEnabled || !devtoolsEnabled) {
@@ -188,42 +213,821 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, [selectionEnabled, devtoolsEnabled, devtoolsGateTick]);
 
   useEffect(() => {
+    if (!isDev || typeof window === "undefined" || typeof document === "undefined") return undefined;
+
+    stressRunnerAbortRef.current = false;
+
+    const sleep = (ms) => new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+    const isAborted = () => stressRunnerAbortRef.current === true;
+
+    const runDevPanelToggleStep = async () => {
+      for (let i = 0; i < 10; i += 1) {
+        if (isAborted()) return;
+        setShowDevPanel((prev) => !prev);
+        console.log(`[StressRunner] devpanel toggle ${i + 1}/10`);
+        await sleep(500);
+      }
+    };
+
+    const runRingPresetSwitchStep = async () => {
+      const hasPresetSwitchHook = (
+        typeof window.dispatchEvent === "function"
+        && typeof KeyboardEvent !== "undefined"
+        && Boolean(document.querySelector("canvas"))
+      );
+      if (!hasPresetSwitchHook) {
+        console.log("[StressRunner] no preset switch hook");
+        return;
+      }
+      for (let i = 0; i < 10; i += 1) {
+        if (isAborted()) return;
+        window.dispatchEvent(new KeyboardEvent("keydown", {
+          key: "F2",
+          bubbles: true,
+          cancelable: true,
+        }));
+        console.log(`[StressRunner] ring preset switch ${i + 1}/10`);
+        await sleep(250);
+      }
+    };
+
+    const runResizeThrashStep = async () => {
+      const canDispatchResize = typeof window.dispatchEvent === "function" && typeof Event !== "undefined";
+      if (canDispatchResize) {
+        for (let i = 0; i < 20; i += 1) {
+          if (isAborted()) return;
+          window.dispatchEvent(new Event("resize"));
+          await sleep(150);
+        }
+        return;
+      }
+
+      const appFrame = document.querySelector("[data-app-frame]");
+      if (!(appFrame instanceof HTMLElement)) {
+        console.log("[StressRunner] no resize handler");
+        return;
+      }
+
+      for (let i = 0; i < 20; i += 1) {
+        if (isAborted()) return;
+        appFrame.classList.toggle("stress-resize-small");
+        appFrame.classList.toggle("stress-resize-large");
+        await sleep(150);
+      }
+      appFrame.classList.remove("stress-resize-small");
+      appFrame.classList.remove("stress-resize-large");
+    };
+
+    const runStressRunner = async () => {
+      if (stressRunnerActiveRef.current) {
+        console.info("[StressRunner] already running");
+        return;
+      }
+      stressRunnerActiveRef.current = true;
+      console.info("[StressRunner] start");
+      try {
+        await runDevPanelToggleStep();
+        await runRingPresetSwitchStep();
+        await runResizeThrashStep();
+        if (!isAborted()) {
+          console.info("[StressRunner] completed");
+        }
+      } catch (error) {
+        console.error("[StressRunner] failed", error);
+      } finally {
+        stressRunnerActiveRef.current = false;
+      }
+    };
+
+    const dumpProbeState = () => {
+      console.log("[Probe6] DUMP __PROBE3_DIAGNOSTICS__", window.__PROBE3_DIAGNOSTICS__ || null);
+      const firstLoss = window.__FIRST_WEBGL_LOSS__;
+      console.log("[Probe6] DUMP __FIRST_WEBGL_LOSS__", firstLoss || "none");
+    };
+
+    const onKeyDown = (event) => {
+      if (!event.ctrlKey || !event.shiftKey) return;
+      const key = String(event.key || "");
+      if (key === "9") {
+        event.preventDefault();
+        runStressRunner();
+        return;
+      }
+      if (key === "0") {
+        event.preventDefault();
+        dumpProbeState();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      stressRunnerAbortRef.current = true;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isDev]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    console.log(`[Probe3] postprocess ${DISABLE_POSTPROCESS ? "disabled" : "enabled"}`);
+  }, []);
+
+  useEffect(() => {
     if (typeof window === "undefined" || typeof document === "undefined") return undefined;
 
+    const inventoryEnabled = Boolean(isDev && ENABLE_CANVAS_INVENTORY_LOGGER);
+    const forensicsEnabled = Boolean(isDev);
+    if (forensicsEnabled) {
+      window.__FIRST_WEBGL_LOSS__ = null;
+    }
     let mountCount = 0;
     let unmountCount = 0;
+    let contextLossCount = 0;
+    let contextRestoreCount = 0;
+    let inventoryIntervalId = null;
+    let probe6SamplerIntervalId = null;
+    let lastMultiCanvasSignature = null;
+    let lastInventoryCount = null;
+    let lastInventoryLogAt = 0;
+    let firstLossSaved = false;
     const knownCanvases = new Set();
+    const contextListeners = new Map();
+    const typeCache = new WeakMap();
+    const ownerCache = new WeakMap();
+    const resizeObserverCache = new WeakMap();
+    const resizeSizeCache = new WeakMap();
+    const observedCanvases = new Set();
+    const probe6PatchedGl = new WeakSet();
+    const probe6OriginalFns = new WeakMap();
+    const probe6RegistrationByCanvas = new Map();
+    const probe6ByGl = new WeakMap();
+    const PROBE6_METHODS = [
+      "readPixels",
+      "bindFramebuffer",
+      "framebufferTexture2D",
+      "framebufferRenderbuffer",
+      "checkFramebufferStatus",
+      "useProgram",
+      "bindTexture",
+      "texImage2D",
+      "texSubImage2D",
+      "bindBuffer",
+      "bufferData",
+      "drawArrays",
+      "drawElements",
+    ];
 
     const syncGlobalCounts = () => {
       window.__PROBE2_CANVAS_COUNTS__ = { mountCount, unmountCount };
+      window.__PROBE3_DIAGNOSTICS__ = {
+        postprocessDisabled: DISABLE_POSTPROCESS,
+        uiControlsCaptureDisabled: DISABLE_UI_CONTROLS_CAPTURE,
+        contextLossCount,
+        contextRestoreCount,
+        mountCount,
+        unmountCount,
+      };
     };
 
-    const scanCanvases = () => {
-      const currentCanvases = new Set(Array.from(document.querySelectorAll("canvas")));
+    const getFirstClass = (el) => {
+      if (!(el instanceof Element)) return "-";
+      if (typeof el.className === "string" && el.className.trim()) {
+        const first = el.className.trim().split(/\s+/)[0];
+        return first || "-";
+      }
+      return "-";
+    };
 
-      currentCanvases.forEach((canvasEl) => {
-        if (knownCanvases.has(canvasEl)) return;
-        knownCanvases.add(canvasEl);
-        mountCount += 1;
-        console.log(`Canvas mount #${mountCount}`);
+    const describeNode = (el) => {
+      if (!(el instanceof Element)) return "-";
+      const tag = String(el.tagName || "UNKNOWN").toUpperCase();
+      const idPart = el.id ? `#${el.id}` : "";
+      const firstClass = getFirstClass(el);
+      const classPart = firstClass !== "-" ? `.${firstClass}` : "";
+      return `${tag}${idPart}${classPart}`;
+    };
+
+    const buildOwnerHint = (canvasEl) => {
+      if (!(canvasEl instanceof Element)) return "-";
+      const nodes = [];
+      let node = canvasEl;
+      for (let i = 0; i < 3 && node instanceof Element; i += 1) {
+        nodes.push(node);
+        node = node.parentElement;
+      }
+      const hint = nodes.reverse().map(describeNode).join(" > ") || "-";
+      ownerCache.set(canvasEl, hint);
+      return hint;
+    };
+
+    const getCachedCanvasType = (canvasEl) => {
+      if (!(canvasEl instanceof HTMLCanvasElement)) return "unknown";
+      const datasetType = canvasEl.dataset?.probeType;
+      if (datasetType && datasetType.trim()) {
+        const normalized = datasetType.trim();
+        typeCache.set(canvasEl, normalized);
+        canvasEl.__probeType = normalized;
+        return normalized;
+      }
+
+      const directCachedType = canvasEl.__probeType;
+      if (typeof directCachedType === "string" && directCachedType.trim()) {
+        const normalized = directCachedType.trim();
+        typeCache.set(canvasEl, normalized);
+        try {
+          canvasEl.dataset.probeType = normalized;
+        } catch {
+          // Ignore dataset write failures.
+        }
+        return normalized;
+      }
+      const weakMapType = typeCache.get(canvasEl);
+      if (weakMapType) return weakMapType;
+      return null;
+    };
+
+    const formatGlError = (code) => {
+      if (!code) return "0x0:NO_ERROR";
+      const codeNum = Number(code) || 0;
+      const hex = `0x${codeNum.toString(16)}`;
+      const knownNames = {
+        1280: "INVALID_ENUM",
+        1281: "INVALID_VALUE",
+        1282: "INVALID_OPERATION",
+        1285: "OUT_OF_MEMORY",
+        1286: "INVALID_FRAMEBUFFER_OPERATION",
+        37442: "CONTEXT_LOST_WEBGL",
+      };
+      return `${hex}:${knownNames[codeNum] || "UNKNOWN"}`;
+    };
+
+    const getCanvasType = (canvasEl, { allowDetect = true } = {}) => {
+      if (!(canvasEl instanceof HTMLCanvasElement)) return "unknown";
+
+      const cachedType = getCachedCanvasType(canvasEl);
+      if (cachedType) return cachedType;
+      if (!allowDetect || !canvasEl.isConnected) {
+        typeCache.set(canvasEl, "unknown");
+        canvasEl.__probeType = "unknown";
+        return "unknown";
+      }
+
+      // Last resort detection: single-shot per canvas, cached immediately.
+      let detectedType = "unknown";
+      try {
+        const webgl2Ctx = canvasEl.getContext("webgl2", { failIfMajorPerformanceCaveat: false });
+        if (webgl2Ctx) {
+          detectedType = (typeof webgl2Ctx.isContextLost === "function" && webgl2Ctx.isContextLost())
+            ? "unknown"
+            : "webgl2";
+        } else {
+          const webglCtx = canvasEl.getContext("webgl");
+          if (webglCtx) {
+            detectedType = (typeof webglCtx.isContextLost === "function" && webglCtx.isContextLost())
+              ? "unknown"
+              : "webgl";
+          } else {
+            const twoDCtx = canvasEl.getContext("2d");
+            detectedType = twoDCtx ? "2d" : "unknown";
+          }
+        }
+      } catch {
+        detectedType = "unknown";
+      }
+
+      typeCache.set(canvasEl, detectedType);
+      canvasEl.__probeType = detectedType;
+      try {
+        canvasEl.dataset.probeType = detectedType;
+      } catch {
+        // Ignore dataset write failures.
+      }
+      return detectedType;
+    };
+
+    const getCanvasIndex = (canvasEl) => {
+      if (!(canvasEl instanceof HTMLCanvasElement)) return null;
+      const list = Array.from(document.querySelectorAll("canvas"));
+      const idx = list.indexOf(canvasEl);
+      return idx >= 0 ? idx + 1 : null;
+    };
+
+    const describeCanvasMeta = (canvasEl, index = null, options = {}) => {
+      if (!(canvasEl instanceof HTMLCanvasElement)) return "i=- id=- class=- size=0x0 type=unknown owner=-";
+      const { allowDetect = true, typeOverride = null, ownerOverride = null } = options;
+      const idx = index == null ? "-" : String(index);
+      const id = canvasEl.id || "-";
+      const firstClass = getFirstClass(canvasEl);
+      const size = `${canvasEl.width || 0}x${canvasEl.height || 0}`;
+      const type = typeOverride || getCanvasType(canvasEl, { allowDetect });
+      const owner = ownerOverride || ownerCache.get(canvasEl) || (canvasEl.isConnected ? buildOwnerHint(canvasEl) : "-");
+      return `i=${idx} id=${id} class=${firstClass} size=${size} type=${type} owner=${owner}`;
+    };
+
+    const getGlErrorName = (code) => {
+      const codeNum = Number(code) || 0;
+      const knownNames = {
+        1280: "INVALID_ENUM",
+        1281: "INVALID_VALUE",
+        1282: "INVALID_OPERATION",
+        1285: "OUT_OF_MEMORY",
+        1286: "INVALID_FRAMEBUFFER_OPERATION",
+        37442: "CONTEXT_LOST_WEBGL",
+      };
+      return knownNames[codeNum] || "UNKNOWN";
+    };
+
+    const summarizeProbe6Arg = (arg) => {
+      if (arg == null) return String(arg);
+      if (typeof arg === "number" || typeof arg === "boolean") return String(arg);
+      if (typeof arg === "string") return arg.length > 24 ? `${arg.slice(0, 24)}…` : arg;
+      if (ArrayBuffer.isView(arg)) return `${arg.constructor?.name || "TypedArray"}(${arg.length ?? 0})`;
+      if (arg instanceof ArrayBuffer) return `ArrayBuffer(${arg.byteLength})`;
+      if (typeof arg === "object") {
+        if ("width" in arg && "height" in arg) {
+          return `${arg.constructor?.name || "Object"}(${arg.width}x${arg.height})`;
+        }
+        if ("id" in arg && typeof arg.id !== "undefined") return `${arg.constructor?.name || "Object"}#${String(arg.id)}`;
+        return arg.constructor?.name || "Object";
+      }
+      return typeof arg;
+    };
+
+    const summarizeProbe6Args = (args = []) => {
+      return args
+        .slice(0, 4)
+        .map((arg) => summarizeProbe6Arg(arg))
+        .join(", ");
+    };
+
+    const getRendererSnapshot = (gl) => {
+      const renderInfo = gl?.info?.render || {};
+      const memoryInfo = gl?.info?.memory || {};
+      const programsRaw = gl?.info?.programs;
+      const programs = Array.isArray(programsRaw)
+        ? programsRaw.length
+        : (typeof programsRaw?.length === "number" ? programsRaw.length : null);
+      return {
+        calls: Number.isFinite(renderInfo.calls) ? renderInfo.calls : null,
+        textures: Number.isFinite(memoryInfo.textures) ? memoryInfo.textures : null,
+        programs,
+      };
+    };
+
+    const saveFirstLoss = (payload, source) => {
+      if (!forensicsEnabled || firstLossSaved) return;
+      if (window.__FIRST_WEBGL_LOSS__) {
+        firstLossSaved = true;
+        return;
+      }
+      const snapshot = {
+        ts: new Date().toISOString(),
+        source: source || "unknown",
+        payload,
+        lastOp: payload?.lastOp || "-",
+        lastArgsSummary: payload?.lastArgsSummary || "-",
+        rendererSnapshot: payload?.renderer || null,
+      };
+      window.__FIRST_WEBGL_LOSS__ = snapshot;
+      firstLossSaved = true;
+      console.warn("[Probe6] FIRST_LOSS_SAVED window.__FIRST_WEBGL_LOSS__");
+    };
+
+    const getProbe6State = (context) => {
+      if (!context) return null;
+      let state = probe6ByGl.get(context);
+      if (state) return state;
+      state = {
+        lastError: 0,
+        lastErrorAtMs: 0,
+        lastOp: "-",
+        lastArgsSummary: "-",
+        lastOpAtMs: 0,
+      };
+      probe6ByGl.set(context, state);
+      return state;
+    };
+
+    const patchProbe6Context = (context) => {
+      if (!context || probe6PatchedGl.has(context)) return;
+      const originals = new Map();
+
+      PROBE6_METHODS.forEach((methodName) => {
+        const original = context[methodName];
+        if (typeof original !== "function") return;
+        const bound = original.bind(context);
+        try {
+          context[methodName] = (...args) => {
+            const state = getProbe6State(context);
+            if (state) {
+              state.lastOp = methodName;
+              state.lastArgsSummary = summarizeProbe6Args(args);
+              state.lastOpAtMs = performance.now();
+            }
+            return bound(...args);
+          };
+          originals.set(methodName, bound);
+        } catch {
+          // Ignore patch failures for non-writable methods.
+        }
       });
 
-      Array.from(knownCanvases).forEach((canvasEl) => {
-        if (currentCanvases.has(canvasEl)) return;
-        knownCanvases.delete(canvasEl);
-        unmountCount += 1;
-        console.log(`Canvas unmount #${unmountCount}`);
+      if (originals.size === 0) {
+        return;
+      }
+
+      probe6OriginalFns.set(context, originals);
+      probe6PatchedGl.add(context);
+      getProbe6State(context);
+    };
+
+    const unpatchProbe6Context = (context) => {
+      if (!context) return;
+      const originals = probe6OriginalFns.get(context);
+      if (originals) {
+        originals.forEach((fn, methodName) => {
+          try {
+            context[methodName] = fn;
+          } catch {
+            // ignore restore failures.
+          }
+        });
+      }
+      probe6OriginalFns.delete(context);
+      probe6PatchedGl.delete(context);
+      probe6ByGl.delete(context);
+    };
+
+    const registerProbe6Gl = (registration = {}) => {
+      const renderer = registration?.gl;
+      if (!renderer || typeof renderer.getContext !== "function") return;
+      const canvas = registration?.canvas ?? renderer.domElement;
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+
+      const context = renderer.getContext();
+      if (!context) return;
+      const typeHint = (typeof WebGL2RenderingContext !== "undefined" && context instanceof WebGL2RenderingContext)
+        ? "webgl2"
+        : "webgl";
+
+      typeCache.set(canvas, typeHint);
+      canvas.__probeType = typeHint;
+      try {
+        canvas.dataset.probeType = typeHint;
+      } catch {
+        // Ignore dataset write failures.
+      }
+
+      patchProbe6Context(context);
+      probe6RegistrationByCanvas.set(canvas, {
+        renderer,
+        context,
+        source: registration?.source || "r3f",
+      });
+    };
+
+    const logContextForensics = (eventName, canvasEl, canvasType) => {
+      if (!forensicsEnabled) return;
+      const uiState = probeUiStateRef.current || {};
+      const registration = probe6RegistrationByCanvas.get(canvasEl);
+      const probe6State = registration?.context ? getProbe6State(registration.context) : null;
+      const lastErr = probe6State?.lastError ?? 0;
+      const lastErrAt = probe6State?.lastErrorAtMs ? new Date(probe6State.lastErrorAtMs).toISOString() : "-";
+      const rect = canvasEl?.getBoundingClientRect?.();
+      const rendererSnapshot = registration?.renderer ? getRendererSnapshot(registration.renderer) : null;
+      const meta = describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), { allowDetect: false, typeOverride: canvasType });
+      const timestamp = new Date().toISOString();
+      const dpr = Number(window.devicePixelRatio || 1).toFixed(2);
+      const payload = {
+        event: eventName,
+        timestamp,
+        route: uiState.route || "/",
+        view: uiState.displayMode || "unknown",
+        section: uiState.activeSection || "home",
+        devPanelOpen: Boolean(uiState.isDevPanelOpen),
+        appMarker: probeAppMarkerRef.current || "-",
+        dpr,
+        canvasCss: rect ? `${Math.round(rect.width)}x${Math.round(rect.height)}` : "-",
+        canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
+        lastGlError: formatGlError(lastErr),
+        lastGlErrorAt: lastErrAt,
+        lastOp: probe6State?.lastOp || "-",
+        lastArgsSummary: probe6State?.lastArgsSummary || "-",
+        renderer: rendererSnapshot,
+        isContextLost: registration?.context && typeof registration.context.isContextLost === "function"
+          ? registration.context.isContextLost()
+          : null,
+        canvasMeta: meta,
+      };
+      if (eventName === "webglcontextlost") {
+        saveFirstLoss(payload, "webglcontextlost");
+      }
+      console.warn("[Probe6] CONTEXT_EVENT", payload);
+    };
+
+    const detachResizeObserver = (canvasEl) => {
+      const observer = resizeObserverCache.get(canvasEl);
+      if (!observer) return;
+      observer.disconnect();
+      observedCanvases.delete(canvasEl);
+      resizeSizeCache.delete(canvasEl);
+    };
+
+    const attachResizeObserver = (canvasEl) => {
+      if (!inventoryEnabled) return;
+      if (!(canvasEl instanceof HTMLCanvasElement)) return;
+      if (resizeObserverCache.has(canvasEl)) return;
+      if (typeof ResizeObserver !== "function") return;
+
+      const observer = new ResizeObserver((entries) => {
+        entries.forEach((entry) => {
+          const target = entry.target;
+          if (!(target instanceof HTMLCanvasElement)) return;
+          const nextSize = `${target.width || 0}x${target.height || 0}`;
+          const prevSize = resizeSizeCache.get(target);
+          if (prevSize === nextSize) return;
+          resizeSizeCache.set(target, nextSize);
+          const index = getCanvasIndex(target);
+          const meta = describeCanvasMeta(target, index, { allowDetect: false });
+          console.log(`[Probe4] CANVAS RESIZE ${meta}`);
+        });
       });
 
+      observer.observe(canvasEl);
+      resizeObserverCache.set(canvasEl, observer);
+      observedCanvases.add(canvasEl);
+      resizeSizeCache.set(canvasEl, `${canvasEl.width || 0}x${canvasEl.height || 0}`);
+    };
+
+    const warnMultipleCanvases = (canvasList, source) => {
+      if (!inventoryEnabled) return;
+      if (!Array.isArray(canvasList) || canvasList.length <= 1) {
+        lastMultiCanvasSignature = null;
+        return;
+      }
+
+      const signatureParts = canvasList
+        .map((canvasEl) => {
+          const owner = ownerCache.get(canvasEl) || buildOwnerHint(canvasEl);
+          const type = getCanvasType(canvasEl);
+          return `${owner}|${canvasEl.width || 0}x${canvasEl.height || 0}|${type}`;
+        })
+        .sort();
+      const signature = `N=${canvasList.length}|${signatureParts.join("||")}`;
+
+      if (signature === lastMultiCanvasSignature) return;
+      lastMultiCanvasSignature = signature;
+      console.warn(`[Probe4] WARNING: MULTIPLE CANVASES DETECTED (N=${canvasList.length}) source=${source}`);
+    };
+
+    const logInventoryBlock = (source, { force = false } = {}) => {
+      if (!inventoryEnabled) return;
+      const canvasList = Array.from(document.querySelectorAll("canvas"));
+      const now = Date.now();
+      const shouldLog = force || canvasList.length !== lastInventoryCount || (now - lastInventoryLogAt >= 5000);
+      warnMultipleCanvases(canvasList, source);
+      if (!shouldLog) return;
+
+      lastInventoryCount = canvasList.length;
+      lastInventoryLogAt = now;
+      const lines = [`[Probe4][Inventory] total canvases: ${canvasList.length} source=${source}`];
+      canvasList.forEach((canvasEl, i) => {
+        lines.push(`  ${describeCanvasMeta(canvasEl, i + 1, { allowDetect: true })}`);
+      });
+      console.log(lines.join("\n"));
+    };
+
+    const detachContextListeners = (canvasEl) => {
+      const listeners = contextListeners.get(canvasEl);
+      if (!listeners) return;
+      canvasEl.removeEventListener("webglcontextlost", listeners.onLost);
+      canvasEl.removeEventListener("webglcontextrestored", listeners.onRestored);
+      contextListeners.delete(canvasEl);
+    };
+
+    const attachContextListeners = (canvasEl) => {
+      if (contextListeners.has(canvasEl)) return;
+
+      const onLost = (event) => {
+        event.preventDefault();
+        contextLossCount += 1;
+        console.warn(`[Probe3] webglcontextlost #${contextLossCount}`);
+        const canvasType = getCanvasType(canvasEl, { allowDetect: false });
+        if (canvasType === "webgl2" || canvasType === "webgl") {
+          logContextForensics("webglcontextlost", canvasEl, canvasType);
+        }
+        syncGlobalCounts();
+      };
+      const onRestored = () => {
+        contextRestoreCount += 1;
+        console.info(`[Probe3] webglcontextrestored #${contextRestoreCount}`);
+        const canvasType = getCanvasType(canvasEl, { allowDetect: false });
+        if (canvasType === "webgl2" || canvasType === "webgl") {
+          logContextForensics("webglcontextrestored", canvasEl, canvasType);
+        }
+        syncGlobalCounts();
+      };
+
+      canvasEl.addEventListener("webglcontextlost", onLost, false);
+      canvasEl.addEventListener("webglcontextrestored", onRestored, false);
+      contextListeners.set(canvasEl, { onLost, onRestored });
+    };
+
+    const onCanvasAdded = (canvasEl, reason) => {
+      if (!(canvasEl instanceof HTMLCanvasElement)) return;
+      if (knownCanvases.has(canvasEl)) return;
+
+      knownCanvases.add(canvasEl);
+      buildOwnerHint(canvasEl);
+      getCanvasType(canvasEl, { allowDetect: true });
+      attachContextListeners(canvasEl);
+      attachResizeObserver(canvasEl);
+      mountCount += 1;
+      console.log(`Canvas mount #${mountCount}`);
+      if (inventoryEnabled) {
+        const index = getCanvasIndex(canvasEl);
+        console.log(`[Probe4] CANVAS ADD ${describeCanvasMeta(canvasEl, index, { allowDetect: false })} reason=${reason}`);
+      }
       syncGlobalCounts();
     };
 
-    scanCanvases();
-    const observer = new MutationObserver(scanCanvases);
+    const onCanvasRemoved = (canvasEl, reason) => {
+      if (!(canvasEl instanceof HTMLCanvasElement)) return;
+      if (!knownCanvases.has(canvasEl) && !inventoryEnabled) return;
+
+      const owner = ownerCache.get(canvasEl) || (canvasEl.isConnected ? buildOwnerHint(canvasEl) : "-");
+      const type = getCachedCanvasType(canvasEl) || "unknown";
+      const removedRegistration = probe6RegistrationByCanvas.get(canvasEl);
+      if (removedRegistration?.context) {
+        unpatchProbe6Context(removedRegistration.context);
+      }
+      probe6RegistrationByCanvas.delete(canvasEl);
+      const wasKnown = knownCanvases.delete(canvasEl);
+      detachResizeObserver(canvasEl);
+      detachContextListeners(canvasEl);
+
+      if (wasKnown) {
+        unmountCount += 1;
+        console.log(`Canvas unmount #${unmountCount}`);
+      }
+      if (inventoryEnabled) {
+        console.log(`[Probe4] CANVAS REMOVE ${describeCanvasMeta(canvasEl, null, { allowDetect: false, ownerOverride: owner, typeOverride: type })} reason=${reason}`);
+      }
+      syncGlobalCounts();
+    };
+
+    const collectCanvasesFromNode = (node, bucket) => {
+      if (!node || !bucket) return;
+      if (node instanceof HTMLCanvasElement) {
+        bucket.add(node);
+      }
+      if (node instanceof Element || node instanceof DocumentFragment) {
+        if (typeof node.querySelectorAll === "function") {
+          node.querySelectorAll("canvas").forEach((canvasEl) => {
+            if (canvasEl instanceof HTMLCanvasElement) bucket.add(canvasEl);
+          });
+        }
+      }
+    };
+
+    const previousProbe6Register = window.__PROBE6_REGISTER_GL__;
+    window.__PROBE6_REGISTER_GL__ = (registration) => {
+      try {
+        registerProbe6Gl(registration);
+      } catch {
+        // ignore probe registration failures.
+      }
+      if (
+        typeof previousProbe6Register === "function"
+        && previousProbe6Register !== window.__PROBE6_REGISTER_GL__
+      ) {
+        try {
+          previousProbe6Register(registration);
+        } catch {
+          // ignore chained callback failures.
+        }
+      }
+    };
+
+    // Prime with canvases already present on first mount.
+    Array.from(document.querySelectorAll("canvas")).forEach((canvasEl) => {
+      onCanvasAdded(canvasEl, "initial");
+    });
+    syncGlobalCounts();
+
+    const observer = new MutationObserver((mutations) => {
+      const addedCanvases = new Set();
+      const removedCanvases = new Set();
+
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => collectCanvasesFromNode(node, addedCanvases));
+        mutation.removedNodes.forEach((node) => collectCanvasesFromNode(node, removedCanvases));
+      });
+
+      if (addedCanvases.size === 0 && removedCanvases.size === 0) return;
+
+      addedCanvases.forEach((canvasEl) => onCanvasAdded(canvasEl, "mutation:add"));
+      removedCanvases.forEach((canvasEl) => {
+        if (canvasEl.isConnected) return;
+        onCanvasRemoved(canvasEl, "mutation:remove");
+      });
+
+      logInventoryBlock("mutation");
+    });
     observer.observe(document.documentElement, { childList: true, subtree: true });
+    if (inventoryEnabled) {
+      console.info("[Probe4] observer attached subtree=documentElement");
+      logInventoryBlock("load", { force: true });
+      inventoryIntervalId = window.setInterval(() => {
+        logInventoryBlock("interval");
+      }, 500);
+    }
+    if (forensicsEnabled) {
+      probe6SamplerIntervalId = window.setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+
+        Array.from(knownCanvases).forEach((canvasEl) => {
+          const registration = probe6RegistrationByCanvas.get(canvasEl);
+          const context = registration?.context;
+          if (!context) return;
+          const state = getProbe6State(context);
+          if (!state) return;
+
+          let errorCode = 0;
+          try {
+            errorCode = context.getError();
+          } catch {
+            return;
+          }
+
+          const previousError = state.lastError ?? 0;
+          const uiState = probeUiStateRef.current || {};
+          const rect = canvasEl.getBoundingClientRect?.();
+          const rendererSnapshot = registration?.renderer ? getRendererSnapshot(registration.renderer) : null;
+          const canvasType = getCachedCanvasType(canvasEl) || getCanvasType(canvasEl, { allowDetect: false });
+          const lastOpAgeMs = state.lastOpAtMs ? Math.max(0, Math.round(performance.now() - state.lastOpAtMs)) : null;
+
+          if (previousError === 0 && errorCode !== 0) {
+            const payload = {
+              timestamp: new Date().toISOString(),
+              err: formatGlError(errorCode),
+              errName: getGlErrorName(errorCode),
+              lastOp: state.lastOp || "-",
+              lastArgsSummary: state.lastArgsSummary || "-",
+              lastOpAgeMs,
+              route: uiState.route || "/",
+              view: uiState.displayMode || "unknown",
+              section: uiState.activeSection || "home",
+              devPanelOpen: Boolean(uiState.isDevPanelOpen),
+              appMarker: probeAppMarkerRef.current || "-",
+              dpr: Number(window.devicePixelRatio || 1).toFixed(2),
+              canvasCss: rect ? `${Math.round(rect.width)}x${Math.round(rect.height)}` : "-",
+              canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
+              renderer: rendererSnapshot,
+              isContextLost: typeof context.isContextLost === "function" ? context.isContextLost() : null,
+              canvasMeta: describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), {
+                allowDetect: false,
+                typeOverride: canvasType,
+                }),
+            };
+            saveFirstLoss(payload, "gl_error_transition");
+            console.warn("[Probe6] GL_ERROR_TRANSITION", payload);
+          } else if (previousError !== 0 && errorCode === 0) {
+            console.info("[Probe6] GL_ERROR_CLEARED", {
+              timestamp: new Date().toISOString(),
+              previousErr: formatGlError(previousError),
+              route: uiState.route || "/",
+              view: uiState.displayMode || "unknown",
+              appMarker: probeAppMarkerRef.current || "-",
+            });
+          }
+
+          state.lastError = errorCode;
+          if (errorCode !== 0) state.lastErrorAtMs = Date.now();
+        });
+      }, 1000);
+    }
 
     return () => {
       observer.disconnect();
+      if (previousProbe6Register) {
+        window.__PROBE6_REGISTER_GL__ = previousProbe6Register;
+      } else {
+        delete window.__PROBE6_REGISTER_GL__;
+      }
+      if (inventoryIntervalId != null) {
+        window.clearInterval(inventoryIntervalId);
+      }
+      if (probe6SamplerIntervalId != null) {
+        window.clearInterval(probe6SamplerIntervalId);
+      }
+      Array.from(probe6RegistrationByCanvas.values()).forEach((registration) => {
+        if (registration?.context) unpatchProbe6Context(registration.context);
+      });
+      probe6RegistrationByCanvas.clear();
+      Array.from(observedCanvases).forEach((canvasEl) => detachResizeObserver(canvasEl));
+      Array.from(contextListeners.keys()).forEach((canvasEl) => detachContextListeners(canvasEl));
       knownCanvases.clear();
       syncGlobalCounts();
     };
