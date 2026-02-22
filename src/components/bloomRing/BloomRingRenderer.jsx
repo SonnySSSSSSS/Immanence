@@ -20,6 +20,7 @@ import { EffectComposer, Bloom, ChromaticAberration, Vignette, GodRays } from '@
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
+import { registerR3FRenderer } from '../../dev/canvasStabilityGuard.js';
 
 // ─── TrailArc ─────────────────────────────────────────────────────────────────
 // Moving comet-head + tail along an arc (right quadrant).
@@ -1215,13 +1216,12 @@ export default function BloomRingRenderer({
           const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
           console.info(`[BloomRingRenderer] mount dpr=${appliedDpr} cap=1.50`);
         }
-        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
-          window.__PROBE6_REGISTER_GL__({
-            gl,
-            canvas: gl.domElement,
-            source: 'BloomRingRenderer',
-          });
-        }
+        registerR3FRenderer(gl, gl, {
+          source: 'BloomRingRenderer',
+          dpr: Number(gl.getPixelRatio?.() || 1),
+          canvasSize: `${gl.domElement?.width || 0}x${gl.domElement?.height || 0}`,
+          appMarker: typeof window !== 'undefined' ? window.__IMMANENCE_APP_MARKER__ : 'unknown',
+        });
       }}
     >
       <BloomRingSceneContent params={params} accentColor={accentColor} mode={mode} isFrameActive={isFrameActive} />
