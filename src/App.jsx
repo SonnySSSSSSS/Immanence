@@ -416,6 +416,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     const ownerCache = new WeakMap();
     const resizeObserverCache = new WeakMap();
     const resizeSizeCache = new WeakMap();
+    const removalCleanupTimers = new Map();
     const observedCanvases = new Set();
     const probe6PatchedGl = new WeakSet();
     const probe6OriginalFns = new WeakMap();
@@ -951,6 +952,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     const onCanvasAdded = (canvasEl, reason) => {
       if (!(canvasEl instanceof HTMLCanvasElement)) return;
       if (knownCanvases.has(canvasEl)) return;
+      const pendingCleanupId = removalCleanupTimers.get(canvasEl);
+      if (pendingCleanupId != null) {
+        window.clearTimeout(pendingCleanupId);
+        removalCleanupTimers.delete(canvasEl);
+      }
 
       knownCanvases.add(canvasEl);
       buildOwnerHint(canvasEl);
@@ -972,47 +978,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
       const owner = ownerCache.get(canvasEl) || (canvasEl.isConnected ? buildOwnerHint(canvasEl) : "-");
       const type = getCachedCanvasType(canvasEl) || "unknown";
-      const removedRegistration = probe6RegistrationByCanvas.get(canvasEl);
-      if (removedRegistration?.context) {
-        let lostOnRemove = false;
-        try {
-          lostOnRemove = typeof removedRegistration.context.isContextLost === "function"
-            ? removedRegistration.context.isContextLost()
-            : false;
-        } catch {
-          lostOnRemove = false;
-        }
-        if (lostOnRemove) {
-          const uiState = probeUiStateRef.current || {};
-          const payload = {
-            timestamp: new Date().toISOString(),
-            route: uiState.route || "/",
-            view: uiState.displayMode || "unknown",
-            section: uiState.activeSection || "home",
-            devPanelOpen: Boolean(uiState.isDevPanelOpen),
-            appMarker: probeAppMarkerRef.current || "-",
-            dpr: Number(window.devicePixelRatio || 1).toFixed(2),
-            canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
-            renderer: removedRegistration?.renderer ? getRendererSnapshot(removedRegistration.renderer) : null,
-            isContextLost: true,
-            canvasMeta: describeCanvasMeta(canvasEl, null, {
-              allowDetect: false,
-              ownerOverride: owner,
-              typeOverride: type,
-            }),
-          };
-          saveFirstLoss(payload, "canvas_remove_context_lost");
-          console.warn("[Probe6] CONTEXT_LOST_ON_REMOVE", payload);
-        }
-        unpatchProbe6Context(removedRegistration.context);
-      }
-      if (removedRegistration?.renderer) {
-        unpatchProbe6RendererForceLoss(removedRegistration.renderer);
-      }
       probe6RegistrationByCanvas.delete(canvasEl);
       const wasKnown = knownCanvases.delete(canvasEl);
-      detachResizeObserver(canvasEl);
-      detachContextListeners(canvasEl);
 
       if (wasKnown) {
         unmountCount += 1;
@@ -1022,6 +989,55 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         console.log(`[Probe4] CANVAS REMOVE ${describeCanvasMeta(canvasEl, null, { allowDetect: false, ownerOverride: owner, typeOverride: type })} reason=${reason}`);
       }
       syncGlobalCounts();
+
+      const priorTimer = removalCleanupTimers.get(canvasEl);
+      if (priorTimer != null) {
+        window.clearTimeout(priorTimer);
+      }
+      const cleanupTimerId = window.setTimeout(() => {
+        const removedRegistration = probe6RegistrationByCanvas.get(canvasEl);
+        if (removedRegistration?.context) {
+          let lostOnRemove = false;
+          try {
+            lostOnRemove = typeof removedRegistration.context.isContextLost === "function"
+              ? removedRegistration.context.isContextLost()
+              : false;
+          } catch {
+            lostOnRemove = false;
+          }
+          if (lostOnRemove) {
+            const uiState = probeUiStateRef.current || {};
+            const payload = {
+              timestamp: new Date().toISOString(),
+              route: uiState.route || "/",
+              view: uiState.displayMode || "unknown",
+              section: uiState.activeSection || "home",
+              devPanelOpen: Boolean(uiState.isDevPanelOpen),
+              appMarker: probeAppMarkerRef.current || "-",
+              dpr: Number(window.devicePixelRatio || 1).toFixed(2),
+              canvasBacking: `${canvasEl.width || 0}x${canvasEl.height || 0}`,
+              renderer: removedRegistration?.renderer ? getRendererSnapshot(removedRegistration.renderer) : null,
+              isContextLost: true,
+              canvasMeta: describeCanvasMeta(canvasEl, null, {
+                allowDetect: false,
+                ownerOverride: owner,
+                typeOverride: type,
+              }),
+            };
+            saveFirstLoss(payload, "canvas_remove_context_lost");
+            console.warn("[Probe6] CONTEXT_LOST_ON_REMOVE", payload);
+          }
+          unpatchProbe6Context(removedRegistration.context);
+        }
+        if (removedRegistration?.renderer) {
+          unpatchProbe6RendererForceLoss(removedRegistration.renderer);
+        }
+        probe6RegistrationByCanvas.delete(canvasEl);
+        detachResizeObserver(canvasEl);
+        detachContextListeners(canvasEl);
+        removalCleanupTimers.delete(canvasEl);
+      }, 3000);
+      removalCleanupTimers.set(canvasEl, cleanupTimerId);
     };
 
     const collectCanvasesFromNode = (node, bucket) => {
@@ -1253,6 +1269,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       if (probe6SamplerIntervalId != null) {
         window.clearInterval(probe6SamplerIntervalId);
       }
+      Array.from(removalCleanupTimers.values()).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+      removalCleanupTimers.clear();
       Array.from(probe6RegistrationByCanvas.values()).forEach((registration) => {
         if (registration?.context) unpatchProbe6Context(registration.context);
         if (registration?.renderer) unpatchProbe6RendererForceLoss(registration.renderer);
