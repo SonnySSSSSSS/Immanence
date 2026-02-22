@@ -7,11 +7,81 @@
 // - PATH FX: path-specific particle effects sync with breath
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
+import * as THREE from "three";
 import { EnsoStroke } from "./EnsoStroke";
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
-import BloomRingRenderer from './bloomRing/BloomRingRenderer.jsx';
+import { BloomRingSceneContent } from './bloomRing/BloomRingRenderer.jsx';
+import { VolumetricGlassRingSceneContent } from './bloomRing/VolumetricGlassRingRND.jsx';
+import { TechInstrumentSceneContent } from './bloomRing/TechInstrumentRND.jsx';
 import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefaults.js';
 import { useTheme } from '../context/ThemeContext.jsx';
+
+const BREATH_RING_MAX_DPR = 1.5;
+
+function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver }) {
+  if (rndRingMode === 'orb') {
+    return (
+      <VolumetricGlassRingSceneContent
+        accentColor={liveAccentColor}
+        breathDriver={breathDriver}
+      />
+    );
+  }
+
+  if (rndRingMode === 'instrument') {
+    return (
+      <TechInstrumentSceneContent
+        accentColor={liveAccentColor}
+        breathDriver={breathDriver}
+      />
+    );
+  }
+
+  return (
+    <BloomRingSceneContent
+      params={productionParams}
+      accentColor={liveAccentColor}
+      mode="production"
+    />
+  );
+}
+
+function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style }) {
+  return (
+    <Canvas
+      style={{ width: '100%', height: '100%', display: 'block', ...style }}
+      dpr={[1, BREATH_RING_MAX_DPR]}
+      camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
+      gl={{
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+        preserveDrawingBuffer: false,
+      }}
+      onCreated={({ gl }) => {
+        gl.setPixelRatio(Math.min(window.devicePixelRatio, BREATH_RING_MAX_DPR));
+        gl.setClearColor(0x000000, 0);
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+        gl.toneMapping = THREE.NoToneMapping;
+        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
+          window.__PROBE6_REGISTER_GL__({
+            gl,
+            canvas: gl.domElement,
+            source: 'BreathingRing:PersistentCanvas',
+          });
+        }
+      }}
+    >
+      <RingSceneRouter
+        rndRingMode={rndRingMode}
+        productionParams={productionParams}
+        liveAccentColor={liveAccentColor}
+        breathDriver={breathDriver}
+      />
+    </Canvas>
+  );
+}
 
 // startTime is required and must be based on performance.now() so that
 // audio scheduling (Web Audio API) and the rAF animation loop share one
@@ -25,6 +95,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
   // State to track the currently displayed pattern (triggers re-render when pattern changes)
   const [displayedPattern, setDisplayedPattern] = useState(breathPattern || { inhale: 4, holdTop: 4, exhale: 4, holdBottom: 2 });
+  const [rndRingMode, setRndRingMode] = useState('bracelet');
 
   const patternKey = (pattern) => ([
     pattern?.inhale ?? 0,
@@ -32,6 +103,28 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     pattern?.exhale ?? 0,
     pattern?.holdBottom ?? 0,
   ]).join('|');
+
+  useEffect(() => {
+    if (import.meta.env.DEV !== true || typeof window === 'undefined') return;
+
+    const ringModes = ['bracelet', 'orb', 'instrument', 'baseline'];
+    const ringParam = new URLSearchParams(window.location.search).get('ring');
+    if (ringParam && ringModes.includes(ringParam)) {
+      setRndRingMode(ringParam);
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key !== 'F2') return;
+      event.preventDefault();
+      setRndRingMode((prev) => {
+        const idx = ringModes.indexOf(prev);
+        return ringModes[(idx + 1) % ringModes.length];
+      });
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // Initialize locked pattern on mount (ONLY ONCE)
   // This ensures lockedPatternRef is set before animation loop runs
@@ -445,7 +538,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   // engine never start with a missing clock anchor.
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   if (!startTimeValid) return null;
-  const ringSafePad = "clamp(16px, 2.5vmin, 30px)";
+  const ringSafePad = "20px";
 
   return (
     <div
@@ -513,7 +606,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         style={{
           width: "100vw",
           margin: 0,
-          padding: "28px 14px 18px",
+          padding: "40px 14px 24px",
           borderRadius: 0,
           background: "transparent",
           border: "none",
@@ -524,7 +617,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           overflow: "visible",
           isolation: "isolate",
           // Target mobile portrait; capped so STOP button always stays on-screen.
-          minHeight: "clamp(340px, 52vh, 600px)",
+          minHeight: "clamp(260px, 44vh, 440px)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -541,6 +634,17 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             overflow: "hidden",
             borderRadius: 0,
             pointerEvents: "none",
+
+            // Seam softening: fade this stage’s background to transparent at top/bottom
+            // so the surrounding nebula can blend without hard band edges.
+            WebkitMaskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 14%, rgba(0,0,0,1) 86%, rgba(0,0,0,0) 100%)",
+            maskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 14%, rgba(0,0,0,1) 86%, rgba(0,0,0,0) 100%)",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskSize: "100% 100%",
+            maskSize: "100% 100%",
           }}
         >
           {/* Layer 1: nebula background */}
@@ -555,7 +659,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               backgroundSize: "cover",
               backgroundPosition: "center",
               transform: "scale(1.03)",
-              filter: "saturate(1.15) contrast(1.05) brightness(0.78)",
+              filter: "blur(2px) saturate(0.92) contrast(0.94) brightness(0.52)",
             }}
           />
           {/* Single vignette source (practice compositing): keep extremely subtle */}
@@ -567,8 +671,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               zIndex: 1,
               pointerEvents: "none",
               background:
-                "radial-gradient(circle at 50% 40%, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.42) 100%)",
-              opacity: 0.55,
+                "radial-gradient(circle at 50% 42%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.42) 58%, rgba(0,0,0,0.66) 100%)",
+              opacity: 0.88,
             }}
           />
           {/* Layer 2 (optional placeholder): subject photo layer (wired, off by default) */}
@@ -597,7 +701,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               backgroundImage: `url(${grainBgUrl})`,
               backgroundSize: "420px 420px",
               backgroundRepeat: "repeat",
-              opacity: 0.055,
+              opacity: 0.03,
               mixBlendMode: "overlay",
             }}
           />
@@ -617,27 +721,32 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             justifyContent: "center",
           }}
         >
-          {/* DEV: confirm active renderer */}
-          {process.env.NODE_ENV !== 'production' && (
-            <div style={{
-              position: 'absolute', top: 8, left: 8, zIndex: 9999,
-              background: 'rgba(0,0,0,0.72)', color: '#00ff88',
-              fontFamily: 'monospace', fontSize: '11px',
-              padding: '3px 8px', borderRadius: '3px',
-              letterSpacing: '0.06em', pointerEvents: 'none',
-            }}>
-              BLOOM RING ACTIVE
-            </div>
-          )}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: "300px",
+              height: "300px",
+              transform: "translate(-50%, -50%)",
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, color-mix(in srgb, var(--accent-color) 18%, transparent) 0%, rgba(0,0,0,0) 72%)",
+              opacity: 0.15,
+              zIndex: 5,
+              pointerEvents: "none",
+            }}
+          />
           {/* Ring stage */}
           <div
             className="relative"
             style={{
               position: "relative",
-              width: "min(68vw, 420px)",
+              width: "min(58vw, 300px)",
               aspectRatio: "1 / 1",
               overflow: "visible",
-              marginTop: "6px",
+              marginTop: "12px",
             }}
           >
           {/* Safe drawing box: expands renderer region beyond layout box */}
@@ -646,6 +755,13 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               position: "absolute",
               inset: `calc(-1 * ${ringSafePad})`,
               overflow: "visible",
+              WebkitMaskImage: "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 72%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0) 100%)",
+              maskImage: "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 72%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0) 100%)",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
+              pointerEvents: "none",
             }}
           >
             {/* Contrast window (atmospheric, not a plate): improves halo band separation from nebula */}
@@ -661,21 +777,37 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
                 opacity: 0.75,
               }}
             />
+            {/* Center depth well: improves phase text legibility without a boxed panel */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: ringSafePad,
+                zIndex: 7,
+                pointerEvents: "none",
+                borderRadius: "50%",
+                // Darkest at center, fades outward—keeps nebula continuity.
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.46) 34%, rgba(0,0,0,0.22) 58%, rgba(0,0,0,0.00) 82%)",
+                opacity: 0.85,
+              }}
+            />
 
         {/* WebGL bloom ring — single shared renderer (BloomRingRenderer) */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            overflow: "visible",
+            overflow: "hidden",
             zIndex: 10,
             pointerEvents: "none",
           }}
         >
-          <BloomRingRenderer
-            params={productionParams}
-            accentColor={liveAccentColor}
-            mode="production"
+          <PersistentBreathRingCanvas
+            rndRingMode={rndRingMode}
+            productionParams={productionParams}
+            liveAccentColor={liveAccentColor}
+            breathDriver={breathDriver}
             style={{ width: '100%', height: '100%', display: 'block' }}
           />
         </div>
@@ -698,14 +830,14 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         >
         <div
           style={{
-            fontSize: "0.875rem",
-            letterSpacing: "0.25em",
             textTransform: "uppercase",
-            color: 'var(--accent-primary)',
+            color: "var(--accent-primary)",
             fontFamily: "var(--font-display)",
-            fontWeight: "700",
-            letterSpacing: "var(--tracking-mythic)",
-            textShadow: '0 0 18px rgba(0,0,0,0.85), 0 0 12px var(--accent-glow)',
+            fontSize: "clamp(1.75rem, 5.2vw, 2rem)",
+            fontWeight: 400,
+            letterSpacing: "0.25em",
+            opacity: 0.85,
+            textShadow: "0 2px 12px rgba(0,0,0,0.58)",
           }}
         >
           {progress < tInhale
@@ -719,12 +851,12 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
         {/* Phase countdown timer */}
         <div
           style={{
-            fontSize: "1.5rem",
-            fontWeight: "700",
-            fontFamily: "var(--font-mono, monospace)",
-            color: 'var(--accent-primary)',
-            marginTop: "4px",
-            textShadow: '0 0 18px rgba(0,0,0,0.85), 0 0 12px var(--accent-glow)',
+            fontSize: "clamp(3rem, 10vw, 3.5rem)",
+            fontWeight: 300,
+            fontFamily: "var(--font-display)",
+            color: "var(--accent-primary)",
+            marginTop: "6px",
+            textShadow: "0 2px 10px rgba(0,0,0,0.50)",
             opacity: 0.9,
           }}
         >
@@ -757,11 +889,11 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           <div
             className="relative z-10"
             style={{
-              marginTop: "18px",
+              marginTop: "24px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "10px",
+              gap: "12px",
               pointerEvents: "none",
             }}
           >
@@ -771,38 +903,22 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "12px",
-                fontSize: "0.72rem",
-                letterSpacing: "0.24em",
+                fontSize: "0.92rem",
+                letterSpacing: "0.15em",
                 textTransform: "uppercase",
                 fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.70)",
-                textShadow: "0 2px 10px rgba(0,0,0,0.55)",
+                fontWeight: 500,
+                color: "rgba(245,245,245,0.65)",
+                textShadow: "0 2px 8px rgba(0,0,0,0.46)",
               }}
             >
               <span>
-                PHASE <span style={{ color: "var(--accent-primary)" }}>{capacityPhaseNumber}</span><span style={{ color: "#FFD93D" }}>/3</span>
+                PHASE <span style={{ color: "var(--accent-primary)" }}>{capacityPhaseNumber}</span><span style={{ color: "var(--accent-secondary)" }}>/3</span>
               </span>
-              <span style={{ opacity: 0.45 }}>|</span>
+              <span style={{ opacity: 0.4 }}>•</span>
               <span>
                 CAPACITY: <span style={{ color: "var(--accent-secondary)" }}>{capacityPhaseLabel}</span>
               </span>
-            </div>
-
-            {/* Breathing pattern (seconds) moved out of the circle for a cleaner focus */}
-            <div
-              style={{
-                fontSize: "0.72rem",
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.74)",
-                textShadow: "0 2px 12px rgba(0,0,0,0.65)",
-                opacity: 0.95,
-              }}
-            >
-              {patternText}
             </div>
           </div>
         )}

@@ -103,7 +103,7 @@ function AutoFitScene({ maxRadius, fillFactor, children }) {
 }
 
 // ── CosmicOrbScene ────────────────────────────────────────────────────────────
-function CosmicOrbScene({ accentColor, breathDriver }) {
+export function CosmicOrbScene({ accentColor, breathDriver }) {
   const matRef     = useRef(null);
   const arcAngleRef = useRef(0); // running arc position (advances per-frame)
 
@@ -213,6 +213,10 @@ function CosmicOrbScene({ accentColor, breathDriver }) {
   );
 }
 
+export function VolumetricGlassRingSceneContent({ accentColor, breathDriver }) {
+  return <CosmicOrbScene accentColor={accentColor} breathDriver={breathDriver} />;
+}
+
 // ── Export ───────────────────────────────────────────────────────────────────
 export default function VolumetricGlassRingRND({ accentColor, breathDriver, className, style }) {
   return (
@@ -236,7 +240,7 @@ export default function VolumetricGlassRingRND({ accentColor, breathDriver, clas
         }
       }}
     >
-      <CosmicOrbScene accentColor={accentColor} breathDriver={breathDriver} />
+      <VolumetricGlassRingSceneContent accentColor={accentColor} breathDriver={breathDriver} />
       {/* No EffectComposer — spec forbids bloom beyond ring boundary */}
     </Canvas>
   );

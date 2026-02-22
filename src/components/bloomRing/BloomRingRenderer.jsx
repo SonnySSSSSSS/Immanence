@@ -19,6 +19,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom, ChromaticAberration, Vignette, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
+import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
 
 // ─── TrailArc ─────────────────────────────────────────────────────────────────
 // Moving comet-head + tail along an arc (right quadrant).
@@ -151,6 +152,8 @@ const ENERGY_BAND_FRAG = /* glsl */`
 uniform float uTime;
 uniform vec3 uAccentColor;
 uniform float uBreathIntensity;
+uniform float uCycleProgress;
+uniform float uHoldFactor;
 
 varying float vTheta;
 varying float vRadialT;
@@ -183,9 +186,9 @@ void main() {
 
   // Electric crackle: rare, thin sparks anchored to outer edge
   float edgeOuter = smoothstep(0.78, 0.98, vRadialT);
-  float sparkField = noise1((vTheta + 3.14159265) * 18.0 + floor(uTime * 0.6));
+  float sparkField = noise1((vTheta + 3.14159265) * 18.0 + floor(uTime * 1.8));
   float sparkGate = step(0.92, sparkField);
-  float tt = fract(uTime * 0.6);
+  float tt = fract(uTime * 1.8);
   float sparkPulse = smoothstep(0.0, 0.12, tt) * (1.0 - smoothstep(0.55, 1.0, tt));
   float spark = sparkGate * sparkPulse * edgeOuter;
 
@@ -197,6 +200,17 @@ void main() {
   // Brightness: cohesive band + spike pressure + spark flash
   float brightness = (0.85 + band * 1.45 + spikes * (1.25 + 0.40 * breath)) * flicker;
   brightness += spark * (2.8 + 1.2 * breath);
+
+  // Charge wave: luminous arc traveling clockwise at breath-cycle pace.
+  // Blends into existing brightness field — not a separate layer.
+  const float CHARGE_HALF = 0.105; // ~12-degree half-width
+  float chargeAngle = 1.5707963 - uCycleProgress * 6.2831853; // CW from 12 o'clock
+  float dAngle = mod(vTheta - chargeAngle + 3.14159265, 6.2831853) - 3.14159265;
+  float leadEnv  = smoothstep(CHARGE_HALF * 0.65, 0.0, max(0.0, -dAngle)); // sharp leading
+  float trailEnv = smoothstep(CHARGE_HALF * 1.65, 0.0, max(0.0,  dAngle)); // soft trailing
+  float arcEnv = leadEnv * trailEnv * edgeMask;
+  float holdPulse = 1.0 + uHoldFactor * 0.28 * sin(uTime * 3.2);
+  brightness *= (1.0 + arcEnv * 0.42 * holdPulse);
 
   vec3 color = uAccentColor * brightness;
   gl_FragColor = vec4(color, alpha);
@@ -676,6 +690,8 @@ function RingScene({
     uBreathIntensity: { value: 0.5 },
     uInnerRadius: { value: ENERGY_BAND_INNER },
     uOuterRadius: { value: ENERGY_BAND_OUTER },
+    uCycleProgress: { value: 0.0 },
+    uHoldFactor:    { value: 0.0 },
   }), [accentColor]);
 
   useFrame(({ clock, viewport }, delta) => {
@@ -768,6 +784,11 @@ function RingScene({
       energyBandMatRef.current.uniforms.uTime.value = clock.elapsedTime;
       energyBandMatRef.current.uniforms.uAccentColor.value.set(accentColor);
       energyBandMatRef.current.uniforms.uBreathIntensity.value = bI;
+      if (breathDriver) {
+        energyBandMatRef.current.uniforms.uCycleProgress.value = breathDriver.cycleProgress01 ?? 0.0;
+        const isHold = breathDriver.phase === 'holdTop' || breathDriver.phase === 'holdBottom';
+        energyBandMatRef.current.uniforms.uHoldFactor.value = isHold ? 1.0 : 0.0;
+      }
     }
     if (energyGlowRef.current?.material) {
       const flicker = 0.972 + 0.025 * Math.sin(clock.elapsedTime * 5.4);
@@ -960,17 +981,12 @@ function RingScene({
   );
 }
 
-// ─── BloomRingRenderer (main export) ──────────────────────────────────────────
-export default function BloomRingRenderer({
+export function BloomRingSceneContent({
   params = {},
   accentColor = '#ffffff',
-  className,
-  style,
   mode = 'production',
 }) {
   const {
-    width,
-    height,
     bloomStrength    = 1.2,
     bloomRadius      = 0.60,
     bloomThreshold   = 0.50,
@@ -1043,29 +1059,8 @@ export default function BloomRingRenderer({
   const isAvatar           = mode === 'avatar';
   const cappedBloomStrength = Math.min(bloomStrength, 2.4);
 
-  // Sizing: explicit px dims from params, or fill container via CSS.
-  const canvasStyle = (width != null && height != null)
-    ? { width, height, ...style }
-    : { width: '100%', height: '100%', display: 'block', ...style };
-
   return (
-    <Canvas
-      style={canvasStyle}
-      className={className}
-      dpr={[1, 2]}
-      camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
-      gl={{
-        antialias: true,
-        alpha: true,
-        powerPreference: 'high-performance',
-        preserveDrawingBuffer: false,
-      }}
-      onCreated={({ gl }) => {
-        gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        gl.outputColorSpace = THREE.SRGBColorSpace;
-        gl.toneMapping = THREE.NoToneMapping;
-      }}
-    >
+    <>
       <RingScene
         breathSpeed={breathSpeed}
         trailSpeed={trailSpeed}
@@ -1107,59 +1102,106 @@ export default function BloomRingRenderer({
         />
       )}
 
-      <EffectComposer multisampling={0}>
-        {/* GodRays — non-avatar, param-gated */}
-        {!isAvatar && rayEnabled && (
-          <GodRays
-            sun={godRayLightRef}
-            samples={raySamples}
-            density={rayDensity}
-            decay={rayDecay}
-            weight={rayWeight}
-            exposure={rayExposure}
-            clampMax={rayClampMax}
-            blendFunction={BlendFunction.SCREEN}
-          />
-        )}
+      {!DISABLE_POSTPROCESS && (
+        <EffectComposer multisampling={0}>
+          {/* GodRays — non-avatar, param-gated */}
+          {!isAvatar && rayEnabled && (
+            <GodRays
+              sun={godRayLightRef}
+              samples={raySamples}
+              density={rayDensity}
+              decay={rayDecay}
+              weight={rayWeight}
+              exposure={rayExposure}
+              clampMax={rayClampMax}
+              blendFunction={BlendFunction.SCREEN}
+            />
+          )}
 
-        {/* Tight bloom — production: high intensity, small radius for energy glow */}
-        <Bloom
-          intensity={isAvatar ? 0.6 : (mode === 'production' ? 1.9 : cappedBloomStrength * 0.8)}
-          radius={isAvatar ? 0.5 : (mode === 'production' ? 0.14 : Math.min(bloomRadius, 0.35))}
-          luminanceThreshold={isAvatar ? 0.1 : (mode === 'production' ? 0.32 : Math.max(bloomThreshold, 0.45))}
-          luminanceSmoothing={isAvatar ? 0.4 : 0.015}
-        />
-
-        {/* Wide bloom — lab only */}
-        {!isAvatar && mode !== 'production' && (
+          {/* Tight bloom — production: high intensity, small radius for energy glow */}
           <Bloom
-            intensity={cappedBloomStrength * 0.3}
-            radius={0.65}
-            luminanceThreshold={0.55}
-            luminanceSmoothing={0.05}
+            intensity={isAvatar ? 0.6 : (mode === 'production' ? 1.9 : cappedBloomStrength * 0.8)}
+            radius={isAvatar ? 0.5 : (mode === 'production' ? 0.14 : Math.min(bloomRadius, 0.35))}
+            luminanceThreshold={isAvatar ? 0.1 : (mode === 'production' ? 0.32 : Math.max(bloomThreshold, 0.45))}
+            luminanceSmoothing={isAvatar ? 0.4 : 0.015}
           />
-        )}
 
-        {/* Streak bloom — lab only */}
-        {!isAvatar && mode !== 'production' && streakStrength > 0 && (
-          <Bloom
-            intensity={streakStrength * 1.5}
-            radius={streakLength * 2.0}
-            luminanceThreshold={streakThreshold}
-            luminanceSmoothing={0.01}
-          />
-        )}
+          {/* Wide bloom — lab only */}
+          {!isAvatar && mode !== 'production' && (
+            <Bloom
+              intensity={cappedBloomStrength * 0.3}
+              radius={0.65}
+              luminanceThreshold={0.55}
+              luminanceSmoothing={0.05}
+            />
+          )}
 
-        {/* Chromatic aberration — lab only */}
-        {!isAvatar && mode !== 'production' && (
-          <ChromaticAberration offset={[0.0012, 0.0005]} radialModulation={true} modulationOffset={0.15} />
-        )}
+          {/* Streak bloom — lab only */}
+          {!isAvatar && mode !== 'production' && streakStrength > 0 && (
+            <Bloom
+              intensity={streakStrength * 1.5}
+              radius={streakLength * 2.0}
+              luminanceThreshold={streakThreshold}
+              luminanceSmoothing={0.01}
+            />
+          )}
 
-        {/* Vignette — lab only */}
-        {!isAvatar && mode !== 'production' && (
-          <Vignette eskil={false} offset={0.25} darkness={0.45} />
-        )}
-      </EffectComposer>
+          {/* Chromatic aberration — lab only */}
+          {!isAvatar && mode !== 'production' && (
+            <ChromaticAberration offset={[0.0012, 0.0005]} radialModulation={true} modulationOffset={0.15} />
+          )}
+
+          {/* Vignette — lab only */}
+          {!isAvatar && mode !== 'production' && (
+            <Vignette eskil={false} offset={0.25} darkness={0.45} />
+          )}
+        </EffectComposer>
+      )}
+    </>
+  );
+}
+
+// ─── BloomRingRenderer (main export) ──────────────────────────────────────────
+export default function BloomRingRenderer({
+  params = {},
+  accentColor = '#ffffff',
+  className,
+  style,
+  mode = 'production',
+}) {
+  const { width, height } = params;
+
+  // Sizing: explicit px dims from params, or fill container via CSS.
+  const canvasStyle = (width != null && height != null)
+    ? { width, height, ...style }
+    : { width: '100%', height: '100%', display: 'block', ...style };
+
+  return (
+    <Canvas
+      style={canvasStyle}
+      className={className}
+      dpr={[1, 1.5]}
+      camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
+      gl={{
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+        preserveDrawingBuffer: false,
+      }}
+      onCreated={({ gl }) => {
+        gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+        gl.toneMapping = THREE.NoToneMapping;
+        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
+          window.__PROBE6_REGISTER_GL__({
+            gl,
+            canvas: gl.domElement,
+            source: 'BloomRingRenderer',
+          });
+        }
+      }}
+    >
+      <BloomRingSceneContent params={params} accentColor={accentColor} mode={mode} />
     </Canvas>
   );
 }

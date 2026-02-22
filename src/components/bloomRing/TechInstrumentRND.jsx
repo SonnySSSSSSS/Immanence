@@ -174,7 +174,7 @@ function AutoFitScene({ maxRadius, fillFactor, children }) {
   return <group ref={rootRef}>{children}</group>;
 }
 
-const TechInstrumentScene = memo(function TechInstrumentScene({ accentColor, breathDriverRef }) {
+export const TechInstrumentScene = memo(function TechInstrumentScene({ accentColor, breathDriverRef }) {
   const segMainMatsRef = useRef([]);
   const segCoreMatsRef = useRef([]);
   const segCoreMeshesRef = useRef([]);
@@ -419,11 +419,9 @@ const BloomIntensityDriver = memo(function BloomIntensityDriver({ bloomRef, brea
   return null;
 });
 
-export default function TechInstrumentRND({ accentColor, breathDriver, className, style }) {
+export function TechInstrumentSceneContent({ accentColor, breathDriver }) {
   const breathDriverRef = useRef(breathDriver);
   const bloomRef = useRef(null);
-  const contextWarnedRef = useRef(false);
-  const contextListenersRef = useRef(null);
   const composerEnabled = BLOOM_ENABLED && !DISABLE_POSTPROCESS;
 
   const bloomProps = useMemo(
@@ -438,6 +436,37 @@ export default function TechInstrumentRND({ accentColor, breathDriver, className
   useEffect(() => {
     breathDriverRef.current = breathDriver;
   }, [breathDriver]);
+
+  return (
+    <>
+      <TechInstrumentScene accentColor={accentColor} breathDriverRef={breathDriverRef} />
+      {composerEnabled && (
+        <>
+          <BloomIntensityDriver bloomRef={bloomRef} breathDriverRef={breathDriverRef} />
+          <EffectComposer
+            key="tech-instrument-composer"
+            enabled={composerEnabled}
+            multisampling={0}
+            resolutionScale={COMPOSER_RESOLUTION_SCALE}
+          >
+            <Bloom
+              ref={bloomRef}
+              threshold={bloomProps.threshold}
+              intensity={BLOOM_BASE}
+              radius={bloomProps.radius}
+              mipmapBlur={bloomProps.mipmapBlur}
+            />
+          </EffectComposer>
+        </>
+      )}
+    </>
+  );
+}
+
+export default function TechInstrumentRND({ accentColor, breathDriver, className, style }) {
+  const contextWarnedRef = useRef(false);
+  const contextListenersRef = useRef(null);
+  const composerEnabled = BLOOM_ENABLED && !DISABLE_POSTPROCESS;
 
   useEffect(() => () => {
     const listeners = contextListenersRef.current;
@@ -494,26 +523,7 @@ export default function TechInstrumentRND({ accentColor, breathDriver, className
         contextListenersRef.current = { canvas: gl.domElement, onLost, onRestored };
       }}
     >
-      <TechInstrumentScene accentColor={accentColor} breathDriverRef={breathDriverRef} />
-      {composerEnabled && (
-        <>
-          <BloomIntensityDriver bloomRef={bloomRef} breathDriverRef={breathDriverRef} />
-          <EffectComposer
-            key="tech-instrument-composer"
-            enabled={composerEnabled}
-            multisampling={0}
-            resolutionScale={COMPOSER_RESOLUTION_SCALE}
-          >
-            <Bloom
-              ref={bloomRef}
-              threshold={bloomProps.threshold}
-              intensity={BLOOM_BASE}
-              radius={bloomProps.radius}
-              mipmapBlur={bloomProps.mipmapBlur}
-            />
-          </EffectComposer>
-        </>
-      )}
+      <TechInstrumentSceneContent accentColor={accentColor} breathDriver={breathDriver} />
     </Canvas>
   );
 }
