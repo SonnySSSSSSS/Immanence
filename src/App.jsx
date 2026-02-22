@@ -295,6 +295,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         }, ms);
         scheduledDumpIds.push(id);
       };
+      dumpProbeState();
+      scheduleDump(2000, "2s");
+      scheduleDump(4000, "4s");
       scheduleDump(8000, "8s");
       scheduleDump(16000, "16s");
       console.info("[StressRunner] start");
