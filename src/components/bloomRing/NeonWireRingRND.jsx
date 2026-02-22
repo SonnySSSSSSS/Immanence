@@ -22,6 +22,7 @@ import { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
 
 // ── Debug toggles ─────────────────────────────────────────────────────────────
 const DEBUG_FORCE_PROGRESS = null;  // set to 0.35 for static screenshot capture
@@ -217,17 +218,26 @@ export default function NeonWireRingRND({ accentColor, breathDriver, className, 
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
+        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
+          window.__PROBE6_REGISTER_GL__({
+            gl,
+            canvas: gl.domElement,
+            source: 'NeonWireRingRND',
+          });
+        }
       }}
     >
       <TechInstrumentScene accentColor={accentColor} breathDriver={breathDriver} />
-      <EffectComposer>
-        <Bloom
-          threshold={BLOOM_THRESHOLD}
-          intensity={BLOOM_INTENSITY}
-          radius={BLOOM_RADIUS}
-          mipmapBlur
-        />
-      </EffectComposer>
+      {!DISABLE_POSTPROCESS && (
+        <EffectComposer>
+          <Bloom
+            threshold={BLOOM_THRESHOLD}
+            intensity={BLOOM_INTENSITY}
+            radius={BLOOM_RADIUS}
+            mipmapBlur
+          />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }

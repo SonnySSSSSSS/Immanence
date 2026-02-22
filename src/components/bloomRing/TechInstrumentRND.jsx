@@ -1,9 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
 
 const DEFAULT_ACCENT = '#22d3ee';
+const PRESET_NAME = 'instrument';
 
 const SEGMENT_COUNT = 48;
 const RING_RADIUS = 1.0;
@@ -32,19 +34,30 @@ const CAL_Z = -0.002;
 
 const MAX_RADIUS = 1.16;
 const FILL_FACTOR = 0.86;
+const DEBUG_STATIC_PROGRESS = null; // set to 0.35 for static ON/OFF screenshot checks
 
-const EMI_OFF = 0.005;
-const EMI_ON = 0.85;
+const EMI_OFF = 0.008;
+const EMI_ON = 0.95;
 const EMI_HEAD = EMI_ON * 1.35;
-const INNER_EMI = EMI_ON * 0.9;
-const INNER_HEAD_EMI = EMI_HEAD * 0.9;
+const INNER_EMI = 0.85;
+const INNER_HEAD_EMI = 0.95;
 const CAL_EMI = 0.08;
-const HOLD_PULSE_MULT = 0.09;
+const HOLD_PULSE_MULT = 0.15;
 
-const BLOOM_THRESHOLD = 0.65;
-const BLOOM_BASE = 0.9;
-const BLOOM_HOLD_BOOST = 0.06;
-const BLOOM_RADIUS = 0.3;
+const OFF_ROUGHNESS = 0.68;
+const ON_ROUGHNESS = 0.28;
+const OFF_CLEARCOAT = 0.22;
+const ON_CLEARCOAT = 0.72;
+const OFF_CLEARCOAT_ROUGHNESS = 0.58;
+const ON_CLEARCOAT_ROUGHNESS = 0.2;
+
+const BLOOM_THRESHOLD = 0.55;
+const BLOOM_BASE = 0.95;
+const BLOOM_HOLD_BOOST = 0.1;
+const BLOOM_RADIUS = 0.32;
+const BLOOM_ENABLED = true;
+const COMPOSER_RESOLUTION_SCALE = 0.65;
+const MAX_RENDER_DPR = 1.5;
 
 const rimVert = `
   varying vec3 vNormalW;
@@ -70,6 +83,8 @@ const rimFrag = `
   }
 `;
 
+const TMP_SIZE = new THREE.Vector2();
+
 function clamp01(v) {
   return Math.min(1, Math.max(0, v));
 }
@@ -80,10 +95,10 @@ function derivePalette(accentColor) {
   const white = new THREE.Color('#ffffff');
 
   return {
-    segOff: accent.clone().lerp(black, 0.9),
-    segOnBase: accent.clone().lerp(white, 0.2),
-    segOnEmissive: accent.clone().lerp(white, 0.34),
-    segCoreEmissive: accent.clone().lerp(white, 0.42),
+    segOff: accent.clone().lerp(black, 0.94),
+    segOnBase: accent.clone().lerp(white, 0.24),
+    segOnEmissive: accent.clone().lerp(white, 0.6),
+    segCoreEmissive: accent.clone().lerp(white, 0.12),
     track: accent.clone().lerp(black, 0.9),
     plate: accent.clone().lerp(black, 0.93),
     bezel: accent.clone().lerp(black, 0.88),
@@ -94,48 +109,7 @@ function derivePalette(accentColor) {
   };
 }
 
-function resolveBreathState(breathDriver) {
-  const phase = breathDriver?.phase ?? 'holdBottom';
-  const p = clamp01(breathDriver?.phaseProgress01 ?? 0);
-
-  if (phase === 'inhale') {
-    const activeCount = Math.floor(p * SEGMENT_COUNT);
-    return {
-      phase: 'inhale',
-      inhaleP: p,
-      holdP: 0,
-      exhaleP: 0,
-      holdPulse: 0,
-      activeCount,
-      headIndex: activeCount > 0 ? activeCount - 1 : -1,
-    };
-  }
-
-  if (phase === 'holdTop') {
-    return {
-      phase: 'hold',
-      inhaleP: 1,
-      holdP: p,
-      exhaleP: 0,
-      holdPulse: Math.sin(p * Math.PI),
-      activeCount: SEGMENT_COUNT,
-      headIndex: -1,
-    };
-  }
-
-  if (phase === 'exhale') {
-    const activeCount = Math.floor((1 - p) * SEGMENT_COUNT);
-    return {
-      phase: 'exhale',
-      inhaleP: 0,
-      holdP: 0,
-      exhaleP: p,
-      holdPulse: 0,
-      activeCount,
-      headIndex: -1,
-    };
-  }
-
+function createBreathState() {
   return {
     phase: 'holdBottom',
     inhaleP: 0,
@@ -145,6 +119,45 @@ function resolveBreathState(breathDriver) {
     activeCount: 0,
     headIndex: -1,
   };
+}
+
+function writeBreathState(target, breathDriver) {
+  const phase = DEBUG_STATIC_PROGRESS != null ? 'inhale' : (breathDriver?.phase ?? 'holdBottom');
+  const p = clamp01(DEBUG_STATIC_PROGRESS ?? (breathDriver?.phaseProgress01 ?? 0));
+
+  target.inhaleP = 0;
+  target.holdP = 0;
+  target.exhaleP = 0;
+  target.holdPulse = 0;
+  target.headIndex = -1;
+
+  if (phase === 'inhale') {
+    target.phase = 'inhale';
+    target.inhaleP = p;
+    target.activeCount = Math.floor(p * SEGMENT_COUNT);
+    target.headIndex = target.activeCount > 0 ? target.activeCount - 1 : -1;
+    return;
+  }
+
+  if (phase === 'holdTop') {
+    target.phase = 'hold';
+    target.inhaleP = 1;
+    target.holdP = p;
+    target.holdPulse = Math.sin(p * Math.PI);
+    target.activeCount = SEGMENT_COUNT;
+    return;
+  }
+
+  if (phase === 'exhale') {
+    target.phase = 'exhale';
+    target.exhaleP = p;
+    target.activeCount = Math.floor((1 - p) * SEGMENT_COUNT);
+    return;
+  }
+
+  target.phase = 'holdBottom';
+  target.exhaleP = 1;
+  target.activeCount = 0;
 }
 
 function AutoFitScene({ maxRadius, fillFactor, children }) {
@@ -161,15 +174,55 @@ function AutoFitScene({ maxRadius, fillFactor, children }) {
   return <group ref={rootRef}>{children}</group>;
 }
 
-function TechInstrumentScene({ accentColor, breathDriver }) {
+const TechInstrumentScene = memo(function TechInstrumentScene({ accentColor, breathDriverRef }) {
   const segMainMatsRef = useRef([]);
   const segCoreMatsRef = useRef([]);
   const segCoreMeshesRef = useRef([]);
   const calMatRef = useRef(null);
-  const bezelRimRef = useRef(null);
-  const calRimRef = useRef(null);
+  const breathStateRef = useRef(createBreathState());
 
   const palette = useMemo(() => derivePalette(accentColor), [accentColor]);
+
+  const geometries = useMemo(() => ({
+    plate: new THREE.RingGeometry(PLATE_INNER_R, PLATE_OUTER_R, 96),
+    track: new THREE.RingGeometry(TRACK_INNER_R, TRACK_OUTER_R, 128),
+    bezel: new THREE.TorusGeometry(BEZEL_RADIUS, BEZEL_TUBE, 20, 256),
+    bezelRim: new THREE.TorusGeometry(BEZEL_RADIUS, BEZEL_TUBE + 0.002, 20, 256),
+    cal: new THREE.TorusGeometry(CAL_RING_RADIUS, CAL_RING_TUBE, 16, 256),
+    calRim: new THREE.TorusGeometry(CAL_RING_RADIUS, CAL_RING_TUBE + 0.0015, 16, 256),
+    index: new THREE.BoxGeometry(0.012, 0.038, SEG_DEPTH * 0.58),
+    segment: new THREE.BoxGeometry(SEG_WIDTH, SEG_HEIGHT, SEG_DEPTH),
+    segmentCore: new THREE.BoxGeometry(SEG_WIDTH * CORE_SCALE, SEG_HEIGHT * CORE_SCALE, SEG_DEPTH * 0.42),
+  }), []);
+
+  const rimMaterials = useMemo(() => ({
+    bezel: new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+      vertexShader: rimVert,
+      fragmentShader: rimFrag,
+      uniforms: {
+        uColor: { value: new THREE.Color(DEFAULT_ACCENT) },
+        uPower: { value: 2.6 },
+        uIntensity: { value: 0.11 },
+      },
+    }),
+    cal: new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+      vertexShader: rimVert,
+      fragmentShader: rimFrag,
+      uniforms: {
+        uColor: { value: new THREE.Color(DEFAULT_ACCENT) },
+        uPower: { value: 2.9 },
+        uIntensity: { value: 0.08 },
+      },
+    }),
+  }), []);
 
   const segments = useMemo(
     () =>
@@ -184,8 +237,18 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
     [],
   );
 
+  useEffect(() => () => {
+    Object.values(geometries).forEach((geom) => geom.dispose());
+    rimMaterials.bezel.dispose();
+    rimMaterials.cal.dispose();
+    segMainMatsRef.current.length = 0;
+    segCoreMatsRef.current.length = 0;
+    segCoreMeshesRef.current.length = 0;
+  }, [geometries, rimMaterials]);
+
   useFrame(() => {
-    const state = resolveBreathState(breathDriver);
+    const state = breathStateRef.current;
+    writeBreathState(state, breathDriverRef.current);
     const holdMultiplier = state.phase === 'hold' ? 1 + HOLD_PULSE_MULT * state.holdPulse : 1;
 
     for (let i = 0; i < SEGMENT_COUNT; i++) {
@@ -199,7 +262,9 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
         mainMat.emissiveIntensity = isOn
           ? (isHead ? EMI_HEAD : EMI_ON) * holdMultiplier
           : EMI_OFF;
-        mainMat.roughness = isOn ? 0.36 : 0.62;
+        mainMat.roughness = isOn ? ON_ROUGHNESS : OFF_ROUGHNESS;
+        mainMat.clearcoat = isOn ? ON_CLEARCOAT : OFF_CLEARCOAT;
+        mainMat.clearcoatRoughness = isOn ? ON_CLEARCOAT_ROUGHNESS : OFF_CLEARCOAT_ROUGHNESS;
       }
 
       const coreMesh = segCoreMeshesRef.current[i];
@@ -219,13 +284,8 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
       calMatRef.current.emissiveIntensity = CAL_EMI;
     }
 
-    if (bezelRimRef.current) {
-      bezelRimRef.current.uniforms.uColor.value.copy(palette.rim);
-    }
-
-    if (calRimRef.current) {
-      calRimRef.current.uniforms.uColor.value.copy(palette.rim);
-    }
+    rimMaterials.bezel.uniforms.uColor.value.copy(palette.rim);
+    rimMaterials.cal.uniforms.uColor.value.copy(palette.rim);
   });
 
   return (
@@ -233,8 +293,7 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
       <ambientLight intensity={0.04} />
       <directionalLight position={[2, 3, 4]} intensity={0.16} />
 
-      <mesh position={[0, 0, PLATE_Z]}>
-        <ringGeometry args={[PLATE_INNER_R, PLATE_OUTER_R, 96]} />
+      <mesh position={[0, 0, PLATE_Z]} geometry={geometries.plate}>
         <meshStandardMaterial
           color={palette.plate}
           metalness={0.08}
@@ -247,8 +306,7 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
         />
       </mesh>
 
-      <mesh position={[0, 0, TRACK_Z]}>
-        <ringGeometry args={[TRACK_INNER_R, TRACK_OUTER_R, 128]} />
+      <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
         <meshStandardMaterial
           color={palette.track}
           emissive={palette.track}
@@ -259,8 +317,7 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
         />
       </mesh>
 
-      <mesh>
-        <torusGeometry args={[BEZEL_RADIUS, BEZEL_TUBE, 20, 256]} />
+      <mesh geometry={geometries.bezel}>
         <meshStandardMaterial
           color={palette.bezel}
           emissive={palette.bezel}
@@ -271,26 +328,9 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
         />
       </mesh>
 
-      <mesh>
-        <torusGeometry args={[BEZEL_RADIUS, BEZEL_TUBE + 0.002, 20, 256]} />
-        <shaderMaterial
-          ref={bezelRimRef}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-          toneMapped={false}
-          vertexShader={rimVert}
-          fragmentShader={rimFrag}
-          uniforms={{
-            uColor: { value: palette.rim.clone() },
-            uPower: { value: 2.6 },
-            uIntensity: { value: 0.11 },
-          }}
-        />
-      </mesh>
+      <mesh geometry={geometries.bezelRim} material={rimMaterials.bezel} />
 
-      <mesh position={[0, 0, CAL_Z]}>
-        <torusGeometry args={[CAL_RING_RADIUS, CAL_RING_TUBE, 16, 256]} />
+      <mesh position={[0, 0, CAL_Z]} geometry={geometries.cal}>
         <meshPhysicalMaterial
           ref={calMatRef}
           color={palette.calBase}
@@ -304,26 +344,9 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
         />
       </mesh>
 
-      <mesh position={[0, 0, CAL_Z + 0.0005]}>
-        <torusGeometry args={[CAL_RING_RADIUS, CAL_RING_TUBE + 0.0015, 16, 256]} />
-        <shaderMaterial
-          ref={calRimRef}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-          toneMapped={false}
-          vertexShader={rimVert}
-          fragmentShader={rimFrag}
-          uniforms={{
-            uColor: { value: palette.rim.clone() },
-            uPower: { value: 2.9 },
-            uIntensity: { value: 0.08 },
-          }}
-        />
-      </mesh>
+      <mesh position={[0, 0, CAL_Z + 0.0005]} geometry={geometries.calRim} material={rimMaterials.cal} />
 
-      <mesh position={[0, (RING_RADIUS + CAL_RING_RADIUS) * 0.5, SEG_Z + 0.008]}>
-        <boxGeometry args={[0.012, 0.038, SEG_DEPTH * 0.58]} />
+      <mesh position={[0, (RING_RADIUS + CAL_RING_RADIUS) * 0.5, SEG_Z + 0.008]} geometry={geometries.index}>
         <meshPhysicalMaterial
           color={palette.index}
           emissive={palette.index}
@@ -338,42 +361,39 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
 
       {segments.map((seg, i) => (
         <group key={i} position={[seg.px, seg.py, 0]} rotation={[0, 0, seg.rz]}>
-          <mesh position={[0, 0, SEG_Z]}>
-            <boxGeometry args={[SEG_WIDTH, SEG_HEIGHT, SEG_DEPTH]} />
+          <mesh position={[0, 0, SEG_Z]} geometry={geometries.segment}>
             <meshPhysicalMaterial
-              ref={el => {
+              ref={(el) => {
                 if (el) segMainMatsRef.current[i] = el;
               }}
               color={palette.segOff}
               emissive={palette.segOff}
               emissiveIntensity={EMI_OFF}
               metalness={0.2}
-              roughness={0.62}
-              clearcoat={0.56}
-              clearcoatRoughness={0.28}
+              roughness={OFF_ROUGHNESS}
+              clearcoat={OFF_CLEARCOAT}
+              clearcoatRoughness={OFF_CLEARCOAT_ROUGHNESS}
               toneMapped={false}
             />
           </mesh>
 
           <mesh
-            ref={el => {
+            ref={(el) => {
               if (el) segCoreMeshesRef.current[i] = el;
             }}
             visible={false}
             position={[0, 0, SEG_Z + CORE_Z_OFFSET]}
+            geometry={geometries.segmentCore}
           >
-            <boxGeometry
-              args={[SEG_WIDTH * CORE_SCALE, SEG_HEIGHT * CORE_SCALE, SEG_DEPTH * 0.42]}
-            />
             <meshPhysicalMaterial
-              ref={el => {
+              ref={(el) => {
                 if (el) segCoreMatsRef.current[i] = el;
               }}
               color={palette.segOnBase}
               emissive={palette.segCoreEmissive}
               emissiveIntensity={INNER_EMI}
               transparent
-              opacity={0.85}
+              opacity={0.9}
               metalness={0.12}
               roughness={0.26}
               clearcoat={0.62}
@@ -385,35 +405,115 @@ function TechInstrumentScene({ accentColor, breathDriver }) {
       ))}
     </AutoFitScene>
   );
-}
+});
+
+const BloomIntensityDriver = memo(function BloomIntensityDriver({ bloomRef, breathDriverRef }) {
+  const breathStateRef = useRef(createBreathState());
+
+  useFrame(() => {
+    if (!bloomRef.current) return;
+    writeBreathState(breathStateRef.current, breathDriverRef.current);
+    bloomRef.current.intensity = BLOOM_BASE + breathStateRef.current.holdPulse * BLOOM_HOLD_BOOST;
+  });
+
+  return null;
+});
 
 export default function TechInstrumentRND({ accentColor, breathDriver, className, style }) {
-  const state = resolveBreathState(breathDriver);
-  const bloomIntensity = BLOOM_BASE + state.holdPulse * BLOOM_HOLD_BOOST;
+  const breathDriverRef = useRef(breathDriver);
+  const bloomRef = useRef(null);
+  const contextWarnedRef = useRef(false);
+  const contextListenersRef = useRef(null);
+  const composerEnabled = BLOOM_ENABLED && !DISABLE_POSTPROCESS;
+
+  const bloomProps = useMemo(
+    () => ({
+      threshold: BLOOM_THRESHOLD,
+      radius: BLOOM_RADIUS,
+      mipmapBlur: true,
+    }),
+    [],
+  );
+
+  useEffect(() => {
+    breathDriverRef.current = breathDriver;
+  }, [breathDriver]);
+
+  useEffect(() => () => {
+    const listeners = contextListenersRef.current;
+    if (!listeners) return;
+    listeners.canvas.removeEventListener('webglcontextlost', listeners.onLost);
+    listeners.canvas.removeEventListener('webglcontextrestored', listeners.onRestored);
+    contextListenersRef.current = null;
+  }, []);
 
   return (
     <Canvas
       className={className}
       style={{ width: '100%', height: '100%', display: 'block', ...style }}
-      dpr={[1, 2]}
+      dpr={[1, MAX_RENDER_DPR]}
       camera={{ fov: 12, position: [0, 0, 10], near: 0.1, far: 50 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => {
-        gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        gl.setPixelRatio(Math.min(window.devicePixelRatio, MAX_RENDER_DPR));
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
+        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
+          window.__PROBE6_REGISTER_GL__({
+            gl,
+            canvas: gl.domElement,
+            source: 'TechInstrumentRND',
+          });
+        }
+
+        const size = gl.getSize(TMP_SIZE);
+        console.info(
+          `[TechInstrumentRND] mount dpr=${gl.getPixelRatio().toFixed(2)} size=${size.x}x${size.y} composer=${composerEnabled}`,
+        );
+
+        const onLost = (event) => {
+          event.preventDefault();
+          if (contextWarnedRef.current) return;
+          contextWarnedRef.current = true;
+          const lostSize = gl.getSize(TMP_SIZE);
+          console.warn(
+            `[TechInstrumentRND] webglcontextlost preset=${PRESET_NAME} dpr=${gl.getPixelRatio().toFixed(2)} size=${lostSize.x}x${lostSize.y} bloom=${composerEnabled}`,
+          );
+        };
+        const onRestored = () => {
+          contextWarnedRef.current = false;
+          const restoredSize = gl.getSize(TMP_SIZE);
+          console.info(
+            `[TechInstrumentRND] webglcontextrestored preset=${PRESET_NAME} dpr=${gl.getPixelRatio().toFixed(2)} size=${restoredSize.x}x${restoredSize.y} bloom=${composerEnabled}`,
+          );
+        };
+
+        gl.domElement.addEventListener('webglcontextlost', onLost, false);
+        gl.domElement.addEventListener('webglcontextrestored', onRestored, false);
+        contextListenersRef.current = { canvas: gl.domElement, onLost, onRestored };
       }}
     >
-      <TechInstrumentScene accentColor={accentColor} breathDriver={breathDriver} />
-      <EffectComposer>
-        <Bloom
-          threshold={BLOOM_THRESHOLD}
-          intensity={bloomIntensity}
-          radius={BLOOM_RADIUS}
-          mipmapBlur
-        />
-      </EffectComposer>
+      <TechInstrumentScene accentColor={accentColor} breathDriverRef={breathDriverRef} />
+      {composerEnabled && (
+        <>
+          <BloomIntensityDriver bloomRef={bloomRef} breathDriverRef={breathDriverRef} />
+          <EffectComposer
+            key="tech-instrument-composer"
+            enabled={composerEnabled}
+            multisampling={0}
+            resolutionScale={COMPOSER_RESOLUTION_SCALE}
+          >
+            <Bloom
+              ref={bloomRef}
+              threshold={bloomProps.threshold}
+              intensity={BLOOM_BASE}
+              radius={bloomProps.radius}
+              mipmapBlur={bloomProps.mipmapBlur}
+            />
+          </EffectComposer>
+        </>
+      )}
     </Canvas>
   );
 }
