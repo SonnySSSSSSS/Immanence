@@ -2,7 +2,6 @@ import { memo, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
 
 const DEFAULT_ACCENT = '#22d3ee';
 const PRESET_NAME = 'instrument';
@@ -422,7 +421,7 @@ const BloomIntensityDriver = memo(function BloomIntensityDriver({ bloomRef, brea
 export function TechInstrumentSceneContent({ accentColor, breathDriver }) {
   const breathDriverRef = useRef(breathDriver);
   const bloomRef = useRef(null);
-  const composerEnabled = BLOOM_ENABLED && !DISABLE_POSTPROCESS;
+  const composerEnabled = BLOOM_ENABLED;
 
   const bloomProps = useMemo(
     () => ({
@@ -466,7 +465,7 @@ export function TechInstrumentSceneContent({ accentColor, breathDriver }) {
 export default function TechInstrumentRND({ accentColor, breathDriver, className, style }) {
   const contextWarnedRef = useRef(false);
   const contextListenersRef = useRef(null);
-  const composerEnabled = BLOOM_ENABLED && !DISABLE_POSTPROCESS;
+  const composerEnabled = BLOOM_ENABLED;
 
   useEffect(() => () => {
     const listeners = contextListenersRef.current;
@@ -488,14 +487,6 @@ export default function TechInstrumentRND({ accentColor, breathDriver, className
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
-        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
-          window.__PROBE6_REGISTER_GL__({
-            gl,
-            canvas: gl.domElement,
-            source: 'TechInstrumentRND',
-          });
-        }
-
         const size = gl.getSize(TMP_SIZE);
         console.info(
           `[TechInstrumentRND] mount dpr=${gl.getPixelRatio().toFixed(2)} size=${size.x}x${size.y} composer=${composerEnabled}`,

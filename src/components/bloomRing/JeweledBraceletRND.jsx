@@ -196,13 +196,6 @@ export default function JeweledBraceletRND({ accentColor, breathDriver, classNam
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
-        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
-          window.__PROBE6_REGISTER_GL__({
-            gl,
-            canvas: gl.domElement,
-            source: 'JeweledBraceletRND',
-          });
-        }
       }}
     >
       <JeweledBraceletScene accentColor={accentColor} breathDriver={breathDriver} />

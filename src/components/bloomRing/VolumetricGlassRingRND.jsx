@@ -231,13 +231,6 @@ export default function VolumetricGlassRingRND({ accentColor, breathDriver, clas
         gl.setClearColor(0x000000, 0);
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.NoToneMapping;
-        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
-          window.__PROBE6_REGISTER_GL__({
-            gl,
-            canvas: gl.domElement,
-            source: 'VolumetricGlassRingRND',
-          });
-        }
       }}
     >
       <VolumetricGlassRingSceneContent accentColor={accentColor} breathDriver={breathDriver} />

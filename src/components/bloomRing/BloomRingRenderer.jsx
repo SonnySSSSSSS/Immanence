@@ -19,8 +19,6 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom, ChromaticAberration, Vignette, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
-import { DISABLE_POSTPROCESS } from '../../config/renderProbeFlags.js';
-import { registerR3FRenderer } from '../../dev/canvasStabilityGuard.js';
 
 // ─── TrailArc ─────────────────────────────────────────────────────────────────
 // Moving comet-head + tail along an arc (right quadrant).
@@ -45,11 +43,7 @@ import { registerR3FRenderer } from '../../dev/canvasStabilityGuard.js';
 const easeInOut = p => { const c = Math.max(0, Math.min(1, p)); return c * c * (3 - 2 * c); };
 
 function shouldRenderRingFrame(isFrameActive = true) {
-  if (!isFrameActive) return false;
-  if (typeof window === 'undefined') return true;
-  if (window.__IMMANENCE_PRACTICE_ACTIVE__ === false) return false;
-  if (window.__IMMANENCE_APP_MARKER__ === 'practice:idle') return false;
-  return true;
+  return isFrameActive;
 }
 
 // ─── Accent palette helpers ───────────────────────────────────────────────────
@@ -1120,7 +1114,7 @@ export function BloomRingSceneContent({
         />
       )}
 
-      {!DISABLE_POSTPROCESS && (
+      {(
         <EffectComposer multisampling={0}>
           {/* GodRays — non-avatar, param-gated */}
           {!isAvatar && rayEnabled && (
@@ -1216,12 +1210,6 @@ export default function BloomRingRenderer({
           const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
           console.info(`[BloomRingRenderer] mount dpr=${appliedDpr} cap=1.50`);
         }
-        registerR3FRenderer(gl, gl, {
-          source: 'BloomRingRenderer',
-          dpr: Number(gl.getPixelRatio?.() || 1),
-          canvasSize: `${gl.domElement?.width || 0}x${gl.domElement?.height || 0}`,
-          appMarker: typeof window !== 'undefined' ? window.__IMMANENCE_APP_MARKER__ : 'unknown',
-        });
       }}
     >
       <BloomRingSceneContent params={params} accentColor={accentColor} mode={mode} isFrameActive={isFrameActive} />

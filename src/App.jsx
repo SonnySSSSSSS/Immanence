@@ -38,9 +38,6 @@ import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import { hasDevtoolsQueryFlag, isDevtoolsEnabled, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
-import { installCanvasInventoryGuard, registerR3FRenderer } from "./dev/canvasStabilityGuard.js";
-import { installStabilityStressRunner } from "./dev/stabilityStressRunner.js";
-import { DISABLE_POSTPROCESS, DISABLE_UI_CONTROLS_CAPTURE } from "./config/renderProbeFlags.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -170,38 +167,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const devtoolsEnabled = isDevtoolsEnabled();
   const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
-  const probeAppMarkerRef = useRef("app:init");
-  const isPracticeActiveRef = useRef(false);
-  const appFramePulseRef = useRef({ flip: false, baseMaxWidth: "" });
-  const probeUiStateRef = useRef({
-    route: "/",
-    displayMode: "unknown",
-    activeSection: "home",
-    isDevPanelOpen: false,
-  });
-
-  useEffect(() => {
-    const route = (typeof window !== "undefined" && window.location?.pathname) ? window.location.pathname : "/";
-    probeUiStateRef.current = {
-      route,
-      displayMode,
-      activeSection: activeSection ?? "home",
-      isDevPanelOpen: showDevPanel,
-    };
-    probeAppMarkerRef.current = `section:${activeSection ?? "home"}|devpanel:${showDevPanel ? "open" : "closed"}`;
-    if (typeof window !== "undefined") {
-      window.__IMMANENCE_APP_MARKER__ = probeAppMarkerRef.current;
-    }
-  }, [displayMode, activeSection, showDevPanel]);
-
-  useEffect(() => {
-    isPracticeActiveRef.current = Boolean(isPracticing);
-    probeAppMarkerRef.current = isPracticing ? "practice:running" : "practice:idle";
-    if (typeof window !== "undefined") {
-      window.__IMMANENCE_APP_MARKER__ = probeAppMarkerRef.current;
-      window.__IMMANENCE_PRACTICE_ACTIVE__ = Boolean(isPracticing);
-    }
-  }, [isPracticing]);
 
   useEffect(() => {
     if (!selectionEnabled || !devtoolsEnabled) {
@@ -221,97 +186,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selectionEnabled, devtoolsEnabled, devtoolsGateTick]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    console.log(`[Probe3] postprocess ${DISABLE_POSTPROCESS ? "disabled" : "enabled"}`);
-  }, []);
-
-  useEffect(() => {
-    if (!isDev || typeof window === "undefined" || typeof document === "undefined") return undefined;
-
-    const previousProbeRegister = window.__PROBE6_REGISTER_GL__;
-    const pulseState = appFramePulseRef.current;
-
-    const guardCleanup = installCanvasInventoryGuard({
-      isPracticeActive: () => Boolean(window.__IMMANENCE_PRACTICE_ACTIVE__ ?? isPracticeActiveRef.current),
-      getAppMarker: () => String(window.__IMMANENCE_APP_MARKER__ || probeAppMarkerRef.current || "unknown"),
-      getView: () => String(probeUiStateRef.current?.displayMode || "unknown"),
-      maxCanvasesDuringPractice: 1,
-      minCssPx: 1,
-      logPrefix: "[CanvasGuard]",
-    });
-
-    window.__PROBE6_REGISTER_GL__ = (registration = {}) => {
-      const renderer = registration?.renderer || registration?.gl || null;
-      registerR3FRenderer(renderer, renderer, {
-        source: registration?.source || "window.__PROBE6_REGISTER_GL__",
-        route: window.location?.pathname || "/",
-        view: probeUiStateRef.current?.displayMode || "unknown",
-        section: probeUiStateRef.current?.activeSection || "home",
-        appMarker: window.__IMMANENCE_APP_MARKER__ || probeAppMarkerRef.current || "unknown",
-      });
-
-      if (typeof previousProbeRegister === "function" && previousProbeRegister !== window.__PROBE6_REGISTER_GL__) {
-        try {
-          previousProbeRegister(registration);
-        } catch {
-          // Ignore chained probe callback failures.
-        }
-      }
-    };
-
-    const runnerCleanup = installStabilityStressRunner({
-      toggleDevPanel: () => {
-        if (!selectionEnabled || !isDevtoolsEnabled()) return;
-        setShowDevPanel((prev) => !prev);
-      },
-      switchRingPreset: () => {
-        if (typeof KeyboardEvent === "undefined") return;
-        window.dispatchEvent(new KeyboardEvent("keydown", {
-          key: "F2",
-          code: "F2",
-          bubbles: true,
-          cancelable: true,
-        }));
-      },
-      simulateResizePulse: () => {
-        const appFrame = document.querySelector("[data-app-frame]");
-        if (!(appFrame instanceof HTMLElement)) return;
-        if (!pulseState.baseMaxWidth) {
-          pulseState.baseMaxWidth = appFrame.style.maxWidth || "";
-        }
-        pulseState.flip = !pulseState.flip;
-        appFrame.style.maxWidth = pulseState.flip ? "calc(100% - 12px)" : pulseState.baseMaxWidth;
-        window.dispatchEvent(new Event("resize"));
-      },
-    });
-
-    window.__PROBE3_DIAGNOSTICS__ = {
-      ...(window.__PROBE3_DIAGNOSTICS__ || {}),
-      postprocessDisabled: DISABLE_POSTPROCESS,
-      uiControlsCaptureDisabled: DISABLE_UI_CONTROLS_CAPTURE,
-      inventoryGuardEnabled: true,
-    };
-
-    return () => {
-      runnerCleanup?.();
-      guardCleanup?.();
-
-      const appFrame = document.querySelector("[data-app-frame]");
-      if (appFrame instanceof HTMLElement) {
-        appFrame.style.maxWidth = pulseState.baseMaxWidth || "";
-      }
-      pulseState.flip = false;
-      pulseState.baseMaxWidth = "";
-
-      if (typeof previousProbeRegister === "function") {
-        window.__PROBE6_REGISTER_GL__ = previousProbeRegister;
-      } else {
-        delete window.__PROBE6_REGISTER_GL__;
-      }
-    };
-  }, []);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -693,20 +567,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         {/* Inner App Container */}
         <div
           data-app-frame
-          className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
-          style={displayMode === 'sanctuary' ? {
-            // Sanctuary: iPad width (820px)
+          className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${displayMode === 'sanctuary' ? 'max-w-[820px]' : 'max-w-[430px]'} ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
+          style={{
             width: '100%',
-            maxWidth: '820px',
-            boxShadow: 'none',
-            overflowX: 'hidden',
-            overflowY: 'visible',
-            zIndex: 1,
-          } : {
-            // Hearth: Phone width (430px)
-            width: '100%',
-            maxWidth: '430px',
-            // Keep frame shadow off; rectangular frame-glow reads as square corner artifacts near glass cards.
             boxShadow: 'none',
             overflowX: 'hidden',
             overflowY: 'visible',

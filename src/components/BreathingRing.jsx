@@ -20,11 +20,7 @@ import { useTheme } from '../context/ThemeContext.jsx';
 const BREATH_RING_MAX_DPR = 1.5;
 
 function isRingFrameActive(practiceActive = true) {
-  if (!practiceActive) return false;
-  if (typeof window === 'undefined') return true;
-  if (window.__IMMANENCE_PRACTICE_ACTIVE__ === false) return false;
-  if (window.__IMMANENCE_APP_MARKER__ === 'practice:idle') return false;
-  return true;
+  return practiceActive;
 }
 
 function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver, isFrameActive = true }) {
@@ -120,10 +116,7 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
           if (loseCtxExt) {
             const originalLoseContext = loseCtxExt.loseContext.bind(loseCtxExt);
             loseCtxExt.loseContext = () => {
-              const isIntentional = canvas.dataset?.intentionalTeardown === '1'
-                || window.__IMMANENCE_PRACTICE_ACTIVE__ === false
-                || window.__IMMANENCE_APP_MARKER__ === 'practice:idle';
-              if (isIntentional) {
+              if (canvas.dataset?.intentionalTeardown === '1') {
                 if (import.meta.env.DEV) {
                   console.info('[BreathingRing] suppressed loseContext() call (intentional teardown)');
                 }
@@ -143,13 +136,6 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
         if (import.meta.env.DEV) {
           const appliedDpr = Number(gl.getPixelRatio?.() || 1).toFixed(2);
           console.info(`[BreathingRing] canvas mount dpr=${appliedDpr} cap=${BREATH_RING_MAX_DPR.toFixed(2)}`);
-        }
-        if (typeof window !== 'undefined' && typeof window.__PROBE6_REGISTER_GL__ === 'function') {
-          window.__PROBE6_REGISTER_GL__({
-            gl,
-            canvas: gl.domElement,
-            source: 'BreathingRing:PersistentCanvas',
-          });
         }
       }}
     >
