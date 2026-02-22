@@ -400,6 +400,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     const observedCanvases = new Set();
     const probe6PatchedGl = new WeakSet();
     const probe6OriginalFns = new WeakMap();
+    const probe6RendererForceLossOriginal = new WeakMap();
     const probe6RegistrationByCanvas = new Map();
     const probe6ByGl = new WeakMap();
     const PROBE6_METHODS = [
@@ -650,6 +651,51 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       return state;
     };
 
+    const patchProbe6RendererForceLoss = (renderer, canvasEl, context) => {
+      if (!renderer || typeof renderer.forceContextLoss !== "function") return;
+      if (probe6RendererForceLossOriginal.has(renderer)) return;
+      const original = renderer.forceContextLoss.bind(renderer);
+      probe6RendererForceLossOriginal.set(renderer, original);
+      try {
+        renderer.forceContextLoss = (...args) => {
+          const uiState = probeUiStateRef.current || {};
+          const state = context ? getProbe6State(context) : null;
+          const payload = {
+            timestamp: new Date().toISOString(),
+            route: uiState.route || "/",
+            view: uiState.displayMode || "unknown",
+            section: uiState.activeSection || "home",
+            devPanelOpen: Boolean(uiState.isDevPanelOpen),
+            appMarker: probeAppMarkerRef.current || "-",
+            lastOp: state?.lastOp || "-",
+            lastArgsSummary: state?.lastArgsSummary || "-",
+            dpr: Number(window.devicePixelRatio || 1).toFixed(2),
+            canvasBacking: `${canvasEl?.width || 0}x${canvasEl?.height || 0}`,
+            renderer: getRendererSnapshot(renderer),
+            isContextLost: context && typeof context.isContextLost === "function" ? context.isContextLost() : null,
+            canvasMeta: canvasEl instanceof HTMLCanvasElement ? describeCanvasMeta(canvasEl, getCanvasIndex(canvasEl), { allowDetect: false }) : "-",
+          };
+          saveFirstLoss(payload, "renderer_force_context_loss");
+          console.warn("[Probe6] FORCE_CONTEXT_LOSS", payload);
+          return original(...args);
+        };
+      } catch {
+        // Ignore non-writable renderer methods.
+      }
+    };
+
+    const unpatchProbe6RendererForceLoss = (renderer) => {
+      if (!renderer) return;
+      const original = probe6RendererForceLossOriginal.get(renderer);
+      if (!original) return;
+      try {
+        renderer.forceContextLoss = original;
+      } catch {
+        // Ignore restore failures.
+      }
+      probe6RendererForceLossOriginal.delete(renderer);
+    };
+
     const patchProbe6Context = (context) => {
       if (!context || probe6PatchedGl.has(context)) return;
       const originals = new Map();
@@ -721,6 +767,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       }
 
       patchProbe6Context(context);
+      patchProbe6RendererForceLoss(renderer, canvas, context);
       probe6RegistrationByCanvas.set(canvas, {
         renderer,
         context,
@@ -933,6 +980,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         }
         unpatchProbe6Context(removedRegistration.context);
       }
+      if (removedRegistration?.renderer) {
+        unpatchProbe6RendererForceLoss(removedRegistration.renderer);
+      }
       probe6RegistrationByCanvas.delete(canvasEl);
       const wasKnown = knownCanvases.delete(canvasEl);
       detachResizeObserver(canvasEl);
@@ -1127,6 +1177,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       }
       Array.from(probe6RegistrationByCanvas.values()).forEach((registration) => {
         if (registration?.context) unpatchProbe6Context(registration.context);
+        if (registration?.renderer) unpatchProbe6RendererForceLoss(registration.renderer);
       });
       probe6RegistrationByCanvas.clear();
       Array.from(observedCanvases).forEach((canvasEl) => detachResizeObserver(canvasEl));
