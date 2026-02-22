@@ -732,10 +732,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
+  const [pendingSummaryPayload, setPendingSummaryPayload] = useState(null);
+  const [pendingSummaryNeedsRingUnmount, setPendingSummaryNeedsRingUnmount] = useState(false);
+  const [ringTeardownRequested, setRingTeardownRequested] = useState(false);
   const [_lastSessionId, setLastSessionId] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [breathSubmode, setBreathSubmode] = useState("breath");
   const { startMicroNote, pendingMicroNote } = useJournalStore();
+  const showSummaryModal = Boolean(showSummary && sessionSummary);
+  const practiceActive = isRunning;
+  const appMarker = practiceActive ? "practice:running" : "practice:idle";
+  const shouldRenderRingCanvas = Boolean(
+    practiceActive
+    && actualRunningPracticeId === "breath"
+    && appMarker !== "practice:idle"
+    && !showSummaryModal
+    && !ringTeardownRequested
+  );
+  const awaitingRingUnmountForSummaryRef = useRef(false);
+  const ringUnmountedForSummaryRef = useRef(false);
 
   const onPracticingChangeRef = useRef(onPracticingChange);
   const onBreathStateChangeRef = useRef(onBreathStateChange);
@@ -755,6 +770,36 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const notifyBreathStateChange = useCallback((next) => {
     onBreathStateChangeRef.current?.(next);
   }, []);
+
+  const queueSummaryAfterRingUnmount = useCallback((summaryPayload, expectRingUnmount = false) => {
+    if (!summaryPayload) return;
+    const mustWaitForUnmount = Boolean(expectRingUnmount);
+    awaitingRingUnmountForSummaryRef.current = mustWaitForUnmount;
+    ringUnmountedForSummaryRef.current = !mustWaitForUnmount;
+    setPendingSummaryNeedsRingUnmount(mustWaitForUnmount);
+    setPendingSummaryPayload(summaryPayload);
+    setRingTeardownRequested(true);
+  }, []);
+
+  const handleBreathingRingUnmount = useCallback(() => {
+    if (!awaitingRingUnmountForSummaryRef.current) return;
+    ringUnmountedForSummaryRef.current = true;
+    console.log("[BreathingRing] unmounted before summary");
+  }, []);
+
+  useEffect(() => {
+    if (!pendingSummaryPayload) return;
+    if (shouldRenderRingCanvas) return;
+    if (pendingSummaryNeedsRingUnmount && !ringUnmountedForSummaryRef.current) return;
+
+    setSessionSummary(pendingSummaryPayload);
+    setShowSummary(true);
+    setPendingSummaryPayload(null);
+    setPendingSummaryNeedsRingUnmount(false);
+    awaitingRingUnmountForSummaryRef.current = false;
+    ringUnmountedForSummaryRef.current = false;
+    console.log("[SessionSummaryModal] mounted after ring unmount");
+  }, [pendingSummaryPayload, pendingSummaryNeedsRingUnmount, shouldRenderRingCanvas]);
 
   const resolveTutorialPracticeId = useCallback((baseId) => {
     if (!baseId) return null;
@@ -814,18 +859,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [countdownValue, setCountdownValue] = useState(null);
   const circuitCountdownRef = useRef(null);
-  const queuePostSessionUi = useCallback((commit) => {
-    if (typeof commit !== 'function') return;
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
-      commit();
-      return;
-    }
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        commit();
-      });
-    });
-  }, []);
 
   // Ring FX ephemeral state
   const [currentFxIndex, setCurrentFxIndex] = useState(0);
@@ -1055,6 +1088,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setDuration(exDuration);
     setTimeLeft(exDuration * 60);
 
+    setRingTeardownRequested(false);
     setIsRunning(true);
     notifyPracticingChange(true);
     setSessionStartTime(performance.now());
@@ -1101,6 +1135,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleCircuitComplete = () => {
     // Capture curriculum context BEFORE clearing (same pattern as handleStop)
     const savedActivePracticeSession = activePracticeSession;
+    const ringCanvasWasMounted = shouldRenderRingCanvas;
     const activeSessionDayNumber = typeof savedActivePracticeSession === 'object'
       ? savedActivePracticeSession?.dayNumber
       : savedActivePracticeSession;
@@ -1111,6 +1146,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const wasFromCurriculum = !!activeSessionDayNumber;
 
     clearActivePracticeSession();
+    setRingTeardownRequested(true);
     setIsRunning(false);
     notifyPracticingChange(false);
 
@@ -1169,20 +1205,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       console.error("Failed to save circuit session:", e);
     }
 
-    queuePostSessionUi(() => {
-      setSessionSummary({
-        type: 'circuit',
-        circuitName: 'Custom Circuit',
-        exercisesCompleted: circuitConfig.exercises.length,
-        totalDuration: totalDuration,
-      });
-      setShowSummary(true);
+    queueSummaryAfterRingUnmount({
+      type: 'circuit',
+      circuitName: 'Custom Circuit',
+      exercisesCompleted: circuitConfig.exercises.length,
+      totalDuration: totalDuration,
+    }, ringCanvasWasMounted);
 
-      // Show evening feedback for evening circuit completion (pilot)
-      if (activeCircuitId === 'evening-test-circuit') {
-        setTimeout(() => setShowFeedbackModal(true), 500);
-      }
-    });
+    // Show evening feedback for evening circuit completion (pilot)
+    if (activeCircuitId === 'evening-test-circuit') {
+      setTimeout(() => setShowFeedbackModal(true), 500);
+    }
 
     if (recordedSession) {
       setLastSessionId(recordedSession.id);
@@ -1204,6 +1237,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // options.completed = true means the session timer naturally reached 0
     // If not provided (manual stop), we check timeLeft
     const wasNaturalCompletion = options.completed === true;
+    const ringCanvasWasMounted = shouldRenderRingCanvas;
     
     // Capture curriculum context BEFORE clearing
     const savedActivePracticeSession = activePracticeSession;
@@ -1230,6 +1264,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     // Now clear the session
     clearActivePracticeSession();
+    setRingTeardownRequested(true);
     setIsRunning(false);
     notifyPracticingChange(false);
     notifyBreathStateChange(null);
@@ -1451,26 +1486,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         ? Math.round((recordedSession.durationSec / 60) * 10) / 10
         : Math.round((actualDurationSeconds / 60) * 10) / 10;
 
-      queuePostSessionUi(() => {
-        setSessionSummary({
-          practice: summaryPracticeLabel,
-          duration: recordedDurationMinutes,
-          tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
-          breathCount,
-          exitType,
-          nextLeg: nextLegInfo,
-          curriculumDayNumber: wasFromCurriculum ? activeSessionDayNumber : null,
-          legNumber: currentLegNumber,
-          totalLegs: totalLegsForDay,
-          dailyStats: dailyStatsInfo,
-          practiceMode: isEmotionPractice ? emotionMode : null,
-          closingLine: emotionClosingLine,
-          emotionCompletionCount: emotionCompletionCount,
-          sakshiCompletionCount: sakshiCompletionCount,
-          sessionRecord: recordedSession,
-        });
-        setShowSummary(true);
-      });
+      queueSummaryAfterRingUnmount({
+        practice: summaryPracticeLabel,
+        duration: recordedDurationMinutes,
+        tapStats: tapCount > 0 ? { tapCount, avgErrorMs, bestErrorMs } : null,
+        breathCount,
+        exitType,
+        nextLeg: nextLegInfo,
+        curriculumDayNumber: wasFromCurriculum ? activeSessionDayNumber : null,
+        legNumber: currentLegNumber,
+        totalLegs: totalLegsForDay,
+        dailyStats: dailyStatsInfo,
+        practiceMode: isEmotionPractice ? emotionMode : null,
+        closingLine: emotionClosingLine,
+        emotionCompletionCount: emotionCompletionCount,
+        sakshiCompletionCount: sakshiCompletionCount,
+        sessionRecord: recordedSession,
+      }, ringCanvasWasMounted);
 
       if (recordedSession) {
         setLastSessionId(recordedSession.id);
@@ -1562,22 +1594,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
 
-    queuePostSessionUi(() => {
-      setSessionSummary({
-        practice: 'Breath & Stillness',
-        duration: actualDurationMinutes,
-        tapStats: null,
-        breathCount: 0,
-        exitType: 'completed',
-        curriculumDayNumber: null,
-        legNumber: null,
-        totalLegs: null,
-        benchmarkSnapshot: snapshot,
-        benchmarkDay: dayIndex,
-        sessionRecord: recordedSession,
-      });
-      setShowSummary(true);
-    });
+    queueSummaryAfterRingUnmount({
+      practice: 'Breath & Stillness',
+      duration: actualDurationMinutes,
+      tapStats: null,
+      breathCount: 0,
+      exitType: 'completed',
+      curriculumDayNumber: null,
+      legNumber: null,
+      totalLegs: null,
+      benchmarkSnapshot: snapshot,
+      benchmarkDay: dayIndex,
+      sessionRecord: recordedSession,
+    }, false);
 
     if (recordedSession) {
       setLastSessionId(recordedSession.id);
@@ -1589,7 +1618,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     breathSubmode,
     saveRunBenchmark,
     initiationComparisonBaseline,
-    queuePostSessionUi,
+    queueSummaryAfterRingUnmount,
     startMicroNote,
   ]);
 
@@ -1655,6 +1684,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
+      setRingTeardownRequested(false);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1672,6 +1702,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
+    setRingTeardownRequested(false);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -2150,17 +2181,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             />
           ) : actualRunningPracticeId === "breath" ? (
           <div className="w-screen flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
-              <BreathingRing
-                breathPattern={breathingPatternForRing}
-                onTap={handleAccuracyTap}
-                onCycleComplete={() => setBreathCount(prev => prev + 1)}
-                startTime={sessionStartTime}
-                practiceActive={isRunning}
-                pathId={avatarPath}
-                fxPreset={currentFxPreset}
-                totalSessionDurationSec={duration}
-                timeLeftText={timeLeftText}
-              />
+              {shouldRenderRingCanvas ? (
+                <BreathingRing
+                  breathPattern={breathingPatternForRing}
+                  onTap={handleAccuracyTap}
+                  onCycleComplete={() => setBreathCount(prev => prev + 1)}
+                  startTime={sessionStartTime}
+                  practiceActive={isRunning}
+                  onUnmount={handleBreathingRingUnmount}
+                  pathId={avatarPath}
+                  fxPreset={currentFxPreset}
+                  totalSessionDurationSec={duration}
+                  timeLeftText={timeLeftText}
+                />
+              ) : null}
 
               {/* Tempo Sync Session Panel - 3-phase cap schedule display */}
               {tempoSessionActive && (
@@ -2322,7 +2356,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   })() : null;
 
   // RENDER PRIORITY 2: Session Summary Modal
-  const showSummaryModal = showSummary && sessionSummary;
   const summaryView = showSummaryModal ? (() => {
     const { practiceTimeSlots } = useCurriculumStore.getState();
     return (

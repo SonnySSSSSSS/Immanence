@@ -103,7 +103,7 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
 // startTime is required and must be based on performance.now() so that
 // audio scheduling (Web Audio API) and the rAF animation loop share one
 // clock origin. Passing Date.now() will silently desync audio timing.
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null, practiceActive = true }) {
+export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null, practiceActive = true, onUnmount = null }) {
   const theme = useTheme();
   const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
   const lockedPatternRef = useRef(null);
@@ -553,6 +553,14 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
   // After all hooks: bail if startTime is absent so the rAF loop and audio
   // engine never start with a missing clock anchor.
+  useEffect(() => {
+    return () => {
+      if (typeof onUnmount === "function") {
+        onUnmount();
+      }
+    };
+  }, [onUnmount]);
+
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   if (!startTimeValid) return null;
   const isFrameActive = isRingFrameActive(practiceActive);
