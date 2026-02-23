@@ -399,11 +399,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     startImagePreloading(import.meta.env.BASE_URL);
   }, []);
 
-  // Initialize viewport resize listener
-  const initViewportListener = useDisplayModeStore((s) => s.initViewportListener);
-  useEffect(() => {
-    initViewportListener();
-  }, [initViewportListener]);
+  // Viewport width modes (hearth/sanctuary) were removed; no resize listener needed.
 
   // DISABLED: Never auto-show completion report
   // User can manually access from HomeHub or CurriculumHub if needed

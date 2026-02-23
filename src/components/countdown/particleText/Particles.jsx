@@ -14,6 +14,10 @@ export default function Particles({
   countDesktop = 8000,
   countMobile = 2800,
   mouseRef = null,
+  opacity = 0.1,
+  fieldScale = 1.45,
+  depthScale = 1.0,
+  parallaxScale = 0.10,
 }) {
   const meshRef = useRef(null);
   const viewport = useThree((state) => state.viewport);
@@ -23,11 +27,11 @@ export default function Particles({
   const count = useMemo(() => (isCoarsePointer() ? countMobile : countDesktop), [countDesktop, countMobile]);
   const field = useMemo(
     () => ({
-      width: viewport.width * 1.45,
-      height: viewport.height * 1.45,
-      depth: 2.6,
+      width: viewport.width * fieldScale,
+      height: viewport.height * fieldScale,
+      depth: 2.6 * depthScale,
     }),
-    [viewport.width, viewport.height]
+    [depthScale, fieldScale, viewport.width, viewport.height]
   );
 
   const seeds = useMemo(() => {
@@ -60,8 +64,8 @@ export default function Particles({
     // Virtual mouse drives a subtle global parallax shift on the particle field
     const mx = mouseRef?.current?.[0] ?? 0;
     const my = mouseRef?.current?.[1] ?? 0;
-    const mouseOffX = mx * field.width * 0.1;
-    const mouseOffY = my * field.height * 0.1;
+    const mouseOffX = mx * field.width * parallaxScale;
+    const mouseOffY = my * field.height * parallaxScale;
 
     for (let i = 0; i < seeds.length; i++) {
       const q = seeds[i];
@@ -97,7 +101,7 @@ export default function Particles({
       <meshBasicMaterial
         color={color}
         transparent
-        opacity={0.1}
+        opacity={opacity}
         toneMapped={false}
         depthWrite={false}
         blending={THREE.AdditiveBlending}

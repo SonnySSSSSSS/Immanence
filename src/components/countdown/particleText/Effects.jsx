@@ -4,7 +4,7 @@ import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
 // Module-level constant — never mutated, avoids per-render allocation
-const CA_OFFSET = new THREE.Vector2(0.003, 0.003);
+const CA_OFFSET = new THREE.Vector2(0.0024, 0.0018);
 
 export default function Effects({ enabled = true }) {
   if (!enabled) return null;
@@ -13,7 +13,7 @@ export default function Effects({ enabled = true }) {
     <EffectComposer multisampling={0}>
       {/* Tight bloom: digit core + bright sparks */}
       <Bloom
-        intensity={2.2}
+        intensity={1.75}
         radius={0.28}
         luminanceThreshold={0.18}
         luminanceSmoothing={0.05}
@@ -21,7 +21,7 @@ export default function Effects({ enabled = true }) {
       />
       {/* Wide bloom: soft halo around the full field */}
       <Bloom
-        intensity={0.75}
+        intensity={0.55}
         radius={0.85}
         luminanceThreshold={0.06}
         luminanceSmoothing={0.18}

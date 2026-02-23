@@ -61,7 +61,7 @@ const TextMesh = forwardRef(({ children, vAlign = 'center', hAlign = 'center', s
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={0.55}
+          emissiveIntensity={0.8}
           roughness={0.22}
           metalness={0.04}
           toneMapped={false}
@@ -105,7 +105,7 @@ export default function Number({
   const opticalOffsetWorld = getOpticalOffsetFactor(textValue) * targetWorldHeight
 
   return (
-    <group scale={[scaleX, scaleY, 1]} position={[opticalOffsetWorld, 0, 0]}>
+    <group scale={[scaleX, scaleY, 1]}>
       {/* Hidden reference: establishes consistent height across glyphs. */}
       <group visible={false}>
         <TextMesh size={10} color={color} onBoundsChange={setRefWorldBounds}>
@@ -113,7 +113,8 @@ export default function Number({
         </TextMesh>
       </group>
 
-      <TextMesh size={10} color={color} onBoundsChange={setLiveWorldBounds}>
+      {/* Keep the scene origin as the visual center; apply optical compensation inside. */}
+      <TextMesh size={10} color={color} position={[opticalOffsetWorld, 0, 0]} onBoundsChange={setLiveWorldBounds}>
         {textValue}
       </TextMesh>
     </group>
