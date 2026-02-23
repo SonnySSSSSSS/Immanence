@@ -19,10 +19,7 @@ import { usePathStore } from '../state/pathStore.js';
 export function NavigationSection({ currentStage, previewPath, onNavigate, isPracticing = false }) {
   const { activePath, beginPath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const displayMode = useDisplayModeStore(s => s.mode);
   const isLight = colorScheme === 'light';
-  const isSanctuary = displayMode === 'sanctuary';
-  const isHearth = displayMode === 'hearth';
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   // Prefer the stage coming from the main app/dev controls (`currentStage`), then fall back to avatar store stage.
   const effectiveStage = currentStage || avatarStage;
@@ -66,11 +63,11 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: isSanctuary ? '32px' : '20px',
-        paddingBottom: isSanctuary ? '48px' : '32px',
+        gap: '20px',
+        paddingBottom: '32px',
       }}
     >
-      <div className="flex items-center justify-center" style={{ paddingTop: isSanctuary ? '12px' : '4px' }}>
+      <div className="flex items-center justify-center" style={{ paddingTop: '4px' }}>
         <AvatarV3
           stage={normalizedStage}
           modeWeights={modeWeights}
@@ -79,7 +76,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           lastModeChange={lastModeChange}
           lastSessionComplete={lastSessionComplete}
           path={avatarPath}
-          size={isSanctuary ? 'sanctuary' : 'hearth'}
+          size="hearth"
         />
       </div>
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
@@ -88,8 +85,8 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: isSanctuary ? '24px' : '18px',
-            paddingTop: isSanctuary ? '24px' : '12px',
+            gap: '18px',
+            paddingTop: '12px',
           }}
         >
           {/* Ornamental Divider */}
@@ -209,13 +206,13 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
             data-card="true"
             data-card-id="pathOverview"
             className="im-card"
-            style={{
-              width: '100%',
-              maxWidth: isHearth ? '430px' : '760px',
-              borderRadius: '28px',
-              margin: '16px auto',
-              background: isLight
-                ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)'
+              style={{
+                width: '100%',
+                maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                borderRadius: '28px',
+                margin: '16px auto',
+                background: isLight
+                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)'
                 : 'linear-gradient(180deg, rgba(26, 15, 28, 0.99) 0%, rgba(21, 11, 22, 1) 100%)',
               boxShadow: isLight
                 ? '0 8px 40px rgba(0, 0, 0, 0.15)'

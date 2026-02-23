@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RitualStepDisplay from './RitualStepDisplay';
 import RitualProgress from './RitualProgress';
-import { useDisplayModeStore } from '../state/displayModeStore';
 import { Icon } from '../icons/Icon.jsx';
 
 void motion;
@@ -15,29 +14,13 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     const [isPaused, setIsPaused] = useState(false);
     const [sessionState, setSessionState] = useState('intro');
 
-    // Get display mode to constrain session to Hearth mode if needed
-    const mode = useDisplayModeStore(state => state.mode);
-    const isHearthMode = mode === 'hearth';
-
     // Refs for timer
     const timerRef = useRef(null);
     // Context / Helpers
     const currentStep = ritual.steps[currentStepIndex];
     const totalSteps = ritual.steps.length;
 
-    // DIAGNOSTIC: Log session state and props
-    useEffect(() => {
-        console.group('🔍 RitualSession Diagnostic');
-        console.log('sessionState:', sessionState);
-        console.log('isLight:', isLight);
-        console.log('mode (from store):', mode);
-        console.log('isHearthMode:', isHearthMode);
-        console.log('window.innerWidth:', window.innerWidth);
-        console.log('window.innerHeight:', window.innerHeight);
-        console.log('currentStepIndex:', currentStepIndex);
-        console.log('ritual.name:', ritual?.name);
-        console.groupEnd();
-    }, [sessionState, isLight, mode, isHearthMode, currentStepIndex]);
+    // NOTE: width rails are globally enforced; no per-session viewport modes.
 
     // Initialize Step
     useEffect(() => {
@@ -110,12 +93,12 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     const RitualSurface = ({ children }) => (
         <div
             className={`fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none ${isLight ? 'bg-[#FDFBF5]/90 backdrop-blur-md' : 'bg-black/98'}`}
-            style={{ maxWidth: isHearthMode ? '430px' : '100%', margin: isHearthMode ? '0 auto' : undefined }}
+            style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
         >
             <div 
                 className={`relative w-full flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
                 style={{ 
-                    maxWidth: isHearthMode ? 'min(400px, calc(100vw - 24px))' : 'min(640px, 94vw)',
+                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                     maxHeight: 'min(720px, calc(100dvh - 48px))'
                 }}
             >
@@ -137,7 +120,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
         return (
             <div
                 className="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none bg-black/90 backdrop-blur-sm transition-opacity duration-300"
-                style={{ maxWidth: isHearthMode ? '430px' : '100%', margin: isHearthMode ? '0 auto' : undefined }}
+                style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
             >
                 <div 
                     className={`relative w-full max-w-lg flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
@@ -291,8 +274,8 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
         <div 
             className={`fixed inset-0 z-[200] flex flex-col ${isLight ? 'bg-[#FDFBF5]' : 'bg-black/98'}`}
             style={{ 
-                maxWidth: isHearthMode ? '430px' : '100%', 
-                margin: isHearthMode ? '0 auto' : undefined,
+                width: 'var(--app-frame-width, 100vw)',
+                margin: '0 auto',
                 animation: 'fade-in 0.5s ease-out'
             }}
             onPointerDown={(e) => e.stopPropagation()}
@@ -316,7 +299,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
                 </div>
 
                 <div className="flex-1 flex flex-col items-center justify-center p-4">
-                    <div className={`w-full h-full flex flex-col ${isHearthMode ? 'max-w-full' : 'max-w-md'}`}>
+                    <div className="w-full h-full flex flex-col max-w-full">
                         {renderStepContent()}
                     </div>
                 </div>

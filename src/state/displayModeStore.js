@@ -1,39 +1,9 @@
 // src/state/displayModeStore.js
-// Display Mode: Sanctuary (cosmic immersive) vs Hearth (portrait focused)
-// Color Scheme: Dark vs Light
-// Persists preferences to localStorage
+// Display preferences (color scheme + stage asset style).
+// NOTE: The app now uses a single, fixed app-frame aspect ratio and a single content rail.
+// "Hearth/Sanctuary" width modes were removed to prevent per-screen aspect drift.
 
 import { create } from 'zustand';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// AUTO-DETECT DEFAULT MODE
-// ═══════════════════════════════════════════════════════════════════════════
-function detectDefaultMode() {
-    // Portrait viewport or small width → hearth
-    if (typeof window !== 'undefined') {
-        const isPortrait = window.innerHeight > window.innerWidth;
-        const isSmall = window.innerWidth < 768;
-        if (isPortrait || isSmall) {
-            return 'hearth';
-        }
-    }
-    return 'sanctuary';
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LOAD STORED PREFERENCES
-// ═══════════════════════════════════════════════════════════════════════════
-function loadStoredMode() {
-    try {
-        const stored = localStorage.getItem('immanenceOS.displayMode');
-        if (stored === 'sanctuary' || stored === 'hearth') {
-            return stored;
-        }
-    } catch {
-        // localStorage not available
-    }
-    return null;
-}
 
 function loadStoredColorScheme() {
     try {
@@ -75,42 +45,11 @@ applyColorSchemeClass(initialColorScheme);
 // DISPLAY MODE STORE
 // ═══════════════════════════════════════════════════════════════════════════
 export const useDisplayModeStore = create((set, get) => ({
-    // Mode: 'sanctuary' | 'hearth' (user preference)
-    mode: loadStoredMode() ?? detectDefaultMode(),
-
-    // Viewport Mode: live viewport-based mode (updates on resize)
-    viewportMode: detectDefaultMode(),
-
     // Color Scheme: 'dark' | 'light'
     colorScheme: initialColorScheme,
 
     // Stage Asset Style Set: 1-5
     stageAssetStyle: loadStoredStageAssetStyle(),
-
-    // Toggle between display modes
-    toggleMode: () => {
-        const current = get().mode;
-        const newMode = current === 'sanctuary' ? 'hearth' : 'sanctuary';
-        set({ mode: newMode });
-
-        try {
-            localStorage.setItem('immanenceOS.displayMode', newMode);
-        } catch {
-            // ignore
-        }
-    },
-
-    // Set specific display mode
-    setMode: (mode) => {
-        if (mode !== 'sanctuary' && mode !== 'hearth') return;
-        set({ mode });
-
-        try {
-            localStorage.setItem('immanenceOS.displayMode', mode);
-        } catch {
-            // ignore
-        }
-    },
 
     // Toggle between color schemes
     toggleColorScheme: () => {
@@ -152,31 +91,7 @@ export const useDisplayModeStore = create((set, get) => ({
         }
     },
 
-    // Set viewport mode (for live resize updates)
-    setViewportMode: (viewportMode) => set({ viewportMode }),
-
-    // Initialize viewport resize listener
-    initViewportListener: () => {
-        if (typeof window === 'undefined') return;
-
-        const update = () => {
-            const next = detectDefaultMode();
-            const cur = get().viewportMode;
-            console.log('[displayModeStore] resize check - next:', next, 'cur:', cur, 'windowW:', window.innerWidth);
-            if (next !== cur) {
-                console.log('[displayModeStore] UPDATING viewportMode to:', next);
-                get().setViewportMode(next);
-            }
-        };
-
-        window.addEventListener('resize', update, { passive: true });
-        window.addEventListener('orientationchange', update, { passive: true });
-        update();
-    },
-
     // Helpers
-    isSanctuary: () => get().mode === 'sanctuary',
-    isHearth: () => get().mode === 'hearth',
     isDark: () => get().colorScheme === 'dark',
     isLight: () => get().colorScheme === 'light',
 }));

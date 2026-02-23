@@ -23,7 +23,7 @@ function PracticeHeader({ isSanctuary, practiceId, onSelectPractice, selector })
       {/* Top Layer: Practice Selector - wrapped in container with proper spacing */}
       <div style={{
         width: '100%',
-        maxWidth: '560px',
+        maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
         margin: '0 auto',
         paddingLeft: '16px',
         paddingRight: '16px',

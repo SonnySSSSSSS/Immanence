@@ -29,7 +29,6 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
     const [showSession, setShowSession] = useState(false);
     
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
     const { 
         completeOnboarding, 
@@ -342,11 +341,10 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
         }
     };
     // Calculate max-width based on display mode
-    const panelMaxWidth = displayMode === 'hearth' 
-        ? 'min(400px, calc(100vw - 24px))' 
-        : 'min(640px, calc(100vw - 48px))';
+    const panelMaxWidth = 'var(--ui-rail-max, min(430px, 94vw))';
     
-    const containerMaxWidth = displayMode === 'hearth' ? '430px' : '100%';
+    // Portaled UI must align to the same fixed app-frame width (no per-screen viewport widths).
+    const containerMaxWidth = 'var(--app-frame-width, 100vw)';
     
     const ritual = getRitualData();
 
@@ -356,7 +354,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
             {showSession && (
                 <div 
                     className="absolute inset-0 z-[110] bg-black pointer-events-auto"
-                    style={{ maxWidth: displayMode === 'hearth' ? '430px' : '100%', margin: displayMode === 'hearth' ? '0 auto' : undefined }}
+                    style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
                 >
                     <RitualSession 
                         ritual={ritual}
@@ -386,7 +384,7 @@ export function ThoughtDetachmentOnboarding({ isOpen, onClose, onComplete, onExi
                             style={{ 
                                 boxShadow: '0 20px 50px rgba(0,0,0,0.5)', 
                                 maxWidth: panelMaxWidth,
-                                minHeight: displayMode === 'hearth' ? '480px' : '520px',
+                                minHeight: '480px',
                                 maxHeight: 'min(800px, calc(100dvh - 24px))'
                             }}
                         >

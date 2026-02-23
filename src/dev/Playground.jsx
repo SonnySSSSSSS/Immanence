@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import App from "../App.jsx";
-import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useDevOverrideStore } from "./devOverrideStore.js";
 import { PLAYGROUND_PRESETS } from "./playgroundPresets.js";
 import { useUiTuningStore } from "./uiTuningStore.js";
@@ -13,11 +12,6 @@ export function Playground() {
   const [frameWidth, setFrameWidth] = useState(0);
   const exitingRef = useRef(false);
   const syncingFromLayoutRef = useRef(false);
-
-  const displayMode = useDisplayModeStore((s) => s.mode);
-  const viewportMode = useDisplayModeStore((s) => s.viewportMode);
-  const setMode = useDisplayModeStore((s) => s.setMode);
-  const setViewportMode = useDisplayModeStore((s) => s.setViewportMode);
 
   const {
     stage,
@@ -48,8 +42,6 @@ export function Playground() {
 
   if (initialSnapshotRef.current == null) {
     initialSnapshotRef.current = {
-      mode: displayMode,
-      viewportMode,
       previewStage: overrideStage || stage,
       previewPath: overridePath,
     };
@@ -65,28 +57,19 @@ export function Playground() {
   const applyRestoredSnapshot = useCallback(
     (snapshot) => {
       if (!snapshot) return;
-      const restoredMode =
-        snapshot.mode === "sanctuary" || snapshot.mode === "hearth"
-          ? snapshot.mode
-          : "hearth";
       const restoredStage = snapshot.previewStage || "Seedling";
       const restoredPath = snapshot.previewPath ?? null;
-      setMode(restoredMode);
-      setViewportMode(snapshot.viewportMode || restoredMode);
-      setLayoutMode(restoredMode);
-      setOverrideLayoutMode(restoredMode);
+      // Layout width modes were removed; keep a single, fixed rail.
       setStage(restoredStage);
       setOverrideStage(restoredStage);
       setOverridePath(restoredPath);
     },
     [
       setLayoutMode,
-      setMode,
       setOverrideLayoutMode,
       setOverridePath,
       setOverrideStage,
       setStage,
-      setViewportMode,
     ]
   );
 
@@ -112,8 +95,6 @@ export function Playground() {
 
     syncingFromLayoutRef.current = true;
     setOverrideLayoutMode(initialUiState.layoutMode);
-    setMode(initialUiState.layoutMode);
-    setViewportMode(initialUiState.layoutMode);
     setOverrideStage(initialUiState.stage);
 
     return () => {
@@ -125,10 +106,8 @@ export function Playground() {
     activatePlayground,
     captureSnapshot,
     restorePlaygroundState,
-    setMode,
     setOverrideLayoutMode,
     setOverrideStage,
-    setViewportMode,
   ]);
 
   useEffect(() => {
@@ -143,29 +122,16 @@ export function Playground() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleExitPlayground]);
 
-  // Drawer -> app mode/stage
+  // Drawer -> app stage
   useEffect(() => {
-    syncingFromLayoutRef.current = true;
-    setMode(layoutMode);
-    setViewportMode(layoutMode);
     setOverrideLayoutMode(layoutMode);
-  }, [layoutMode, setMode, setOverrideLayoutMode, setViewportMode]);
+  }, [layoutMode, setOverrideLayoutMode]);
 
   useEffect(() => {
     setOverrideStage(stage);
   }, [setOverrideStage, stage]);
 
-  // App -> drawer mode two-way sync (WidthToggle can change it)
-  useEffect(() => {
-    if (syncingFromLayoutRef.current) {
-      syncingFromLayoutRef.current = false;
-      return;
-    }
-    if (displayMode !== layoutMode) {
-      setLayoutMode(displayMode);
-      setOverrideLayoutMode(displayMode);
-    }
-  }, [displayMode, layoutMode, setLayoutMode, setOverrideLayoutMode]);
+  // App -> drawer mode two-way sync removed (width modes removed).
 
   // DevPanel <-> drawer stage sync through shared override store
   useEffect(() => {
@@ -212,8 +178,8 @@ export function Playground() {
 
   const debugLine = useMemo(
     () =>
-      `BUILD_PROBE: LAYOUT_WIDTH_DEBUG | mode:${layoutMode} | viewport:${viewportMode} | width:${frameWidth}px`,
-    [frameWidth, layoutMode, viewportMode]
+      `BUILD_PROBE: LAYOUT_WIDTH_DEBUG | mode:${layoutMode} | width:${frameWidth}px`,
+    [frameWidth, layoutMode]
   );
 
   return (

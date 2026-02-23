@@ -28,10 +28,11 @@ body {
 
 html,
 body {
-  height: auto;
+  height: 100%;
   min-height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
+  /* App owns scrolling inside the framed viewport. Prevent body scroll to avoid layout drift. */
+  overflow-y: hidden;
   /* Hide scrollbars globally - allow page scroll without visible scrollbar */
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -45,6 +46,7 @@ body::-webkit-scrollbar {
 
 
 #root {
+  height: 100%;
   min-height: 100%;
 }
 

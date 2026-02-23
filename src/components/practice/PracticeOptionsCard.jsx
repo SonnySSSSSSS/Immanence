@@ -53,8 +53,7 @@ export function PracticeOptionsCard({
   const p = getPracticeConfig(practiceId);
   const practice = p?.label;
   const isCollapsed = !practiceId;
-  const viewportMode = useDisplayModeStore(s => s.viewportMode);
-  const isSanctuary = viewportMode === 'sanctuary';
+  const isSanctuary = false;
   const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
   const practicePanelWallpaper = tokens?.isLight
     ? `linear-gradient(rgba(245, 240, 230, 0.70), rgba(245, 240, 230, 0.86)), url("${practicePanelWallpaperUrl}")`
@@ -131,7 +130,8 @@ export function PracticeOptionsCard({
       ref={cardRef}
       className={`relative w-full transition-all duration-500 ease-out ${isCollapsed ? 'opacity-40 grayscale-[0.5] overflow-hidden' : 'opacity-100 overflow-visible'}`}
       style={{
-        maxWidth: isSanctuary ? '656px' : '560px',
+        // Hard rule: do not invent per-screen viewport widths; follow the global rail.
+        maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
         margin: '0 auto',
         paddingLeft: '16px',
         paddingRight: '16px',

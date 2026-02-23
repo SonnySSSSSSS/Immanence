@@ -36,7 +36,9 @@
       "Bash(timeout 8 tail:*)",
       "Bash(exit 0)",
       "Bash(npx eslint:*)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(git checkout:*)",
+      "WebFetch(domain:codesandbox.io)"
     ]
   },
   "mcpServers": {

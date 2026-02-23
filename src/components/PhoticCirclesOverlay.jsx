@@ -7,11 +7,11 @@ import { PhoticControlPanel } from './PhoticControlPanel';
 import { useEffectivePhotic } from '../hooks/useEffectiveSettings';
 import { computePhoticLayout } from '../utils/photicLayout';
 import { useSettingsStore } from '../state/settingsStore';
-import { useDisplayModeStore } from '../state/displayModeStore';
 
 export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
     const photic = useEffectivePhotic();
-    const displayMode = useDisplayModeStore((s) => s.mode);
+    // Single-rail layout: cap interactions to the content rail width.
+    const interfaceWidthCap = 430;
 
     // Component state (not persisted)
     // Initialize to autoStart value to prevent flash of control panel
@@ -236,7 +236,6 @@ export function PhoticCirclesOverlay({ isOpen, onClose, autoStart = false }) {
         onClose();
     };
 
-    const interfaceWidthCap = displayMode === 'sanctuary' ? 820 : 430;
     const stageInnerW = Math.max(0, Math.min(interfaceWidthCap, stageOuterW));
 
     // Compute layout for circles (stage is constrained to UI width, full viewport height)

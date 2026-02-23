@@ -83,7 +83,7 @@ export const DURATIONS = [3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 
 // Unified width system for all practice UI components
 export const PRACTICE_UI_WIDTH = {
-  maxWidth: '560px',
+  maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
   padding: '16px',
 };
 

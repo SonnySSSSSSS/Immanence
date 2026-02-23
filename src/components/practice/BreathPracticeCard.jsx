@@ -642,7 +642,7 @@ function BreathPracticeCard({
           `}</style>
 
           {practiceId === 'breath' && (
-            <div className="w-full" style={{ maxWidth: '430px', marginTop: '12px' }}>
+            <div className="w-full" style={{ maxWidth: 'var(--ui-rail-max, min(430px, 94vw))', marginTop: '12px' }}>
               <button
                 type="button"
                 onClick={onToggleTrajectory}

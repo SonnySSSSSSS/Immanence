@@ -22,9 +22,8 @@ const COLOR_PRESETS = [
 
 export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbedded = false }) {
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
-    const displayMode = useDisplayModeStore((s) => s.mode);
     const isLight = colorScheme === 'light';
-    const isHearth = displayMode === 'hearth';
+    const isHearth = true;
 
     const photic = useEffectivePhotic();
     const setPhoticSettingBase = useSettingsStore((s) => s.setPhoticSetting);
@@ -77,7 +76,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
     const containerStyle = isEmbedded
         ? {
             width: '100%',
-            maxWidth: '540px',
+            maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
             margin: '0 auto',
             backgroundColor: 'transparent',
             padding: '0',

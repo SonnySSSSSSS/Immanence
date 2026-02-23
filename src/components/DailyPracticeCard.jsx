@@ -294,9 +294,7 @@ function resolvePracticeLaunchFromEntry(entry) {
 
 export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false, devCardActive = null, devCardCarouselId = null }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
-    const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
 
     const dataCardActive = import.meta.env.DEV && typeof devCardActive === 'boolean' ? String(devCardActive) : undefined;
@@ -664,11 +662,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             <div
                 className="w-full relative transition-all duration-700 ease-in-out"
                 style={{
-                    ...(isSanctuary ? {} : {
-                        maxWidth: '430px',
-                        margin: '0 auto',
-                    }),
-                    ...(isSanctuary && { width: '100%' }),
+                    width: '100%',
+                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                    margin: '0 auto',
                 }}
             >
                 <div
@@ -1397,11 +1393,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 data-tutorial="home-daily-card"
                 className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
                 style={{
-                    ...(isSanctuary ? {} : {
-                        maxWidth: '430px',
-                        margin: '0 auto',
-                    }),
-                    ...(isSanctuary && { width: '100%' }),
+                    width: '100%',
+                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                    margin: '0 auto',
                 }}
             >
                 <div
@@ -1585,11 +1579,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 data-tutorial="home-daily-card"
                 className={`w-full relative transition-all duration-700 ease-in-out${isTutorialTarget ? ' tutorial-target' : ''}`}
                 style={{
-                    ...(isSanctuary ? {} : {
-                        maxWidth: '430px',
-                        margin: '0 auto',
-                    }),
-                    ...(isSanctuary && { width: '100%' }),
+                    width: '100%',
+                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                    margin: '0 auto',
                 }}
             >
             {/* OUTER: Frame with Shadow */}

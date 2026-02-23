@@ -428,9 +428,7 @@ function MetricRing({ label, value, isLight }) {
  */
 export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive, onOpenReports }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.viewportMode);
     const isLight = colorScheme === 'light';
-    const isSanctuary = displayMode === 'sanctuary';
     const config = THEME_CONFIG[isLight ? 'light' : 'dark'];
 
     const cardRef = useRef(null);
@@ -524,7 +522,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
         <div
             className="w-full relative transition-all duration-700 ease-in-out"
             style={{
-                maxWidth: isSanctuary ? '656px' : '430px',
+                maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                 margin: '0 auto',
             }}
         >

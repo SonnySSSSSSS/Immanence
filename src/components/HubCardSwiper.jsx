@@ -16,10 +16,8 @@ export function HubCardSwiper({ cards }) {
     const [[page, direction], setPage] = useState([0, 0]);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const displayMode = useDisplayModeStore(s => s.viewportMode);
-    const isSanctuary = displayMode === 'sanctuary';
-    
-    const cardMaxWidth = isSanctuary ? '656px' : 'min(430px, 94vw)';
+    const isSanctuary = false;
+    const cardMaxWidth = 'var(--ui-rail-max, min(430px, 94vw))';
 
     const cardIndex = ((page % cards.length) + cards.length) % cards.length;
 

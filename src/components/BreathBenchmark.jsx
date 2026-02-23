@@ -21,7 +21,6 @@ export function BreathBenchmark({ isOpen, onClose, onSave = null }) {
     const setBenchmark = useBreathBenchmarkStore(s => s.setBenchmark);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const isHearth = useDisplayModeStore(s => s.isHearth)();
 
     const [stage, setStage] = useState('intro'); // 'intro' | 'measuring' | 'results'
     const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
@@ -176,7 +175,7 @@ export function BreathBenchmark({ isOpen, onClose, onSave = null }) {
             >
             <div style={{
                 width: '100%',
-                maxWidth: isHearth ? '430px' : '760px',
+                maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',

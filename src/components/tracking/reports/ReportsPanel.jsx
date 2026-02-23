@@ -77,9 +77,8 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
     const getPatternStats = useChainStore(s => s.getPatternStats);
     const chainStats = useMemo(() => getPatternStats ? getPatternStats() : null, [getPatternStats]);
     const completedChains = useChainStore(s => s.completedChains || []);
-    const viewportMode = useDisplayModeStore(s => s.viewportMode);
-    const isSanctuary = viewportMode === 'sanctuary';
-    const chartWidth = isSanctuary ? 520 : 320;
+    const isSanctuary = false;
+    const chartWidth = 320;
 
     const normalizedInitialDomain = DOMAIN_OPTIONS.some(d => d.key === initialReportDomain)
         ? initialReportDomain

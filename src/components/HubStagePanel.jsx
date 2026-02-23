@@ -22,7 +22,7 @@ export function HubStagePanel({
     const dividerColor = isLight ? 'rgba(180, 155, 110, 0.25)' : 'rgba(253, 251, 245, 0.15)';
 
     return (
-        <div className="w-full flex flex-col items-center px-4 relative" style={{ maxWidth: '430px' }}>
+        <div className="w-full flex flex-col items-center px-4 relative" style={{ maxWidth: 'var(--ui-rail-max, min(430px, 94vw))' }}>
             {/* Global Aurora "Crown" for Stage Title Backdrop (Light Mode) */}
             {isLight && !hideStageTitle && (
                 <div

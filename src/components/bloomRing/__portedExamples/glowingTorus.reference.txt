@@ -1,0 +1,137 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// SOURCE: "Glowing Torus" CodeSandbox example (user-supplied reference)
+//   URL:  https://codesandbox.io/p/sandbox/the-fluttering-star-5hyjq
+//         (user also referenced a general "glowing torus" three.js pattern)
+//
+// WHAT WAS TAKEN / PORTED INTO TechInstrumentRND.jsx
+//   1. MATERIAL PATTERN — high-metalness + low-roughness MeshPhysicalMaterial
+//      on the torus (bezel), with clearcoat for a glossy lacquer read,
+//      plus an accent-colored emissive term to feed bloom.
+//
+//   2. FRESNEL / RIM SHADER — additive ShaderMaterial overlay on the torus
+//      that reads view-space dot(normal, viewDir) and raises it to a power
+//      to produce a crisp specular highlight band around the rim.
+//      The color is decoded from sRGB to linear so bloom receives the correct
+//      accent hue without drifting toward warm white.
+//
+//   3. 3-POINT LIGHTING LANGUAGE (from ReflectorPlanes-style references)
+//      Key  : pointLight above-left, white, strong
+//      Fill : pointLight opposite, warm tint (#ffe8d6), dim
+//      Rim  : pointLight behind, accent-tinted, medium — color updated per
+//             frame in useFrame so it tracks the active accent palette.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// GLOWING TORUS — reference material + shader excerpts
+// (reconstructed from the canonical three.js / R3F glowing-torus pattern)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── A) Rim/Fresnel shader ────────────────────────────────────────────────────
+// Vertex shader: world-space normal + view direction interpolated to fragment.
+// Fragment shader: Fresnel term (1 - N·V)^power, multiplied by linear-decoded
+// accent color and a scalar intensity — output is additive RGBA so it sits on
+// top of the physical material specular without double-counting.
+
+const rimVert = `
+  varying vec3 vNormalW;
+  varying vec3 vViewDirW;
+  void main() {
+    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    vNormalW    = normalize(mat3(modelMatrix) * normal);
+    vViewDirW   = normalize(cameraPosition - worldPosition.xyz);
+    gl_Position = projectionMatrix * viewMatrix * worldPosition;
+  }
+`;
+
+const rimFrag = `
+  uniform vec3  uColor;
+  uniform float uPower;
+  uniform float uIntensity;
+  varying vec3 vNormalW;
+  varying vec3 vViewDirW;
+  void main() {
+    // sRGB → linear so bloom receives correct accent hue (no warm-white drift)
+    vec3 linearColor = pow(max(uColor, vec3(0.0001)), vec3(2.2));
+    float fresnel = pow(1.0 - max(dot(normalize(vNormalW), normalize(vViewDirW)), 0.0), uPower);
+    float rim = fresnel * uIntensity;
+    gl_FragColor = vec4(linearColor * rim, rim);
+  }
+`;
+
+// Usage (R3F):
+//   <mesh geometry={bezelGeometry}>
+//     <shaderMaterial
+//       transparent
+//       depthWrite={false}
+//       blending={THREE.AdditiveBlending}
+//       toneMapped={false}
+//       vertexShader={rimVert}
+//       fragmentShader={rimFrag}
+//       uniforms={{
+//         uColor:     { value: new THREE.Color(accentHex) },
+//         uPower:     { value: 1.9 },    // broader rim — lower = wider band
+//         uIntensity: { value: 0.38 },   // peak rim brightness
+//       }}
+//     />
+//   </mesh>
+
+// ── B) Physical material on torus (bezel) ───────────────────────────────────
+// MeshPhysicalMaterial tuning for "premium watch bezel" look:
+//   metalness      : 0.82  — reads as polished metal, picks up specular
+//   roughness      : 0.12  — tight specular lobe, clearly visible highlight
+//   clearcoat      : 0.90  — adds a glossy lacquer micro-layer
+//   clearcoatRough : 0.06  — very smooth clearcoat → sharp micro-highlight
+//   emissive       : accent rim color (less white-shifted than base) for bloom
+//   emissiveIntens : 0.52  — enough to exceed bloom threshold without washing out
+
+// Usage (R3F JSX):
+//   <meshPhysicalMaterial
+//     color={palette.bezel}               // accent dark mix
+//     emissive={palette.rim}              // accent, ~14% white shift
+//     emissiveIntensity={0.52}
+//     metalness={0.82}
+//     roughness={0.12}
+//     clearcoat={0.90}
+//     clearcoatRoughness={0.06}
+//     toneMapped={false}
+//   />
+
+// ── C) 3-point lighting ──────────────────────────────────────────────────────
+// Recreates the "ReflectorPlanes" lighting language: clear key / dim fill /
+// accent-tinted back rim.  The back rim light color is updated every frame
+// (useFrame) to stay in sync with the live accent palette.
+
+//   <ambientLight intensity={0.04} />
+//   <pointLight position={[-1.8, 2.8,  5.0]} intensity={0.82} color="#ffffff" />   // key
+//   <pointLight position={[ 2.6,-1.4,  3.8]} intensity={0.20} color="#ffe8d6" />   // fill
+//   <pointLight ref={rimLightRef} position={[0, -2.8, -4.5]} intensity={0.44} />    // rim (accent)
+//   // in useFrame: rimLightRef.current.color.copy(palette.rim)
+
+// ── D) Dual Bloom postprocessing ─────────────────────────────────────────────
+// Two Bloom passes: tight rim glow + wide atmospheric wrap.
+// The tight bloom intensity is driven per-frame from breathDriver (hold phase
+// boosts intensity slightly for a "full lung" read).
+
+//   <EffectComposer multisampling={0} resolutionScale={0.65}>
+//     <GodRays sun={sunRef} ... />           // before bloom so rays get bloomed
+//     <Bloom                                 // tight: rim + emissive highlights
+//       ref={tightBloomRef}
+//       threshold={0.68}
+//       intensity={1.30}   // driven per-frame: base + holdPulse * 0.14
+//       radius={0.18}
+//       mipmapBlur
+//     />
+//     <Bloom                                 // wide: low-intensity atmospheric
+//       threshold={0.38}
+//       intensity={0.22}
+//       radius={0.68}
+//       mipmapBlur
+//     />
+//   </EffectComposer>
+
+// ── E) Colour-correct note ───────────────────────────────────────────────────
+// Three.js outputColorSpace = SRGBColorSpace means the renderer gamma-encodes
+// the final framebuffer.  Materials with toneMapped=false bypass tone mapping
+// but still go through the OETF.  The rim shader manually decodes uColor from
+// sRGB to linear (pow(c, 2.2)) before passing it to bloom so that accent hues
+// (e.g. cyan #22d3ee) reach the bloom pass at their correct linear intensity
+// rather than the compressed sRGB value, which would drift toward warm white.

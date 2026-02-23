@@ -18,7 +18,6 @@ const SelectedCardElectricBorderOverlay = lazy(() => import("./components/dev/Se
 const SelectedControlElectricBorderOverlay = lazy(() => import("./components/dev/SelectedControlElectricBorderOverlay.jsx").then(m => ({ default: m.SelectedControlElectricBorderOverlay })));
 const SelectedPlateOverlay = lazy(() => import("./components/dev/SelectedPlateOverlay.jsx").then(m => ({ default: m.SelectedPlateOverlay })));
 import { DisplayModeToggle } from "./components/DisplayModeToggle.jsx";
-import { WidthToggle } from "./components/WidthToggle.jsx";
 import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { useUserModeStore } from "./state/userModeStore.js";
 import { useUiStore } from "./state/uiStore.js";
@@ -44,7 +43,7 @@ import AuthGate from "./components/auth/AuthGate";
 
 const DISABLE_SELECTION = false;
 
-function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards, isActiveBreathSession = false }) {
+function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
   // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
@@ -53,7 +52,10 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
   
   return (
     <div className="w-full flex flex-col items-center section-enter" style={{ overflow: 'visible' }}>
-      <div className="w-full relative z-10 px-4 transition-all duration-500" style={{ overflow: 'visible' }}>
+      <div
+        className={`w-full relative z-10 ${section === "practice" && isBreathLayoutLocked ? 'px-0 transition-none' : 'px-4 transition-all duration-500'}`}
+        style={{ overflow: section === "practice" && isBreathLayoutLocked ? 'hidden' : 'visible' }}
+      >
         {section === "practice" && !hideCards && (
           <PracticeSection 
             onPracticingChange={onPracticingChange} 
@@ -95,8 +97,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
 
 
 function App({ playgroundMode = false, playgroundBottomLayer = true }) {
-  // Display mode (sanctuary/hearth) and color scheme (dark/light)
-  const displayMode = useDisplayModeStore((s) => s.mode);
+  // Color scheme (dark/light)
   const colorScheme = useDisplayModeStore((s) => s.colorScheme);
   const overrideStage = useDevOverrideStore((s) => s.stage);
   const overridePath = useDevOverrideStore((s) => s.avatarPath);
@@ -114,6 +115,19 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const outerBackground = isLight
     ? 'linear-gradient(135deg, #F5F0E6 0%, #EDE5D8 100%)'
     : '#000';
+  const APP_FRAME_WIDTH = 'min(100vw, calc(100dvh * 1080 / 1920))';
+  // Single, authoritative content rail width. Individual cards can be narrower, but sections
+  // should not invent their own viewport widths.
+  const UI_RAIL_MAX_WIDTH = 'min(430px, 94vw)';
+
+  // Expose layout vars globally so portals rendered into document.body can still align to the
+  // same frame/rail as the rest of the app.
+  useEffect(() => {
+    const root = document?.documentElement;
+    if (!root) return;
+    root.style.setProperty('--app-frame-width', APP_FRAME_WIDTH);
+    root.style.setProperty('--ui-rail-max', UI_RAIL_MAX_WIDTH);
+  }, [APP_FRAME_WIDTH, UI_RAIL_MAX_WIDTH]);
 
   // Disable browser scroll restoration (fixes Edge loading Home scrolled down)
   useEffect(() => {
@@ -121,13 +135,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       history.scrollRestoration = 'manual';
     }
   }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (!root) return;
-    root.classList.toggle('hearth-viewport', displayMode === 'hearth');
-    return () => root.classList.remove('hearth-viewport');
-  }, [displayMode]);
 
   // Curriculum completion report (manually triggered only, never auto-shown)
   const [showCurriculumReport, setShowCurriculumReport] = useState(false);
@@ -407,11 +414,15 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.196 - feat(NeonWireRingRND): exaggeration pass A — darker OFF, HDR ON, inner-core disc, bloom active
+  // v3.27.202 - feat(BreathingRing): dual always-mounted canvas arch; orb canvas as ONE STAGE PLATE child; frameloop toggle
+  // v3.27.201 - fix(ParticleCountdown): switch font to helvetiker_bold (bold.blob only had glyph "4"); fix toneMapping
+  // v3.27.200 - feat(ParticleCountdown): replace instrument preset with bloom+chromatic particle countdown; virtual mouse parallax
+  // v3.27.198 - fix(TechInstrumentRND): remove background plate mesh (second ring visual)
 
   // Practice identification
   const [activePracticeId, setActivePracticeId] = useState(null);
   const [selectedPracticeId, setSelectedPracticeId] = useState(null);
+  const [breathLayoutSticky, setBreathLayoutSticky] = useState(false);
   const [isFullscreenExperience, setIsFullscreenExperience] = useState(false);
 
   const handlePracticingChange = (val, pid = null, requiresFullscreen = false, selectedId = null) => {
@@ -435,6 +446,34 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     isPracticing === true &&
     activeSection === 'practice' &&
     activePracticeId === 'breath';
+  useEffect(() => {
+    if (activeSection !== 'practice') {
+      setBreathLayoutSticky(false);
+      return;
+    }
+
+    const inBreathContext =
+      activePracticeId === 'breath' ||
+      runningPracticeId === 'breath' ||
+      menuPracticeId === 'breath';
+
+    if (inBreathContext) {
+      setBreathLayoutSticky(true);
+      return;
+    }
+
+    const switchedToOtherPractice =
+      (runningPracticeId && runningPracticeId !== 'breath') ||
+      (menuPracticeId && menuPracticeId !== 'breath');
+
+    if (switchedToOtherPractice) {
+      setBreathLayoutSticky(false);
+    }
+  }, [activeSection, activePracticeId, runningPracticeId, menuPracticeId]);
+
+  const isBreathLayoutLocked =
+    activeSection === 'practice' &&
+    (isActiveBreathSession || breathLayoutSticky);
   const resolvedPracticeTutorialId = effectivePracticeId ? `practice:${effectivePracticeId}` : null;
   const practiceTutorialId =
     resolvedPracticeTutorialId && TUTORIALS[resolvedPracticeTutorialId]
@@ -522,18 +561,17 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
       {/* Outer Layout Container - Adapts to display mode */}
       <div
-        className="min-h-screen w-full flex justify-center overflow-visible transition-colors duration-500 relative"
+        className="w-full h-[100dvh] flex justify-center overflow-hidden transition-colors duration-500 relative"
         style={{
           background: outerBackground,
+          '--app-frame-width': APP_FRAME_WIDTH,
         }}
       >
         {/* Side mask - left side (dynamic based on display mode) */}
         <div
           className="fixed inset-y-0 left-0 pointer-events-none z-50 transition-all duration-500"
           style={{
-            width: displayMode === 'sanctuary'
-              ? 'calc((100vw - min(100vw, 820px)) / 2)'
-              : 'calc((100vw - min(100vw, 430px)) / 2)',
+            width: 'calc((100vw - var(--app-frame-width)) / 2)',
             background: outerBackground,
           }}
         />
@@ -542,15 +580,21 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         <div
           className="fixed inset-y-0 right-0 pointer-events-none z-50 transition-all duration-500"
           style={{
-            width: displayMode === 'sanctuary'
-              ? 'calc((100vw - min(100vw, 820px)) / 2)'
-              : 'calc((100vw - min(100vw, 430px)) / 2)',
+            width: 'calc((100vw - var(--app-frame-width)) / 2)',
             background: outerBackground,
           }}
         />
 
-        {/* Full-viewport Background (wallpaper fills entire screen) */}
-        <Background stage={effectivePreviewStage} showBottomLayer={effectiveShowBackgroundBottomLayer} />
+        {/* Full-viewport background: force pure black during active breath to prevent wallpaper bleed */}
+        {isActiveBreathSession ? (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0 z-0"
+            style={{ background: "#020207" }}
+          />
+        ) : (
+          <Background stage={effectivePreviewStage} showBottomLayer={effectiveShowBackgroundBottomLayer} />
+        )}
 
         <PhoticCirclesOverlay
           isOpen={isPhoticOpen}
@@ -561,17 +605,28 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         {/* Inner App Container */}
         <div
           data-app-frame
-          className={`relative min-h-screen flex flex-col items-center overflow-visible transition-all duration-500 ${displayMode === 'sanctuary' ? 'max-w-[820px]' : 'max-w-[430px]'} ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
+          className={`relative w-full h-[100dvh] flex flex-col items-center overflow-hidden transition-all duration-500 ${isLight ? 'text-[#3D3425]' : 'text-white'}`}
           style={{
-            width: '100%',
+            width: 'var(--app-frame-width)',
+            maxWidth: 'var(--app-frame-width)',
+            height: '100dvh',
+            maxHeight: '100dvh',
             boxShadow: 'none',
             overflowX: 'hidden',
-            overflowY: 'visible',
+            overflowY: 'hidden',
             zIndex: 1,
+            '--ui-rail-max': UI_RAIL_MAX_WIDTH,
           }}
         >
 
-          <div className='relative z-10 w-full flex flex-col overflow-x-hidden overflow-y-visible' style={isFirefox ? { transform: 'translateZ(0)' } : undefined}>
+          <div
+            className="relative z-10 w-full flex flex-col overflow-hidden"
+            style={{
+              ...(isFirefox ? { transform: 'translateZ(0)' } : null),
+              height: '100%',
+              minHeight: 0,
+            }}
+          >
             {/* Fixed Dark Header Bar */}
             <header
               className={`sticky top-0 z-50 w-full px-6 py-3 transition-colors duration-500${isActiveBreathSession ? ' header--breath-active' : ''}`}
@@ -601,7 +656,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                 {/* Right: Controls & Home Button */}
                 <div className="flex-1 flex items-center justify-end gap-3">
                   <div className="flex items-center gap-3 app-header-control-cluster">
-                    <WidthToggle />
                     <DisplayModeToggle />
                     <button
                       type="button"
@@ -663,7 +717,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.196
+                        v3.27.202
                       </button>
                     </div>
                   </div>
@@ -681,17 +735,19 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
               </div>
             </header>
 
-            {/* Main content - hide when minimized */}
-            <div
+            {/* Main content (single scroll container; prevents per-section width/height drift) */}
+            <main
+              className="w-full flex-1 min-h-0 overflow-x-hidden"
               style={{
                 opacity: isMinimized ? 0 : 1,
                 pointerEvents: isMinimized ? 'none' : 'auto',
-                transition: 'opacity 0.7s ease'
+                transition: 'opacity 0.7s ease',
+                overflowY: isActiveBreathSession ? 'hidden' : 'auto',
               }}
               inert={isMinimized ? "" : undefined}
             >
               {!hasChosenUserMode ? (
-                <div className="min-h-screen w-full flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center">
                   <div className="flex flex-col items-center gap-3">
                     <button
                       type="button"
@@ -856,6 +912,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   currentPracticeId={activePracticeId}
                   isFullscreenExperience={isFullscreenExperience}
                   isActiveBreathSession={isActiveBreathSession}
+                  isBreathLayoutLocked={isBreathLayoutLocked}
                   onPracticingChange={handlePracticingChange}
                   breathState={breathState}
                   onBreathStateChange={setBreathState}
@@ -872,7 +929,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                   hideCards={hideCards}
                 />
               )}
-            </div>
+            </main>
           </div>
 
           <HardwareGuide

@@ -91,7 +91,10 @@ export function HomeSnowVipassana({ onExit }) {
     return (
         <div className="fixed inset-0 bg-black overflow-hidden flex items-center justify-center z-50">
             {/* Parallax Container */}
-            <div className={`relative ${isHearth ? 'w-[430px]' : 'w-[820px]'} h-full overflow-hidden`}>
+            <div
+                className="relative h-full overflow-hidden"
+                style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
+            >
                 
                 {/* Background Layer (Top Third) */}
                 <div className="absolute inset-0 pointer-events-none" style={{ clipPath: 'inset(0 0 66% 0)' }}>

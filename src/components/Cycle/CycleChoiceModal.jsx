@@ -2,15 +2,13 @@
 // Modal for choosing cycle type and mode
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCycleStore, CYCLE_TYPES, CYCLE_MODES } from '../../state/cycleStore';
-import { useDisplayModeStore } from '../../state/displayModeStore';
 import { useState } from 'react';
 
 void motion;
 
 export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) {
     const startCycle = useCycleStore((state) => state.startCycle);
-    const displayMode = useDisplayModeStore((s) => s.mode);
-    const isSanctuary = displayMode === 'sanctuary';
+    const isSanctuary = false;
     const [selectedMode, setSelectedMode] = useState(null);
 
     const handleStartCycle = () => {
@@ -40,8 +38,8 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                 <motion.div
                     className="relative w-full mx-4 bg-[#161625] border border-white/10 rounded-lg"
                     style={{
-                        maxWidth: isSanctuary ? '672px' : 'min(400px, calc(100vw - 32px))',
-                        padding: isSanctuary ? '32px' : '24px',
+                        maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                        padding: '24px',
                     }}
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -54,7 +52,7 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                             className="font-bold tracking-wide text-white/90 mb-2"
                             style={{ 
                                 fontFamily: 'var(--font-display)',
-                                fontSize: isSanctuary ? '24px' : '18px',
+                                fontSize: '18px',
                             }}
                         >
                             Choose Your Path
@@ -63,7 +61,7 @@ export function CycleChoiceModal({ isOpen, onClose, cycleType = 'foundation' }) 
                             className="text-white/60 font-medium"
                             style={{ 
                                 fontFamily: 'var(--font-body)',
-                                fontSize: isSanctuary ? '14px' : '12px',
+                                fontSize: '12px',
                             }}
                         >
                             {cycleType === 'foundation' && 'Establish your baseline consistency over 14 days'}

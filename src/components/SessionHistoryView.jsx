@@ -31,9 +31,8 @@ import {
 
 export function SessionHistoryView({ onClose, initialTab = ARCHIVE_TABS.ALL, initialReportDomain = REPORT_DOMAINS.PRACTICE }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
-    const archiveMaxWidth = displayMode === 'sanctuary' ? '820px' : '430px';
+    const archiveMaxWidth = 'var(--ui-rail-max, min(430px, 94vw))';
     
     // Get the store methods as references (not calling them to avoid new array on every render)
     const getAllCircuitEntries = useCircuitJournalStore(s => s.getAllEntries);

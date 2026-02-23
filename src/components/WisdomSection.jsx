@@ -202,7 +202,7 @@ function ChapterModal({
         data-card-id="chapter-modal"
         style={{ 
           animation: "scaleIn 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-          maxWidth: displayMode === 'sanctuary' ? '820px' : '430px'
+          maxWidth: 'var(--ui-rail-max, min(430px, 94vw))'
         }}
       >
         {/* Vertical Progress Rail - right edge */}

@@ -187,9 +187,7 @@ function FocusTrend({ dayCompletions, isLight, totalDays }) {
 
 export function CurriculumCompletionReport({ onDismiss }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
-    const displayMode = useDisplayModeStore(s => s.mode);
     const isLight = colorScheme === 'light';
-    const isSanctuary = displayMode === 'sanctuary';
 
     const {
         getProgress,
@@ -242,7 +240,7 @@ export function CurriculumCompletionReport({ onDismiss }) {
             <div
                 className="w-full mx-auto"
                 style={{
-                    maxWidth: isSanctuary ? '700px' : '500px',
+                    maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                 }}
             >
                 {/* Header */}

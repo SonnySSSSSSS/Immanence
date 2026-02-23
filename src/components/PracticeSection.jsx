@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from "react";
 import { createPortal } from 'react-dom';
 import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
 import { SensorySession } from "./SensorySession.jsx";
@@ -121,7 +121,7 @@ const getPracticeConfig = (id) => {
 
 // Unified width system for all practice UI components
 const PRACTICE_UI_WIDTH = {
-  maxWidth: '560px',
+  maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
   padding: '16px',
 };
 
@@ -355,8 +355,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   } = usePracticeSessionInstrumentation();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
-  const viewportMode = useDisplayModeStore(s => s.viewportMode);
-  const isSanctuary = viewportMode === 'sanctuary';
+  const isSanctuary = false;
 
   // Breath benchmark for progressive patterns
   const benchmark = useBreathBenchmarkStore(s => s.benchmark);
@@ -585,6 +584,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   
   // When running a practice, get the actual practice ID (accounting for subModes)
   const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
+  const isBreathRunningSession = isRunning && actualRunningPracticeId === "breath";
+  const breathViewportRootRef = useRef(null);
+  const [breathViewportHeightPx, setBreathViewportHeightPx] = useState(null);
 
   // CANONICAL RENDER PRACTICE ID: Use this for ALL render-path decisions
   const renderPracticeId = isRunning ? actualRunningPracticeId : practiceId;
@@ -592,6 +594,51 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // RENDER-SPECIFIC: Derive from renderPracticeId for render-path decisions
   const renderPracticeConfig = getPracticeConfig(renderPracticeId) || PRACTICE_REGISTRY.breath;
   const renderPractice = renderPracticeConfig.label;
+
+  useLayoutEffect(() => {
+    if (!isBreathRunningSession) {
+      setBreathViewportHeightPx(null);
+      return undefined;
+    }
+
+    let rafId = null;
+    const measure = () => {
+      const rootEl = breathViewportRootRef.current;
+      if (!rootEl) return;
+      const top = rootEl.getBoundingClientRect().top || 0;
+      const available = Math.max(0, window.innerHeight - top);
+      setBreathViewportHeightPx((prev) => (Math.abs((prev ?? 0) - available) < 1 ? prev : available));
+    };
+
+    const scheduleMeasure = () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("resize", scheduleMeasure);
+    window.addEventListener("orientationchange", scheduleMeasure);
+
+    return () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("orientationchange", scheduleMeasure);
+    };
+  }, [isBreathRunningSession]);
+
+  useEffect(() => {
+    if (!isBreathRunningSession) return undefined;
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [isBreathRunningSession]);
 
   // Handle curriculum auto-start and initialization (with guards to prevent override during practice)
   useEffect(() => {
@@ -1963,6 +2010,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
+    const breathViewportReady = !isBreathRunningSession || Number.isFinite(breathViewportHeightPx);
     if (renderPractice === "Rituals") {
       return (
         <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-visible pb-12">
@@ -2122,7 +2170,51 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     return (
-      <section className="w-full h-full min-h-[600px] flex flex-col items-center justify-center pb-12">
+      <section
+        ref={isBreathRunningSession ? breathViewportRootRef : null}
+        className={`w-full h-full min-h-[600px] flex flex-col items-center ${isBreathRunningSession ? "" : "justify-center"}`}
+        style={{
+          position: "relative",
+          width: "100%",
+          minHeight: isBreathRunningSession ? 0 : undefined,
+          height: isBreathRunningSession
+            ? (breathViewportHeightPx ? `${breathViewportHeightPx}px` : "100dvh")
+            : undefined,
+          maxHeight: isBreathRunningSession
+            ? (breathViewportHeightPx ? `${breathViewportHeightPx}px` : "100dvh")
+            : undefined,
+          overflow: isBreathRunningSession ? "hidden" : undefined,
+          paddingBottom: isBreathRunningSession ? 0 : "3rem",
+          justifyContent: isBreathRunningSession ? "flex-start" : undefined,
+        }}
+      >
+        {isBreathRunningSession && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "#020207",
+              zIndex: 0,
+              pointerEvents: "none",
+            }}
+          />
+        )}
+
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: "100%",
+            minHeight: 0,
+            height: isBreathRunningSession ? "100%" : undefined,
+            display: "flex",
+            flexDirection: "column",
+            flex: "1 1 auto",
+            overflow: isBreathRunningSession ? "hidden" : undefined,
+            visibility: breathViewportReady ? "visible" : "hidden",
+          }}
+        >
         {activeCircuitId && circuitConfig && (
           <div
             className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
@@ -2155,7 +2247,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           </div>
         )}
 
-        <div className="flex-1 flex items-center justify-center w-full">
+        <div className="flex-1 flex items-center justify-center w-full" style={{ minHeight: 0 }}>
           {actualRunningPracticeId === "visualization" ? (
             <VisualizationCanvas
               geometry={geometry}
@@ -2180,28 +2272,84 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               onCycleComplete={(cycle) => setVisualizationCycles(cycle)}
             />
           ) : actualRunningPracticeId === "breath" ? (
-          <div className="w-screen flex flex-col items-center justify-center gap-6" style={{ overflow: 'visible' }}>
-              {shouldRenderRingCanvas ? (
-                <BreathingRing
-                  breathPattern={breathingPatternForRing}
-                  onTap={handleAccuracyTap}
-                  onCycleComplete={() => setBreathCount(prev => prev + 1)}
-                  startTime={sessionStartTime}
-                  practiceActive={isRunning}
-                  onUnmount={handleBreathingRingUnmount}
-                  pathId={avatarPath}
-                  fxPreset={currentFxPreset}
-                  totalSessionDurationSec={duration}
-                  timeLeftText={timeLeftText}
-                />
-              ) : null}
+          <div
+            className="w-full h-full flex flex-col"
+            style={{
+              overflow: isBreathRunningSession ? "hidden" : "visible",
+              minHeight: 0,
+              flex: "1 1 auto",
+              minWidth: 0,
+            }}
+          >
+              <div
+                style={{
+                  flex: "0 0 auto",
+                  minHeight: 0,
+                  paddingTop: "env(safe-area-inset-top)",
+                }}
+              />
 
-              {/* Tempo Sync Session Panel - 3-phase cap schedule display */}
-              {tempoSessionActive && (
-                <div style={{ width: '100%', maxWidth: '320px', marginTop: '8px' }}>
-                  <TempoSyncSessionPanel />
-                </div>
-              )}
+              <div
+                style={{
+                  flex: "1 1 auto",
+                  minHeight: 0,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {shouldRenderRingCanvas ? (
+                  <BreathingRing
+                    breathPattern={breathingPatternForRing}
+                    onTap={handleAccuracyTap}
+                    onCycleComplete={() => setBreathCount(prev => prev + 1)}
+                    startTime={sessionStartTime}
+                    practiceActive={isRunning}
+                    onUnmount={handleBreathingRingUnmount}
+                    pathId={avatarPath}
+                    fxPreset={currentFxPreset}
+                    totalSessionDurationSec={duration}
+                    timeLeftText={timeLeftText}
+                  />
+                ) : null}
+              </div>
+
+              <div
+                style={{
+                  flex: "0 0 auto",
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: "8px",
+                  paddingBottom: "env(safe-area-inset-bottom)",
+                }}
+              >
+                {tempoSessionActive && (
+                  <div style={{ width: '100%', maxWidth: '320px' }}>
+                    <TempoSyncSessionPanel />
+                  </div>
+                )}
+                <SessionControls
+                  // Breath pattern + timer are rendered inside the BreathingRing plates.
+                  isBreathPractice={false}
+                  breathingPatternText={breathingPatternText}
+                  showFeedback={showFeedback}
+                  lastSignedErrorMs={lastSignedErrorMs}
+                  feedbackColor={feedbackColor}
+                  feedbackShadow={feedbackShadow}
+                  feedbackText={feedbackText}
+                  onStop={handleStop}
+                  buttonBg={buttonBg}
+                  radialGlow={radialGlow}
+                  buttonShadow={buttonShadow}
+                  timeLeftText={timeLeftText}
+                  showBreathCount={showBreathCount}
+                  breathCount={breathCount}
+                />
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center animate-fade-in-up">
@@ -2243,7 +2391,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           )}
         </div>
 
-        <SessionControls
+        {!isBreathRunningSession && <SessionControls
           // Breath pattern + timer are rendered inside the BreathingRing plates.
           isBreathPractice={false}
           breathingPatternText={breathingPatternText}
@@ -2259,10 +2407,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           timeLeftText={timeLeftText}
           showBreathCount={showBreathCount}
           breathCount={breathCount}
-        />
+        />}
 
         {/* FX Selector (dev tool) sits at the bottom under the Stop button */}
-        {showFxGallery && isBreathPractice && !isActiveBreathSession && (
+        {showFxGallery && isBreathPractice && !isActiveBreathSession && !isBreathRunningSession && (
           <div
             className="flex items-center gap-3 mt-6 px-4 py-2 rounded-full"
             style={{
@@ -2351,6 +2499,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             border: none;
           }
         `}</style>
+        </div>
       </section>
     );
   })() : null;

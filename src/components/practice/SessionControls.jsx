@@ -37,7 +37,7 @@ export function SessionControls({
         </div>
       )}
 
-      <div className="h-6 mb-3 flex items-center justify-center">
+      <div className="h-5 mb-2 flex items-center justify-center">
         {showFeedback && (
           <div
             key={lastSignedErrorMs}
@@ -76,7 +76,7 @@ export function SessionControls({
 
       {timeLeftText && (
         <div
-          className="type-label text-[12px] mt-5"
+          className="type-label text-[12px] mt-3"
           style={{
             color: "rgba(245,245,245,0.78)",
             textShadow: "0 2px 8px rgba(0,0,0,0.36)",
@@ -88,7 +88,7 @@ export function SessionControls({
 
       {showBreathCount && (
         <div
-          className="type-label text-[9px] mt-2"
+          className="type-label text-[9px] mt-1.5"
           style={{
             color: 'rgba(245,245,245,0.5)',
           }}

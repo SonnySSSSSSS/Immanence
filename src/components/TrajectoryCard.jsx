@@ -88,7 +88,7 @@ export function TrajectoryCard({ onTap }) {
             onClick={() => onTap?.(REPORT_DOMAINS.PRACTICE)}
             className="im-card w-full rounded-[32px] px-6 py-5 relative overflow-hidden transition-all duration-700 cursor-pointer hover:shadow-2xl active:scale-[0.99]"
             style={{
-                maxWidth: '430px',
+                maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
                 margin: '0 auto',
                 border: '2px solid transparent',
                 backgroundImage: isLight
