@@ -244,10 +244,20 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   const segCoreMatsRef   = useRef([]);
   const segCoreMeshesRef = useRef([]);
   const calMatRef        = useRef(null);
+  const bezelMatRef      = useRef(null);
   const rimLightRef      = useRef(null);   // B) accent-tinted rim/back light
   const breathStateRef   = useRef(createBreathState());
+  const holdEmiRef       = useRef(0);
 
   const palette = useMemo(() => derivePalette(accentColor), [accentColor]);
+  const accentTint = useMemo(
+    () => palette.rim.clone().lerp(new THREE.Color('#fff'), 0.55),
+    [palette],
+  );
+  const accentShade = useMemo(
+    () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.65),
+    [palette],
+  );
 
   const geometries = useMemo(() => ({
     track:       new THREE.RingGeometry(TRACK_INNER_R, TRACK_OUTER_R, 128),
@@ -315,6 +325,14 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   useFrame(() => {
     const state = breathStateRef.current;
     writeBreathState(state, breathDriverRef.current);
+
+    const isHold = state.phase === 'hold' || state.phase === 'holdBottom';
+    const targetHoldEmi = isHold ? 0.16 : 0;
+    holdEmiRef.current += (targetHoldEmi - holdEmiRef.current) * 0.12;
+    if (bezelMatRef.current) {
+      bezelMatRef.current.emissiveIntensity = holdEmiRef.current;
+    }
+
     const holdMultiplier = state.phase === 'hold' ? 1 + HOLD_PULSE_MULT * state.holdPulse : 1;
 
     for (let i = 0; i < SEGMENT_COUNT; i++) {
@@ -389,11 +407,17 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	        {/* emissive=rim (accent-true) feeds bloom for the glow ring read.               */}
 	        <mesh geometry={geometries.bezel}>
 	          <meshPhysicalMaterial
-	            color={palette.bezel}
+	            ref={bezelMatRef}
+	            color={accentShade}
+	            emissive={accentTint}
+	            emissiveIntensity={0}
 	            metalness={1}
-	            roughness={0.05}
+	            roughness={0.07}
 	            clearcoat={0.4}
 	            clearcoatRoughness={0.1}
+	            sheen={0.15}
+	            sheenColor={accentTint}
+	            sheenRoughness={0.6}
 	          />
 	        </mesh>
         {/* Additive fresnel rim over bezel (A: specular highlight band) */}
