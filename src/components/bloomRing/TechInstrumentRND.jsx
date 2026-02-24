@@ -90,7 +90,7 @@ const DEBUG_STATIC_PROGRESS = null; // set to 0.35 for static screenshot checks
 const EMI_OFF = 0.05;
 const EMI_ON = 1.15;
 const EMI_HEAD = EMI_ON * 1.35;
-const EMI_ON_DARK = 0.65;
+const EMI_ON_DARK = 0.20;
 const INNER_EMI = 1.35;
 const INNER_HEAD_EMI = 1.75;
 const HOLD_PULSE_MULT = 0.15;
@@ -255,13 +255,16 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
     () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.65),
     [palette],
   );
+  const accent = useMemo(() => new THREE.Color(accentColor || DEFAULT_ACCENT), [accentColor]);
+  const white = useMemo(() => new THREE.Color('#ffffff'), []);
+  const black = useMemo(() => new THREE.Color('#000000'), []);
   const tickBright = useMemo(
-    () => accentTint.clone(),
-    [accentTint],
+    () => accent.clone().lerp(white, 0.30),
+    [accent, white],
   );
   const tickDark = useMemo(
-    () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.55),
-    [palette],
+    () => accent.clone().lerp(black, 0.78),
+    [accent, black],
   );
   const accentTintMostlyWhite = useMemo(
     () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.75),
@@ -391,7 +394,7 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
           const onIntensity = THREE.MathUtils.lerp(EMI_ON, EMI_ON_DARK, t);
           const headBoost = EMI_HEAD / EMI_ON;
 
-          mainMat.color.copy(onColor);
+          mainMat.color.set(0x000000);
           mainMat.emissive.copy(onColor);
           mainMat.emissiveIntensity = (isHead ? onIntensity * headBoost : onIntensity) * holdMultiplier;
         } else {
@@ -408,9 +411,12 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 
       const coreMat = segCoreMatsRef.current[i];
       if (coreMat && isOn) {
-        coreMat.color.copy(accentShade);
-        coreMat.emissive.copy(accentTint);
-        coreMat.emissiveIntensity = (isHead ? INNER_HEAD_EMI : INNER_EMI) * holdMultiplier;
+        const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
+        const onColor = tickBright.clone().lerp(tickDark, t);
+        const coreIntensity = THREE.MathUtils.lerp(INNER_EMI, 0.15, t);
+        coreMat.color.set(0x000000);
+        coreMat.emissive.copy(onColor);
+        coreMat.emissiveIntensity = (isHead ? coreIntensity * (INNER_HEAD_EMI / INNER_EMI) : coreIntensity) * holdMultiplier;
         coreMat.metalness = 0;
         coreMat.roughness = 0.5;
       }
