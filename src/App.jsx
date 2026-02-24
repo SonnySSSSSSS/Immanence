@@ -37,6 +37,7 @@ import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
 import { hasDevtoolsQueryFlag, isDevtoolsEnabled, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
+import { getDevPanelProdGate } from "./lib/devPanelGate.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
@@ -159,7 +160,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [breathState, setBreathState] = useState({ phase: 'rest', progress: 0, isPracticing: false });
   const [avatarStage, setAvatarStage] = useState("Seedling"); // Track avatar stage name for theme
   const showFxGallery = true; // FX Gallery dev mode
-  const [showDevPanel, setShowDevPanel] = useState(false); // Dev Panel (🎨 button)
+  const isDev = import.meta.env.DEV;
+  const devPanelGateEnabled = getDevPanelProdGate();
+  const [showDevPanel, setShowDevPanel] = useState(() => (isDev ? false : devPanelGateEnabled)); // Dev Panel (🎨 button)
   const [devtoolsGateTick, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
@@ -170,13 +173,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
-  const isDev = import.meta.env.DEV;
   const devtoolsEnabled = isDevtoolsEnabled();
   const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
 
   useEffect(() => {
-    if (!isDev) return undefined;
+    if (!isDev && !devPanelGateEnabled) return undefined;
     const onKeyDown = (event) => {
       const key = String(event.key || '').toLowerCase();
       if (event.ctrlKey && event.shiftKey && key === 'd') {
@@ -186,7 +188,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isDev]);
+  }, [devPanelGateEnabled, isDev]);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -529,7 +531,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       />
 
       {/* Dev Panel (🎨 button or Ctrl+Shift+D) */}
-      {import.meta.env.DEV && (
+      {devPanelGateEnabled && (
         <Suspense fallback={null}>
           <DevPanel
             isOpen={showDevPanel}
@@ -662,7 +664,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     >
                       ⚙️
                     </button>
-                    {import.meta.env.DEV && (
+                    {devPanelGateEnabled && (
                       <button
                         type="button"
                         onClick={() => setShowDevPanel(v => !v)}

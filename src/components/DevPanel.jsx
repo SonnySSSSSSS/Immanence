@@ -94,6 +94,7 @@ import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
 import UnifiedInspectorSection from './devpanel/sections/UnifiedInspectorSection.jsx';
 import { BloomRingLab } from './dev/BloomRingLab.jsx';
+import { getDevPanelProdGate } from '../lib/devPanelGate.js';
 
 // Eager import: avoids transient dynamic-import failures in local dev.
 
@@ -158,8 +159,13 @@ export function DevPanel({
     const setStageAssetStyle = useDisplayModeStore(s => s.setStageAssetStyle);
     const isLight = colorScheme === 'light';
     const isDevBuild = import.meta.env.DEV;
+    const isProdBuild = !isDevBuild;
+    const devPanelGateEnabled = getDevPanelProdGate();
+    const [prodArmed, setProdArmed] = useState(false);
+    const prodGuarded = isProdBuild && devPanelGateEnabled;
+    const destructiveLocked = prodGuarded && !prodArmed;
     // DevPanel should be fully functional in dev builds; do not require extra devtools unlock gates.
-    const devtoolsEnabled = Boolean(isDevBuild);
+    const devtoolsEnabled = Boolean(isDevBuild || devPanelGateEnabled);
     const canRunDevEffects = useDevPanelGate(isOpen, devtoolsEnabled);
     const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const isPlaygroundPath = currentPathname === '/__playground';
@@ -253,6 +259,13 @@ export function DevPanel({
             // ignore
         }
     }, []);
+
+    const makeGuardedAction = useCallback((fn) => {
+        return (...args) => {
+            if (destructiveLocked) return;
+            return fn(...args);
+        };
+    }, [destructiveLocked]);
 
     const logNearestAncestors = useCallback((label, eventTarget) => {
         if (!import.meta.env.DEV) return;
@@ -960,6 +973,33 @@ export function DevPanel({
                         <span className="text-sm font-semibold tracking-wide" style={{
                             color: isLight ? 'rgba(45, 40, 35, 0.95)' : 'rgba(255, 255, 255, 0.9)'
                         }}>DEVELOPER PANEL</span>
+                        {isProdBuild && (
+                            <span
+                                className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                                style={{
+                                    borderColor: 'rgba(255, 120, 120, 0.65)',
+                                    color: 'rgba(255, 140, 140, 0.9)',
+                                    background: 'rgba(255, 120, 120, 0.08)',
+                                    letterSpacing: '0.08em',
+                                }}
+                            >
+                                PROD DEV PANEL
+                            </span>
+                        )}
+                        {prodGuarded && (
+                            <button
+                                type="button"
+                                onClick={() => setProdArmed((prev) => !prev)}
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all ${
+                                    prodArmed
+                                        ? 'border-emerald-400/60 text-emerald-200 bg-emerald-500/15'
+                                        : 'border-amber-400/50 text-amber-200/90 bg-amber-500/10'
+                                }`}
+                                title={prodArmed ? 'Destructive actions enabled (prod)' : 'Arm to enable destructive actions (prod)'}
+                            >
+                                {prodArmed ? 'ARMED' : 'ARM'}
+                            </button>
+                        )}
                     </div>
                     <button
                           onClick={() => {
@@ -1099,6 +1139,8 @@ export function DevPanel({
                         onToggle={() => toggleSection('avatarCompositeTuner')}
                         isLight={isLight}
                         editingStageKey={normalizeStageKey(avatarStage)}
+                        prodGuarded={prodGuarded}
+                        prodArmed={prodArmed}
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -1133,7 +1175,7 @@ export function DevPanel({
                         controlsFxDraft={controlsFxDraft}
                         setControlsFxDraft={setControlsFxDraft}
                         setControlsFxPreset={setControlsFxPreset}
-                        resetControlsFxPreset={resetControlsFxPreset}
+                        resetControlsFxPreset={makeGuardedAction(resetControlsFxPreset)}
                         getControlsFxPreset={getControlsFxPreset}
                         controlsPresetJson={controlsPresetJson}
                         setControlsPresetJson={setControlsPresetJson}
@@ -1141,7 +1183,7 @@ export function DevPanel({
                         setControlsPresetStatus={setControlsPresetStatus}
                         exportControlsFxPresetsJson={exportControlsFxPresetsJson}
                         importControlsFxPresetsJson={importControlsFxPresetsJson}
-                        resetAllControlsFxPresets={resetAllControlsFxPresets}
+                        resetAllControlsFxPresets={makeGuardedAction(resetAllControlsFxPresets)}
                         utcViolations={utcViolations}
                         platesSelectedId={platesSelectedId}
                         platesFxEnabled={platesFxEnabled}
@@ -1152,7 +1194,7 @@ export function DevPanel({
                         platesAdvancedOpen={platesAdvancedOpen}
                         setPlatesAdvancedOpen={setPlatesAdvancedOpen}
                         activePlateOverrideCount={activePlateOverrideCount}
-                        resetSelectedPlateOverrides={resetSelectedPlateOverrides}
+                        resetSelectedPlateOverrides={makeGuardedAction(resetSelectedPlateOverrides)}
                         cardApplyToAll={cardApplyToAll}
                         setCardApplyToAll={setCardApplyToAll}
                         cardState={cardState}
@@ -1182,9 +1224,9 @@ export function DevPanel({
                         globalDraft={globalDraft}
                         saveSelected={saveSelected}
                         selectedDraft={selectedDraft}
-                        resetGlobal={resetGlobal}
-                        resetSelected={resetSelected}
-                        clearAll={clearAll}
+                        resetGlobal={makeGuardedAction(resetGlobal)}
+                        resetSelected={makeGuardedAction(resetSelected)}
+                        clearAll={makeGuardedAction(clearAll)}
                         navBtnTunerExpanded={expandedSections.navBtnTuner}
                         onToggleNavBtnTuner={() => toggleSection('navBtnTuner')}
                         navBtnProbeEnabled={navBtnProbeEnabled}
@@ -1193,7 +1235,7 @@ export function DevPanel({
                         setNavButtonTunerEnabled={setNavButtonTunerEnabled}
                         navBtnDraft={navBtnDraft}
                         onChangeNavBtnSetting={onChangeNavBtnSetting}
-                        resetNavButtonSettings={resetNavButtonSettings}
+                        resetNavButtonSettings={makeGuardedAction(resetNavButtonSettings)}
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -1508,11 +1550,18 @@ export function DevPanel({
                         </div>
 
                         {/* Reset all (destructive) */}
-                        <DestructiveButton
-                            label="Reset ALL Stores"
-                            armed={armed === 'all'}
-                            onArm={() => handleDestructive('all', devHelpers.resetAllStores)}
-                        />
+                        <div style={destructiveLocked ? { opacity: 0.5 } : undefined}>
+                            <DestructiveButton
+                                label="Reset ALL Stores"
+                                armed={armed === 'all'}
+                                onArm={makeGuardedAction(() => handleDestructive('all', devHelpers.resetAllStores))}
+                            />
+                            {destructiveLocked && (
+                                <div className="text-[10px] text-white/50 mt-1">
+                                    Arm to enable destructive actions (prod only).
+                                </div>
+                            )}
+                        </div>
                     </Section>
 
                 </div>
@@ -2030,11 +2079,18 @@ function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLig
             </div>
 
             {/* Reset curriculum (destructive) */}
-            <DestructiveButton
-                label="Reset Curriculum"
-                armed={armed === 'curriculum'}
-                onArm={() => handleDestructive('curriculum', _devReset)}
-            />
+            <div style={destructiveLocked ? { opacity: 0.5 } : undefined}>
+                <DestructiveButton
+                    label="Reset Curriculum"
+                    armed={armed === 'curriculum'}
+                    onArm={makeGuardedAction(() => handleDestructive('curriculum', _devReset))}
+                />
+                {destructiveLocked && (
+                    <div className="text-[10px] text-white/50 mt-1">
+                        Arm to enable destructive actions (prod only).
+                    </div>
+                )}
+            </div>
         </Section>
     );
 }

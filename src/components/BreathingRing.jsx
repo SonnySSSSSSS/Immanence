@@ -7,18 +7,19 @@
 // - PATH FX: path-specific particle effects sync with breath
 
 import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useId } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { EnsoStroke } from "./EnsoStroke";
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 import { BloomRingSceneContent } from './bloomRing/BloomRingRenderer.jsx';
 import { TechInstrumentSceneContent } from './bloomRing/TechInstrumentRND.jsx';
+import { PolygonBreathSceneContent } from './bloomRing/PolygonBreathScene.jsx';
 import ParticleCountdownPreset from './countdown/ParticleCountdownPreset.jsx';
 import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefaults.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 
 const BREATH_RING_MAX_DPR = 1.5;
-const RING_MODE_CYCLE = ['bracelet', 'orb', 'instrument'];
+const RING_MODE_CYCLE = ['bracelet', 'polygon', 'orb', 'instrument'];
 
 function normalizeRingMode(mode) {
   if (mode === 'baseline' || mode === 'base') return 'bracelet';
@@ -29,7 +30,7 @@ function isRingFrameActive(practiceActive = true) {
   return practiceActive;
 }
 
-function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver, isFrameActive = true }) {
+function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver, isFrameActive = true, displayNumber }) {
   if (!isFrameActive) return null;
 
   if (rndRingMode === 'instrument') {
@@ -37,6 +38,16 @@ function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breat
       <TechInstrumentSceneContent
         accentColor={liveAccentColor}
         breathDriver={breathDriver}
+      />
+    );
+  }
+
+  if (rndRingMode === 'polygon') {
+    return (
+      <PolygonBreathSceneContent
+        accentColor={liveAccentColor}
+        breathDriver={breathDriver}
+        displayNumber={displayNumber}
       />
     );
   }
@@ -51,7 +62,60 @@ function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breat
   );
 }
 
-function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style, isFrameActive = true, frameloop: frameloopProp }) {
+function HybridInstrumentTickOverlayScene({ accentColor }) {
+  const SEGMENT_COUNT = 48;
+  const SEG_W = 0.038, SEG_H = 0.075, SEG_D = 0.006;
+  const R = 0.90, Z = 0.06;
+  const HYBRID_TICK_SCALE = 1.0;
+
+  const meshRef = useRef(null);
+
+  const geometry = useMemo(() => new THREE.BoxGeometry(SEG_W, SEG_H, SEG_D), []);
+  const tickColor = useMemo(
+    () => new THREE.Color(accentColor).lerp(new THREE.Color('#000'), 0.82),
+    [accentColor]
+  );
+
+  const { camera, size, invalidate } = useThree();
+
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < SEGMENT_COUNT; i++) {
+      const angle = Math.PI / 2 - (i / SEGMENT_COUNT) * Math.PI * 2;
+      dummy.position.set(Math.cos(angle) * R, Math.sin(angle) * R, Z);
+      dummy.rotation.set(0, 0, angle - Math.PI / 2);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }, []);
+
+  useEffect(() => {
+    camera.zoom = Math.min(size.width, size.height) / 2;
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [size.width, size.height, camera, invalidate]);
+
+  return (
+    <group scale={[HYBRID_TICK_SCALE, HYBRID_TICK_SCALE, 1]}>
+      <instancedMesh ref={meshRef} args={[geometry, null, SEGMENT_COUNT]}>
+        <meshBasicMaterial
+          transparent
+          opacity={0.32}
+          depthWrite={false}
+          depthTest={false}
+          toneMapped={false}
+          color={tickColor}
+        />
+      </instancedMesh>
+    </group>
+  );
+}
+
+function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style, isFrameActive = true, frameloop: frameloopProp, displayNumber }) {
   const canvasElRef = useRef(null);
 
   // Mark canvas for intentional teardown BEFORE R3F's useEffect cleanup
@@ -162,6 +226,7 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
         liveAccentColor={liveAccentColor}
         breathDriver={breathDriver}
         isFrameActive={isFrameActive}
+        displayNumber={displayNumber}
       />
     </Canvas>
   );
@@ -638,6 +703,8 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   const isFrameActive = isRingFrameActive(practiceActive);
   const isOrb = rndRingMode === 'orb';
+  const ringModeLabel = rndRingMode === 'bracelet' ? 'hybrid' : rndRingMode;
+  const showArcPhaseLabel = rndRingMode === 'instrument' || rndRingMode === 'bracelet';
   const ringSafePad = "20px";
   const phaseWord =
     progress < tInhale ? "Inhale" :
@@ -940,7 +1007,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               lineHeight: 1.4,
             }}
           >
-            RING: {rndRingMode}
+            RING: {ringModeLabel}
           </div>
         )}
 
@@ -966,10 +1033,33 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             breathDriver={breathDriver}
             style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block' }}
             isFrameActive={isFrameActive}
+            displayNumber={phaseRemainingSec}
           />
         </div>
 
-        {rndRingMode === 'instrument' && (
+        {rndRingMode === 'bracelet' && !isOrb && isFrameActive && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              background: 'transparent',
+              zIndex: 20,
+            }}
+          >
+            <Canvas
+              frameloop="demand"
+              dpr={[1, BREATH_RING_MAX_DPR]}
+              orthographic
+              camera={{ position: [0, 0, 10], near: 0.1, far: 50, zoom: 1 }}
+              gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+            >
+              <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} />
+            </Canvas>
+          </div>
+        )}
+
+        {showArcPhaseLabel && (
           <div
             aria-hidden="true"
             style={{
@@ -1028,7 +1118,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             borderRadius: 0,
           }}
         >
-        {rndRingMode !== 'instrument' && rndRingMode !== 'orb' && (
+        {!showArcPhaseLabel && rndRingMode !== 'orb' && rndRingMode !== 'polygon' && (
           <div
             style={{
               textTransform: "uppercase",
@@ -1045,7 +1135,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
           </div>
         )}
         {/* Phase countdown timer — hidden for orb (ParticleCountdown has its own WebGL digit) */}
-        {rndRingMode !== 'orb' && <div
+        {rndRingMode !== 'orb' && rndRingMode !== 'polygon' && <div
           style={{
             fontSize: "clamp(3rem, 10vw, 3.5rem)",
             fontWeight: 300,
@@ -1096,7 +1186,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
                   lineHeight: 1.4,
                 }}
               >
-                RING: {rndRingMode}
+                RING: {ringModeLabel}
               </div>
             )}
           </div>

@@ -1,6 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import './AvatarComposite.css';
 import { useDevPanelStore } from '../../state/devPanelStore.js';
+import { useAvatarPresetStore } from '../../state/avatarPresetStore.js';
+import { DEFAULT_AVATAR_PRESETS } from './avatarDefaultPresets.js';
+import { getDevPanelProdGate } from '../../lib/devPanelGate.js';
 import { getStageAssets, normalizeStageKey } from '../../config/avatarStageAssets.js';
 
 const LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
@@ -118,8 +121,13 @@ function getLastPathSegment(publicPath) {
 
 export function AvatarComposite({ stage, size }) {
   const normalizedStage = normalizeStageKey(stage);
-  const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
-  const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
+  const devPanelVisible = getDevPanelProdGate();
+  const avatarCompositeDevState = useDevPanelStore((s) => (devPanelVisible ? s.avatarComposite : null));
+  const getAvatarCompositeRoleTransform = useDevPanelStore((s) =>
+    devPanelVisible ? s.getAvatarCompositeRoleTransform : null
+  );
+  const presetsByStage = useAvatarPresetStore((s) => s.presetsByStage);
+  const ensureStagePreset = useAvatarPresetStore((s) => s.ensureStagePreset);
   const isDev = import.meta.env.DEV;
   const stageAssets = getStageAssets(normalizedStage);
 
@@ -128,32 +136,46 @@ export function AvatarComposite({ stage, size }) {
   const glassSrc = resolvePublicAssetUrl(stageAssets.glassRing);
   const ringSrc = resolvePublicAssetUrl(stageAssets.runeRing);
   const compositeSizeStyle = resolveSizeStyle(size);
-  const tunerEnabled = Boolean(isDev && avatarCompositeDevState?.enabled);
-  const showDebugOverlay = Boolean(tunerEnabled && avatarCompositeDevState?.showDebugOverlay);
+  const useDevTransforms = Boolean(devPanelVisible && avatarCompositeDevState?.enabled);
+  const showDebugOverlay = Boolean(useDevTransforms && avatarCompositeDevState?.showDebugOverlay);
+
+  useEffect(() => {
+    ensureStagePreset(normalizedStage);
+  }, [ensureStagePreset, normalizedStage]);
 
   // Dev-only visual probe to confirm AvatarComposite is re-rendering from store updates.
   const PROBE = isDev ? (avatarCompositeDevState?.enabled ? 'red' : 'blue') : null;
 
+  const baseLayers = useMemo(() => {
+    if (useDevTransforms && getAvatarCompositeRoleTransform) {
+      const stageLayers = {};
+      LAYER_IDS.forEach((layerId) => {
+        stageLayers[layerId] = getAvatarCompositeRoleTransform(normalizedStage, layerId);
+      });
+      return stageLayers;
+    }
+
+    return (
+      presetsByStage?.[normalizedStage] ||
+      DEFAULT_AVATAR_PRESETS[normalizedStage] ||
+      DEFAULT_AVATAR_PRESETS.seedling
+    );
+  }, [avatarCompositeDevState, getAvatarCompositeRoleTransform, normalizedStage, presetsByStage, useDevTransforms]);
+
   const effectiveLayers = useMemo(() => {
-    const stageLayers = {};
-    LAYER_IDS.forEach((layerId) => {
-      stageLayers[layerId] = getAvatarCompositeRoleTransform(normalizedStage, layerId);
-    });
-    const mergedLayers = mergeLayers(stageLayers);
+    const mergedLayers = mergeLayers(baseLayers);
     const resolved = {};
     LAYER_IDS.forEach((layerId) => {
       resolved[layerId] = resolveEffectiveLayer(layerId, mergedLayers);
     });
     return resolved;
-  }, [avatarCompositeDevState, getAvatarCompositeRoleTransform, normalizedStage]);
+  }, [baseLayers]);
 
-  const bgStyle = tunerEnabled ? getDevStyleForLayer('bg', effectiveLayers.bg) : undefined;
-  const stageStyle = tunerEnabled ? getDevStyleForLayer('stage', effectiveLayers.stage) : undefined;
+  const bgStyle = getDevStyleForLayer('bg', effectiveLayers.bg);
+  const stageStyle = getDevStyleForLayer('stage', effectiveLayers.stage);
   const glassProbeStyle = PROBE ? { border: `3px solid ${PROBE}` } : undefined;
-  const glassStyle = tunerEnabled
-    ? { ...getDevStyleForLayer('glass', effectiveLayers.glass), ...glassProbeStyle }
-    : glassProbeStyle;
-  const ringStyle = tunerEnabled ? getDevStyleForLayer('ring', effectiveLayers.ring) : undefined;
+  const glassStyle = { ...getDevStyleForLayer('glass', effectiveLayers.glass), ...glassProbeStyle };
+  const ringStyle = getDevStyleForLayer('ring', effectiveLayers.ring);
 
   return (
     <div
