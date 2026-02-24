@@ -21,7 +21,14 @@ const DEFAULT_ROLE_RESET = {
     linkTo: null,
     linkOpacity: false,
 };
-function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingStageKey = 'seedling' }) {
+function AvatarCompositeSection({
+    expanded,
+    onToggle,
+    isLight = false,
+    editingStageKey = 'seedling',
+    prodGuarded = false,
+    prodArmed = false,
+}) {
     const avatarComposite = useDevPanelStore(s => s.avatarComposite);
     const setAvatarCompositeEnabled = useDevPanelStore(s => s.setAvatarCompositeEnabled);
     const setAvatarCompositeDebugOverlay = useDevPanelStore(s => s.setAvatarCompositeDebugOverlay);
@@ -59,6 +66,7 @@ function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingSt
     const tunerEnabled = avatarComposite?.enabled !== false;
     const showDebugOverlay = Boolean(avatarComposite?.showDebugOverlay);
 
+    const destructiveLocked = prodGuarded && !prodArmed;
     const toggleLayer = (layerId) => {
         setLayerExpanded(prev => ({ ...prev, [layerId]: !prev[layerId] }));
     };
@@ -97,11 +105,23 @@ function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingSt
     };
 
     const applyLinkAllForCurrentStage = () => {
+        if (destructiveLocked) return;
         const master = linkAllTarget === 'none' ? null : linkAllTarget;
         AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
             const linkTo = master && layerId !== master ? master : null;
             setAvatarCompositeRoleTransformLink(normalizedEditingStageKey, layerId, linkTo);
         });
+    };
+
+    const handleCopyCurrentStageToAll = () => {
+        if (destructiveLocked) return;
+        if (prodGuarded && prodArmed && !import.meta.env.DEV) {
+            const confirmed = window.confirm(
+                'Copy current stage tuning to ALL stages? This will overwrite existing presets for ember, flame, beacon, and stellar.'
+            );
+            if (!confirmed) return;
+        }
+        copyAvatarCompositeStageToAll(normalizedEditingStageKey);
     };
 
     return (
@@ -153,7 +173,8 @@ function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingSt
                 </select>
                 <button
                     onClick={applyLinkAllForCurrentStage}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                    disabled={destructiveLocked}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Apply
                 </button>
@@ -161,14 +182,19 @@ function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingSt
 
             <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
-                    onClick={() => copyAvatarCompositeStage('seedling', normalizedEditingStageKey)}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                    onClick={() => {
+                        if (destructiveLocked) return;
+                        copyAvatarCompositeStage('seedling', normalizedEditingStageKey);
+                    }}
+                    disabled={destructiveLocked}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Copy Seedling -&gt; Current Stage
                 </button>
                 <button
-                    onClick={() => copyAvatarCompositeStageToAll(normalizedEditingStageKey)}
-                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                    onClick={handleCopyCurrentStageToAll}
+                    disabled={destructiveLocked}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Copy Current Stage -&gt; All Stages
                 </button>
@@ -176,8 +202,12 @@ function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingSt
 
             <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
-                    onClick={() => resetAvatarCompositeStage(normalizedEditingStageKey)}
-                    className="rounded-lg px-3 py-2 text-xs bg-red-500/10 border border-red-500/35 text-red-300/80 hover:bg-red-500/20 transition-all"
+                    onClick={() => {
+                        if (destructiveLocked) return;
+                        resetAvatarCompositeStage(normalizedEditingStageKey);
+                    }}
+                    disabled={destructiveLocked}
+                    className="rounded-lg px-3 py-2 text-xs bg-red-500/10 border border-red-500/35 text-red-300/80 hover:bg-red-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Reset Current Stage
                 </button>
@@ -188,6 +218,11 @@ function AvatarCompositeSection({ expanded, onToggle, isLight = false, editingSt
                     Copy Current Stage JSON
                 </button>
             </div>
+            {destructiveLocked && (
+                <div className="text-[10px] text-white/55 mb-4">
+                    Arm to enable destructive actions (prod only).
+                </div>
+            )}
 
             <div className="space-y-2 mb-4">
                 {AVATAR_COMPOSITE_LAYER_IDS.map((layerId) => {
