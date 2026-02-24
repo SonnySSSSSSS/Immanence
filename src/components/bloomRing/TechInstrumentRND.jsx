@@ -95,6 +95,12 @@ const INNER_EMI = 1.35;
 const INNER_HEAD_EMI = 1.75;
 const HOLD_PULSE_MULT = 0.15;
 
+const OUTER_NO_BLOOM_MAX = 0.22;
+const CORE_NO_BLOOM_MAX = 0.18;
+const OUTER_HEAD_BLOOM = 1.8;
+const CORE_HEAD_BLOOM = 1.4;
+const HEAD_BAND_MAX = 8;
+
 // ─── segment material ─────────────────────────────────────────────────────────
 const OFF_ROUGHNESS = 0.6;
 const ON_ROUGHNESS = 0.45;
@@ -387,19 +393,44 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	      const isOn   = i < state.activeCount;
 	      const isHead = i === headIndex;
 	      const fillCount = state.activeCount;
+        const lastRank = Math.max(0, fillCount - 1);
+        const rank = isOn ? i : 0;
+        let onColor = null;
+        let outerI = 0;
+        let coreI = 0;
+
+        if (isOn) {
+          const t = fillCount <= 1 ? 0 : rank / (fillCount - 1);
+          const tCol = Math.pow(t, 1.1);
+          onColor = tickDark.clone().lerp(tickBright, tCol);
+
+          const headBand = Math.min(HEAD_BAND_MAX, fillCount);
+          const edgeDist = lastRank - rank;
+          const inHeadBand = edgeDist < headBand;
+          const hbT = headBand <= 1 ? 1 : 1 - (edgeDist / (headBand - 1));
+          const hbEase = hbT * hbT;
+          const outerIBase = inHeadBand
+            ? THREE.MathUtils.lerp(0.55, OUTER_HEAD_BLOOM, hbEase)
+            : OUTER_NO_BLOOM_MAX;
+          const coreIBase = inHeadBand
+            ? THREE.MathUtils.lerp(0.40, CORE_HEAD_BLOOM, hbEase)
+            : CORE_NO_BLOOM_MAX;
+          const coreIHeadAdjusted = isHead ? coreIBase * (INNER_HEAD_EMI / INNER_EMI) : coreIBase;
+
+          outerI = inHeadBand
+            ? outerIBase * holdMultiplier
+            : Math.min(OUTER_NO_BLOOM_MAX, outerIBase * holdMultiplier);
+          coreI = inHeadBand
+            ? coreIHeadAdjusted * holdMultiplier
+            : Math.min(CORE_NO_BLOOM_MAX, coreIHeadAdjusted * holdMultiplier);
+        }
 
       const mainMat = segMainMatsRef.current[i];
       if (mainMat) {
         if (isOn) {
-          const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
-          const tCol = Math.pow(t, 1.1);
-          const tInt = Math.pow(t, 3.2);
-          const onColor = tickDark.clone().lerp(tickBright, tCol);
-          const outerI = THREE.MathUtils.lerp(0.03, 2.0, tInt);
-
           mainMat.color.set(0x000000);
           mainMat.emissive.copy(onColor);
-          mainMat.emissiveIntensity = outerI * holdMultiplier;
+          mainMat.emissiveIntensity = outerI;
         } else {
           mainMat.color.setRGB(0.06, 0.06, 0.06);
           mainMat.emissive.setRGB(0, 0, 0);
@@ -415,14 +446,9 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       const coreMat = segCoreMatsRef.current[i];
       if (coreMat) {
         if (isOn) {
-          const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
-          const tCol = Math.pow(t, 1.1);
-          const tInt = Math.pow(t, 3.2);
-          const onColor = tickDark.clone().lerp(tickBright, tCol);
-          const coreI = THREE.MathUtils.lerp(0.02, INNER_EMI * 1.1, tInt);
           coreMat.color.set(0x000000);
           coreMat.emissive.copy(onColor);
-          coreMat.emissiveIntensity = (isHead ? coreI * (INNER_HEAD_EMI / INNER_EMI) : coreI) * holdMultiplier;
+          coreMat.emissiveIntensity = coreI;
           coreMat.metalness = 0;
           coreMat.roughness = 0.5;
         } else {
