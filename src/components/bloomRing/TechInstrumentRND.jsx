@@ -392,18 +392,16 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       if (mainMat) {
         if (isOn) {
           const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
-          const tRev = 1 - t;
-          const tCol = Math.pow(tRev, 1.1);
-          const tInt = Math.pow(tRev, 3.2);
+          const tCol = Math.pow(t, 1.1);
+          const tInt = Math.pow(t, 3.2);
           const onColor = tickDark.clone().lerp(tickBright, tCol);
           const outerI = THREE.MathUtils.lerp(0.03, 2.0, tInt);
-          const headBoost = EMI_HEAD / EMI_ON;
 
           mainMat.color.set(0x000000);
           mainMat.emissive.copy(onColor);
-          mainMat.emissiveIntensity = (isHead ? outerI * headBoost : outerI) * holdMultiplier;
+          mainMat.emissiveIntensity = outerI * holdMultiplier;
         } else {
-          mainMat.color.copy(OFF_GRAY_MAIN);
+          mainMat.color.setRGB(0.06, 0.06, 0.06);
           mainMat.emissive.setRGB(0, 0, 0);
           mainMat.emissiveIntensity = 0;
         }
@@ -418,9 +416,8 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       if (coreMat) {
         if (isOn) {
           const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
-          const tRev = 1 - t;
-          const tCol = Math.pow(tRev, 1.1);
-          const tInt = Math.pow(tRev, 3.2);
+          const tCol = Math.pow(t, 1.1);
+          const tInt = Math.pow(t, 3.2);
           const onColor = tickDark.clone().lerp(tickBright, tCol);
           const coreI = THREE.MathUtils.lerp(0.02, INNER_EMI * 1.1, tInt);
           coreMat.color.set(0x000000);
@@ -429,7 +426,7 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
           coreMat.metalness = 0;
           coreMat.roughness = 0.5;
         } else {
-          coreMat.color.copy(OFF_GRAY_CORE);
+          coreMat.color.setRGB(0.04, 0.04, 0.04);
           coreMat.emissive.setRGB(0, 0, 0);
           coreMat.emissiveIntensity = 0;
         }
