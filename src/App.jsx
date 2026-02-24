@@ -412,6 +412,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.207 - feat(instrument): dark-gray inactive ticks + higher-contrast active ramp
   // v3.27.206 - feat(instrument): amplify tick gradient (strong endpoints + steeper curve)
   // v3.27.205 - feat(instrument): strengthen tick gradient via split color/intensity ramps
   // v3.27.204 - fix(instrument): apply tick gradient to segmentCore emissive
@@ -719,7 +720,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.206
+                        v3.27.207
                       </button>
                     </div>
                   </div>
