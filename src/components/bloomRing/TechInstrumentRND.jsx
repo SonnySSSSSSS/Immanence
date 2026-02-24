@@ -91,20 +91,16 @@ const FILL_FACTOR = 0.86;
 const DEBUG_STATIC_PROGRESS = null; // set to 0.35 for static screenshot checks
 
 // ─── segment emission ─────────────────────────────────────────────────────────
-const EMI_OFF = 0.008;
-const EMI_ON = 0.95;
+const EMI_OFF = 0.05;
+const EMI_ON = 1.15;
 const EMI_HEAD = EMI_ON * 1.35;
-const INNER_EMI = 0.85;
-const INNER_HEAD_EMI = 0.95;
+const INNER_EMI = 1.35;
+const INNER_HEAD_EMI = 1.75;
 const HOLD_PULSE_MULT = 0.15;
 
 // ─── segment material ─────────────────────────────────────────────────────────
-const OFF_ROUGHNESS = 0.68;
-const ON_ROUGHNESS = 0.28;
-const OFF_CLEARCOAT = 0.22;
-const ON_CLEARCOAT = 0.72;
-const OFF_CLEARCOAT_ROUGHNESS = 0.58;
-const ON_CLEARCOAT_ROUGHNESS = 0.2;
+const OFF_ROUGHNESS = 0.6;
+const ON_ROUGHNESS = 0.45;
 
 const BLOOM_ENABLED = true;
 
@@ -341,14 +337,13 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 
       const mainMat = segMainMatsRef.current[i];
       if (mainMat) {
-        mainMat.color.copy(isOn ? palette.segOnBase : palette.segOff);
-        mainMat.emissive.copy(isOn ? palette.segOnEmissive : palette.segOff);
+        mainMat.color.copy(accentShade);
+        mainMat.emissive.copy(accentTint);
         mainMat.emissiveIntensity = isOn
           ? (isHead ? EMI_HEAD : EMI_ON) * holdMultiplier
           : EMI_OFF;
-        mainMat.roughness          = isOn ? ON_ROUGHNESS : OFF_ROUGHNESS;
-        mainMat.clearcoat          = isOn ? ON_CLEARCOAT : OFF_CLEARCOAT;
-        mainMat.clearcoatRoughness = isOn ? ON_CLEARCOAT_ROUGHNESS : OFF_CLEARCOAT_ROUGHNESS;
+        mainMat.metalness = 0;
+        mainMat.roughness = isOn ? ON_ROUGHNESS : OFF_ROUGHNESS;
       }
 
       const coreMesh = segCoreMeshesRef.current[i];
@@ -356,9 +351,11 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 
       const coreMat = segCoreMatsRef.current[i];
       if (coreMat && isOn) {
-        coreMat.color.copy(palette.segOnBase);
-        coreMat.emissive.copy(palette.segCoreEmissive);
+        coreMat.color.copy(accentShade);
+        coreMat.emissive.copy(accentTint);
         coreMat.emissiveIntensity = (isHead ? INNER_HEAD_EMI : INNER_EMI) * holdMultiplier;
+        coreMat.metalness = 0;
+        coreMat.roughness = 0.5;
       }
     }
 
@@ -457,15 +454,13 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
           {segments.map((seg, i) => (
             <group key={i} position={[seg.px, seg.py, 0]} rotation={[0, 0, seg.rz]}>
               <mesh position={[0, 0, SEG_Z]} geometry={geometries.segment}>
-                <meshPhysicalMaterial
+                <meshStandardMaterial
                   ref={(el) => { if (el) segMainMatsRef.current[i] = el; }}
-                  color={palette.segOff}
-                  emissive={palette.segOff}
+                  color={accentShade}
+                  emissive={accentTint}
                   emissiveIntensity={EMI_OFF}
-                  metalness={0.2}
+                  metalness={0}
                   roughness={OFF_ROUGHNESS}
-                  clearcoat={OFF_CLEARCOAT}
-                  clearcoatRoughness={OFF_CLEARCOAT_ROUGHNESS}
                   toneMapped={false}
                 />
               </mesh>
@@ -476,17 +471,15 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
                 position={[0, 0, SEG_Z + CORE_Z_OFFSET]}
                 geometry={geometries.segmentCore}
               >
-                <meshPhysicalMaterial
+                <meshStandardMaterial
                   ref={(el) => { if (el) segCoreMatsRef.current[i] = el; }}
-                  color={palette.segOnBase}
-                  emissive={palette.segCoreEmissive}
+                  color={accentShade}
+                  emissive={accentTint}
                   emissiveIntensity={INNER_EMI}
                   transparent
                   opacity={0.9}
-                  metalness={0.12}
-                  roughness={0.26}
-                  clearcoat={0.62}
-                  clearcoatRoughness={0.22}
+                  metalness={0}
+                  roughness={0.5}
                   toneMapped={false}
                 />
               </mesh>
