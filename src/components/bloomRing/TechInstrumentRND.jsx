@@ -249,12 +249,16 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
     () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.65),
     [palette],
   );
-  const keyLightColor = useMemo(
-    () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.7),
+  const accentTintMostlyWhite = useMemo(
+    () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.75),
     [accentTint],
   );
-  const rimLightColor = useMemo(
+  const keyWhiteTint = useMemo(
     () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.85),
+    [accentTint],
+  );
+  const rimWhiteTint = useMemo(
+    () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.9),
     [accentTint],
   );
 
@@ -329,11 +333,12 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	    const targetHoldAmount = isHold ? 1 : 0;
 	    holdAmountRef.current += (targetHoldAmount - holdAmountRef.current) * 0.12;
 	    if (bezelMatRef.current) {
-	      // Phase 3D: keep subtle surface emissive, let the additive halo do the radiance job.
-	      bezelMatRef.current.emissiveIntensity = holdAmountRef.current * 0.09;
+	      // Phase 3D.0 (checkpoint A): hard-disable HOLD emissive to eliminate matte border band.
+	      // If we can reintroduce later without banding, do it in Phase 3D.3.
+	      bezelMatRef.current.emissiveIntensity = 0;
 	    }
 	    if (haloMatRef.current) {
-	      haloMatRef.current.opacity = holdAmountRef.current * 0.14;
+	      haloMatRef.current.opacity = holdAmountRef.current * 0.16;
 	    }
 
 	    const holdMultiplier = state.phase === 'hold' ? 1 + HOLD_PULSE_MULT * state.holdPulse : 1;
@@ -400,23 +405,25 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	  return (
 	    <AutoFitScene maxRadius={MAX_RADIUS} fillFactor={FILL_FACTOR}>
 	      <>
-		        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
-		        <ambientLight intensity={0.2} />
-		        {/* Key light: grazing primary spec (near-white, slight accent tint) */}
+	        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
+		        <ambientLight intensity={0.14} />
 		        <spotLight
-		          position={[2.2, 2.8, 2.0]}
-		          intensity={0.95}
-		          angle={0.45}
-		          penumbra={0.75}
-		          distance={6}
+		          position={[2.4, 3.1, 2.2]}
+		          intensity={1.15}
+		          angle={0.5}
+		          penumbra={0.85}
+		          distance={8}
 		          decay={2}
-		          color={keyLightColor}
+		          color={keyWhiteTint}
 		        />
-		        {/* Rim light: subtle edge separation from opposite side */}
-		        <directionalLight
-		          position={[-2.5, 1.2, -1.5]}
-		          intensity={0.4}
-		          color={rimLightColor}
+		        <spotLight
+		          position={[-2.8, 1.4, -1.6]}
+		          intensity={0.55}
+		          angle={0.6}
+		          penumbra={1}
+		          distance={7}
+		          decay={2}
+		          color={rimWhiteTint}
 		        />
 
 	        {/* ── track ring ── */}
@@ -457,13 +464,13 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	          <torusGeometry args={[BEZEL_RADIUS + 0.012, 0.006, 12, 256]} />
 	          <meshBasicMaterial
 	            ref={haloMatRef}
-	            color={accentTint}
+	            color={accentTintMostlyWhite}
 	            transparent
 	            opacity={0}
 	            toneMapped={false}
 	            blending={THREE.AdditiveBlending}
 	            depthWrite={false}
-	            depthTest
+	            depthTest={true}
 	          />
 	        </mesh>
 
