@@ -64,8 +64,9 @@ const T_MAX_RENDER_DPR             = 1.5;
 // ─── ring geometry ────────────────────────────────────────────────────────────
 const SEGMENT_COUNT = 48;
 const RING_RADIUS = 1.0;
-const TICK_INSET = 0.006;
-const TICK_RING_RADIUS = RING_RADIUS - TICK_INSET;
+const BASE_TICK_RING_RADIUS = RING_RADIUS;
+const TICK_INSET = 0.012;
+const TICK_RING_RADIUS = BASE_TICK_RING_RADIUS - TICK_INSET;
 const SEG_WIDTH = 0.082;
 const SEG_HEIGHT = 0.112;
 const SEG_DEPTH = 0.012;
