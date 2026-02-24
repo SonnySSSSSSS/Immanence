@@ -86,6 +86,7 @@ const DEBUG_STATIC_PROGRESS = null; // set to 0.35 for static screenshot checks
 const EMI_OFF = 0.05;
 const EMI_ON = 1.15;
 const EMI_HEAD = EMI_ON * 1.35;
+const EMI_ON_DARK = 0.65;
 const INNER_EMI = 1.35;
 const INNER_HEAD_EMI = 1.75;
 const HOLD_PULSE_MULT = 0.15;
@@ -95,6 +96,7 @@ const OFF_ROUGHNESS = 0.6;
 const ON_ROUGHNESS = 0.45;
 
 const BLOOM_ENABLED = true;
+const LIGHTING_PROBE_ENABLED = true;
 
 const TMP_SIZE = new THREE.Vector2();
 
@@ -249,6 +251,14 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
     () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.65),
     [palette],
   );
+  const tickBright = useMemo(
+    () => accentTint.clone(),
+    [accentTint],
+  );
+  const tickDark = useMemo(
+    () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.55),
+    [palette],
+  );
   const accentTintMostlyWhite = useMemo(
     () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.75),
     [accentTint],
@@ -367,14 +377,24 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	    for (let i = 0; i < SEGMENT_COUNT; i++) {
 	      const isOn   = i < state.activeCount;
 	      const isHead = i === headIndex;
+	      const fillCount = state.activeCount;
 
       const mainMat = segMainMatsRef.current[i];
       if (mainMat) {
-        mainMat.color.copy(accentShade);
-        mainMat.emissive.copy(accentTint);
-        mainMat.emissiveIntensity = isOn
-          ? (isHead ? EMI_HEAD : EMI_ON) * holdMultiplier
-          : EMI_OFF;
+        if (isOn) {
+          const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
+          const onColor = tickBright.clone().lerp(tickDark, t);
+          const onIntensity = THREE.MathUtils.lerp(EMI_ON, EMI_ON_DARK, t);
+          const headBoost = EMI_HEAD / EMI_ON;
+
+          mainMat.color.copy(onColor);
+          mainMat.emissive.copy(onColor);
+          mainMat.emissiveIntensity = (isHead ? onIntensity * headBoost : onIntensity) * holdMultiplier;
+        } else {
+          mainMat.color.copy(accentShade);
+          mainMat.emissive.copy(accentTint);
+          mainMat.emissiveIntensity = EMI_OFF;
+        }
         mainMat.metalness = 0;
         mainMat.roughness = isOn ? ON_ROUGHNESS : OFF_ROUGHNESS;
       }
@@ -405,26 +425,59 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	  return (
 	    <AutoFitScene maxRadius={MAX_RADIUS} fillFactor={FILL_FACTOR}>
 	      <>
-	        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
-		        <ambientLight intensity={0.14} />
-		        <spotLight
-		          position={[2.4, 3.1, 2.2]}
-		          intensity={1.15}
-		          angle={0.5}
-		          penumbra={0.85}
-		          distance={8}
-		          decay={2}
-		          color={keyWhiteTint}
-		        />
-		        <spotLight
-		          position={[-2.8, 1.4, -1.6]}
-		          intensity={0.55}
-		          angle={0.6}
-		          penumbra={1}
-		          distance={7}
-		          decay={2}
-		          color={rimWhiteTint}
-		        />
+	        {/* ── B) lighting rig ── */}
+	        {LIGHTING_PROBE_ENABLED ? (
+	          <>
+	            <ambientLight intensity={0.2} />
+	            <spotLight
+	              position={[0, 0, 2.5]}
+	              intensity={6}
+	              angle={0.6}
+	              penumbra={0.6}
+	              distance={10}
+	              decay={2}
+	              color="#ffffff"
+	            />
+	            <spotLight
+	              position={[-1.5, 1.2, 1.5]}
+	              intensity={3}
+	              angle={0.7}
+	              penumbra={1}
+	              distance={10}
+	              decay={2}
+	              color="#ffffff"
+	            />
+	          </>
+	        ) : (
+	          <>
+	            <ambientLight intensity={0.14} />
+	            <spotLight
+	              position={[2.4, 3.1, 2.2]}
+	              intensity={1.15}
+	              angle={0.5}
+	              penumbra={0.85}
+	              distance={8}
+	              decay={2}
+	              color={keyWhiteTint}
+	            />
+	            <spotLight
+	              position={[-2.8, 1.4, -1.6]}
+	              intensity={0.55}
+	              angle={0.6}
+	              penumbra={1}
+	              distance={7}
+	              decay={2}
+	              color={rimWhiteTint}
+	            />
+	          </>
+	        )}
+
+	        {LIGHTING_PROBE_ENABLED && (
+	          <mesh position={[0, 0, 0.2]}>
+	            <sphereGeometry args={[0.08, 32, 32]} />
+	            <meshStandardMaterial color="#ffffff" metalness={0} roughness={0.2} />
+	          </mesh>
+	        )}
 
 	        {/* ── track ring ── */}
 	        <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
