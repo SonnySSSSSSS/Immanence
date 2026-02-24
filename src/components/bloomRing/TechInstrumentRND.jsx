@@ -235,7 +235,11 @@ function AutoFitScene({ maxRadius, fillFactor, children }) {
 // sunRef is owned by TechInstrumentSceneContent and forwarded here so that
 // the sun mesh lives inside AutoFitScene (scales with ring) while GodRays
 // in the EffectComposer can still reference it.
-export const TechInstrumentScene = memo(function TechInstrumentScene({ accentColor, breathDriverRef, sunRef }) {
+export const TechInstrumentScene = memo(function TechInstrumentScene({
+  accentColor,
+  breathDriverRef,
+  sunRef,
+}) {
   const segMainMatsRef   = useRef([]);
   const segCoreMatsRef   = useRef([]);
   const segCoreMeshesRef = useRef([]);
@@ -357,152 +361,151 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({ accentCol
 
   return (
     <AutoFitScene maxRadius={MAX_RADIUS} fillFactor={FILL_FACTOR}>
+      <>
+	        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
+	        <ambientLight intensity={0.25} />
+	        <directionalLight position={[2, 3, 2]} intensity={1.2} />
+	        {/* Key: soft, above-left */}
+	        <pointLight position={T_LIGHT_KEY_POS}  intensity={T_LIGHT_KEY_INT}  color="#ffffff" />
+	        {/* Fill: dim, opposite side, warm tint */}
+	        <pointLight position={T_LIGHT_FILL_POS} intensity={T_LIGHT_FILL_INT} color="#ffe8d6" />
+	        {/* Rim/back: accent-tinted edge catch — color updated per frame */}
+	        <pointLight ref={rimLightRef} position={T_LIGHT_RIM_POS} intensity={T_LIGHT_RIM_INT} />
 
-      {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
-      <ambientLight intensity={0.04} />
-      {/* Key: soft, above-left */}
-      <pointLight position={T_LIGHT_KEY_POS}  intensity={T_LIGHT_KEY_INT}  color="#ffffff" />
-      {/* Fill: dim, opposite side, warm tint */}
-      <pointLight position={T_LIGHT_FILL_POS} intensity={T_LIGHT_FILL_INT} color="#ffe8d6" />
-      {/* Rim/back: accent-tinted edge catch — color updated per frame */}
-      <pointLight ref={rimLightRef} position={T_LIGHT_RIM_POS} intensity={T_LIGHT_RIM_INT} />
+        {/* ── track ring ── */}
+        <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
+          <meshStandardMaterial
+            color={palette.track}
+            emissive={palette.track}
+            emissiveIntensity={0.02}
+            metalness={0.14}
+            roughness={0.9}
+            toneMapped={false}
+          />
+        </mesh>
 
-      {/* ── track ring ── */}
-      <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
-        <meshStandardMaterial
-          color={palette.track}
-          emissive={palette.track}
-          emissiveIntensity={0.02}
-          metalness={0.14}
-          roughness={0.9}
-          toneMapped={false}
-        />
-      </mesh>
+	        {/* ── A) Bezel torus — "glowing torus" style: polished metal + accent emissive ── */}
+	        {/* High metalness + low roughness = crisp specular band from key light.          */}
+	        {/* emissive=rim (accent-true) feeds bloom for the glow ring read.               */}
+	        <mesh geometry={geometries.bezel}>
+	          <meshPhysicalMaterial
+	            color={palette.bezel}
+	            metalness={1}
+	            roughness={0.05}
+	            clearcoat={0.4}
+	            clearcoatRoughness={0.1}
+	          />
+	        </mesh>
+        {/* Additive fresnel rim over bezel (A: specular highlight band) */}
+        <mesh geometry={geometries.bezelRim} material={rimMaterials.bezel} />
 
-      {/* ── A) Bezel torus — "glowing torus" style: polished metal + accent emissive ── */}
-      {/* High metalness + low roughness = crisp specular band from key light.          */}
-      {/* emissive=rim (accent-true) feeds bloom for the glow ring read.               */}
-      <mesh geometry={geometries.bezel}>
-        <meshPhysicalMaterial
-          color={palette.bezel}
-          emissive={palette.rim}
-          emissiveIntensity={T_BEZEL_EMI_INTENSITY}
-          metalness={T_BEZEL_METALNESS}
-          roughness={T_BEZEL_ROUGHNESS}
-          clearcoat={T_BEZEL_CLEARCOAT}
-          clearcoatRoughness={T_BEZEL_CC_ROUGHNESS}
-          toneMapped={false}
-        />
-      </mesh>
-      {/* Additive fresnel rim over bezel (A: specular highlight band) */}
-      <mesh geometry={geometries.bezelRim} material={rimMaterials.bezel} />
+        {/* ── A) Cal ring — upgraded emissive + polished clearcoat ── */}
+        <mesh position={[0, 0, CAL_Z]} geometry={geometries.cal}>
+          <meshPhysicalMaterial
+            ref={calMatRef}
+            color={palette.calBase}
+            emissive={palette.calEmissive}
+            emissiveIntensity={T_CAL_EMI_INTENSITY}
+            metalness={0.58}
+            roughness={0.22}
+            clearcoat={0.72}
+            clearcoatRoughness={0.18}
+            toneMapped={false}
+          />
+        </mesh>
+        <mesh position={[0, 0, CAL_Z + 0.0005]} geometry={geometries.calRim} material={rimMaterials.cal} />
 
-      {/* ── A) Cal ring — upgraded emissive + polished clearcoat ── */}
-      <mesh position={[0, 0, CAL_Z]} geometry={geometries.cal}>
-        <meshPhysicalMaterial
-          ref={calMatRef}
-          color={palette.calBase}
-          emissive={palette.calEmissive}
-          emissiveIntensity={T_CAL_EMI_INTENSITY}
-          metalness={0.58}
-          roughness={0.22}
-          clearcoat={0.72}
-          clearcoatRoughness={0.18}
-          toneMapped={false}
-        />
-      </mesh>
-      <mesh position={[0, 0, CAL_Z + 0.0005]} geometry={geometries.calRim} material={rimMaterials.cal} />
-
-      {/* ── index tick ── */}
-      <mesh position={[0, (RING_RADIUS + CAL_RING_RADIUS) * 0.5, SEG_Z + 0.008]} geometry={geometries.index}>
-        <meshPhysicalMaterial
-          color={palette.index}
-          emissive={palette.index}
-          emissiveIntensity={0.08}
-          metalness={0.24}
-          roughness={0.42}
-          clearcoat={0.3}
-          clearcoatRoughness={0.4}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* ── segments ── */}
-      {segments.map((seg, i) => (
-        <group key={i} position={[seg.px, seg.py, 0]} rotation={[0, 0, seg.rz]}>
-          <mesh position={[0, 0, SEG_Z]} geometry={geometries.segment}>
+          {/* ── index tick ── */}
+          <mesh position={[0, (RING_RADIUS + CAL_RING_RADIUS) * 0.5, SEG_Z + 0.008]} geometry={geometries.index}>
             <meshPhysicalMaterial
-              ref={(el) => { if (el) segMainMatsRef.current[i] = el; }}
-              color={palette.segOff}
-              emissive={palette.segOff}
-              emissiveIntensity={EMI_OFF}
-              metalness={0.2}
-              roughness={OFF_ROUGHNESS}
-              clearcoat={OFF_CLEARCOAT}
-              clearcoatRoughness={OFF_CLEARCOAT_ROUGHNESS}
+              color={palette.index}
+              emissive={palette.index}
+              emissiveIntensity={0.08}
+              metalness={0.24}
+              roughness={0.42}
+              clearcoat={0.3}
+              clearcoatRoughness={0.4}
               toneMapped={false}
             />
           </mesh>
 
-          <mesh
-            ref={(el) => { if (el) segCoreMeshesRef.current[i] = el; }}
-            visible={false}
-            position={[0, 0, SEG_Z + CORE_Z_OFFSET]}
-            geometry={geometries.segmentCore}
-          >
-            <meshPhysicalMaterial
-              ref={(el) => { if (el) segCoreMatsRef.current[i] = el; }}
-              color={palette.segOnBase}
-              emissive={palette.segCoreEmissive}
-              emissiveIntensity={INNER_EMI}
-              transparent
-              opacity={0.9}
-              metalness={0.12}
-              roughness={0.26}
-              clearcoat={0.62}
-              clearcoatRoughness={0.22}
-              toneMapped={false}
-            />
-          </mesh>
-        </group>
-      ))}
+          {/* ── segments ── */}
+          {segments.map((seg, i) => (
+            <group key={i} position={[seg.px, seg.py, 0]} rotation={[0, 0, seg.rz]}>
+              <mesh position={[0, 0, SEG_Z]} geometry={geometries.segment}>
+                <meshPhysicalMaterial
+                  ref={(el) => { if (el) segMainMatsRef.current[i] = el; }}
+                  color={palette.segOff}
+                  emissive={palette.segOff}
+                  emissiveIntensity={EMI_OFF}
+                  metalness={0.2}
+                  roughness={OFF_ROUGHNESS}
+                  clearcoat={OFF_CLEARCOAT}
+                  clearcoatRoughness={OFF_CLEARCOAT_ROUGHNESS}
+                  toneMapped={false}
+                />
+              </mesh>
 
-      {/* ── B) Ghost reflection suggestion ── */}
-      {/* A second additive ring below the bezel, squashed on Z, gives the    */}
-      {/* impression the ring casts light downward — cheap fake Reflector.    */}
-      {T_GHOST_OPACITY > 0 && (
-        <group position={[0, T_GHOST_Y, -0.06]} scale={[0.96, 1, 0.22]}>
-          <mesh geometry={geometries.bezel}>
-            <meshBasicMaterial
-              color={palette.rim}
-              transparent
-              opacity={T_GHOST_OPACITY}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              toneMapped={false}
-            />
-          </mesh>
-          <mesh geometry={geometries.cal}>
-            <meshBasicMaterial
-              color={palette.rim}
-              transparent
-              opacity={T_GHOST_OPACITY * 0.5}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              toneMapped={false}
-            />
-          </mesh>
-        </group>
-      )}
+              <mesh
+                ref={(el) => { if (el) segCoreMeshesRef.current[i] = el; }}
+                visible={false}
+                position={[0, 0, SEG_Z + CORE_Z_OFFSET]}
+                geometry={geometries.segmentCore}
+              >
+                <meshPhysicalMaterial
+                  ref={(el) => { if (el) segCoreMatsRef.current[i] = el; }}
+                  color={palette.segOnBase}
+                  emissive={palette.segCoreEmissive}
+                  emissiveIntensity={INNER_EMI}
+                  transparent
+                  opacity={0.9}
+                  metalness={0.12}
+                  roughness={0.26}
+                  clearcoat={0.62}
+                  clearcoatRoughness={0.22}
+                  toneMapped={false}
+                />
+              </mesh>
+            </group>
+          ))}
 
-      {/* ── C) GodRays sun emitter ── */}
-      {/* Tiny accent-bright sphere just above the bezel top.                 */}
-      {/* GodRays projects from its screen-space position → subtle downward   */}
-      {/* rays crossing the ring (cinematic, not flashlight).                 */}
-      <mesh ref={sunRef} position={[0, BEZEL_RADIUS + 0.15, 0.08]}>
-        <sphereGeometry args={[0.014, 6, 6]} />
-        <meshBasicMaterial color={palette.sun} toneMapped={false} />
-      </mesh>
+          {/* ── B) Ghost reflection suggestion ── */}
+          {/* A second additive ring below the bezel, squashed on Z, gives the    */}
+          {/* impression the ring casts light downward — cheap fake Reflector.    */}
+          {T_GHOST_OPACITY > 0 && (
+            <group position={[0, T_GHOST_Y, -0.06]} scale={[0.96, 1, 0.22]}>
+              <mesh geometry={geometries.bezel}>
+                <meshBasicMaterial
+                  color={palette.rim}
+                  transparent
+                  opacity={T_GHOST_OPACITY}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                  toneMapped={false}
+                />
+              </mesh>
+              <mesh geometry={geometries.cal}>
+                <meshBasicMaterial
+                  color={palette.rim}
+                  transparent
+                  opacity={T_GHOST_OPACITY * 0.5}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                  toneMapped={false}
+                />
+              </mesh>
+            </group>
+          )}
+
+        {/* ── C) GodRays sun emitter ── */}
+        {/* Tiny accent-bright sphere just above the bezel top.                 */}
+        {/* GodRays projects from its screen-space position → subtle downward   */}
+        {/* rays crossing the ring (cinematic, not flashlight).                 */}
+        <mesh ref={sunRef} position={[0, BEZEL_RADIUS + 0.15, 0.08]}>
+          <sphereGeometry args={[0.014, 6, 6]} />
+          <meshBasicMaterial color={palette.sun} toneMapped={false} />
+        </mesh>
+      </>
 
     </AutoFitScene>
   );
@@ -620,6 +623,7 @@ export default function TechInstrumentRND({ accentColor, breathDriver, className
   }, []);
 
   return (
+    <>
     <Canvas
       className={className}
       style={{ width: '100%', height: '100%', display: 'block', ...style }}
@@ -660,5 +664,6 @@ export default function TechInstrumentRND({ accentColor, breathDriver, className
     >
       <TechInstrumentSceneContent accentColor={accentColor} breathDriver={breathDriver} />
     </Canvas>
+    </>
   );
 }
