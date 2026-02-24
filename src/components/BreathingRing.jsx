@@ -7,7 +7,7 @@
 // - PATH FX: path-specific particle effects sync with breath
 
 import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useId } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { EnsoStroke } from "./EnsoStroke";
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
@@ -30,7 +30,18 @@ function isRingFrameActive(practiceActive = true) {
   return practiceActive;
 }
 
-function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breathDriver, isFrameActive = true, displayNumber }) {
+function RingSceneRouter({
+  rndRingMode,
+  productionParams,
+  liveAccentColor,
+  breathDriver,
+  isFrameActive = true,
+  displayNumber,
+  presetVariant = 'other',
+  activePresetRaw = '',
+  activePresetLabel = '',
+  normalizedPresetNumber = null,
+}) {
   if (!isFrameActive) return null;
 
   if (rndRingMode === 'instrument') {
@@ -57,41 +68,85 @@ function RingSceneRouter({ rndRingMode, productionParams, liveAccentColor, breat
       params={productionParams}
       accentColor={liveAccentColor}
       mode="production"
+      presetVariant={presetVariant}
+      activePresetRaw={activePresetRaw}
+      activePresetLabel={activePresetLabel}
+      normalizedPresetNumber={normalizedPresetNumber}
       isFrameActive={isFrameActive}
     />
   );
 }
 
-function HybridInstrumentTickOverlayScene({ accentColor }) {
+function HybridInstrumentTickOverlayScene({ accentColor, breathDriver }) {
   const SEGMENT_COUNT = 48;
   const SEG_W = 0.038, SEG_H = 0.075, SEG_D = 0.006;
   const R = 0.90, Z = 0.06;
   const HYBRID_TICK_SCALE = 1.0;
-
-  const meshRef = useRef(null);
-
+  const LABEL_WINDOW_HALF_SPAN_DEG = 26;
+  const baseMeshRef = useRef(null);
+  const glowMeshRef = useRef(null);
   const geometry = useMemo(() => new THREE.BoxGeometry(SEG_W, SEG_H, SEG_D), []);
-  const tickColor = useMemo(
-    () => new THREE.Color(accentColor).lerp(new THREE.Color('#000'), 0.82),
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const tickColor = useMemo(() => new THREE.Color(), []);
+  const darkBaseColor = useMemo(
+    () => new THREE.Color(accentColor).lerp(new THREE.Color("#000"), 0.92),
     [accentColor]
   );
+  const litBaseColor = useMemo(
+    () => new THREE.Color(accentColor).lerp(new THREE.Color("#fff"), 0.42),
+    [accentColor]
+  );
+  const gapHalfSpanRad = useMemo(
+    () => (LABEL_WINDOW_HALF_SPAN_DEG * Math.PI) / 180,
+    []
+  );
+  const visibleTickMeta = useMemo(() => {
+    const sixOClock = -Math.PI / 2;
+    const rankByIndex = new Array(SEGMENT_COUNT).fill(-1);
+    const visibleIndices = [];
+
+    for (let i = 0; i < SEGMENT_COUNT; i++) {
+      const angle = Math.PI / 2 - (i / SEGMENT_COUNT) * Math.PI * 2;
+      const d = Math.atan2(Math.sin(angle - sixOClock), Math.cos(angle - sixOClock));
+      const inGap = Math.abs(d) <= gapHalfSpanRad;
+      if (!inGap) {
+        rankByIndex[i] = visibleIndices.length;
+        visibleIndices.push(i);
+      }
+    }
+
+    return {
+      rankByIndex,
+      visibleCount: visibleIndices.length,
+    };
+  }, [gapHalfSpanRad]);
 
   const { camera, size, invalidate } = useThree();
-
   useEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
+    const baseMesh = baseMeshRef.current;
+    const glowMesh = glowMeshRef.current;
+    if (!baseMesh || !glowMesh) return;
 
-    const dummy = new THREE.Object3D();
     for (let i = 0; i < SEGMENT_COUNT; i++) {
       const angle = Math.PI / 2 - (i / SEGMENT_COUNT) * Math.PI * 2;
       dummy.position.set(Math.cos(angle) * R, Math.sin(angle) * R, Z);
       dummy.rotation.set(0, 0, angle - Math.PI / 2);
+      if (visibleTickMeta.rankByIndex[i] === -1) {
+        dummy.scale.set(0.001, 0.001, 0.001);
+      } else {
+        dummy.scale.set(1, 1, 1);
+      }
       dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
+      baseMesh.setMatrixAt(i, dummy.matrix);
+      glowMesh.setMatrixAt(i, dummy.matrix);
+      glowMesh.setColorAt(i, new THREE.Color("#000"));
     }
-    mesh.instanceMatrix.needsUpdate = true;
-  }, []);
+    baseMesh.instanceMatrix.needsUpdate = true;
+    glowMesh.instanceMatrix.needsUpdate = true;
+    glowMesh.instanceColor.needsUpdate = true;
+    baseMesh.frustumCulled = false;
+    glowMesh.frustumCulled = false;
+  }, [dummy, visibleTickMeta.rankByIndex]);
 
   useEffect(() => {
     camera.zoom = Math.min(size.width, size.height) / 2;
@@ -99,23 +154,88 @@ function HybridInstrumentTickOverlayScene({ accentColor }) {
     invalidate();
   }, [size.width, size.height, camera, invalidate]);
 
+  useFrame(() => {
+    const mesh = glowMeshRef.current;
+    if (!mesh) return;
+    const smoothstep = (edge0, edge1, x) => {
+      const span = edge1 - edge0;
+      if (span <= 0) return x >= edge1 ? 1 : 0;
+      const t = Math.max(0, Math.min(1, (x - edge0) / span));
+      return t * t * (3 - 2 * t);
+    };
+
+    const phase = breathDriver?.phase;
+    const phaseProgress01 = Math.max(0, Math.min(1, breathDriver?.phaseProgress01 ?? 0));
+    let p = phaseProgress01;
+    if (phase === "exhale") p = 1 - phaseProgress01;
+    if (phase === "holdTop") p = 1;
+    if (phase === "holdBottom") p = 0;
+
+    const w = 0.05;
+    const sigma = 0.065;
+    for (let i = 0; i < SEGMENT_COUNT; i++) {
+      const rank = visibleTickMeta.rankByIndex[i];
+      if (rank < 0) {
+        mesh.setColorAt(i, tickColor.setRGB(0, 0, 0));
+        continue;
+      }
+
+      const t = (rank + 0.5) / visibleTickMeta.visibleCount;
+      const fill = smoothstep(t - w, t + w, p);
+      const d = Math.min(Math.abs(t - p), 1 - Math.abs(t - p));
+      const head = Math.exp(-(d * d) / (2 * sigma * sigma));
+      const intensity = Math.max(0, Math.min(1.5, fill * 0.75 + head * 0.95));
+
+      tickColor.copy(litBaseColor).multiplyScalar(intensity);
+      mesh.setColorAt(i, tickColor);
+    }
+
+    if (mesh.instanceColor) {
+      mesh.instanceColor.needsUpdate = true;
+    }
+  });
+
   return (
     <group scale={[HYBRID_TICK_SCALE, HYBRID_TICK_SCALE, 1]}>
-      <instancedMesh ref={meshRef} args={[geometry, null, SEGMENT_COUNT]}>
+      <instancedMesh ref={baseMeshRef} args={[geometry, null, SEGMENT_COUNT]} frustumCulled={false}>
         <meshBasicMaterial
           transparent
-          opacity={0.32}
-          depthWrite={false}
+          opacity={0.22}
+          color={darkBaseColor}
           depthTest={false}
+          depthWrite={false}
           toneMapped={false}
-          color={tickColor}
+        />
+      </instancedMesh>
+      <instancedMesh ref={glowMeshRef} args={[geometry, null, SEGMENT_COUNT]} frustumCulled={false}>
+        <meshBasicMaterial
+          vertexColors
+          transparent
+          opacity={0.92}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+          blending={THREE.AdditiveBlending}
         />
       </instancedMesh>
     </group>
   );
 }
 
-function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentColor, breathDriver, style, isFrameActive = true, frameloop: frameloopProp, displayNumber }) {
+function PersistentBreathRingCanvas({
+  rndRingMode,
+  productionParams,
+  liveAccentColor,
+  breathDriver,
+  style,
+  isFrameActive = true,
+  frameloop: frameloopProp,
+  displayNumber,
+  presetVariant = 'other',
+  activePresetRaw = '',
+  activePresetLabel = '',
+  normalizedPresetNumber = null,
+}) {
   const canvasElRef = useRef(null);
 
   // Mark canvas for intentional teardown BEFORE R3F's useEffect cleanup
@@ -227,6 +347,10 @@ function PersistentBreathRingCanvas({ rndRingMode, productionParams, liveAccentC
         breathDriver={breathDriver}
         isFrameActive={isFrameActive}
         displayNumber={displayNumber}
+        presetVariant={presetVariant}
+        activePresetRaw={activePresetRaw}
+        activePresetLabel={activePresetLabel}
+        normalizedPresetNumber={normalizedPresetNumber}
       />
     </Canvas>
   );
@@ -703,12 +827,19 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   const startTimeValid = startTime != null && Number.isFinite(startTime);
   const isFrameActive = isRingFrameActive(practiceActive);
   const isOrb = rndRingMode === 'orb';
-  const ringModeLabel = rndRingMode === 'bracelet' ? 'hybrid' : rndRingMode;
-  const showArcPhaseLabel = rndRingMode === 'instrument' || rndRingMode === 'bracelet';
-  const ringSafePad = "20px";
-  const phaseWord =
-    progress < tInhale ? "Inhale" :
-    progress < tHoldTop ? "Hold" :
+  const normalizedMode = normalizeRingMode(rndRingMode);
+  const normalizedPresetIndex = normalizedMode ? RING_MODE_CYCLE.indexOf(normalizedMode) : -1;
+  const normalizedPresetNumber = normalizedPresetIndex >= 0 ? normalizedPresetIndex + 1 : null;
+	  const activePresetRaw = rndRingMode;
+	  const activePresetLabel = normalizedPresetNumber == null
+	    ? 'n/a'
+	    : `#${normalizedPresetNumber}:${normalizedMode}`;
+	  const presetVariant = normalizedPresetNumber === 1 ? 'preset1' : 'other';
+	  const showArcPhaseLabel = rndRingMode === 'instrument' || rndRingMode === 'bracelet';
+	  const ringSafePad = "20px";
+	  const phaseWord =
+	    progress < tInhale ? "Inhale" :
+	    progress < tHoldTop ? "Hold" :
     progress < tExhale ? "Exhale" :
     "Hold";
   const phaseLabel = phaseWord.toUpperCase();
@@ -985,31 +1116,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               />
             )}
 
-        {/* DEV-only ring mode overlay */}
-        {!isOrb && import.meta.env.DEV && (
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: ringSafePad,
-              left: ringSafePad,
-              zIndex: 50,
-              pointerEvents: "none",
-              fontFamily: "monospace",
-              fontSize: "10px",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              color: "#22d3ee",
-              background: "rgba(0,0,0,0.55)",
-              padding: "2px 6px",
-              borderRadius: "3px",
-              opacity: 0.82,
-              lineHeight: 1.4,
-            }}
-          >
-            RING: {ringModeLabel}
-          </div>
-        )}
+	        {/* DEV ring-mode overlay removed (was used for probe targeting) */}
 
         {/* Standard ring canvas — bracelet / instrument — always mounted */}
         <div
@@ -1034,6 +1141,10 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block' }}
             isFrameActive={isFrameActive}
             displayNumber={phaseRemainingSec}
+            presetVariant={presetVariant}
+            activePresetRaw={activePresetRaw}
+            activePresetLabel={activePresetLabel}
+            normalizedPresetNumber={normalizedPresetNumber}
           />
         </div>
 
@@ -1048,13 +1159,13 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             }}
           >
             <Canvas
-              frameloop="demand"
+              frameloop="always"
               dpr={[1, BREATH_RING_MAX_DPR]}
               orthographic
               camera={{ position: [0, 0, 10], near: 0.1, far: 50, zoom: 1 }}
               gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
             >
-              <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} />
+              <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} breathDriver={breathDriver} />
             </Canvas>
           </div>
         )}
@@ -1064,7 +1175,17 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
             aria-hidden="true"
             style={{
               position: "absolute",
-              inset: 0,
+              ...(rndRingMode === 'bracelet'
+                ? {
+                    top: "60%",
+                    left: "50%",
+                    width: "70%",
+                    height: "70%",
+                    transform: "translate(-50%, -50%)",
+                  }
+                : {
+                    inset: 0,
+                  }),
               zIndex: 25,
               pointerEvents: "none",
             }}
@@ -1169,26 +1290,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
               minHeight: 0,
             }}
           >
-            {import.meta.env.DEV && (
-              <div
-                aria-hidden="true"
-                style={{
-                  pointerEvents: "none",
-                  fontFamily: "monospace",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "#22d3ee",
-                  background: "rgba(0,0,0,0.55)",
-                  padding: "2px 6px",
-                  borderRadius: "3px",
-                  opacity: 0.82,
-                  lineHeight: 1.4,
-                }}
-              >
-                RING: {ringModeLabel}
-              </div>
-            )}
+	            {/* DEV ring-mode overlay removed (was used for probe targeting) */}
           </div>
         )}
 

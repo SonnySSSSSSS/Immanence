@@ -16,6 +16,7 @@
 
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import { EffectComposer, Bloom, ChromaticAberration, Vignette, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
@@ -102,6 +103,7 @@ const MAX_OCCLUDER_SCALE = SCENE_MAX_RADIUS / 1.8;
 
 // Production mode: ring-only scene (no reticle/crosshairs extending to 1.80).
 const SCENE_MAX_RADIUS_PRODUCTION = 1.12;
+const INSTRUMENT_PROBE_ENABLED = true;
 
 // ─── Energy band GLSL ────────────────────────────────────────────────────────
 const ENERGY_BAND_VERT = /* glsl */`
@@ -677,8 +679,20 @@ function RingScene({
   autoFit = true,
   fitFill = 0.88,
   isFrameActive = true,
+  presetVariant = 'other',
+  activePresetRaw = '',
+  metalRingRadius = 1.0,
+  metalRingTube = 0.03,
+  metalRingRadialSegs = 16,
+  metalRingTubularSegs = 128,
+  metalRingMetalness = 1.0,
+  metalRingRoughness = 0.05,
+  metalRingClearcoat = 0.35,
+  metalRingClearcoatRoughness = 0.12,
 }) {
   const isAvatar = mode === 'avatar';
+  const isInstrumentTarget = !isAvatar && mode === 'production' && activePresetRaw === 'instrument';
+  const showInstrumentProbe = isInstrumentTarget && INSTRUMENT_PROBE_ENABLED;
   const sceneRootRef   = useRef(null);
   const ringGroupRef   = useRef(null);
   const reticleRef     = useRef(null);
@@ -869,47 +883,102 @@ function RingScene({
       {/* Plasma containment ring — non-avatar only */}
       {!isAvatar && (
         <group ref={ringGroupRef} position={[0, 0, 0]}>
-          {/* Layer C: tight glow — lab/avatar only (production relies on Bloom for glow) */}
-          {mode !== "production" && (
-            <mesh ref={energyGlowRef} position={[0, 0, -0.001]}>
-              <ringGeometry args={[ENERGY_GLOW_INNER, ENERGY_GLOW_OUTER, 192]} />
-              <meshBasicMaterial
-                color={accentColor}
-                transparent
-                opacity={0.28}
-                blending={THREE.AdditiveBlending}
-                depthWrite={false}
-                toneMapped={false}
-              />
-            </mesh>
+          {isInstrumentTarget ? (
+            <>
+              {showInstrumentProbe ? (
+                <>
+                  <Html
+                    fullscreen
+                    style={{
+                      background: 'rgba(255,0,0,0.35)',
+                      zIndex: 999999,
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      fontSize: '36px',
+                      letterSpacing: '0.08em',
+                      textShadow: '0 0 10px rgba(0,0,0,0.65)',
+                    }}
+                  >
+                    INSTRUMENT_PROBE_VISIBLE
+                  </Html>
+                  <mesh position={[0, 0, 0]} renderOrder={9999}>
+                    <planeGeometry args={[100, 100]} />
+                    <meshBasicMaterial
+                      color="red"
+                      transparent
+                      opacity={0.85}
+                      depthTest={false}
+                      depthWrite={false}
+                    />
+                  </mesh>
+                </>
+              ) : (
+                <>
+                  <ambientLight intensity={0.25} color="#ffffff" />
+                  <directionalLight intensity={1.2} color="#ffffff" position={[2, 3, 2]} />
+                  <mesh position={[0, 0, 0.01]}>
+                    <torusGeometry args={[1.0, 0.09, 24, 96]} />
+                    <meshPhysicalMaterial
+                      color={accentColor}
+                      metalness={1}
+                      roughness={0.08}
+                      clearcoat={0.4}
+                      clearcoatRoughness={0.12}
+                    />
+                  </mesh>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Layer C: tight glow — lab/avatar only (production relies on Bloom for glow) */}
+              {mode !== "production" && (
+                <mesh ref={energyGlowRef} position={[0, 0, -0.001]}>
+                  <ringGeometry args={[ENERGY_GLOW_INNER, ENERGY_GLOW_OUTER, 192]} />
+                  <meshBasicMaterial
+                    color={accentColor}
+                    transparent
+                    opacity={0.28}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                  />
+                </mesh>
+              )}
+
+              {/* Layer B: noisy energy band */}
+              <mesh position={[0, 0, 0.001]}>
+                <ringGeometry args={[ENERGY_BAND_INNER, ENERGY_BAND_OUTER, 256]} />
+                <shaderMaterial
+                  ref={energyBandMatRef}
+                  vertexShader={ENERGY_BAND_VERT}
+                  fragmentShader={ENERGY_BAND_FRAG}
+                  uniforms={energyUniforms}
+                  transparent
+                  depthWrite={false}
+                  toneMapped={false}
+                  blending={THREE.AdditiveBlending}
+                />
+              </mesh>
+
+              {/* Layer A: white-hot core ring */}
+              <mesh position={[0, 0, 0.002]}>
+                <ringGeometry args={[ENERGY_CORE_INNER, ENERGY_CORE_OUTER, 192]} />
+                <meshBasicMaterial
+                  color="#ffffff"
+                  transparent={false}
+                  blending={THREE.NormalBlending}
+                  depthWrite={true}
+                  toneMapped={false}
+                />
+              </mesh>
+            </>
           )}
-
-          {/* Layer B: noisy energy band */}
-          <mesh position={[0, 0, 0.001]}>
-            <ringGeometry args={[ENERGY_BAND_INNER, ENERGY_BAND_OUTER, 256]} />
-            <shaderMaterial
-              ref={energyBandMatRef}
-              vertexShader={ENERGY_BAND_VERT}
-              fragmentShader={ENERGY_BAND_FRAG}
-              uniforms={energyUniforms}
-              transparent
-              depthWrite={false}
-              toneMapped={false}
-              blending={THREE.AdditiveBlending}
-            />
-          </mesh>
-
-          {/* Layer A: white-hot core ring */}
-          <mesh position={[0, 0, 0.002]}>
-            <ringGeometry args={[ENERGY_CORE_INNER, ENERGY_CORE_OUTER, 192]} />
-            <meshBasicMaterial
-              color="#ffffff"
-              transparent={false}
-              blending={THREE.NormalBlending}
-              depthWrite={true}
-              toneMapped={false}
-            />
-          </mesh>
         </group>
       )}
 
@@ -995,6 +1064,10 @@ export function BloomRingSceneContent({
   accentColor = '#ffffff',
   mode = 'production',
   isFrameActive = true,
+  presetVariant = 'other',
+  activePresetRaw = '',
+  activePresetLabel = '',
+  normalizedPresetNumber = null,
 }) {
   const {
     bloomStrength    = 1.2,
@@ -1028,6 +1101,14 @@ export function BloomRingSceneContent({
     breathDriver  = null,
     autoFit       = true,
     fitFill       = 0.88,
+    metalRingRadius = 1.0,
+    metalRingTube = 0.03,
+    metalRingRadialSegs = 16,
+    metalRingTubularSegs = 128,
+    metalRingMetalness = 1.0,
+    metalRingRoughness = 0.05,
+    metalRingClearcoat = 0.35,
+    metalRingClearcoatRoughness = 0.12,
   } = params;
 
   const godRayLightRef = useRef(null);
@@ -1095,6 +1176,16 @@ export function BloomRingSceneContent({
         autoFit={autoFit}
         fitFill={fitFill}
         isFrameActive={isFrameActive}
+        presetVariant={presetVariant}
+        activePresetRaw={activePresetRaw}
+        metalRingRadius={metalRingRadius}
+        metalRingTube={metalRingTube}
+        metalRingRadialSegs={metalRingRadialSegs}
+        metalRingTubularSegs={metalRingTubularSegs}
+        metalRingMetalness={metalRingMetalness}
+        metalRingRoughness={metalRingRoughness}
+        metalRingClearcoat={metalRingClearcoat}
+        metalRingClearcoatRoughness={metalRingClearcoatRoughness}
       />
 
       {/* TrailArc — lab only (production strips all decorations) */}
@@ -1212,7 +1303,12 @@ export default function BloomRingRenderer({
         }
       }}
     >
-      <BloomRingSceneContent params={params} accentColor={accentColor} mode={mode} isFrameActive={isFrameActive} />
+      <BloomRingSceneContent
+        params={params}
+        accentColor={accentColor}
+        mode={mode}
+        isFrameActive={isFrameActive}
+      />
     </Canvas>
   );
 }

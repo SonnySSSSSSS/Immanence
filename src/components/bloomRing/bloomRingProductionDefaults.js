@@ -32,6 +32,17 @@ export const PRODUCTION_RING_DEFAULTS = {
   trailSpread:         0.05,
   trailSpeed:          0.4,
   trailSparkle:        0.08,
+  metalRingRadius:     1.0,
+  metalRingTube:       0.03,
+  metalRingRadialSegs: 16,
+  metalRingTubularSegs: 128,
+  metalRingMetalness:  1.0,
+  metalRingRoughness:  0.05,
+  metalRingClearcoat:  0.35,
+  metalRingClearcoatRoughness: 0.12,
+  causticsIntensity:   1.25,
+  causticsSpeed:       0.72,
+  holdRadianceIntensity: 3.0,
 };
 
 // Neutral stage accent — Beacon cyan.

@@ -412,6 +412,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.203 - fix(instrument): inset tick ring radius (no tick size change)
   // v3.27.202 - feat(BreathingRing): dual always-mounted canvas arch; orb canvas as ONE STAGE PLATE child; frameloop toggle
   // v3.27.201 - fix(ParticleCountdown): switch font to helvetiker_bold (bold.blob only had glyph "4"); fix toneMapping
   // v3.27.200 - feat(ParticleCountdown): replace instrument preset with bloom+chromatic particle countdown; virtual mouse parallax
@@ -715,7 +716,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.202
+                        v3.27.203
                       </button>
                     </div>
                   </div>
