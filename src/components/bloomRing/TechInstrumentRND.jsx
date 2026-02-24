@@ -27,14 +27,6 @@ const T_RIM_BEZEL_POWER      = 1.6;    // lower = broader rim band
 const T_RIM_CAL_INTENSITY    = 0.32;   // [tuned up]
 const T_RIM_CAL_POWER        = 2.0;
 
-// ── 3-point lighting ──────────────────────────────────────────────────────────
-const T_LIGHT_KEY_POS        = [-1.8,  2.8,  5.0];
-const T_LIGHT_KEY_INT        = 1.10;   // [tuned up] stronger key for crisper specular
-const T_LIGHT_FILL_POS       = [ 2.6, -1.4,  3.8];
-const T_LIGHT_FILL_INT       = 0.26;   // [tuned up]
-const T_LIGHT_RIM_POS        = [ 0.0, -2.8, -4.5];
-const T_LIGHT_RIM_INT        = 0.62;   // [tuned up] stronger back-rim catch
-
 // ── Scene wobble (marks instrument renderer as clearly distinct from bracelet) ─
 const T_WOBBLE_ENABLED       = true;   // slow tilt oscillation
 const T_WOBBLE_AMPLITUDE     = 0.08;   // radians — max tilt angle
@@ -243,9 +235,9 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   const bezelMatRef      = useRef(null);
   const glintRef         = useRef(null);
   const glintMatRef      = useRef(null);
-  const rimLightRef      = useRef(null);   // B) accent-tinted rim/back light
+  const haloMatRef       = useRef(null);
   const breathStateRef   = useRef(createBreathState());
-  const holdEmiRef       = useRef(0);
+  const holdAmountRef    = useRef(0);
   const glintOpacityRef  = useRef(0);
 
   const palette = useMemo(() => derivePalette(accentColor), [accentColor]);
@@ -256,6 +248,14 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   const accentShade = useMemo(
     () => palette.rim.clone().lerp(new THREE.Color('#000'), 0.65),
     [palette],
+  );
+  const keyLightColor = useMemo(
+    () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.7),
+    [accentTint],
+  );
+  const rimLightColor = useMemo(
+    () => accentTint.clone().lerp(new THREE.Color('#fff'), 0.85),
+    [accentTint],
   );
 
   const geometries = useMemo(() => ({
@@ -326,10 +326,14 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	    writeBreathState(state, breathDriverRef.current);
 
 	    const isHold = state.phase === 'hold' || state.phase === 'holdBottom';
-	    const targetHoldEmi = isHold ? 0.16 : 0;
-	    holdEmiRef.current += (targetHoldEmi - holdEmiRef.current) * 0.12;
+	    const targetHoldAmount = isHold ? 1 : 0;
+	    holdAmountRef.current += (targetHoldAmount - holdAmountRef.current) * 0.12;
 	    if (bezelMatRef.current) {
-	      bezelMatRef.current.emissiveIntensity = holdEmiRef.current;
+	      // Phase 3D: keep subtle surface emissive, let the additive halo do the radiance job.
+	      bezelMatRef.current.emissiveIntensity = holdAmountRef.current * 0.09;
+	    }
+	    if (haloMatRef.current) {
+	      haloMatRef.current.opacity = holdAmountRef.current * 0.14;
 	    }
 
 	    const holdMultiplier = state.phase === 'hold' ? 1 + HOLD_PULSE_MULT * state.holdPulse : 1;
@@ -383,41 +387,36 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       }
     }
 
-    if (calMatRef.current) {
-      calMatRef.current.color.copy(palette.calBase);
-      calMatRef.current.emissive.copy(palette.calEmissive);
-      calMatRef.current.emissiveIntensity = T_CAL_EMI_INTENSITY;
-    }
+	    if (calMatRef.current) {
+	      calMatRef.current.color.copy(palette.calBase);
+	      calMatRef.current.emissive.copy(palette.calEmissive);
+	      calMatRef.current.emissiveIntensity = T_CAL_EMI_INTENSITY;
+	    }
 
-    // B) Rim/back light tracks accent hue each frame
-    if (rimLightRef.current) {
-      rimLightRef.current.color.copy(palette.rim);
-    }
-
-    rimMaterials.bezel.uniforms.uColor.value.copy(palette.rim);
-    rimMaterials.cal.uniforms.uColor.value.copy(palette.rim);
-  });
+	    rimMaterials.bezel.uniforms.uColor.value.copy(palette.rim);
+	    rimMaterials.cal.uniforms.uColor.value.copy(palette.rim);
+	  });
 
 	  return (
 	    <AutoFitScene maxRadius={MAX_RADIUS} fillFactor={FILL_FACTOR}>
 	      <>
 		        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
-		        <ambientLight intensity={0.25} />
-		        <directionalLight position={[2, 3, 2]} intensity={1.2} />
-		        {/* Key: soft, above-left */}
-		        <pointLight position={T_LIGHT_KEY_POS}  intensity={T_LIGHT_KEY_INT}  color="#ffffff" />
-		        {/* Fill: dim, opposite side, warm tint */}
-		        <pointLight position={T_LIGHT_FILL_POS} intensity={T_LIGHT_FILL_INT} color="#ffe8d6" />
-		        {/* Rim/back: accent-tinted edge catch — color updated per frame */}
-		        <pointLight ref={rimLightRef} position={T_LIGHT_RIM_POS} intensity={T_LIGHT_RIM_INT} />
-		        {/* Phase 3C — localized shaping light: grazing gradient over bezel/ticks */}
+		        <ambientLight intensity={0.2} />
+		        {/* Key light: grazing primary spec (near-white, slight accent tint) */}
 		        <spotLight
-		          position={[-2, 2.2, 1.5]}
-		          intensity={0.3}
+		          position={[2.2, 2.8, 2.0]}
+		          intensity={0.95}
 		          angle={0.45}
-		          penumbra={0.7}
-		          distance={3}
-		          color={accentTint}
+		          penumbra={0.75}
+		          distance={6}
+		          decay={2}
+		          color={keyLightColor}
+		        />
+		        {/* Rim light: subtle edge separation from opposite side */}
+		        <directionalLight
+		          position={[-2.5, 1.2, -1.5]}
+		          intensity={0.4}
+		          color={rimLightColor}
 		        />
 
 	        {/* ── track ring ── */}
@@ -452,6 +451,21 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 		        </mesh>
 	        {/* Additive fresnel rim over bezel (A: specular highlight band) */}
 	        <mesh geometry={geometries.bezelRim} material={rimMaterials.bezel} />
+
+	        {/* Phase 3D — additive halo ring (3D, not a matte overlay) */}
+	        <mesh position={[0, 0, 0.03]}>
+	          <torusGeometry args={[BEZEL_RADIUS + 0.012, 0.006, 12, 256]} />
+	          <meshBasicMaterial
+	            ref={haloMatRef}
+	            color={accentTint}
+	            transparent
+	            opacity={0}
+	            toneMapped={false}
+	            blending={THREE.AdditiveBlending}
+	            depthWrite={false}
+	            depthTest
+	          />
+	        </mesh>
 
 	        {/* Phase 3C — inner etched reticle (very low contrast, no emission) */}
 	        <mesh position={[0, 0, TRACK_Z - 0.002]}>
