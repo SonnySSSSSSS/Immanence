@@ -64,6 +64,8 @@ const T_MAX_RENDER_DPR             = 1.5;
 // ─── ring geometry ────────────────────────────────────────────────────────────
 const SEGMENT_COUNT = 48;
 const RING_RADIUS = 1.0;
+const TICK_INSET = 0.006;
+const TICK_RING_RADIUS = RING_RADIUS - TICK_INSET;
 const SEG_WIDTH = 0.082;
 const SEG_HEIGHT = 0.112;
 const SEG_DEPTH = 0.012;
@@ -319,8 +321,8 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       Array.from({ length: SEGMENT_COUNT }, (_, i) => {
         const angle = Math.PI / 2 - (i / SEGMENT_COUNT) * Math.PI * 2;
         return {
-          px: Math.cos(angle) * RING_RADIUS,
-          py: Math.sin(angle) * RING_RADIUS,
+          px: Math.cos(angle) * TICK_RING_RADIUS,
+          py: Math.sin(angle) * TICK_RING_RADIUS,
           rz: angle - Math.PI / 2,
         };
       }),
@@ -570,7 +572,7 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
         <mesh position={[0, 0, CAL_Z + 0.0005]} geometry={geometries.calRim} material={rimMaterials.cal} />
 
           {/* ── index tick ── */}
-          <mesh position={[0, (RING_RADIUS + CAL_RING_RADIUS) * 0.5, SEG_Z + 0.008]} geometry={geometries.index}>
+          <mesh position={[0, (TICK_RING_RADIUS + CAL_RING_RADIUS) * 0.5, SEG_Z + 0.008]} geometry={geometries.index}>
             <meshPhysicalMaterial
               color={palette.index}
               emissive={palette.index}
