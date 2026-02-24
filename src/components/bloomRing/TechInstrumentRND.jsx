@@ -259,11 +259,11 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   const white = useMemo(() => new THREE.Color('#ffffff'), []);
   const black = useMemo(() => new THREE.Color('#000000'), []);
   const tickBright = useMemo(
-    () => accent.clone().lerp(white, 0.30),
+    () => accent.clone().lerp(white, 0.70),
     [accent, white],
   );
   const tickDark = useMemo(
-    () => accent.clone().lerp(black, 0.78),
+    () => accent.clone().lerp(black, 0.90),
     [accent, black],
   );
   const accentTintMostlyWhite = useMemo(
@@ -390,10 +390,11 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       if (mainMat) {
         if (isOn) {
           const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
-          const tColor = Math.pow(t, 0.8);
-          const tInt = Math.pow(t, 1.8);
-          const onColor = tickBright.clone().lerp(tickDark, tColor);
-          const onIntensity = THREE.MathUtils.lerp(1.35, 0.10, tInt);
+          const tKnee = THREE.MathUtils.smoothstep(t, 0.15, 1.0);
+          const tInt = Math.pow(tKnee, 2.8);
+          const tCol = Math.pow(t, 1.2);
+          const onColor = tickBright.clone().lerp(tickDark, tCol);
+          const onIntensity = THREE.MathUtils.lerp(1.6, 0.04, tInt);
           const headBoost = EMI_HEAD / EMI_ON;
 
           mainMat.color.set(0x000000);
@@ -414,10 +415,11 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
       const coreMat = segCoreMatsRef.current[i];
       if (coreMat && isOn) {
         const t = fillCount <= 1 ? 0 : i / (fillCount - 1);
-        const tColor = Math.pow(t, 0.8);
-        const tInt = Math.pow(t, 1.8);
-        const onColor = tickBright.clone().lerp(tickDark, tColor);
-        const coreIntensity = THREE.MathUtils.lerp(INNER_EMI, 0.08, tInt);
+        const tKnee = THREE.MathUtils.smoothstep(t, 0.15, 1.0);
+        const tInt = Math.pow(tKnee, 2.8);
+        const tCol = Math.pow(t, 1.2);
+        const onColor = tickBright.clone().lerp(tickDark, tCol);
+        const coreIntensity = THREE.MathUtils.lerp(INNER_EMI, 0.03, tInt);
         coreMat.color.set(0x000000);
         coreMat.emissive.copy(onColor);
         coreMat.emissiveIntensity = (isHead ? coreIntensity * (INNER_HEAD_EMI / INNER_EMI) : coreIntensity) * holdMultiplier;
