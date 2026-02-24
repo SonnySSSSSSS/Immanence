@@ -75,6 +75,7 @@ const TRACK_OUTER_R = RING_RADIUS + SEG_HEIGHT * 0.56;
 const TRACK_Z = -0.008;
 const BEZEL_RADIUS = 1.072;
 const BEZEL_TUBE = 0.02;
+const BEZEL_TUBE_SCALE = 1.12;
 const CAL_RING_RADIUS = 0.892;
 const CAL_RING_TUBE = 0.008;
 const CAL_Z = -0.002;
@@ -274,8 +275,8 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 
   const geometries = useMemo(() => ({
     track:       new THREE.RingGeometry(TRACK_INNER_R, TRACK_OUTER_R, 128),
-    bezel:       new THREE.TorusGeometry(BEZEL_RADIUS, BEZEL_TUBE, 20, 256),
-    bezelRim:    new THREE.TorusGeometry(BEZEL_RADIUS, BEZEL_TUBE + 0.002, 20, 256),
+    bezel:       new THREE.TorusGeometry(BEZEL_RADIUS, BEZEL_TUBE * BEZEL_TUBE_SCALE, 20, 256),
+    bezelRim:    new THREE.TorusGeometry(BEZEL_RADIUS, BEZEL_TUBE * BEZEL_TUBE_SCALE + 0.002, 20, 256),
     cal:         new THREE.TorusGeometry(CAL_RING_RADIUS, CAL_RING_TUBE, 16, 256),
     calRim:      new THREE.TorusGeometry(CAL_RING_RADIUS, CAL_RING_TUBE + 0.0015, 16, 256),
     index:       new THREE.BoxGeometry(0.012, 0.038, SEG_DEPTH * 0.58),
