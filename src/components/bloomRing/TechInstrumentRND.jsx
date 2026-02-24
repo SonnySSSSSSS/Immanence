@@ -241,9 +241,12 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
   const segCoreMeshesRef = useRef([]);
   const calMatRef        = useRef(null);
   const bezelMatRef      = useRef(null);
+  const glintRef         = useRef(null);
+  const glintMatRef      = useRef(null);
   const rimLightRef      = useRef(null);   // B) accent-tinted rim/back light
   const breathStateRef   = useRef(createBreathState());
   const holdEmiRef       = useRef(0);
+  const glintOpacityRef  = useRef(0);
 
   const palette = useMemo(() => derivePalette(accentColor), [accentColor]);
   const accentTint = useMemo(
@@ -318,22 +321,43 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
     segCoreMeshesRef.current.length = 0;
   }, [geometries, rimMaterials]);
 
-  useFrame(() => {
-    const state = breathStateRef.current;
-    writeBreathState(state, breathDriverRef.current);
+	  useFrame(() => {
+	    const state = breathStateRef.current;
+	    writeBreathState(state, breathDriverRef.current);
 
-    const isHold = state.phase === 'hold' || state.phase === 'holdBottom';
-    const targetHoldEmi = isHold ? 0.16 : 0;
-    holdEmiRef.current += (targetHoldEmi - holdEmiRef.current) * 0.12;
-    if (bezelMatRef.current) {
-      bezelMatRef.current.emissiveIntensity = holdEmiRef.current;
-    }
+	    const isHold = state.phase === 'hold' || state.phase === 'holdBottom';
+	    const targetHoldEmi = isHold ? 0.16 : 0;
+	    holdEmiRef.current += (targetHoldEmi - holdEmiRef.current) * 0.12;
+	    if (bezelMatRef.current) {
+	      bezelMatRef.current.emissiveIntensity = holdEmiRef.current;
+	    }
 
-    const holdMultiplier = state.phase === 'hold' ? 1 + HOLD_PULSE_MULT * state.holdPulse : 1;
+	    const holdMultiplier = state.phase === 'hold' ? 1 + HOLD_PULSE_MULT * state.holdPulse : 1;
+	    const headIndex = state.headIndex;
 
-    for (let i = 0; i < SEGMENT_COUNT; i++) {
-      const isOn   = i < state.activeCount;
-      const isHead = i === state.headIndex;
+	    // Phase 3C — subtle head-coupled glint on the bezel (no extra UI layer)
+	    if (glintRef.current && glintMatRef.current) {
+	      const hasHead = headIndex >= 0 && headIndex < SEGMENT_COUNT;
+	      const glintTarget = hasHead ? (isHold ? 0.14 : 0.06) : 0;
+	      glintOpacityRef.current += (glintTarget - glintOpacityRef.current) * 0.18;
+	      glintMatRef.current.opacity = glintOpacityRef.current;
+	      glintRef.current.visible = glintOpacityRef.current > 0.001;
+
+	      if (hasHead) {
+	        const seg = segments[headIndex];
+	        const angle = Math.atan2(seg.py, seg.px);
+	        glintRef.current.position.set(
+	          Math.cos(angle) * BEZEL_RADIUS,
+	          Math.sin(angle) * BEZEL_RADIUS,
+	          0.02,
+	        );
+	        glintRef.current.rotation.set(0, 0, seg.rz);
+	      }
+	    }
+
+	    for (let i = 0; i < SEGMENT_COUNT; i++) {
+	      const isOn   = i < state.activeCount;
+	      const isHead = i === headIndex;
 
       const mainMat = segMainMatsRef.current[i];
       if (mainMat) {
@@ -374,23 +398,32 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
     rimMaterials.cal.uniforms.uColor.value.copy(palette.rim);
   });
 
-  return (
-    <AutoFitScene maxRadius={MAX_RADIUS} fillFactor={FILL_FACTOR}>
-      <>
-	        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
-	        <ambientLight intensity={0.25} />
-	        <directionalLight position={[2, 3, 2]} intensity={1.2} />
-	        {/* Key: soft, above-left */}
-	        <pointLight position={T_LIGHT_KEY_POS}  intensity={T_LIGHT_KEY_INT}  color="#ffffff" />
-	        {/* Fill: dim, opposite side, warm tint */}
-	        <pointLight position={T_LIGHT_FILL_POS} intensity={T_LIGHT_FILL_INT} color="#ffe8d6" />
-	        {/* Rim/back: accent-tinted edge catch — color updated per frame */}
-	        <pointLight ref={rimLightRef} position={T_LIGHT_RIM_POS} intensity={T_LIGHT_RIM_INT} />
+	  return (
+	    <AutoFitScene maxRadius={MAX_RADIUS} fillFactor={FILL_FACTOR}>
+	      <>
+		        {/* ── B) 3-point lighting (ReflectorPlanes language) ── */}
+		        <ambientLight intensity={0.25} />
+		        <directionalLight position={[2, 3, 2]} intensity={1.2} />
+		        {/* Key: soft, above-left */}
+		        <pointLight position={T_LIGHT_KEY_POS}  intensity={T_LIGHT_KEY_INT}  color="#ffffff" />
+		        {/* Fill: dim, opposite side, warm tint */}
+		        <pointLight position={T_LIGHT_FILL_POS} intensity={T_LIGHT_FILL_INT} color="#ffe8d6" />
+		        {/* Rim/back: accent-tinted edge catch — color updated per frame */}
+		        <pointLight ref={rimLightRef} position={T_LIGHT_RIM_POS} intensity={T_LIGHT_RIM_INT} />
+		        {/* Phase 3C — localized shaping light: grazing gradient over bezel/ticks */}
+		        <spotLight
+		          position={[-2, 2.2, 1.5]}
+		          intensity={0.3}
+		          angle={0.45}
+		          penumbra={0.7}
+		          distance={3}
+		          color={accentTint}
+		        />
 
-        {/* ── track ring ── */}
-        <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
-          <meshStandardMaterial
-            color={palette.track}
+	        {/* ── track ring ── */}
+	        <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
+	          <meshStandardMaterial
+	            color={palette.track}
             emissive={palette.track}
             emissiveIntensity={0.02}
             metalness={0.14}
@@ -402,28 +435,53 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	        {/* ── A) Bezel torus — "glowing torus" style: polished metal + accent emissive ── */}
 	        {/* High metalness + low roughness = crisp specular band from key light.          */}
 	        {/* emissive=rim (accent-true) feeds bloom for the glow ring read.               */}
-	        <mesh geometry={geometries.bezel}>
-	          <meshPhysicalMaterial
-	            ref={bezelMatRef}
+		        <mesh geometry={geometries.bezel}>
+		          <meshPhysicalMaterial
+		            ref={bezelMatRef}
+		            color={accentShade}
+		            emissive={accentTint}
+		            emissiveIntensity={0}
+		            metalness={1}
+		            roughness={0.07}
+		            clearcoat={0.4}
+		            clearcoatRoughness={0.1}
+		            sheen={0.15}
+		            sheenColor={accentTint}
+		            sheenRoughness={0.6}
+		          />
+		        </mesh>
+	        {/* Additive fresnel rim over bezel (A: specular highlight band) */}
+	        <mesh geometry={geometries.bezelRim} material={rimMaterials.bezel} />
+
+	        {/* Phase 3C — inner etched reticle (very low contrast, no emission) */}
+	        <mesh position={[0, 0, TRACK_Z - 0.002]}>
+	          <torusGeometry args={[0.955, 0.0016, 10, 192]} />
+	          <meshBasicMaterial
 	            color={accentShade}
-	            emissive={accentTint}
-	            emissiveIntensity={0}
-	            metalness={1}
-	            roughness={0.07}
-	            clearcoat={0.4}
-	            clearcoatRoughness={0.1}
-	            sheen={0.15}
-	            sheenColor={accentTint}
-	            sheenRoughness={0.6}
+	            transparent
+	            opacity={0.1}
+	            toneMapped={false}
+	            depthWrite={false}
 	          />
 	        </mesh>
-        {/* Additive fresnel rim over bezel (A: specular highlight band) */}
-        <mesh geometry={geometries.bezelRim} material={rimMaterials.bezel} />
 
-        {/* ── A) Cal ring — upgraded emissive + polished clearcoat ── */}
-        <mesh position={[0, 0, CAL_Z]} geometry={geometries.cal}>
-          <meshPhysicalMaterial
-            ref={calMatRef}
+	        {/* Phase 3C — head-coupled glint (tiny highlight riding the bezel) */}
+	        <mesh ref={glintRef} position={[0, 0, 0.02]} rotation={[0, 0, 0]}>
+	          <boxGeometry args={[0.055, 0.015, 0.002]} />
+	          <meshBasicMaterial
+	            ref={glintMatRef}
+	            color={accentTint}
+	            transparent
+	            opacity={0}
+	            toneMapped={false}
+	            depthWrite={false}
+	          />
+	        </mesh>
+
+	        {/* ── A) Cal ring — upgraded emissive + polished clearcoat ── */}
+	        <mesh position={[0, 0, CAL_Z]} geometry={geometries.cal}>
+	          <meshPhysicalMaterial
+	            ref={calMatRef}
             color={palette.calBase}
             emissive={palette.calEmissive}
             emissiveIntensity={T_CAL_EMI_INTENSITY}
