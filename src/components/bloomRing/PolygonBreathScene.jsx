@@ -58,65 +58,20 @@ function createDigitTexture(value) {
 
   const w = canvas.width
   const h = canvas.height
-  const text = String(value)
   const font = '700 170px Cinzel, Georgia, serif'
-  const x = w / 2
-  const y = h / 2
 
   ctx.save()
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.translate(canvas.width / 2, canvas.height / 2)
+  // H2: force upright correction in texture space.
+  ctx.rotate(Math.PI / 2)
   ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.globalCompositeOperation = 'source-over'
-  ctx.globalAlpha = 0.28
-  ctx.fillStyle = '#ffffff'
-  ctx.shadowColor = '#ffffff'
-  ctx.shadowBlur = 14
-  ctx.fillText(text, x, y)
-  ctx.restore()
-
-  // Step 2d probe: canvas orientation marker and center crosshair.
-  ctx.save()
-  ctx.globalCompositeOperation = 'source-over'
-  ctx.globalAlpha = 0.9
-  ctx.strokeStyle = 'rgba(0,255,255,0.8)'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.moveTo(w / 2, 0)
-  ctx.lineTo(w / 2, h)
-  ctx.moveTo(0, h / 2)
-  ctx.lineTo(w, h / 2)
-  ctx.stroke()
-  ctx.restore()
-
-  ctx.save()
-  ctx.font = '700 20px Cinzel, Georgia, serif'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
   ctx.globalAlpha = 1
-  ctx.fillStyle = '#00ffff'
-  ctx.fillText('UP', w / 2, 20)
-  ctx.restore()
-
-  ctx.save()
-  ctx.font = font
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.globalAlpha = 0.85
-  ctx.lineWidth = 10
-  ctx.strokeStyle = 'rgba(0,0,0,0.55)'
-  ctx.shadowBlur = 0
-  ctx.strokeText(text, x, y)
-  ctx.restore()
-
-  ctx.save()
-  ctx.font = font
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.globalAlpha = 1.0
   ctx.fillStyle = '#ffffff'
-  ctx.shadowBlur = 0
-  ctx.fillText(text, x, y)
+  ctx.fillText(String(value), 0, 0)
   ctx.restore()
 
   const tex = new THREE.CanvasTexture(canvas)
