@@ -447,6 +447,12 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             depthWrite={false}
             alphaTest={0.01}
             toneMapped={false}
+            stencilWrite
+            stencilRef={1}
+            stencilFunc={THREE.EqualStencilFunc}
+            stencilFail={THREE.KeepStencilOp}
+            stencilZFail={THREE.KeepStencilOp}
+            stencilZPass={THREE.KeepStencilOp}
           />
         </mesh>
       )}
