@@ -262,6 +262,8 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const scaleRef = useRef(1.0)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const reflectionRef = useRef()    // upright reflection below polygon
+  const insideDirRef = useRef(new THREE.Vector3())
+  const insideCenterRef = useRef(new THREE.Vector3())
 
   useFrame((state, delta) => {
     if (!groupRef.current) return
@@ -285,6 +287,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     // Billboard: copy camera quaternion so plane always faces viewer exactly
     if (numberPlaneRef.current) {
       // PROBE:plane-rotation-removal:START
+      const insideOffset = 0.02
+      state.camera.getWorldDirection(insideDirRef.current)
+      if (groupRef.current) {
+        groupRef.current.getWorldPosition(insideCenterRef.current)
+      } else {
+        insideCenterRef.current.set(0, 0, 0)
+      }
+      numberPlaneRef.current.position.copy(insideCenterRef.current).addScaledVector(insideDirRef.current, -insideOffset)
       numberPlaneRef.current.quaternion.copy(camera.quaternion)
       numberPlaneRef.current.rotateZ(Math.PI)
       // PROBE:plane-rotation-removal:END
@@ -369,18 +379,6 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
       {/* Rotating polygon group — no digit here; digit is in world space below */}
       <group ref={groupRef}>
-        {/* PROBE:inside-depth-occluder:START */}
-        <mesh geometry={icoGeom} renderOrder={0}>
-          <meshBasicMaterial
-            transparent
-            opacity={0}
-            depthWrite
-            depthTest
-            colorWrite={false}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        {/* PROBE:inside-depth-occluder:END */}
         <mesh geometry={icoGeom}>
           <meshBasicMaterial colorWrite={false} depthWrite />
         </mesh>
@@ -421,7 +419,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
-        <mesh ref={numberPlaneRef} position={[0, 0, 0.06]} rotation={[0, 0, Math.PI]} renderOrder={10}>
+        <mesh ref={numberPlaneRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={10}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
