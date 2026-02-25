@@ -270,6 +270,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const groupRef = useRef()
   const scaleRef = useRef(1.0)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
+  const digitInsideCueRef = useRef()
   const reflectionRef = useRef()    // upright reflection below polygon
 
   useFrame((state, delta) => {
@@ -297,6 +298,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       numberPlaneRef.current.quaternion.copy(camera.quaternion)
       numberPlaneRef.current.rotateZ(Math.PI)
       // PROBE:plane-rotation-removal:END
+    }
+    if (digitInsideCueRef.current) {
+      digitInsideCueRef.current.quaternion.copy(camera.quaternion)
+      digitInsideCueRef.current.rotateZ(Math.PI)
     }
 
     // P3 probe: make reflection face camera directly to verify transform legibility.
@@ -415,13 +420,29 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
-        <mesh ref={numberPlaneRef} position={[0, 0, 0.03]} rotation={[0, 0, Math.PI]} renderOrder={10}>
+        <mesh ref={numberPlaneRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={9999}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
             transparent
             opacity={1}
+            depthTest={false}
+            depthWrite={false}
+            alphaTest={0.01}
+            toneMapped={false}
+          />
+        </mesh>
+      )}
+
+      {!useSafeDigit && digitTexture && (
+        <mesh ref={digitInsideCueRef} position={[0, 0, 0.03]} rotation={[0, 0, Math.PI]} renderOrder={9}>
+          <planeGeometry args={[0.62, 0.62]} />
+          <meshBasicMaterial
+            map={digitTexture}
+            color={accentColor}
+            transparent
+            opacity={0.22}
             depthTest
             depthWrite={false}
             alphaTest={0.01}
