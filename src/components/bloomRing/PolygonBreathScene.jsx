@@ -147,41 +147,6 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     gl.shadowMap.enabled = false
   }, [gl])
 
-  // Permanent fix: disable environment/PMREM to prevent X4008 and context loss
-  useEffect(() => {
-    // Force environment/background to null
-    scene.environment = null
-    scene.background = null
-
-    // Strip only envMap from all materials — do NOT touch metalness/roughness,
-    // those are owned by JSX props and drive the direct-lighting response.
-    scene.traverse((obj) => {
-      if (!obj.material) return
-      const materials = Array.isArray(obj.material) ? obj.material : [obj.material]
-      materials.forEach((m) => {
-        m.envMap = null
-        m.envMapIntensity = 0
-      })
-    })
-
-    // Guard against environment leakage
-    let lastCheckTime = 0
-    const checkInterval = setInterval(() => {
-      const now = Date.now()
-      if (now - lastCheckTime < 500) return
-      lastCheckTime = now
-
-      if (scene.environment !== null) {
-        scene.environment = null
-      }
-      if (scene.background !== null) {
-        scene.background = null
-      }
-    }, 500)
-
-    return () => clearInterval(checkInterval)
-  }, [scene])
-
   // Optional: cleanup detector for debug builds (can be disabled for production)
   useEffect(() => {
     if (!POLYGON_DEBUG_LOGS) return
