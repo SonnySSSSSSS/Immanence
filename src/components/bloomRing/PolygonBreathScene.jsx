@@ -65,6 +65,8 @@ function createDigitTexture(value) {
   ctx.translate(canvas.width / 2, canvas.height / 2)
   // Orientation correction: no texture rotation.
   ctx.rotate(0)
+  // Horizontal flip to correct mirrored/backwards glyph orientation.
+  ctx.scale(-1, 1)
   ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
