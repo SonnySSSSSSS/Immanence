@@ -421,7 +421,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
-        <mesh ref={numberPlaneRef} position={[0, 0, 0.02]} rotation={[0, 0, Math.PI]} renderOrder={10}>
+        <mesh ref={numberPlaneRef} position={[0, 0, 0.06]} rotation={[0, 0, Math.PI]} renderOrder={10}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
