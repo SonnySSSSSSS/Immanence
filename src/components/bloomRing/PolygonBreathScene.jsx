@@ -22,6 +22,7 @@ const POLYGON_LASER_TINT = '#ff6a7a'
 const POLYGON_LASER_HALO_TINT = '#ff4d6d'
 const POLYGON_PERF_FPS_TARGET = 45
 const POLYGON_PERF_DEGRADE_SECONDS = 3
+const POLYGON_RAINBOW_ORBIT_TURNS = 1.0
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
@@ -271,10 +272,135 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   // useFrame refs and logic
   const groupRef = useRef()
   const scaleRef = useRef(1.0)
+  const rainbowBeamRigRef = useRef()
+  const rainbowSpinAngleRef = useRef(0)
+  const rainbowHoldAngleRef = useRef(0)
+  const rainbowWasHoldRef = useRef(false)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const digitInsideCueRef = useRef()
   const digitLaserJitterRef = useRef()
   const reflectionRef = useRef()    // upright reflection below polygon
+
+  const rainbowBeamMaterial = useMemo(() => {
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+        speed: { value: 1 },
+        fade: { value: 0.25 },
+        startRadius: { value: 0.0 },
+        endRadius: { value: 0.5 },
+        emissiveIntensity: { value: 6.0 },
+        ratio: { value: 1.0 },
+        beamOpacity: { value: 0.95 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float fade;
+        uniform float speed;
+        uniform float startRadius;
+        uniform float endRadius;
+        uniform float emissiveIntensity;
+        uniform float time;
+        uniform float ratio;
+        uniform float beamOpacity;
+
+        vec3 physhue2rgb(float hue, float r) {
+          return smoothstep(vec3(0.0), vec3(1.0), abs(mod(hue + vec3(0.0, 1.0, 2.0) * r, 1.0) * 2.0 - 1.0));
+        }
+
+        vec3 iridescence(float angle, float thickness) {
+          float NxV = cos(angle);
+          float lum = 0.05064;
+          float luma = 0.01070;
+          vec3 tint = vec3(0.49639, 0.78252, 0.8723);
+          float interf0 = 2.4;
+          float phase0 = 1.0 / 2.8;
+          float interf1 = interf0 * 4.0 / 3.0;
+          float phase1 = phase0;
+          float f = (1.0 - NxV) * (1.0 - NxV);
+          float interf = mix(interf0, interf1, f);
+          float phase = mix(phase0, phase1, f);
+          float dp = (NxV - 1.0) * 0.5;
+          vec3 hue = mix(
+            physhue2rgb(thickness * interf0 + dp, thickness * phase0),
+            physhue2rgb(thickness * interf1 + 0.1 + dp, thickness * phase1),
+            f
+          );
+          vec3 film = hue * lum + vec3(0.9639, 0.78252, 0.18723) * luma;
+          return vec3((film * 3.0 + pow(f, 12.0))) * tint;
+        }
+
+        float _saturate(float x) {
+          return min(1.0, max(0.0, x));
+        }
+
+        vec3 _saturate(vec3 x) {
+          return min(vec3(1.0), max(vec3(0.0), x));
+        }
+
+        vec3 bump3y(vec3 x, vec3 yoffset) {
+          vec3 y = vec3(1.0) - x * x;
+          y = _saturate(y - yoffset);
+          return y;
+        }
+
+        vec3 spectral_zucconi6(float w) {
+          float x = _saturate((w - 400.0) / 300.0);
+          const vec3 c1 = vec3(3.54585104, 2.93225262, 2.41593945);
+          const vec3 x1 = vec3(0.69549072, 0.49228336, 0.27699880);
+          const vec3 y1 = vec3(0.02312639, 0.15225084, 0.52607955);
+          const vec3 c2 = vec3(3.90307140, 3.21182957, 3.96587128);
+          const vec3 x2 = vec3(0.11748627, 0.86755042, 0.66077860);
+          const vec3 y2 = vec3(0.84897130, 0.88445281, 0.73949448);
+          return bump3y(c1 * (x - x1), y1) + bump3y(c2 * (x - x2), y2);
+        }
+
+        void main() {
+          float t = time * speed;
+          const vec2 vstart = vec2(0.5, 0.5);
+          const vec2 vend = vec2(1.0, 0.5);
+          vec2 dir = vstart - vend;
+          float len = length(dir);
+          float cosR = dir.y / len;
+          float sinR = dir.x / len;
+          vec2 uv = (mat2(cosR, -sinR, sinR, cosR) * (vUv * vec2(ratio, 1.0) - vec2(0.0, 1.0) - vstart * vec2(1.0, -1.0)) / len);
+          float a = atan(uv.x, uv.y) * 10.0;
+          float s = max(0.001, uv.y * (endRadius - startRadius) + startRadius);
+          float w = (uv.x / s + 0.5) * 300.0 + 400.0 + a;
+          vec3 c = spectral_zucconi6(w);
+          float l = 1.0 - smoothstep(fade, 1.0, uv.y);
+          float area = uv.y < 0.0 ? 0.0 : 1.0;
+          float brightness = smoothstep(0.0, 0.5, c.x + c.y + c.z);
+          vec3 co = c / iridescence(uv.x * 0.5 * 3.14159, 1.0 - uv.y + t / 10.0) / 20.0;
+          vec3 finalColor = area * co * l * brightness * emissiveIntensity;
+          finalColor *= beamOpacity;
+          if (finalColor.r + finalColor.g + finalColor.b < 0.01) discard;
+          gl_FragColor = vec4(finalColor, 1.0);
+          #include <colorspace_fragment>
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false,
+      side: THREE.DoubleSide,
+    })
+    return mat
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      try { rainbowBeamMaterial.dispose() } catch { /* suppress dispose errors */ }
+    }
+  }, [rainbowBeamMaterial])
 
   useFrame((state, delta) => {
     if (!groupRef.current) return
@@ -312,6 +438,28 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     scaleRef.current += (targetScale - scaleRef.current) * Math.min(1, safeDelta * 5)
     groupRef.current.scale.setScalar(scaleRef.current)
 
+    if (rainbowBeamRigRef.current) {
+      const dynamicAngle = t * Math.PI * 2 * POLYGON_RAINBOW_ORBIT_TURNS
+      rainbowSpinAngleRef.current = dynamicAngle
+      if (atHold) {
+        if (!rainbowWasHoldRef.current) {
+          rainbowHoldAngleRef.current = rainbowSpinAngleRef.current
+        }
+        const hover = Math.sin(state.clock.elapsedTime * 0.85) * 0.20
+        rainbowBeamRigRef.current.rotation.z = rainbowHoldAngleRef.current + hover
+      } else {
+        rainbowBeamRigRef.current.rotation.z = dynamicAngle
+      }
+      rainbowWasHoldRef.current = atHold
+    }
+    if (rainbowBeamMaterial?.uniforms) {
+      rainbowBeamMaterial.uniforms.time.value += safeDelta * (atHold ? 0.45 : 1.0)
+      rainbowBeamMaterial.uniforms.speed.value = atHold ? 0.45 : 1.0
+      rainbowBeamMaterial.uniforms.ratio.value = 1.0
+      rainbowBeamMaterial.uniforms.emissiveIntensity.value = atHold ? 4.8 : 6.8
+      rainbowBeamMaterial.uniforms.beamOpacity.value = atHold ? 0.82 : 0.98
+    }
+
     // Billboard: copy camera quaternion so plane always faces viewer exactly
     if (numberPlaneRef.current) {
       // PROBE:plane-rotation-removal:START
@@ -325,19 +473,18 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     }
     if (digitLaserJitterRef.current) {
       const tJ = state.clock.elapsedTime
-      const jitterX = Math.sin(tJ * 29.0) * 0.012
-      const jitterY = Math.sin(tJ * 21.0 + 1.7) * 0.012
-      const jitterScale = 1 + Math.sin(tJ * 15.0) * 0.05
-      digitLaserJitterRef.current.position.set(jitterX, jitterY, 0)
-      digitLaserJitterRef.current.scale.setScalar(jitterScale)
+      const shimmerX = Math.sin(tJ * 7.0) * 0.004 + Math.sin(tJ * 3.4 + 1.2) * 0.002
+      const shimmerY = Math.sin(tJ * 5.8 + 0.9) * 0.003
+      const shimmerScale = 1 + Math.sin(tJ * 4.2) * 0.015
+      digitLaserJitterRef.current.position.set(shimmerX, shimmerY, 0)
+      digitLaserJitterRef.current.scale.setScalar(shimmerScale)
       digitLaserJitterRef.current.quaternion.copy(camera.quaternion)
       digitLaserJitterRef.current.rotateZ(Math.PI)
       if (digitLaserJitterRef.current.material) {
-        const pulse = 0.20 + Math.sin(tJ * 24.0) * 0.12
-        digitLaserJitterRef.current.material.opacity = Math.max(0.08, pulse)
+        const pulse = 0.20 + Math.sin(tJ * 6.0) * 0.05
+        digitLaserJitterRef.current.material.opacity = Math.max(0.12, pulse)
       }
     }
-
     // P3 probe: make reflection face camera directly to verify transform legibility.
     if (reflectionRef.current) {
       reflectionRef.current.quaternion.copy(state.camera.quaternion)
@@ -394,6 +541,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           toneMapped={false}
         />
       </mesh>
+
+      {/* Rotating spectral beam: orbits during active countdown, hovers on holds. */}
+      <group ref={rainbowBeamRigRef} position={[0, 0, 0.28]} renderOrder={6}>
+        <mesh position={[0.62, -0.08, 0]} rotation={[0, 0, 0.02]}>
+          <planeGeometry args={[2.8, 2.8]} />
+          <primitive object={rainbowBeamMaterial} attach="material" />
+        </mesh>
+      </group>
 
       <Html
         fullscreen
