@@ -63,8 +63,8 @@ function createDigitTexture(value) {
   ctx.save()
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.translate(canvas.width / 2, canvas.height / 2)
-  // H2: force upright correction in texture space.
-  ctx.rotate(Math.PI / 2)
+  // H2 sign correction: rotate texture -90deg.
+  ctx.rotate(-Math.PI / 2)
   ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
