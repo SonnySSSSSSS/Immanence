@@ -63,8 +63,8 @@ function createDigitTexture(value) {
   ctx.save()
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.translate(canvas.width / 2, canvas.height / 2)
-  // Orientation correction: rotate texture 180deg.
-  ctx.rotate(Math.PI)
+  // Orientation correction: no texture rotation.
+  ctx.rotate(0)
   ctx.font = font
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
