@@ -423,14 +423,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             // depthWrite: true (default) — essential so polygon depth can occlude the digit plane.
             <meshPhysicalMaterial
               color={accentColor}
-              metalness={0.08}
-              roughness={0.22}
-              clearcoat={0.7}
-              clearcoatRoughness={0.12}
-              envMap={null}
-              envMapIntensity={0}
+              metalness={0.12}
+              roughness={0.30}
+              clearcoat={0.85}
+              clearcoatRoughness={0.20}
+              ior={1.38}
+              reflectivity={0.55}
               transparent
-              opacity={0.40}
+              opacity={0.46}
               toneMapped={false}
             />
           )}
