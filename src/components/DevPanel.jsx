@@ -1288,6 +1288,8 @@ export function DevPanel({
                         onToggle={() => toggleSection('curriculum')}
                         armed={armed}
                         handleDestructive={handleDestructive}
+                        destructiveLocked={destructiveLocked}
+                        makeGuardedAction={makeGuardedAction}
                         isLight={isLight}
                     />
 
@@ -1838,7 +1840,15 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
     );
 }
 
-function CurriculumSection({ expanded, onToggle, armed, handleDestructive, isLight = false }) {
+function CurriculumSection({
+    expanded,
+    onToggle,
+    armed,
+    handleDestructive,
+    destructiveLocked,
+    makeGuardedAction,
+    isLight = false
+}) {
     const getCurrentDayNumber = useCurriculumStore(s => s.getCurrentDayNumber);
     const _devSetDay = useCurriculumStore(s => s._devSetDay);
     const _devCompleteDay = useCurriculumStore(s => s._devCompleteDay);
