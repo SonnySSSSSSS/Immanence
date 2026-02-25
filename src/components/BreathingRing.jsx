@@ -265,6 +265,7 @@ function PersistentBreathRingCanvas({
       gl={{
         antialias: true,
         alpha: true,
+        stencil: true,
         powerPreference: 'high-performance',
         preserveDrawingBuffer: false,
       }}
