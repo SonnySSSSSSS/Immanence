@@ -1,14 +1,34 @@
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { ContactShadows, Environment } from '@react-three/drei'
+import { ContactShadows, Environment, Html } from '@react-three/drei'
 
 const POLYGON_DIGIT_TEXTURE_SIZE = 256
 const POLYGON_DEBUG_LOGS = false
 const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
+const POLY_PROBE_SIGNATURE = 'PolygonBreathScene.jsx::forensics-v1'
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
+
+function summarizeWebGLArg(arg) {
+  if (arg == null) return String(arg)
+  const type = typeof arg
+  if (type === 'number' || type === 'boolean') return `${type}:${arg}`
+  if (type === 'string') return `string:${arg.slice(0, 64)}`
+  if (ArrayBuffer.isView(arg)) {
+    const ctor = arg.constructor?.name || 'TypedArray'
+    return `${ctor}[${arg.byteLength}]`
+  }
+  if (typeof HTMLCanvasElement !== 'undefined' && arg instanceof HTMLCanvasElement) {
+    return `HTMLCanvasElement(${arg.width}x${arg.height})`
+  }
+  if (typeof ImageBitmap !== 'undefined' && arg instanceof ImageBitmap) {
+    return `ImageBitmap(${arg.width}x${arg.height})`
+  }
+  const ctor = arg?.constructor?.name || 'Object'
+  return ctor
+}
 
 function createDigitTexture(value) {
   // Use a real DOM canvas so CanvasTexture uploads stay on the DOM-backed texSubImage path.
@@ -81,6 +101,103 @@ function createDigitTexture(value) {
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
   const { gl, size } = useThree()
+  const runtimeProbeFlags = useMemo(() => {
+    if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
+    const params = new URLSearchParams(window.location.search || '')
+    return {
+      polyRuntimeSafe: params.has('polySafe'),
+      polyRuntimeSafeDigit: params.has('polySafeDigit'),
+    }
+  }, [])
+  const useSafeGeometry = POLY_SAFE_GEOMETRY || runtimeProbeFlags.polyRuntimeSafe
+  const useSafeDigit = POLY_SAFE_DIGIT || runtimeProbeFlags.polyRuntimeSafe || runtimeProbeFlags.polyRuntimeSafeDigit
+  const modeLabel = useSafeGeometry ? 'POLY SAFE MODE' : 'POLY NORMAL MODE'
+  const modeSuffix = (!useSafeGeometry && useSafeDigit) ? ' · DIGIT OFF' : ''
+
+  useEffect(() => {
+    console.info(`[POLY PROBE] ${POLY_PROBE_SIGNATURE} mounted mode=${modeLabel}${modeSuffix}`)
+  }, [modeLabel, modeSuffix])
+
+  useEffect(() => {
+    const glContext = gl?.getContext?.()
+    if (!glContext) return undefined
+
+    const originalTexSubImage2D = glContext.texSubImage2D
+    const originalPixelStorei = glContext.pixelStorei
+    if (typeof originalTexSubImage2D !== 'function' || typeof originalPixelStorei !== 'function') {
+      return undefined
+    }
+
+    const PREMULT = glContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL
+    const FLIPY = glContext.UNPACK_FLIP_Y_WEBGL
+    let texSubImageLogCount = 0
+
+    function wrappedPixelStorei(...args) {
+      const pname = args[0]
+      if (pname === PREMULT || pname === FLIPY) {
+        console.warn('[POLY PROBE] pixelStorei unpack flag set while polygon mounted', {
+          signature: POLY_PROBE_SIGNATURE,
+          mode: `${modeLabel}${modeSuffix}`,
+          pname,
+          value: args[1],
+          stack: new Error().stack,
+        })
+      }
+      return originalPixelStorei.apply(glContext, args)
+    }
+
+    function wrappedTexSubImage2D(...args) {
+      if (texSubImageLogCount < 12) {
+        texSubImageLogCount += 1
+        console.warn('[POLY PROBE] texSubImage2D called', {
+          signature: POLY_PROBE_SIGNATURE,
+          mode: `${modeLabel}${modeSuffix}`,
+          argTypes: args.map(summarizeWebGLArg),
+          stack: new Error().stack,
+          callIndex: texSubImageLogCount,
+        })
+      }
+      return originalTexSubImage2D.apply(glContext, args)
+    }
+
+    glContext.pixelStorei = wrappedPixelStorei
+    glContext.texSubImage2D = wrappedTexSubImage2D
+
+    return () => {
+      if (glContext.pixelStorei === wrappedPixelStorei) glContext.pixelStorei = originalPixelStorei
+      if (glContext.texSubImage2D === wrappedTexSubImage2D) glContext.texSubImage2D = originalTexSubImage2D
+    }
+  }, [gl, modeLabel, modeSuffix])
+
+  useEffect(() => {
+    const originalWarn = console.warn
+    const originalError = console.error
+    const x4008Pattern = /X4008|C:\\fakepath\(210,11-125\)|floating point division by zero/i
+
+    function wrapConsole(fn) {
+      return (...args) => {
+        const message = args.map((v) => String(v)).join(' ')
+        if (x4008Pattern.test(message)) {
+          originalWarn('[POLY PROBE] X4008 seen while polygon mounted', {
+            signature: POLY_PROBE_SIGNATURE,
+            mode: `${modeLabel}${modeSuffix}`,
+            stack: new Error().stack,
+          })
+        }
+        return fn.apply(console, args)
+      }
+    }
+
+    const wrappedWarn = wrapConsole(originalWarn)
+    const wrappedError = wrapConsole(originalError)
+    console.warn = wrappedWarn
+    console.error = wrappedError
+
+    return () => {
+      if (console.warn === wrappedWarn) console.warn = originalWarn
+      if (console.error === wrappedError) console.error = originalError
+    }
+  }, [modeLabel, modeSuffix])
 
   // Breath driver ref sync (same pattern as TechInstrumentRND)
   const breathDriverRef = useRef(breathDriver)
@@ -99,14 +216,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   }, [displayNumber])
 
   const digitTexture = useMemo(() => {
-    if (POLY_SAFE_DIGIT) return null
+    if (useSafeDigit) return null
     let nextTexture = POLYGON_DIGIT_TEXTURE_CACHE.get(normalizedDisplayNumber) || null
     if (!nextTexture) {
       nextTexture = createDigitTexture(normalizedDisplayNumber)
       if (nextTexture) POLYGON_DIGIT_TEXTURE_CACHE.set(normalizedDisplayNumber, nextTexture)
     }
     return nextTexture
-  }, [normalizedDisplayNumber])
+  }, [normalizedDisplayNumber, useSafeDigit])
 
   // Keep renderer viewport/scissor synchronized during resize transitions.
   useEffect(() => {
@@ -176,7 +293,33 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     <>
       <ambientLight intensity={0.15} />
       <pointLight position={[1.5, 2.5, 2]} intensity={0.9} color={accentColor} />
-      {!POLY_SAFE_GEOMETRY && <Environment preset="city" />}
+      {!useSafeGeometry && <Environment preset="city" />}
+
+      <Html
+        fullscreen
+        style={{
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '8px',
+            left: '8px',
+            fontSize: '10px',
+            letterSpacing: '0.08em',
+            fontFamily: 'monospace',
+            color: useSafeGeometry ? '#ffcc66' : '#9ef0ff',
+            background: 'rgba(0,0,0,0.45)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '6px',
+            padding: '4px 6px',
+          }}
+        >
+          {modeLabel}{modeSuffix}
+        </div>
+      </Html>
 
       {/* Rotating polygon group — digit rotates and can be occluded */}
       <group ref={groupRef}>
@@ -184,7 +327,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           <meshBasicMaterial colorWrite={false} depthWrite />
         </mesh>
         <mesh geometry={icoGeom}>
-          {POLY_SAFE_GEOMETRY ? (
+          {useSafeGeometry ? (
             <meshBasicMaterial
               color="#ffffff"
               transparent
@@ -207,10 +350,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           )}
         </mesh>
         <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]}>
-          <lineBasicMaterial color={POLY_SAFE_GEOMETRY ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
+          <lineBasicMaterial color={useSafeGeometry ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
         </lineSegments>
 
-        {!POLY_SAFE_DIGIT && digitTexture && (
+        {!useSafeDigit && digitTexture && (
           <mesh ref={digitMeshRef} position={[0, 0, 0.78]}>
             <planeGeometry args={[0.50, 0.50]} />
             <meshBasicMaterial
@@ -226,7 +369,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         )}
       </group>
 
-      {!POLY_SAFE_GEOMETRY && (
+      {!useSafeGeometry && (
         <ContactShadows
           position={[0, -0.92, 0]}
           color={accentColor}
