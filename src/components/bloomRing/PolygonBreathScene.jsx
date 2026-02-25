@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Environment, Html } from '@react-three/drei'
+import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
 // ─── POLYGON STABILITY LOCK ───────────────────────────────────────────────────
 // These constraints MUST be preserved. See git history for X4008 / texSubImage
@@ -122,6 +123,13 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const [qualityTier, setQualityTier] = useState(runtimeQualityInfo.initialTier)
   const qualityConfig = POLYGON_QUALITY_CONFIG[qualityTier] || POLYGON_QUALITY_CONFIG.hi
   const envIntensity = runtimeQualityInfo.fxKillSwitch ? 0 : qualityConfig.envIntensity
+  const bloomIntensity = runtimeQualityInfo.fxKillSwitch
+    ? 0
+    : qualityTier === 'hi'
+      ? 0.35
+      : qualityTier === 'mid'
+        ? 0.22
+        : 0
   const perfMonitorRef = useRef({ elapsed: 0, frames: 0, lowFpsForSec: 0 })
   const runtimeProbeFlags = useMemo(() => {
     if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
@@ -334,6 +342,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         resolution={256}
         background={false}
       />
+      {bloomIntensity > 0 && (
+        <EffectComposer multisampling={0} resolutionScale={qualityConfig.composerScale}>
+          <Bloom mipmapBlur luminanceThreshold={0.9} intensity={bloomIntensity} />
+        </EffectComposer>
+      )}
 
       {/* Subtle projector cues (replaced volumetric beam):
 
