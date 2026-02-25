@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
+import { Environment, Html } from '@react-three/drei'
 
 // ─── POLYGON STABILITY LOCK ───────────────────────────────────────────────────
 // These constraints MUST be preserved. See git history for X4008 / texSubImage
@@ -121,6 +121,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   }, [])
   const [qualityTier, setQualityTier] = useState(runtimeQualityInfo.initialTier)
   const qualityConfig = POLYGON_QUALITY_CONFIG[qualityTier] || POLYGON_QUALITY_CONFIG.hi
+  const envIntensity = runtimeQualityInfo.fxKillSwitch ? 0 : qualityConfig.envIntensity
   const perfMonitorRef = useRef({ elapsed: 0, frames: 0, lowFpsForSec: 0 })
   const runtimeProbeFlags = useMemo(() => {
     if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
@@ -328,6 +329,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   return (
     <>
       <PolyLightRig accentColor={accentColor} />
+      <Environment
+        files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/blue_photo_studio_1k.hdr"
+        resolution={256}
+        background={false}
+      />
 
       {/* Subtle projector cues (replaced volumetric beam):
 
@@ -429,6 +435,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
               clearcoatRoughness={0.20}
               ior={1.38}
               reflectivity={0.55}
+              envMapIntensity={envIntensity}
               transparent
               opacity={0.46}
               toneMapped={false}
