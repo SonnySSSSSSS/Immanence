@@ -520,10 +520,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       {reflectionBaseOpacity > 0 && !useSafeDigit && digitTexture && (
         <mesh
           ref={reflectionRef}
-          position={[0, -1.05, -0.04]}
+          position={[0, -0.78, -0.04]}
           scale={[1, 1, 1]}
         >
-          <planeGeometry args={[0.62, 0.62]} />
+          <planeGeometry args={[0.72, 0.72]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
