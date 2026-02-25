@@ -130,6 +130,139 @@ function Build-ReplacementLiteral {
     return ($prefix + $replacementPath + $Tail)
 }
 
+function Resolve-ExistingPathCaseInsensitive {
+    param([string]$AbsolutePath)
+
+    try {
+        if (Test-Path -LiteralPath $AbsolutePath) {
+            return (Get-Item -LiteralPath $AbsolutePath).FullName
+        }
+    }
+    catch { }
+
+    return $null
+}
+
+function Add-DiagnosticCandidate {
+    param(
+        [System.Collections.Generic.List[object]]$Attempts,
+        [hashtable]$Seen,
+        [string]$Method,
+        [string]$RepoRelativePath,
+        [string]$RepoRootPath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RepoRelativePath)) { return }
+    $normalized = (($RepoRelativePath -replace '\\', '/') -replace '/+', '/').TrimStart('/')
+    if ([string]::IsNullOrWhiteSpace($normalized)) { return }
+
+    $key = "$Method|$($normalized.ToLowerInvariant())"
+    if ($Seen.ContainsKey($key)) { return }
+    $Seen[$key] = $true
+
+    $abs = Join-Path $RepoRootPath ($normalized -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+    $resolvedAbs = Resolve-ExistingPathCaseInsensitive -AbsolutePath $abs
+    $exists = ($null -ne $resolvedAbs)
+    $resolvedRel = if ($exists) { Normalize-RepoRelativePath -AbsolutePath $resolvedAbs -RepoRootPath $RepoRootPath } else { $normalized }
+
+    $Attempts.Add([ordered]@{
+        method = $Method
+        candidateRelativePath = $normalized
+        exists = $exists
+        resolvedRelativePath = $resolvedRel
+        resolvedFullPath = $resolvedAbs
+    }) | Out-Null
+}
+
+function Resolve-PngPathDiagnostics {
+    param(
+        [string]$OriginalPathPart,
+        [string]$FileAbsolutePath,
+        [string]$RepoRootPath,
+        [string]$CanonicalRoot
+    )
+
+    $pathPart = $OriginalPathPart
+    while ($pathPart -match '^\$\{[^}]+\}') {
+        $pathPart = [System.Text.RegularExpressions.Regex]::Replace($pathPart, '^\$\{[^}]+\}', '')
+    }
+
+    $attempts = New-Object System.Collections.Generic.List[object]
+    $seen = @{}
+    $canonicalPrefix = ($CanonicalRoot.Trim('/') + '/')
+
+    if ($pathPart -match '\$\{' -or $pathPart -match '\{[^}]+\}') {
+        return [pscustomobject]@{
+            pngExistsAtResolvedPath = $false
+            pngResolvedPath = $null
+            pngResolutionMethod = 'DYNAMIC_TEMPLATE'
+            pngResolutionAttempts = @($attempts.ToArray())
+        }
+    }
+
+    $pathVariants = New-Object System.Collections.Generic.List[string]
+    $pathVariants.Add($pathPart)
+    try {
+        $decoded = [System.Uri]::UnescapeDataString($pathPart)
+        if ($decoded -ne $pathPart) {
+            $pathVariants.Add($decoded)
+        }
+    }
+    catch { }
+
+    foreach ($rawVariant in $pathVariants) {
+        $v = (($rawVariant -replace '\\', '/') -replace '/+', '/')
+        if ([string]::IsNullOrWhiteSpace($v)) { continue }
+
+        if ($v.StartsWith('/')) {
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'ABS_LEADING_SLASH' -RepoRelativePath ($canonicalPrefix + $v.TrimStart('/')) -RepoRootPath $RepoRootPath
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'ABS_ADD_PUBLIC' -RepoRelativePath ('public/' + $v.TrimStart('/')) -RepoRootPath $RepoRootPath
+        }
+        elseif ($v.StartsWith('public/', [System.StringComparison]::OrdinalIgnoreCase)) {
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'AS_IS_PUBLIC' -RepoRelativePath $v -RepoRootPath $RepoRootPath
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'STRIP_PUBLIC_TO_CANONICAL' -RepoRelativePath ($canonicalPrefix + $v.Substring(7)) -RepoRootPath $RepoRootPath
+        }
+        elseif ($v.StartsWith('./') -or $v.StartsWith('../')) {
+            try {
+                $abs = [System.IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $FileAbsolutePath) $v))
+                Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'RELATIVE_TO_FILE' -RepoRelativePath (Normalize-RepoRelativePath -AbsolutePath $abs -RepoRootPath $RepoRootPath) -RepoRootPath $RepoRootPath
+            }
+            catch { }
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'RELATIVE_ADD_CANONICAL' -RepoRelativePath ($canonicalPrefix + $v.TrimStart('./')) -RepoRootPath $RepoRootPath
+        }
+        else {
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'ADD_CANONICAL' -RepoRelativePath ($canonicalPrefix + $v) -RepoRootPath $RepoRootPath
+            Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'ADD_PUBLIC' -RepoRelativePath ('public/' + $v) -RepoRootPath $RepoRootPath
+            try {
+                $abs = [System.IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $FileAbsolutePath) $v))
+                Add-DiagnosticCandidate -Attempts $attempts -Seen $seen -Method 'RESOLVE_RELATIVE_FILE' -RepoRelativePath (Normalize-RepoRelativePath -AbsolutePath $abs -RepoRootPath $RepoRootPath) -RepoRootPath $RepoRootPath
+            }
+            catch { }
+        }
+    }
+
+    $resolved = $attempts | Where-Object { $_.exists } | Select-Object -First 1
+    if ($null -ne $resolved) {
+        return [pscustomobject]@{
+            pngExistsAtResolvedPath = $true
+            pngResolvedPath = [pscustomobject]@{
+                relative = $resolved.resolvedRelativePath
+                full = $resolved.resolvedFullPath
+            }
+            pngResolutionMethod = $resolved.method
+            pngResolutionAttempts = @($attempts.ToArray())
+        }
+    }
+
+    $fallback = $attempts | Select-Object -First 1
+    return [pscustomobject]@{
+        pngExistsAtResolvedPath = $false
+        pngResolvedPath = if ($null -ne $fallback) { [pscustomobject]@{ relative = $fallback.candidateRelativePath; full = $null } } else { $null }
+        pngResolutionMethod = if ($null -ne $fallback) { $fallback.method } else { 'UNRESOLVED' }
+        pngResolutionAttempts = @($attempts.ToArray())
+    }
+}
+
 function Get-FileScope {
     param([string]$RepoRootPath)
 
@@ -176,9 +309,15 @@ try {
         $_.Extension -ieq '.webp' -and $_.FullName -notmatch '[\\/](node_modules|dist|\.git)[\\/]'
     }
     $webpSet = @{}
+    $webpIndex = @{}
     foreach ($file in $webpFiles) {
         $rel = Normalize-RepoRelativePath -AbsolutePath $file.FullName -RepoRootPath $repoRootPath
         $webpSet[$rel.ToLowerInvariant()] = $rel
+        $base = [System.IO.Path]::GetFileNameWithoutExtension($rel).ToLowerInvariant()
+        if (-not $webpIndex.ContainsKey($base)) {
+            $webpIndex[$base] = New-Object System.Collections.Generic.List[string]
+        }
+        $webpIndex[$base].Add($rel)
     }
 
     $files = Get-FileScope -RepoRootPath $repoRootPath
@@ -234,6 +373,12 @@ try {
             $candidateWebpPaths = @()
             $normalizedPathGuess = $null
             $replacementLiteral = $null
+            $pngExistsAtResolvedPath = $false
+            $pngResolvedPath = $null
+            $pngResolutionMethod = $null
+            $pngResolutionAttempts = @()
+            $movedOrPathMismatchCandidate = $false
+            $remediationHint = $null
 
             if ($pathPart -match '^(?i)(https?:|data:)') {
                 $classification = 'NON_PATH'
@@ -242,6 +387,12 @@ try {
                 $classification = 'NON_PATH'
             }
             else {
+                $diag = Resolve-PngPathDiagnostics -OriginalPathPart $pathPart -FileAbsolutePath $file.FullName -RepoRootPath $repoRootPath -CanonicalRoot $CanonicalWebpRoot
+                $pngExistsAtResolvedPath = [bool]$diag.pngExistsAtResolvedPath
+                $pngResolvedPath = $diag.pngResolvedPath
+                $pngResolutionMethod = $diag.pngResolutionMethod
+                $pngResolutionAttempts = @($diag.pngResolutionAttempts)
+
                 $prefixStripped = $pathPart
                 while ($prefixStripped -match '^\$\{[^}]+\}') {
                     $prefixStripped = [System.Text.RegularExpressions.Regex]::Replace($prefixStripped, '^\$\{[^}]+\}', '')
@@ -317,6 +468,20 @@ try {
                 }
             }
 
+            if ($classification -eq 'MISSING_WEBP') {
+                $base = [System.IO.Path]::GetFileNameWithoutExtension($pathPart).ToLowerInvariant()
+                if ($webpIndex.ContainsKey($base) -and $webpIndex[$base].Count -eq 1) {
+                    $uniqueWebp = [string]$webpIndex[$base][0]
+                    $siblingPng = [System.Text.RegularExpressions.Regex]::Replace($uniqueWebp, '(?i)\.webp$', '.png')
+                    $siblingPngAbs = Join-Path $repoRootPath ($siblingPng -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+                    if (Test-Path -LiteralPath $siblingPngAbs) {
+                        $movedOrPathMismatchCandidate = $true
+                        $remediationHint = 'MOVED_OR_PATH_MISMATCH_CANDIDATE'
+                        $candidateWebpPaths = @($uniqueWebp)
+                    }
+                }
+            }
+
             $classificationCounts[$classification]++
             $fileRel = Normalize-RepoRelativePath -AbsolutePath $file.FullName -RepoRootPath $repoRootPath
             if (-not $filePngCounts.ContainsKey($fileRel)) { $filePngCounts[$fileRel] = 0 }
@@ -342,6 +507,12 @@ try {
                 resolvedWebpPath = $resolvedWebpPath
                 candidateWebpPaths = @($candidateWebpPaths)
                 replacementLiteral = $replacementLiteral
+                pngExistsAtResolvedPath = $pngExistsAtResolvedPath
+                pngResolvedPath = $pngResolvedPath
+                pngResolutionMethod = $pngResolutionMethod
+                pngResolutionAttempts = @($pngResolutionAttempts)
+                movedOrPathMismatchCandidate = $movedOrPathMismatchCandidate
+                remediationHint = $remediationHint
             }) | Out-Null
         }
     }
