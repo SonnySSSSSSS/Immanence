@@ -406,14 +406,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
-        <mesh ref={numberPlaneRef} position={[0, 0, 0.06]} rotation={[0, 0, Math.PI]} renderOrder={10}>
+        <mesh ref={numberPlaneRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={9999}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
             transparent
             opacity={1}
-            depthTest
+            depthTest={false}
             depthWrite={false}
             alphaTest={0.01}
             toneMapped={false}
@@ -422,7 +422,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       )}
 
       {/* P3 probe: exaggerated readable reflection clone below the polygon. */}
-      {!useSafeDigit && digitTexture && (
+      {false && !useSafeDigit && digitTexture && (
         <mesh
           ref={reflectionRef}
           position={[0, -1.05, -0.04]}
