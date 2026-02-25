@@ -6,7 +6,9 @@ import { ContactShadows, Environment } from '@react-three/drei'
 const POLYGON_DIGIT_TEXTURE_SIZE = 256
 const POLYGON_DEBUG_LOGS = false
 const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
-const POLY_HARD_SAFE_MODE = true
+// Dev-only probe toggles. Keep both false for normal visuals.
+const POLY_SAFE_GEOMETRY = false
+const POLY_SAFE_DIGIT = false
 
 function createDigitTexture(value) {
   // Use a real DOM canvas so CanvasTexture uploads stay on the DOM-backed texSubImage path.
@@ -97,7 +99,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   }, [displayNumber])
 
   const digitTexture = useMemo(() => {
-    if (POLY_HARD_SAFE_MODE) return null
+    if (POLY_SAFE_DIGIT) return null
     let nextTexture = POLYGON_DIGIT_TEXTURE_CACHE.get(normalizedDisplayNumber) || null
     if (!nextTexture) {
       nextTexture = createDigitTexture(normalizedDisplayNumber)
@@ -174,7 +176,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     <>
       <ambientLight intensity={0.15} />
       <pointLight position={[1.5, 2.5, 2]} intensity={0.9} color={accentColor} />
-      {!POLY_HARD_SAFE_MODE && <Environment preset="city" />}
+      {!POLY_SAFE_GEOMETRY && <Environment preset="city" />}
 
       {/* Rotating polygon group — digit rotates and can be occluded */}
       <group ref={groupRef}>
@@ -182,7 +184,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           <meshBasicMaterial colorWrite={false} depthWrite />
         </mesh>
         <mesh geometry={icoGeom}>
-          {POLY_HARD_SAFE_MODE ? (
+          {POLY_SAFE_GEOMETRY ? (
             <meshBasicMaterial
               color="#ffffff"
               transparent
@@ -205,10 +207,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           )}
         </mesh>
         <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]}>
-          <lineBasicMaterial color={POLY_HARD_SAFE_MODE ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
+          <lineBasicMaterial color={POLY_SAFE_GEOMETRY ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
         </lineSegments>
 
-        {!POLY_HARD_SAFE_MODE && digitTexture && (
+        {!POLY_SAFE_DIGIT && digitTexture && (
           <mesh ref={digitMeshRef} position={[0, 0, 0.78]}>
             <planeGeometry args={[0.50, 0.50]} />
             <meshBasicMaterial
@@ -224,7 +226,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         )}
       </group>
 
-      {!POLY_HARD_SAFE_MODE && (
+      {!POLY_SAFE_GEOMETRY && (
         <ContactShadows
           position={[0, -0.92, 0]}
           color={accentColor}
