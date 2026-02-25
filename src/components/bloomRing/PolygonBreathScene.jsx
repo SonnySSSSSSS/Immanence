@@ -75,6 +75,29 @@ function createDigitTexture(value) {
   ctx.fillText(text, x, y)
   ctx.restore()
 
+  // Step 2d probe: canvas orientation marker and center crosshair.
+  ctx.save()
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = 0.9
+  ctx.strokeStyle = 'rgba(0,255,255,0.8)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(w / 2, 0)
+  ctx.lineTo(w / 2, h)
+  ctx.moveTo(0, h / 2)
+  ctx.lineTo(w, h / 2)
+  ctx.stroke()
+  ctx.restore()
+
+  ctx.save()
+  ctx.font = '700 20px Cinzel, Georgia, serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.globalAlpha = 1
+  ctx.fillStyle = '#00ffff'
+  ctx.fillText('UP', w / 2, 20)
+  ctx.restore()
+
   ctx.save()
   ctx.font = font
   ctx.textAlign = 'center'
