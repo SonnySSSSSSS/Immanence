@@ -383,6 +383,22 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
       {/* Rotating polygon group — no digit here; digit is in world space below */}
       <group ref={groupRef}>
+        <mesh geometry={icoGeom} renderOrder={0}>
+          <meshBasicMaterial
+            transparent
+            opacity={0}
+            colorWrite={false}
+            depthWrite={false}
+            depthTest={false}
+            side={THREE.DoubleSide}
+            stencilWrite
+            stencilRef={1}
+            stencilFunc={THREE.AlwaysStencilFunc}
+            stencilFail={THREE.ReplaceStencilOp}
+            stencilZFail={THREE.ReplaceStencilOp}
+            stencilZPass={THREE.ReplaceStencilOp}
+          />
+        </mesh>
         <mesh geometry={icoGeom}>
           {useSafeGeometry ? (
             <meshBasicMaterial
