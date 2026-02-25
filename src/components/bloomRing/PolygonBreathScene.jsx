@@ -284,6 +284,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     if (numberPlaneRef.current) {
       // PROBE:plane-rotation-removal:START
       numberPlaneRef.current.quaternion.copy(camera.quaternion)
+      numberPlaneRef.current.rotateZ(Math.PI)
       // PROBE:plane-rotation-removal:END
     }
 
