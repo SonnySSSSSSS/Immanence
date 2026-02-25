@@ -1,14 +1,82 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { useFrame } from '@react-three/fiber'
-import { ContactShadows, Environment, MeshTransmissionMaterial } from '@react-three/drei'
-import { EffectComposer, Bloom } from '@react-three/postprocessing'
+import { useFrame, useThree } from '@react-three/fiber'
+import { ContactShadows, Environment } from '@react-three/drei'
+
+const POLYGON_DIGIT_TEXTURE_SIZE = 256
+const POLYGON_DEBUG_LOGS = false
+const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
+
+function createDigitTexture(value) {
+  const canvas = document.createElement('canvas')
+  canvas.width = POLYGON_DIGIT_TEXTURE_SIZE
+  canvas.height = POLYGON_DIGIT_TEXTURE_SIZE
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.globalAlpha = 1
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.shadowColor = 'rgba(0,0,0,0)'
+  ctx.shadowBlur = 0
+  ctx.shadowOffsetX = 0
+  ctx.shadowOffsetY = 0
+  ctx.filter = 'none'
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const w = canvas.width
+  const h = canvas.height
+  const text = String(value)
+  const font = '700 170px Cinzel, Georgia, serif'
+  const x = w / 2
+  const y = h / 2
+
+  ctx.save()
+  ctx.font = font
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = 0.28
+  ctx.fillStyle = '#ffffff'
+  ctx.shadowColor = '#ffffff'
+  ctx.shadowBlur = 14
+  ctx.fillText(text, x, y)
+  ctx.restore()
+
+  ctx.save()
+  ctx.font = font
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.globalAlpha = 0.85
+  ctx.lineWidth = 10
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)'
+  ctx.shadowBlur = 0
+  ctx.strokeText(text, x, y)
+  ctx.restore()
+
+  ctx.save()
+  ctx.font = font
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.globalAlpha = 1.0
+  ctx.fillStyle = '#ffffff'
+  ctx.shadowBlur = 0
+  ctx.fillText(text, x, y)
+  ctx.restore()
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.minFilter = THREE.LinearFilter
+  tex.magFilter = THREE.LinearFilter
+  tex.generateMipmaps = false
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.flipY = false
+  tex.premultiplyAlpha = false
+  tex.needsUpdate = true
+  return tex
+}
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
-  // PROBE: track scene mounts
-  useEffect(() => {
-    console.count('Polygon Scene mount')
-  }, [])
+  const { gl, size } = useThree()
 
   // Breath driver ref sync (same pattern as TechInstrumentRND)
   const breathDriverRef = useRef(breathDriver)
@@ -20,98 +88,37 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const icoGeom = useMemo(() => new THREE.IcosahedronGeometry(0.88, 0), [])
   const edgeGeom = useMemo(() => new THREE.EdgesGeometry(icoGeom), [icoGeom])
 
-  // Canvas texture — useState for init triggers re-render so `map` prop updates
-  const [digitTexture, setDigitTexture] = useState(null)
-  const digitCanvasRef = useRef(null)
+  const lastLoggedDigitRef = useRef(null)
+  const normalizedDisplayNumber = useMemo(() => {
+    const n = Number(displayNumber)
+    return Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0
+  }, [displayNumber])
 
-  // Effect 1: init canvas + texture once on mount
+  const digitTexture = useMemo(() => {
+    let nextTexture = POLYGON_DIGIT_TEXTURE_CACHE.get(normalizedDisplayNumber) || null
+    if (!nextTexture) {
+      nextTexture = createDigitTexture(normalizedDisplayNumber)
+      if (nextTexture) POLYGON_DIGIT_TEXTURE_CACHE.set(normalizedDisplayNumber, nextTexture)
+    }
+    return nextTexture
+  }, [normalizedDisplayNumber])
+
+  // Keep renderer viewport/scissor synchronized during resize transitions.
   useEffect(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 256
-    canvas.height = 256
-    digitCanvasRef.current = canvas
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.minFilter = THREE.LinearFilter
-    tex.magFilter = THREE.LinearFilter
-    tex.generateMipmaps = false
-    tex.colorSpace = THREE.SRGBColorSpace   // keeps digit clean under bloom/sRGB output
-    setDigitTexture(tex)    // triggers re-render → material gets map
+    const safeW = Math.max(1, Math.floor(size.width || 1))
+    const safeH = Math.max(1, Math.floor(size.height || 1))
+    gl.setViewport(0, 0, safeW, safeH)
+    gl.setScissor(0, 0, safeW, safeH)
+    gl.setScissorTest(false)
+  }, [gl, size.width, size.height])
 
-  }, [])
-
-  // Effect 2: redraw digit when displayNumber changes
-  // React effect ordering guarantees Effect 1 runs before Effect 2 on mount
+  // Debug log is disabled by default; when enabled it logs only on value changes.
   useEffect(() => {
-    console.count('Polygon digit redraw')
-    const canvas = digitCanvasRef.current
-    if (!canvas || !digitTexture) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Hard reset state to avoid cumulative glow
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.globalAlpha = 1
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.shadowColor = 'rgba(0,0,0,0)'
-    ctx.shadowBlur = 0
-    ctx.shadowOffsetX = 0
-    ctx.shadowOffsetY = 0
-    ctx.filter = 'none'
-
-    // PROBE: Use COPY compositing for hard overwrite (tests for H1 texture ghosting)
-    ctx.globalCompositeOperation = 'copy'
-    ctx.fillStyle = 'rgba(0,0,0,0)'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.globalCompositeOperation = 'source-over'
-
-    // Shared typography
-    const w = canvas.width
-    const h = canvas.height
-    const text = String(displayNumber ?? 0)
-    const font = '700 170px Cinzel, Georgia, serif'
-    const x = w / 2
-    const y = h / 2
-
-    // PASS 1: Glow aura (low, consistent)
-    ctx.save()
-    ctx.font = font
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.globalAlpha = 0.28
-    ctx.fillStyle = '#ffffff'
-    ctx.shadowColor = '#ffffff'
-    ctx.shadowBlur = 14
-    ctx.fillText(text, x, y)
-    ctx.restore()
-
-    // PASS 2: Dark stroke (shape separation)
-    ctx.save()
-    ctx.font = font
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.globalAlpha = 0.85
-    ctx.lineWidth = 10
-    ctx.strokeStyle = 'rgba(0,0,0,0.55)'
-    ctx.shadowBlur = 0
-    ctx.strokeText(text, x, y)
-    ctx.restore()
-
-    // PASS 3: Crisp core fill (readable glyph)
-    ctx.save()
-    ctx.font = font
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.globalAlpha = 1.0
-    ctx.fillStyle = '#ffffff'
-    ctx.shadowBlur = 0
-    ctx.fillText(text, x, y)
-    ctx.restore()
-
-    // Mark both textures as needing update
-    // eslint-disable-next-line react-hooks/immutability
-    digitTexture.needsUpdate = true
-  }, [displayNumber, digitTexture])
+    if (!POLYGON_DEBUG_LOGS) return
+    if (lastLoggedDigitRef.current === normalizedDisplayNumber) return
+    lastLoggedDigitRef.current = normalizedDisplayNumber
+    console.debug('[PolygonBreathScene] digit texture update', normalizedDisplayNumber)
+  }, [normalizedDisplayNumber])
 
   // Geometry cleanup — independent of texture lifecycle
   useEffect(() => {
@@ -124,9 +131,13 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   // Texture cleanup — separate so geometry disposal doesn't depend on digitTexture
   useEffect(() => {
     return () => {
-      try { digitTexture?.dispose() } catch { /* suppress dispose errors */ }
+      for (const texture of POLYGON_DIGIT_TEXTURE_CACHE.values()) {
+        try { texture?.dispose() } catch { /* suppress dispose errors */ }
+      }
+      POLYGON_DIGIT_TEXTURE_CACHE.clear()
+      lastLoggedDigitRef.current = null
     }
-  }, [digitTexture])
+  }, [])
 
   // useFrame refs and logic
   const groupRef = useRef()
@@ -135,21 +146,26 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
   useFrame((state, delta) => {
     if (!groupRef.current) return
+    if (size.width < 1 || size.height < 1) return
+
     const bd = breathDriverRef.current
     const cycleProgress01 = bd?.cycleProgress01 ?? 0
     const phase = bd?.phase
+    const safeDelta = Number.isFinite(delta) && delta > 0 ? Math.min(delta, 0.1) : 0.016
 
     const t = cycleProgress01
     const eased = t * t * (3 - 2 * t)
     groupRef.current.rotation.y = eased * Math.PI * 2 * 1.5
-    groupRef.current.rotation.x += delta * 0.08 * 1.5
+    groupRef.current.rotation.x += safeDelta * 0.08 * 1.5
 
     const atHold = phase === 'holdTop' || phase === 'holdBottom'
     const targetScale = atHold ? 1 + Math.sin(state.clock.elapsedTime * 1.8) * 0.022 : 1.0
-    scaleRef.current += (targetScale - scaleRef.current) * Math.min(1, delta * 5)
+    scaleRef.current += (targetScale - scaleRef.current) * Math.min(1, safeDelta * 5)
     groupRef.current.scale.setScalar(scaleRef.current)
 
   })
+
+  if (size.width < 1 || size.height < 1) return null
 
   return (
     <>
@@ -163,19 +179,16 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           <meshBasicMaterial colorWrite={false} depthWrite />
         </mesh>
         <mesh geometry={icoGeom}>
-          <MeshTransmissionMaterial
-            transmission={1}
-            thickness={0.65}
-            roughness={0.08}
-            ior={1.45}
-            chromaticAberration={0.02}
-            anisotropy={0.1}
-            distortion={0.05}
-            distortionScale={0.2}
-            attenuationColor={accentColor}
-            attenuationDistance={1.1}
+          <meshPhysicalMaterial
+            color={accentColor}
+            metalness={0.18}
+            roughness={0.22}
+            clearcoat={1}
+            clearcoatRoughness={0.12}
+            transparent
+            opacity={0.22}
+            depthWrite={false}
             toneMapped={false}
-            samples={6}
           />
         </mesh>
         <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]}>
@@ -205,20 +218,9 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         blur={3.0}
         scale={3.4}
         far={2.8}
-        frames={reducedEffects ? 1 : Infinity}
+        frames={reducedEffects ? 1 : 6}
         resolution={128}
       />
-
-      {/* PROBE: disable bloom to isolate texture ghosting vs mesh stacking */}
-      {/* <EffectComposer key="polygon-composer" multisampling={0}>
-        <Bloom
-          intensity={0.55}
-          radius={0.42}
-          luminanceThreshold={0.34}
-          luminanceSmoothing={0.02}
-          mipmapBlur
-        />
-      </EffectComposer> */}
     </>
   )
 }
