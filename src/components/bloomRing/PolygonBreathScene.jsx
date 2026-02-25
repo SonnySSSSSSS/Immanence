@@ -8,6 +8,7 @@ const POLYGON_DEBUG_LOGS = false
 const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
 
 function createDigitTexture(value) {
+  // Use a real DOM canvas so CanvasTexture uploads stay on the DOM-backed texSubImage path.
   const canvas = document.createElement('canvas')
   canvas.width = POLYGON_DIGIT_TEXTURE_SIZE
   canvas.height = POLYGON_DIGIT_TEXTURE_SIZE
