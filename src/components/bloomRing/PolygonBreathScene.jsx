@@ -18,6 +18,8 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing'
 const POLYGON_DIGIT_TEXTURE_SIZE = 256
 const POLYGON_DEBUG_LOGS = false
 const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
+const POLYGON_LASER_TINT = '#ff6a7a'
+const POLYGON_LASER_HALO_TINT = '#ff4d6d'
 const POLYGON_PERF_FPS_TARGET = 45
 const POLYGON_PERF_DEGRADE_SECONDS = 3
 // Dev-only probe toggles. Keep both false for normal visuals.
@@ -81,9 +83,9 @@ function createDigitTexture(value) {
   ctx.globalCompositeOperation = 'source-over'
   // L2: halo pass for laser glow envelope.
   ctx.globalAlpha = 0.45
-  ctx.shadowColor = '#9ef0ff'
+  ctx.shadowColor = POLYGON_LASER_HALO_TINT
   ctx.shadowBlur = 28
-  ctx.fillStyle = '#9ef0ff'
+  ctx.fillStyle = POLYGON_LASER_HALO_TINT
   ctx.fillText(String(value), 0, 0)
   // L2: crisp core pass over halo.
   ctx.globalAlpha = 1
@@ -464,7 +466,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
-            color={accentColor}
+            color={POLYGON_LASER_TINT}
             transparent
             opacity={0.85}
             depthTest={false}
@@ -487,7 +489,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
-            color={accentColor}
+            color={POLYGON_LASER_TINT}
             transparent
             opacity={0.45}
             depthTest
