@@ -273,6 +273,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const scaleRef = useRef(1.0)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const digitInsideCueRef = useRef()
+  const digitLaserJitterRef = useRef()
   const reflectionRef = useRef()    // upright reflection below polygon
 
   useFrame((state, delta) => {
@@ -321,6 +322,20 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     if (digitInsideCueRef.current) {
       digitInsideCueRef.current.quaternion.copy(camera.quaternion)
       digitInsideCueRef.current.rotateZ(Math.PI)
+    }
+    if (digitLaserJitterRef.current) {
+      const tJ = state.clock.elapsedTime
+      const jitterX = Math.sin(tJ * 31.0) * 0.004
+      const jitterY = Math.sin(tJ * 23.0 + 1.7) * 0.004
+      const jitterScale = 1 + Math.sin(tJ * 17.0) * 0.018
+      digitLaserJitterRef.current.position.set(jitterX, jitterY, 0)
+      digitLaserJitterRef.current.scale.setScalar(jitterScale)
+      digitLaserJitterRef.current.quaternion.copy(camera.quaternion)
+      digitLaserJitterRef.current.rotateZ(Math.PI)
+      if (digitLaserJitterRef.current.material) {
+        const pulse = 0.14 + Math.sin(tJ * 19.0) * 0.06
+        digitLaserJitterRef.current.material.opacity = Math.max(0.05, pulse)
+      }
     }
 
     // P3 probe: make reflection face camera directly to verify transform legibility.
@@ -495,6 +510,29 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             depthTest
             depthWrite={false}
             blending={THREE.NormalBlending}
+            alphaTest={0.01}
+            toneMapped={false}
+            stencilWrite
+            stencilRef={1}
+            stencilFunc={THREE.EqualStencilFunc}
+            stencilFail={THREE.KeepStencilOp}
+            stencilZFail={THREE.KeepStencilOp}
+            stencilZPass={THREE.KeepStencilOp}
+          />
+        </mesh>
+      )}
+
+      {!useSafeDigit && digitTexture && (
+        <mesh ref={digitLaserJitterRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={22}>
+          <planeGeometry args={[0.62, 0.62]} />
+          <meshBasicMaterial
+            map={digitTexture}
+            color={POLYGON_LASER_TINT}
+            transparent
+            opacity={0.14}
+            depthTest={false}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
             alphaTest={0.01}
             toneMapped={false}
             stencilWrite
