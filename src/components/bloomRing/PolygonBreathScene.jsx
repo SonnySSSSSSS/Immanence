@@ -369,6 +369,18 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
       {/* Rotating polygon group — no digit here; digit is in world space below */}
       <group ref={groupRef}>
+        {/* PROBE:inside-depth-occluder:START */}
+        <mesh geometry={icoGeom} renderOrder={0}>
+          <meshBasicMaterial
+            transparent
+            opacity={0}
+            depthWrite
+            depthTest
+            colorWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        {/* PROBE:inside-depth-occluder:END */}
         <mesh geometry={icoGeom}>
           <meshBasicMaterial colorWrite={false} depthWrite />
         </mesh>
@@ -400,7 +412,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             />
           )}
         </mesh>
-        <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]}>
+        <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]} renderOrder={11}>
           <lineBasicMaterial color={useSafeGeometry ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
         </lineSegments>
       </group>
@@ -409,14 +421,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
-        <mesh ref={numberPlaneRef} position={[0, 0, -0.04]} rotation={[0, 0, Math.PI]} renderOrder={9999}>
+        <mesh ref={numberPlaneRef} position={[0, 0, -0.04]} rotation={[0, 0, Math.PI]} renderOrder={10}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
             transparent
             opacity={1}
-            depthTest={false}
+            depthTest
             depthWrite={false}
             alphaTest={0.01}
             toneMapped={false}
