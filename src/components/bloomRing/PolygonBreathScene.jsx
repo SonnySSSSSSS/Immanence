@@ -427,15 +427,16 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
-        <mesh ref={numberPlaneRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={9999}>
+        <mesh ref={numberPlaneRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={21}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
             transparent
-            opacity={1}
+            opacity={0.35}
             depthTest={false}
             depthWrite={false}
+            blending={THREE.AdditiveBlending}
             alphaTest={0.01}
             toneMapped={false}
             stencilWrite
@@ -449,17 +450,24 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       )}
 
       {!useSafeDigit && digitTexture && (
-        <mesh ref={digitInsideCueRef} position={[0, 0, 0.03]} rotation={[0, 0, Math.PI]} renderOrder={9}>
+        <mesh ref={digitInsideCueRef} position={[0, 0, 0]} rotation={[0, 0, Math.PI]} renderOrder={20}>
           <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
             transparent
-            opacity={0.22}
+            opacity={0.55}
             depthTest
             depthWrite={false}
+            blending={THREE.NormalBlending}
             alphaTest={0.01}
             toneMapped={false}
+            stencilWrite
+            stencilRef={1}
+            stencilFunc={THREE.EqualStencilFunc}
+            stencilFail={THREE.KeepStencilOp}
+            stencilZFail={THREE.KeepStencilOp}
+            stencilZPass={THREE.KeepStencilOp}
           />
         </mesh>
       )}
