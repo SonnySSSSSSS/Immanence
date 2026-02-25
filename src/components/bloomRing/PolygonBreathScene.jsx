@@ -427,16 +427,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
           After probe passes, revert to depthTest=true with small offset. */}
       {!useSafeDigit && digitTexture && (
         <mesh ref={numberPlaneRef} position={[0, 0, -0.04]} rotation={[0, 0, Math.PI]} renderOrder={9999}>
-          <planeGeometry args={[0.62, 0.62]} />
+          <planeGeometry args={[1.86, 1.86]} />
           <meshBasicMaterial
-            map={digitTexture}
-            color={accentColor}
+            color="#ff00ff"
             transparent
-            alphaTest={0.01}
-            toneMapped={false}
-            depthWrite={false}
+            opacity={1}
             depthTest={false}
-            opacity={1.0}
+            depthWrite={false}
+            toneMapped={false}
           />
         </mesh>
       )}
