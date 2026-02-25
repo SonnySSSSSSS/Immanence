@@ -34,13 +34,13 @@ function PolyLightRig({ accentColor }) {
   return (
     <>
       {/* Fill: raised ambient so unlit faces aren't near-black without IBL */}
-      <ambientLight intensity={0.35} />
-      {/* Key: front/upper/right — main face light, neutral white */}
-      <directionalLight position={[2.5, 3.0, 2.5]} intensity={2.2} />
-      {/* Rim: behind/upper/left — cool-blue edge separation */}
-      <pointLight position={[-2.2, 2.0, -2.0]} intensity={0.8} color="#9ab8ff" />
+      <ambientLight intensity={0.22} />
+      {/* Key: tighter front/upper/right for jewelry-style specular line */}
+      <directionalLight position={[3.4, 3.8, 2.2]} intensity={2.8} color="#f6fbff" />
+      {/* Rim: behind/upper/left for edge sparkle */}
+      <directionalLight position={[-3.0, 2.8, -2.4]} intensity={1.15} color="#9fd7ff" />
       {/* Bounce: low warm ground fill tinted by accent */}
-      <pointLight position={[0, -1.5, 0.5]} intensity={0.35} color={accentColor} />
+      <pointLight position={[0, -1.4, 0.5]} intensity={0.28} color={accentColor} />
     </>
   )
 }
