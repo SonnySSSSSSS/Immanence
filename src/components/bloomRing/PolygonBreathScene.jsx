@@ -307,6 +307,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       numberPlaneRef.current.quaternion.copy(state.camera.quaternion)
     }
 
+    // P3 probe: make reflection face camera directly to verify transform legibility.
+    if (reflectionRef.current) {
+      reflectionRef.current.quaternion.copy(state.camera.quaternion)
+    }
+
     // Reflection: fade with breath cycle for a gentle glimmer
     if (reflectionRef.current?.material) {
       reflectionRef.current.material.opacity = 0.20 + cycleProgress01 * 0.12
@@ -436,16 +441,14 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         </mesh>
       )}
 
-      {/* PHASE 1 PROBE: Move reflection up to test visibility (reduce Y by 0.35).
-          Once probe confirms both digits visible, fine-tune Y to avoid clipping. */}
+      {/* P3 probe: exaggerated readable reflection clone below the polygon. */}
       {!useSafeDigit && digitTexture && (
         <mesh
           ref={reflectionRef}
-          position={[0, -0.65, 0.25]}
-          rotation={[-0.15, 0, 0]}
-          scale={[1, -1, 1]}
+          position={[0, -1.05, -0.04]}
+          scale={[1, 1, 1]}
         >
-          <planeGeometry args={[0.52, 0.52]} />
+          <planeGeometry args={[0.62, 0.62]} />
           <meshBasicMaterial
             map={digitTexture}
             color={accentColor}
