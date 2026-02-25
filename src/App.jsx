@@ -61,6 +61,7 @@ function SectionView({ section, isPracticing, currentPracticeId, onPracticingCha
           <PracticeSection 
             onPracticingChange={onPracticingChange} 
             onBreathStateChange={onBreathStateChange}
+            currentStage={currentStage}
             avatarPath={previewPath} 
             showCore={previewShowCore}
             showFxGallery={showFxGallery} 

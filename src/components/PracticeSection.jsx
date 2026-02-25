@@ -353,7 +353,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, currentStage, avatarPath, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
   const {
     startSession,
     endSession,
@@ -2863,6 +2863,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         {/* Bottom Layer: Dynamic Options Card */}
         <PracticeOptionsCard
           practiceId={practiceId}
+          wallpaperStage={currentStage}
           duration={duration}
           onDurationChange={setDuration}
           onStart={handleStart}

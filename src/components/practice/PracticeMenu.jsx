@@ -1,5 +1,6 @@
 import React from "react";
 import { getStageWallpaperUrl } from "../bg/wallpaperUrl.js";
+import { normalizeStageKey } from "../../config/avatarStageAssets.js";
 import { SacredTimeSlider } from "../SacredTimeSlider.jsx";
 import { PracticeMenuHeader } from "./PracticeMenuHeader.jsx";
 import { isUiPickingActive } from "../../dev/uiControlsCaptureManager.js";
@@ -31,6 +32,7 @@ const CONFIG_COMPONENTS = {
 function PracticeMenu({
   containerKey,
   label,
+  wallpaperStageKey,
   showRitualSubtitle,
   ritualSubtitleText,
   titleContainerMarginBottom,
@@ -58,7 +60,7 @@ function PracticeMenu({
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
 
   // Stage key for wallpaper (fallback to 'seedling' if missing)
-  const stageKey = (practice?.stageKey || practice?.id || 'seedling').toLowerCase();
+  const stageKey = normalizeStageKey(wallpaperStageKey || practice?.stageKey || 'seedling');
   const wallpaperUrl = getStageWallpaperUrl(stageKey);
 
   // Resolve config components from string names

@@ -30,6 +30,7 @@ const CONFIG_COMPONENTS = {
 
 export function PracticeOptionsCard({ 
   practiceId, 
+  wallpaperStage,
   duration, 
   onDurationChange, 
   onStart, 
@@ -245,6 +246,7 @@ export function PracticeOptionsCard({
           <PracticeMenu
             containerKey={practiceId}
             label={label}
+            wallpaperStageKey={wallpaperStage}
             showRitualSubtitle={menuShowRitualSubtitle}
             ritualSubtitleText="Select an invocation to begin"
             titleContainerMarginBottom={menuTitleContainerMarginBottom}
