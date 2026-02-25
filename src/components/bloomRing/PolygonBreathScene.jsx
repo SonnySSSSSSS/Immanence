@@ -325,16 +325,16 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     }
     if (digitLaserJitterRef.current) {
       const tJ = state.clock.elapsedTime
-      const jitterX = Math.sin(tJ * 31.0) * 0.004
-      const jitterY = Math.sin(tJ * 23.0 + 1.7) * 0.004
-      const jitterScale = 1 + Math.sin(tJ * 17.0) * 0.018
+      const jitterX = Math.sin(tJ * 29.0) * 0.012
+      const jitterY = Math.sin(tJ * 21.0 + 1.7) * 0.012
+      const jitterScale = 1 + Math.sin(tJ * 15.0) * 0.05
       digitLaserJitterRef.current.position.set(jitterX, jitterY, 0)
       digitLaserJitterRef.current.scale.setScalar(jitterScale)
       digitLaserJitterRef.current.quaternion.copy(camera.quaternion)
       digitLaserJitterRef.current.rotateZ(Math.PI)
       if (digitLaserJitterRef.current.material) {
-        const pulse = 0.14 + Math.sin(tJ * 19.0) * 0.06
-        digitLaserJitterRef.current.material.opacity = Math.max(0.05, pulse)
+        const pulse = 0.20 + Math.sin(tJ * 24.0) * 0.12
+        digitLaserJitterRef.current.material.opacity = Math.max(0.08, pulse)
       }
     }
 
