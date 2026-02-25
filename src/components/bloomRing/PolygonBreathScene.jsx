@@ -130,6 +130,13 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       : qualityTier === 'mid'
         ? 0.22
         : 0
+  const reflectionBaseOpacity = runtimeQualityInfo.fxKillSwitch
+    ? 0
+    : qualityTier === 'hi'
+      ? 0.16
+      : qualityTier === 'mid'
+        ? 0.11
+        : 0
   const perfMonitorRef = useRef({ elapsed: 0, frames: 0, lowFpsForSec: 0 })
   const runtimeProbeFlags = useMemo(() => {
     if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
@@ -328,7 +335,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
     // Reflection: fade with breath cycle for a gentle glimmer
     if (reflectionRef.current?.material) {
-      reflectionRef.current.material.opacity = 0.20 + cycleProgress01 * 0.12
+      reflectionRef.current.material.opacity = reflectionBaseOpacity + cycleProgress01 * 0.04
     }
   })
 
@@ -510,7 +517,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       )}
 
       {/* P3 probe: exaggerated readable reflection clone below the polygon. */}
-      {false && !useSafeDigit && digitTexture && (
+      {reflectionBaseOpacity > 0 && !useSafeDigit && digitTexture && (
         <mesh
           ref={reflectionRef}
           position={[0, -1.05, -0.04]}
