@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
@@ -17,9 +17,16 @@ import { Html } from '@react-three/drei'
 const POLYGON_DIGIT_TEXTURE_SIZE = 256
 const POLYGON_DEBUG_LOGS = false
 const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
+const POLYGON_PERF_FPS_TARGET = 45
+const POLYGON_PERF_DEGRADE_SECONDS = 3
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
+const POLYGON_QUALITY_CONFIG = {
+  hi: { dprCap: 1.5, composerScale: 1.0, bloomEnabled: true, envIntensity: 1.0 },
+  mid: { dprCap: 1.25, composerScale: 0.75, bloomEnabled: true, envIntensity: 0.7 },
+  low: { dprCap: 1.0, composerScale: 0.6, bloomEnabled: false, envIntensity: 0.45 },
+}
 
 // Direct-light rig for polygon preset — no IBL, no shadows, no helpers.
 // All positions are in world space; three.js default target is [0,0,0].
@@ -97,6 +104,24 @@ function createDigitTexture(value) {
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
   const { gl, size, scene, camera } = useThree()
+  const runtimeQualityInfo = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return { initialTier: 'hi', fxKillSwitch: false, autoDowngrade: false }
+    }
+    const params = new URLSearchParams(window.location.search || '')
+    const mobileByUa = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || '')
+    const touchByHardware = (navigator.maxTouchPoints || 0) > 1
+    const lowMemory = Number.isFinite(navigator.deviceMemory) && navigator.deviceMemory <= 4
+    const initialTier = (mobileByUa || touchByHardware || lowMemory) ? 'mid' : 'hi'
+    return {
+      initialTier,
+      fxKillSwitch: params.has('polyFxOff'),
+      autoDowngrade: !params.has('polyNoAutoTier'),
+    }
+  }, [])
+  const [qualityTier, setQualityTier] = useState(runtimeQualityInfo.initialTier)
+  const qualityConfig = POLYGON_QUALITY_CONFIG[qualityTier] || POLYGON_QUALITY_CONFIG.hi
+  const perfMonitorRef = useRef({ elapsed: 0, frames: 0, lowFpsForSec: 0 })
   const runtimeProbeFlags = useMemo(() => {
     if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
     const params = new URLSearchParams(window.location.search || '')
@@ -111,9 +136,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
   useEffect(() => {
     if (POLYGON_DEBUG_LOGS) {
-      console.debug(`[PolygonBreathScene] mounted mode=${modeLabel}`)
+      console.debug(
+        `[PolygonBreathScene] mounted mode=${modeLabel} tier=${qualityTier} dprCap=${qualityConfig.dprCap} fxKill=${runtimeQualityInfo.fxKillSwitch}`
+      )
     }
-  }, [modeLabel])
+  }, [modeLabel, qualityTier, qualityConfig.dprCap, runtimeQualityInfo.fxKillSwitch])
 
   // Permanent fix: disable shadows and environment for polygon preset stability
   useEffect(() => {
@@ -275,6 +302,23 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   useFrame((state, delta) => {
     if (!groupRef.current) return
     if (size.width < 1 || size.height < 1) return
+
+    if (runtimeQualityInfo.autoDowngrade) {
+      const monitor = perfMonitorRef.current
+      const safeDelta = Number.isFinite(delta) && delta > 0 ? Math.min(delta, 0.25) : 0.016
+      monitor.elapsed += safeDelta
+      monitor.frames += 1
+      if (monitor.elapsed >= 1) {
+        const fps = monitor.frames / monitor.elapsed
+        monitor.lowFpsForSec = fps < POLYGON_PERF_FPS_TARGET ? monitor.lowFpsForSec + monitor.elapsed : 0
+        monitor.elapsed = 0
+        monitor.frames = 0
+        if (monitor.lowFpsForSec >= POLYGON_PERF_DEGRADE_SECONDS) {
+          setQualityTier((prev) => (prev === 'hi' ? 'mid' : prev === 'mid' ? 'low' : 'low'))
+          monitor.lowFpsForSec = 0
+        }
+      }
+    }
 
     const bd = breathDriverRef.current
     const cycleProgress01 = bd?.cycleProgress01 ?? 0
