@@ -380,25 +380,11 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   useEffect(() => {
     if (import.meta.env.DEV !== true || typeof window === 'undefined') return;
 
-    const ringModes = RING_MODE_CYCLE;
     const ringParam = new URLSearchParams(window.location.search).get('ring');
     const normalizedQueryMode = normalizeRingMode(ringParam);
     if (normalizedQueryMode) {
       setRndRingMode(normalizedQueryMode);
     }
-
-    const onKeyDown = (event) => {
-      if (event.key !== 'F2') return;
-      event.preventDefault();
-      setRndRingMode((prev) => {
-        const normalizedPrev = normalizeRingMode(prev) || ringModes[0];
-        const idx = ringModes.indexOf(normalizedPrev);
-        return ringModes[(idx + 1) % ringModes.length];
-      });
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
   // Compatibility normalization for legacy/persisted values.

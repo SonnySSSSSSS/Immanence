@@ -68,6 +68,15 @@ import { useProgressStore } from '../state/progressStore.js';
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
 const DEV_FX_GALLERY_ENABLED = true;
+const PRESET_SWITCHER_Z_INDEX = 10020;
+
+function isTypingIntoEditableElement(activeEl) {
+  if (!activeEl) return false;
+  const tagName = activeEl.tagName;
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA') return true;
+  if (activeEl.isContentEditable) return true;
+  return activeEl.getAttribute?.('contenteditable') === 'true';
+}
 
 const DevCompleteNowOverlay =
   import.meta.env.DEV === true
@@ -909,6 +918,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Ring FX ephemeral state
   const [currentFxIndex, setCurrentFxIndex] = useState(0);
+  const [isPresetSwitcherOpen, setIsPresetSwitcherOpen] = useState(false);
   const currentFxPreset = showFxGallery ? ringFXPresets[currentFxIndex] : null;
 
   // REFACTOR BRIDGE: Map practiceParams to legacy variable names for stable behavior
@@ -2008,6 +2018,69 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const showFeedback = lastSignedErrorMs !== null && isBreathPractice;
   const timeLeftText = formatTime(timeLeft);
 
+  const isBreathPracticeRef = useRef(isBreathPractice);
+  const isPresetSwitcherOpenRef = useRef(isPresetSwitcherOpen);
+
+  useEffect(() => {
+    isBreathPracticeRef.current = isBreathPractice;
+  }, [isBreathPractice]);
+
+  useEffect(() => {
+    isPresetSwitcherOpenRef.current = isPresetSwitcherOpen;
+  }, [isPresetSwitcherOpen]);
+
+  useEffect(() => {
+    if (isBreathPractice) return;
+    setIsPresetSwitcherOpen(false);
+  }, [isBreathPractice]);
+
+  useEffect(() => {
+    const onWindowKeyDown = (event) => {
+      const code = event.code;
+      const key = event.key;
+      const isF2 = code === 'F2' || key === 'F2';
+      const isArrowLeft = code === 'ArrowLeft' || key === 'ArrowLeft';
+      const isArrowRight = code === 'ArrowRight' || key === 'ArrowRight';
+      const isEscape = code === 'Escape' || key === 'Escape';
+
+      if (!(isF2 || isArrowLeft || isArrowRight || isEscape)) return;
+      if (isTypingIntoEditableElement(document.activeElement)) return;
+      if (!isBreathPracticeRef.current) return;
+
+      if (isF2) {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsPresetSwitcherOpen((prev) => !prev);
+        return;
+      }
+
+      if (!isPresetSwitcherOpenRef.current) return;
+
+      if (isEscape) {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsPresetSwitcherOpen(false);
+        return;
+      }
+
+      if (isArrowLeft) {
+        event.preventDefault();
+        event.stopPropagation();
+        setCurrentFxIndex((prev) => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
+        return;
+      }
+
+      if (isArrowRight) {
+        event.preventDefault();
+        event.stopPropagation();
+        setCurrentFxIndex((prev) => (prev + 1) % ringFXPresets.length);
+      }
+    };
+
+    window.addEventListener('keydown', onWindowKeyDown);
+    return () => window.removeEventListener('keydown', onWindowKeyDown);
+  }, []);
+
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
     const breathViewportReady = !isBreathRunningSession || Number.isFinite(breathViewportHeightPx);
@@ -2574,6 +2647,42 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       )}
       {sessionView}
       {summaryView}
+      {isPresetSwitcherOpen && isBreathPractice && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: PRESET_SWITCHER_Z_INDEX,
+            minWidth: '260px',
+            maxWidth: 'min(94vw, 420px)',
+            padding: '12px 14px',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(8, 10, 18, 0.86)',
+            color: 'rgba(255,255,255,0.95)',
+            textAlign: 'center',
+            boxShadow: '0 14px 50px rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            pointerEvents: 'none',
+          }}
+        >
+          <div className="type-caption text-[10px]" style={{ opacity: 0.72 }}>
+            Preset Switcher
+          </div>
+          <div className="type-label mt-1" style={{ color: 'var(--accent-color)' }}>
+            {ringFXPresets[currentFxIndex]?.name}
+          </div>
+          <div className="type-caption text-[10px] mt-1" style={{ opacity: 0.62 }}>
+            {currentFxIndex + 1} / {ringFXPresets.length}
+          </div>
+          <div className="type-caption text-[10px] mt-2" style={{ opacity: 0.55 }}>
+            F2 toggle | ← → cycle | Esc close
+          </div>
+        </div>
+      )}
       
       {/* Countdown Overlay */}
       {countdownValue !== null && (
