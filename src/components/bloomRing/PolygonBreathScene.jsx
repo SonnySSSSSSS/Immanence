@@ -470,7 +470,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             map={digitTexture}
             color={accentColor}
             transparent
-            opacity={0.70}
+            opacity={0.85}
             depthTest={false}
             depthWrite={false}
             blending={THREE.AdditiveBlending}
@@ -493,7 +493,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             map={digitTexture}
             color={accentColor}
             transparent
-            opacity={0.55}
+            opacity={0.45}
             depthTest
             depthWrite={false}
             blending={THREE.NormalBlending}
