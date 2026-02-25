@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 const BASE = import.meta.env.BASE_URL || '/';
 
 const PULSE_FRAMES = [
-    `${BASE}assets/ritual/glow_frame_1.png`,
-    `${BASE}assets/ritual/glow_frame_2.png`,
-    `${BASE}assets/ritual/glow_frame_3.png`,
-    `${BASE}assets/ritual/glow_frame_4.png`,
-    `${BASE}assets/ritual/glow_frame_5.png`,
+    `${BASE}assets/ritual/glow_frame_1.webp`,
+    `${BASE}assets/ritual/glow_frame_2.webp`,
+    `${BASE}assets/ritual/glow_frame_3.webp`,
+    `${BASE}assets/ritual/glow_frame_4.webp`,
+    `${BASE}assets/ritual/glow_frame_5.webp`,
 ];
 
 export function VisualMapDisplay({ isPulsing = false, showOverlay = false }) {
@@ -21,7 +21,7 @@ export function VisualMapDisplay({ isPulsing = false, showOverlay = false }) {
                 transition={{ duration: 2 }}
                 className="absolute inset-0 z-10"
                 style={{
-                    backgroundImage: `url(${BASE}assets/ritual/visual_map_v1.png)`,
+                    backgroundImage: `url(${BASE}assets/ritual/visual_map_v1.webp)`,
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',

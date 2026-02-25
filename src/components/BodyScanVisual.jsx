@@ -109,7 +109,7 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
                     {/* Body silhouette image */}
                     <img
                         key={image || 'default'}
-                        src={image ? (image.includes('://') || image.startsWith('/') ? image : `${import.meta.env.BASE_URL}sensory/${image}`) : `${import.meta.env.BASE_URL}sensory/body-scan-silhouette.png`}
+                        src={image ? (image.includes('://') || image.startsWith('/') ? image : `${import.meta.env.BASE_URL}sensory/${image}`) : `${import.meta.env.BASE_URL}sensory/body-scan-silhouette.webp`}
                         alt="Body Scan"
                         className="w-full h-full object-contain transition-opacity duration-700 pointer-events-none"
                         style={{
@@ -226,7 +226,7 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
                                         {hoveredPoint.name}
                                     </h4>
                                     <div className="text-[10px] text-white/60">
-                                        {hoveredPoint.label_anatomical && `${hoveredPoint.label_anatomical} • `}{hoveredPoint.location}
+                                        {hoveredPoint.label_anatomical && `${hoveredPoint.label_anatomical} â€¢ `}{hoveredPoint.location}
                                     </div>
                                 </div>
 

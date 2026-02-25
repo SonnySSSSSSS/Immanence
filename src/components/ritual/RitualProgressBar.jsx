@@ -3,13 +3,13 @@ import React from 'react';
 const BASE = import.meta.env.BASE_URL || '/';
 
 const STEP_ICONS = [
-    `${BASE}assets/ritual/incense_icon_v1.png`,
-    `${BASE}assets/ritual/map_icon_v1.png`,
-    `${BASE}assets/ritual/orb_hold_icon_v1.png`,
-    `${BASE}assets/ritual/random_step_icon_v1.png`,
-    `${BASE}assets/ritual/camera_step_icon_v1.png`,
-    `${BASE}assets/ritual/quill_icon_v1.png`,
-    `${BASE}assets/ritual/glow_frame_5.png`,
+    `${BASE}assets/ritual/incense_icon_v1.webp`,
+    `${BASE}assets/ritual/map_icon_v1.webp`,
+    `${BASE}assets/ritual/orb_hold_icon_v1.webp`,
+    `${BASE}assets/ritual/random_step_icon_v1.webp`,
+    `${BASE}assets/ritual/camera_step_icon_v1.webp`,
+    `${BASE}assets/ritual/quill_icon_v1.webp`,
+    `${BASE}assets/ritual/glow_frame_5.webp`,
 ];
 
 export function RitualProgressBar({ currentStep }) {

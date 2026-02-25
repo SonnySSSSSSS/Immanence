@@ -1,4 +1,4 @@
-﻿// src/components/WeeklyReview.jsx
+// src/components/WeeklyReview.jsx
 import React from 'react';
 import { useApplicationStore } from '../state/applicationStore.js';
 
@@ -46,7 +46,7 @@ export function WeeklyReview() {
                 <div
                     className="absolute inset-0 pointer-events-none rounded-3xl"
                     style={{
-                        backgroundImage: `url(${import.meta.env.BASE_URL}application-axe-stump.png)`,
+                        backgroundImage: `url(${import.meta.env.BASE_URL}application-axe-stump.webp)`,
                         backgroundSize: 'contain',
                         backgroundPosition: 'center center',
                         backgroundRepeat: 'no-repeat',

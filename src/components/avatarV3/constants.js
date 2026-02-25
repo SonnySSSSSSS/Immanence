@@ -17,11 +17,11 @@ export const STAGE_MEANINGS = {
 };
 
 export const STAGE_ASSETS = {
-  seedling: 'seedling_cloudiest.png',
-  ember: 'ember_cloudiest.png',
-  flame: 'flame_cloudiest.png',
-  beacon: 'beacon_cloudiest.png',
-  stellar: 'stellar_cloudiest.png',
+  seedling: 'seedling_cloudiest.webp',
+  ember: 'ember_cloudiest.webp',
+  flame: 'flame_cloudiest.webp',
+  beacon: 'beacon_cloudiest.webp',
+  stellar: 'stellar_cloudiest.webp',
 };
 
 export const MODE_LABELS = {

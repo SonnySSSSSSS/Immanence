@@ -19,7 +19,7 @@ function DashboardTile({ tile, isLight }) {
     // Format value based on tile type
     let displayValue = value;
     if (value === null || value === undefined) {
-        displayValue = '—';
+        displayValue = 'â€”';
     } else if (typeof value === 'number') {
         // For percent tiles, show with one decimal max
         if (id === 'completion_rate' || id === 'on_time_rate') {
@@ -153,7 +153,7 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
         ? (value === null ? ringColor : 'rgba(100, 80, 60, 0.8)')
         : (value === null ? ringColor : 'rgba(76, 175, 80, 0.8)');
 
-    const displayValue = value === null ? '—' : `${Math.round(value)}%`;
+    const displayValue = value === null ? 'â€”' : `${Math.round(value)}%`;
 
     // Sanctuary mode: put percent inside circle, keep label below
     if (isSanctuary && !isLight) {
@@ -236,7 +236,7 @@ function RateRingModule({ value, label, isLight, isSanctuary = false }) {
 }
 
 /**
- * QuickDashboardTiles — Read-only dashboard summary
+ * QuickDashboardTiles â€” Read-only dashboard summary
  * @param {Object} props
  * @param {Object} props.tiles - Tiles object from getQuickDashboardTiles()
  *                                 Shape: { minutes_total, sessions_total, days_active, completion_rate, on_time_rate }
@@ -383,7 +383,7 @@ export function QuickDashboardTiles({
                     <div
                         className="absolute inset-0 pointer-events-none opacity-[0.03]"
                         style={{
-                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.png)`,
+                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.webp)`,
                             backgroundSize: '200px',
                             mixBlendMode: 'multiply',
                             borderRadius: '24px',

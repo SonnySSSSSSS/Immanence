@@ -1,4 +1,4 @@
-﻿// src/components/WisdomSection.jsx
+// src/components/WisdomSection.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { WisdomSelectionModal } from "./WisdomSelectionModal.jsx";
 import ReactMarkdown from "react-markdown";
@@ -1182,14 +1182,14 @@ export function WisdomSection() {
     
     // Archetypal icons for each category (image assets)
     const categoryIcons = {
-      "focus-presence": `${import.meta.env.BASE_URL}icons/compass/eye.png`,
-      "emotional-regulation": `${import.meta.env.BASE_URL}icons/compass/balance.png`,
-      "shadow-integration": `${import.meta.env.BASE_URL}icons/compass/moon.png`,
-      "heart-connection": `${import.meta.env.BASE_URL}icons/compass/heart.png`,
-      "grounding-safety": `${import.meta.env.BASE_URL}icons/compass/mountain.png`,
-      "expression-voice": `${import.meta.env.BASE_URL}icons/compass/wave.png`,
-      "resonance-alignment": `${import.meta.env.BASE_URL}icons/compass/star.png`,
-      "self-knowledge": `${import.meta.env.BASE_URL}icons/compass/fire.png`,
+      "focus-presence": `${import.meta.env.BASE_URL}icons/compass/eye.webp`,
+      "emotional-regulation": `${import.meta.env.BASE_URL}icons/compass/balance.webp`,
+      "shadow-integration": `${import.meta.env.BASE_URL}icons/compass/moon.webp`,
+      "heart-connection": `${import.meta.env.BASE_URL}icons/compass/heart.webp`,
+      "grounding-safety": `${import.meta.env.BASE_URL}icons/compass/mountain.webp`,
+      "expression-voice": `${import.meta.env.BASE_URL}icons/compass/wave.webp`,
+      "resonance-alignment": `${import.meta.env.BASE_URL}icons/compass/star.webp`,
+      "self-knowledge": `${import.meta.env.BASE_URL}icons/compass/fire.webp`,
     };
     
     // Hardened Radial Layout Constants (no IIFE inside JSX)

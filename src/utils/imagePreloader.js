@@ -37,14 +37,14 @@ export const CRITICAL_IMAGES = [
  */
 export const SECONDARY_IMAGES = [
     // Stage backgrounds (bottom layers - note: top layers removed as they no longer exist)
-    'bg/bg-seedling-bottom.png',
-    'bg/bg-ember-bottom.png',
-    'bg/bg-flame-bottom.png',
-    'bg/bg-beacon-bottom.png',
-    'bg/bg-stellar-bottom.png',
+    'bg/bg-seedling-bottom.webp',
+    'bg/bg-ember-bottom.webp',
+    'bg/bg-flame-bottom.webp',
+    'bg/bg-beacon-bottom.webp',
+    'bg/bg-stellar-bottom.webp',
 
     // Practice backgrounds
-    'bg/practice-breath-mandala.png',
+    'bg/practice-breath-mandala.webp',
 ];
 
 /**

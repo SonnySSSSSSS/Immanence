@@ -16,7 +16,7 @@ const STAGE_HUE_SHIFTS = {
 
 export function RadiantHalo({ size = 440, stage = 'flame' }) {
     // We use the pre-rendered PNG from public/assets/radiant_halo.png
-    const assetPath = `${import.meta.env.BASE_URL}assets/radiant_halo.png`;
+    const assetPath = `${import.meta.env.BASE_URL}assets/radiant_halo.webp`;
 
     // Get the hue shift for this stage
     const hueShift = STAGE_HUE_SHIFTS[stage.toLowerCase()] || 0;

@@ -56,7 +56,7 @@ function PracticeMenu({
   const activeMode = hasSubModes ? (setters.activeMode || practice.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
 
-  const wallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
+  const wallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
 
   // Resolve config components from string names
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;

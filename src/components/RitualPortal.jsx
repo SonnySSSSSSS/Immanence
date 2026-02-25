@@ -26,37 +26,37 @@ const RITUAL_STEPS = [
         background: `${BASE}assets/ritual/incense_bg_v1.jpg`,
         audio: `${BASE}assets/audio/ritual_step_1.mp3`,
         guide: {
-            image: `${BASE}assets/ritual/guide_lighting_incense.png`,
+            image: `${BASE}assets/ritual/guide_lighting_incense.webp`,
             caption: "Light your incense. Focus on the rising smoke as a symbolic offering of your attention."
         }
     },
     {
         id: 2,
         title: "Visual Map Review",
-        background: `${BASE}assets/ritual/visual_map_v1.png`,
+        background: `${BASE}assets/ritual/visual_map_v1.webp`,
         audio: `${BASE}assets/audio/ritual_step_2.mp3`,
         guide: {
-            image: `${BASE}assets/ritual/guide_reviewing_map.png`,
+            image: `${BASE}assets/ritual/guide_reviewing_map.webp`,
             caption: "Gaze upon the emotional map. See your feelings as distinct nodes within this container."
         }
     },
     {
         id: 3,
         title: "Container Holding",
-        background: `${BASE}assets/ritual/visual_map_v1.png`,
+        background: `${BASE}assets/ritual/visual_map_v1.webp`,
         audio: `${BASE}assets/audio/ritual_step_3.mp3`,
         guide: {
-            image: `${BASE}assets/ritual/guide_holding_container.png`,
+            image: `${BASE}assets/ritual/guide_holding_container.webp`,
             caption: "Imagine your hands gently cradling this container. Feel the weight and warmth of your awareness."
         }
     },
     {
         id: 4,
         title: "Random Select + Feel",
-        background: `${BASE}assets/ritual/visual_map_v1.png`,
+        background: `${BASE}assets/ritual/visual_map_v1.webp`,
         audio: `${BASE}assets/audio/ritual_step_4.mp3`,
         guide: {
-            image: `${BASE}assets/ritual/guide_selecting_memory.png`,
+            image: `${BASE}assets/ritual/guide_selecting_memory.webp`,
             caption: "Allow a random memory to emerge. Witness it without judgment or entanglement."
         }
     },
@@ -66,7 +66,7 @@ const RITUAL_STEPS = [
         background: `${BASE}assets/ritual/incense_bg_v1.jpg`,
         audio: `${BASE}assets/audio/ritual_step_5.mp3`,
         guide: {
-            image: `${BASE}assets/ritual/guide_taking_photo.png`,
+            image: `${BASE}assets/ritual/guide_taking_photo.webp`,
             caption: "Take a photo of yourself from a 3rd-person perspective. Observe the witness witnessing."
         }
     },
@@ -99,7 +99,7 @@ export function RitualPortal({ onComplete, onStop }) {
     const [showGuide, setShowGuide] = useState(true);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    // Stable performance.now() anchor for BreathingRing — created once on mount.
+    // Stable performance.now() anchor for BreathingRing â€” created once on mount.
     const breathStartTime = useRef(performance.now());
 
     useEffect(() => {
@@ -175,7 +175,7 @@ export function RitualPortal({ onComplete, onStop }) {
                                     : '0 0 30px rgba(212,184,122,0.2)'
                             }}
                         >
-                            <span className="text-5xl">✍️</span>
+                            <span className="text-5xl">âœï¸</span>
                         </div>
                         <p className="font-display tracking-widest text-lg"
                             style={{ color: isLight ? '#A07855' : '#D4B87A' }}

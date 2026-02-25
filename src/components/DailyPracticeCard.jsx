@@ -651,11 +651,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const displayName = getDisplayName(user);
 
     // Show path-based daily card when an active path with scheduled times exists,
-    // regardless of onboarding status — prevents falling through to stale curriculum modal
+    // regardless of onboarding status â€” prevents falling through to stale curriculum modal
     const hasActivePath = activePathObj && times.length > 0;
 
     if (hasActivePath || needsSetup || showNoCurriculumSetupState || (!onboardingComplete && hasPersistedCurriculumData === false)) {
-        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
+        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
         const isSetupEmptyState = !activePathObj;
 
         return (
@@ -810,7 +810,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                 <div
                                     className="absolute inset-0 pointer-events-none opacity-40"
                                     style={{
-                                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.png)`,
+                                        backgroundImage: `url(${import.meta.env.BASE_URL}assets/parchment_blank.webp)`,
                                         backgroundSize: 'cover',
                                         mixBlendMode: 'multiply',
                                     }}
@@ -859,7 +859,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                                         <div className="mt-6 w-full">
                                             <img
-                                                src={`${import.meta.env.BASE_URL}enter%20temple.png`}
+                                                src={`${import.meta.env.BASE_URL}enter%20temple.webp`}
                                                 alt="Enter temple"
                                                 style={{
                                                     width: '100%',
@@ -927,7 +927,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         </div>
                                         <div style={{ marginTop: '20px', width: '100%', display: 'flex', justifyContent: 'center' }}>
                                             <img
-                                                src={`${import.meta.env.BASE_URL}off%20day.png`}
+                                                src={`${import.meta.env.BASE_URL}off%20day.webp`}
                                                 alt="Rest day"
                                                 style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '16px', opacity: 0.9 }}
                                             />
@@ -1010,7 +1010,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 transform: 'scale(1)',
                                                             }}
                                                         >
-                                                            {isDone ? '✓' : legNumber}
+                                                            {isDone ? 'âœ“' : legNumber}
                                                         </div>
 
                                                         {/* Leg Details */}
@@ -1252,7 +1252,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     };
 
     if ((isCurriculumActive && dayNumber > 14) || isCurriculumComplete) {
-        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
+        const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
 
         return (
             <div
@@ -1317,7 +1317,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                     <div
                         className="absolute inset-0 pointer-events-none opacity-[0.03] dpRadiusInherit"
                         style={{
-                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.png)`,
+                            backgroundImage: `url(${import.meta.env.BASE_URL}assets/canvas_grain.webp)`,
                             backgroundSize: '200px',
                             mixBlendMode: 'multiply',
                         }}
@@ -1326,7 +1326,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 </div>
 
                 <div className="glassCardContent relative z-10 p-8 text-center">
-                    <div className="text-4xl mb-4">🏆</div>
+                    <div className="text-4xl mb-4">ðŸ†</div>
                     <h3 className="text-xl font-bold mb-2" style={{ color: config.textMain, fontFamily: 'var(--font-display)' }}>
                         Curriculum Complete!
                     </h3>
@@ -1723,7 +1723,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         <div className="flex flex-col items-end gap-1">
                                             {streak > 1 && (
                                                 <div className="px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1" style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', color: 'var(--accent-color)' }}>
-                                                    🔥 {streak}-DAY STREAK
+                                                    ðŸ”¥ {streak}-DAY STREAK
                                                 </div>
                                             )}
                                         </div>
@@ -1738,7 +1738,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             letterSpacing: '0.02em'
                                         }}
                                     >
-                                        Completed today's sessions — see you tomorrow!
+                                        Completed today's sessions â€” see you tomorrow!
                                     </div>
                                 )}
 
@@ -1796,7 +1796,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         transform: isActionable ? 'scale(1.05)' : 'scale(1)',
                                                     }}
                                                 >
-                                                    {leg.completed && showPerLegCompletion ? '✓' : leg.legNumber}
+                                                    {leg.completed && showPerLegCompletion ? 'âœ“' : leg.legNumber}
                                                 </div>
 
                                                 {/* Leg Details */}
@@ -1826,7 +1826,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         )}
                                                         {isActionable && lastSessionFailed && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#dc2626' : '#ff6b6b' }}>
-                                                                ⚠ Incomplete
+                                                                âš  Incomplete
                                                             </div>
                                                         )}
                                                         {expired && (

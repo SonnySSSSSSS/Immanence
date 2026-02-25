@@ -39,7 +39,7 @@ export function MemorySelector({ onSelect }) {
                     transition={isSpinning ? { duration: 3, ease: "easeInOut" } : { duration: 0.5 }}
                     className="w-full h-full rounded-full"
                     style={{
-                        backgroundImage: `url(${BASE}assets/ritual/random_icon_v1.png)`,
+                        backgroundImage: `url(${BASE}assets/ritual/random_icon_v1.webp)`,
                         backgroundSize: 'contain',
                         backgroundRepeat: 'no-repeat',
                         filter: isSpinning ? 'drop-shadow(0 0 20px var(--accent-color)) saturate(2)' : 'none'

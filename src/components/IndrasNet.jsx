@@ -1,9 +1,9 @@
 // src/components/IndrasNet.jsx
 // INDRA'S NET - Stage-aware cosmic particles at bottom
 //
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CRITICAL PATTERN: Display Mode Particle Rendering
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //
 // PROBLEM: When switching between hearth (430px) and sanctuary (820px) modes,
 // canvas-rendered particles would stretch or shrink because the canvas element
@@ -26,18 +26,18 @@
 //    - Particles only created once per canvas mount
 //    - Resize handler only reinitializes on significant width changes (>50px)
 //
-// ⚠️ DO NOT REMOVE OR MODIFY THIS PATTERN WITHOUT TESTING:
+// âš ï¸ DO NOT REMOVE OR MODIFY THIS PATTERN WITHOUT TESTING:
 //    - Toggle between hearth/sanctuary modes multiple times
 //    - Verify particles maintain consistent size across transitions
 //    - Check that no stretching, squashing, or duplication occurs
 //
 // TESTING CHECKLIST:
-// [ ] Switch hearth → sanctuary → hearth → sanctuary rapidly
+// [ ] Switch hearth â†’ sanctuary â†’ hearth â†’ sanctuary rapidly
 // [ ] Verify particle size stays constant (no stretch/shrink)
 // [ ] Confirm smooth fade transition (no flicker or jump)
 // [ ] Check particle count remains consistent (no duplication)
 // [ ] Test with different stages (seedling, ember, flame, beacon, stellar)
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 import React, { useEffect, useRef, useState } from "react";
 
@@ -63,10 +63,10 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
     const hideParticles = isPracticing;
     const initializedRef = useRef(false);
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // LAYER 1: KEY-BASED REMOUNTING
-    // ═══════════════════════════════════════════════════════════════════════════
-    // ⚠️ CRITICAL: This key forces React to unmount/remount the canvas element
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // âš ï¸ CRITICAL: This key forces React to unmount/remount the canvas element
     // when displayMode changes, ensuring particles are never stretched
     const [canvasKey, setCanvasKey] = useState(`canvas-${displayMode}-0`);
     const [opacity, setOpacity] = useState(1);
@@ -80,7 +80,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
 
             // After fade completes, remount canvas with new key
             const timer = setTimeout(() => {
-                // Update key → React unmounts old canvas, mounts new one
+                // Update key â†’ React unmounts old canvas, mounts new one
                 setCanvasKey(`canvas-${displayMode}-${Date.now()}`);
                 prevModeRef.current = displayMode;
 
@@ -92,7 +92,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
                 requestAnimationFrame(() => {
                     setOpacity(1);
                 });
-            }, 300); // ⚠️ Must match CSS transition duration
+            }, 300); // âš ï¸ Must match CSS transition duration
 
             return () => clearTimeout(timer);
         }
@@ -114,10 +114,10 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
         const stageLower = (stage || 'flame').toLowerCase();
         const colors = STAGE_PARTICLE_COLORS[stageLower] || STAGE_PARTICLE_COLORS.flame;
 
-        // ═══════════════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // LAYER 3: PROTECTED INITIALIZATION
-        // ═══════════════════════════════════════════════════════════════════════════
-        // ⚠️ CRITICAL: Prevents duplicate particle creation during canvas lifetime
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // âš ï¸ CRITICAL: Prevents duplicate particle creation during canvas lifetime
         function initParticles() {
             if (initializedRef.current) return; // Already initialized for this mount
             initializedRef.current = true;
@@ -225,7 +225,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
                     inset: 0,
                     width: "140%",
                     left: "-20%",
-                    backgroundImage: `url('${import.meta.env.BASE_URL}bottom loop.png')`,
+                    backgroundImage: `url('${import.meta.env.BASE_URL}bottom loop.webp')`,
                     backgroundRepeat: "no-repeat",
                     backgroundPosition: "bottom center",
                     backgroundSize: "cover",

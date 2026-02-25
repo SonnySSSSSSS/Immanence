@@ -79,7 +79,7 @@ export function CameraCapture({ onCapture }) {
                         <div 
                             className="absolute inset-x-8 inset-y-8 border border-white/20 rounded-3xl"
                             style={{
-                                backgroundImage: `url(${BASE}assets/ritual/photo_hint_v1.png)`,
+                                backgroundImage: `url(${BASE}assets/ritual/photo_hint_v1.webp)`,
                                 backgroundSize: 'contain',
                                 backgroundPosition: 'center',
                                 backgroundRepeat: 'no-repeat',
@@ -102,7 +102,7 @@ export function CameraCapture({ onCapture }) {
                                 className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border border-green-500/30 flex items-center gap-2 z-50 shadow-lg"
                             >
                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[10px] font-bold text-white uppercase tracking-[2px]">Camera Offline • Secure</span>
+                                <span className="text-[10px] font-bold text-white uppercase tracking-[2px]">Camera Offline â€¢ Secure</span>
                             </motion.div>
                         )}
                     </AnimatePresence>

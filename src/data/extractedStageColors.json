@@ -5,7 +5,7 @@
     "accent": "#588B7A",
     "muted": "#3A5B52",
     "highlight": "#7FA88F",
-    "source": "bg/bg-seedling-bottom.png",
+    "source": "bg/bg-seedling-bottom.webp",
     "extractedAt": "2026-02-09T00:00:00.000Z",
     "contrastRatio": "4.2",
     "wcagAA": true
@@ -16,7 +16,7 @@
     "accent": "#e5ab51",
     "muted": "#895b14",
     "highlight": "#f2d6aa",
-    "source": "bg/bg-ember-bottom.png",
+    "source": "bg/bg-ember-bottom.webp",
     "extractedAt": "2026-02-04T16:03:52.533Z",
     "contrastRatio": "9.63",
     "wcagAA": true
@@ -27,7 +27,7 @@
     "accent": "#23a64e",
     "muted": "#092813",
     "highlight": "#55db81",
-    "source": "bg/bg-flame-bottom.png",
+    "source": "bg/bg-flame-bottom.webp",
     "extractedAt": "2026-02-04T16:03:52.577Z",
     "contrastRatio": "6.25",
     "wcagAA": true
@@ -38,7 +38,7 @@
     "accent": "#96335e",
     "muted": "#240c17",
     "highlight": "#cb6591",
-    "source": "bg/bg-beacon-bottom.png",
+    "source": "bg/bg-beacon-bottom.webp",
     "extractedAt": "2026-02-04T16:03:52.615Z",
     "contrastRatio": "2.77",
     "wcagAA": false
@@ -49,7 +49,7 @@
     "accent": "#783780",
     "muted": "#140915",
     "highlight": "#b162bb",
-    "source": "bg/bg-stellar-bottom.png",
+    "source": "bg/bg-stellar-bottom.webp",
     "extractedAt": "2026-02-04T16:03:52.654Z",
     "contrastRatio": "2.49",
     "wcagAA": false

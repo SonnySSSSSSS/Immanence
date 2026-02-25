@@ -95,9 +95,9 @@ function ParallaxLayer({
 }
 
 export default function ParallaxForest({
-  skySrc = "/awareness/parallax_forest_00001_.png",
-  treesSrc = "/awareness/parallax_forest_00002_.png",
-  foliageSrc = "/awareness/parallax_forest_00003_.png",
+  skySrc = "/awareness/parallax_forest_00001_.webp",
+  treesSrc = "/awareness/parallax_forest_00002_.webp",
+  foliageSrc = "/awareness/parallax_forest_00003_.webp",
   className = "",
   style = {},
 }) {

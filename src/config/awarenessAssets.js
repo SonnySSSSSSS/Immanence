@@ -12,11 +12,11 @@ export const AWARENESS_REGIONS = ['upper', 'middle', 'lower', 'full'];
 
 // Body scan practice IDs to assets (in public/sensory folder)
 export const BODY_SCAN_ASSETS = {
-    full: `${import.meta.env.BASE_URL}sensory/body-scan-silhouette.png`,
+    full: `${import.meta.env.BASE_URL}sensory/body-scan-silhouette.webp`,
     head: `${import.meta.env.BASE_URL}sensory/body-scan-head.jpg`,
-    chest: `${import.meta.env.BASE_URL}sensory/body-scan-chest.png`,
-    hips: `${import.meta.env.BASE_URL}sensory/body-scan-hips.png`,
-    hands: `${import.meta.env.BASE_URL}sensory/body-scan-hands.png`,
-    feet: `${import.meta.env.BASE_URL}sensory/body-scan-feet.png`,
-    nadis: `${import.meta.env.BASE_URL}sensory/body-scan-nadis.png`,
+    chest: `${import.meta.env.BASE_URL}sensory/body-scan-chest.webp`,
+    hips: `${import.meta.env.BASE_URL}sensory/body-scan-hips.webp`,
+    hands: `${import.meta.env.BASE_URL}sensory/body-scan-hands.webp`,
+    feet: `${import.meta.env.BASE_URL}sensory/body-scan-feet.webp`,
+    nadis: `${import.meta.env.BASE_URL}sensory/body-scan-nadis.webp`,
 };

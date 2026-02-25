@@ -54,7 +54,7 @@ export function PracticeOptionsCard({
   const practice = p?.label;
   const isCollapsed = !practiceId;
   const isSanctuary = false;
-  const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.png`;
+  const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
   const practicePanelWallpaper = tokens?.isLight
     ? `linear-gradient(rgba(245, 240, 230, 0.70), rgba(245, 240, 230, 0.86)), url("${practicePanelWallpaperUrl}")`
     : `linear-gradient(rgba(10, 12, 18, 0.35), rgba(10, 12, 18, 0.62)), url("${practicePanelWallpaperUrl}")`;
