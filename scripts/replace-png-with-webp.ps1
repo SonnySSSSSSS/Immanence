@@ -3,6 +3,8 @@ param(
     [string]$RepoRoot,
     [string]$PublicRoot,
     [string]$ManifestPath,
+    [switch]$ApplyAllRewritableFromReport,
+    [string]$ScanReportPath,
     [switch]$DryRun
 )
 
@@ -19,6 +21,10 @@ if ([string]::IsNullOrWhiteSpace($PublicRoot)) {
 
 if ([string]::IsNullOrWhiteSpace($ManifestPath)) {
     $ManifestPath = Join-Path $scriptDirectory '.tmp\webp-manifest.json'
+}
+
+if ([string]::IsNullOrWhiteSpace($ScanReportPath)) {
+    $ScanReportPath = Join-Path $scriptDirectory '.tmp\asset-ref-scan.json'
 }
 
 function Normalize-RepoRelativePath {
@@ -207,9 +213,108 @@ function Resolve-ReplacementKey {
     return $null
 }
 
+function Invoke-ReportDrivenApply {
+    param(
+        [string]$RepoRootPath,
+        [string]$ReportPath,
+        [switch]$IsDryRun
+    )
+
+    if (-not (Test-Path -LiteralPath $ReportPath)) {
+        throw "Scan report not found: $ReportPath"
+    }
+
+    $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
+    if ($null -eq $report -or $null -eq $report.matches) {
+        throw "Invalid scan report format: $ReportPath"
+    }
+
+    $rewritable = @($report.matches | Where-Object { $_.classification -eq 'REWRITABLE' })
+    $grouped = $rewritable | Group-Object file
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $filesTouched = 0
+    $replacementsApplied = 0
+    $conflictsSkipped = 0
+    $touchedByFile = @{}
+
+    foreach ($group in $grouped) {
+        $fileRel = [string]$group.Name
+        $fileAbs = Join-Path $RepoRootPath ($fileRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        if (-not (Test-Path -LiteralPath $fileAbs)) {
+            $conflictsSkipped += $group.Count
+            continue
+        }
+
+        $content = Get-Content -LiteralPath $fileAbs -Raw
+        if ($null -eq $content) { $content = '' }
+
+        $fileChanges = 0
+        $orderedMatches = @($group.Group | Sort-Object { [int]$_.spanStart } -Descending)
+        foreach ($match in $orderedMatches) {
+            $start = [int]$match.spanStart
+            $length = [int]$match.spanLength
+            $expected = [string]$match.matchedText
+            $replacement = [string]$match.replacementLiteral
+
+            if ($start -lt 0 -or $length -lt 0 -or ($start + $length) -gt $content.Length) {
+                $conflictsSkipped++
+                continue
+            }
+            if ([string]::IsNullOrWhiteSpace($replacement)) {
+                $conflictsSkipped++
+                continue
+            }
+
+            $slice = $content.Substring($start, $length)
+            if ($slice -cne $expected) {
+                $conflictsSkipped++
+                continue
+            }
+
+            $content = $content.Substring(0, $start) + $replacement + $content.Substring($start + $length)
+            $fileChanges++
+        }
+
+        if ($fileChanges -gt 0) {
+            $filesTouched++
+            $replacementsApplied += $fileChanges
+            $touchedByFile[$fileRel] = $fileChanges
+
+            if ($IsDryRun) {
+                Write-Host "DRY-RUN: $fileRel ($fileChanges replacements)"
+            }
+            else {
+                [System.IO.File]::WriteAllText($fileAbs, $content, $utf8NoBom)
+                Write-Host "UPDATED: $fileRel ($fileChanges replacements)"
+            }
+        }
+    }
+
+    $topTouched = $touchedByFile.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 20
+    $mode = if ($IsDryRun) { 'dry-run' } else { 'apply' }
+    Write-Host "Summary: mode=$mode filesTouched=$filesTouched replacementsApplied=$replacementsApplied conflictsSkipped=$conflictsSkipped"
+    Write-Host 'Top touched files:'
+    foreach ($row in $topTouched) {
+        Write-Host "  $($row.Key): $($row.Value)"
+    }
+
+    return [ordered]@{
+        mode = $mode
+        filesTouched = $filesTouched
+        replacementsApplied = $replacementsApplied
+        conflictsSkipped = $conflictsSkipped
+    }
+}
+
 try {
     $repoRootPath = (Resolve-Path -LiteralPath $RepoRoot).Path
     $publicRootPath = (Resolve-Path -LiteralPath $PublicRoot).Path
+
+    if ($ApplyAllRewritableFromReport) {
+        Invoke-ReportDrivenApply -RepoRootPath $repoRootPath -ReportPath $ScanReportPath -IsDryRun:$DryRun | Out-Null
+        exit 0
+    }
 
     $replacementMap = @{}
 
