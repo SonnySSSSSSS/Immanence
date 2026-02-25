@@ -1,33 +1,41 @@
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { ContactShadows, Environment, Html } from '@react-three/drei'
+import { Html } from '@react-three/drei'
+
+// ─── POLYGON STABILITY LOCK ───────────────────────────────────────────────────
+// These constraints MUST be preserved. See git history for X4008 / texSubImage
+// context-loss investigation that led to this design.
+//
+// • No <Environment/> — no PMREM; keep scene.environment = null + scene.background = null
+// • No shadows — keep gl.shadowMap.enabled = false; no ContactShadows
+// • No steady-state texture uploads — CanvasTexture updates only on digit change
+// • No envMap — material.envMap = null + envMapIntensity = 0 on all materials
+// • Lighting via direct lights only (PolyLightRig); no IBL
+// ─────────────────────────────────────────────────────────────────────────────
 
 const POLYGON_DIGIT_TEXTURE_SIZE = 256
 const POLYGON_DEBUG_LOGS = false
 const POLYGON_DIGIT_TEXTURE_CACHE = new Map()
-const POLY_PROBE_SIGNATURE = 'PolygonBreathScene.jsx::forensics-v1'
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
 
-function summarizeWebGLArg(arg) {
-  if (arg == null) return String(arg)
-  const type = typeof arg
-  if (type === 'number' || type === 'boolean') return `${type}:${arg}`
-  if (type === 'string') return `string:${arg.slice(0, 64)}`
-  if (ArrayBuffer.isView(arg)) {
-    const ctor = arg.constructor?.name || 'TypedArray'
-    return `${ctor}[${arg.byteLength}]`
-  }
-  if (typeof HTMLCanvasElement !== 'undefined' && arg instanceof HTMLCanvasElement) {
-    return `HTMLCanvasElement(${arg.width}x${arg.height})`
-  }
-  if (typeof ImageBitmap !== 'undefined' && arg instanceof ImageBitmap) {
-    return `ImageBitmap(${arg.width}x${arg.height})`
-  }
-  const ctor = arg?.constructor?.name || 'Object'
-  return ctor
+// Direct-light rig for polygon preset — no IBL, no shadows, no helpers.
+// All positions are in world space; three.js default target is [0,0,0].
+function PolyLightRig({ accentColor }) {
+  return (
+    <>
+      {/* Fill: raised ambient so unlit faces aren't near-black without IBL */}
+      <ambientLight intensity={0.35} />
+      {/* Key: front/upper/right — main face light, neutral white */}
+      <directionalLight position={[2.5, 3.0, 2.5]} intensity={2.2} />
+      {/* Rim: behind/upper/left — cool-blue edge separation */}
+      <pointLight position={[-2.2, 2.0, -2.0]} intensity={0.8} color="#9ab8ff" />
+      {/* Bounce: low warm ground fill tinted by accent */}
+      <pointLight position={[0, -1.5, 0.5]} intensity={0.35} color={accentColor} />
+    </>
+  )
 }
 
 function createDigitTexture(value) {
@@ -100,7 +108,7 @@ function createDigitTexture(value) {
 }
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
-  const { gl, size } = useThree()
+  const { gl, size, scene, camera } = useThree()
   const runtimeProbeFlags = useMemo(() => {
     if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
     const params = new URLSearchParams(window.location.search || '')
@@ -112,13 +120,57 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const useSafeGeometry = POLY_SAFE_GEOMETRY || runtimeProbeFlags.polyRuntimeSafe
   const useSafeDigit = POLY_SAFE_DIGIT || runtimeProbeFlags.polyRuntimeSafe || runtimeProbeFlags.polyRuntimeSafeDigit
   const modeLabel = useSafeGeometry ? 'POLY SAFE MODE' : 'POLY NORMAL MODE'
-  const modeSuffix = (!useSafeGeometry && useSafeDigit) ? ' · DIGIT OFF' : ''
 
   useEffect(() => {
-    console.info(`[POLY PROBE] ${POLY_PROBE_SIGNATURE} mounted mode=${modeLabel}${modeSuffix}`)
-  }, [modeLabel, modeSuffix])
+    if (POLYGON_DEBUG_LOGS) {
+      console.debug(`[PolygonBreathScene] mounted mode=${modeLabel}`)
+    }
+  }, [modeLabel])
 
+  // Permanent fix: disable shadows and environment for polygon preset stability
   useEffect(() => {
+    gl.shadowMap.enabled = false
+  }, [gl])
+
+  // Permanent fix: disable environment/PMREM to prevent X4008 and context loss
+  useEffect(() => {
+    // Force environment/background to null
+    scene.environment = null
+    scene.background = null
+
+    // Strip only envMap from all materials — do NOT touch metalness/roughness,
+    // those are owned by JSX props and drive the direct-lighting response.
+    scene.traverse((obj) => {
+      if (!obj.material) return
+      const materials = Array.isArray(obj.material) ? obj.material : [obj.material]
+      materials.forEach((m) => {
+        m.envMap = null
+        m.envMapIntensity = 0
+      })
+    })
+
+    // Guard against environment leakage
+    let lastCheckTime = 0
+    const checkInterval = setInterval(() => {
+      const now = Date.now()
+      if (now - lastCheckTime < 500) return
+      lastCheckTime = now
+
+      if (scene.environment !== null) {
+        scene.environment = null
+      }
+      if (scene.background !== null) {
+        scene.background = null
+      }
+    }, 500)
+
+    return () => clearInterval(checkInterval)
+  }, [scene])
+
+  // Optional: cleanup detector for debug builds (can be disabled for production)
+  useEffect(() => {
+    if (!POLYGON_DEBUG_LOGS) return
+
     const glContext = gl?.getContext?.()
     if (!glContext) return undefined
 
@@ -130,33 +182,26 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
     const PREMULT = glContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL
     const FLIPY = glContext.UNPACK_FLIP_Y_WEBGL
-    let texSubImageLogCount = 0
+    let texSubImageCallCount = 0
+    let pixelStoreiCallCount = 0
+    const pixelStoreiLogMap = new Map()
 
     function wrappedPixelStorei(...args) {
+      pixelStoreiCallCount += 1
       const pname = args[0]
       if (pname === PREMULT || pname === FLIPY) {
-        console.warn('[POLY PROBE] pixelStorei unpack flag set while polygon mounted', {
-          signature: POLY_PROBE_SIGNATURE,
-          mode: `${modeLabel}${modeSuffix}`,
-          pname,
-          value: args[1],
-          stack: new Error().stack,
-        })
+        const key = `${pname}:${args[1]}`
+        const now = Date.now()
+        if (!pixelStoreiLogMap.has(key) || now - pixelStoreiLogMap.get(key) > 2000) {
+          pixelStoreiLogMap.set(key, now)
+          console.debug('[Polygon] pixelStorei flag set', { pname, value: args[1] })
+        }
       }
       return originalPixelStorei.apply(glContext, args)
     }
 
     function wrappedTexSubImage2D(...args) {
-      if (texSubImageLogCount < 12) {
-        texSubImageLogCount += 1
-        console.warn('[POLY PROBE] texSubImage2D called', {
-          signature: POLY_PROBE_SIGNATURE,
-          mode: `${modeLabel}${modeSuffix}`,
-          argTypes: args.map(summarizeWebGLArg),
-          stack: new Error().stack,
-          callIndex: texSubImageLogCount,
-        })
-      }
+      texSubImageCallCount += 1
       return originalTexSubImage2D.apply(glContext, args)
     }
 
@@ -167,37 +212,8 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       if (glContext.pixelStorei === wrappedPixelStorei) glContext.pixelStorei = originalPixelStorei
       if (glContext.texSubImage2D === wrappedTexSubImage2D) glContext.texSubImage2D = originalTexSubImage2D
     }
-  }, [gl, modeLabel, modeSuffix])
+  }, [gl])
 
-  useEffect(() => {
-    const originalWarn = console.warn
-    const originalError = console.error
-    const x4008Pattern = /X4008|C:\\fakepath\(210,11-125\)|floating point division by zero/i
-
-    function wrapConsole(fn) {
-      return (...args) => {
-        const message = args.map((v) => String(v)).join(' ')
-        if (x4008Pattern.test(message)) {
-          originalWarn('[POLY PROBE] X4008 seen while polygon mounted', {
-            signature: POLY_PROBE_SIGNATURE,
-            mode: `${modeLabel}${modeSuffix}`,
-            stack: new Error().stack,
-          })
-        }
-        return fn.apply(console, args)
-      }
-    }
-
-    const wrappedWarn = wrapConsole(originalWarn)
-    const wrappedError = wrapConsole(originalError)
-    console.warn = wrappedWarn
-    console.error = wrappedError
-
-    return () => {
-      if (console.warn === wrappedWarn) console.warn = originalWarn
-      if (console.error === wrappedError) console.error = originalError
-    }
-  }, [modeLabel, modeSuffix])
 
   // Breath driver ref sync (same pattern as TechInstrumentRND)
   const breathDriverRef = useRef(breathDriver)
@@ -205,7 +221,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     breathDriverRef.current = breathDriver
   }, [breathDriver])
 
-  // Geometry — two memoized geometries
+  // Geometry — all created once, disposed on unmount
   const icoGeom = useMemo(() => new THREE.IcosahedronGeometry(0.88, 0), [])
   const edgeGeom = useMemo(() => new THREE.EdgesGeometry(icoGeom), [icoGeom])
 
@@ -264,7 +280,8 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   // useFrame refs and logic
   const groupRef = useRef()
   const scaleRef = useRef(1.0)
-  const digitMeshRef = useRef()
+  const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
+  const reflectionRef = useRef()    // upright reflection below polygon
 
   useFrame((state, delta) => {
     if (!groupRef.current) return
@@ -285,15 +302,56 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     scaleRef.current += (targetScale - scaleRef.current) * Math.min(1, safeDelta * 5)
     groupRef.current.scale.setScalar(scaleRef.current)
 
+    // Billboard: copy camera quaternion so plane always faces viewer exactly
+    if (numberPlaneRef.current) {
+      numberPlaneRef.current.quaternion.copy(state.camera.quaternion)
+    }
+
+    // Reflection: fade with breath cycle for a gentle glimmer
+    if (reflectionRef.current?.material) {
+      reflectionRef.current.material.opacity = 0.20 + cycleProgress01 * 0.12
+    }
   })
 
   if (size.width < 1 || size.height < 1) return null
 
   return (
     <>
-      <ambientLight intensity={0.15} />
-      <pointLight position={[1.5, 2.5, 2]} intensity={0.9} color={accentColor} />
-      {!useSafeGeometry && <Environment preset="city" />}
+      <PolyLightRig accentColor={accentColor} />
+
+      {/* Subtle projector cues (replaced volumetric beam):
+
+          Emitter glow — small plane at the source point (top),
+          suggests projection origin without VFX look.
+
+          Hit spot — small circular glyph at the digit, grounded cue
+          that projection is targeting something inside the crystal. */}
+
+      {/* Emitter glyph — very small, high above polygon, facing camera */}
+      <mesh position={[0, 1.6, 0]}>
+        <planeGeometry args={[0.08, 0.08]} />
+        <meshBasicMaterial
+          color={accentColor}
+          transparent
+          opacity={0.08}
+          depthWrite={false}
+          depthTest={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Hit spot — centered at digit, facing camera, extremely subtle */}
+      <mesh position={[0, 0, 0.04]}>
+        <planeGeometry args={[0.14, 0.14]} />
+        <meshBasicMaterial
+          color={accentColor}
+          transparent
+          opacity={0.04}
+          depthWrite={false}
+          depthTest={true}
+          toneMapped={false}
+        />
+      </mesh>
 
       <Html
         fullscreen
@@ -317,11 +375,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             padding: '4px 6px',
           }}
         >
-          {modeLabel}{modeSuffix}
+          {modeLabel}
         </div>
       </Html>
 
-      {/* Rotating polygon group — digit rotates and can be occluded */}
+      {/* Rotating polygon group — no digit here; digit is in world space below */}
       <group ref={groupRef}>
         <mesh geometry={icoGeom}>
           <meshBasicMaterial colorWrite={false} depthWrite />
@@ -336,15 +394,20 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
               toneMapped={false}
             />
           ) : (
+            // Dielectric glass: low metalness gives Lambertian diffuse response visible
+            // under raised ambient, keeping faces bright even without IBL.
+            // clearcoat 0.7 adds a sharp gloss highlight from the key light.
+            // depthWrite: true (default) — essential so polygon depth can occlude the digit plane.
             <meshPhysicalMaterial
               color={accentColor}
-              metalness={0.18}
+              metalness={0.08}
               roughness={0.22}
-              clearcoat={1}
+              clearcoat={0.7}
               clearcoatRoughness={0.12}
+              envMap={null}
+              envMapIntensity={0}
               transparent
-              opacity={0.22}
-              depthWrite={false}
+              opacity={0.40}
               toneMapped={false}
             />
           )}
@@ -352,35 +415,50 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]}>
           <lineBasicMaterial color={useSafeGeometry ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
         </lineSegments>
-
-        {!useSafeDigit && digitTexture && (
-          <mesh ref={digitMeshRef} position={[0, 0, 0.78]}>
-            <planeGeometry args={[0.50, 0.50]} />
-            <meshBasicMaterial
-              map={digitTexture}
-              color={accentColor}
-              transparent
-              alphaTest={0.02}
-              toneMapped={false}
-              depthWrite={false}
-              depthTest
-            />
-          </mesh>
-        )}
       </group>
 
-      {!useSafeGeometry && (
-        <ContactShadows
-          position={[0, -0.92, 0]}
-          color={accentColor}
-          opacity={0.60}
-          blur={3.0}
-          scale={3.4}
-          far={2.8}
-          frames={reducedEffects ? 1 : 6}
-          resolution={128}
-        />
+      {/* PHASE 1 PROBE: Force visibility to confirm digit mesh is rendering.
+          Temporarily: depthTest=false, renderOrder=999, opacity=1.0.
+          After probe passes, revert to depthTest=true with small offset. */}
+      {!useSafeDigit && digitTexture && (
+        <mesh ref={numberPlaneRef} position={[0, 0, -0.04]} rotation={[0, 0, Math.PI]} renderOrder={9999}>
+          <planeGeometry args={[0.62, 0.62]} />
+          <meshBasicMaterial
+            map={digitTexture}
+            color={accentColor}
+            transparent
+            alphaTest={0.01}
+            toneMapped={false}
+            depthWrite={false}
+            depthTest={false}
+            opacity={1.0}
+          />
+        </mesh>
       )}
+
+      {/* PHASE 1 PROBE: Move reflection up to test visibility (reduce Y by 0.35).
+          Once probe confirms both digits visible, fine-tune Y to avoid clipping. */}
+      {!useSafeDigit && digitTexture && (
+        <mesh
+          ref={reflectionRef}
+          position={[0, -0.65, 0.25]}
+          rotation={[-0.15, 0, 0]}
+          scale={[1, -1, 1]}
+        >
+          <planeGeometry args={[0.52, 0.52]} />
+          <meshBasicMaterial
+            map={digitTexture}
+            color={accentColor}
+            transparent
+            opacity={0.26}
+            alphaTest={0.02}
+            toneMapped={false}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
+
     </>
   )
 }
