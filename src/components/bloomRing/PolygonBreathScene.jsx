@@ -304,7 +304,8 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
     // Billboard: copy camera quaternion so plane always faces viewer exactly
     if (numberPlaneRef.current) {
-      numberPlaneRef.current.quaternion.copy(state.camera.quaternion)
+      numberPlaneRef.current.quaternion.copy(camera.quaternion)
+      numberPlaneRef.current.rotateZ(Math.PI / 2)
     }
 
     // P3 probe: make reflection face camera directly to verify transform legibility.
