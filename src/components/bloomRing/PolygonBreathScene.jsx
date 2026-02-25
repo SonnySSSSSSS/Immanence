@@ -89,6 +89,15 @@ function createDigitTexture(value) {
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
   const { gl, size, scene, camera } = useThree()
+  const stencilBits = useMemo(() => {
+    try {
+      const ctx = gl?.getContext?.()
+      if (!ctx) return 0
+      return Number(ctx.getParameter(ctx.STENCIL_BITS) || 0)
+    } catch {
+      return 0
+    }
+  }, [gl])
   const runtimeProbeFlags = useMemo(() => {
     if (typeof window === 'undefined') return { polyRuntimeSafe: false, polyRuntimeSafeDigit: false }
     const params = new URLSearchParams(window.location.search || '')
@@ -363,7 +372,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             padding: '4px 6px',
           }}
         >
-          {modeLabel}
+          {modeLabel} · STENCIL: {stencilBits}
         </div>
       </Html>
 
