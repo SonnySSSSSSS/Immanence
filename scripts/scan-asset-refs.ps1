@@ -41,24 +41,40 @@ function Normalize-RepoRelativePath {
     return ($relative -replace '\\', '/')
 }
 
-function Is-LikelyNonPathContext {
+function Is-StrictPathContext {
     param(
         [string]$LineText,
         [string]$MatchText
     )
 
-    $trimmed = $LineText.TrimStart()
-    if ($trimmed.StartsWith('//') -or $trimmed.StartsWith('*') -or $trimmed.StartsWith('#')) {
-        return $true
+    if ([string]::IsNullOrWhiteSpace($LineText) -or [string]::IsNullOrWhiteSpace($MatchText)) {
+        return $false
     }
 
-    $matchPos = $LineText.IndexOf($MatchText, [System.StringComparison]::OrdinalIgnoreCase)
-    if ($matchPos -ge 0) {
-        $before = $LineText.Substring(0, $matchPos)
-        if ($before.Contains('//')) {
-            return $true
-        }
-    }
+    $escaped = [System.Text.RegularExpressions.Regex]::Escape($MatchText)
+    $quoted = '["' + "'" + '`]'
+
+    # 1) import ... from '...png'
+    $importFrom = '(?i)\bimport\b[^;\r\n]*\bfrom\s*' + $quoted + $escaped + $quoted
+    if ($LineText -match $importFrom) { return $true }
+
+    # 2) require('...png')
+    $requireCall = '(?i)\brequire\s*\(\s*' + $quoted + $escaped + $quoted + '\s*\)'
+    if ($LineText -match $requireCall) { return $true }
+
+    # 3) <img src="...png">
+    $imgSrc = '(?i)<img\b[^>]*\bsrc\s*=\s*["' + "'" + ']' + $escaped + '["' + "'" + ']'
+    if ($LineText -match $imgSrc) { return $true }
+
+    # 4) url(...png...)
+    $cssUrl = '(?i)\burl\s*\(\s*["' + "'" + ']?' + $escaped + '["' + "'" + ']?\s*\)'
+    if ($LineText -match $cssUrl) { return $true }
+
+    # 5) Explicit property assignment with exact key name.
+    $propBare = '(?i)(^|[,{]\s*)(src|image|thumbnail|background|icon)\s*:\s*' + $quoted + $escaped + $quoted
+    if ($LineText -match $propBare) { return $true }
+    $propQuoted = '(?i)(^|[,{]\s*)["' + "'" + '](src|image|thumbnail|background|icon)["' + "'" + ']\s*:\s*' + $quoted + $escaped + $quoted
+    if ($LineText -match $propQuoted) { return $true }
 
     return $false
 }
@@ -383,7 +399,7 @@ try {
             if ($pathPart -match '^(?i)(https?:|data:)') {
                 $classification = 'NON_PATH'
             }
-            elseif (Is-LikelyNonPathContext -LineText $lineText -MatchText $matchedText) {
+            elseif (-not (Is-StrictPathContext -LineText $lineText -MatchText $matchedText)) {
                 $classification = 'NON_PATH'
             }
             else {
@@ -548,6 +564,11 @@ try {
     Write-Host "REWRITABLE: $($classificationCounts.REWRITABLE)"
     Write-Host "MISSING_WEBP: $($classificationCounts.MISSING_WEBP)"
     Write-Host "AMBIGUOUS: $($classificationCounts.AMBIGUOUS)"
+    Write-Host "NON_PATH: $($classificationCounts.NON_PATH)"
+    $candidatePaths = [int]$classificationCounts.REWRITABLE + [int]$classificationCounts.MISSING_WEBP + [int]$classificationCounts.AMBIGUOUS
+    Write-Host '=== STRICT PATH SCAN RESULT ==='
+    Write-Host "TOTAL_PNG_MATCHES: $($report.totals.pngMatches)"
+    Write-Host "CANDIDATE_PATHS: $candidatePaths"
     Write-Host "NON_PATH: $($classificationCounts.NON_PATH)"
     Write-Host 'top files by png refs:'
     foreach ($row in $topFiles | Select-Object -First 10) {
