@@ -427,8 +427,8 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
             />
           )}
         </mesh>
-        <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]} renderOrder={11}>
-          <lineBasicMaterial color={useSafeGeometry ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} />
+        <lineSegments geometry={edgeGeom} scale={[1.003, 1.003, 1.003]} renderOrder={10000}>
+          <lineBasicMaterial color={useSafeGeometry ? '#ffffff' : accentColor} transparent opacity={0.55} toneMapped={false} depthTest={false} />
         </lineSegments>
       </group>
 
