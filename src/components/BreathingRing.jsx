@@ -19,9 +19,16 @@ import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefault
 import { useTheme } from '../context/ThemeContext.jsx';
 
 const BREATH_RING_MAX_DPR = 1.5;
-const RING_MODE_CYCLE = ['bracelet', 'polygon', 'orb', 'instrument'];
+export const BREATH_RING_PRESETS = [
+  { id: 'instrument', label: 'Instrument' },
+  { id: 'bracelet', label: 'Bracelet' },
+  { id: 'polygon', label: 'Polygon' },
+  { id: 'orb', label: 'Countdown' },
+];
+const RING_MODE_CYCLE = BREATH_RING_PRESETS.map((preset) => preset.id);
 
 function normalizeRingMode(mode) {
+  if (mode === 'countdown') return 'orb';
   if (mode === 'baseline' || mode === 'base') return 'bracelet';
   return RING_MODE_CYCLE.includes(mode) ? mode : null;
 }
@@ -359,7 +366,16 @@ function PersistentBreathRingCanvas({
 // startTime is required and must be based on performance.now() so that
 // audio scheduling (Web Audio API) and the rAF animation loop share one
 // clock origin. Passing Date.now() will silently desync audio timing.
-export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime, totalSessionDurationSec = null, practiceActive = true, onUnmount = null }) {
+export function BreathingRing({
+  breathPattern,
+  onTap,
+  onCycleComplete,
+  startTime,
+  totalSessionDurationSec = null,
+  practiceActive = true,
+  onUnmount = null,
+  ringMode = null,
+}) {
   const theme = useTheme();
   const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
   const lockedPatternRef = useRef(null);
@@ -368,7 +384,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 
   // State to track the currently displayed pattern (triggers re-render when pattern changes)
   const [displayedPattern, setDisplayedPattern] = useState(breathPattern || { inhale: 4, holdTop: 4, exhale: 4, holdBottom: 2 });
-  const [rndRingMode, setRndRingMode] = useState('instrument');
+  const [rndRingMode, setRndRingMode] = useState(() => normalizeRingMode(ringMode) || 'instrument');
 
   const patternKey = (pattern) => ([
     pattern?.inhale ?? 0,
@@ -378,6 +394,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
   ]).join('|');
 
   useEffect(() => {
+    if (ringMode != null) return;
     if (import.meta.env.DEV !== true || typeof window === 'undefined') return;
 
     const ringParam = new URLSearchParams(window.location.search).get('ring');
@@ -385,7 +402,14 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
     if (normalizedQueryMode) {
       setRndRingMode(normalizedQueryMode);
     }
-  }, []);
+  }, [ringMode]);
+
+  useEffect(() => {
+    if (ringMode == null) return;
+    const normalizedRingMode = normalizeRingMode(ringMode);
+    if (!normalizedRingMode) return;
+    setRndRingMode((prev) => (prev === normalizedRingMode ? prev : normalizedRingMode));
+  }, [ringMode]);
 
   // Compatibility normalization for legacy/persisted values.
   useEffect(() => {
@@ -820,7 +844,7 @@ export function BreathingRing({ breathPattern, onTap, onCycleComplete, startTime
 	  const activePresetLabel = normalizedPresetNumber == null
 	    ? 'n/a'
 	    : `#${normalizedPresetNumber}:${normalizedMode}`;
-	  const presetVariant = normalizedPresetNumber === 1 ? 'preset1' : 'other';
+	  const presetVariant = normalizedMode === 'bracelet' ? 'preset1' : 'other';
 	  const showArcPhaseLabel = rndRingMode === 'instrument' || rndRingMode === 'bracelet';
 	  const ringSafePad = "20px";
 	  const phaseWord =

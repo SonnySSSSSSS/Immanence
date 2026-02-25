@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffe
 import { createPortal } from 'react-dom';
 import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
 import { SensorySession } from "./SensorySession.jsx";
-import { BreathingRing } from "./BreathingRing.jsx";
+import { BreathingRing, BREATH_RING_PRESETS } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
 import { VipassanaVisual } from "./vipassana/VipassanaVisual.jsx";
@@ -18,7 +18,6 @@ import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
 import { SOLFEGGIO_SET, FREQUENCY_SETS } from "../utils/frequencyLibrary.js";
 import { loadPreferences, savePreferences } from "../state/practiceStore.js";
-import { ringFXPresets } from "../data/ringFXPresets.js";
 import { usePracticeSessionInstrumentation } from "./practice/usePracticeSessionInstrumentation.js";
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -67,7 +66,6 @@ import { useProgressStore } from '../state/progressStore.js';
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
-const DEV_FX_GALLERY_ENABLED = true;
 const PRESET_SWITCHER_Z_INDEX = 10020;
 
 function isTypingIntoEditableElement(activeEl) {
@@ -355,7 +353,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   );
 }
 
-export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, showFxGallery = DEV_FX_GALLERY_ENABLED, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
+export function PracticeSection({ onPracticingChange, onBreathStateChange, avatarPath, onNavigate, onOpenPhotic, isActiveBreathSession = false }) {
   const {
     startSession,
     endSession,
@@ -916,10 +914,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [countdownValue, setCountdownValue] = useState(null);
   const circuitCountdownRef = useRef(null);
 
-  // Ring FX ephemeral state
-  const [currentFxIndex, setCurrentFxIndex] = useState(0);
+  // Breath ring preset switcher state (legacy FX preset system removed)
+  const [ringPresetIndex, setRingPresetIndex] = useState(0);
   const [isPresetSwitcherOpen, setIsPresetSwitcherOpen] = useState(false);
-  const currentFxPreset = showFxGallery ? ringFXPresets[currentFxIndex] : null;
+  const currentRingPreset = BREATH_RING_PRESETS[ringPresetIndex] || BREATH_RING_PRESETS[0];
 
   // REFACTOR BRIDGE: Map practiceParams to legacy variable names for stable behavior
   const { preset, pattern } = practiceParams.breath;
@@ -1041,14 +1039,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Generic setter for consolidated practices with subModes (awareness, resonance, perception)
   const setActiveMode = (practiceId, modeKey) => updateParams(practiceId, { activeMode: modeKey });
-
-  const handlePrevFx = () => {
-    setCurrentFxIndex(prev => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
-  };
-
-  const handleNextFx = () => {
-    setCurrentFxIndex(prev => (prev + 1) % ringFXPresets.length);
-  };
 
   useEffect(() => {
     if (!isRunning) {
@@ -2066,14 +2056,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       if (isArrowLeft) {
         event.preventDefault();
         event.stopPropagation();
-        setCurrentFxIndex((prev) => (prev - 1 + ringFXPresets.length) % ringFXPresets.length);
+        setRingPresetIndex((prev) => (prev - 1 + BREATH_RING_PRESETS.length) % BREATH_RING_PRESETS.length);
         return;
       }
 
       if (isArrowRight) {
         event.preventDefault();
         event.stopPropagation();
-        setCurrentFxIndex((prev) => (prev + 1) % ringFXPresets.length);
+        setRingPresetIndex((prev) => (prev + 1) % BREATH_RING_PRESETS.length);
       }
     };
 
@@ -2381,9 +2371,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                     practiceActive={isRunning}
                     onUnmount={handleBreathingRingUnmount}
                     pathId={avatarPath}
-                    fxPreset={currentFxPreset}
+                    ringMode={currentRingPreset.id}
                     totalSessionDurationSec={duration}
-                    timeLeftText={timeLeftText}
                   />
                 ) : null}
               </div>
@@ -2481,60 +2470,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           showBreathCount={showBreathCount}
           breathCount={breathCount}
         />}
-
-        {/* FX Selector (dev tool) sits at the bottom under the Stop button */}
-        {showFxGallery && isBreathPractice && !isActiveBreathSession && !isBreathRunningSession && (
-          <div
-            className="flex items-center gap-3 mt-6 px-4 py-2 rounded-full"
-            style={{
-              background: isLight ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.5)',
-              border: isLight ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          >
-            <button
-              onClick={handlePrevFx}
-              className="type-h2 transition-colors px-2 py-1"
-              style={{ 
-                fontSize: '16px',
-                color: 'rgba(255,255,255,0.65)'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
-              title="Previous FX"
-            >
-              ◀
-            </button>
-            <div
-              className="type-label text-center min-w-[200px]"
-              style={{
-                color: 'var(--accent-color)',
-              }}
-            >
-              <div className="type-caption text-[8px] mb-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                {currentFxPreset?.category}
-              </div>
-              <div>{currentFxPreset?.name}</div>
-              <div className="type-caption text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                {currentFxIndex + 1} / {ringFXPresets.length}
-              </div>
-            </div>
-            <button
-              onClick={handleNextFx}
-              className="type-h2 transition-colors px-2 py-1"
-              style={{ 
-                fontSize: '16px',
-                color: 'rgba(255,255,255,0.65)'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
-              title="Next FX"
-            >
-              ▶
-            </button>
-          </div>
-        )}
 
         <style>{`
           @keyframes fade-in-up {
@@ -2670,16 +2605,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           }}
         >
           <div className="type-caption text-[10px]" style={{ opacity: 0.72 }}>
-            Preset Switcher
+            Ring Presets
           </div>
           <div className="type-label mt-1" style={{ color: 'var(--accent-color)' }}>
-            {ringFXPresets[currentFxIndex]?.name}
+            {currentRingPreset.label}
           </div>
-          <div className="type-caption text-[10px] mt-1" style={{ opacity: 0.62 }}>
-            {currentFxIndex + 1} / {ringFXPresets.length}
+          <div
+            className="type-caption text-[10px] mt-2"
+            style={{ opacity: 0.7, display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}
+          >
+            {BREATH_RING_PRESETS.map((preset, index) => (
+              <span
+                key={preset.id}
+                style={{
+                  opacity: index === ringPresetIndex ? 1 : 0.5,
+                  color: index === ringPresetIndex ? 'var(--accent-color)' : 'rgba(255,255,255,0.75)',
+                }}
+              >
+                {preset.label}
+              </span>
+            ))}
           </div>
           <div className="type-caption text-[10px] mt-2" style={{ opacity: 0.55 }}>
-            F2 toggle | ← → cycle | Esc close
+            F2 open/close | ← → change | Esc close
           </div>
         </div>
       )}
