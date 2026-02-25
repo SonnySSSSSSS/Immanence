@@ -71,7 +71,15 @@ function createDigitTexture(value) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.globalCompositeOperation = 'source-over'
+  // L2: halo pass for laser glow envelope.
+  ctx.globalAlpha = 0.22
+  ctx.shadowColor = '#ffffff'
+  ctx.shadowBlur = 16
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText(String(value), 0, 0)
+  // L2: crisp core pass over halo.
   ctx.globalAlpha = 1
+  ctx.shadowBlur = 0
   ctx.fillStyle = '#ffffff'
   ctx.fillText(String(value), 0, 0)
   ctx.restore()
