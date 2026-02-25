@@ -18,7 +18,7 @@ if ([string]::IsNullOrWhiteSpace($PublicRoot)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ManifestPath)) {
-    $ManifestPath = Join-Path $scriptDirectory 'webp-manifest.json'
+    $ManifestPath = Join-Path $scriptDirectory '.tmp\webp-manifest.json'
 }
 
 function Normalize-RepoRelativePath {

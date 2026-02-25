@@ -7,6 +7,7 @@ param(
     [int]$Method = 6,
     [switch]$Lossless,
     [string]$CwebpPath,
+    [switch]$WriteManifest,
     [string]$ManifestPath
 )
 
@@ -19,7 +20,7 @@ if ([string]::IsNullOrWhiteSpace($PublicRoot)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ManifestPath)) {
-    $ManifestPath = Join-Path $scriptDirectory 'webp-manifest.json'
+    $ManifestPath = Join-Path $scriptDirectory '.tmp\webp-manifest.json'
 }
 
 function Resolve-CwebpExecutable {
@@ -139,15 +140,19 @@ try {
         }
     }
 
-    $manifestDirectory = Split-Path -Parent $ManifestPath
-    if (-not [string]::IsNullOrWhiteSpace($manifestDirectory) -and -not (Test-Path -LiteralPath $manifestDirectory)) {
-        New-Item -ItemType Directory -Path $manifestDirectory -Force | Out-Null
-    }
-
-    $manifestMap | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ManifestPath -Encoding UTF8
-
     Write-Host "Summary: found=$found converted=$converted skipped=$skipped failed=$failed"
-    Write-Host "Manifest: $ManifestPath"
+    if ($WriteManifest) {
+        $manifestDirectory = Split-Path -Parent $ManifestPath
+        if (-not [string]::IsNullOrWhiteSpace($manifestDirectory) -and -not (Test-Path -LiteralPath $manifestDirectory)) {
+            New-Item -ItemType Directory -Path $manifestDirectory -Force | Out-Null
+        }
+
+        $manifestMap | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ManifestPath -Encoding UTF8
+        Write-Host "Manifest written: $ManifestPath"
+    }
+    else {
+        Write-Host 'Manifest not written (pass -WriteManifest to emit one).'
+    }
 
     if ($failed -gt 0) {
         exit 1

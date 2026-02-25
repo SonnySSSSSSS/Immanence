@@ -56,3 +56,9 @@ node-v*.msi
 node-v*.msi
 
 work-manager.bat
+
+# WebP migration runtime artifacts
+tmp_probe.webp
+tmp_probe.png
+webp-manifest.json
+scripts/.tmp/

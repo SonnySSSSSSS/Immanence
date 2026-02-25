@@ -8,6 +8,7 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $script:FailureCode = 1
 $probeDir = $null
+$scriptDirectory = Split-Path -Parent $PSCommandPath
 
 function Resolve-CwebpExecutable {
     param([string]$RequestedPath)
@@ -86,5 +87,18 @@ catch {
 finally {
     if ($null -ne $probeDir -and (Test-Path -LiteralPath $probeDir)) {
         Remove-Item -LiteralPath $probeDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    # Defensive cleanup for any legacy probe artifacts in common working locations.
+    $legacyProbeFiles = @(
+        (Join-Path $scriptDirectory 'tmp_probe.webp'),
+        (Join-Path $scriptDirectory 'tmp_probe.png'),
+        (Join-Path (Get-Location) 'tmp_probe.webp'),
+        (Join-Path (Get-Location) 'tmp_probe.png')
+    )
+    foreach ($probeFile in $legacyProbeFiles) {
+        if (Test-Path -LiteralPath $probeFile) {
+            Remove-Item -LiteralPath $probeFile -Force -ErrorAction SilentlyContinue
+        }
     }
 }
