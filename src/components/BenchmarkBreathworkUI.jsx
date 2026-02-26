@@ -144,21 +144,29 @@ export function BenchmarkBreathworkUI({
     const textColor = isLight ? '#2f2619' : '#f4f0e8';
     const muted = isLight ? 'rgba(47, 38, 25, 0.65)' : 'rgba(244, 240, 232, 0.65)';
     const accent = isLight ? '#8b6b3d' : '#f5d18a';
+    const railMaxWidth = 'var(--ui-rail-max, min(430px, 94vw))';
 
     return (
         <div
             style={{
                 position: 'fixed',
-                inset: 0,
+                top: 0,
+                bottom: 0,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'var(--app-frame-width, 100vw)',
+                maxWidth: 'var(--app-frame-width, 100vw)',
                 zIndex: 10020,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: bgColor,
                 color: textColor,
-                padding: '20px',
+                padding: '20px 16px',
                 fontFamily: 'var(--font-body)',
                 cursor: stage === 'measuring' ? 'pointer' : 'default',
+                boxSizing: 'border-box',
+                overflowY: 'auto',
             }}
             onClick={stage === 'measuring' || stage === 'intro' ? handleAdvance : undefined}
         >
@@ -184,7 +192,7 @@ export function BenchmarkBreathworkUI({
             </button>
 
             {stage === 'intro' && (
-                <div style={{ width: '100%', maxWidth: 540, textAlign: 'center' }}>
+                <div style={{ width: '100%', maxWidth: railMaxWidth, textAlign: 'center', boxSizing: 'border-box' }}>
                     <div style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: muted }}>
                         Day {dayNumber} Benchmark
                     </div>
@@ -217,7 +225,7 @@ export function BenchmarkBreathworkUI({
             )}
 
             {stage === 'measuring' && (
-                <div style={{ width: '100%', maxWidth: 540, textAlign: 'center' }}>
+                <div style={{ width: '100%', maxWidth: railMaxWidth, textAlign: 'center', boxSizing: 'border-box' }}>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 22 }}>
                         {PHASES.map((phase, idx) => (
                             <div
@@ -253,7 +261,7 @@ export function BenchmarkBreathworkUI({
             )}
 
             {stage === 'results' && (
-                <div style={{ width: '100%', maxWidth: 620, textAlign: 'center' }}>
+                <div style={{ width: '100%', maxWidth: railMaxWidth, textAlign: 'center', boxSizing: 'border-box' }}>
                     <div style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: muted }}>
                         Day {dayNumber} Snapshot
                     </div>
