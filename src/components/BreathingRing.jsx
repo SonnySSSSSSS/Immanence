@@ -1093,8 +1093,8 @@ export function BreathingRing({
             className="relative"
             style={{
               position: "relative",
-              width: `${ringStageSize}px`,
-              height: `${ringStageSize}px`,
+              width: rndRingMode === 'rainbow' ? "100%" : `${ringStageSize}px`,
+              height: rndRingMode === 'rainbow' ? "100%" : `${ringStageSize}px`,
               overflow: "visible",
               marginTop: 0,
               flexShrink: 0,
@@ -1104,10 +1104,10 @@ export function BreathingRing({
           <div
             style={{
               position: "absolute",
-              inset: `calc(-1 * ${ringSafePad})`,
+              inset: rndRingMode === 'rainbow' ? 0 : `calc(-1 * ${ringSafePad})`,
               overflow: "visible",
-              WebkitMaskImage: "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 72%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0) 100%)",
-              maskImage: "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 72%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0) 100%)",
+              WebkitMaskImage: rndRingMode === 'rainbow' ? "none" : "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 72%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0) 100%)",
+              maskImage: rndRingMode === 'rainbow' ? "none" : "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 72%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0) 100%)",
               WebkitMaskRepeat: "no-repeat",
               maskRepeat: "no-repeat",
               WebkitMaskSize: "100% 100%",
