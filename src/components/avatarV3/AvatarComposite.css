@@ -3,13 +3,13 @@
   width: 100%;
   height: 100%;
   aspect-ratio: 1 / 1;
+  isolation: isolate;
 }
 
 .avatar-composite__globe-clip {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  clip-path: circle(50% at 50% 50%);
   border-radius: 9999px;
 }
 
@@ -22,6 +22,10 @@
   object-position: center;
   pointer-events: none;
   user-select: none;
+  backface-visibility: hidden;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  image-rendering: auto;
 }
 
 .avatar-composite__ring {
@@ -33,6 +37,10 @@
   object-position: center;
   pointer-events: none;
   user-select: none;
+  backface-visibility: hidden;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  image-rendering: auto;
 }
 
 .avatar-composite__layer--bg {
@@ -57,6 +65,8 @@
   z-index: 6;
   pointer-events: none;
   transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform;
   animation: avatar-composite-ring-spin 480s linear infinite;
 }
 
