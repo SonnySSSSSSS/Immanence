@@ -196,7 +196,7 @@ function StatsCard({ domain, stats, isLight }) {
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{
-                        backgroundImage: `url(${import.meta.env.BASE_URL}textures/parchment-subtle.png)`,
+                        backgroundImage: `url(/textures/parchment-subtle.webp)`,
                         backgroundSize: '300px 300px',
                         backgroundRepeat: 'repeat',
                         opacity: 0.08,
@@ -347,7 +347,7 @@ function StatsCard({ domain, stats, isLight }) {
                         zIndex: 11,
                     }}
                 >
-                    ⟨ PERFORMANCE.VECTOR ⟩
+                    âŸ¨ PERFORMANCE.VECTOR âŸ©
                 </div>
                 <div
                     className="text-[9px] font-bold mb-2 text-center relative font-mono opacity-40"
@@ -395,7 +395,7 @@ function StatsCard({ domain, stats, isLight }) {
                         className="h-full rounded-full transition-all duration-1000 ease-out relative"
                         style={{
                             width: `${Math.min(100, ((stats.totalMinutes || 0) / 100) * 100)}%`,
-                            backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/progress_texture.png)`,
+                            backgroundImage: `url(/stats/tracking_card/progress_texture.webp)`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             boxShadow: isLight ? 'none' : '0 0 10px rgba(212, 184, 122, 0.4)',
@@ -414,7 +414,7 @@ function StatsCard({ domain, stats, isLight }) {
                     <div
                         className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 pointer-events-none opacity-60 mix-blend-screen"
                         style={{
-                            backgroundImage: `url(${import.meta.env.BASE_URL}stats/tracking_card/wave_ribbon.png)`,
+                            backgroundImage: `url(/stats/tracking_card/wave_ribbon.webp)`,
                             backgroundSize: '100% 100%',
                             backgroundPosition: 'center',
                             filter: isLight ? 'brightness(0.8) contrast(1.2)' : 'none'
@@ -746,7 +746,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                     textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
                 }}
             >
-                ⟨ PRACTICE HUB ⟩
+                âŸ¨ PRACTICE HUB âŸ©
             </div>
 
             {/* Single domain stats card */}
@@ -775,7 +775,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                         className="text-xs font-black"
                         style={{ color: isLight ? 'rgba(60, 45, 35, 0.7)' : 'rgba(253, 251, 245, 0.7)' }}
                     >
-                        {isHeatmapOpen ? '▾' : '▸'}
+                        {isHeatmapOpen ? 'â–¾' : 'â–¸'}
                     </div>
                 </button>
 
@@ -785,7 +785,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                             className="text-[8px] uppercase tracking-[0.15em]"
                             style={{ color: isLight ? 'rgba(60, 45, 35, 0.55)' : 'rgba(253, 251, 245, 0.55)' }}
                         >
-                            Last 84 local days · Reacted vs Chose · T_REF={T_REF}
+                            Last 84 local days Â· Reacted vs Chose Â· T_REF={T_REF}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -919,7 +919,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                                                                 color: isLight ? 'rgba(60,45,35,0.75)' : 'rgba(253,251,245,0.75)',
                                                             }}
                                                         >
-                                                            ↑
+                                                            â†‘
                                                         </button>
                                                         <button
                                                             type="button"
@@ -931,7 +931,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                                                                 color: isLight ? 'rgba(60,45,35,0.75)' : 'rgba(253,251,245,0.75)',
                                                             }}
                                                         >
-                                                            ↓
+                                                            â†“
                                                         </button>
                                                         <button
                                                             type="button"
@@ -955,7 +955,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                                                             key={`${row.itemId}-${cell.dateKey}`}
                                                             className="w-[10px] h-[10px] rounded-[2px]"
                                                             style={getHeatmapCellStyle(cell, isLight)}
-                                                            title={`${row.label} · ${cell.dateKey} · Reacted ${cell.reacted} · Chose ${cell.chose}`}
+                                                            title={`${row.label} Â· ${cell.dateKey} Â· Reacted ${cell.reacted} Â· Chose ${cell.chose}`}
                                                         />
                                                     ))}
                                                 </div>
@@ -970,7 +970,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                             className="text-[8px] uppercase tracking-[0.15em]"
                             style={{ color: isLight ? 'rgba(60,45,35,0.45)' : 'rgba(253,251,245,0.45)' }}
                         >
-                            Max Daily Total: {trackerRange.maxTotal} · T_REF: {trackerRange.tRef}
+                            Max Daily Total: {trackerRange.maxTotal} Â· T_REF: {trackerRange.tRef}
                         </div>
                     </div>
                 )}

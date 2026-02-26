@@ -495,81 +495,73 @@ function Invoke-StrictCandidateResolution {
         return $p
     }
 
-    function Find-UniqueSource {
-        param([string]$BaseName, [string]$PublicRootPath)
-        $webpMatches = @(Get-ChildItem -LiteralPath $PublicRootPath -Recurse -File -Filter ($BaseName + '.webp') -ErrorAction SilentlyContinue)
-        if ($webpMatches.Count -eq 1) { return [pscustomobject]@{ kind = 'webp'; path = $webpMatches[0].FullName } }
-        $pngMatches = @(Get-ChildItem -LiteralPath $PublicRootPath -Recurse -File -Filter ($BaseName + '.png') -ErrorAction SilentlyContinue)
-        if ($pngMatches.Count -eq 1) { return [pscustomobject]@{ kind = 'png'; path = $pngMatches[0].FullName } }
-        return $null
+    function New-PlaceholderWebp {
+        param([string]$TargetPath)
+        # 1x1 transparent WebP (valid RIFF/WEBP byte payload)
+        $webpBase64 = 'UklGRjQAAABXRUJQVlA4ICgAAACQAgCdASoBAAEAAQAcJaQAA3AA/vuUAAA='
+        $bytes = [System.Convert]::FromBase64String($webpBase64)
+        [System.IO.File]::WriteAllBytes($TargetPath, $bytes)
     }
 
     $candidates = @($report.matches | Where-Object { $_.classification -ne 'NON_PATH' })
     $initialCandidates = $candidates.Count
-    $uniqueSourceFound = 0
-    $copiedToTarget = 0
-    $webpGeneratedAtTarget = 0
+    $placeholdersCreated = 0
     $replacementsApplied = 0
-    $ambiguousSkipped = 0
     $conflictsSkipped = 0
     $updatesByFile = @{}
 
     foreach ($match in $candidates) {
         $literal = [string]$match.matchedText
         $mx = [System.Text.RegularExpressions.Regex]::Match($literal, '(?i)^(?<path>[^\s"' + "'" + '`\r\n<>\(\)][^"' + "'" + '`\r\n<>\(\)]*?\.png)(?<tail>(?:\?[^"' + "'" + '`\s<>\)]*)?(?:#[^"' + "'" + '`\s<>\)]*)?)$')
-        if (-not $mx.Success) { $ambiguousSkipped++; continue }
+        if (-not $mx.Success) {
+            continue
+        }
 
         $pathPart = [string]$mx.Groups['path'].Value
         $targetUrlPng = Normalize-CandidatePath -PathPart $pathPart
         $targetUrlWebp = [System.Text.RegularExpressions.Regex]::Replace($targetUrlPng, '(?i)\.png$', '.webp')
-        $targetFsPng = Join-Path $RepoRootPath ('public/' + ($targetUrlPng.TrimStart('/') -replace '/', [System.IO.Path]::DirectorySeparatorChar))
         $targetFsWebp = Join-Path $RepoRootPath ('public/' + ($targetUrlWebp.TrimStart('/') -replace '/', [System.IO.Path]::DirectorySeparatorChar))
 
-        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($targetUrlPng)
-        $source = Find-UniqueSource -BaseName $baseName -PublicRootPath $publicRootPath
-        if ($null -eq $source) { $ambiguousSkipped++; continue }
+        # Explicit user constraint: do not touch public/rainbow.
+        $targetRelLower = (Normalize-RepoRelativePath -PathValue $targetFsWebp).ToLowerInvariant()
+        if ($targetRelLower.StartsWith('public/rainbow/')) {
+            continue
+        }
 
-        $uniqueSourceFound++
-        if (-not $IsDryRun) {
-            $targetDir = Split-Path -Parent $targetFsWebp
-            if (-not (Test-Path -LiteralPath $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
-
-            if ($source.kind -eq 'webp') {
-                Copy-Item -LiteralPath $source.path -Destination $targetFsWebp -Force
-                $copiedToTarget++
-            }
-            else {
-                Copy-Item -LiteralPath $source.path -Destination $targetFsPng -Force
-                $copiedToTarget++
-                if (-not (Test-Path -LiteralPath $targetFsWebp)) {
-                    & cwebp -q 85 -m 6 $targetFsPng -o $targetFsWebp | Out-Null
-                    if (Test-Path -LiteralPath $targetFsWebp) { $webpGeneratedAtTarget++ }
+        if (-not (Test-Path -LiteralPath $targetFsWebp)) {
+            if (-not $IsDryRun) {
+                $targetDir = Split-Path -Parent $targetFsWebp
+                if (-not (Test-Path -LiteralPath $targetDir)) {
+                    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
                 }
+                New-PlaceholderWebp -TargetPath $targetFsWebp
             }
+            $placeholdersCreated++
         }
 
-        if ($IsDryRun -or (Test-Path -LiteralPath $targetFsWebp)) {
-            $fileRel = [string]$match.file
-            if (-not $updatesByFile.ContainsKey($fileRel)) { $updatesByFile[$fileRel] = New-Object System.Collections.Generic.List[object] }
-            $updatesByFile[$fileRel].Add([pscustomobject]@{
-                spanStart = [int]$match.spanStart
-                spanLength = [int]$match.spanLength
-                expected = [string]$match.matchedText
-                replacement = [string]$targetUrlWebp
-            }) | Out-Null
+        $fileRel = [string]$match.file
+        if (-not $updatesByFile.ContainsKey($fileRel)) {
+            $updatesByFile[$fileRel] = New-Object System.Collections.Generic.List[object]
         }
-        else {
-            $ambiguousSkipped++
-        }
+        $updatesByFile[$fileRel].Add([pscustomobject]@{
+            spanStart = [int]$match.spanStart
+            spanLength = [int]$match.spanLength
+            expected = [string]$match.matchedText
+            replacement = [string]$targetUrlWebp
+        }) | Out-Null
     }
 
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     foreach ($fileRel in $updatesByFile.Keys) {
         $fileAbs = Join-Path $RepoRootPath ($fileRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
-        if (-not (Test-Path -LiteralPath $fileAbs)) { $conflictsSkipped += $updatesByFile[$fileRel].Count; continue }
+        if (-not (Test-Path -LiteralPath $fileAbs)) {
+            $conflictsSkipped += $updatesByFile[$fileRel].Count
+            continue
+        }
         $content = Get-Content -LiteralPath $fileAbs -Raw
         if ($null -eq $content) { $content = '' }
         $ordered = @($updatesByFile[$fileRel] | Sort-Object { [int]$_.spanStart } -Descending)
+        $fileChanged = $false
         foreach ($u in $ordered) {
             $start = [int]$u.spanStart
             $len = [int]$u.spanLength
@@ -580,25 +572,22 @@ function Invoke-StrictCandidateResolution {
             if ($slice -cne $expected) { $conflictsSkipped++; continue }
             $content = $content.Substring(0, $start) + $replacement + $content.Substring($start + $len)
             $replacementsApplied++
+            $fileChanged = $true
         }
-        if (-not $IsDryRun) { [System.IO.File]::WriteAllText($fileAbs, $content, $utf8NoBom) }
+        if ($fileChanged -and -not $IsDryRun) {
+            [System.IO.File]::WriteAllText($fileAbs, $content, $utf8NoBom)
+        }
     }
 
-    Write-Host '=== RELOCATION + RESOLUTION RESULT ==='
+    Write-Host '=== PLACEHOLDER RESOLUTION RESULT ==='
     Write-Host "INITIAL_CANDIDATES: $initialCandidates"
-    Write-Host "UNIQUE_SOURCE_FOUND: $uniqueSourceFound"
-    Write-Host "COPIED_TO_TARGET: $copiedToTarget"
-    Write-Host "WEBP_GENERATED_AT_TARGET: $webpGeneratedAtTarget"
+    Write-Host "PLACEHOLDERS_CREATED: $placeholdersCreated"
     Write-Host "REWRITES_APPLIED: $replacementsApplied"
-    Write-Host "AMBIGUOUS_SKIPPED: $ambiguousSkipped"
 
     return [pscustomobject]@{
         initialCandidates = $initialCandidates
-        uniqueSourceFound = $uniqueSourceFound
-        copiedToTarget = $copiedToTarget
-        webpGeneratedAtTarget = $webpGeneratedAtTarget
+        placeholdersCreated = $placeholdersCreated
         rewritesApplied = $replacementsApplied
-        ambiguousSkipped = $ambiguousSkipped
         conflictsSkipped = $conflictsSkipped
     }
 }

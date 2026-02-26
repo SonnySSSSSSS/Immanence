@@ -80,7 +80,7 @@ export function Background({ stage = 'seedling', showBottomLayer = true }) {
             <div
               className="absolute inset-0 pointer-events-none z-[1]"
               style={{
-                backgroundImage: `url(${import.meta.env.BASE_URL}${stageLower}_${cloudBackground}.png)`,
+                backgroundImage: `url(/_${cloudBackground}.webp)`,
                 backgroundSize: 'auto 100%',
                 backgroundPosition: 'center bottom',
                 backgroundRepeat: 'no-repeat',

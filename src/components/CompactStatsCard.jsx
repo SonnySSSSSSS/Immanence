@@ -220,13 +220,13 @@ function PrecisionTimeline({ weekOffsets, isLight, r, g, b }) {
         
         // Early
         if (offset > 1) {
-            if (offset >= 8) return 5; // Level 5 (Top) - â‰¥ 10m (using 8 as snap threshold)
+            if (offset >= 8) return 5; // Level 5 (Top) - Ã¢â€°Â¥ 10m (using 8 as snap threshold)
             return 4; // Level 4 - ~5m
         }
         
         // Late
         if (offset < -1) {
-            if (offset <= -8) return 1; // Level 1 (Bottom) - â‰¥ 10m
+            if (offset <= -8) return 1; // Level 1 (Bottom) - Ã¢â€°Â¥ 10m
             return 2; // Level 2 - ~5m
         }
         
@@ -611,7 +611,7 @@ export function CompactStatsCard({ domain = 'wisdom', streakInfo, onOpenArchive,
                         <div
                             className="absolute inset-0 transition-all duration-1000"
                             style={{
-                                backgroundImage: `url(${import.meta.env.BASE_URL}assets/card_bg_${stageLower}_nebula.png)`,
+                                backgroundImage: `url(/assets/card_bg_${stageLower}_nebula.webp)`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
                                 WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%)',

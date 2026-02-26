@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const CATEGORIES = [
-    { id: 'pull', label: 'PULL', icon: '🧲', color: '#60A5FA' },
-    { id: 'push', label: 'PUSH', icon: '🛡️', color: '#F87171' },
-    { id: 'story', label: 'STORY', icon: '📖', color: '#FBBF24' },
-    { id: 'static', label: 'STATIC', icon: '🌫️', color: '#9CA3AF' },
+    { id: 'pull', label: 'PULL', icon: 'ðŸ§²', color: '#60A5FA' },
+    { id: 'push', label: 'PUSH', icon: 'ðŸ›¡ï¸', color: '#F87171' },
+    { id: 'story', label: 'STORY', icon: 'ðŸ“–', color: '#FBBF24' },
+    { id: 'static', label: 'STATIC', icon: 'ðŸŒ«ï¸', color: '#9CA3AF' },
 ];
 
 export function InsightMeditationPortal({ onExit }) {
@@ -98,7 +98,7 @@ export function InsightMeditationPortal({ onExit }) {
                 <div 
                     className="absolute inset-0 transition-opacity duration-1000"
                     style={{
-                        backgroundImage: `url(${assetsPrefix}insight_failure_mode.png)`,
+                        backgroundImage: `url(/insight_failure_mode.webp)`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         opacity: 0.15
@@ -172,7 +172,7 @@ export function InsightMeditationPortal({ onExit }) {
                      <div 
                         className="absolute inset-0 bg-repeat-x bg-contain"
                         style={{ 
-                            backgroundImage: `url(${assetsPrefix}homeSnow_sanctuary_stylized_mid.png)`,
+                            backgroundImage: `url(/homeSnow_sanctuary_stylized_mid.webp)`,
                             transform: `translateX(-${offsets.mid}px)`,
                             width: '300%'
                         }}
