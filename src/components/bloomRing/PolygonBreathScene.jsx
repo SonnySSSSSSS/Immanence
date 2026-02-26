@@ -340,6 +340,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const groupRef = useRef()
   const rainbowBeamRigRef = useRef()
   const rainbowMeshRef = useRef()
+  const rainbowAngleCurrentRef = useRef(0)
+  const rainbowAngleTargetRef = useRef(0)
+  const rainbowPhaseRef = useRef(null)
+  const rainbowPhaseStartAngleRef = useRef(0)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const digitInsideCueRef = useRef()
   const digitLaserJitterRef = useRef()
@@ -511,11 +515,18 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
     if (rainbowBeamRigRef.current) {
       const rainbowCfg = phaseMotion.rainbow
-      const rainbowOrbit = phaseProgress01 * Math.PI * 2 * rainbowCfg.orbitTurns + rainbowCfg.baseAngle
+      if (rainbowPhaseRef.current !== phase) {
+        rainbowPhaseRef.current = phase
+        rainbowPhaseStartAngleRef.current = rainbowAngleTargetRef.current
+      }
+      const rainbowOrbit = rainbowPhaseStartAngleRef.current + phaseProgress01 * Math.PI * 2 * rainbowCfg.orbitTurns + rainbowCfg.baseAngle
       const rainbowWobble = Math.sin(elapsed * Math.PI * 2 * rainbowCfg.oscillationHz) * rainbowCfg.oscillationAmp
+      rainbowAngleTargetRef.current = rainbowOrbit + rainbowWobble
+      const follow = 1 - Math.exp(-safeDelta * 8)
+      rainbowAngleCurrentRef.current += (rainbowAngleTargetRef.current - rainbowAngleCurrentRef.current) * follow
       rainbowBeamRigRef.current.rotation.x = 0
       rainbowBeamRigRef.current.rotation.y = 0
-      rainbowBeamRigRef.current.rotation.z = rainbowOrbit + rainbowWobble
+      rainbowBeamRigRef.current.rotation.z = rainbowAngleCurrentRef.current
     }
     if (rainbowBeamMaterial?.uniforms) {
       const rainbowCfg = phaseMotion.rainbow
