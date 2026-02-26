@@ -340,6 +340,9 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const groupRef = useRef()
   const rainbowBeamRigRef = useRef()
   const rainbowMeshRef = useRef()
+  const flarePlane1Ref = useRef()
+  const flarePlane2Ref = useRef()
+  const flarePlane3Ref = useRef()
   const rainbowAngleCurrentRef = useRef(0)
   const rainbowAngleTargetRef = useRef(0)
   const rainbowPhaseRef = useRef(null)
@@ -513,6 +516,17 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       rainbowMeshRef.current.scale.set(len, len, 1)
     }
 
+    // Animate lens flare planes with independent twinkling
+    if (flarePlane1Ref.current?.material) {
+      flarePlane1Ref.current.material.opacity = 0.5 + Math.sin(elapsed * 2.4) * 0.3
+    }
+    if (flarePlane2Ref.current?.material) {
+      flarePlane2Ref.current.material.opacity = 0.25 + Math.sin(elapsed * 1.8 + 0.5) * 0.15
+    }
+    if (flarePlane3Ref.current?.material) {
+      flarePlane3Ref.current.material.opacity = 0.12 + Math.sin(elapsed * 1.3 + 1.0) * 0.08
+    }
+
     if (rainbowBeamRigRef.current) {
       const rainbowCfg = phaseMotion.rainbow
       if (rainbowPhaseRef.current !== phase) {
@@ -633,6 +647,20 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         <mesh ref={rainbowMeshRef}>
           <planeGeometry />
           <primitive object={rainbowBeamMaterial} attach="material" />
+        </mesh>
+
+        {/* Animated lens flare planes — twinkling particles that radiate from beam origin */}
+        <mesh ref={flarePlane1Ref} position={[0, 0, -0.05]}>
+          <planeGeometry args={[0.3, 0.3]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        </mesh>
+        <mesh ref={flarePlane2Ref} position={[0, 0, -0.05]}>
+          <planeGeometry args={[0.5, 0.5]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        </mesh>
+        <mesh ref={flarePlane3Ref} position={[0, 0, -0.05]}>
+          <planeGeometry args={[0.7, 0.7]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
         </mesh>
       </group>
 
