@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Environment, Html } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
 // ─── POLYGON STABILITY LOCK ───────────────────────────────────────────────────
@@ -14,6 +14,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing'
 // • No envMap — material.envMap = null + envMapIntensity = 0 on all materials
 // • Lighting via direct lights only (PolyLightRig); no IBL
 // ─────────────────────────────────────────────────────────────────────────────
+
 
 const POLYGON_DIGIT_TEXTURE_SIZE = 256
 const POLYGON_DEBUG_LOGS = false
@@ -174,7 +175,7 @@ function createDigitTexture(value) {
 }
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
-  const { gl, size, scene, camera, viewport } = useThree()
+  const { gl, size, scene, camera } = useThree()
   const runtimeQualityInfo = useMemo(() => {
     if (typeof window === 'undefined') {
       return { initialTier: 'hi', fxKillSwitch: false, autoDowngrade: false }
@@ -338,140 +339,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
   // useFrame refs and logic
   const groupRef = useRef()
-  const rainbowBeamRigRef = useRef()
-  const rainbowMeshRef = useRef()
-  const flarePlane1Ref = useRef()
-  const flarePlane2Ref = useRef()
-  const flarePlane3Ref = useRef()
-  const rainbowAngleCurrentRef = useRef(0)
-  const rainbowAngleTargetRef = useRef(0)
-  const rainbowPhaseRef = useRef(null)
-  const rainbowPhaseStartAngleRef = useRef(0)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const digitInsideCueRef = useRef()
   const digitLaserJitterRef = useRef()
   const reflectionRef = useRef()    // upright reflection below polygon
-
-  const rainbowBeamMaterial = useMemo(() => {
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-        speed: { value: 1 },
-        fade: { value: 0.06 },
-        startRadius: { value: 0.0 },
-        endRadius: { value: 0.5 },
-        emissiveIntensity: { value: 3.0 },
-        ratio: { value: 1.0 },
-        beamOpacity: { value: 0.95 },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec2 vUv;
-        uniform float fade;
-        uniform float speed;
-        uniform float startRadius;
-        uniform float endRadius;
-        uniform float emissiveIntensity;
-        uniform float time;
-        uniform float ratio;
-        uniform float beamOpacity;
-
-        vec3 physhue2rgb(float hue, float r) {
-          return smoothstep(vec3(0.0), vec3(1.0), abs(mod(hue + vec3(0.0, 1.0, 2.0) * r, 1.0) * 2.0 - 1.0));
-        }
-
-        vec3 iridescence(float angle, float thickness) {
-          float NxV = cos(angle);
-          float lum = 0.05064;
-          float luma = 0.01070;
-          vec3 tint = vec3(0.49639, 0.78252, 0.8723);
-          float interf0 = 2.4;
-          float phase0 = 1.0 / 2.8;
-          float interf1 = interf0 * 4.0 / 3.0;
-          float phase1 = phase0;
-          float f = (1.0 - NxV) * (1.0 - NxV);
-          float interf = mix(interf0, interf1, f);
-          float phase = mix(phase0, phase1, f);
-          float dp = (NxV - 1.0) * 0.5;
-          vec3 hue = mix(
-            physhue2rgb(thickness * interf0 + dp, thickness * phase0),
-            physhue2rgb(thickness * interf1 + 0.1 + dp, thickness * phase1),
-            f
-          );
-          vec3 film = hue * lum + vec3(0.9639, 0.78252, 0.18723) * luma;
-          return vec3((film * 3.0 + pow(f, 12.0))) * tint;
-        }
-
-        float _saturate(float x) {
-          return min(1.0, max(0.0, x));
-        }
-
-        vec3 _saturate(vec3 x) {
-          return min(vec3(1.0), max(vec3(0.0), x));
-        }
-
-        vec3 bump3y(vec3 x, vec3 yoffset) {
-          vec3 y = vec3(1.0) - x * x;
-          y = _saturate(y - yoffset);
-          return y;
-        }
-
-        vec3 spectral_zucconi6(float w) {
-          float x = _saturate((w - 400.0) / 300.0);
-          const vec3 c1 = vec3(3.54585104, 2.93225262, 2.41593945);
-          const vec3 x1 = vec3(0.69549072, 0.49228336, 0.27699880);
-          const vec3 y1 = vec3(0.02312639, 0.15225084, 0.52607955);
-          const vec3 c2 = vec3(3.90307140, 3.21182957, 3.96587128);
-          const vec3 x2 = vec3(0.11748627, 0.86755042, 0.66077860);
-          const vec3 y2 = vec3(0.84897130, 0.88445281, 0.73949448);
-          return bump3y(c1 * (x - x1), y1) + bump3y(c2 * (x - x2), y2);
-        }
-
-        void main() {
-          float t = time * speed;
-          const vec2 vstart = vec2(0.5, 0.5);
-          const vec2 vend = vec2(1.0, 0.5);
-          vec2 dir = vstart - vend;
-          float len = length(dir);
-          float cosR = dir.y / len;
-          float sinR = dir.x / len;
-          vec2 uv = (mat2(cosR, -sinR, sinR, cosR) * (vUv * vec2(ratio, 1.0) - vec2(0.0, 1.0) - vstart * vec2(1.0, -1.0)) / len);
-          float a = atan(uv.x, uv.y) * 10.0;
-          float s = max(0.001, uv.y * (endRadius - startRadius) + startRadius);
-          float w = (uv.x / s + 0.5) * 300.0 + 400.0 + a;
-          vec3 c = spectral_zucconi6(w);
-          float l = 1.0 - smoothstep(fade, 1.0, uv.y);
-          float area = uv.y < 0.0 ? 0.0 : 1.0;
-          float brightness = smoothstep(0.0, 0.5, c.x + c.y + c.z);
-          vec3 co = c / iridescence(uv.x * 0.5 * 3.14159, 1.0 - uv.y + t / 10.0) / 20.0;
-          vec3 finalColor = area * co * l * brightness * emissiveIntensity;
-          finalColor *= beamOpacity;
-          if (finalColor.r + finalColor.g + finalColor.b < 0.01) discard;
-          gl_FragColor = vec4(finalColor, 1.0);
-          #include <colorspace_fragment>
-        }
-      `,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      depthTest: false,
-      toneMapped: false,
-      side: THREE.DoubleSide,
-    })
-    return mat
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      try { rainbowBeamMaterial.dispose() } catch { /* suppress dispose errors */ }
-    }
-  }, [rainbowBeamMaterial])
 
   useFrame((state, delta) => {
     if (!groupRef.current) return
@@ -497,7 +368,6 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     const bd = breathDriverRef.current
     const phase = bd?.phase
     const phaseProgress01 = Math.max(0, Math.min(1, bd?.phaseProgress01 ?? 0))
-    const safeDelta = Number.isFinite(delta) && delta > 0 ? Math.min(delta, 0.1) : 0.016
     const elapsed = state.clock.elapsedTime
     const phaseMotion = PHASE_MOTION[phase] || PHASE_MOTION.holdBottom
 
@@ -510,53 +380,6 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     groupRef.current.rotation.y = polygonRotationY
     groupRef.current.rotation.z = 0
     groupRef.current.scale.setScalar(polygonCfg.scale)
-
-    if (rainbowMeshRef.current) {
-      const len = Math.max(viewport.width, viewport.height) * 1.5
-      rainbowMeshRef.current.scale.set(len, len, 1)
-    }
-
-    // Animate lens flare planes with independent twinkling
-    if (flarePlane1Ref.current?.material) {
-      flarePlane1Ref.current.material.opacity = 0.5 + Math.sin(elapsed * 2.4) * 0.3
-    }
-    if (flarePlane2Ref.current?.material) {
-      flarePlane2Ref.current.material.opacity = 0.25 + Math.sin(elapsed * 1.8 + 0.5) * 0.15
-    }
-    if (flarePlane3Ref.current?.material) {
-      flarePlane3Ref.current.material.opacity = 0.12 + Math.sin(elapsed * 1.3 + 1.0) * 0.08
-    }
-
-    if (rainbowBeamRigRef.current) {
-      const rainbowCfg = phaseMotion.rainbow
-      if (rainbowPhaseRef.current !== phase) {
-        rainbowPhaseRef.current = phase
-        rainbowPhaseStartAngleRef.current = rainbowAngleTargetRef.current
-      }
-      const rainbowOrbit = rainbowPhaseStartAngleRef.current + phaseProgress01 * Math.PI * 2 * rainbowCfg.orbitTurns + rainbowCfg.baseAngle
-      const rainbowWobble = Math.sin(elapsed * Math.PI * 2 * rainbowCfg.oscillationHz) * rainbowCfg.oscillationAmp
-      rainbowAngleTargetRef.current = rainbowOrbit + rainbowWobble
-      const follow = 1 - Math.exp(-safeDelta * 8)
-      rainbowAngleCurrentRef.current += (rainbowAngleTargetRef.current - rainbowAngleCurrentRef.current) * follow
-      rainbowBeamRigRef.current.rotation.x = 0
-      rainbowBeamRigRef.current.rotation.y = 0
-      rainbowBeamRigRef.current.rotation.z = rainbowAngleCurrentRef.current
-    }
-    if (rainbowBeamMaterial?.uniforms) {
-      const rainbowCfg = phaseMotion.rainbow
-      const emissivePulse =
-        rainbowCfg.emissivePulseAmp > 0
-          ? Math.sin(elapsed * Math.PI * 2 * rainbowCfg.emissivePulseHz) * rainbowCfg.emissivePulseAmp
-          : 0
-
-      rainbowBeamMaterial.uniforms.time.value += safeDelta * rainbowCfg.flowSpeed
-      rainbowBeamMaterial.uniforms.speed.value = rainbowCfg.flowSpeed
-      rainbowBeamMaterial.uniforms.ratio.value = 1.0
-      rainbowBeamMaterial.uniforms.startRadius.value = rainbowCfg.beamStart
-      rainbowBeamMaterial.uniforms.endRadius.value = rainbowCfg.beamEnd
-      rainbowBeamMaterial.uniforms.emissiveIntensity.value = Math.max(0, rainbowCfg.emissiveBase + emissivePulse)
-      rainbowBeamMaterial.uniforms.beamOpacity.value = rainbowCfg.beamOpacity
-    }
 
     // Billboard: copy camera quaternion so plane always faces viewer exactly
     if (numberPlaneRef.current) {
@@ -595,74 +418,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   return (
     <>
       <PolyLightRig accentColor={accentColor} />
-      <Environment
-        files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/blue_photo_studio_1k.hdr"
-        resolution={256}
-        background={false}
-      />
       {bloomIntensity > 0 && (
         <EffectComposer multisampling={0} resolutionScale={qualityConfig.composerScale}>
           <Bloom mipmapBlur luminanceThreshold={0.9} intensity={bloomIntensity} />
         </EffectComposer>
       )}
-
-      {/* Subtle projector cues (replaced volumetric beam):
-
-          Emitter glow — small plane at the source point (top),
-          suggests projection origin without VFX look.
-
-          Hit spot — small circular glyph at the digit, grounded cue
-          that projection is targeting something inside the crystal. */}
-
-      {/* Emitter glyph — very small, high above polygon, facing camera */}
-      <mesh position={[0, 1.6, 0]}>
-        <planeGeometry args={[0.08, 0.08]} />
-        <meshBasicMaterial
-          color={accentColor}
-          transparent
-          opacity={0.08}
-          depthWrite={false}
-          depthTest={false}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Hit spot — centered at digit, facing camera, extremely subtle */}
-      <mesh position={[0, 0, 0.04]}>
-        <planeGeometry args={[0.14, 0.14]} />
-        <meshBasicMaterial
-          color={accentColor}
-          transparent
-          opacity={0.04}
-          depthWrite={false}
-          depthTest={true}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Rotating spectral beam: orbits during active countdown, hovers on holds.
-          renderOrder=-1 ensures polygon faces (default renderOrder=0) paint over it,
-          so the beam appears to radiate from behind the polygon. */}
-      <group ref={rainbowBeamRigRef} position={[0, 0, 0]} renderOrder={-1}>
-        <mesh ref={rainbowMeshRef}>
-          <planeGeometry />
-          <primitive object={rainbowBeamMaterial} attach="material" />
-        </mesh>
-
-        {/* Animated lens flare planes — twinkling particles that radiate from beam origin */}
-        <mesh ref={flarePlane1Ref} position={[0, 0, -0.05]}>
-          <planeGeometry args={[0.3, 0.3]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </mesh>
-        <mesh ref={flarePlane2Ref} position={[0, 0, -0.05]}>
-          <planeGeometry args={[0.5, 0.5]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </mesh>
-        <mesh ref={flarePlane3Ref} position={[0, 0, -0.05]}>
-          <planeGeometry args={[0.7, 0.7]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </mesh>
-      </group>
 
       <Html
         fullscreen

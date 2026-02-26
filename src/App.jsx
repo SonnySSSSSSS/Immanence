@@ -412,6 +412,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.221 - fix(rainbow-prism): separate Canvas with orthographic camera (zoom 70) for correct rendering
+  // v3.27.220 - refactor(rainbow-prism): exact match reference implementation with Box objects + lighting
+  // v3.27.219 - fix(rainbow-prism): add missing spotLight to illuminate rainbow
+  // v3.27.218 - fix: reorder presets (orb #4, rainbow #5); add cache buster to prism.glb
+  // v3.27.217 - feat(rainbow-prism): add preset #5 with animated rainbow + proper ray-prism reflection; remove rainbow from polygon
+  // v3.27.216 - fix(polygon): animated rainbow with time-based shader; orbit-based rotation
+  // v3.27.215 - fix(polygon): fix rainbow shader animation (use elapsed time instead of delta accumulation); smooth flow animation
   // v3.27.214 - feat(polygon): viewport-filling rainbow fan from polygon center; renderOrder=-1 for depth hierarchy
   // v3.27.213 - fix(polygon): digit rotation/position/depthTest; replace beam with subtle cues; polygon writes depth
   // v3.27.212 - fix(polygon): depthTest=false on digit plane; dielectric material; raised ambient; beam opacity
@@ -727,7 +734,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.214
+                        v3.27.221
                       </button>
                     </div>
                   </div>
