@@ -1034,7 +1034,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 {/* Status text */}
                                                                 {expired && (
                                                                     <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b7b63' : 'rgba(253,251,245,0.55)' }}>
-                                                                        Window Passed
+                                                                        Time Passed
                                                                     </div>
                                                                 )}
                                                                 {isActionable && (
@@ -1831,7 +1831,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         )}
                                                         {expired && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#8b7b63' : 'rgba(253,251,245,0.55)' }}>
-                                                                Window Passed
+                                                                Time Passed
                                                             </div>
                                                         )}
                                                         {isActionable && !lastSessionFailed && (
