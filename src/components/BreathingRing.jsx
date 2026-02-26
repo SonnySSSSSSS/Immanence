@@ -1065,7 +1065,7 @@ export function BreathingRing({
             inset: 0,
             zIndex: 10,
             overflow: "visible",
-            pointerEvents: "none",
+            pointerEvents: rndRingMode === 'rainbow' ? "auto" : "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1112,7 +1112,7 @@ export function BreathingRing({
               maskRepeat: "no-repeat",
               WebkitMaskSize: "100% 100%",
               maskSize: "100% 100%",
-              pointerEvents: "none",
+              pointerEvents: rndRingMode === 'rainbow' ? "auto" : "none",
             }}
           >
             {/* Center depth well: improves phase text legibility without a boxed panel */}
@@ -1198,7 +1198,7 @@ export function BreathingRing({
               zIndex: 25,
             }}
           >
-            <RainbowPresetCanvas />
+            <RainbowPresetCanvas breathDriver={breathDriver} />
           </div>
         )}
 

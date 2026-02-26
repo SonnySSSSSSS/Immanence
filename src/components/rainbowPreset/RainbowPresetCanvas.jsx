@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { RainbowPresetBreathSceneContent } from './RainbowPresetBreathScene.jsx'
 
-export function RainbowPresetCanvas({ style = {} }) {
+export function RainbowPresetCanvas({ style = {}, breathDriver = null }) {
   return (
     <Canvas
       orthographic
@@ -15,7 +15,7 @@ export function RainbowPresetCanvas({ style = {} }) {
       <EffectComposer disableNormalPass multisampling={0}>
         <Bloom mipmapBlur levels={9} intensity={1.5} luminanceThreshold={1} luminanceSmoothing={1} />
       </EffectComposer>
-      <RainbowPresetBreathSceneContent />
+      <RainbowPresetBreathSceneContent breathDriver={breathDriver} />
     </Canvas>
   )
 }
