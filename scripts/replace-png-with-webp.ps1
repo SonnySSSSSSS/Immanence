@@ -4,6 +4,7 @@ param(
     [string]$PublicRoot,
     [string]$ManifestPath,
     [switch]$ApplyAllRewritableFromReport,
+    [switch]$ResolveStrictCandidatesFromScan,
     [string]$ScanReportPath,
     [switch]$DryRun
 )
@@ -307,9 +308,310 @@ function Invoke-ReportDrivenApply {
     }
 }
 
+function Resolve-GenericPathRule {
+    param(
+        [string]$PathPart,
+        [string]$RepoRootPath,
+        [string]$ConvertScriptPath,
+        [switch]$IsDryRun
+    )
+
+    $p = ([string]$PathPart -replace '\\', '/')
+    while ($p -match '^\$\{[^}]+\}') {
+        $p = [System.Text.RegularExpressions.Regex]::Replace($p, '^\$\{[^}]+\}', '')
+    }
+    $p = ($p -replace '/+', '/').Trim()
+    if ([string]::IsNullOrWhiteSpace($p)) {
+        return $null
+    }
+    if ($p.StartsWith('public/', [System.StringComparison]::OrdinalIgnoreCase)) {
+        $p = $p.Substring(7)
+    }
+    if ($p.StartsWith('/')) {
+        $p = $p.TrimStart('/')
+    }
+    if ([string]::IsNullOrWhiteSpace($p)) {
+        return $null
+    }
+
+    $webpRel = [System.Text.RegularExpressions.Regex]::Replace($p, '(?i)\.png$', '.webp')
+    $pngRel = [System.Text.RegularExpressions.Regex]::Replace($p, '(?i)\.webp$', '.png')
+    if ($pngRel -notmatch '(?i)\.png$') { return $null }
+
+    $webpAbs = Join-Path $RepoRootPath ("public/" + ($webpRel -replace '/', [System.IO.Path]::DirectorySeparatorChar))
+    $pngAbs = Join-Path $RepoRootPath ("public/" + ($pngRel -replace '/', [System.IO.Path]::DirectorySeparatorChar))
+
+    if (Test-Path -LiteralPath $webpAbs) {
+        return [pscustomobject]@{
+            resolved = $true
+            generated = $false
+            replacementLiteral = '/' + $webpRel.TrimStart('/')
+        }
+    }
+
+    if (Test-Path -LiteralPath $pngAbs) {
+        if (-not $IsDryRun) {
+            $dir = Split-Path -Parent $pngAbs
+            & powershell -ExecutionPolicy Bypass -File $ConvertScriptPath -PublicRoot $dir | Out-Host
+        }
+        if (Test-Path -LiteralPath $webpAbs) {
+            return [pscustomobject]@{
+                resolved = $true
+                generated = $true
+                replacementLiteral = '/' + $webpRel.TrimStart('/')
+            }
+        }
+    }
+
+    return [pscustomobject]@{
+        resolved = $false
+        generated = $false
+        replacementLiteral = $null
+    }
+}
+
+function Resolve-CardBgTemplateRule {
+    param(
+        [string]$PathPart,
+        [string]$RepoRootPath,
+        [string]$ConvertScriptPath,
+        [switch]$IsDryRun
+    )
+
+    $normalized = ([string]$PathPart -replace '\\', '/')
+    if ($normalized -notmatch '(?i)card_bg_\$\{stageLower\}_nebula\.png$') {
+        return $null
+    }
+
+    $allowed = @('seedling', 'ember', 'flame', 'beacon', 'stellar')
+    $needsGenerate = $false
+    foreach ($stage in $allowed) {
+        $webpRel = "public/card_bg_${stage}_nebula.webp"
+        $pngRel = "public/card_bg_${stage}_nebula.png"
+        $webpAbs = Join-Path $RepoRootPath ($webpRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        $pngAbs = Join-Path $RepoRootPath ($pngRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+
+        if (Test-Path -LiteralPath $webpAbs) { continue }
+        if (Test-Path -LiteralPath $pngAbs) {
+            $needsGenerate = $true
+            if (-not $IsDryRun) {
+                $dir = Split-Path -Parent $pngAbs
+                & powershell -ExecutionPolicy Bypass -File $ConvertScriptPath -PublicRoot $dir | Out-Host
+            }
+            if (-not (Test-Path -LiteralPath $webpAbs)) {
+                return [pscustomobject]@{ resolved = $false; generated = $false; replacementLiteral = $null }
+            }
+            continue
+        }
+        return [pscustomobject]@{ resolved = $false; generated = $false; replacementLiteral = $null }
+    }
+
+    return [pscustomobject]@{
+        resolved = $true
+        generated = $needsGenerate
+        replacementLiteral = '/card_bg_${stageLower}_nebula.webp'
+    }
+}
+
+function Resolve-CloudTemplateRule {
+    param(
+        [string]$PathPart,
+        [string]$RepoRootPath,
+        [string]$ConvertScriptPath,
+        [switch]$IsDryRun
+    )
+
+    $normalized = ([string]$PathPart -replace '\\', '/')
+    if ($normalized -notmatch '(?i)\$\{stageLower\}_\$\{cloudBackground\}\.png$') {
+        return $null
+    }
+
+    $stages = @('seedling', 'ember', 'flame', 'beacon', 'stellar')
+    $clouds = @('hearth_clouds', 'sanctuary_clouds')
+    $needsGenerate = $false
+
+    foreach ($s in $stages) {
+        foreach ($c in $clouds) {
+            $webpRel = "public/${s}_${c}.webp"
+            $pngRel = "public/${s}_${c}.png"
+            $webpAbs = Join-Path $RepoRootPath ($webpRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+            $pngAbs = Join-Path $RepoRootPath ($pngRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+
+            if (Test-Path -LiteralPath $webpAbs) { continue }
+            if (Test-Path -LiteralPath $pngAbs) {
+                $needsGenerate = $true
+                if (-not $IsDryRun) {
+                    $dir = Split-Path -Parent $pngAbs
+                    & powershell -ExecutionPolicy Bypass -File $ConvertScriptPath -PublicRoot $dir | Out-Host
+                }
+                if (-not (Test-Path -LiteralPath $webpAbs)) {
+                    return [pscustomobject]@{ resolved = $false; generated = $false; replacementLiteral = $null }
+                }
+                continue
+            }
+            return [pscustomobject]@{ resolved = $false; generated = $false; replacementLiteral = $null }
+        }
+    }
+
+    return [pscustomobject]@{
+        resolved = $true
+        generated = $needsGenerate
+        replacementLiteral = '/${stageLower}_${cloudBackground}.webp'
+    }
+}
+
+function Invoke-StrictCandidateResolution {
+    param(
+        [string]$RepoRootPath,
+        [string]$ReportPath,
+        [string]$ConvertScriptPath,
+        [switch]$IsDryRun
+    )
+
+    if (-not (Test-Path -LiteralPath $ReportPath)) {
+        throw "Scan report not found: $ReportPath"
+    }
+    if (-not (Test-Path -LiteralPath $ConvertScriptPath)) {
+        throw "Conversion script not found: $ConvertScriptPath"
+    }
+
+    $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
+    if ($null -eq $report -or $null -eq $report.matches) {
+        throw "Invalid scan report format: $ReportPath"
+    }
+
+    function Normalize-CandidatePath {
+        param([string]$PathPart)
+        $p = [string]$PathPart
+        while ($p -match '^\$\{[^}]+\}') {
+            $p = [System.Text.RegularExpressions.Regex]::Replace($p, '^\$\{[^}]+\}', '')
+        }
+        $p = ($p -replace '\\', '/')
+        if ($p.StartsWith('public/', [System.StringComparison]::OrdinalIgnoreCase)) {
+            $p = $p.Substring(7)
+        }
+        if (-not $p.StartsWith('/')) { $p = '/' + $p.TrimStart('/') }
+        $p = '/' + ($p.TrimStart('/') -replace '/+', '/')
+        return $p
+    }
+
+    function Find-UniqueSource {
+        param([string]$BaseName, [string]$PublicRootPath)
+        $webpMatches = @(Get-ChildItem -LiteralPath $PublicRootPath -Recurse -File -Filter ($BaseName + '.webp') -ErrorAction SilentlyContinue)
+        if ($webpMatches.Count -eq 1) { return [pscustomobject]@{ kind = 'webp'; path = $webpMatches[0].FullName } }
+        $pngMatches = @(Get-ChildItem -LiteralPath $PublicRootPath -Recurse -File -Filter ($BaseName + '.png') -ErrorAction SilentlyContinue)
+        if ($pngMatches.Count -eq 1) { return [pscustomobject]@{ kind = 'png'; path = $pngMatches[0].FullName } }
+        return $null
+    }
+
+    $candidates = @($report.matches | Where-Object { $_.classification -ne 'NON_PATH' })
+    $initialCandidates = $candidates.Count
+    $uniqueSourceFound = 0
+    $copiedToTarget = 0
+    $webpGeneratedAtTarget = 0
+    $replacementsApplied = 0
+    $ambiguousSkipped = 0
+    $conflictsSkipped = 0
+    $updatesByFile = @{}
+
+    foreach ($match in $candidates) {
+        $literal = [string]$match.matchedText
+        $mx = [System.Text.RegularExpressions.Regex]::Match($literal, '(?i)^(?<path>[^\s"' + "'" + '`\r\n<>\(\)][^"' + "'" + '`\r\n<>\(\)]*?\.png)(?<tail>(?:\?[^"' + "'" + '`\s<>\)]*)?(?:#[^"' + "'" + '`\s<>\)]*)?)$')
+        if (-not $mx.Success) { $ambiguousSkipped++; continue }
+
+        $pathPart = [string]$mx.Groups['path'].Value
+        $targetUrlPng = Normalize-CandidatePath -PathPart $pathPart
+        $targetUrlWebp = [System.Text.RegularExpressions.Regex]::Replace($targetUrlPng, '(?i)\.png$', '.webp')
+        $targetFsPng = Join-Path $RepoRootPath ('public/' + ($targetUrlPng.TrimStart('/') -replace '/', [System.IO.Path]::DirectorySeparatorChar))
+        $targetFsWebp = Join-Path $RepoRootPath ('public/' + ($targetUrlWebp.TrimStart('/') -replace '/', [System.IO.Path]::DirectorySeparatorChar))
+
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($targetUrlPng)
+        $source = Find-UniqueSource -BaseName $baseName -PublicRootPath $publicRootPath
+        if ($null -eq $source) { $ambiguousSkipped++; continue }
+
+        $uniqueSourceFound++
+        if (-not $IsDryRun) {
+            $targetDir = Split-Path -Parent $targetFsWebp
+            if (-not (Test-Path -LiteralPath $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
+
+            if ($source.kind -eq 'webp') {
+                Copy-Item -LiteralPath $source.path -Destination $targetFsWebp -Force
+                $copiedToTarget++
+            }
+            else {
+                Copy-Item -LiteralPath $source.path -Destination $targetFsPng -Force
+                $copiedToTarget++
+                if (-not (Test-Path -LiteralPath $targetFsWebp)) {
+                    & cwebp -q 85 -m 6 $targetFsPng -o $targetFsWebp | Out-Null
+                    if (Test-Path -LiteralPath $targetFsWebp) { $webpGeneratedAtTarget++ }
+                }
+            }
+        }
+
+        if ($IsDryRun -or (Test-Path -LiteralPath $targetFsWebp)) {
+            $fileRel = [string]$match.file
+            if (-not $updatesByFile.ContainsKey($fileRel)) { $updatesByFile[$fileRel] = New-Object System.Collections.Generic.List[object] }
+            $updatesByFile[$fileRel].Add([pscustomobject]@{
+                spanStart = [int]$match.spanStart
+                spanLength = [int]$match.spanLength
+                expected = [string]$match.matchedText
+                replacement = [string]$targetUrlWebp
+            }) | Out-Null
+        }
+        else {
+            $ambiguousSkipped++
+        }
+    }
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    foreach ($fileRel in $updatesByFile.Keys) {
+        $fileAbs = Join-Path $RepoRootPath ($fileRel -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        if (-not (Test-Path -LiteralPath $fileAbs)) { $conflictsSkipped += $updatesByFile[$fileRel].Count; continue }
+        $content = Get-Content -LiteralPath $fileAbs -Raw
+        if ($null -eq $content) { $content = '' }
+        $ordered = @($updatesByFile[$fileRel] | Sort-Object { [int]$_.spanStart } -Descending)
+        foreach ($u in $ordered) {
+            $start = [int]$u.spanStart
+            $len = [int]$u.spanLength
+            $expected = [string]$u.expected
+            $replacement = [string]$u.replacement
+            if ($start -lt 0 -or $len -lt 0 -or ($start + $len) -gt $content.Length) { $conflictsSkipped++; continue }
+            $slice = $content.Substring($start, $len)
+            if ($slice -cne $expected) { $conflictsSkipped++; continue }
+            $content = $content.Substring(0, $start) + $replacement + $content.Substring($start + $len)
+            $replacementsApplied++
+        }
+        if (-not $IsDryRun) { [System.IO.File]::WriteAllText($fileAbs, $content, $utf8NoBom) }
+    }
+
+    Write-Host '=== RELOCATION + RESOLUTION RESULT ==='
+    Write-Host "INITIAL_CANDIDATES: $initialCandidates"
+    Write-Host "UNIQUE_SOURCE_FOUND: $uniqueSourceFound"
+    Write-Host "COPIED_TO_TARGET: $copiedToTarget"
+    Write-Host "WEBP_GENERATED_AT_TARGET: $webpGeneratedAtTarget"
+    Write-Host "REWRITES_APPLIED: $replacementsApplied"
+    Write-Host "AMBIGUOUS_SKIPPED: $ambiguousSkipped"
+
+    return [pscustomobject]@{
+        initialCandidates = $initialCandidates
+        uniqueSourceFound = $uniqueSourceFound
+        copiedToTarget = $copiedToTarget
+        webpGeneratedAtTarget = $webpGeneratedAtTarget
+        rewritesApplied = $replacementsApplied
+        ambiguousSkipped = $ambiguousSkipped
+        conflictsSkipped = $conflictsSkipped
+    }
+}
+
 try {
     $repoRootPath = (Resolve-Path -LiteralPath $RepoRoot).Path
     $publicRootPath = (Resolve-Path -LiteralPath $PublicRoot).Path
+
+    if ($ResolveStrictCandidatesFromScan) {
+        $convertScriptPath = Join-Path $scriptDirectory 'convert-png-to-webp.ps1'
+        Invoke-StrictCandidateResolution -RepoRootPath $repoRootPath -ReportPath $ScanReportPath -ConvertScriptPath $convertScriptPath -IsDryRun:$DryRun | Out-Null
+        exit 0
+    }
 
     if ($ApplyAllRewritableFromReport) {
         Invoke-ReportDrivenApply -RepoRootPath $repoRootPath -ReportPath $ScanReportPath -IsDryRun:$DryRun | Out-Null
