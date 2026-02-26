@@ -22,7 +22,6 @@ const POLYGON_LASER_TINT = '#ff6a7a'
 const POLYGON_LASER_HALO_TINT = '#ff4d6d'
 const POLYGON_PERF_FPS_TARGET = 45
 const POLYGON_PERF_DEGRADE_SECONDS = 3
-const POLYGON_RAINBOW_ORBIT_TURNS = 1.0
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
@@ -30,6 +29,72 @@ const POLYGON_QUALITY_CONFIG = {
   hi: { dprCap: 1.5, composerScale: 1.0, bloomEnabled: true, envIntensity: 1.0 },
   mid: { dprCap: 1.25, composerScale: 0.75, bloomEnabled: true, envIntensity: 0.7 },
   low: { dprCap: 1.0, composerScale: 0.6, bloomEnabled: false, envIntensity: 0.45 },
+}
+const PHASE_MOTION = {
+  inhale: {
+    polygon: { axis: 'y', turns: 1.25, wobbleAmp: 0, wobbleHz: 0, scale: 1.0 },
+    rainbow: {
+      baseAngle: 0,
+      orbitTurns: 1.0,
+      oscillationAmp: 0,
+      oscillationHz: 0,
+      flowSpeed: 1.0,
+      beamStart: 0.0,
+      beamEnd: 0.46,
+      beamOpacity: 0.98,
+      emissiveBase: 3.0,
+      emissivePulseAmp: 0,
+      emissivePulseHz: 0,
+    },
+  },
+  exhale: {
+    polygon: { axis: 'y', turns: -1.25, wobbleAmp: 0, wobbleHz: 0, scale: 1.0 },
+    rainbow: {
+      baseAngle: 0,
+      orbitTurns: -1.0,
+      oscillationAmp: 0,
+      oscillationHz: 0,
+      flowSpeed: 1.0,
+      beamStart: 0.0,
+      beamEnd: 0.46,
+      beamOpacity: 0.98,
+      emissiveBase: 3.0,
+      emissivePulseAmp: 0,
+      emissivePulseHz: 0,
+    },
+  },
+  holdTop: {
+    polygon: { axis: 'x', turns: 0, wobbleAmp: 0.18, wobbleHz: 0.9, scale: 1.0 },
+    rainbow: {
+      baseAngle: 0,
+      orbitTurns: 0,
+      oscillationAmp: 0.08,
+      oscillationHz: 0.9,
+      flowSpeed: 0,
+      beamStart: 0.0,
+      beamEnd: 0.68,
+      beamOpacity: 1.0,
+      emissiveBase: 3.2,
+      emissivePulseAmp: 0,
+      emissivePulseHz: 0,
+    },
+  },
+  holdBottom: {
+    polygon: { axis: 'none', turns: 0, wobbleAmp: 0, wobbleHz: 0, scale: 1.0 },
+    rainbow: {
+      baseAngle: 0,
+      orbitTurns: 0,
+      oscillationAmp: 0,
+      oscillationHz: 0,
+      flowSpeed: 0,
+      beamStart: 0.0,
+      beamEnd: 0.08,
+      beamOpacity: 0.34,
+      emissiveBase: 0.5,
+      emissivePulseAmp: 0.12,
+      emissivePulseHz: 1.2,
+    },
+  },
 }
 
 // Direct-light rig for polygon preset — no IBL, no shadows, no helpers.
@@ -271,12 +336,8 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
   // useFrame refs and logic
   const groupRef = useRef()
-  const scaleRef = useRef(1.0)
   const rainbowBeamRigRef = useRef()
   const rainbowMeshRef = useRef()
-  const rainbowSpinAngleRef = useRef(0)
-  const rainbowHoldAngleRef = useRef(0)
-  const rainbowWasHoldRef = useRef(false)
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const digitInsideCueRef = useRef()
   const digitLaserJitterRef = useRef()
@@ -425,19 +486,21 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     }
 
     const bd = breathDriverRef.current
-    const cycleProgress01 = bd?.cycleProgress01 ?? 0
     const phase = bd?.phase
+    const phaseProgress01 = Math.max(0, Math.min(1, bd?.phaseProgress01 ?? 0))
     const safeDelta = Number.isFinite(delta) && delta > 0 ? Math.min(delta, 0.1) : 0.016
+    const elapsed = state.clock.elapsedTime
+    const phaseMotion = PHASE_MOTION[phase] || PHASE_MOTION.holdBottom
 
-    const t = cycleProgress01
-    const eased = t * t * (3 - 2 * t)
-    groupRef.current.rotation.y = eased * Math.PI * 2 * 1.5
-    groupRef.current.rotation.x += safeDelta * 0.08 * 1.5
-
-    const atHold = phase === 'holdTop' || phase === 'holdBottom'
-    const targetScale = atHold ? 1 + Math.sin(state.clock.elapsedTime * 1.8) * 0.022 : 1.0
-    scaleRef.current += (targetScale - scaleRef.current) * Math.min(1, safeDelta * 5)
-    groupRef.current.scale.setScalar(scaleRef.current)
+    const polygonCfg = phaseMotion.polygon
+    const phaseAngle = phaseProgress01 * Math.PI * 2 * polygonCfg.turns
+    const wobblePhase = Math.sin(elapsed * Math.PI * 2 * polygonCfg.wobbleHz) * polygonCfg.wobbleAmp
+    const polygonRotationX = polygonCfg.axis === 'x' ? phaseAngle + wobblePhase : 0
+    const polygonRotationY = polygonCfg.axis === 'y' ? phaseAngle : 0
+    groupRef.current.rotation.x = polygonRotationX
+    groupRef.current.rotation.y = polygonRotationY
+    groupRef.current.rotation.z = 0
+    groupRef.current.scale.setScalar(polygonCfg.scale)
 
     if (rainbowMeshRef.current) {
       const len = Math.max(viewport.width, viewport.height) * 1.5
@@ -445,25 +508,27 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     }
 
     if (rainbowBeamRigRef.current) {
-      const dynamicAngle = t * Math.PI * 2 * POLYGON_RAINBOW_ORBIT_TURNS
-      rainbowSpinAngleRef.current = dynamicAngle
-      if (atHold) {
-        if (!rainbowWasHoldRef.current) {
-          rainbowHoldAngleRef.current = rainbowSpinAngleRef.current
-        }
-        const hover = Math.sin(state.clock.elapsedTime * 0.85) * 0.20
-        rainbowBeamRigRef.current.rotation.z = rainbowHoldAngleRef.current + hover
-      } else {
-        rainbowBeamRigRef.current.rotation.z = dynamicAngle
-      }
-      rainbowWasHoldRef.current = atHold
+      const rainbowCfg = phaseMotion.rainbow
+      const rainbowOrbit = phaseProgress01 * Math.PI * 2 * rainbowCfg.orbitTurns + rainbowCfg.baseAngle
+      const rainbowWobble = Math.sin(elapsed * Math.PI * 2 * rainbowCfg.oscillationHz) * rainbowCfg.oscillationAmp
+      rainbowBeamRigRef.current.rotation.x = 0
+      rainbowBeamRigRef.current.rotation.y = 0
+      rainbowBeamRigRef.current.rotation.z = rainbowOrbit + rainbowWobble
     }
     if (rainbowBeamMaterial?.uniforms) {
-      rainbowBeamMaterial.uniforms.time.value += safeDelta * (atHold ? 0.45 : 1.0)
-      rainbowBeamMaterial.uniforms.speed.value = atHold ? 0.45 : 1.0
+      const rainbowCfg = phaseMotion.rainbow
+      const emissivePulse =
+        rainbowCfg.emissivePulseAmp > 0
+          ? Math.sin(elapsed * Math.PI * 2 * rainbowCfg.emissivePulseHz) * rainbowCfg.emissivePulseAmp
+          : 0
+
+      rainbowBeamMaterial.uniforms.time.value += safeDelta * rainbowCfg.flowSpeed
+      rainbowBeamMaterial.uniforms.speed.value = rainbowCfg.flowSpeed
       rainbowBeamMaterial.uniforms.ratio.value = 1.0
-      rainbowBeamMaterial.uniforms.emissiveIntensity.value = atHold ? 2.0 : 3.0
-      rainbowBeamMaterial.uniforms.beamOpacity.value = atHold ? 0.82 : 0.98
+      rainbowBeamMaterial.uniforms.startRadius.value = rainbowCfg.beamStart
+      rainbowBeamMaterial.uniforms.endRadius.value = rainbowCfg.beamEnd
+      rainbowBeamMaterial.uniforms.emissiveIntensity.value = Math.max(0, rainbowCfg.emissiveBase + emissivePulse)
+      rainbowBeamMaterial.uniforms.beamOpacity.value = rainbowCfg.beamOpacity
     }
 
     // Billboard: copy camera quaternion so plane always faces viewer exactly
