@@ -30,6 +30,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const [daysError, setDaysError] = useState(null);
     const [benchmarkError, setBenchmarkError] = useState(null);
     const [showBenchmark, setShowBenchmark] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
     const lastBenchmark = useBreathBenchmarkStore(s => s.lastBenchmark);
     const completeAttemptBenchmark = useBreathBenchmarkStore(s => s.completeAttemptBenchmark);
     const canReuseLastBenchmark = useBreathBenchmarkStore(s => s.canReuseLastBenchmark);
@@ -104,6 +105,14 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         }
         : { ok: true, error: null };
     const canBeginPath = scheduleValidation.ok && daysValidation.ok && benchmarkValidation.ok;
+    const totalSteps = 5;
+    const canAdvanceStep3 = daysValidation.ok && scheduleValidation.ok;
+    const canAdvanceStep4 = benchmarkValidation.ok;
+    const canAdvanceCurrentStep = currentStep === 3
+        ? canAdvanceStep3
+        : currentStep === 4
+            ? canAdvanceStep4
+            : true;
     const scheduleInstruction = scheduleConstraint?.requiredCount === 2 && scheduleConstraint?.maxCount === 2
         ? 'Select exactly 2 time slots for practice (morning and evening).'
         : 'Choose at least one time to begin this path.';
@@ -286,9 +295,34 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             >
                 ✕
             </button>
+            {isInitiationPath && (
+                <div className="mb-6">
+                    <div className="text-[11px] uppercase tracking-[0.16em] mb-3" style={{ color: goldLabelColor }}>
+                        Step {currentStep} of {totalSteps}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {Array.from({ length: totalSteps }).map((_, idx) => {
+                            const stepNumber = idx + 1;
+                            const isCompleteOrCurrent = stepNumber <= currentStep;
+                            return (
+                                <div
+                                    key={stepNumber}
+                                    className="h-1.5 flex-1 rounded-full transition-colors"
+                                    style={{
+                                        background: isCompleteOrCurrent
+                                            ? 'var(--accent-color)'
+                                            : isLight ? 'rgba(180, 140, 90, 0.2)' : 'rgba(250, 208, 120, 0.12)',
+                                    }}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Header */}
-            <div className="border-b border-[var(--accent-15)] pb-4">
+            {(!isInitiationPath || currentStep === 1) && (
+                <div className="border-b border-[var(--accent-15)] pb-4">
                 <div className="mb-8 pr-12">
                     <h2
                         className="text-3xl font-bold mb-2"
@@ -348,9 +382,10 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                         "{path.description}"
                     </p>
                 </div>
-            </div>
+                </div>
+            )}
 
-            {isInitiationPath && (
+            {isInitiationPath && currentStep === 2 && (
                 <div className="mb-8">
                     <h3
                         className="text-base font-bold mb-3 tracking-wide"
@@ -379,7 +414,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             )}
 
             {/* Wisdom Section */}
-            {path.chapters.length > 0 && (
+            {!isInitiationPath && path.chapters.length > 0 && (
                 <div>
                     <h3
                         className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
@@ -411,7 +446,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
             )}
 
             {/* Application Section */}
-            {path.applicationItems.length > 0 && (
+            {!isInitiationPath && path.applicationItems.length > 0 && (
                 <div>
                     <h3
                         className="text-base font-bold text-[var(--accent-color)] mb-2 tracking-wide"
@@ -578,7 +613,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
-            {isInitiationPath && (
+            {isInitiationPath && currentStep === 2 && (
                 <div className="mb-8">
                     <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
                         Tracking Focus
@@ -598,7 +633,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
-            {isInitiationPath && (
+            {isInitiationPath && currentStep === 3 && (
                 <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                     <div className="text-[10px] uppercase tracking-[0.18em] mb-2 text-center" style={{ color: goldLabelColor }}>
                         Step 1: Select Active Days
@@ -641,7 +676,7 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 </div>
             )}
 
-            {path.showBreathBenchmark && (
+            {path.showBreathBenchmark && (!isInitiationPath || currentStep === 4) && (
                 <div className="mb-8">
                     <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
                         Step 1: Benchmark
@@ -701,11 +736,17 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                             Using previous benchmark
                         </div>
                     )}
+                    {!benchmarkValidation.ok && (
+                        <div className="mt-3 text-[11px] text-center" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
+                            {benchmarkError || benchmarkValidation.error}
+                        </div>
+                    )}
                 </div>
             )}
 
             {/* Practice Times */}
-            <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+            {(!isInitiationPath || currentStep === 3) && (
+                <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <div className="text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: goldLabelColor }}>
                     {isInitiationPath ? 'Step 2: Select Time Slots' : 'Step 2: Select Time Slots'}
                 </div>
@@ -733,24 +774,23 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                         {scheduleValidation.error}
                     </div>
                 )}
-                {!benchmarkValidation.ok && (
-                    <div className="mt-3 text-[11px]" style={{ color: isLight ? 'rgba(180, 80, 40, 0.9)' : 'rgba(255, 180, 120, 0.9)' }}>
-                        {benchmarkError || benchmarkValidation.error}
-                    </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Ornamental Divider */}
-            <div className="flex items-center justify-center py-2">
+            {(!isInitiationPath || currentStep === 5) && (
+                <div className="flex items-center justify-center py-2">
                 <div className="flex items-center gap-4 text-[var(--accent-30)]">
                     <div className="w-24 h-[1px] bg-gradient-to-r from-transparent to-[var(--accent-30)]" />
                     <div style={{ fontSize: '10px' }}>◆</div>
                     <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-[var(--accent-30)]" />
                 </div>
-            </div>
+                </div>
+            )}
 
             {/* BEGIN Button */}
-            <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+            {(!isInitiationPath || currentStep === 5) && (
+                <div className="border-t pt-8" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
                 <div className="text-[10px] uppercase tracking-[0.18em] mb-3" style={{ color: goldLabelColor }}>
                     Step 3: Click Begin this path
                 </div>
@@ -781,7 +821,52 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 >
                     This will become your active focus for the next {contract.totalDays ?? (path.duration * 7)} days.
                 </p>
-            </div>
+                </div>
+            )}
+
+            {isInitiationPath && (
+                <div className="border-t pt-6 mt-6 flex items-center justify-between" style={{ borderColor: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(250, 208, 120, 0.1)' }}>
+                    {currentStep > 1 ? (
+                        <button
+                            type="button"
+                            onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+                            className="rounded-full px-4 py-2 text-[10px] uppercase"
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                background: "transparent",
+                                border: "1px solid var(--accent-20)",
+                                color: "var(--text-muted)",
+                            }}
+                        >
+                            Back
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                    {currentStep < totalSteps ? (
+                        <button
+                            type="button"
+                            onClick={() => setCurrentStep(prev => Math.min(totalSteps, prev + 1))}
+                            disabled={!canAdvanceCurrentStep}
+                            className={`rounded-full px-4 py-2 text-[10px] uppercase ${!canAdvanceCurrentStep ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            style={{
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 600,
+                                letterSpacing: "var(--tracking-mythic)",
+                                background: "transparent",
+                                border: "1px solid var(--accent-20)",
+                                color: "var(--text-muted)",
+                            }}
+                        >
+                            Next
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                </div>
+            )}
 
             <style>{`
                 @keyframes benchmarkRadiate {
