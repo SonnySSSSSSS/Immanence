@@ -107,7 +107,7 @@ function createDigitTexture(value) {
 }
 
 export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
-  const { gl, size, scene, camera } = useThree()
+  const { gl, size, scene, camera, viewport } = useThree()
   const runtimeQualityInfo = useMemo(() => {
     if (typeof window === 'undefined') {
       return { initialTier: 'hi', fxKillSwitch: false, autoDowngrade: false }
@@ -273,6 +273,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
   const groupRef = useRef()
   const scaleRef = useRef(1.0)
   const rainbowBeamRigRef = useRef()
+  const rainbowMeshRef = useRef()
   const rainbowSpinAngleRef = useRef(0)
   const rainbowHoldAngleRef = useRef(0)
   const rainbowWasHoldRef = useRef(false)
@@ -286,10 +287,10 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       uniforms: {
         time: { value: 0 },
         speed: { value: 1 },
-        fade: { value: 0.25 },
+        fade: { value: 0.06 },
         startRadius: { value: 0.0 },
         endRadius: { value: 0.5 },
-        emissiveIntensity: { value: 6.0 },
+        emissiveIntensity: { value: 3.0 },
         ratio: { value: 1.0 },
         beamOpacity: { value: 0.95 },
       },
@@ -438,6 +439,11 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     scaleRef.current += (targetScale - scaleRef.current) * Math.min(1, safeDelta * 5)
     groupRef.current.scale.setScalar(scaleRef.current)
 
+    if (rainbowMeshRef.current) {
+      const len = Math.max(viewport.width, viewport.height) * 1.5
+      rainbowMeshRef.current.scale.set(len, len, 1)
+    }
+
     if (rainbowBeamRigRef.current) {
       const dynamicAngle = t * Math.PI * 2 * POLYGON_RAINBOW_ORBIT_TURNS
       rainbowSpinAngleRef.current = dynamicAngle
@@ -456,7 +462,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
       rainbowBeamMaterial.uniforms.time.value += safeDelta * (atHold ? 0.45 : 1.0)
       rainbowBeamMaterial.uniforms.speed.value = atHold ? 0.45 : 1.0
       rainbowBeamMaterial.uniforms.ratio.value = 1.0
-      rainbowBeamMaterial.uniforms.emissiveIntensity.value = atHold ? 4.8 : 6.8
+      rainbowBeamMaterial.uniforms.emissiveIntensity.value = atHold ? 2.0 : 3.0
       rainbowBeamMaterial.uniforms.beamOpacity.value = atHold ? 0.82 : 0.98
     }
 
@@ -542,10 +548,12 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         />
       </mesh>
 
-      {/* Rotating spectral beam: orbits during active countdown, hovers on holds. */}
-      <group ref={rainbowBeamRigRef} position={[0, 0, 0.28]} renderOrder={6}>
-        <mesh position={[0.62, -0.08, 0]} rotation={[0, 0, 0.02]}>
-          <planeGeometry args={[2.8, 2.8]} />
+      {/* Rotating spectral beam: orbits during active countdown, hovers on holds.
+          renderOrder=-1 ensures polygon faces (default renderOrder=0) paint over it,
+          so the beam appears to radiate from behind the polygon. */}
+      <group ref={rainbowBeamRigRef} position={[0, 0, 0]} renderOrder={-1}>
+        <mesh ref={rainbowMeshRef}>
+          <planeGeometry />
           <primitive object={rainbowBeamMaterial} attach="material" />
         </mesh>
       </group>

@@ -412,6 +412,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.214 - feat(polygon): viewport-filling rainbow fan from polygon center; renderOrder=-1 for depth hierarchy
   // v3.27.213 - fix(polygon): digit rotation/position/depthTest; replace beam with subtle cues; polygon writes depth
   // v3.27.212 - fix(polygon): depthTest=false on digit plane; dielectric material; raised ambient; beam opacity
   // v3.27.211 - feat(polygon): projector beam + billboarded digit + upright reflection; stability lock preserved
@@ -726,7 +727,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.213
+                        v3.27.214
                       </button>
                     </div>
                   </div>
