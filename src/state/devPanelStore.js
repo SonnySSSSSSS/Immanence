@@ -44,9 +44,11 @@ function createDefaultAvatarComposite() {
   return {
     enabled: true,
     showDebugOverlay: false,
+    // AVATAR_DEFAULTS:START
     transformsByStage: {
       seedling: createDefaultStageTransforms(),
     },
+    // AVATAR_DEFAULTS:END
   };
 }
 
