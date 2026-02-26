@@ -14,6 +14,7 @@ import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
 import { BloomRingSceneContent } from './bloomRing/BloomRingRenderer.jsx';
 import { TechInstrumentSceneContent } from './bloomRing/TechInstrumentRND.jsx';
 import { PolygonBreathSceneContent } from './bloomRing/PolygonBreathScene.jsx';
+import { RainbowPresetCanvas } from './rainbowPreset/RainbowPresetCanvas.jsx';
 import ParticleCountdownPreset from './countdown/ParticleCountdownPreset.jsx';
 import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefaults.js';
 import { useTheme } from '../context/ThemeContext.jsx';
@@ -24,6 +25,7 @@ export const BREATH_RING_PRESETS = [
   { id: 'bracelet', label: 'Bracelet' },
   { id: 'polygon', label: 'Polygon' },
   { id: 'orb', label: 'Countdown' },
+  { id: 'rainbow', label: 'Rainbow Prism' },
 ];
 const RING_MODE_CYCLE = BREATH_RING_PRESETS.map((preset) => preset.id);
 
@@ -68,6 +70,10 @@ function RingSceneRouter({
         displayNumber={displayNumber}
       />
     );
+  }
+
+  if (rndRingMode === 'rainbow') {
+    return null;
   }
 
   return (
@@ -1129,35 +1135,36 @@ export function BreathingRing({
 
 	        {/* DEV ring-mode overlay removed (was used for probe targeting) */}
 
-        {/* Standard ring canvas — bracelet / instrument — always mounted */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            overflow: "hidden",
-            zIndex: 10,
-            pointerEvents: "none",
-            minWidth: "1px",
-            minHeight: "1px",
-            opacity: isOrb ? 0 : (isFrameActive ? 1 : 0),
-            transition: "opacity 0.25s ease",
-          }}
-        >
-          <PersistentBreathRingCanvas
-            rndRingMode={rndRingMode}
-            frameloop={isOrb ? "never" : undefined}
-            productionParams={productionParams}
-            liveAccentColor={liveAccentColor}
-            breathDriver={breathDriver}
-            style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block' }}
-            isFrameActive={isFrameActive}
-            displayNumber={phaseRemainingSec}
-            presetVariant={presetVariant}
-            activePresetRaw={activePresetRaw}
-            activePresetLabel={activePresetLabel}
-            normalizedPresetNumber={normalizedPresetNumber}
-          />
-        </div>
+        {rndRingMode !== 'rainbow' && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              overflow: "hidden",
+              zIndex: 10,
+              pointerEvents: "none",
+              minWidth: "1px",
+              minHeight: "1px",
+              opacity: isOrb ? 0 : (isFrameActive ? 1 : 0),
+              transition: "opacity 0.25s ease",
+            }}
+          >
+            <PersistentBreathRingCanvas
+              rndRingMode={rndRingMode}
+              frameloop={isOrb ? "never" : undefined}
+              productionParams={productionParams}
+              liveAccentColor={liveAccentColor}
+              breathDriver={breathDriver}
+              style={{ width: '100%', height: '100%', minWidth: '1px', minHeight: '1px', display: 'block' }}
+              isFrameActive={isFrameActive}
+              displayNumber={phaseRemainingSec}
+              presetVariant={presetVariant}
+              activePresetRaw={activePresetRaw}
+              activePresetLabel={activePresetLabel}
+              normalizedPresetNumber={normalizedPresetNumber}
+            />
+          </div>
+        )}
 
         {rndRingMode === 'bracelet' && !isOrb && isFrameActive && (
           <div
@@ -1178,6 +1185,20 @@ export function BreathingRing({
             >
               <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} breathDriver={breathDriver} />
             </Canvas>
+          </div>
+        )}
+
+        {rndRingMode === 'rainbow' && isFrameActive && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'auto',
+              background: 'transparent',
+              zIndex: 25,
+            }}
+          >
+            <RainbowPresetCanvas />
           </div>
         )}
 
