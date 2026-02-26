@@ -121,11 +121,9 @@ function getLastPathSegment(publicPath) {
 
 export function AvatarComposite({ stage, size }) {
   const normalizedStage = normalizeStageKey(stage);
-  const devPanelVisible = getDevPanelProdGate();
-  const avatarCompositeDevState = useDevPanelStore((s) => (devPanelVisible ? s.avatarComposite : null));
-  const getAvatarCompositeRoleTransform = useDevPanelStore((s) =>
-    devPanelVisible ? s.getAvatarCompositeRoleTransform : null
-  );
+  const devPanelGateEnabled = getDevPanelProdGate();
+  const avatarCompositeDevState = useDevPanelStore((s) => s.avatarComposite);
+  const getAvatarCompositeRoleTransform = useDevPanelStore((s) => s.getAvatarCompositeRoleTransform);
   const presetsByStage = useAvatarPresetStore((s) => s.presetsByStage);
   const ensureStagePreset = useAvatarPresetStore((s) => s.ensureStagePreset);
   const isDev = import.meta.env.DEV;
@@ -136,8 +134,12 @@ export function AvatarComposite({ stage, size }) {
   const glassSrc = resolvePublicAssetUrl(stageAssets.glassRing);
   const ringSrc = resolvePublicAssetUrl(stageAssets.runeRing);
   const compositeSizeStyle = resolveSizeStyle(size);
-  const useDevTransforms = Boolean(devPanelVisible && avatarCompositeDevState?.enabled);
-  const showDebugOverlay = Boolean(useDevTransforms && avatarCompositeDevState?.showDebugOverlay);
+  // Apply persisted composite transforms in all runtimes (local + production),
+  // so avatar presets do not depend on the devpanel URL gate.
+  const useDevTransforms = Boolean(avatarCompositeDevState?.enabled);
+  const showDebugOverlay = Boolean(
+    devPanelGateEnabled && useDevTransforms && avatarCompositeDevState?.showDebugOverlay
+  );
 
   useEffect(() => {
     ensureStagePreset(normalizedStage);
@@ -147,7 +149,7 @@ export function AvatarComposite({ stage, size }) {
   const PROBE = isDev ? (avatarCompositeDevState?.enabled ? 'red' : 'blue') : null;
 
   const baseLayers = useMemo(() => {
-    if (useDevTransforms && getAvatarCompositeRoleTransform) {
+    if (useDevTransforms) {
       const stageLayers = {};
       LAYER_IDS.forEach((layerId) => {
         stageLayers[layerId] = getAvatarCompositeRoleTransform(normalizedStage, layerId);
