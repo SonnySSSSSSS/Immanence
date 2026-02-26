@@ -22,6 +22,8 @@ const POLYGON_LASER_TINT = '#ff6a7a'
 const POLYGON_LASER_HALO_TINT = '#ff4d6d'
 const POLYGON_PERF_FPS_TARGET = 45
 const POLYGON_PERF_DEGRADE_SECONDS = 3
+const POLYGON_MOTION_SPEED_SCALE = 0.5
+const POLYGON_WOBBLE_AMPLITUDE_SCALE = 0.5
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
@@ -32,13 +34,13 @@ const POLYGON_QUALITY_CONFIG = {
 }
 const PHASE_MOTION = {
   inhale: {
-    polygon: { axis: 'y', turns: 1.25, wobbleAmp: 0, wobbleHz: 0, scale: 1.0 },
+    polygon: { axis: 'y', turns: 1.25 * POLYGON_MOTION_SPEED_SCALE, wobbleAmp: 0 * POLYGON_WOBBLE_AMPLITUDE_SCALE, wobbleHz: 0, scale: 1.0 },
     rainbow: {
       baseAngle: 0,
-      orbitTurns: 1.0,
-      oscillationAmp: 0,
+      orbitTurns: 1.0 * POLYGON_MOTION_SPEED_SCALE,
+      oscillationAmp: 0 * POLYGON_WOBBLE_AMPLITUDE_SCALE,
       oscillationHz: 0,
-      flowSpeed: 1.0,
+      flowSpeed: 1.0 * POLYGON_MOTION_SPEED_SCALE,
       beamStart: 0.0,
       beamEnd: 0.46,
       beamOpacity: 0.98,
@@ -48,13 +50,13 @@ const PHASE_MOTION = {
     },
   },
   exhale: {
-    polygon: { axis: 'y', turns: -1.25, wobbleAmp: 0, wobbleHz: 0, scale: 1.0 },
+    polygon: { axis: 'y', turns: -1.25 * POLYGON_MOTION_SPEED_SCALE, wobbleAmp: 0 * POLYGON_WOBBLE_AMPLITUDE_SCALE, wobbleHz: 0, scale: 1.0 },
     rainbow: {
       baseAngle: 0,
-      orbitTurns: -1.0,
-      oscillationAmp: 0,
+      orbitTurns: -1.0 * POLYGON_MOTION_SPEED_SCALE,
+      oscillationAmp: 0 * POLYGON_WOBBLE_AMPLITUDE_SCALE,
       oscillationHz: 0,
-      flowSpeed: 1.0,
+      flowSpeed: 1.0 * POLYGON_MOTION_SPEED_SCALE,
       beamStart: 0.0,
       beamEnd: 0.46,
       beamOpacity: 0.98,
@@ -64,13 +66,13 @@ const PHASE_MOTION = {
     },
   },
   holdTop: {
-    polygon: { axis: 'x', turns: 0, wobbleAmp: 0.18, wobbleHz: 0.9, scale: 1.0 },
+    polygon: { axis: 'x', turns: 0.20 * POLYGON_MOTION_SPEED_SCALE, wobbleAmp: 0.18 * POLYGON_WOBBLE_AMPLITUDE_SCALE, wobbleHz: 0.9, scale: 1.0 },
     rainbow: {
       baseAngle: 0,
-      orbitTurns: 0,
-      oscillationAmp: 0.08,
+      orbitTurns: 0.12 * POLYGON_MOTION_SPEED_SCALE,
+      oscillationAmp: 0.08 * POLYGON_WOBBLE_AMPLITUDE_SCALE,
       oscillationHz: 0.9,
-      flowSpeed: 0,
+      flowSpeed: 0.20 * POLYGON_MOTION_SPEED_SCALE,
       beamStart: 0.0,
       beamEnd: 0.68,
       beamOpacity: 1.0,
@@ -80,13 +82,13 @@ const PHASE_MOTION = {
     },
   },
   holdBottom: {
-    polygon: { axis: 'none', turns: 0, wobbleAmp: 0, wobbleHz: 0, scale: 1.0 },
+    polygon: { axis: 'y', turns: 0.08 * POLYGON_MOTION_SPEED_SCALE, wobbleAmp: 0.04 * POLYGON_WOBBLE_AMPLITUDE_SCALE, wobbleHz: 0.55, scale: 1.0 },
     rainbow: {
       baseAngle: 0,
-      orbitTurns: 0,
-      oscillationAmp: 0,
-      oscillationHz: 0,
-      flowSpeed: 0,
+      orbitTurns: 0.08 * POLYGON_MOTION_SPEED_SCALE,
+      oscillationAmp: 0.04 * POLYGON_WOBBLE_AMPLITUDE_SCALE,
+      oscillationHz: 0.55,
+      flowSpeed: 0.08 * POLYGON_MOTION_SPEED_SCALE,
       beamStart: 0.0,
       beamEnd: 0.08,
       beamOpacity: 0.34,
