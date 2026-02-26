@@ -15,8 +15,6 @@ export function RainbowPresetBreathSceneContent({ breathDriver = null }) {
   const spot = useRef(null)
   const boxreflect = useRef(null)
   const rainbow = useRef(null)
-  const lastPointer = useRef(new THREE.Vector2(0, 0))
-  const lastPointerMoveAt = useRef(-Infinity)
 
   const rayOut = useCallback(() => hitPrism(false), [])
   const rayOver = useCallback((e) => {
@@ -43,14 +41,6 @@ export function RainbowPresetBreathSceneContent({ breathDriver = null }) {
   }, [])
 
   useFrame((state) => {
-    const pointerDelta =
-      Math.abs(state.pointer.x - lastPointer.current.x) +
-      Math.abs(state.pointer.y - lastPointer.current.y)
-    if (pointerDelta > 0.0001) {
-      lastPointerMoveAt.current = state.clock.elapsedTime
-    }
-    lastPointer.current.set(state.pointer.x, state.pointer.y)
-
     const timerProgress01 =
       breathDriver?.cycleProgress01 != null
         ? Math.max(0, Math.min(1, breathDriver.cycleProgress01))
@@ -58,13 +48,7 @@ export function RainbowPresetBreathSceneContent({ breathDriver = null }) {
     const angle = timerProgress01 * Math.PI * 2 - Math.PI / 2
     const orbitRadius = Math.min(state.viewport.width, state.viewport.height) * 0.42
     const autoRayOrigin = [Math.cos(angle) * orbitRadius, Math.sin(angle) * orbitRadius, 0]
-    const pointerRayOrigin = [
-      (state.pointer.x * state.viewport.width) / 2,
-      (state.pointer.y * state.viewport.height) / 2,
-      0
-    ]
-    const pointerRecentlyActive = state.clock.elapsedTime - lastPointerMoveAt.current < 1.2
-    boxreflect.current.setRay(pointerRecentlyActive ? pointerRayOrigin : autoRayOrigin, [0, -0.5, 0])
+    boxreflect.current.setRay(autoRayOrigin, [0, -0.5, 0])
 
     lerp(rainbow.current.material, 'emissiveIntensity', isPrismHit ? 2.5 : 0, 0.1)
     spot.current.intensity = rainbow.current.material.emissiveIntensity
