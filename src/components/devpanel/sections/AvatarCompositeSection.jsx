@@ -43,6 +43,8 @@ function AvatarCompositeSection({
     const copyAvatarCompositeStageToAll = useDevPanelStore(s => s.copyAvatarCompositeStageToAll);
     const getAvatarCompositeSettingsJSON = useDevPanelStore(s => s.getAvatarCompositeSettingsJSON);
     const setAvatarCompositeSettingsJSON = useDevPanelStore(s => s.setAvatarCompositeSettingsJSON);
+    const getAvatarCompositeAllStagesJSON = useDevPanelStore(s => s.getAvatarCompositeAllStagesJSON);
+    const getAvatarCompositeDefaultsSnippet = useDevPanelStore(s => s.getAvatarCompositeDefaultsSnippet);
 
     const [layerExpanded, setLayerExpanded] = useState({
         bg: true,
@@ -97,6 +99,36 @@ function AvatarCompositeSection({
             }
         }
         setJsonStatus('Copied to editor field.');
+    };
+
+    const copyAllStagesJson = async () => {
+        const json = getAvatarCompositeAllStagesJSON();
+        setJsonDraft(json);
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(json);
+                setJsonStatus('Copied all stages JSON to clipboard.');
+                return;
+            } catch {
+                // Fallback handled below.
+            }
+        }
+        setJsonStatus('Copied all stages JSON to editor field.');
+    };
+
+    const copyDefaultsSnippet = async () => {
+        const snippet = getAvatarCompositeDefaultsSnippet();
+        setJsonDraft(snippet);
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(snippet);
+                setJsonStatus('Copied defaults snippet to clipboard. Paste into createDefaultAvatarComposite().');
+                return;
+            } catch {
+                // Fallback handled below.
+            }
+        }
+        setJsonStatus('Copied defaults snippet to editor field.');
     };
 
     const applySettings = () => {
@@ -216,6 +248,18 @@ function AvatarCompositeSection({
                     className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
                 >
                     Copy Current Stage JSON
+                </button>
+                <button
+                    onClick={copyAllStagesJson}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                >
+                    Copy All Stages JSON
+                </button>
+                <button
+                    onClick={copyDefaultsSnippet}
+                    className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70 hover:bg-white/10 transition-all"
+                >
+                    Copy Defaults Snippet
                 </button>
             </div>
             {destructiveLocked && (

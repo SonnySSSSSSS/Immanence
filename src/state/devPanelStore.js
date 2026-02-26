@@ -416,6 +416,30 @@ export const useDevPanelStore = create(
         return { ok: true };
       },
 
+      getAvatarCompositeAllStagesJSON: () => {
+        const state = get();
+        const transformsByStage = {};
+        AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+          transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
+        });
+        return JSON.stringify(
+          {
+            transformsByStage,
+          },
+          null,
+          2
+        );
+      },
+
+      getAvatarCompositeDefaultsSnippet: () => {
+        const state = get();
+        const transformsByStage = {};
+        AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+          transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
+        });
+        return `transformsByStage: ${JSON.stringify(transformsByStage, null, 2)},`;
+      },
+
       getAvatarCompositeDefaults: () => JSON.parse(JSON.stringify(DEFAULT_AVATAR_COMPOSITE)),
     }),
     {
