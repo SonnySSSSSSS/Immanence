@@ -134,8 +134,29 @@ function AvatarCompositeSection({
     };
 
     const writeDefaultsToDevPanelStoreFile = async () => {
+        const fallbackCopySnippet = async () => {
+            const snippet = getAvatarCompositeDefaultsSnippet();
+            setJsonDraft(snippet);
+            if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                try {
+                    await navigator.clipboard.writeText(snippet);
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
+            return false;
+        };
+
         if (typeof window === 'undefined' || typeof window.showOpenFilePicker !== 'function') {
-            setJsonStatus('Direct file write is unavailable in this browser. Use Copy Defaults Snippet instead.');
+            const copied = await fallbackCopySnippet();
+            const message = copied
+                ? 'This browser does not support file picker write. Defaults snippet was copied to clipboard. Paste it into createDefaultAvatarComposite() in src/state/devPanelStore.js.'
+                : 'This browser does not support file picker write. Use Copy Defaults Snippet and paste into createDefaultAvatarComposite() in src/state/devPanelStore.js.';
+            setJsonStatus(message);
+            if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                window.alert(message);
+            }
             return;
         }
 
@@ -185,7 +206,11 @@ function AvatarCompositeSection({
 
             setJsonStatus('Updated src/state/devPanelStore.js defaults. Now run git add/commit/push.');
         } catch {
-            setJsonStatus('Direct file write canceled or failed.');
+            const copied = await fallbackCopySnippet();
+            const message = copied
+                ? 'File write canceled/failed. Defaults snippet was copied to clipboard.'
+                : 'File write canceled/failed. Use Copy Defaults Snippet.';
+            setJsonStatus(message);
         }
     };
 
