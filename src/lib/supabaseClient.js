@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 // NOTE: Multi-user sync feature is disabled.
 // Set ENABLE_AUTH to true when Supabase CORS is configured.
 const ENABLE_AUTH = true;
+const SUPABASE_URL = 'https://snyozqiselfxfifpavmj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_fVQsaU3JzAhoIa2znapxBA_dlSm6quO';
+
+export const SUPABASE_URL_FOR_PROBE = SUPABASE_URL;
+export const SUPABASE_ANON_KEY_PREFIX_FOR_PROBE = SUPABASE_ANON_KEY.slice(0, 8);
 
 // Create a mock client that does nothing when auth is disabled
 const createMockClient = () => ({
@@ -17,7 +22,7 @@ const createMockClient = () => ({
 
 export const supabase = ENABLE_AUTH
   ? createClient(
-      'https://snyozqiselfxfifpavmj.supabase.co',
-      'sb_publishable_fVQsaU3JzAhoIa2znapxBA_dlSm6quO'
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
     )
   : createMockClient();

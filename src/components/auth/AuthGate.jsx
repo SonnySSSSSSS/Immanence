@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { SUPABASE_ANON_KEY_PREFIX_FOR_PROBE, SUPABASE_URL_FOR_PROBE } from "../../lib/supabaseClient";
 // NOTE: Multi-user sync feature is disabled until Supabase CORS is configured.
 // To enable, set ENABLE_AUTH to true and configure Supabase allowed origins.
 const ENABLE_AUTH = true;
@@ -15,6 +16,8 @@ export default function AuthGate({ children, onAuthChange }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [dnsStatus, setDnsStatus] = useState("PENDING");
+  const [dnsErrorText, setDnsErrorText] = useState("");
 
   useEffect(() => {
     // Skip auth initialization when disabled
@@ -48,6 +51,19 @@ export default function AuthGate({ children, onAuthChange }) {
         sub?.subscription?.unsubscribe?.();
       };
     });
+  }, []);
+
+  useEffect(() => {
+    if (!ENABLE_AUTH) return;
+    fetch(`${SUPABASE_URL_FOR_PROBE}/auth/v1/signup`, { method: "POST", mode: "no-cors" })
+      .then(() => {
+        setDnsStatus("PASS");
+        setDnsErrorText("");
+      })
+      .catch((e) => {
+        setDnsStatus("FAIL");
+        setDnsErrorText(`${e?.name || "Error"}: ${e?.message || "Failed to fetch"}`);
+      });
   }, []);
 
   async function handleSubmit(e) {
@@ -99,7 +115,36 @@ export default function AuthGate({ children, onAuthChange }) {
     // PROBE:AUTH_ENABLEMENT:END
   ) : null;
 
-  if (loading) return <>{probeBanner}</>;
+  // PROBE:SUPABASE_DNS:START
+  const dnsProbePanel = ENABLE_AUTH ? (
+    <div
+      style={{
+        position: "fixed",
+        left: 12,
+        bottom: 12,
+        zIndex: 99999,
+        padding: "12px 14px",
+        background: "#111111",
+        color: "#ffffff",
+        border: "2px solid #00e5ff",
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 700,
+        lineHeight: 1.4,
+        boxShadow: "0 6px 16px rgba(0,0,0,0.55)",
+        maxWidth: "min(92vw, 760px)",
+        wordBreak: "break-word",
+      }}
+    >
+      <div>SUPABASE_URL: {SUPABASE_URL_FOR_PROBE}</div>
+      <div>ANON_KEY_PREFIX: {SUPABASE_ANON_KEY_PREFIX_FOR_PROBE}...</div>
+      <div>DNS_PROBE: {dnsStatus}</div>
+      {dnsStatus === "FAIL" ? <div>DNS_ERROR: {dnsErrorText}</div> : null}
+    </div>
+  ) : null;
+  // PROBE:SUPABASE_DNS:END
+
+  if (loading) return <>{probeBanner}{dnsProbePanel}</>;
 
   // When auth is disabled, just render children
   if (!ENABLE_AUTH) {
@@ -110,6 +155,7 @@ export default function AuthGate({ children, onAuthChange }) {
     return (
       <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
         {probeBanner}
+        {dnsProbePanel}
         <div style={{ width: 360, maxWidth: "90vw", padding: 16, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <div style={{ fontSize: 14, opacity: 0.9 }}>Immanence OS</div>
@@ -158,6 +204,7 @@ export default function AuthGate({ children, onAuthChange }) {
   return (
     <>
       {probeBanner}
+      {dnsProbePanel}
       {children}
     </>
   );
