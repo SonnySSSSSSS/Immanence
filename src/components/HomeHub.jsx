@@ -13,6 +13,7 @@ import { ExportDataButton } from "./ExportDataButton.jsx";
 import { HubStagePanel } from "./HubStagePanel.jsx";
 import { HonorLogModal } from "./HonorLogModal.jsx";
 import { SessionHistoryView } from "./SessionHistoryView.jsx";
+import { TrackingHub } from "./TrackingHub.jsx";
 import { SideNavigation } from "./SideNavigation.jsx";
 import { noiseOverlayStyle, sheenOverlayStyle } from "../styles/cardMaterial.js";
 import { useProgressStore } from "../state/progressStore.js";
@@ -44,15 +45,23 @@ import { usePathStore } from "../state/pathStore.js";
 const PATHS = ['Yantra', 'Kaya', 'Chitra', 'Nada'];
 
 // Sanctuary mode unified width rail (leaves margin within 820px app container)
-const SANCTUARY_MODULE_MAX_WIDTH = '740px';
+const SANCTUARY_MODULE_MAX_WIDTH = 'var(--ui-rail-max, min(430px, 94vw))';
 
 // Unified Sanctuary rail style - ensures all three sections share identical left/right edges
 const SANCTUARY_RAIL_STYLE = {
   width: '100%',
-  maxWidth: '740px',
+  maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
   marginLeft: 'auto',
   marginRight: 'auto',
   position: 'relative',
+};
+
+const sanitizeModeTileBackgroundImage = (bgUrl) => {
+  const raw = typeof bgUrl === 'string' ? bgUrl.trim() : '';
+  if (!raw || raw === 'none' || raw === 'url(none)' || raw === 'url("none")' || raw === "url('none')") {
+    return 'none';
+  }
+  return `url("${raw}")`;
 };
 
 
@@ -62,14 +71,16 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const { getCurrentStage, getDaysUntilNextStage } = useLunarStore();
   const { stage: avatarStage, modeWeights, lastStageChange, lastModeChange, lastSessionComplete } = useAvatarV3State();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const displayMode = useDisplayModeStore(s => s.viewportMode);
   const userMode = useUserModeStore((s) => s.userMode);
   const isLight = colorScheme === 'light';
-  const isSanctuary = displayMode === 'sanctuary';
+  // Single-rail app framing: remove hearth/sanctuary width modes to prevent aspect drift.
+  const isSanctuary = false;
 
   // Debug flags are sourced from App.jsx (URL + localStorage) and passed as props so they work in embedded shells.
   const disableDailyCard = Boolean(debugDisableDailyCard);
   const showBuildProbe = Boolean(debugBuildProbe);
+  const modeTileBgUrl = 'none';
+  const modeTileBackgroundImage = sanitizeModeTileBackgroundImage(modeTileBgUrl);
   void debugShadowScan;
   const dailyCardShadowOff = Boolean(debugDailyCardShadowOff);
   const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
@@ -125,6 +136,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const homeSwipePracticeRef = useRef(null);
   const homeSwipeProgressRef = useRef(null);
   const [homeSwipeHeight, setHomeSwipeHeight] = useState(null);
+  void homeSwipeHeight;
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -252,7 +264,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // Honor log modal state (moved from TrackingHub)
   const [showHonorModal, setShowHonorModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTrackingHub, setShowTrackingHub] = useState(false);
   const [archiveOptions, setArchiveOptions] = useState({ initialTab: 'all', initialReportDomain: null });
+  const trackerLaunchContext = useUiStore(s => s.trackerLaunchContext);
 
   // Dynamic max-width based on display mode: sanctuary=1024px, hearth=580px (narrower for visual balance)
   const streakInfo = getStreakInfo();
@@ -365,6 +379,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     return () => window.removeEventListener('immanence-open-archive', handler);
   }, []);
 
+  useEffect(() => {
+    if (trackerLaunchContext?.target === 'applicationHeatmap') {
+      setShowTrackingHub(true);
+    }
+  }, [trackerLaunchContext]);
+
   const activeLauncher = launcherContext
     ? getProgramLauncher(launcherContext.programId || activeCurriculumId, launcherContext.leg?.launcherId)
     : null;
@@ -384,7 +404,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           ────────────────────────────────────────────────────────────────────── */}
       <div
         className="w-full flex flex-col items-center gap-0 pb-0 transition-all duration-500 overflow-visible"
-        style={{ paddingTop: isSanctuary ? '16px' : '12px' }}
+        style={{ paddingTop: '12px' }}
       >
         <div className="relative w-full flex items-center justify-center overflow-visible">
           {/* Cloud Background - NO LONGER HERE, moved to full-page layer */}
@@ -396,18 +416,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: isSanctuary ? 'min(105%, 750px)' : 'min(90%, 525px)',
-              height: isSanctuary ? 'min(105%, 600px)' : 'min(90%, 525px)',
+              width: 'min(90%, 525px)',
+              height: 'min(90%, 525px)',
               background: 'radial-gradient(circle, ' +
                 'var(--accent-glow) 0%, ' +
                 'var(--accent-glow)40 12%, ' +
                 'var(--accent-glow)18 35%, ' +
                 'var(--accent-glow)05 55%, ' +
                 'transparent 75%)',
-              filter: isSanctuary ? 'blur(90px)' : 'blur(75px)',
+              filter: 'blur(75px)',
               opacity: isLight
-                ? (isSanctuary ? 0.08 : 0.06)
-                : (isSanctuary ? 0.25 : 0.20),
+                ? 0.06
+                : 0.20,
               pointerEvents: 'none',
               zIndex: 0,
             }}
@@ -423,7 +443,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               lastModeChange={lastModeChange}
               lastSessionComplete={lastSessionComplete}
               path={avatarPath}
-              size={isSanctuary ? 'sanctuary' : 'hearth'}
+              size="hearth"
             />
           </div>
 
@@ -468,8 +488,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         {userMode !== 'student' && (
           <div
             className="w-full transition-all duration-700"
-            style={isSanctuary ? SANCTUARY_RAIL_STYLE : {
-              maxWidth: 'min(430px, 94vw)',
+            style={{
+              ...SANCTUARY_RAIL_STYLE,
+              maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
               margin: '0 auto',
             }}
           >
@@ -482,19 +503,21 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 gap: '0',
               }}
             >
-              <SimpleModeButton
-                title="Practice"
-                onClick={() => handleSelectSection("practice")}
-                disabled={lockToHub}
-                icon="practice"
-                isActive={activeSection === 'practice'}
-                className="im-nav-pill"
-                data-nav-pill-id="home:practice"
-                data-ui-target="true"
-                data-ui-scope="role"
-                data-ui-role-group="homeHub"
-                data-ui-id="homeHub:mode:practice"
-              />
+              <div className="relative flex flex-col items-center justify-start">
+                <SimpleModeButton
+                  title="Practice"
+                  onClick={() => handleSelectSection("practice")}
+                  disabled={lockToHub}
+                  icon="practice"
+                  isActive={activeSection === 'practice'}
+                  className="im-nav-pill"
+                  data-nav-pill-id="home:practice"
+                  data-ui-target="true"
+                  data-ui-scope="role"
+                  data-ui-role-group="homeHub"
+                  data-ui-id="homeHub:mode:practice"
+                />
+              </div>
               <SimpleModeButton
                 title="Wisdom"
                 onClick={() => handleSelectSection("wisdom")}
@@ -535,11 +558,16 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 data-ui-id="homeHub:mode:navigation"
               />
             </div>
+            <style>{`
+              [data-ui-id^="homeHub:mode:"] {
+                background-image: ${modeTileBackgroundImage} !important;
+              }
+            `}</style>
           </div>
         )}
 
         {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
-        <div className="w-full" style={isSanctuary ? SANCTUARY_RAIL_STYLE : {}}>
+        <div className="w-full" style={SANCTUARY_RAIL_STYLE}>
           <div
             className="w-full overflow-x-hidden overflow-y-visible"
             style={{
@@ -572,10 +600,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   <div
                     className="w-full relative"
                     style={{
-                      ...(isSanctuary ? {} : {
-                        maxWidth: '430px',
-                        margin: '0 auto',
-                      }),
+                      maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+                      margin: '0 auto',
                       borderRadius: '24px',
                       // Intentionally no shadow, no blur, no filter. If jagged corners persist, it is not this card.
                       boxShadow: 'none',
@@ -830,6 +856,42 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           initialTab={archiveOptions.initialTab}
           initialReportDomain={archiveOptions.initialReportDomain}
         />
+      )}
+      {showTrackingHub && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowTrackingHub(false)}
+        >
+          <div
+            className="relative w-full"
+            style={{
+              maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              borderRadius: '28px',
+              background: isLight ? 'rgba(246, 241, 230, 0.98)' : 'rgba(10, 10, 15, 0.98)',
+              border: isLight ? '1px solid rgba(180, 140, 90, 0.25)' : '1px solid rgba(255,255,255,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowTrackingHub(false)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+                color: isLight ? 'rgba(60,52,37,0.9)' : 'rgba(253,251,245,0.9)',
+              }}
+              aria-label="Close tracker hub"
+            >
+              ×
+            </button>
+            <div className="p-4 pt-10">
+              <TrackingHub streakInfo={streakInfo} />
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
