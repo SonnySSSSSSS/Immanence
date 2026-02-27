@@ -178,6 +178,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     lastKind: "",
     lastStackFirstLine: "",
     lastHitAtMs: 0,
+    lastCssElement: "",
+    lastCssBackgroundImage: "",
+    lastCssOuterHtmlSnippet: "",
   });
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const devtoolsEnabled = isDevtoolsEnabled();
@@ -436,6 +439,76 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
   }, []);
   // PROBE:NONE_DOM_TRAP:END
+
+  // PROBE:NONE_CSS_SCAN:START
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return undefined;
+
+    const scanComputedBackgroundImages = () => {
+      let detected = null;
+      const nodes = document.querySelectorAll("*");
+
+      for (const el of nodes) {
+        try {
+          const style = window.getComputedStyle(el);
+          const bgImage = style?.backgroundImage || "";
+          const normalized = String(bgImage).toLowerCase();
+          const hasNoneUrl =
+            normalized.includes("/none") ||
+            normalized.includes("url(none") ||
+            normalized.includes('url(\"none\"') ||
+            normalized.includes(\"url('none'\");
+
+          if (!bgImage || !normalized.includes("none") || !hasNoneUrl) continue;
+
+          const tag = (el.tagName || "").toLowerCase();
+          const className = typeof el.className === "string" ? el.className.trim() : "";
+          const elementLabel = className ? `${tag}.${className.replace(/\\s+/g, ".")}` : tag;
+          const outerSnippet = (el.outerHTML || "").slice(0, 240);
+
+          detected = {
+            elementLabel,
+            bgImage,
+            outerSnippet,
+          };
+          break;
+        } catch {
+          // Ignore style access failures and continue scanning.
+        }
+      }
+
+      if (!detected) return;
+
+      console.log("[NONE_CSS_DETECTED]", detected);
+      setNoneTrapProbe((prev) => {
+        if (prev.lastUrl === detected.bgImage && prev.lastCssElement === detected.elementLabel) {
+          return prev;
+        }
+        return {
+          ...prev,
+          hitCount: prev.hitCount + 1,
+          lastUrl: detected.bgImage,
+          lastKind: "CSS_BG_IMAGE",
+          lastStackFirstLine: detected.elementLabel,
+          lastHitAtMs: Date.now(),
+          lastCssElement: detected.elementLabel,
+          lastCssBackgroundImage: detected.bgImage,
+          lastCssOuterHtmlSnippet: detected.outerSnippet,
+        };
+      });
+    };
+
+    const onLoad = () => scanComputedBackgroundImages();
+    window.addEventListener("load", onLoad);
+    const timeoutId = window.setTimeout(scanComputedBackgroundImages, 1000);
+    scanComputedBackgroundImages();
+
+    return () => {
+      window.removeEventListener("load", onLoad);
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+  // PROBE:NONE_CSS_SCAN:END
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -833,6 +906,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         <div>LAST_NONE_URL: {noneTrapProbe.lastUrl || ""}</div>
         <div>LAST_NONE_KIND: {noneTrapProbe.lastKind || ""}</div>
         <div>LAST_NONE_STACK: {noneTrapProbe.lastStackFirstLine || ""}</div>
+        <div>LAST_NONE_CSS_ELEMENT: {noneTrapProbe.lastCssElement || ""}</div>
+        <div>LAST_NONE_CSS_BG_IMAGE: {noneTrapProbe.lastCssBackgroundImage || ""}</div>
+        <div>LAST_NONE_CSS_HTML: {noneTrapProbe.lastCssOuterHtmlSnippet || ""}</div>
         <div>LAST_NONE_HIT_MS_AGO: {noneTrapProbe.lastHitAtMs ? Math.max(0, Date.now() - noneTrapProbe.lastHitAtMs) : 0}</div>
       </div>
       {/* PROBE:NONE_TRAP:END */}
