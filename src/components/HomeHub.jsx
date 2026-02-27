@@ -71,6 +71,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // Debug flags are sourced from App.jsx (URL + localStorage) and passed as props so they work in embedded shells.
   const disableDailyCard = Boolean(debugDisableDailyCard);
   const showBuildProbe = Boolean(debugBuildProbe);
+  const practiceBgUrlRawProbe = 'none';
   void debugShadowScan;
   const dailyCardShadowOff = Boolean(debugDailyCardShadowOff);
   const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
@@ -493,19 +494,36 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 gap: '0',
               }}
             >
-              <SimpleModeButton
-                title="Practice"
-                onClick={() => handleSelectSection("practice")}
-                disabled={lockToHub}
-                icon="practice"
-                isActive={activeSection === 'practice'}
-                className="im-nav-pill"
-                data-nav-pill-id="home:practice"
-                data-ui-target="true"
-                data-ui-scope="role"
-                data-ui-role-group="homeHub"
-                data-ui-id="homeHub:mode:practice"
-              />
+              <div className="relative flex flex-col items-center justify-start">
+                <SimpleModeButton
+                  title="Practice"
+                  onClick={() => handleSelectSection("practice")}
+                  disabled={lockToHub}
+                  icon="practice"
+                  isActive={activeSection === 'practice'}
+                  className="im-nav-pill"
+                  data-nav-pill-id="home:practice"
+                  data-ui-target="true"
+                  data-ui-scope="role"
+                  data-ui-role-group="homeHub"
+                  data-ui-id="homeHub:mode:practice"
+                />
+                {/* PROBE:BG_NONE_FIX:START */}
+                <div
+                  style={{
+                    fontSize: '10px',
+                    lineHeight: 1.1,
+                    marginTop: '2px',
+                    opacity: 0.8,
+                    color: isLight ? 'rgba(60, 50, 35, 0.75)' : 'rgba(255, 255, 255, 0.75)',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'text',
+                  }}
+                >
+                  BG_URL_RAW: {String(practiceBgUrlRawProbe)}
+                </div>
+                {/* PROBE:BG_NONE_FIX:END */}
+              </div>
               <SimpleModeButton
                 title="Wisdom"
                 onClick={() => handleSelectSection("wisdom")}
@@ -546,6 +564,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 data-ui-id="homeHub:mode:navigation"
               />
             </div>
+            <style>{`
+              [data-ui-id="homeHub:mode:practice"] {
+                background-image: none !important;
+              }
+            `}</style>
           </div>
         )}
 
