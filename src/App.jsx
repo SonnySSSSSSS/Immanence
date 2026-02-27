@@ -471,7 +471,30 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   return (
     <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={effectiveAvatarStage}>
-
+      {/* PROBE:BUILD_STAMP:START */}
+      <div
+        style={{
+          position: "fixed",
+          top: 14,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 2147483647,
+          background: "#f4e04d",
+          color: "#111111",
+          border: "3px solid #111111",
+          borderRadius: 10,
+          padding: "10px 16px",
+          fontSize: 28,
+          fontWeight: 900,
+          lineHeight: 1.1,
+          textAlign: "center",
+          boxShadow: "0 8px 20px rgba(0, 0, 0, 0.45)",
+          pointerEvents: "none",
+        }}
+      >
+        BUILD_STAMP: GH_PAGES_V1_20260227_160312
+      </div>
+      {/* PROBE:BUILD_STAMP:END */}
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
         <CurriculumCompletionReport
@@ -905,4 +928,3 @@ function AppWithBoundary(props) {
 }
 
 export default AppWithBoundary;
-
