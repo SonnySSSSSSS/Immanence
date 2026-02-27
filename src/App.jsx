@@ -618,6 +618,21 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           onClose={handleClosePhotic}
           autoStart={true}
         />
+        {/* PROBE:DEPLOY_BUILD_ID_V1:START */}
+        <div
+          style={{
+            position: 'fixed',
+            right: 8,
+            bottom: 8,
+            fontSize: 10,
+            opacity: 0.6,
+            pointerEvents: 'none',
+            zIndex: 9999,
+          }}
+        >
+          build: {__DEPLOY_GIT_SHA__} @ {__DEPLOY_BUILD_TIME__}
+        </div>
+        {/* PROBE:DEPLOY_BUILD_ID_V1:END */}
 
         {/* Inner App Container */}
         <div

@@ -1,6 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+const { execSync } = require('child_process');
+
+// PROBE:DEPLOY_BUILD_ID_V1:START
+let DEPLOY_GIT_SHA = 'unknown';
+try {
+  DEPLOY_GIT_SHA = execSync('git rev-parse --short HEAD').toString().trim();
+} catch (e) {}
+const DEPLOY_BUILD_TIME = new Date().toISOString();
+// PROBE:DEPLOY_BUILD_ID_V1:END
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -18,6 +27,12 @@ export default defineConfig(({ mode }) => ({
  // To avoid these MIME-type issues we keep base "/" for development and only use
  // "/Immanence/" for build/preview so deployed assets resolve under that sub-path.
  base: mode === 'development' ? '/' : '/Immanence/',
+  // PROBE:DEPLOY_BUILD_ID_V1:START
+  define: {
+    __DEPLOY_GIT_SHA__: JSON.stringify(DEPLOY_GIT_SHA),
+    __DEPLOY_BUILD_TIME__: JSON.stringify(DEPLOY_BUILD_TIME),
+  },
+  // PROBE:DEPLOY_BUILD_ID_V1:END
  server: {
     proxy: {
       '/api/ollama': {
