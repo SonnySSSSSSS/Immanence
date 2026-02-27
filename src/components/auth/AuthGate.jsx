@@ -18,6 +18,9 @@ export default function AuthGate({ children, onAuthChange }) {
   const [err, setErr] = useState("");
   const [dnsStatus, setDnsStatus] = useState("PENDING");
   const [dnsErrorText, setDnsErrorText] = useState("");
+  const [dnsAttempts, setDnsAttempts] = useState(0);
+  const [dnsLastAttemptAt, setDnsLastAttemptAt] = useState(0);
+  const [dnsNow, setDnsNow] = useState(Date.now());
 
   useEffect(() => {
     // Skip auth initialization when disabled
@@ -51,19 +54,6 @@ export default function AuthGate({ children, onAuthChange }) {
         sub?.subscription?.unsubscribe?.();
       };
     });
-  }, []);
-
-  useEffect(() => {
-    if (!ENABLE_AUTH) return;
-    fetch(`${SUPABASE_URL_FOR_PROBE}/auth/v1/signup`, { method: "POST", mode: "no-cors" })
-      .then(() => {
-        setDnsStatus("PASS");
-        setDnsErrorText("");
-      })
-      .catch((e) => {
-        setDnsStatus("FAIL");
-        setDnsErrorText(`${e?.name || "Error"}: ${e?.message || "Failed to fetch"}`);
-      });
   }, []);
 
   async function handleSubmit(e) {
@@ -116,6 +106,45 @@ export default function AuthGate({ children, onAuthChange }) {
   ) : null;
 
   // PROBE:SUPABASE_DNS:START
+  useEffect(() => {
+    if (!ENABLE_AUTH) return;
+    let cancelled = false;
+    let retryTimer = null;
+    const clockTimer = setInterval(() => {
+      setDnsNow(Date.now());
+    }, 1000);
+
+    const runProbe = () => {
+      if (cancelled) return;
+      setDnsAttempts((n) => n + 1);
+      setDnsLastAttemptAt(Date.now());
+      fetch(`${SUPABASE_URL_FOR_PROBE}/auth/v1/signup`, { method: "POST", mode: "no-cors" })
+        .then(() => {
+          if (cancelled) return;
+          setDnsStatus("PASS");
+          setDnsErrorText("");
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          setDnsStatus("FAIL");
+          setDnsErrorText(`${e?.name || "Error"}: ${e?.message || "Failed to fetch"}`);
+          retryTimer = setTimeout(runProbe, 2000);
+        });
+    };
+
+    runProbe();
+
+    return () => {
+      cancelled = true;
+      clearInterval(clockTimer);
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, []);
+
+  const dnsLastAttemptMsAgo = dnsLastAttemptAt > 0
+    ? Math.max(0, Math.round(dnsNow - dnsLastAttemptAt))
+    : 0;
+
   const dnsProbePanel = ENABLE_AUTH ? (
     <div
       style={{
@@ -139,6 +168,8 @@ export default function AuthGate({ children, onAuthChange }) {
       <div>SUPABASE_URL: {SUPABASE_URL_FOR_PROBE}</div>
       <div>ANON_KEY_PREFIX: {SUPABASE_ANON_KEY_PREFIX_FOR_PROBE}...</div>
       <div>DNS_PROBE: {dnsStatus}</div>
+      <div>DNS_ATTEMPTS: {dnsAttempts}</div>
+      <div>DNS_LAST_ATTEMPT_MS_AGO: {dnsLastAttemptMsAgo}</div>
       {dnsStatus === "FAIL" ? <div>DNS_ERROR: {dnsErrorText}</div> : null}
     </div>
   ) : null;
