@@ -190,85 +190,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [devPanelGateEnabled, isDev]);
 
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof document === "undefined") return undefined;
-
-    const isInvalidNoneBackgroundImage = (value) => {
-      const raw = String(value || "").trim();
-      if (!raw) return false;
-      const normalized = raw.toLowerCase();
-      if (normalized === 'url("none")' || normalized === "url('none')" || normalized === "url(none)") {
-        return true;
-      }
-      if (normalized.includes("/immanence/none")) {
-        return true;
-      }
-      if (normalized.includes("/none\")") || normalized.includes("/none')")) {
-        return true;
-      }
-      return /\/none\s*["')]*\s*$/i.test(normalized);
-    };
-
-    const sanitizeNoneBgImages = () => {
-      const candidates = document.querySelectorAll('[data-ui-id="homeHub:mode:practice"], [data-ui-id^="homeHub:mode:"]');
-      candidates.forEach((el) => {
-        try {
-          const computedBg = window.getComputedStyle(el).backgroundImage;
-          if (isInvalidNoneBackgroundImage(computedBg)) {
-            el.style.backgroundImage = "none";
-            return;
-          }
-          const inlineBg = el.style?.backgroundImage || "";
-          if (isInvalidNoneBackgroundImage(inlineBg)) {
-            el.style.backgroundImage = "none";
-          }
-        } catch {
-          // Ignore style read/write errors for detached elements.
-        }
-      });
-    };
-
-    let rafPending = false;
-    const scheduleSanitize = () => {
-      if (rafPending) return;
-      rafPending = true;
-      window.requestAnimationFrame(() => {
-        rafPending = false;
-        sanitizeNoneBgImages();
-      });
-    };
-
-    sanitizeNoneBgImages();
-    const timeout250 = window.setTimeout(sanitizeNoneBgImages, 250);
-    const timeout1000 = window.setTimeout(sanitizeNoneBgImages, 1000);
-
-    const observer = new MutationObserver(() => {
-      scheduleSanitize();
-    });
-
-    try {
-      observer.observe(document.documentElement || document.body, {
-        attributes: true,
-        attributeFilter: ["style", "class"],
-        subtree: true,
-        childList: true,
-      });
-    } catch {
-      // Ignore observer setup failures.
-    }
-
-    const disconnectTimer = window.setTimeout(() => {
-      observer.disconnect();
-    }, 5000);
-
-    return () => {
-      window.clearTimeout(timeout250);
-      window.clearTimeout(timeout1000);
-      window.clearTimeout(disconnectTimer);
-      observer.disconnect();
-    };
-  }, []);
-
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
 
@@ -611,32 +532,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   return (
     <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={effectiveAvatarStage}>
-      <div
-        style={{
-          position: "fixed",
-          top: 14,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 2147483647,
-          background: "#f4e04d",
-          color: "#111111",
-          border: "3px solid #111111",
-          borderRadius: 10,
-          padding: "10px 16px",
-          fontSize: 28,
-          fontWeight: 900,
-          lineHeight: 1.1,
-          textAlign: "center",
-          boxShadow: "0 8px 20px rgba(0, 0, 0, 0.45)",
-          pointerEvents: "none",
-        }}
-      >
-        {/* PROBE:DEPLOY_ID_OVERLAY:START */}
-        <div>DEPLOY_GIT_SHA: {__DEPLOY_GIT_SHA__}</div>
-        <div>DEPLOY_GIT_REF: {__DEPLOY_GIT_REF__}</div>
-        <div>DEPLOY_BUILD_TIME: {__DEPLOY_BUILD_TIME__}</div>
-        {/* PROBE:DEPLOY_ID_OVERLAY:END */}
-      </div>
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
         <CurriculumCompletionReport

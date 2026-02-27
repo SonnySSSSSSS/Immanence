@@ -56,6 +56,14 @@ const SANCTUARY_RAIL_STYLE = {
   position: 'relative',
 };
 
+const sanitizeModeTileBackgroundImage = (bgUrl) => {
+  const raw = typeof bgUrl === 'string' ? bgUrl.trim() : '';
+  if (!raw || raw === 'none' || raw === 'url(none)' || raw === 'url("none")' || raw === "url('none')") {
+    return 'none';
+  }
+  return `url("${raw}")`;
+};
+
 
 function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false, debugDisableDailyCard = false, debugBuildProbe = false, debugShadowScan = false, debugDailyCardShadowOff = false, debugDailyCardBlurOff = false, debugDailyCardBorderOff = false, debugDailyCardMaskOff = false }) {
   // Real data from stores
@@ -71,6 +79,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // Debug flags are sourced from App.jsx (URL + localStorage) and passed as props so they work in embedded shells.
   const disableDailyCard = Boolean(debugDisableDailyCard);
   const showBuildProbe = Boolean(debugBuildProbe);
+  const modeTileBgUrl = 'none';
+  const modeTileBackgroundImage = sanitizeModeTileBackgroundImage(modeTileBgUrl);
   void debugShadowScan;
   const dailyCardShadowOff = Boolean(debugDailyCardShadowOff);
   const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
@@ -549,8 +559,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               />
             </div>
             <style>{`
-              [data-ui-id="homeHub:mode:practice"] {
-                background-image: none !important;
+              [data-ui-id^="homeHub:mode:"] {
+                background-image: ${modeTileBackgroundImage} !important;
               }
             `}</style>
           </div>
