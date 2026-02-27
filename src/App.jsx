@@ -172,6 +172,12 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
+  const [noneNavGuardProbe, setNoneNavGuardProbe] = useState({
+    hitCount: 0,
+    lastPath: "",
+    lastStackFirstLine: "",
+    lastHitAtMs: 0,
+  });
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
   const devtoolsEnabled = isDevtoolsEnabled();
   const selectionEnabled = !DISABLE_SELECTION;
@@ -189,6 +195,83 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [devPanelGateEnabled, isDev]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const basePath = import.meta.env.BASE_URL || "/";
+    const absoluteBase = `${window.location.origin}${basePath}`;
+    const pushStateOriginal = window.history.pushState.bind(window.history);
+    const replaceStateOriginal = window.history.replaceState.bind(window.history);
+
+    const getFirstStackLine = (stack) => {
+      if (!stack) return "";
+      const lines = String(stack).split("\n").map((line) => line.trim()).filter(Boolean);
+      if (lines.length <= 1) return lines[0] || "";
+      return lines[1];
+    };
+
+    const getPathFromTarget = (target) => {
+      try {
+        if (target === undefined || target === null || target === "") {
+          return window.location.pathname;
+        }
+        return new URL(String(target), window.location.href).pathname;
+      } catch {
+        return window.location.pathname;
+      }
+    };
+
+    const isNonePath = (pathname) => {
+      const normalizedPath = String(pathname || "");
+      const baseNonePath = `${basePath}none`;
+      return normalizedPath.endsWith("/none") || normalizedPath === baseNonePath;
+    };
+
+    const handleNoneHit = (pathname) => {
+      const stack = new Error("NONE_NAV_GUARD").stack || "";
+      setNoneNavGuardProbe((prev) => ({
+        hitCount: prev.hitCount + 1,
+        lastPath: pathname,
+        lastStackFirstLine: getFirstStackLine(stack),
+        lastHitAtMs: Date.now(),
+      }));
+      window.location.replace(absoluteBase);
+    };
+
+    window.history.pushState = function pushStatePatched(...args) {
+      const targetPath = getPathFromTarget(args[2]);
+      if (isNonePath(targetPath)) {
+        handleNoneHit(targetPath);
+        return null;
+      }
+      return pushStateOriginal(...args);
+    };
+
+    window.history.replaceState = function replaceStatePatched(...args) {
+      const targetPath = getPathFromTarget(args[2]);
+      if (isNonePath(targetPath)) {
+        handleNoneHit(targetPath);
+        return null;
+      }
+      return replaceStateOriginal(...args);
+    };
+
+    const onPopState = () => {
+      const targetPath = window.location.pathname;
+      if (isNonePath(targetPath)) {
+        handleNoneHit(targetPath);
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+
+    return () => {
+      window.history.pushState = pushStateOriginal;
+      window.history.replaceState = replaceStateOriginal;
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, []);
 
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
@@ -531,6 +614,32 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   return (
     <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={effectiveAvatarStage}>
+      {/* PROBE:NONE_NAV_GUARD:START */}
+      <div
+        style={{
+          position: "fixed",
+          right: 12,
+          bottom: 12,
+          zIndex: 99999,
+          padding: "10px 12px",
+          borderRadius: 8,
+          border: "2px solid #00ff99",
+          background: "#0d1117",
+          color: "#ffffff",
+          fontSize: 12,
+          fontWeight: 700,
+          lineHeight: 1.4,
+          boxShadow: "0 6px 16px rgba(0,0,0,0.55)",
+          maxWidth: "min(92vw, 620px)",
+          wordBreak: "break-word",
+        }}
+      >
+        <div>NONE_NAV_GUARD: ACTIVE</div>
+        <div>NONE_NAV_GUARD_HITS: {noneNavGuardProbe.hitCount}</div>
+        <div>LAST_NONE_PATH: {noneNavGuardProbe.lastPath || ""}</div>
+        <div>LAST_NONE_STACK: {noneNavGuardProbe.lastStackFirstLine || ""}</div>
+      </div>
+      {/* PROBE:NONE_NAV_GUARD:END */}
 
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
