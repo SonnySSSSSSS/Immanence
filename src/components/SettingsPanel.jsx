@@ -4,7 +4,7 @@ import React from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
 // NOTE: Auth feature disabled - lazy import to prevent Supabase CORS errors
-const ENABLE_AUTH = false;
+const ENABLE_AUTH = true;
 const getSupabase = () => import('../lib/supabaseClient').then(m => m.supabase);
 
 export function SettingsPanel({ isOpen, onClose, onSignedOut }) {

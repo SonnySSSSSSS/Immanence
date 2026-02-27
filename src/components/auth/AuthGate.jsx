@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 // NOTE: Multi-user sync feature is disabled until Supabase CORS is configured.
 // To enable, set ENABLE_AUTH to true and configure Supabase allowed origins.
-const ENABLE_AUTH = false;
+const ENABLE_AUTH = true;
 
 // Lazy import to avoid Supabase initialization when auth is disabled
 const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabase);
@@ -75,7 +75,31 @@ export default function AuthGate({ children, onAuthChange }) {
     }
   }
 
-  if (loading) return null;
+  const probeBanner = ENABLE_AUTH ? (
+    // PROBE:AUTH_ENABLEMENT:START
+    <div
+      style={{
+        position: "fixed",
+        top: 12,
+        left: 12,
+        zIndex: 99999,
+        padding: "12px 16px",
+        background: "#ffeb3b",
+        color: "#000000",
+        border: "3px solid #000000",
+        borderRadius: 8,
+        fontSize: 24,
+        fontWeight: 800,
+        letterSpacing: 0.5,
+        boxShadow: "0 4px 14px rgba(0,0,0,0.45)",
+      }}
+    >
+      AUTH ENABLED: TRUE (PROBE)
+    </div>
+    // PROBE:AUTH_ENABLEMENT:END
+  ) : null;
+
+  if (loading) return <>{probeBanner}</>;
 
   // When auth is disabled, just render children
   if (!ENABLE_AUTH) {
@@ -85,6 +109,7 @@ export default function AuthGate({ children, onAuthChange }) {
   if (!session) {
     return (
       <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+        {probeBanner}
         <div style={{ width: 360, maxWidth: "90vw", padding: 16, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <div style={{ fontSize: 14, opacity: 0.9 }}>Immanence OS</div>
@@ -132,6 +157,7 @@ export default function AuthGate({ children, onAuthChange }) {
 
   return (
     <>
+      {probeBanner}
       {children}
     </>
   );

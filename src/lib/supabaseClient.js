@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // NOTE: Multi-user sync feature is disabled.
 // Set ENABLE_AUTH to true when Supabase CORS is configured.
-const ENABLE_AUTH = false;
+const ENABLE_AUTH = true;
 
 // Create a mock client that does nothing when auth is disabled
 const createMockClient = () => ({
