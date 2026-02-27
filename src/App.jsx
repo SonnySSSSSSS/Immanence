@@ -347,6 +347,96 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
   }, []);
 
+  // PROBE:NONE_DOM_TRAP:START
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    if (window.__immanenceNoneDomTrapInstalled) return undefined;
+
+    const TRAP_EVENT = "immanence:none-trap-hit";
+    const basePath = import.meta.env.BASE_URL || "/";
+
+    const toAbsoluteUrl = (value) => {
+      try {
+        return new URL(String(value), window.location.href).toString();
+      } catch {
+        return String(value || "");
+      }
+    };
+
+    const isNoneTarget = (value) => {
+      try {
+        const normalized = new URL(String(value), window.location.href);
+        const path = normalized.pathname || "";
+        return path.endsWith("/none") || path.includes(`${basePath}none`);
+      } catch {
+        const raw = String(value || "");
+        return raw.endsWith("/none") || raw.includes(`${basePath}none`);
+      }
+    };
+
+    const getStackSnippet = () => {
+      const stack = new Error("NONE_DOM_TRAP").stack || "";
+      const lines = String(stack).split("\n").map((line) => line.trim()).filter(Boolean);
+      return lines.slice(1, 5).join(" | ");
+    };
+
+    const emitDomHit = (kind, value) => {
+      const absoluteUrl = toAbsoluteUrl(value);
+      if (!absoluteUrl) return;
+      if (window.__immanenceNoneDomTrapLastUrl && window.__immanenceNoneDomTrapLastUrl === absoluteUrl) {
+        return;
+      }
+      window.__immanenceNoneDomTrapLastUrl = absoluteUrl;
+      window.dispatchEvent(new CustomEvent(TRAP_EVENT, {
+        detail: {
+          kind,
+          url: absoluteUrl,
+          stackFirstLine: getStackSnippet(),
+        },
+      }));
+    };
+
+    const patchSetter = (prototypeObj, propertyName, kind) => {
+      const descriptor = Object.getOwnPropertyDescriptor(prototypeObj, propertyName);
+      if (!descriptor || typeof descriptor.set !== "function") return () => {};
+      const originalSet = descriptor.set;
+      const patchedSet = function patchedNoneDomSetter(nextValue) {
+        if (isNoneTarget(nextValue)) {
+          emitDomHit(kind, nextValue);
+        }
+        return originalSet.call(this, nextValue);
+      };
+      Object.defineProperty(prototypeObj, propertyName, {
+        ...descriptor,
+        set: patchedSet,
+      });
+      return () => {
+        Object.defineProperty(prototypeObj, propertyName, descriptor);
+      };
+    };
+
+    const restoreFns = [
+      patchSetter(window.HTMLImageElement?.prototype, "src", "IMG_SRC"),
+      patchSetter(window.HTMLLinkElement?.prototype, "href", "LINK_HREF"),
+      patchSetter(window.HTMLScriptElement?.prototype, "src", "SCRIPT_SRC"),
+    ];
+
+    window.__immanenceNoneDomTrapInstalled = true;
+
+    return () => {
+      restoreFns.forEach((restore) => {
+        try {
+          restore();
+        } catch {
+          // Ignore restore failures in non-standard runtimes.
+        }
+      });
+      window.__immanenceNoneDomTrapInstalled = false;
+      window.__immanenceNoneDomTrapLastUrl = "";
+    };
+  }, []);
+  // PROBE:NONE_DOM_TRAP:END
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.__NONE_TRAP_UI_PROBE_ACTIVE__ = true;
