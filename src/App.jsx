@@ -347,6 +347,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.__NONE_TRAP_UI_PROBE_ACTIVE__ = true;
+  }, []);
+
   const handleClosePhotic = useCallback(() => {
     setIsPhoticOpen(false);
 
@@ -688,6 +693,31 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   return (
     <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={effectiveAvatarStage}>
+      {/* PROBE:NONE_TRAP_UI:START */}
+      <div
+        style={{
+          position: "fixed",
+          top: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 2147483647,
+          background: "#ff3b30",
+          color: "#ffffff",
+          border: "4px solid #111111",
+          borderRadius: 10,
+          padding: "14px 20px",
+          fontSize: 30,
+          fontWeight: 900,
+          lineHeight: 1.2,
+          textAlign: "center",
+          boxShadow: "0 8px 22px rgba(0,0,0,0.55)",
+          pointerEvents: "none",
+        }}
+      >
+        <div>NONE_TRAP_UI_PROBE_ACTIVE</div>
+        <div>BUILD_PROBE_ID: NONE_TRAP_UI_V1</div>
+      </div>
+      {/* PROBE:NONE_TRAP_UI:END */}
       {/* PROBE:NONE_TRAP:START */}
       <div
         style={{
