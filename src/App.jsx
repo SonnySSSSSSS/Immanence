@@ -456,14 +456,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           const hasNoneUrl =
             normalized.includes("/none") ||
             normalized.includes("url(none") ||
-            normalized.includes('url(\"none\"') ||
-            normalized.includes(\"url('none'\");
+            normalized.includes('url("none"') ||
+            normalized.includes("url('none'");
 
           if (!bgImage || !normalized.includes("none") || !hasNoneUrl) continue;
 
           const tag = (el.tagName || "").toLowerCase();
           const className = typeof el.className === "string" ? el.className.trim() : "";
-          const elementLabel = className ? `${tag}.${className.replace(/\\s+/g, ".")}` : tag;
+          const elementLabel = className ? `${tag}.${className.replace(/\s+/g, ".")}` : tag;
           const outerSnippet = (el.outerHTML || "").slice(0, 240);
 
           detected = {
