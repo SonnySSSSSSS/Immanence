@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { SUPABASE_ANON_KEY_PREFIX_FOR_PROBE, SUPABASE_URL_FOR_PROBE } from "../../lib/supabaseClient";
 // NOTE: Multi-user sync feature is disabled until Supabase CORS is configured.
 // To enable, set ENABLE_AUTH to true and configure Supabase allowed origins.
 const ENABLE_AUTH = true;
@@ -16,11 +15,6 @@ export default function AuthGate({ children, onAuthChange }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
-  const [dnsStatus, setDnsStatus] = useState("PENDING");
-  const [dnsErrorText, setDnsErrorText] = useState("");
-  const [dnsAttempts, setDnsAttempts] = useState(0);
-  const [dnsLastAttemptAt, setDnsLastAttemptAt] = useState(0);
-  const [dnsNow, setDnsNow] = useState(Date.now());
 
   useEffect(() => {
     // Skip auth initialization when disabled
@@ -81,101 +75,7 @@ export default function AuthGate({ children, onAuthChange }) {
     }
   }
 
-  const probeBanner = ENABLE_AUTH ? (
-    // PROBE:AUTH_ENABLEMENT:START
-    <div
-      style={{
-        position: "fixed",
-        top: 12,
-        left: 12,
-        zIndex: 99999,
-        padding: "12px 16px",
-        background: "#ffeb3b",
-        color: "#000000",
-        border: "3px solid #000000",
-        borderRadius: 8,
-        fontSize: 24,
-        fontWeight: 800,
-        letterSpacing: 0.5,
-        boxShadow: "0 4px 14px rgba(0,0,0,0.45)",
-      }}
-    >
-      AUTH ENABLED: TRUE (PROBE)
-    </div>
-    // PROBE:AUTH_ENABLEMENT:END
-  ) : null;
-
-  // PROBE:SUPABASE_DNS:START
-  useEffect(() => {
-    if (!ENABLE_AUTH) return;
-    let cancelled = false;
-    let retryTimer = null;
-    const clockTimer = setInterval(() => {
-      setDnsNow(Date.now());
-    }, 1000);
-
-    const runProbe = () => {
-      if (cancelled) return;
-      setDnsAttempts((n) => n + 1);
-      setDnsLastAttemptAt(Date.now());
-      fetch(`${SUPABASE_URL_FOR_PROBE}/auth/v1/signup`, { method: "POST", mode: "no-cors" })
-        .then(() => {
-          if (cancelled) return;
-          setDnsStatus("PASS");
-          setDnsErrorText("");
-        })
-        .catch((e) => {
-          if (cancelled) return;
-          setDnsStatus("FAIL");
-          setDnsErrorText(`${e?.name || "Error"}: ${e?.message || "Failed to fetch"}`);
-          retryTimer = setTimeout(runProbe, 2000);
-        });
-    };
-
-    runProbe();
-
-    return () => {
-      cancelled = true;
-      clearInterval(clockTimer);
-      if (retryTimer) clearTimeout(retryTimer);
-    };
-  }, []);
-
-  const dnsLastAttemptMsAgo = dnsLastAttemptAt > 0
-    ? Math.max(0, Math.round(dnsNow - dnsLastAttemptAt))
-    : 0;
-
-  const dnsProbePanel = ENABLE_AUTH ? (
-    <div
-      style={{
-        position: "fixed",
-        left: 12,
-        bottom: 12,
-        zIndex: 99999,
-        padding: "12px 14px",
-        background: "#111111",
-        color: "#ffffff",
-        border: "2px solid #00e5ff",
-        borderRadius: 8,
-        fontSize: 13,
-        fontWeight: 700,
-        lineHeight: 1.4,
-        boxShadow: "0 6px 16px rgba(0,0,0,0.55)",
-        maxWidth: "min(92vw, 760px)",
-        wordBreak: "break-word",
-      }}
-    >
-      <div>SUPABASE_URL: {SUPABASE_URL_FOR_PROBE}</div>
-      <div>ANON_KEY_PREFIX: {SUPABASE_ANON_KEY_PREFIX_FOR_PROBE}...</div>
-      <div>DNS_PROBE: {dnsStatus}</div>
-      <div>DNS_ATTEMPTS: {dnsAttempts}</div>
-      <div>DNS_LAST_ATTEMPT_MS_AGO: {dnsLastAttemptMsAgo}</div>
-      {dnsStatus === "FAIL" ? <div>DNS_ERROR: {dnsErrorText}</div> : null}
-    </div>
-  ) : null;
-  // PROBE:SUPABASE_DNS:END
-
-  if (loading) return <>{probeBanner}{dnsProbePanel}</>;
+  if (loading) return null;
 
   // When auth is disabled, just render children
   if (!ENABLE_AUTH) {
@@ -185,8 +85,6 @@ export default function AuthGate({ children, onAuthChange }) {
   if (!session) {
     return (
       <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
-        {probeBanner}
-        {dnsProbePanel}
         <div style={{ width: 360, maxWidth: "90vw", padding: 16, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
             <div style={{ fontSize: 14, opacity: 0.9 }}>Immanence OS</div>
@@ -234,8 +132,6 @@ export default function AuthGate({ children, onAuthChange }) {
 
   return (
     <>
-      {probeBanner}
-      {dnsProbePanel}
       {children}
     </>
   );
