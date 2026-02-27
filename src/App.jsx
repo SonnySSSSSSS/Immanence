@@ -620,6 +620,87 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   }, []);
   // PROBE:NONE_CSS_SCAN:END
 
+  // PROBE:BG_NONE_APP_GUARD:START
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return undefined;
+
+    const isInvalidNoneBackgroundImage = (value) => {
+      const raw = String(value || "").trim();
+      if (!raw) return false;
+      const normalized = raw.toLowerCase();
+      if (normalized === 'url("none")' || normalized === "url('none')" || normalized === "url(none)") {
+        return true;
+      }
+      if (normalized.includes("/immanence/none")) {
+        return true;
+      }
+      if (normalized.includes("/none\")") || normalized.includes("/none')")) {
+        return true;
+      }
+      return /\/none\s*["')]*\s*$/i.test(normalized);
+    };
+
+    const sanitizeNoneBgImages = () => {
+      const candidates = document.querySelectorAll('[data-ui-id="homeHub:mode:practice"], [data-ui-id^="homeHub:mode:"]');
+      candidates.forEach((el) => {
+        try {
+          const computedBg = window.getComputedStyle(el).backgroundImage;
+          if (isInvalidNoneBackgroundImage(computedBg)) {
+            el.style.backgroundImage = "none";
+            return;
+          }
+          const inlineBg = el.style?.backgroundImage || "";
+          if (isInvalidNoneBackgroundImage(inlineBg)) {
+            el.style.backgroundImage = "none";
+          }
+        } catch {
+          // Ignore style read/write errors for detached elements.
+        }
+      });
+    };
+
+    let rafPending = false;
+    const scheduleSanitize = () => {
+      if (rafPending) return;
+      rafPending = true;
+      window.requestAnimationFrame(() => {
+        rafPending = false;
+        sanitizeNoneBgImages();
+      });
+    };
+
+    sanitizeNoneBgImages();
+    const timeout250 = window.setTimeout(sanitizeNoneBgImages, 250);
+    const timeout1000 = window.setTimeout(sanitizeNoneBgImages, 1000);
+
+    const observer = new MutationObserver(() => {
+      scheduleSanitize();
+    });
+
+    try {
+      observer.observe(document.documentElement || document.body, {
+        attributes: true,
+        attributeFilter: ["style", "class"],
+        subtree: true,
+        childList: true,
+      });
+    } catch {
+      // Ignore observer setup failures.
+    }
+
+    const disconnectTimer = window.setTimeout(() => {
+      observer.disconnect();
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeout250);
+      window.clearTimeout(timeout1000);
+      window.clearTimeout(disconnectTimer);
+      observer.disconnect();
+    };
+  }, []);
+  // PROBE:BG_NONE_APP_GUARD:END
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.__NONE_TRAP_UI_PROBE_ACTIVE__ = true;
@@ -847,6 +928,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.222 - feat(rainbow-prism): replace prism triangle with procedural yin-yang disk (GLSL shader, iridescent rim, slow rotation)
   // v3.27.221 - fix(rainbow-prism): separate Canvas with orthographic camera (zoom 70) for correct rendering
   // v3.27.220 - refactor(rainbow-prism): exact match reference implementation with Box objects + lighting
   // v3.27.219 - fix(rainbow-prism): add missing spotLight to illuminate rainbow
@@ -1225,7 +1307,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.221
+                        v3.27.222
                       </button>
                     </div>
                   </div>
