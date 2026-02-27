@@ -72,6 +72,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const disableDailyCard = Boolean(debugDisableDailyCard);
   const showBuildProbe = Boolean(debugBuildProbe);
   const practiceBgUrlRawProbe = 'none';
+  const practiceBgImageSafeProbe = (!practiceBgUrlRawProbe || practiceBgUrlRawProbe === 'none')
+    ? 'none'
+    : `url("${practiceBgUrlRawProbe}")`;
   void debugShadowScan;
   const dailyCardShadowOff = Boolean(debugDailyCardShadowOff);
   const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
@@ -566,7 +569,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             </div>
             <style>{`
               [data-ui-id="homeHub:mode:practice"] {
-                background-image: none !important;
+                background-image: ${practiceBgImageSafeProbe} !important;
               }
             `}</style>
           </div>
