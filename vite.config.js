@@ -18,6 +18,13 @@ export default defineConfig(({ mode }) => ({
  // To avoid these MIME-type issues we keep base "/" for development and only use
  // "/Immanence/" for build/preview so deployed assets resolve under that sub-path.
  base: mode === 'development' ? '/' : '/Immanence/',
+  // PROBE:DEPLOY_ID_DEFINE:START
+  define: {
+    __DEPLOY_GIT_SHA__: JSON.stringify(process.env.GITHUB_SHA || '__DEPLOY_GIT_SHA__'),
+    __DEPLOY_GIT_REF__: JSON.stringify(process.env.GITHUB_REF_NAME || process.env.GITHUB_REF || '__DEPLOY_GIT_REF__'),
+    __DEPLOY_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+  // PROBE:DEPLOY_ID_DEFINE:END
  server: {
     proxy: {
       '/api/ollama': {
