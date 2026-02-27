@@ -632,7 +632,18 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           pointerEvents: "none",
         }}
       >
-        BUILD_STAMP: GH_PAGES_V1_20260227_160312
+        {(() => {
+          const BUILD_STAMP = "GH_PAGES_V1_20260227_160312";
+          const ACTIVE_COMMIT_SHA = "9a47ee7";
+          const ACTIVE_BRANCH_HINT = "feature/tech-instrument-shading";
+          return (
+            <>
+              <div>BUILD_STAMP: {BUILD_STAMP}</div>
+              <div>ACTIVE_COMMIT_SHA: {ACTIVE_COMMIT_SHA}</div>
+              <div>ACTIVE_BRANCH_HINT: {ACTIVE_BRANCH_HINT}</div>
+            </>
+          );
+        })()}
       </div>
       {/* PROBE:BUILD_STAMP:END */}
       {/* Curriculum Completion Report */}
