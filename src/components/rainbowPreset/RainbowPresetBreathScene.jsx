@@ -3,7 +3,7 @@ import { useRef, useCallback, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Beam } from './Beam.jsx'
 import { Rainbow } from './Rainbow.jsx'
-import { Prism } from './Prism.jsx'
+import { YinYang } from './YinYang.jsx'
 import { Flare } from './Flare.jsx'
 import { Box } from './Box.jsx'
 import { calculateRefractionAngle, lerp, lerpV3 } from './util'
@@ -63,7 +63,7 @@ export function RainbowPresetBreathSceneContent({ breathDriver = null }) {
       <pointLight position={[-10, 0, 0]} intensity={0.05} />
       <spotLight ref={spot} intensity={1} distance={7} angle={1} penumbra={1} position={[0, 0, 1]} />
       <Beam ref={boxreflect} bounce={10} far={20}>
-        <Prism position={[0, -0.5, 0]} onRayOver={rayOver} onRayOut={rayOut} onRayMove={rayMove} />
+        <YinYang position={[0, -0.5, 0]} onRayOver={rayOver} onRayOut={rayOut} onRayMove={rayMove} />
         <Box position={[2.25, -3.5, 0]} rotation={[0, 0, Math.PI / 3.5]} />
         <Box position={[-2.5, -2.5, 0]} rotation={[0, 0, Math.PI / 4]} />
         <Box position={[-3, 1, 0]} rotation={[0, 0, Math.PI / 4]} />

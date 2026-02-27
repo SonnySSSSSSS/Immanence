@@ -38,7 +38,11 @@
       "Bash(npx eslint:*)",
       "Bash(cmd /c:*)",
       "Bash(git checkout:*)",
-      "WebFetch(domain:codesandbox.io)"
+      "WebFetch(domain:codesandbox.io)",
+      "Bash(grep -n \"from.*''\\\\./\" \"d:/Unity Apps/immanence-os/src/components/rainbowPreset/\"*.jsx)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f \"node.*vite\")",
+      "Bash(grep -v \"//\")"
     ]
   },
   "mcpServers": {

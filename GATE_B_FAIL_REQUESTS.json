@@ -1,0 +1,10 @@
+{
+  "pageUrl": "https://sonnysssssss.github.io/Immanence/",
+  "failed": [
+    {
+      "url": "https://snyozqiselfxfifpavmj.supabase.co/auth/v1/signup",
+      "method": "POST",
+      "error": "net::ERR_NAME_NOT_RESOLVED"
+    }
+  ]
+}
