@@ -172,9 +172,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [isHardwareGuideOpen, setIsHardwareGuideOpen] = useState(false);
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
-  const [noneNavGuardProbe, setNoneNavGuardProbe] = useState({
+  const [noneTrapProbe, setNoneTrapProbe] = useState({
     hitCount: 0,
-    lastPath: "",
+    lastUrl: "",
+    lastKind: "",
     lastStackFirstLine: "",
     lastHitAtMs: 0,
   });
@@ -198,78 +199,151 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-
+    const TRAP_EVENT = "immanence:none-trap-hit";
     const basePath = import.meta.env.BASE_URL || "/";
     const absoluteBase = `${window.location.origin}${basePath}`;
-    const pushStateOriginal = window.history.pushState.bind(window.history);
-    const replaceStateOriginal = window.history.replaceState.bind(window.history);
 
-    const getFirstStackLine = (stack) => {
-      if (!stack) return "";
-      const lines = String(stack).split("\n").map((line) => line.trim()).filter(Boolean);
-      if (lines.length <= 1) return lines[0] || "";
-      return lines[1];
-    };
-
-    const getPathFromTarget = (target) => {
-      try {
-        if (target === undefined || target === null || target === "") {
-          return window.location.pathname;
-        }
-        return new URL(String(target), window.location.href).pathname;
-      } catch {
-        return window.location.pathname;
-      }
-    };
-
-    const isNonePath = (pathname) => {
-      const normalizedPath = String(pathname || "");
-      const baseNonePath = `${basePath}none`;
-      return normalizedPath.endsWith("/none") || normalizedPath === baseNonePath;
-    };
-
-    const handleNoneHit = (pathname) => {
-      const stack = new Error("NONE_NAV_GUARD").stack || "";
-      setNoneNavGuardProbe((prev) => ({
+    const onTrapHit = (event) => {
+      const detail = event?.detail || {};
+      setNoneTrapProbe((prev) => ({
         hitCount: prev.hitCount + 1,
-        lastPath: pathname,
-        lastStackFirstLine: getFirstStackLine(stack),
+        lastUrl: detail.url || "",
+        lastKind: detail.kind || "OTHER",
+        lastStackFirstLine: detail.stackFirstLine || "",
         lastHitAtMs: Date.now(),
       }));
-      window.location.replace(absoluteBase);
     };
+    window.addEventListener(TRAP_EVENT, onTrapHit);
 
-    window.history.pushState = function pushStatePatched(...args) {
-      const targetPath = getPathFromTarget(args[2]);
-      if (isNonePath(targetPath)) {
-        handleNoneHit(targetPath);
-        return null;
+    if (!window.__immanenceNoneTrapInstalled) {
+      const getStackFirstLine = (stack) => {
+        if (!stack) return "";
+        const lines = String(stack).split("\n").map((line) => line.trim()).filter(Boolean);
+        if (lines.length <= 1) return lines[0] || "";
+        return lines[1] || "";
+      };
+
+      const getTargetUrlString = (target) => {
+        try {
+          if (target && typeof target === "object" && typeof target.url === "string") {
+            return target.url;
+          }
+          if (target === undefined || target === null || target === "") {
+            return window.location.href;
+          }
+          return String(target);
+        } catch {
+          return "";
+        }
+      };
+
+      const isNoneTarget = (target) => {
+        const raw = getTargetUrlString(target);
+        if (!raw) return false;
+        try {
+          const normalized = new URL(raw, window.location.href);
+          const path = normalized.pathname || "";
+          return path.endsWith("/none") || path.includes(`${basePath}none`);
+        } catch {
+          return raw.endsWith("/none") || raw.includes(`${basePath}none`);
+        }
+      };
+
+      const emitHit = (kind, target) => {
+        const stack = new Error("NONE_TRAP").stack || "";
+        const url = getTargetUrlString(target);
+        window.dispatchEvent(new CustomEvent(TRAP_EVENT, {
+          detail: {
+            kind: kind || "OTHER",
+            url,
+            stackFirstLine: getStackFirstLine(stack),
+          },
+        }));
+      };
+
+      const originalFetch = window.fetch?.bind(window);
+      if (typeof originalFetch === "function") {
+        window.fetch = function noneTrapFetchPatched(input, init) {
+          if (isNoneTarget(input)) {
+            emitHit("FETCH", input);
+            try {
+              return Promise.resolve(new Response("", { status: 204, statusText: "NONE_TRAP_BLOCKED" }));
+            } catch {
+              return Promise.resolve({ ok: true, status: 204, text: async () => "", json: async () => ({}) });
+            }
+          }
+          return originalFetch(input, init);
+        };
       }
-      return pushStateOriginal(...args);
-    };
 
-    window.history.replaceState = function replaceStatePatched(...args) {
-      const targetPath = getPathFromTarget(args[2]);
-      if (isNonePath(targetPath)) {
-        handleNoneHit(targetPath);
-        return null;
+      const originalXhrOpen = window.XMLHttpRequest?.prototype?.open;
+      if (originalXhrOpen) {
+        window.XMLHttpRequest.prototype.open = function noneTrapXhrOpenPatched(method, url, ...rest) {
+          if (isNoneTarget(url)) {
+            emitHit("XHR", url);
+            return originalXhrOpen.call(this, method, absoluteBase, ...rest);
+          }
+          return originalXhrOpen.call(this, method, url, ...rest);
+        };
       }
-      return replaceStateOriginal(...args);
-    };
 
-    const onPopState = () => {
-      const targetPath = window.location.pathname;
-      if (isNonePath(targetPath)) {
-        handleNoneHit(targetPath);
+      const originalAssign = window.location.assign?.bind(window.location);
+      if (typeof originalAssign === "function") {
+        try {
+          window.location.assign = function noneTrapAssignPatched(url) {
+            if (isNoneTarget(url)) {
+              emitHit("LOCATION", url);
+              return originalAssign(absoluteBase);
+            }
+            return originalAssign(url);
+          };
+        } catch {
+          // Ignore non-writable location.assign in some browsers.
+        }
       }
-    };
 
-    window.addEventListener("popstate", onPopState);
+      const originalReplace = window.location.replace?.bind(window.location);
+      if (typeof originalReplace === "function") {
+        try {
+          window.location.replace = function noneTrapReplacePatched(url) {
+            if (isNoneTarget(url)) {
+              emitHit("LOCATION", url);
+              return originalReplace(absoluteBase);
+            }
+            return originalReplace(url);
+          };
+        } catch {
+          // Ignore non-writable location.replace in some browsers.
+        }
+      }
+
+      try {
+        const hrefDesc = Object.getOwnPropertyDescriptor(window.Location?.prototype || {}, "href");
+        if (hrefDesc && hrefDesc.configurable && typeof hrefDesc.get === "function" && typeof hrefDesc.set === "function") {
+          Object.defineProperty(window.Location.prototype, "href", {
+            configurable: true,
+            enumerable: hrefDesc.enumerable,
+            get() {
+              return hrefDesc.get.call(this);
+            },
+            set(value) {
+              if (isNoneTarget(value)) {
+                emitHit("HREF_SET", value);
+                return hrefDesc.set.call(this, absoluteBase);
+              }
+              return hrefDesc.set.call(this, value);
+            },
+          });
+        }
+      } catch {
+        // Ignore environments where href setter can't be patched.
+      }
+
+      window.__immanenceNoneTrapInstalled = true;
+    }
 
     return () => {
-      window.history.pushState = pushStateOriginal;
-      window.history.replaceState = replaceStateOriginal;
-      window.removeEventListener("popstate", onPopState);
+      window.removeEventListener(TRAP_EVENT, onTrapHit);
     };
   }, []);
 
@@ -614,7 +688,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   return (
     <AuthGate onAuthChange={handleAuthChange}>
     <ThemeProvider currentStage={effectiveAvatarStage}>
-      {/* PROBE:NONE_NAV_GUARD:START */}
+      {/* PROBE:NONE_TRAP:START */}
       <div
         style={{
           position: "fixed",
@@ -634,12 +708,14 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
           wordBreak: "break-word",
         }}
       >
-        <div>NONE_NAV_GUARD: ACTIVE</div>
-        <div>NONE_NAV_GUARD_HITS: {noneNavGuardProbe.hitCount}</div>
-        <div>LAST_NONE_PATH: {noneNavGuardProbe.lastPath || ""}</div>
-        <div>LAST_NONE_STACK: {noneNavGuardProbe.lastStackFirstLine || ""}</div>
+        <div>NONE_TRAP: ACTIVE</div>
+        <div>NONE_TRAP_HITS: {noneTrapProbe.hitCount}</div>
+        <div>LAST_NONE_URL: {noneTrapProbe.lastUrl || ""}</div>
+        <div>LAST_NONE_KIND: {noneTrapProbe.lastKind || ""}</div>
+        <div>LAST_NONE_STACK: {noneTrapProbe.lastStackFirstLine || ""}</div>
+        <div>LAST_NONE_HIT_MS_AGO: {noneTrapProbe.lastHitAtMs ? Math.max(0, Date.now() - noneTrapProbe.lastHitAtMs) : 0}</div>
       </div>
-      {/* PROBE:NONE_NAV_GUARD:END */}
+      {/* PROBE:NONE_TRAP:END */}
 
       {/* Curriculum Completion Report */}
       {showCurriculumReport && (
