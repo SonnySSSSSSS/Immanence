@@ -44,6 +44,103 @@ import AuthGate from "./components/auth/AuthGate";
 
 const DISABLE_SELECTION = false;
 
+// PROBE:NONE_MUTATION_SCAN:START
+if (typeof window !== "undefined" && typeof document !== "undefined" && !window.__immanenceNoneMutationScanInstalled) {
+  window.__immanenceNoneMutationScanInstalled = true;
+  const TRAP_EVENT = "immanence:none-trap-hit";
+
+  const isNoneUrl = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return false;
+    try {
+      const normalized = new URL(raw, window.location.href);
+      return normalized.pathname.endsWith("/none") || normalized.pathname === "/none" || raw === "none";
+    } catch {
+      return raw === "none" || raw.endsWith("/none") || raw.includes("/none");
+    }
+  };
+
+  const emitNoneImgMarkupHit = (url, element) => {
+    const detail = {
+      kind: "IMG_MARKUP",
+      url: String(url || ""),
+      stackFirstLine: "MutationObserver",
+      atMs: Date.now(),
+      elementTag: element?.tagName?.toLowerCase?.() || "img",
+      elementClassName: typeof element?.className === "string" ? element.className : "",
+      elementOuterHtmlSnippet: (element?.outerHTML || "").slice(0, 240),
+    };
+    console.log("[NONE_IMG_MARKUP_DETECTED]", detail);
+    window.__immanenceNoneTrapPendingHits = window.__immanenceNoneTrapPendingHits || [];
+    window.__immanenceNoneTrapPendingHits.push(detail);
+    window.dispatchEvent(new CustomEvent(TRAP_EVENT, { detail }));
+  };
+
+  const inspectImage = (imgEl) => {
+    if (!imgEl) return;
+    const attrSrc = imgEl.getAttribute("src");
+    const propSrc = imgEl.src;
+    if (isNoneUrl(attrSrc)) {
+      emitNoneImgMarkupHit(attrSrc, imgEl);
+      return;
+    }
+    if (isNoneUrl(propSrc)) {
+      emitNoneImgMarkupHit(propSrc, imgEl);
+    }
+  };
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === "childList") {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) return;
+          if (node.tagName === "IMG") {
+            inspectImage(node);
+          }
+          node.querySelectorAll?.("img").forEach((img) => inspectImage(img));
+        });
+      }
+      if (mutation.type === "attributes" && mutation.attributeName === "src") {
+        if (mutation.target instanceof HTMLImageElement) {
+          inspectImage(mutation.target);
+        }
+      }
+    }
+  });
+
+  const startObserver = () => {
+    try {
+      observer.observe(document.documentElement || document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["src"],
+      });
+    } catch {
+      // Ignore observer start failures.
+    }
+  };
+
+  const runImmediateScan = () => {
+    try {
+      document.querySelectorAll('img[src="none"], img[src$="/none"]').forEach((img) => inspectImage(img));
+    } catch {
+      // Ignore selector scan failures.
+    }
+  };
+
+  startObserver();
+  runImmediateScan();
+  window.setTimeout(() => {
+    try {
+      observer.disconnect();
+    } catch {
+      // Ignore disconnect failures.
+    }
+  }, 5000);
+}
+// PROBE:NONE_MUTATION_SCAN:END
+
 function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
@@ -214,9 +311,22 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
         lastKind: detail.kind || "OTHER",
         lastStackFirstLine: detail.stackFirstLine || "",
         lastHitAtMs: Date.now(),
+        lastCssElement: detail.elementTag
+          ? `${detail.elementTag}${detail.elementClassName ? `.${String(detail.elementClassName).replace(/\s+/g, ".")}` : ""}`
+          : prev.lastCssElement,
+        lastCssBackgroundImage: detail.backgroundImage || prev.lastCssBackgroundImage,
+        lastCssOuterHtmlSnippet: detail.elementOuterHtmlSnippet || prev.lastCssOuterHtmlSnippet,
       }));
     };
     window.addEventListener(TRAP_EVENT, onTrapHit);
+
+    const pendingHits = Array.isArray(window.__immanenceNoneTrapPendingHits)
+      ? [...window.__immanenceNoneTrapPendingHits]
+      : [];
+    if (pendingHits.length > 0) {
+      pendingHits.forEach((detail) => onTrapHit({ detail }));
+      window.__immanenceNoneTrapPendingHits = [];
+    }
 
     if (!window.__immanenceNoneTrapInstalled) {
       const getStackFirstLine = (stack) => {
