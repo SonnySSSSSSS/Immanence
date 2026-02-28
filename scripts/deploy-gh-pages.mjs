@@ -19,6 +19,20 @@ function run(command, args, options = {}) {
   }
 }
 
+function runNpm(repoRoot, npmArgs) {
+  // Prefer invoking npm via `node <npm-cli.js> ...` when available.
+  // When this script is executed under `npm run deploy`, npm provides `npm_execpath`.
+  // This avoids Windows shim issues like `spawnSync npm.cmd EINVAL` on some Node versions.
+  const npmExecPath = process.env.npm_execpath;
+  if (npmExecPath && existsSync(npmExecPath) && npmExecPath.toLowerCase().endsWith('npm-cli.js')) {
+    run(process.execPath, [npmExecPath, ...npmArgs], { cwd: repoRoot });
+    return;
+  }
+
+  // Fallback: use `npm` from PATH. On Windows this may need `shell: true` to locate the shim.
+  run('npm', npmArgs, { cwd: repoRoot, shell: process.platform === 'win32' });
+}
+
 function capture(command, args, options = {}) {
   const result = spawnSync(command, args, {
     encoding: 'utf8',
@@ -80,7 +94,6 @@ function parseArgs(argv) {
 const options = parseArgs(process.argv.slice(2));
 const repoRoot = process.cwd();
 const distDir = path.resolve(repoRoot, options.distDir);
-const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 let publishDir = '';
 let exitCode = 0;
@@ -91,7 +104,7 @@ try {
   }
 
   if (!options.noBuild) {
-    run(npmCmd, ['run', 'build'], { cwd: repoRoot });
+    runNpm(repoRoot, ['run', 'build']);
   }
 
   if (!existsSync(distDir)) {
