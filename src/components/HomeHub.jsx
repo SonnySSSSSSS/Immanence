@@ -252,11 +252,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     requestAnimationFrame(() => update("rAF"));
     const timer = setTimeout(() => update("timeout-150"), 150);
 
-    const onResize = () => update("resize");
-    window.addEventListener("resize", onResize);
+    // PROBE:DISABLE_CURRICULUM_RESIZE_V1:START
+    // Legacy [CurriculumModal] window resize handler removed (Heart Mode removed).
+    // PROBE:DISABLE_CURRICULUM_RESIZE_V1:END
 
     return () => {
-      window.removeEventListener("resize", onResize);
       clearTimeout(timer);
     };
   }, []);
