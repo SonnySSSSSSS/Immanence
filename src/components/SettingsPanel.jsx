@@ -31,6 +31,7 @@ export function resetLocalData() {
 }
 
 export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
+  // PROBE:SETTINGS_HOOK_ORDER_FIX:START
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const resetSettings = useSettingsStore(s => s.resetSettings);
@@ -79,6 +80,7 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     setPasswordOk('');
     setPasswordSaving(false);
   }, [authUser?.id, currentDisplayName]);
+  // PROBE:SETTINGS_HOOK_ORDER_FIX:END
 
   if (!isOpen) return null;
 
@@ -99,9 +101,10 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     }
   };
 
-  const canUpdateName = ENABLE_AUTH && Boolean(authUser?.id) && String(nameDraft || '').trim().length >= 2 && !nameSaving;
-  const canUpdateEmail = ENABLE_AUTH && Boolean(authUser?.id) && !emailSaving;
-  const canUpdatePassword = ENABLE_AUTH && Boolean(authUser?.id) && !passwordSaving;
+  const isAuthed = ENABLE_AUTH && Boolean(authUser?.id);
+  const canUpdateName = isAuthed && String(nameDraft || '').trim().length >= 2 && !nameSaving;
+  const canUpdateEmail = isAuthed && !emailSaving;
+  const canUpdatePassword = isAuthed && !passwordSaving;
 
   const handleUpdateName = async () => {
     setNameErr('');
@@ -245,7 +248,7 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
           </p>
         </div>
 
-        {ENABLE_AUTH && authUser?.id ? (
+        {isAuthed ? (
           <div className="mb-5">
             <div
               className="text-xs font-semibold mb-2 opacity-80"
