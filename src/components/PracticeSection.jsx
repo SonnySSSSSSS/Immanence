@@ -1818,12 +1818,40 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   const handleStart = (durationOverrideSec = null, ritualOverride = null) => {
     if (practiceId === 'breath' && initiationBenchmarkContext) {
-      const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
-      if (logScheduleAdherenceStart) {
-        logScheduleAdherenceStart({ actualStartTime: Date.now() });
+      const runId = initiationBenchmarkContext.runId;
+      const benchmarkState = useBreathBenchmarkStore.getState();
+      const alreadySatisfied = runId && benchmarkState.hasBenchmarkForRun(runId);
+
+      if (alreadySatisfied) {
+        // Benchmark already completed in navigation — copy to benchmarksByRunId for day-14 baseline
+        const attemptData = benchmarkState.getAttemptBenchmark(runId);
+        if (attemptData?.benchmark) {
+          // saveRunBenchmark param is named 'results'; value comes from attemptData.benchmark snapshot
+          saveRunBenchmark?.({
+            runId,
+            dayNumber: initiationBenchmarkContext.dayIndex, // 1-based: 1 or 14
+            results: attemptData.benchmark,
+          });
+        } else {
+          console.warn('[PracticeSection] hasBenchmarkForRun satisfied but benchmark payload missing', { runId });
+        }
+        // Apply 75% starting pattern to practice config
+        const startingPattern = benchmarkState.getStartingPattern();
+        if (startingPattern) {
+          setPattern(startingPattern);
+          setPreset(null);
+        }
+        // Clear context so it doesn't re-gate on next Start
+        setInitiationBenchmarkContext(null);
+        // Fall through to normal executeStart path below
+      } else {
+        const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
+        if (logScheduleAdherenceStart) {
+          logScheduleAdherenceStart({ actualStartTime: Date.now() });
+        }
+        setShowInitiationBenchmark(true);
+        return;
       }
-      setShowInitiationBenchmark(true);
-      return;
     }
 
     // Get the actual practice ID to run (handles subModes)
