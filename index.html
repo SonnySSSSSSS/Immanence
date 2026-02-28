@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Immanence OS Favicon -->
+  <link rel="icon" type="image/svg+xml" href="enso.svg" />
+  <link rel="alternate icon" type="image/png" href="sakshi-void.webp" />
+
+  <!-- Dev safety: purge stale SW and caches on localhost before any module loads -->
+  <script>
+    if (location.hostname === 'localhost') {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(reg => reg.unregister()));
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+      }
+    }
+  </script>
+
+  <!-- Immanence OS Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Playfair+Display:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- PWA & Mobile Optimization -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#050508" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Immanence" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Immanence OS</title>
+
+  <script type="module" crossorigin src="/Immanence/assets/index-NOppfZ3u.js"></script>
+  <link rel="stylesheet" crossorigin href="/Immanence/assets/index-D8RXJINZ.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- Vite dev server serves modules from /src; base handled by Vite -->
+</body>
+
+</html>

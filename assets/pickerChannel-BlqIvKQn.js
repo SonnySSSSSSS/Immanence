@@ -1,0 +1,1 @@
+function e(e,t,n){window.localStorage.setItem(e,JSON.stringify(n)),window.dispatchEvent(new CustomEvent(t,{detail:n}))}function t(e){let t=window.localStorage.getItem(e);return t?JSON.parse(t):null}function n(e,t){return window.addEventListener(e,t),()=>window.removeEventListener(e,t)}export{t as n,n as r,e as t};

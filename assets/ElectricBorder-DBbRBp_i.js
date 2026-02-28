@@ -1,0 +1,8 @@
+import{it as e,tt as t}from"./index-NOppfZ3u.js";var n=e(),r=t();function i(){let[e,t]=(0,n.useState)(!1);return(0,n.useEffect)(()=>{if(typeof window>`u`||typeof window.matchMedia!=`function`)return;let e=window.matchMedia(`(prefers-reduced-motion: reduce)`),n=()=>t(!!e.matches);return n(),e.addEventListener(`change`,n),()=>e.removeEventListener(`change`,n)},[]),e}var a=!1;function o(){if(a||typeof document>`u`)return;a=!0;let e=document.createElement(`style`);e.dataset.id=`electric-border-kf`,e.textContent=`
+    @keyframes electricBorderPulse {
+      0%   { opacity: 0.50; }
+      40%  { opacity: 1;    }
+      60%  { opacity: 0.95; }
+      100% { opacity: 0.50; }
+    }
+  `,document.head.appendChild(e)}function s({innerRect:e,color:t=`rgba(255, 210, 120, 1)`,speed:a=.06,chaos:s=.12,thickness:c=2,width:l,height:u,showSparks:d}){let f=i()?0:a;if((0,n.useEffect)(()=>{o()},[]),!e)return null;let p=Math.round(4+s*22),m=Math.round(2+s*8),h=[`0 0 ${p}px ${t}`,`0 0 ${m}px ${t}`,`inset 0 0 ${m}px ${t}`].join(`, `),g=f>0?`${(1/f).toFixed(2)}s`:`0s`;return(0,r.jsx)(`div`,{style:{position:`absolute`,inset:0,pointerEvents:`none`},children:(0,r.jsx)(`div`,{style:{position:`absolute`,left:e.x,top:e.y,width:e.width,height:e.height,borderRadius:e.radius,border:`${c}px solid ${t}`,boxShadow:h,pointerEvents:`none`,animation:f>0?`electricBorderPulse ${g} ease-in-out infinite`:`none`,opacity:.82}})})}export{s as t};

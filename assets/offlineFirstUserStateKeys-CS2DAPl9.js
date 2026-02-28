@@ -1,0 +1,1 @@
+const e=Object.freeze([`immanenceOS.progress`,`immanence_mandala_v1`,`immanence-settings`,`immanence-user-mode`,`immanence_practice_prefs_v2`,`immanence_sessions_v1`,`immanenceOS.navigationState`,`immanenceOS.path`,`immanenceOS.curriculum`]),t=new Set(e);export{t as n,e as t};
