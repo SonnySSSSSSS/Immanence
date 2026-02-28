@@ -43,6 +43,7 @@ import "./App.css";
 import AuthGate from "./components/auth/AuthGate";
 
 const DISABLE_SELECTION = false;
+const USER_STATE_SYNC_DEBUG = false;
 
 function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
@@ -518,18 +519,60 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     return 'page:home';
   })();
 
+  // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:START
+  const userStateSyncCleanupRef = useRef(null);
+
+  const stopUserStateSync = useCallback(() => {
+    try {
+      userStateSyncCleanupRef.current?.();
+    } catch {
+      // ignore cleanup errors
+    }
+    userStateSyncCleanupRef.current = null;
+  }, []);
+
+  const startUserStateSync = useCallback(async (session) => {
+    if (userStateSyncCleanupRef.current) return;
+    const userId = session?.user?.id ?? null;
+    if (!userId) return;
+
+    try {
+      const [{ supabase }, { initOfflineFirstUserStateSync }, { OFFLINE_FIRST_USER_STATE_KEYS }] = await Promise.all([
+        import("./lib/supabaseClient.js"),
+        import("./state/offlineFirstUserStateSync.js"),
+        import("./state/offlineFirstUserStateKeys.js"),
+      ]);
+
+      userStateSyncCleanupRef.current = initOfflineFirstUserStateSync({
+        supabase,
+        keys: OFFLINE_FIRST_USER_STATE_KEYS,
+        debug: USER_STATE_SYNC_DEBUG,
+      });
+    } catch (e) {
+      if (USER_STATE_SYNC_DEBUG) {
+        console.log("[userStateSync] init failed (local-only mode continues)", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => () => stopUserStateSync(), [stopUserStateSync]);
+
   const handleAuthChange = useCallback((event, session) => {
     if (event === "SIGNED_OUT") {
+      stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
       return;
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      stopUserStateSync();
+      startUserStateSync(session);
       setShowSettings(false);
       setActiveSection(null);
     }
-  }, []);
+  }, [startUserStateSync, stopUserStateSync]);
+  // PROBE:OFFLINE_FIRST_USER_STATE_SYNC:END
 
   return (
     <AuthGate onAuthChange={handleAuthChange}>
