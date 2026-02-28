@@ -22,7 +22,7 @@ CHANGES IN THIS REVISION:
 - [ ] **Hard blocker:** `sb_secret_...` (secret/elevated key) must never appear anywhere in browser-delivered code/config.
 - [ ] `.env.local:1-2` also contains:
   - `VITE_SUPABASE_URL=...`
-  - `VITE_SUPABASE_ANON_KEY=...`
+  - `VITE_SUPABASE_ANON_KEY=...` (value should be `sb_publishable_...`, not `sb_secret_...`)
 - [ ] `.env.local` values are currently **not consumed** by `src/lib/supabaseClient.js` (hardcoded values are used instead).
 
 ### B. How values reach browser runtime
@@ -31,7 +31,9 @@ CHANGES IN THIS REVISION:
 - [ ] `src/App.jsx:532` wraps app in `<AuthGate ...>`.
 - [ ] `src/components/auth/AuthGate.jsx:7` lazy-loads Supabase client via `import("../../lib/supabaseClient")`.
 - [ ] `src/components/SettingsPanel.jsx:8` also lazy-loads Supabase client for sign-out path.
-- [ ] `src/lib/supabaseClient.js:5`, `src/components/auth/AuthGate.jsx:4`, and `src/components/SettingsPanel.jsx:7` gate auth behind `ENABLE_AUTH` (must be **true** in production if you intend to open signup/login).
+- [ ] Production build must have a single authoritative auth enablement state:
+  - [ ] Verify all code paths referencing `ENABLE_AUTH` resolve to `true` in the production bundle if launch goal includes signup/login.
+  - [ ] If any `ENABLE_AUTH` reference resolves differently (conflicting/partial enablement), treat as Launch Gate FAIL.
 
 ### C. Explicit secret exposure verification
 
@@ -81,6 +83,20 @@ Set these in **Supabase Dashboard -> Authentication -> URL Configuration**:
 - [ ] **Password recovery**: trigger password reset, click the recovery link, and confirm the return path and session recovery work on the GitHub Pages subpath.
 - [ ] **OAuth (only if used)**: complete provider login and confirm callback/return stays inside the allowlist (no unexpected origin or path).
 - [ ] If any of the above fails, treat redirect allowlist config as **not verified** (Launch Gate FAIL until fixed and re-tested).
+
+### E. Provider Surface Reduction (Required)
+
+- [ ] Disable any unused OAuth providers in Supabase Dashboard.
+- [ ] Disable phone auth if not intentionally supported.
+- [ ] Disable any experimental or unused auth mechanisms.
+- [ ] Confirm only intended providers are enabled before launch.
+
+### F. Signup Abuse / Rate-Limit Posture
+
+- [ ] Confirm Supabase project rate limits are acceptable for public exposure.
+- [ ] Decide explicitly whether CAPTCHA or email confirmation is required before granting session.
+- [ ] Verify signup flow cannot be spammed to create unlimited accounts without friction.
+- [ ] If no anti-abuse posture is configured, treat as Launch Gate FAIL before public exposure.
 
 ---
 
@@ -150,12 +166,12 @@ Run all tests from deployed URL:
 
 ```js
 const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-const supabase = createClient('<PROJECT_URL>', '<ANON_KEY>');
+const supabase = createClient('<PROJECT_URL>', '<PUBLISHABLE_KEY>');
 const { data: me } = await supabase.auth.getUser();
 console.log('current user id', me?.user?.id);
 ```
 
-Use project URL/anon key only (no service role key).
+Use project URL/publishable key only (no service role key).
 
 ### B. Cross-user table isolation tests (if/when table exists)
 
@@ -222,9 +238,12 @@ Expected secure outcomes:
 
 - [ ] No elevated key/secret present in browser-delivered artifacts:
   - [ ] No `sb_secret_...` anywhere in built/deployed assets.
-  - [ ] No `service_role` / `SUPABASE_SERVICE_ROLE` key anywhere in built/deployed assets.
-- [ ] Auth is enabled in production **if** the launch goal includes account creation/login:
-  - [ ] `ENABLE_AUTH=true` (or equivalent) in the production build/runtime.
+  - [ ] No `service_role` key anywhere in built/deployed assets.
+  - [ ] No `SUPABASE_SERVICE_ROLE` key anywhere in built/deployed assets.
+- [ ] Production build must have a single authoritative auth enablement state (if launch goal includes signup/login):
+  - [ ] Verified all `ENABLE_AUTH` references resolve to `true` in production build (single authoritative state).
+- [ ] Provider surface reduced before launch (unused mechanisms OFF):
+  - [ ] Verified only intended Auth providers are enabled (unused OAuth providers OFF, phone auth OFF if not supported).
 - [ ] Presence of `sb_publishable_...` in browser bundles is acceptable (and expected when auth is enabled); security depends on RLS + policies.
 - [ ] Every app-used private table has RLS ON.
 - [ ] Every app-used private table has strict `auth.uid()`-scoped policies for SELECT/INSERT/UPDATE/DELETE.
@@ -236,7 +255,11 @@ Expected secure outcomes:
 
 - [ ] Auth remains disabled in production (`ENABLE_AUTH=false` or equivalent) while the launch goal includes new account creation/login.
 - [ ] Any occurrence of `sb_secret_...` in browser-delivered code/config/assets (hard FAIL).
-- [ ] Any occurrence of `service_role` / `SUPABASE_SERVICE_ROLE` key in browser-delivered code/config/assets (hard FAIL).
+- [ ] Any occurrence of `service_role` in browser-delivered code/config/assets (hard FAIL; no exceptions).
+- [ ] Any occurrence of `SUPABASE_SERVICE_ROLE` in browser-delivered code/config/assets (hard FAIL; no exceptions).
+- [ ] Conflicting or partially enabled auth gating detected in production bundle.
+- [ ] Unused auth providers or mechanisms remain enabled (OAuth/phone/etc.).
+- [ ] No explicit signup anti-abuse posture (rate limits/CAPTCHA/confirmation) decided and verified.
 - [ ] Any app-used private table has RLS OFF.
 - [ ] Any private-data policy allows broad access (`true` without auth owner checks).
 - [ ] Redirect allowlist is missing required URL(s) or includes over-broad/unexpected domains.
