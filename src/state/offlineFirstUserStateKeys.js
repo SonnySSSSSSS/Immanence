@@ -7,6 +7,7 @@
 export const OFFLINE_FIRST_USER_STATE_KEYS = Object.freeze([
   // Progress + session history (zustand persist)
   'immanenceOS.progress',
+  'immanence-breath-benchmark', // BENCHMARK_SYNC_V1
 
   // Stage/progression aggregates (direct localStorage)
   'immanence_mandala_v1',
@@ -26,4 +27,3 @@ export const OFFLINE_FIRST_USER_STATE_KEYS = Object.freeze([
 ]);
 
 export const OFFLINE_FIRST_USER_STATE_KEYS_SET = new Set(OFFLINE_FIRST_USER_STATE_KEYS);
-
