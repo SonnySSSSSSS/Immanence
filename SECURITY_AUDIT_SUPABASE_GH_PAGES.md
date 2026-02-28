@@ -1,4 +1,12 @@
 AUDIT_PROBE_SUPABASE_GH_PAGES_V1
+
+CHANGES IN THIS REVISION:
+- Clarify `sb_publishable_...` (anon/publishable) is expected public; `sb_secret_...` / `service_role` are hard FAIL blockers if shipped to the browser.
+- Replace bundle-scan “no publishable key” assertions with conditional checks based on whether auth is enabled in production.
+- Require Supabase Dashboard inventory of *all* tables/policies/RLS and Storage buckets/policies (even if current client code doesn’t call `from()`/Storage).
+- Require end-to-end redirect allowlist validation via real confirmation/recovery/OAuth flows on the GitHub Pages subpath.
+- Add Launch Gate hard FAIL when auth is disabled in production but the launch goal includes signup/login.
+
 // PROBE:SUPABASE_AUDIT:START
 
 # SECURITY AUDIT - Supabase + GitHub Pages
@@ -7,10 +15,11 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 
 ### A. Where Supabase values are defined
 
-- [ ] `src/lib/supabaseClient.js:20` defines Supabase URL in client code:
+- [ ] `src/lib/supabaseClient.js:6` defines Supabase URL in client code:
   - `https://snyozqiselfxfifpavmj.supabase.co`
-- [ ] `src/lib/supabaseClient.js:21` defines client key:
-  - `sb_publishable_...` (anon/publishable key format)
+- [ ] `src/lib/supabaseClient.js:7` defines client key:
+  - `sb_publishable_...` (anon/publishable key format; **safe to expose** — security must come from RLS + policies)
+- [ ] **Hard blocker:** `sb_secret_...` (secret/elevated key) must never appear anywhere in browser-delivered code/config.
 - [ ] `.env.local:1-2` also contains:
   - `VITE_SUPABASE_URL=...`
   - `VITE_SUPABASE_ANON_KEY=...`
@@ -22,16 +31,20 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 - [ ] `src/App.jsx:532` wraps app in `<AuthGate ...>`.
 - [ ] `src/components/auth/AuthGate.jsx:7` lazy-loads Supabase client via `import("../../lib/supabaseClient")`.
 - [ ] `src/components/SettingsPanel.jsx:8` also lazy-loads Supabase client for sign-out path.
-- [ ] `src/lib/supabaseClient.js:5`, `src/components/auth/AuthGate.jsx:4`, and `src/components/SettingsPanel.jsx:7` all set `ENABLE_AUTH = false` currently.
+- [ ] `src/lib/supabaseClient.js:5`, `src/components/auth/AuthGate.jsx:4`, and `src/components/SettingsPanel.jsx:7` gate auth behind `ENABLE_AUTH` (must be **true** in production if you intend to open signup/login).
 
 ### C. Explicit secret exposure verification
 
-- [x] Repo scan found **no** `service_role`, `SUPABASE_SERVICE_ROLE`, or `sb_secret` strings.
-- [x] Only publishable client key pattern found: `sb_publishable_...` in:
-  - `src/lib/supabaseClient.js:21`
-  - `.env.local:2`
-- [x] Build artifact scan (`dist/`, `gh-pages/`) found no `supabase`, `sb_publishable_`, `service_role`, or `sb_secret` strings.
-- [ ] Human verify browser bundles/network from deployed site also contain no service-role material.
+- [ ] Repo scan (required) finds **no** elevated secrets:
+  - [ ] `sb_secret_`
+  - [ ] `service_role`
+  - [ ] `SUPABASE_SERVICE_ROLE`
+- [ ] Repo scan confirms any shipped key is publishable only (OK):
+  - [ ] `sb_publishable_` may appear in source and in built bundles when auth is enabled.
+- [ ] Build artifact scan (required) interpretation depends on auth enablement:
+  - [ ] If auth is **enabled** in production (`ENABLE_AUTH=true`): bundles are expected to contain `sb_publishable_...` and/or Supabase URL; verify they are publishable-only and that **no** `sb_secret_` / `service_role` appears.
+  - [ ] If auth is **disabled** in production (`ENABLE_AUTH=false`): bundles may legitimately omit `sb_publishable_...` due to gating/tree-shaking; treat this as a **Launch Gate FAIL** *if* the launch goal includes account creation/login.
+- [ ] Human verify deployed browser-delivered artifacts (Network tab / “view-source” / static assets) contain **no** `sb_secret_` / `service_role` material.
 
 ---
 
@@ -62,6 +75,13 @@ Set these in **Supabase Dashboard -> Authentication -> URL Configuration**:
 - [ ] Add `https://SonnySSSSSSS.github.io/Immanence/trace` only if you intentionally use that path as an auth callback destination.
 - [ ] Reconcile README local URL note (`README.md:129` shows `5175`) with actual dev URL before finalizing redirect allowlist.
 
+### D. Prove redirects by flow test (required; do not guess)
+
+- [ ] **Email confirmation (signup)**: create a user, click the confirmation link, and confirm the browser returns to the GitHub Pages **subpath** (`/Immanence/`) and the session resolves correctly.
+- [ ] **Password recovery**: trigger password reset, click the recovery link, and confirm the return path and session recovery work on the GitHub Pages subpath.
+- [ ] **OAuth (only if used)**: complete provider login and confirm callback/return stays inside the allowlist (no unexpected origin or path).
+- [ ] If any of the above fails, treat redirect allowlist config as **not verified** (Launch Gate FAIL until fixed and re-tested).
+
 ---
 
 ## 3) RLS Checklist (tables/buckets touched + required policy shape)
@@ -75,6 +95,18 @@ Code search results:
 Enumerated app-touched objects (from code search):
 - [ ] **Tables:** none currently referenced by client code.
 - [ ] **Storage buckets:** none currently referenced by client code.
+
+Required Supabase-side inventory (Dashboard) — **do this even if the app currently doesn’t query tables**:
+- [ ] Enumerate **all tables** in the Supabase project (not just ones referenced in `src/`).
+- [ ] Classify each table as **public** (intentionally world-readable) vs **private** (user-scoped / sensitive).
+- [ ] For every **private** table:
+  - [ ] RLS is **ON**.
+  - [ ] Policies exist for intended operations (SELECT/INSERT/UPDATE/DELETE) and are scoped (for example via `auth.uid()`).
+  - [ ] Policies are not permissive for `anon`/`authenticated` (no blanket `USING (true)` / `WITH CHECK (true)` for private data).
+- [ ] Enumerate **all Storage buckets** (if any):
+  - [ ] Confirm bucket public/private intent.
+  - [ ] Confirm policies on `storage.objects` restrict reads/writes/deletes appropriately.
+- [ ] Explicit rule: **Even unused tables/buckets must be secured** — an attacker can query them using the public `sb_publishable_...` key from any browser client.
 
 ### B. Required RLS baseline for any user-private table introduced/used
 
@@ -188,7 +220,12 @@ Expected secure outcomes:
 
 ### PASS only if all are true
 
-- [ ] No service-role/secret key present in source, env shipped to client, or built assets.
+- [ ] No elevated key/secret present in browser-delivered artifacts:
+  - [ ] No `sb_secret_...` anywhere in built/deployed assets.
+  - [ ] No `service_role` / `SUPABASE_SERVICE_ROLE` key anywhere in built/deployed assets.
+- [ ] Auth is enabled in production **if** the launch goal includes account creation/login:
+  - [ ] `ENABLE_AUTH=true` (or equivalent) in the production build/runtime.
+- [ ] Presence of `sb_publishable_...` in browser bundles is acceptable (and expected when auth is enabled); security depends on RLS + policies.
 - [ ] Every app-used private table has RLS ON.
 - [ ] Every app-used private table has strict `auth.uid()`-scoped policies for SELECT/INSERT/UPDATE/DELETE.
 - [ ] Any used Storage bucket has owner-scoped policies.
@@ -197,7 +234,9 @@ Expected secure outcomes:
 
 ### FAIL (block launch) if any is true
 
-- [ ] Any service-role/secret appears in browser-delivered code/config.
+- [ ] Auth remains disabled in production (`ENABLE_AUTH=false` or equivalent) while the launch goal includes new account creation/login.
+- [ ] Any occurrence of `sb_secret_...` in browser-delivered code/config/assets (hard FAIL).
+- [ ] Any occurrence of `service_role` / `SUPABASE_SERVICE_ROLE` key in browser-delivered code/config/assets (hard FAIL).
 - [ ] Any app-used private table has RLS OFF.
 - [ ] Any private-data policy allows broad access (`true` without auth owner checks).
 - [ ] Redirect allowlist is missing required URL(s) or includes over-broad/unexpected domains.
