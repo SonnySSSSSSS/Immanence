@@ -6,6 +6,18 @@ export const DEV_PANEL_PERSIST_KEY = 'immanence-dev-panel';
 export const AVATAR_COMPOSITE_LAYER_IDS = ['bg', 'stage', 'glass', 'ring'];
 export const AVATAR_COMPOSITE_STAGE_KEYS = ['seedling', 'ember', 'flame', 'beacon', 'stellar'];
 
+const IS_DEV_BUILD = Boolean(import.meta?.env?.DEV);
+
+// Production safety: devpanel tuning must not be able to "stick" across deploys via localStorage.
+// Remove any stale persisted state so shipped defaults are always authoritative.
+if (!IS_DEV_BUILD && typeof window !== 'undefined') {
+  try {
+    window.localStorage?.removeItem?.(DEV_PANEL_PERSIST_KEY);
+  } catch {
+    // Ignore storage failures (privacy mode, denied access, etc.)
+  }
+}
+
 const DEFAULT_LAYER = Object.freeze({
   enabled: true,
   opacity: 1,
@@ -480,196 +492,202 @@ export function migrateDevPanelState(persistedState, version) {
   };
 }
 
-export const useDevPanelStore = create(
-  persist(
-    (set, get) => ({
-      avatarComposite: createDefaultAvatarComposite(),
+const createDevPanelStoreState = (set, get) => ({
+  avatarComposite: createDefaultAvatarComposite(),
 
-      getAvatarCompositeRoleTransform: (stageKey, roleKey) => {
-        const state = get();
-        return resolveRoleTransform(state.avatarComposite, stageKey, roleKey);
+  getAvatarCompositeRoleTransform: (stageKey, roleKey) => {
+    const state = get();
+    return resolveRoleTransform(state.avatarComposite, stageKey, roleKey);
+  },
+
+  setAvatarCompositeEnabled: (enabled) =>
+    set((state) => ({
+      ...state,
+      avatarComposite: {
+        ...state.avatarComposite,
+        enabled: Boolean(enabled),
       },
+    })),
 
-      setAvatarCompositeEnabled: (enabled) =>
-        set((state) => ({
-          ...state,
-          avatarComposite: {
-            ...state.avatarComposite,
-            enabled: Boolean(enabled),
-          },
-        })),
-
-      setAvatarCompositeDebugOverlay: (showDebugOverlay) =>
-        set((state) => ({
-          ...state,
-          avatarComposite: {
-            ...state.avatarComposite,
-            showDebugOverlay: Boolean(showDebugOverlay),
-          },
-        })),
-
-      setAvatarCompositeRoleTransform: (stageKey, roleKey, partialPatch) =>
-        set((state) => updateRoleTransform(state, stageKey, roleKey, partialPatch)),
-
-      setAvatarCompositeRoleTransformValue: (stageKey, roleKey, key, value) =>
-        set((state) => updateRoleTransform(state, stageKey, roleKey, { [key]: value })),
-
-      setAvatarCompositeRoleTransformEnabled: (stageKey, roleKey, enabled) =>
-        set((state) => updateRoleTransform(state, stageKey, roleKey, { enabled: Boolean(enabled) })),
-
-      setAvatarCompositeRoleTransformLink: (stageKey, roleKey, linkTo) =>
-        set((state) => updateRoleTransform(state, stageKey, roleKey, { linkTo })),
-
-      setAvatarCompositeRoleTransformLinkOpacity: (stageKey, roleKey, linkOpacity) =>
-        set((state) => updateRoleTransform(state, stageKey, roleKey, { linkOpacity: Boolean(linkOpacity) })),
-
-      resetAvatarCompositeStage: (stageKey) =>
-        set((state) => {
-          const normalizedStageKey = normalizeStageId(stageKey);
-          const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-          if (normalizedStageKey === 'seedling') {
-            return setWholeStageTransforms(state, 'seedling', createDefaultStageTransforms());
-          }
-
-          const nextTransformsByStage = { ...avatarComposite.transformsByStage };
-          delete nextTransformsByStage[normalizedStageKey];
-          return {
-            ...state,
-            avatarComposite: {
-              ...avatarComposite,
-              transformsByStage: nextTransformsByStage,
-            },
-          };
-        }),
-
-      copyAvatarCompositeStage: (fromStage, toStage) =>
-        set((state) => {
-          const fromStageKey = normalizeStageId(fromStage);
-          const toStageKey = normalizeStageId(toStage);
-          const sourceTransforms = createResolvedStageTransforms(state.avatarComposite, fromStageKey);
-          return setWholeStageTransforms(state, toStageKey, sourceTransforms);
-        }),
-
-      copyAvatarCompositeStageToAll: (fromStage) =>
-        set((state) => {
-          const fromStageKey = normalizeStageId(fromStage);
-          const sourceTransforms = createResolvedStageTransforms(state.avatarComposite, fromStageKey);
-          const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
-          const nextTransformsByStage = { ...avatarComposite.transformsByStage };
-          AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-            nextTransformsByStage[stageKey] = sanitizeStageTransforms(sourceTransforms);
-          });
-          return {
-            ...state,
-            avatarComposite: {
-              ...avatarComposite,
-              transformsByStage: nextTransformsByStage,
-            },
-          };
-        }),
-
-      // Compatibility wrappers (legacy callers -> seedling)
-      setAvatarCompositeLayerEnabled: (layerId, enabled) =>
-        set((state) => updateRoleTransform(state, 'seedling', layerId, { enabled: Boolean(enabled) })),
-
-      setAvatarCompositeLayerValue: (layerId, key, value) =>
-        set((state) => updateRoleTransform(state, 'seedling', layerId, { [key]: value })),
-
-      setAvatarCompositeLayerLink: (layerId, linkTo) =>
-        set((state) => updateRoleTransform(state, 'seedling', layerId, { linkTo })),
-
-      setAvatarCompositeLayerLinkOpacity: (layerId, linkOpacity) =>
-        set((state) => updateRoleTransform(state, 'seedling', layerId, { linkOpacity: Boolean(linkOpacity) })),
-
-      resetAvatarCompositeLayer: (layerId) =>
-        set((state) => updateRoleTransform(state, 'seedling', layerId, DEFAULT_ROLE_RESET)),
-
-      resetAvatarCompositeAll: () =>
-        set((state) => ({
-          ...state,
-          avatarComposite: createDefaultAvatarComposite(),
-        })),
-
-      linkAllAvatarCompositeTo: (masterLayerId) =>
-        set((state) => {
-          const master = normalizeLayerId(masterLayerId);
-          let nextState = state;
-          AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
-            const linkTo = master && layerId !== master ? master : null;
-            nextState = updateRoleTransform(nextState, 'seedling', layerId, { linkTo });
-          });
-          return nextState;
-        }),
-
-      getAvatarCompositeSettingsJSON: (stageKey = 'seedling') => {
-        const state = get();
-        const normalizedStageKey = normalizeStageId(stageKey);
-        const stageTransforms = createResolvedStageTransforms(state.avatarComposite, normalizedStageKey);
-        return JSON.stringify({
-          stage: normalizedStageKey,
-          transforms: stageTransforms,
-        }, null, 2);
+  setAvatarCompositeDebugOverlay: (showDebugOverlay) =>
+    set((state) => ({
+      ...state,
+      avatarComposite: {
+        ...state.avatarComposite,
+        showDebugOverlay: Boolean(showDebugOverlay),
       },
+    })),
 
-      setAvatarCompositeSettingsJSON: (stageKeyOrRaw, maybeRaw) => {
-        let stageKey = 'seedling';
-        let raw = stageKeyOrRaw;
+  setAvatarCompositeRoleTransform: (stageKey, roleKey, partialPatch) =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, partialPatch)),
 
-        if (typeof maybeRaw === 'string') {
-          stageKey = normalizeStageId(stageKeyOrRaw);
-          raw = maybeRaw;
-        }
+  setAvatarCompositeRoleTransformValue: (stageKey, roleKey, key, value) =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { [key]: value })),
 
-        const parsed = parseStageTransformsPayload(raw);
-        if (!parsed.ok) return { ok: false, error: parsed.error };
+  setAvatarCompositeRoleTransformEnabled: (stageKey, roleKey, enabled) =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { enabled: Boolean(enabled) })),
 
-        set((state) => setWholeStageTransforms(state, stageKey, parsed.transforms));
-        return { ok: true };
-      },
+  setAvatarCompositeRoleTransformLink: (stageKey, roleKey, linkTo) =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkTo })),
 
-      getAvatarCompositeAllStagesJSON: () => {
-        const state = get();
-        const transformsByStage = {};
-        AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-          transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
-        });
-        return JSON.stringify(
-          {
-            transformsByStage,
-          },
-          null,
-          2
-        );
-      },
+  setAvatarCompositeRoleTransformLinkOpacity: (stageKey, roleKey, linkOpacity) =>
+    set((state) => updateRoleTransform(state, stageKey, roleKey, { linkOpacity: Boolean(linkOpacity) })),
 
-      getAvatarCompositeDefaultsSnippet: () => {
-        const state = get();
-        const transformsByStage = {};
-        AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
-          transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
-        });
-        return `transformsByStage: ${JSON.stringify(transformsByStage, null, 2)},`;
-      },
+  resetAvatarCompositeStage: (stageKey) =>
+    set((state) => {
+      const normalizedStageKey = normalizeStageId(stageKey);
+      const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
+      if (normalizedStageKey === 'seedling') {
+        return setWholeStageTransforms(state, 'seedling', createDefaultStageTransforms());
+      }
 
-      getAvatarCompositeDefaults: () => JSON.parse(JSON.stringify(DEFAULT_AVATAR_COMPOSITE)),
+      const nextTransformsByStage = { ...avatarComposite.transformsByStage };
+      delete nextTransformsByStage[normalizedStageKey];
+      return {
+        ...state,
+        avatarComposite: {
+          ...avatarComposite,
+          transformsByStage: nextTransformsByStage,
+        },
+      };
     }),
-    {
-      name: DEV_PANEL_PERSIST_KEY,
-      version: 2,
-      migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
-      partialize: (state) => ({
-        avatarComposite: sanitizeAvatarComposite(state.avatarComposite),
-      }),
-      merge: (persisted, current) => {
-        const migrated = migrateDevPanelState(persisted, 2);
-        const persistedAvatar = migrated?.avatarComposite
-          ? sanitizeAvatarComposite(migrated.avatarComposite)
-          : createDefaultAvatarComposite();
-        return {
-          ...current,
-          avatarComposite: persistedAvatar,
-        };
+
+  copyAvatarCompositeStage: (fromStage, toStage) =>
+    set((state) => {
+      const fromStageKey = normalizeStageId(fromStage);
+      const toStageKey = normalizeStageId(toStage);
+      const sourceTransforms = createResolvedStageTransforms(state.avatarComposite, fromStageKey);
+      return setWholeStageTransforms(state, toStageKey, sourceTransforms);
+    }),
+
+  copyAvatarCompositeStageToAll: (fromStage) =>
+    set((state) => {
+      const fromStageKey = normalizeStageId(fromStage);
+      const sourceTransforms = createResolvedStageTransforms(state.avatarComposite, fromStageKey);
+      const avatarComposite = state.avatarComposite || createDefaultAvatarComposite();
+      const nextTransformsByStage = { ...avatarComposite.transformsByStage };
+      AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+        nextTransformsByStage[stageKey] = sanitizeStageTransforms(sourceTransforms);
+      });
+      return {
+        ...state,
+        avatarComposite: {
+          ...avatarComposite,
+          transformsByStage: nextTransformsByStage,
+        },
+      };
+    }),
+
+  // Compatibility wrappers (legacy callers -> seedling)
+  setAvatarCompositeLayerEnabled: (layerId, enabled) =>
+    set((state) => updateRoleTransform(state, 'seedling', layerId, { enabled: Boolean(enabled) })),
+
+  setAvatarCompositeLayerValue: (layerId, key, value) =>
+    set((state) => updateRoleTransform(state, 'seedling', layerId, { [key]: value })),
+
+  setAvatarCompositeLayerLink: (layerId, linkTo) =>
+    set((state) => updateRoleTransform(state, 'seedling', layerId, { linkTo })),
+
+  setAvatarCompositeLayerLinkOpacity: (layerId, linkOpacity) =>
+    set((state) => updateRoleTransform(state, 'seedling', layerId, { linkOpacity: Boolean(linkOpacity) })),
+
+  resetAvatarCompositeLayer: (layerId) =>
+    set((state) => updateRoleTransform(state, 'seedling', layerId, DEFAULT_ROLE_RESET)),
+
+  resetAvatarCompositeAll: () =>
+    set((state) => ({
+      ...state,
+      avatarComposite: createDefaultAvatarComposite(),
+    })),
+
+  linkAllAvatarCompositeTo: (masterLayerId) =>
+    set((state) => {
+      const master = normalizeLayerId(masterLayerId);
+      let nextState = state;
+      AVATAR_COMPOSITE_LAYER_IDS.forEach((layerId) => {
+        const linkTo = master && layerId !== master ? master : null;
+        nextState = updateRoleTransform(nextState, 'seedling', layerId, { linkTo });
+      });
+      return nextState;
+    }),
+
+  getAvatarCompositeSettingsJSON: (stageKey = 'seedling') => {
+    const state = get();
+    const normalizedStageKey = normalizeStageId(stageKey);
+    const stageTransforms = createResolvedStageTransforms(state.avatarComposite, normalizedStageKey);
+    return JSON.stringify(
+      {
+        stage: normalizedStageKey,
+        transforms: stageTransforms,
       },
+      null,
+      2
+    );
+  },
+
+  setAvatarCompositeSettingsJSON: (stageKeyOrRaw, maybeRaw) => {
+    let stageKey = 'seedling';
+    let raw = stageKeyOrRaw;
+
+    if (typeof maybeRaw === 'string') {
+      stageKey = normalizeStageId(stageKeyOrRaw);
+      raw = maybeRaw;
     }
-  )
+
+    const parsed = parseStageTransformsPayload(raw);
+    if (!parsed.ok) return { ok: false, error: parsed.error };
+
+    set((state) => setWholeStageTransforms(state, stageKey, parsed.transforms));
+    return { ok: true };
+  },
+
+  getAvatarCompositeAllStagesJSON: () => {
+    const state = get();
+    const transformsByStage = {};
+    AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
+    });
+    return JSON.stringify(
+      {
+        transformsByStage,
+      },
+      null,
+      2
+    );
+  },
+
+  getAvatarCompositeDefaultsSnippet: () => {
+    const state = get();
+    const transformsByStage = {};
+    AVATAR_COMPOSITE_STAGE_KEYS.forEach((stageKey) => {
+      transformsByStage[stageKey] = createResolvedStageTransforms(state.avatarComposite, stageKey);
+    });
+    return `transformsByStage: ${JSON.stringify(transformsByStage, null, 2)},`;
+  },
+
+  getAvatarCompositeDefaults: () => JSON.parse(JSON.stringify(DEFAULT_AVATAR_COMPOSITE)),
+});
+
+const devPanelPersistConfig = {
+  name: DEV_PANEL_PERSIST_KEY,
+  version: 2,
+  migrate: (persistedState, version) => migrateDevPanelState(persistedState, version),
+  // Acceptance check: only avatarComposite is persisted.
+  partialize: (state) => ({
+    avatarComposite: sanitizeAvatarComposite(state.avatarComposite),
+  }),
+  merge: (persisted, current) => {
+    const migrated = migrateDevPanelState(persisted, 2);
+    const persistedAvatar = migrated?.avatarComposite
+      ? sanitizeAvatarComposite(migrated.avatarComposite)
+      : createDefaultAvatarComposite();
+    return {
+      ...current,
+      avatarComposite: persistedAvatar,
+    };
+  },
+};
+
+export const useDevPanelStore = create(
+  IS_DEV_BUILD ? persist(createDevPanelStoreState, devPanelPersistConfig) : createDevPanelStoreState
 );
