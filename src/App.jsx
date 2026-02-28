@@ -568,6 +568,11 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       return;
     }
 
+    if (event === "USER_UPDATED" && session) {
+      setAuthUser(session?.user ?? null);
+      return;
+    }
+
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
       setAuthUser(session?.user ?? null);
       stopUserStateSync();

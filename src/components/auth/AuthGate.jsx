@@ -12,9 +12,13 @@ export default function AuthGate({ children, onAuthChange }) {
   const [loading, setLoading] = useState(ENABLE_AUTH);
 
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [namePromptOpen, setNamePromptOpen] = useState(false);
+  const [namePromptValue, setNamePromptValue] = useState("");
+  const [namePromptErr, setNamePromptErr] = useState("");
 
   useEffect(() => {
     // Skip auth initialization when disabled
@@ -50,6 +54,87 @@ export default function AuthGate({ children, onAuthChange }) {
     });
   }, []);
 
+  // PROBE:ACCOUNT_NAME:START
+  const getDisplayNameFromUser = (user) => {
+    const meta = user?.user_metadata || {};
+    const rawName = meta?.name ?? meta?.full_name ?? null;
+    const parsedName = typeof rawName === 'string' ? rawName.trim() : '';
+    return parsedName || null;
+  };
+
+  const getNamePromptLatchKey = (userId) => `immanenceOS.accountNamePrompt.v1.${userId || 'unknown'}`;
+
+  useEffect(() => {
+    const user = session?.user ?? null;
+    const userId = user?.id ?? null;
+    if (!userId) return;
+
+    const existingName = getDisplayNameFromUser(user);
+    if (existingName) return;
+
+    let latched = false;
+    try {
+      const key = getNamePromptLatchKey(userId);
+      latched = window?.localStorage?.getItem(key) === '1';
+    } catch {
+      latched = false;
+    }
+
+    if (latched) return;
+
+    setNamePromptValue("");
+    setNamePromptErr("");
+    setNamePromptOpen(true);
+  }, [session?.user?.id]);
+
+  const handleNamePromptNotNow = () => {
+    const userId = session?.user?.id ?? null;
+    if (userId) {
+      try {
+        window?.localStorage?.setItem(getNamePromptLatchKey(userId), '1');
+      } catch {
+        // ignore
+      }
+    }
+    setNamePromptOpen(false);
+  };
+
+  const handleNamePromptSave = async () => {
+    setNamePromptErr("");
+    const trimmed = String(namePromptValue || '').trim();
+    if (!trimmed) {
+      setNamePromptErr("Please enter a name (or choose Not now).");
+      return;
+    }
+
+    const userId = session?.user?.id ?? null;
+    if (!userId) return;
+
+    try {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.auth.updateUser({ data: { name: trimmed, full_name: trimmed } });
+      if (error) throw error;
+
+      try {
+        window?.localStorage?.setItem(getNamePromptLatchKey(userId), '1');
+      } catch {
+        // ignore
+      }
+
+      const nextUser = data?.user ?? null;
+      if (nextUser) {
+        const setAuthUser = await getSetAuthUser();
+        setAuthUser(nextUser);
+        onAuthChange?.("USER_UPDATED", { ...session, user: nextUser });
+      }
+
+      setNamePromptOpen(false);
+    } catch (e) {
+      setNamePromptErr(e?.message || "Failed to save name.");
+    }
+  };
+  // PROBE:ACCOUNT_NAME:END
+
   async function handleSubmit(e) {
     e.preventDefault();
     setErr("");
@@ -62,7 +147,11 @@ export default function AuthGate({ children, onAuthChange }) {
 
       const supabase = await getSupabase();
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const trimmed = String(name || '').trim();
+        const signUpArgs = trimmed
+          ? { email, password, options: { data: { name: trimmed, full_name: trimmed } } }
+          : { email, password };
+        const { error } = await supabase.auth.signUp(signUpArgs);
         if (error) throw error;
         // If email confirmations are ON, session may be null. Still show a message.
         setErr("Account created. If confirmation is required, check your email.");
@@ -102,6 +191,15 @@ export default function AuthGate({ children, onAuthChange }) {
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
+            {mode === "signup" ? (
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Name (optional)"
+                autoComplete="name"
+                style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.2)", color: "inherit" }}
+              />
+            ) : null}
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -132,6 +230,54 @@ export default function AuthGate({ children, onAuthChange }) {
 
   return (
     <>
+      {namePromptOpen ? (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center"
+          style={{ padding: 24 }}
+        >
+          <div
+            className="absolute inset-0"
+            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
+            onClick={handleNamePromptNotNow}
+          />
+          <div
+            className="relative z-10"
+            style={{ width: 420, maxWidth: "92vw", padding: 16, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.35)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 16, marginBottom: 10, opacity: 0.95 }}>
+              What should we call you?
+            </div>
+            <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 12 }}>
+              This becomes your account label across devices.
+            </div>
+            <input
+              value={namePromptValue}
+              onChange={(e) => setNamePromptValue(e.target.value)}
+              placeholder="Name"
+              autoComplete="name"
+              style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.2)", color: "inherit", marginBottom: 10 }}
+            />
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={handleNamePromptNotNow}
+                style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", cursor: "pointer", fontSize: 12 }}
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={handleNamePromptSave}
+                style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", cursor: "pointer", fontSize: 12 }}
+              >
+                Save
+              </button>
+            </div>
+            {namePromptErr ? <div style={{ fontSize: 12, opacity: 0.9, marginTop: 10 }}>{namePromptErr}</div> : null}
+          </div>
+        </div>
+      ) : null}
       {children}
     </>
   );
