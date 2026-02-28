@@ -7,34 +7,34 @@ import { clearSettingsPersistedState, useSettingsStore } from '../state/settings
 const ENABLE_AUTH = true;
 const getSupabase = () => import('../lib/supabaseClient').then(m => m.supabase);
 
+export function resetLocalData() {
+  const confirmed = window.confirm(
+    'Reset all local data?\n\nThis will clear:\n• Curriculum progress\n• Navigation/path data\n• All completion logs\n• Feedback entries\n\nThis cannot be undone. Continue?'
+  );
+
+  if (confirmed) {
+    // Clear all immanenceOS localStorage keys
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('immanenceOS.')) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Reload the app
+    window.location.reload();
+  }
+}
+
 export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const resetSettings = useSettingsStore(s => s.resetSettings);
 
   if (!isOpen) return null;
-
-  const handleReset = () => {
-    const confirmed = window.confirm(
-      'Reset all local data?\n\nThis will clear:\n• Curriculum progress\n• Navigation/path data\n• All completion logs\n• Feedback entries\n\nThis cannot be undone. Continue?'
-    );
-
-    if (confirmed) {
-      // Clear all immanenceOS localStorage keys
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('immanenceOS.')) {
-          keysToRemove.push(key);
-        }
-      }
-      
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      
-      // Reload the app
-      window.location.reload();
-    }
-  };
 
   const handleSignOut = async () => {
     if (ENABLE_AUTH) {
@@ -103,22 +103,6 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
             Manage your local data
           </p>
         </div>
-
-        {/* Reset Button */}
-        <button
-          onClick={handleReset}
-          className="w-full px-4 py-3 rounded-lg font-bold text-sm transition-all mb-4"
-          style={{
-            background: isLight 
-              ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-              : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-            color: '#fff',
-            fontFamily: 'var(--font-display)',
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
-          }}
-        >
-          Reset Local Data
-        </button>
 
         {/* Logout Button */}
         <button

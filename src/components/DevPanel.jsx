@@ -89,6 +89,7 @@ import {
 } from '../dev/plateFxPresets.js';
 import Section from './devpanel/ui/Section.jsx';
 import DevButton from './devpanel/ui/DevButton.jsx';
+import { resetLocalData } from './SettingsPanel.jsx';
 import DestructiveButton from './devpanel/ui/DestructiveButton.jsx';
 import useDevPanelGate from './devpanel/hooks/useDevPanelGate.js';
 import AvatarCompositeSection from './devpanel/sections/AvatarCompositeSection.jsx';
@@ -1566,6 +1567,17 @@ export function DevPanel({
                         </div>
                     </Section>
 
+                    <Section
+                        title="Danger Zone"
+                        expanded={expandedSections.danger || false}
+                        onToggle={() => toggleSection('danger')}
+                        isLight={isLight}
+                    >
+                        <div className="mb-3">
+                            <DevButton onClick={resetLocalData}>Reset Local Data</DevButton>
+                        </div>
+                    </Section>
+
                 </div>
 
                 {/* Footer */}
@@ -2106,5 +2118,4 @@ function CurriculumSection({
 }
 
 export default DevPanel;
-
 
