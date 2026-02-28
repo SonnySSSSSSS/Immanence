@@ -62,9 +62,8 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   const [passwordOk, setPasswordOk] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
 
-  if (!isOpen) return null;
-
   useEffect(() => {
+    if (!isOpen) return;
     if (!authUser?.id) return;
     setNameDraft(currentDisplayName);
     setNameErr('');
@@ -80,6 +79,8 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
     setPasswordOk('');
     setPasswordSaving(false);
   }, [authUser?.id, currentDisplayName]);
+
+  if (!isOpen) return null;
 
   const handleSignOut = async () => {
     if (ENABLE_AUTH) {
