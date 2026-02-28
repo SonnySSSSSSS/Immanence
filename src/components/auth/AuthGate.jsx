@@ -13,6 +13,7 @@ export default function AuthGate({ children, onAuthChange }) {
 
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [name, setName] = useState("");
+  const [nameErr, setNameErr] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
@@ -53,6 +54,10 @@ export default function AuthGate({ children, onAuthChange }) {
       };
     });
   }, []);
+
+  useEffect(() => {
+    if (mode !== "signup") setNameErr("");
+  }, [mode]);
 
   // PROBE:ACCOUNT_NAME:START
   const getDisplayNameFromUser = (user) => {
@@ -138,6 +143,7 @@ export default function AuthGate({ children, onAuthChange }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setErr("");
+    setNameErr("");
 
     try {
       if (!email || !password) {
@@ -148,10 +154,11 @@ export default function AuthGate({ children, onAuthChange }) {
       const supabase = await getSupabase();
       if (mode === "signup") {
         const trimmed = String(name || '').trim();
-        const signUpArgs = trimmed
-          ? { email, password, options: { data: { name: trimmed, full_name: trimmed } } }
-          : { email, password };
-        const { error } = await supabase.auth.signUp(signUpArgs);
+        if (trimmed.length < 2) {
+          setNameErr(trimmed.length === 0 ? "Name is required." : "Name must be at least 2 characters.");
+          return;
+        }
+        const { error } = await supabase.auth.signUp({ email, password, options: { data: { name: trimmed, full_name: trimmed } } });
         if (error) throw error;
         // If email confirmations are ON, session may be null. Still show a message.
         setErr("Account created. If confirmation is required, check your email.");
@@ -192,13 +199,24 @@ export default function AuthGate({ children, onAuthChange }) {
 
           <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
             {mode === "signup" ? (
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Name (optional)"
-                autoComplete="name"
-                style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.2)", color: "inherit" }}
-              />
+              <>
+                <input
+                  value={name}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setName(next);
+                    if (nameErr) {
+                      const trimmed = String(next || "").trim();
+                      if (trimmed.length >= 2) setNameErr("");
+                    }
+                  }}
+                  placeholder="Name"
+                  autoComplete="name"
+                  required
+                  style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(0,0,0,0.2)", color: "inherit" }}
+                />
+                {nameErr ? <div style={{ fontSize: 12, opacity: 0.9 }}>{nameErr}</div> : null}
+              </>
             ) : null}
             <input
               value={email}
@@ -217,6 +235,7 @@ export default function AuthGate({ children, onAuthChange }) {
             />
             <button
               type="submit"
+              disabled={mode === "signup" && String(name || "").trim().length < 2}
               style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", cursor: "pointer" }}
             >
               {mode === "signin" ? "Sign in" : "Create account"}
