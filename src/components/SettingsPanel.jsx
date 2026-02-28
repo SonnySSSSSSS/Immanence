@@ -1,8 +1,9 @@
 // src/components/SettingsPanel.jsx
 // Settings panel with reset functionality for pilot testing
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
+import { setAuthUser, useAuthUser } from '../state/useAuthUser.js';
 // NOTE: Auth feature disabled - lazy import to prevent Supabase CORS errors
 const ENABLE_AUTH = true;
 const getSupabase = () => import('../lib/supabaseClient').then(m => m.supabase);
@@ -33,8 +34,52 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const resetSettings = useSettingsStore(s => s.resetSettings);
+  const authUser = useAuthUser();
+
+  const currentDisplayName = useMemo(() => {
+    const meta = authUser?.user_metadata || {};
+    const rawName = meta?.name ?? meta?.full_name ?? '';
+    return typeof rawName === 'string' ? rawName.trim() : '';
+  }, [authUser?.id, authUser?.user_metadata]);
+
+  const currentEmail = useMemo(() => {
+    return typeof authUser?.email === 'string' ? authUser.email.trim() : '';
+  }, [authUser?.id, authUser?.email]);
+
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameErr, setNameErr] = useState('');
+  const [nameOk, setNameOk] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+
+  const [emailDraft, setEmailDraft] = useState('');
+  const [emailErr, setEmailErr] = useState('');
+  const [emailOk, setEmailOk] = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+
+  const [passwordDraft, setPasswordDraft] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordErr, setPasswordErr] = useState('');
+  const [passwordOk, setPasswordOk] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   if (!isOpen) return null;
+
+  useEffect(() => {
+    if (!authUser?.id) return;
+    setNameDraft(currentDisplayName);
+    setNameErr('');
+    setNameOk('');
+    setNameSaving(false);
+    setEmailDraft('');
+    setEmailErr('');
+    setEmailOk('');
+    setEmailSaving(false);
+    setPasswordDraft('');
+    setPasswordConfirm('');
+    setPasswordErr('');
+    setPasswordOk('');
+    setPasswordSaving(false);
+  }, [authUser?.id, currentDisplayName]);
 
   const handleSignOut = async () => {
     if (ENABLE_AUTH) {
@@ -50,6 +95,101 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
       window.history.replaceState(null, "", baseUrl);
     } catch {
       // Ignore history errors in non-browser contexts
+    }
+  };
+
+  const canUpdateName = ENABLE_AUTH && Boolean(authUser?.id) && String(nameDraft || '').trim().length >= 2 && !nameSaving;
+  const canUpdateEmail = ENABLE_AUTH && Boolean(authUser?.id) && !emailSaving;
+  const canUpdatePassword = ENABLE_AUTH && Boolean(authUser?.id) && !passwordSaving;
+
+  const handleUpdateName = async () => {
+    setNameErr('');
+    setNameOk('');
+
+    const trimmedName = String(nameDraft || '').trim();
+    if (trimmedName.length < 2) {
+      setNameErr(trimmedName.length === 0 ? 'Name is required.' : 'Name must be at least 2 characters.');
+      return;
+    }
+
+    try {
+      setNameSaving(true);
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.auth.updateUser({ data: { name: trimmedName, full_name: trimmedName } });
+      if (error) throw error;
+      if (data?.user) setAuthUser(data.user);
+      setNameOk('Saved.');
+    } catch (e) {
+      setNameErr(e?.message || 'Failed to update name.');
+    } finally {
+      setNameSaving(false);
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    setEmailErr('');
+    setEmailOk('');
+
+    const nextEmail = String(emailDraft || '').trim();
+    if (!nextEmail) {
+      setEmailErr('New email is required.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+      setEmailErr('Please enter a valid email.');
+      return;
+    }
+    if (currentEmail && nextEmail.toLowerCase() === currentEmail.toLowerCase()) {
+      setEmailErr('New email must be different from current email.');
+      return;
+    }
+
+    try {
+      setEmailSaving(true);
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.auth.updateUser({ email: nextEmail });
+      if (error) throw error;
+      if (data?.user) setAuthUser(data.user);
+      setEmailOk('Check your email to confirm the change.');
+    } catch (e) {
+      setEmailErr(e?.message || 'Failed to initiate email change.');
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    setPasswordErr('');
+    setPasswordOk('');
+
+    const nextPassword = String(passwordDraft || '');
+    const nextConfirm = String(passwordConfirm || '');
+
+    if (!nextPassword) {
+      setPasswordErr('New password is required.');
+      return;
+    }
+    if (nextPassword.length < 8) {
+      setPasswordErr('Password must be at least 8 characters.');
+      return;
+    }
+    if (nextPassword !== nextConfirm) {
+      setPasswordErr('Passwords do not match.');
+      return;
+    }
+
+    try {
+      setPasswordSaving(true);
+      const supabase = await getSupabase();
+      const { error } = await supabase.auth.updateUser({ password: nextPassword });
+      if (error) throw error;
+      setPasswordDraft('');
+      setPasswordConfirm('');
+      setPasswordOk('Password updated.');
+    } catch (e) {
+      setPasswordErr(e?.message || 'Failed to update password.');
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -70,7 +210,7 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
 
       {/* Modal */}
       <div 
-        className="relative z-10 w-full max-w-md mx-4 rounded-2xl border p-6"
+        className="relative z-10 w-full max-w-md mx-4 rounded-2xl border p-6 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: isLight 
@@ -103,6 +243,184 @@ export function SettingsPanel({ isOpen, onClose, onSignedOut }) {
             Manage your local data
           </p>
         </div>
+
+        {ENABLE_AUTH && authUser?.id ? (
+          <div className="mb-5">
+            <div
+              className="text-xs font-semibold mb-2 opacity-80"
+              style={{ fontFamily: 'var(--font-display)', color: isLight ? '#3c3020' : '#fdfbf5' }}
+            >
+              Account
+            </div>
+
+            {/* PROBE:ACCOUNT_UPDATE_NAME:START */}
+            <div className="mb-4 p-3 rounded-xl" style={{ background: isLight ? 'rgba(60, 50, 35, 0.04)' : 'rgba(255, 255, 255, 0.06)' }}>
+              <div className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                Display Name
+              </div>
+              <input
+                value={nameDraft}
+                onChange={(e) => {
+                  setNameDraft(e.target.value);
+                  if (nameErr) setNameErr('');
+                  if (nameOk) setNameOk('');
+                }}
+                placeholder="Name"
+                autoComplete="name"
+                className="w-full px-3 py-2 rounded-lg text-sm mb-2"
+                style={{
+                  background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.2)',
+                  border: `1px solid ${isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255,255,255,0.12)'}`,
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-body)',
+                }}
+              />
+              {nameErr ? (
+                <div className="text-xs mb-2" style={{ color: isLight ? '#8a1f11' : '#ffb4aa' }}>{nameErr}</div>
+              ) : null}
+              {nameOk ? (
+                <div className="text-xs mb-2" style={{ color: isLight ? '#1c6b3a' : '#86efac' }}>{nameOk}</div>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleUpdateName}
+                disabled={!canUpdateName}
+                className="w-full px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                style={{
+                  background: isLight ? 'rgba(60, 50, 35, 0.08)' : 'rgba(255, 255, 255, 0.08)',
+                  border: isLight ? '1px solid rgba(60, 50, 35, 0.15)' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-display)',
+                  cursor: canUpdateName ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {nameSaving ? 'Saving…' : 'Save name'}
+              </button>
+            </div>
+            {/* PROBE:ACCOUNT_UPDATE_NAME:END */}
+
+            {/* PROBE:ACCOUNT_UPDATE_EMAIL:START */}
+            <div className="mb-4 p-3 rounded-xl" style={{ background: isLight ? 'rgba(60, 50, 35, 0.04)' : 'rgba(255, 255, 255, 0.06)' }}>
+              <div className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                Change Email
+              </div>
+              <div className="text-xs mb-2 opacity-70" style={{ fontFamily: 'var(--font-body)', color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                Current: {currentEmail || '—'}
+              </div>
+              <input
+                value={emailDraft}
+                onChange={(e) => {
+                  setEmailDraft(e.target.value);
+                  if (emailErr) setEmailErr('');
+                  if (emailOk) setEmailOk('');
+                }}
+                placeholder="New email"
+                autoComplete="email"
+                className="w-full px-3 py-2 rounded-lg text-sm mb-2"
+                style={{
+                  background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.2)',
+                  border: `1px solid ${isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255,255,255,0.12)'}`,
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-body)',
+                }}
+              />
+              {emailErr ? (
+                <div className="text-xs mb-2" style={{ color: isLight ? '#8a1f11' : '#ffb4aa' }}>{emailErr}</div>
+              ) : null}
+              {emailOk ? (
+                <div className="text-xs mb-2" style={{ color: isLight ? '#1c6b3a' : '#86efac' }}>{emailOk}</div>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleUpdateEmail}
+                disabled={!canUpdateEmail || !String(emailDraft || '').trim() || String(emailDraft || '').trim().toLowerCase() === String(currentEmail || '').toLowerCase()}
+                className="w-full px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                style={{
+                  background: isLight ? 'rgba(60, 50, 35, 0.08)' : 'rgba(255, 255, 255, 0.08)',
+                  border: isLight ? '1px solid rgba(60, 50, 35, 0.15)' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-display)',
+                  cursor: canUpdateEmail ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {emailSaving ? 'Sending…' : 'Change email'}
+              </button>
+              <div className="text-[11px] mt-2 opacity-70" style={{ fontFamily: 'var(--font-body)', color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                You may need to confirm via email before the change takes effect.
+              </div>
+            </div>
+            {/* PROBE:ACCOUNT_UPDATE_EMAIL:END */}
+
+            {/* PROBE:ACCOUNT_UPDATE_PASSWORD:START */}
+            <div className="p-3 rounded-xl" style={{ background: isLight ? 'rgba(60, 50, 35, 0.04)' : 'rgba(255, 255, 255, 0.06)' }}>
+              <div className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: isLight ? '#3c3020' : '#fdfbf5' }}>
+                Change Password
+              </div>
+              <input
+                value={passwordDraft}
+                onChange={(e) => {
+                  setPasswordDraft(e.target.value);
+                  if (passwordErr) setPasswordErr('');
+                  if (passwordOk) setPasswordOk('');
+                }}
+                placeholder="New password"
+                type="password"
+                autoComplete="new-password"
+                className="w-full px-3 py-2 rounded-lg text-sm mb-2"
+                style={{
+                  background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.2)',
+                  border: `1px solid ${isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255,255,255,0.12)'}`,
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-body)',
+                }}
+              />
+              <input
+                value={passwordConfirm}
+                onChange={(e) => {
+                  setPasswordConfirm(e.target.value);
+                  if (passwordErr) setPasswordErr('');
+                  if (passwordOk) setPasswordOk('');
+                }}
+                placeholder="Confirm password"
+                type="password"
+                autoComplete="new-password"
+                className="w-full px-3 py-2 rounded-lg text-sm mb-2"
+                style={{
+                  background: isLight ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.2)',
+                  border: `1px solid ${isLight ? 'rgba(60, 50, 35, 0.15)' : 'rgba(255,255,255,0.12)'}`,
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-body)',
+                }}
+              />
+              {passwordErr ? (
+                <div className="text-xs mb-2" style={{ color: isLight ? '#8a1f11' : '#ffb4aa' }}>{passwordErr}</div>
+              ) : null}
+              {passwordOk ? (
+                <div className="text-xs mb-2" style={{ color: isLight ? '#1c6b3a' : '#86efac' }}>{passwordOk}</div>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleUpdatePassword}
+                disabled={
+                  !canUpdatePassword ||
+                  String(passwordDraft || '').length < 8 ||
+                  String(passwordDraft || '') !== String(passwordConfirm || '')
+                }
+                className="w-full px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                style={{
+                  background: isLight ? 'rgba(60, 50, 35, 0.08)' : 'rgba(255, 255, 255, 0.08)',
+                  border: isLight ? '1px solid rgba(60, 50, 35, 0.15)' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: isLight ? '#3c3020' : '#fdfbf5',
+                  fontFamily: 'var(--font-display)',
+                  cursor: canUpdatePassword ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {passwordSaving ? 'Updating…' : 'Update password'}
+              </button>
+            </div>
+            {/* PROBE:ACCOUNT_UPDATE_PASSWORD:END */}
+          </div>
+        ) : null}
 
         {/* Logout Button */}
         <button
