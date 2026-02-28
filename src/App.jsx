@@ -166,6 +166,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [showDevPanel, setShowDevPanel] = useState(() => (isDev ? false : devPanelGateEnabled)); // Dev Panel (🎨 button)
   const [devtoolsGateTick, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
+  const [authUser, setAuthUser] = useState(null);
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
   // GRAVEYARD: Top layer removed
   // const [showBackgroundTopLayer, setShowBackgroundTopLayer] = useState(true);
@@ -560,6 +561,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
 
   const handleAuthChange = useCallback((event, session) => {
     if (event === "SIGNED_OUT") {
+      setAuthUser(null);
       stopUserStateSync();
       setShowSettings(false);
       setActiveSection(null);
@@ -567,6 +569,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
     }
 
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      setAuthUser(session?.user ?? null);
       stopUserStateSync();
       startUserStateSync(session);
       setShowSettings(false);
@@ -738,11 +741,19 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                     <button
                       type="button"
                       onClick={() => setShowSettings(v => !v)}
-                      className="text-lg opacity-60 hover:opacity-100 active:scale-95 transition-all"
-                      title="Settings"
+                      className="type-label text-[11px] font-medium opacity-60 hover:opacity-100 active:scale-95 transition-all max-w-[140px] truncate"
+                      title="Click for account / logout"
                       style={{ color: showSettings ? 'var(--accent-color)' : undefined }}
                     >
-                      ⚙️
+                      {(() => {
+                        const meta = authUser?.user_metadata || {};
+                        const rawName = meta?.name ?? meta?.full_name ?? null;
+                        const name = typeof rawName === 'string' ? rawName.trim() : '';
+                        if (name) return name;
+                        const email = typeof authUser?.email === 'string' ? authUser.email.trim() : '';
+                        if (email) return email.split('@')[0] || email;
+                        return 'Account';
+                      })()}
                     </button>
                     {devPanelGateEnabled && (
                       <button
