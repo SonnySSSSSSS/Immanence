@@ -1,9 +1,10 @@
 name: Deploy GitHub Pages (dist)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
+# NOTE: Disabled to enforce a single Pages source of truth (gh-pages branch publish).
+# See GH_PAGES_DEPLOY_AUDIT.md.
 
 permissions:
   contents: read
@@ -16,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,6 +53,7 @@ jobs:
           path: dist
 
   deploy:
+    if: ${{ false }}
     needs: build
     runs-on: ubuntu-latest
     environment:
@@ -60,4 +63,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

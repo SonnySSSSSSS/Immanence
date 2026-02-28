@@ -13,8 +13,7 @@
     "test:smoke": "npx playwright test -c tests/playwright.config.ts tests/smoke/critical-flows.spec.ts --project=chromium",
     "preview": "vite preview",
     "lint": "eslint .",
-    "predeploy": "npm run build",
-    "deploy": "node scripts/deploy-gh-pages.mjs --no-build",
+    "deploy": "node scripts/deploy-gh-pages.mjs",
     "deploy:dry": "node scripts/deploy-gh-pages.mjs --no-build --dry-run",
     "extract-colors": "node scripts/extractStageColors.js"
   },
