@@ -414,6 +414,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.226 - ui(homehub): move stats into avatar side panels; remove swipe page 2 (HOMEHUB_SIDE_PANELS_V1)
   // v3.27.225 - fix(breath): skip benchmark modal if already completed in navigation path (hasBenchmarkForRun guard)
   // v3.27.224 - fix(polygon): velocity-based rotation (no phase-transition jumps); inhale/exhale oppose on Y; holds differ in drift+sway
   // v3.27.223 - feat(atom-countdown): 3D electron orbits around digit (XZ circle in 3 planes), color-differentiated trails (HSL-shifted cool shade), fix missing trail visibility
@@ -811,7 +812,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.225
+                        v3.27.226
                       </button>
                     </div>
                   </div>

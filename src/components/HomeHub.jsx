@@ -395,6 +395,44 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     userMode,
   });
 
+  // Compute hub tiles for side panels (moved from swipe rail page 2)
+  const hubTiles = getQuickDashboardTiles({
+    scope: hubPolicy.scope,
+    range: hubPolicy.range,
+    includeHonor: hubPolicy.includeHonor,
+    activeRunId: hubPolicy.activeRunId,
+  });
+
+  // Render helper: donut ring for rate metrics (completion/on-time)
+  const renderRateRing = (value, isLight) => {
+    const r = 14;
+    const circumference = 2 * Math.PI * r;
+    const progress = value === null ? 0 : Math.max(0, Math.min(value / 100, 1));
+    const dashLength = progress * circumference;
+
+    const ringColor = isLight ? 'rgba(100, 80, 60, 0.2)' : 'rgba(255, 255, 255, 0.1)';
+    const fillColor = isLight
+      ? (value === null ? ringColor : 'rgba(100, 80, 60, 0.8)')
+      : (value === null ? ringColor : 'rgba(76, 175, 80, 0.8)');
+
+    return (
+      <svg width="44" height="44" viewBox="0 0 44 44" style={{ overflow: 'visible' }}>
+        <circle cx="22" cy="22" r={r} fill="none" stroke={ringColor} strokeWidth="3" />
+        {value !== null && (
+          <circle
+            cx="22" cy="22" r={r}
+            fill="none"
+            stroke={fillColor}
+            strokeWidth="3"
+            strokeDasharray={`${dashLength} ${circumference}`}
+            strokeLinecap="round"
+            transform="rotate(-90 22 22)"
+          />
+        )}
+      </svg>
+    );
+  };
+
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
       {/* Background is handled by Background.jsx globally */}
@@ -406,48 +444,136 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         className="w-full flex flex-col items-center gap-0 pb-0 transition-all duration-500 overflow-visible"
         style={{ paddingTop: '12px' }}
       >
-        <div className="relative w-full flex items-center justify-center overflow-visible">
-          {/* Cloud Background - NO LONGER HERE, moved to full-page layer */}
-
-          {/* Bloom halo - EXPANDED in Sanctuary mode to fill space */}
-          <div
-            className="absolute transition-all duration-500"
-            style={{
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 'min(90%, 525px)',
-              height: 'min(90%, 525px)',
-              background: 'radial-gradient(circle, ' +
-                'var(--accent-glow) 0%, ' +
-                'var(--accent-glow)40 12%, ' +
-                'var(--accent-glow)18 35%, ' +
-                'var(--accent-glow)05 55%, ' +
-                'transparent 75%)',
-              filter: 'blur(75px)',
-              opacity: isLight
-                ? 0.06
-                : 0.20,
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          />
-
-
-          <div className="relative z-10 flex items-center justify-center">
-            <AvatarV3
-              stage={normalizedStage}
-              modeWeights={modeWeights}
-              isPracticing={isPracticing}
-              lastStageChange={lastStageChange}
-              lastModeChange={lastModeChange}
-              lastSessionComplete={lastSessionComplete}
-              path={avatarPath}
-              size="hearth"
-            />
+        {/* PROBE:HOMEHUB_SIDE_PANELS_V1:START */}
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px', padding: '0 8px' }}>
+          {/* LEFT PANEL - Sessions + Active Days */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+            padding: '14px 8px',
+            background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: '16px',
+            border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                {Math.round(hubTiles?.sessions_total ?? 0)}
+              </div>
+              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                SESSIONS
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                {Math.round(hubTiles?.days_active ?? 0)}
+              </div>
+              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                ACTIVE DAYS
+              </div>
+            </div>
           </div>
 
+          {/* CENTER - Bloom Halo + Avatar */}
+          <div className="relative flex items-center justify-center overflow-visible" style={{ flexShrink: 0 }}>
+            {/* Bloom halo - EXPANDED in Sanctuary mode to fill space */}
+            <div
+              className="absolute transition-all duration-500"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 'min(90%, 525px)',
+                height: 'min(90%, 525px)',
+                background: 'radial-gradient(circle, ' +
+                  'var(--accent-glow) 0%, ' +
+                  'var(--accent-glow)40 12%, ' +
+                  'var(--accent-glow)18 35%, ' +
+                  'var(--accent-glow)05 55%, ' +
+                  'transparent 75%)',
+                filter: 'blur(75px)',
+                opacity: isLight
+                  ? 0.06
+                  : 0.20,
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+
+            <div className="relative z-10 flex items-center justify-center">
+              <AvatarV3
+                stage={normalizedStage}
+                modeWeights={modeWeights}
+                isPracticing={isPracticing}
+                lastStageChange={lastStageChange}
+                lastModeChange={lastModeChange}
+                lastSessionComplete={lastSessionComplete}
+                path={avatarPath}
+                size="hearth"
+              />
+            </div>
+          </div>
+
+          {/* RIGHT PANEL - Completion + On-Time + View Report */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '14px 8px',
+            background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: '16px',
+            border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
+          }}>
+            {/* Completion Ring */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              {renderRateRing(hubTiles?.completion_rate, isLight)}
+              <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                {hubTiles?.completion_rate === null || hubTiles?.completion_rate === undefined ? '—' : `${Math.round(hubTiles.completion_rate)}%`}
+              </div>
+              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                COMPLETION
+              </div>
+            </div>
+
+            {/* On-Time Ring */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              {renderRateRing(hubTiles?.on_time_rate, isLight)}
+              <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
+              </div>
+              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                ON-TIME
+              </div>
+            </div>
+
+            {/* View Report Button */}
+            <button
+              onClick={() => openArchive(ARCHIVE_TABS.REPORTS)}
+              className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
+              style={{
+                background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
+                color: '#fff',
+                boxShadow: '0 3px 10px var(--accent-30)',
+                width: '100%',
+                fontSize: '9px',
+                letterSpacing: '0.08em',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              VIEW REPORT
+            </button>
+          </div>
         </div>
+        {/* PROBE:HOMEHUB_SIDE_PANELS_V1:END */}
 
         {/* STATUS & CONTROL INSTRUMENT - Agency | Continuity (No StageTitle - moved to top) */}
         <HubStagePanel
@@ -663,64 +789,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 )}
                 </div>
                 </section>
-
-                <section
-                  className="shrink-0 basis-full w-full"
-                  style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-                >
-                <div ref={homeSwipeProgressRef} className="w-full">
-                {(() => {
-                  // Fetch hub variant tiles with policy range
-                  const hubTiles = getQuickDashboardTiles({
-                    scope: hubPolicy.scope,
-                    range: hubPolicy.range,
-                    includeHonor: hubPolicy.includeHonor,
-                    activeRunId: hubPolicy.activeRunId,
-                  });
-
-                  return (
-                    <QuickDashboardTiles
-                      variant="hubCard"
-                      tiles={hubTiles}
-                      onOpenDetails={() => openArchive(ARCHIVE_TABS.REPORTS)}
-                      metricOrder={hubPolicy.primaryMetricIds}
-                      isStudent={userMode === 'student'}
-                      isSanctuary={isSanctuary}
-                      devCardActive={homeSwipePage === 1}
-                      devCardCarouselId="homeHubSwipe"
-                    />
-                  );
-                })()}
-                </div>
-                </section>
               </div>
             </div>
-
-          {/* Page indicator */}
-          <div className="flex items-center justify-center gap-2 pt-2">
-            {[0, 1].map((idx) => (
-              <button
-                key={idx}
-                type="button"
-                aria-label={idx === 0 ? "Show Today's Practice" : 'Show Progress Overview'}
-                onClick={() => scrollHomeSwipeTo(idx)}
-                className="w-2.5 h-2.5 rounded-full transition-all"
-                style={{
-                  background:
-                    homeSwipePage === idx
-                      ? 'linear-gradient(135deg, rgba(156, 236, 172, 0.95) 0%, rgba(87, 218, 204, 0.92) 100%)'
-                      : 'rgba(255, 255, 255, 0.18)',
-                  boxShadow: homeSwipePage === idx
-                    ? '0 0 14px rgba(87, 218, 204, 0.34), 0 0 6px rgba(156, 236, 172, 0.30)'
-                    : 'none',
-                  border: homeSwipePage === idx
-                    ? '1px solid rgba(122, 232, 188, 0.7)'
-                    : '1px solid rgba(255,255,255,0.10)',
-                  transform: homeSwipePage === idx ? 'scale(1.05)' : 'scale(1.0)',
-                }}
-              />
-            ))}
-          </div>
         </div>
 
 
