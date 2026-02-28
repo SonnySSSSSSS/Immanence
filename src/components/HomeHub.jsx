@@ -445,7 +445,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         style={{ paddingTop: '12px' }}
       >
         {/* PROBE:HOMEHUB_SIDE_PANELS_V1:START */}
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px', padding: '0 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px', padding: '0 8px', maxWidth: 'var(--ui-rail-max, min(430px, 94vw))', margin: '0 auto' }}>
           {/* LEFT PANEL - Sessions + Active Days */}
           <div style={{
             flex: 1,
