@@ -25,6 +25,14 @@ const POLYGON_PERF_FPS_TARGET = 45
 const POLYGON_PERF_DEGRADE_SECONDS = 3
 const POLYGON_MOTION_SPEED_SCALE = 0.5
 const POLYGON_WOBBLE_AMPLITUDE_SCALE = 0.5
+
+// Velocity-based rotation model: per-phase angular velocities (rad/s)
+const PHASE_VELOCITIES = {
+  inhale:     { velY: 1.0,  wobbleAmpX: 0,    wobbleHz: 0    },    // steady forward Y spin
+  exhale:     { velY: -1.0, wobbleAmpX: 0,    wobbleHz: 0    },    // steady backward Y spin (opposing)
+  holdTop:    { velY: 0.18, wobbleAmpX: 0.10, wobbleHz: 0.65 },    // slow forward + gentle X sway
+  holdBottom: { velY: 0.08, wobbleAmpX: 0.05, wobbleHz: 0.42 },    // very slow drift + subtler X sway
+}
 // Dev-only probe toggles. Keep both false for normal visuals.
 const POLY_SAFE_GEOMETRY = false
 const POLY_SAFE_DIGIT = false
@@ -339,6 +347,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
   // useFrame refs and logic
   const groupRef = useRef()
+  const polyRotYRef = useRef(0)     // accumulated Y rotation (rad) — persists across phase transitions
   const numberPlaneRef = useRef()   // billboarded digit (faces camera, depth-occluded)
   const digitInsideCueRef = useRef()
   const digitLaserJitterRef = useRef()
@@ -367,19 +376,20 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
     const bd = breathDriverRef.current
     const phase = bd?.phase
-    const phaseProgress01 = Math.max(0, Math.min(1, bd?.phaseProgress01 ?? 0))
     const elapsed = state.clock.elapsedTime
-    const phaseMotion = PHASE_MOTION[phase] || PHASE_MOTION.holdBottom
 
-    const polygonCfg = phaseMotion.polygon
-    const phaseAngle = phaseProgress01 * Math.PI * 2 * polygonCfg.turns
-    const wobblePhase = Math.sin(elapsed * Math.PI * 2 * polygonCfg.wobbleHz) * polygonCfg.wobbleAmp
-    const polygonRotationX = polygonCfg.axis === 'x' ? phaseAngle + wobblePhase : 0
-    const polygonRotationY = polygonCfg.axis === 'y' ? phaseAngle : 0
-    groupRef.current.rotation.x = polygonRotationX
-    groupRef.current.rotation.y = polygonRotationY
+    // Velocity-based accumulation: no phase transition jumps
+    const safeDelta = Number.isFinite(delta) && delta > 0 ? Math.min(delta, 0.05) : 0.016
+    const phaseCfg = PHASE_VELOCITIES[phase] || PHASE_VELOCITIES.holdBottom
+    polyRotYRef.current += phaseCfg.velY * safeDelta
+
+    // X rotation: continuous sine wobble (independent of Y, persists across phases)
+    const rotX = Math.sin(elapsed * Math.PI * 2 * phaseCfg.wobbleHz) * phaseCfg.wobbleAmpX
+
+    groupRef.current.rotation.x = rotX
+    groupRef.current.rotation.y = polyRotYRef.current
     groupRef.current.rotation.z = 0
-    groupRef.current.scale.setScalar(polygonCfg.scale)
+    groupRef.current.scale.setScalar(1.0)
 
     // Billboard: copy camera quaternion so plane always faces viewer exactly
     if (numberPlaneRef.current) {
