@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffe
 import { createPortal } from 'react-dom';
 import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
 import { SensorySession } from "./SensorySession.jsx";
+import { GuidanceAudioController } from "./audio/GuidanceAudioController.jsx";
 import { BreathingRing, BREATH_RING_PRESETS } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
@@ -67,6 +68,7 @@ import { useProgressStore } from '../state/progressStore.js';
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
 const PRESET_SWITCHER_Z_INDEX = 10020;
+const GUIDANCE_AUDIO_PLACEHOLDER = "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3";
 
 function isTypingIntoEditableElement(activeEl) {
   if (!activeEl) return false;
@@ -378,6 +380,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const saveRunBenchmark = useBreathBenchmarkStore(s => s.saveRunBenchmark);
   const hasSong = useTempoAudioStore((s) => s.hasSong);
   const isSongPlaying = useTempoAudioStore((s) => s.isPlaying);
+  const guidanceStatus = useTempoAudioStore((s) => s.status);
+  const guidanceSource = useTempoAudioStore((s) => s.source);
   const activePath = useNavigationStore(s => s.activePath);
   
   // Tempo sync state for music-synced breathing
@@ -420,6 +424,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [practiceId, setPracticeId] = useState(initialPracticeId);
   const [hasExpandedOnce, setHasExpandedOnce] = useState(!!initialPracticeId);
   const [duration, setDuration] = useState(savedPrefs.duration || 10);
+  const [isSessionPaused, setIsSessionPaused] = useState(false);
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
   const [showInitiationBenchmark, setShowInitiationBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
@@ -443,6 +448,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
+  const pausedAtRef = useRef(null);
 
   const resolveInitiationV2BenchmarkContext = useCallback((ctx) => {
     if (!ctx || ctx.source !== 'dailySchedule' || ctx.practiceId !== 'breath') {
@@ -1047,6 +1053,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [duration, isRunning]);
 
   useEffect(() => {
+    const audioStore = useTempoAudioStore.getState();
+
+    if (!isRunning) {
+      audioStore.stopReset();
+      if (audioStore.source) {
+        audioStore.setSource(null);
+      }
+      return;
+    }
+
+    if (guidanceSource !== GUIDANCE_AUDIO_PLACEHOLDER) {
+      audioStore.setSource(GUIDANCE_AUDIO_PLACEHOLDER);
+    }
+
+    if (isSessionPaused) {
+      audioStore.pause();
+      return;
+    }
+
+    audioStore.play();
+  }, [guidanceSource, isRunning, isSessionPaused]);
+
+  useEffect(() => {
     if (!isRunning && hasSong && isSongPlaying) {
       useTempoAudioStore.getState().stop("practice-end");
     }
@@ -1060,6 +1089,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return () => {
       const st = useTempoAudioStore.getState();
       if (st.hasSong && st.isPlaying) st.stop("practice-unmount");
+      st.stopReset();
+      if (st.source) {
+        st.setSource(null);
+      }
       // End tempo sync session on unmount
       useTempoSyncSessionStore.getState().endSession();
       // Clear any session-scoped overrides/locks to prevent leakage across mounts.
@@ -1280,6 +1313,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return `${m}:${s.toString().padStart(2, "0")} `;
   };
 
+  const handleTogglePause = useCallback(() => {
+    if (!isRunning) return;
+
+    setIsSessionPaused((wasPaused) => {
+      if (!wasPaused) {
+        pausedAtRef.current = performance.now();
+        return true;
+      }
+
+      const pausedAt = pausedAtRef.current;
+      const pausedDurationMs = Number.isFinite(pausedAt) ? performance.now() - pausedAt : 0;
+      pausedAtRef.current = null;
+
+      if (pausedDurationMs > 0) {
+        setSessionStartTime((previousStart) =>
+          Number.isFinite(previousStart) ? previousStart + pausedDurationMs : previousStart
+        );
+      }
+
+      return false;
+    });
+  }, [isRunning]);
+
   const handleStop = (options = {}) => {
     // options.completed = true means the session timer naturally reached 0
     // If not provided (manual stop), we check timeLeft
@@ -1310,6 +1366,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     // Now clear the session
+    pausedAtRef.current = null;
+    setIsSessionPaused(false);
     clearActivePracticeSession();
     setRingTeardownRequested(true);
     setIsRunning(false);
@@ -1878,6 +1936,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setTimeLeft(durationOverrideSec);
     }
 
+    pausedAtRef.current = null;
+    setIsSessionPaused(false);
     setIsStarting(true);
 
     // Check if we need to start audio with countdown
@@ -1943,6 +2003,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setSessionSummary(null);
     
     // 2. Exit session surface by setting isRunning = false
+    pausedAtRef.current = null;
+    setIsSessionPaused(false);
     setIsRunning(false);
     
     // 3. Clear the ritual selection
@@ -1983,7 +2045,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     let interval = null;
 
-    if (isRunning && practice !== "Rituals") {
+    if (isRunning && !isSessionPaused && practice !== "Rituals") {
       if (timeLeft > 0) {
         interval = setInterval(() => {
           setTimeLeft((prev) => prev - 1);
@@ -2000,7 +2062,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, timeLeft, practice, activeCircuitId]);
+  }, [isRunning, isSessionPaused, timeLeft, practice, activeCircuitId]);
 
   // Update tempo sync session elapsed time (calculates segment transitions)
   useEffect(() => {
@@ -2594,6 +2656,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   return (
     <>
+      <GuidanceAudioController />
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
       <BenchmarkBreathworkUI
         isOpen={showInitiationBenchmark}
@@ -2602,6 +2665,51 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         onCancel={handleInitiationBenchmarkCancel}
         onSave={handleInitiationBenchmarkSave}
       />
+      <div
+        style={{
+          position: 'fixed',
+          top: 10,
+          right: 10,
+          zIndex: 10060,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 10px',
+          borderRadius: 999,
+          border: '1px solid rgba(255,255,255,0.22)',
+          background: 'rgba(8, 10, 18, 0.84)',
+          color: 'rgba(255,255,255,0.96)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.32)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
+        <span
+          className="type-label"
+          style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+        >
+          GUIDANCE AUDIO: {String(guidanceStatus || 'idle').toUpperCase()}
+        </span>
+        {isRunning && (
+          <button
+            type="button"
+            onClick={handleTogglePause}
+            className="type-label"
+            style={{
+              padding: '4px 8px',
+              borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.16)',
+              background: 'rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.96)',
+              fontSize: 10,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {isSessionPaused ? 'Resume' : 'Pause'}
+          </button>
+        )}
+      </div>
       {!isActiveBreathSession && (
         <DevCompleteNowOverlay
           isRunning={isRunning}

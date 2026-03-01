@@ -1,0 +1,134 @@
+import { useEffect, useRef } from "react";
+import { useTempoAudioStore } from "../../state/tempoAudioStore.js";
+
+export function GuidanceAudioController() {
+  const source = useTempoAudioStore((state) => state.source);
+  const status = useTempoAudioStore((state) => state.status);
+  const volume = useTempoAudioStore((state) => state.volume);
+  const setStatus = useTempoAudioStore((state) => state.setStatus);
+  const setGuidanceTiming = useTempoAudioStore((state) => state.setGuidanceTiming);
+  const stopReset = useTempoAudioStore((state) => state.stopReset);
+  const setSource = useTempoAudioStore((state) => state.setSource);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.loop = true;
+    audio.volume = useTempoAudioStore.getState().volume;
+    audioRef.current = audio;
+
+    const syncTiming = () => {
+      setGuidanceTiming(
+        audio.currentTime,
+        Number.isFinite(audio.duration) ? audio.duration : 0
+      );
+    };
+
+    const handleError = () => {
+      setStatus("failed");
+    };
+
+    audio.addEventListener("timeupdate", syncTiming);
+    audio.addEventListener("loadedmetadata", syncTiming);
+    audio.addEventListener("error", handleError);
+
+    return () => {
+      audio.removeEventListener("timeupdate", syncTiming);
+      audio.removeEventListener("loadedmetadata", syncTiming);
+      audio.removeEventListener("error", handleError);
+      audio.pause();
+      try {
+        audio.currentTime = 0;
+      } catch {
+        void 0;
+      }
+      stopReset();
+      setSource(null);
+      audioRef.current = null;
+    };
+  }, [setGuidanceTiming, setSource, setStatus, stopReset]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!source) {
+      audio.pause();
+      try {
+        audio.currentTime = 0;
+      } catch {
+        void 0;
+      }
+      try {
+        audio.removeAttribute("src");
+        audio.load();
+      } catch {
+        void 0;
+      }
+      setGuidanceTiming(0, 0);
+      return;
+    }
+
+    if (audio.src !== source) {
+      audio.src = source;
+      audio.load();
+      setGuidanceTiming(0, 0);
+    }
+  }, [setGuidanceTiming, source]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !source) return;
+
+    if (status === "paused") {
+      audio.pause();
+      return;
+    }
+
+    if (status === "idle") {
+      audio.pause();
+      try {
+        audio.currentTime = 0;
+      } catch {
+        void 0;
+      }
+      setGuidanceTiming(0, Number.isFinite(audio.duration) ? audio.duration : 0);
+      return;
+    }
+
+    if (status !== "loading" && status !== "playing") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const startPlayback = async () => {
+      try {
+        await audio.play();
+        if (!cancelled) {
+          setStatus("playing");
+        }
+      } catch (error) {
+        if (cancelled) return;
+        setStatus(error?.name === "NotAllowedError" ? "blocked" : "failed");
+      }
+    };
+
+    startPlayback();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setGuidanceTiming, setStatus, source, status]);
+
+  return null;
+}
+
+export default GuidanceAudioController;

@@ -22,6 +22,7 @@ import { useDisplayModeStore } from "./state/displayModeStore.js";
 import { useUserModeStore } from "./state/userModeStore.js";
 import { useUiStore } from "./state/uiStore.js";
 import { useCurriculumStore } from "./state/curriculumStore.js";
+import { useTempoAudioStore } from "./state/tempoAudioStore.js";
 import { useDevOverrideStore } from "./dev/devOverrideStore.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { startImagePreloading } from "./utils/imagePreloader.js";
@@ -292,6 +293,26 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
   }, [isHub]);
+
+  useEffect(() => {
+    if (activeSection === 'practice') return;
+
+    const audioStore = useTempoAudioStore.getState();
+    audioStore.stopReset();
+    if (audioStore.source) {
+      audioStore.setSource(null);
+    }
+  }, [activeSection]);
+
+  useEffect(() => {
+    return () => {
+      const audioStore = useTempoAudioStore.getState();
+      audioStore.stopReset();
+      if (audioStore.source) {
+        audioStore.setSource(null);
+      }
+    };
+  }, []);
 
   // Listen for dev panel events (hide cards for wallpaper viewing)
   useEffect(() => {
