@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { Collapse } from 'react-collapse';
 import { StageTitle } from "./StageTitle.jsx";
 import { HubCardSwiper } from "./HubCardSwiper.jsx";
 import { CompactStatsCard } from "./CompactStatsCard.jsx";
@@ -136,6 +137,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const homeSwipePracticeRef = useRef(null);
   const homeSwipeProgressRef = useRef(null);
   const [homeSwipeHeight, setHomeSwipeHeight] = useState(null);
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
   void homeSwipeHeight;
 
   useEffect(() => {
@@ -476,6 +479,34 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     boxSizing: 'border-box',
     textAlign: 'center',
   };
+  const sidePanelRollZoneStyle = {
+    ...sidePanelCoverRectStyle,
+    cursor: 'pointer',
+  };
+  const sidePanelCollapseSlotStyle = {
+    width: '100%',
+    height: coverH,
+  };
+  const sidePanelCoverMediaStyle = {
+    width: '100%',
+    height: '100%',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  };
+  const sidePanelCoverLabelStyle = {
+    width: '100%',
+    padding: `calc(${U} * 0.65)`,
+    boxSizing: 'border-box',
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 248, 236, 0.78))'
+      : 'linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.62))',
+    color: isLight ? 'rgba(65, 48, 28, 0.92)' : 'rgba(255, 255, 255, 0.92)',
+    letterSpacing: '0.08em',
+    textAlign: 'center',
+  };
 
   // Render helper: donut ring for rate metrics (completion/on-time)
   const renderRateRing = (value, isLight, options = {}) => {
@@ -540,6 +571,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
+      <style>{`.ReactCollapse--collapse { transition: height 260ms ease; overflow: hidden; }`}</style>
       {/* Background is handled by Background.jsx globally */}
 
       {/* ──────────────────────────────────────────────────────────────────────
@@ -562,27 +594,49 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             boxSizing: 'border-box',
           }}
         >
+          {/* PROBE:HOMEHUB_SIDE_PANELS_ROLLUP_V1 */}
           {/* LEFT PANEL - Sessions + Active Days */}
           <div style={sidePanelFrameStyle}>
-            <div style={sidePanelCoverRectStyle}>
-              <div style={sidePanelCoverContentStyle}>
-                <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                    {Math.round(hubTiles?.sessions_total ?? 0)}
-                  </div>
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    SESSIONS
+            <div
+              style={sidePanelRollZoneStyle}
+              onClick={() => setLeftOpen((open) => !open)}
+            >
+              <Collapse isOpened={!leftOpen}>
+                <div style={sidePanelCollapseSlotStyle}>
+                  <div
+                    style={{
+                      ...sidePanelCoverMediaStyle,
+                      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.18)), url("/assets/homeSnow_hearth_stylized_frame.webp")`,
+                    }}
+                  >
+                    <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
+                      PRACTICE LOG
+                    </div>
                   </div>
                 </div>
-                <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                    {Math.round(hubTiles?.days_active ?? 0)}
-                  </div>
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    ACTIVE DAYS
+              </Collapse>
+              <Collapse isOpened={leftOpen}>
+                <div style={sidePanelCollapseSlotStyle}>
+                  <div style={sidePanelCoverContentStyle}>
+                    <div style={sidePanelMetricCellStyle}>
+                      <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                        {Math.round(hubTiles?.sessions_total ?? 0)}
+                      </div>
+                      <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                        SESSIONS
+                      </div>
+                    </div>
+                    <div style={sidePanelMetricCellStyle}>
+                      <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                        {Math.round(hubTiles?.days_active ?? 0)}
+                      </div>
+                      <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                        ACTIVE DAYS
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Collapse>
             </div>
             <div style={{ ...sidePanelFooterStyle, flexDirection: 'column' }}>
               <div
@@ -651,53 +705,74 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFrameStyle}>
-            <div style={sidePanelCoverRectStyle}>
-              <div
-                style={{
-                  ...sidePanelCoverContentStyle,
-                  width: '100%',
-                  height: coverH,
-                  justifyContent: 'space-evenly',
-                  paddingTop: '4px',
-                  paddingBottom: '8px',
-                  rowGap: '6px',
-                }}
-              >
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
-                  {renderRateRing(hubTiles?.completion_rate, isLight, {
-                    size: 48,
-                    strokeWidth: 3.5,
-                    darkTrackAlpha: 0.16,
-                    lightTrackAlpha: 0.26,
-                    darkFillAlpha: 0.9,
-                    lightFillAlpha: 0.88,
-                  })}
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    COMPLETION
-                  </div>
-                </div>
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
-                  {renderRateRing(hubTiles?.on_time_rate, isLight, {
-                    size: 48,
-                    strokeWidth: 3.5,
-                    darkTrackAlpha: 0.16,
-                    lightTrackAlpha: 0.26,
-                    darkFillAlpha: 0.9,
-                    lightFillAlpha: 0.88,
-                  })}
+            <div
+              style={sidePanelRollZoneStyle}
+              onClick={() => setRightOpen((open) => !open)}
+            >
+              <Collapse isOpened={!rightOpen}>
+                <div style={sidePanelCollapseSlotStyle}>
                   <div
-                    className="type-label text-[9px]"
                     style={{
-                      color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
-                      letterSpacing: '0.06em',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
+                      ...sidePanelCoverMediaStyle,
+                      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.24)), url("/assets/card_bg_cosmic_1.webp")`,
                     }}
                   >
-                    ON‑TIME
+                    <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
+                      RHYTHM REPORT
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Collapse>
+              <Collapse isOpened={rightOpen}>
+                <div style={sidePanelCollapseSlotStyle}>
+                  <div
+                    style={{
+                      ...sidePanelCoverContentStyle,
+                      width: '100%',
+                      height: coverH,
+                      justifyContent: 'space-evenly',
+                      paddingTop: '4px',
+                      paddingBottom: '8px',
+                      rowGap: '6px',
+                    }}
+                  >
+                    <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
+                      {renderRateRing(hubTiles?.completion_rate, isLight, {
+                        size: 48,
+                        strokeWidth: 3.5,
+                        darkTrackAlpha: 0.16,
+                        lightTrackAlpha: 0.26,
+                        darkFillAlpha: 0.9,
+                        lightFillAlpha: 0.88,
+                      })}
+                      <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                        COMPLETION
+                      </div>
+                    </div>
+                    <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
+                      {renderRateRing(hubTiles?.on_time_rate, isLight, {
+                        size: 48,
+                        strokeWidth: 3.5,
+                        darkTrackAlpha: 0.16,
+                        lightTrackAlpha: 0.26,
+                        darkFillAlpha: 0.9,
+                        lightFillAlpha: 0.88,
+                      })}
+                      <div
+                        className="type-label text-[9px]"
+                        style={{
+                          color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
+                          letterSpacing: '0.06em',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
+                        ON‑TIME
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Collapse>
             </div>
             <div style={{ ...sidePanelFooterStyle, height: `calc(${U} * 3.0)` }}>
               <button

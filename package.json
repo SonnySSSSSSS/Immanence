@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "homepage": "https://SonnySSSSSSS.github.io/Immanence",
-
   "scripts": {
     "dev": "node scripts/guard-dev.mjs && npx vite",
     "dev:clean": "powershell -ExecutionPolicy Bypass -File ./dev-reset.ps1 && npm run dev",
@@ -17,7 +16,6 @@
     "deploy:dry": "node scripts/deploy-gh-pages.mjs --no-build --dry-run",
     "extract-colors": "node scripts/extractStageColors.js"
   },
-
   "dependencies": {
     "@react-three/drei": "^9.117.0",
     "@react-three/fiber": "^8.17.0",
@@ -27,17 +25,17 @@
     "express": "^4.18.0",
     "framer-motion": "^12.23.24",
     "idb-keyval": "^6.2.2",
+    "meshline": "^3.3.1",
     "postprocessing": "^6.38.0",
     "react": "18.2.0",
+    "react-collapse": "^5.1.1",
     "react-dom": "18.2.0",
     "react-markdown": "^10.1.0",
     "react-swipeable": "^7.0.2",
-    "meshline": "^3.3.1",
     "three": "^0.181.2",
     "web-audio-beat-detector": "^8.2.33",
     "zustand": "^5.0.8"
   },
-
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/react": "^19.2.5",
@@ -55,7 +53,6 @@
     "tailwindcss": "3.4",
     "vite": "npm:rolldown-vite@7.2.5"
   },
-
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
   }
