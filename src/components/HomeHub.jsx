@@ -478,26 +478,34 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
 
   // Render helper: donut ring for rate metrics (completion/on-time)
-  const renderRateRing = (value, isLight) => {
+  const renderRateRing = (value, isLight, options = {}) => {
+    const size = options.size ?? 48;
+    const strokeWidth = options.strokeWidth ?? 3.5;
+    const darkTrackAlpha = options.darkTrackAlpha ?? 0.16;
+    const lightTrackAlpha = options.lightTrackAlpha ?? 0.26;
+    const darkFillAlpha = options.darkFillAlpha ?? 0.9;
+    const lightFillAlpha = options.lightFillAlpha ?? 0.88;
     const r = 14;
     const circumference = 2 * Math.PI * r;
     const progress = value === null ? 0 : Math.max(0, Math.min(value / 100, 1));
     const dashLength = progress * circumference;
 
-    const ringColor = isLight ? 'rgba(100, 80, 60, 0.2)' : 'rgba(255, 255, 255, 0.1)';
+    const ringColor = isLight
+      ? `rgba(100, 80, 60, ${lightTrackAlpha})`
+      : `rgba(255, 255, 255, ${darkTrackAlpha})`;
     const fillColor = isLight
-      ? (value === null ? ringColor : 'rgba(100, 80, 60, 0.8)')
-      : (value === null ? ringColor : 'rgba(76, 175, 80, 0.8)');
+      ? (value === null ? ringColor : `rgba(100, 80, 60, ${lightFillAlpha})`)
+      : (value === null ? ringColor : `rgba(76, 175, 80, ${darkFillAlpha})`);
 
     return (
-      <svg width="44" height="44" viewBox="0 0 44 44" style={{ overflow: 'visible' }}>
-        <circle cx="22" cy="22" r={r} fill="none" stroke={ringColor} strokeWidth="3" />
+      <svg width={size} height={size} viewBox="0 0 44 44" style={{ overflow: 'visible', flexShrink: 0 }}>
+        <circle cx="22" cy="22" r={r} fill="none" stroke={ringColor} strokeWidth={strokeWidth} />
         {value !== null && (
           <circle
             cx="22" cy="22" r={r}
             fill="none"
             stroke={fillColor}
-            strokeWidth="3"
+            strokeWidth={strokeWidth}
             strokeDasharray={`${dashLength} ${circumference}`}
             strokeLinecap="round"
             transform="rotate(-90 22 22)"
@@ -611,9 +619,24 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFrameStyle}>
             <div style={sidePanelCoverRectStyle}>
-              <div style={sidePanelCoverContentStyle}>
-                <div style={{ ...sidePanelMetricCellStyle, gap: '4px' }}>
-                  {renderRateRing(hubTiles?.completion_rate, isLight)}
+              <div
+                style={{
+                  ...sidePanelCoverContentStyle,
+                  width: '100%',
+                  height: '100%',
+                  gap: 0,
+                  justifyContent: 'space-evenly',
+                }}
+              >
+                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
+                  {renderRateRing(hubTiles?.completion_rate, isLight, {
+                    size: 48,
+                    strokeWidth: 3.5,
+                    darkTrackAlpha: 0.16,
+                    lightTrackAlpha: 0.26,
+                    darkFillAlpha: 0.9,
+                    lightFillAlpha: 0.88,
+                  })}
                   <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
                     {hubTiles?.completion_rate === null || hubTiles?.completion_rate === undefined ? '—' : `${Math.round(hubTiles.completion_rate)}%`}
                   </div>
@@ -621,8 +644,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     COMPLETION
                   </div>
                 </div>
-                <div style={{ ...sidePanelMetricCellStyle, gap: '4px' }}>
-                  {renderRateRing(hubTiles?.on_time_rate, isLight)}
+                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
+                  {renderRateRing(hubTiles?.on_time_rate, isLight, {
+                    size: 48,
+                    strokeWidth: 3.5,
+                    darkTrackAlpha: 0.16,
+                    lightTrackAlpha: 0.26,
+                    darkFillAlpha: 0.9,
+                    lightFillAlpha: 0.88,
+                  })}
                   <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
                     {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
                   </div>
