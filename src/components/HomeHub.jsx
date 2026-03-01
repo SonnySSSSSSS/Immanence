@@ -525,9 +525,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             pointerEvents: 'none',
             color: valueColor,
             fontSize: 12,
-            fontWeight: 700,
+            fontWeight: 600,
             letterSpacing: '0.02em',
             lineHeight: 1,
+            transform: 'translateY(1px)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.35), 0 0 1px rgba(0,0,0,0.25)',
           }}
         >
           {displayValue}
