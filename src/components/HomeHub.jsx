@@ -529,7 +529,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             letterSpacing: '0.02em',
             lineHeight: 1,
             transform: 'translateY(1px)',
-            textShadow: '0 1px 2px rgba(0,0,0,0.35), 0 0 1px rgba(0,0,0,0.25)',
+            textShadow: '-1px 0 0 rgba(0,0,0,0.22), 1px 0 0 rgba(0,0,0,0.22), 0 -1px 0 rgba(0,0,0,0.18), 0 1px 0 rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.24)',
           }}
         >
           {displayValue}
