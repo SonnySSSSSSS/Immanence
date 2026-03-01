@@ -1,6 +1,6 @@
 # Immanence OS
 
-A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing — without cloud dependency or data collection.
+A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing, with browser-first state and optional authenticated access via Supabase.
 
 ## What It Is
 
@@ -8,7 +8,7 @@ Immanence OS is a practice instrument for building attentional and regulatory ca
 
 The system provides two usage modes, a curriculum engine with capacity-based gating, symbolic identity progression, and a full internal developer tooling layer for rapid iteration.
 
-All data stays on your device. No accounts. No telemetry. No backend.
+Practice and progression data stay in browser storage. Authenticated account access is handled through the browser via Supabase in the current client code. No telemetry.
 
 ## Core Philosophy
 
@@ -38,7 +38,7 @@ Open access to all practices and sections. Self-directed with tutorial guidance 
 - All sections and practices accessible immediately
 - 90-day data window for long-term pattern recognition
 - Volume and consistency as primary dashboard metrics
-- Full navigation between Practice, Wisdom, Application, and Settings
+- Full navigation between Practice, Wisdom, Application, and Navigation
 
 On first launch, the user chooses their mode. This choice persists but can be reset.
 
@@ -79,17 +79,9 @@ Multi-practice sequential sessions. Compose breath, awareness, and entrainment e
 
 ## Progression & Identity
 
-Five stages tied to sustained practice over time:
+Five stage labels remain central to the UI: Seedling, Ember, Flame, Beacon, and Stellar.
 
-| Stage | Timeline | Character |
-|-------|----------|-----------|
-| Seedling | Day 0+ | Beginning |
-| Ember | Day 90+ | Establishing |
-| Flame | Day 180+ | Deepening |
-| Beacon | Day 270+ | Stabilizing |
-| Stellar | Day 360+ | Integrating |
-
-Each stage has a distinct rune ring, color palette, and avatar composition. Four practice paths (Yantra, Kaya, Chitra, Nada) emerge from sustained behavioral signal — inferred from practice patterns over 90-day windows, not chosen from a menu.
+Each stage has a distinct rune ring, color palette, and avatar composition. Four practice paths (Yantra, Kaya, Chitra, Nada) emerge from sustained behavioral signal rather than being chosen from a menu. The current code uses multiple progression signals (including session-derived avatar state plus separate lunar/mandala systems), so see [ARCHITECTURE.md](ARCHITECTURE.md) for the technical split.
 
 Cycle system enforces consistency: Foundation (14-day), Transformation (90-day), and Integration (180-day) cycles with checkpoint reviews every 14 days.
 
@@ -112,7 +104,7 @@ Not production-facing. Dev-only tooling gated behind feature flag.
 
 ## Tech Stack
 
-- **React 19** with JSX (no TypeScript)
+- **React 18** with JSX (no TypeScript)
 - **Vite** (Rolldown variant) for builds
 - **Zustand** with localStorage persistence (25+ stores)
 - **React Three Fiber** for 3D rendering
@@ -126,7 +118,7 @@ Not production-facing. Dev-only tooling gated behind feature flag.
 # Install dependencies
 npm install
 
-# Start dev server (localhost:5175/Immanence/)
+# Start dev server (http://localhost:5173/)
 npm run dev
 
 # Lint
@@ -147,9 +139,11 @@ LLM features require Ollama running locally with `gemma3:1b` model:
 ollama pull gemma3:1b
 ```
 
-## Architecture
+## Documentation
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for technical system documentation.
+- [ARCHITECTURE.md](ARCHITECTURE.md) - current top-level technical map
+- [docs/DOC_GAPS.md](docs/DOC_GAPS.md) - short gap map for missing or stale docs
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - legacy architecture doc retained for reference
 
 ## License
 
