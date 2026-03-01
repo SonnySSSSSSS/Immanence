@@ -628,7 +628,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFrameStyle}>
-            <div style={sidePanelCoverRectStyle}>
+            <div
+              style={{
+                // PROBE:COVER_RECT_CLIP_TEST
+                ...sidePanelCoverRectStyle,
+                position: 'relative',
+                overflow: 'visible',
+                outline: '2px solid magenta',
+              }}
+            >
               <div
                 style={{
                   // PROBE:METRICS_CLIP_TEST
@@ -701,6 +709,28 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     </div>
                   </div>
                 </div>
+              </div>
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: 8,
+                  right: 8,
+                  bottom: 8,
+                  zIndex: 9999,
+                  background: '#ffe500',
+                  color: '#111',
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  textAlign: 'center',
+                  padding: '4px 6px',
+                  borderRadius: '999px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.28)',
+                }}
+              >
+                PROBE COVER RECT
               </div>
             </div>
             <div style={{ ...sidePanelFooterStyle, height: `calc(${U} * 3.0)` }}>
