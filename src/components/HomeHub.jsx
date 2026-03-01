@@ -665,6 +665,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   })}
                   <div
                     style={{
+                      // PROBE:ON_TIME_VISIBILITY
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -673,6 +674,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       flexWrap: 'nowrap',
                       whiteSpace: 'nowrap',
                       lineHeight: 1.1,
+                      background: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255, 255, 255, 0.18)',
+                      border: isLight ? '1px solid rgba(100, 80, 60, 0.35)' : '1px solid rgba(255,255,255,0.35)',
+                      padding: '4px 8px',
+                      borderRadius: '999px',
+                      color: isLight ? 'rgba(45, 35, 25, 0.92)' : 'rgba(255,255,255,0.92)',
+                      textShadow: isLight ? '0 1px 2px rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.35)',
                     }}
                   >
                     <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
