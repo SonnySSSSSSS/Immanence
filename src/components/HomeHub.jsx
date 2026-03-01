@@ -496,22 +496,43 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     const fillColor = isLight
       ? (value === null ? ringColor : `rgba(100, 80, 60, ${lightFillAlpha})`)
       : (value === null ? ringColor : `rgba(76, 175, 80, ${darkFillAlpha})`);
+    const displayValue = value === null || value === undefined ? '—' : `${Math.round(value)}%`;
+    const valueColor = isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)';
 
     return (
-      <svg width={size} height={size} viewBox="0 0 44 44" style={{ overflow: 'visible', flexShrink: 0 }}>
-        <circle cx="22" cy="22" r={r} fill="none" stroke={ringColor} strokeWidth={strokeWidth} />
-        {value !== null && (
-          <circle
-            cx="22" cy="22" r={r}
-            fill="none"
-            stroke={fillColor}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${dashLength} ${circumference}`}
-            strokeLinecap="round"
-            transform="rotate(-90 22 22)"
-          />
-        )}
-      </svg>
+      <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+        <svg width={size} height={size} viewBox="0 0 44 44" style={{ overflow: 'visible', display: 'block' }}>
+          <circle cx="22" cy="22" r={r} fill="none" stroke={ringColor} strokeWidth={strokeWidth} />
+          {value !== null && (
+            <circle
+              cx="22" cy="22" r={r}
+              fill="none"
+              stroke={fillColor}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${dashLength} ${circumference}`}
+              strokeLinecap="round"
+              transform="rotate(-90 22 22)"
+            />
+          )}
+        </svg>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            color: valueColor,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            lineHeight: 1,
+          }}
+        >
+          {displayValue}
+        </div>
+      </div>
     );
   };
 
@@ -634,13 +655,13 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   ...sidePanelCoverContentStyle,
                   width: '100%',
                   height: coverH,
-                  justifyContent: 'flex-start',
-                  paddingTop: '6px',
-                  paddingBottom: '10px',
-                  rowGap: '10px',
+                  justifyContent: 'space-evenly',
+                  paddingTop: '4px',
+                  paddingBottom: '8px',
+                  rowGap: '6px',
                 }}
               >
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
+                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
                   {renderRateRing(hubTiles?.completion_rate, isLight, {
                     size: 48,
                     strokeWidth: 3.5,
@@ -649,14 +670,11 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     darkFillAlpha: 0.9,
                     lightFillAlpha: 0.88,
                   })}
-                  <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                    {hubTiles?.completion_rate === null || hubTiles?.completion_rate === undefined ? '—' : `${Math.round(hubTiles.completion_rate)}%`}
-                  </div>
                   <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
                     COMPLETION
                   </div>
                 </div>
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
+                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
                   {renderRateRing(hubTiles?.on_time_rate, isLight, {
                     size: 48,
                     strokeWidth: 3.5,
@@ -666,31 +684,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     lightFillAlpha: 0.88,
                   })}
                   <div
+                    className="type-label text-[9px]"
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      width: '100%',
-                      flexWrap: 'nowrap',
+                      color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
+                      letterSpacing: '0.06em',
                       whiteSpace: 'nowrap',
-                      lineHeight: 1.1,
+                      flexShrink: 0,
                     }}
                   >
-                    <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                      {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
-                    </div>
-                    <div
-                      className="type-label text-[9px]"
-                      style={{
-                        color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
-                        letterSpacing: '0.06em',
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0,
-                      }}
-                    >
-                      ON‑TIME
-                    </div>
+                    ON‑TIME
                   </div>
                 </div>
               </div>
