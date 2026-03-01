@@ -426,6 +426,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     WebkitBackdropFilter: 'blur(12px)',
     borderRadius: panelRadius,
     border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
+    boxShadow: isLight
+      ? 'inset 0 -12px 18px rgba(60, 50, 35, 0.08)'
+      : 'inset 0 -12px 18px rgba(0,0,0,0.18)',
   };
   const sidePanelCoverRectStyle = {
     width: '100%',
@@ -447,11 +450,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     padding: `calc(${U} * 0.6)`,
     boxSizing: 'border-box',
     display: 'flex',
-    alignItems: 'stretch',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    textAlign: 'center',
     gap: `calc(${U} * 0.4)`,
   };
   const sidePanelMetricCellStyle = {
+    width: '100%',
     flex: '1 1 0',
     minWidth: 0,
     display: 'flex',
@@ -468,6 +474,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     alignItems: 'center',
     justifyContent: 'center',
     boxSizing: 'border-box',
+    textAlign: 'center',
   };
 
   // Render helper: donut ring for rate metrics (completion/on-time)
@@ -547,7 +554,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               </div>
             </div>
             <div style={sidePanelFooterStyle}>
-              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.55)' : 'rgba(255, 255, 255, 0.4)', letterSpacing: '0.08em' }}>
+              <div
+                className="type-label text-[9px]"
+                style={{
+                  width: '100%',
+                  textAlign: 'center',
+                  color: isLight ? 'rgba(100, 80, 60, 0.55)' : 'rgba(255, 255, 255, 0.4)',
+                  letterSpacing: '0.08em',
+                }}
+              >
                 14D WINDOW
               </div>
             </div>
