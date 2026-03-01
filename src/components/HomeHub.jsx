@@ -406,7 +406,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // PROBE:HOMEHUB_SIDE_PANEL_GEOM
   const RAIL_W = SANCTUARY_MODULE_MAX_WIDTH;
   const U = `calc(${RAIL_W} / 24)`;
-  const panelW = `clamp(120px, calc(${RAIL_W} * 0.22), 180px)`;
+  const panelW = `clamp(110px, calc(${RAIL_W} * 0.22), 180px)`;
   const panelH = `clamp(180px, calc(${RAIL_W} * 0.55), 260px)`;
   const panelPad = `calc(${U} * 1.0)`;
   const panelRadius = `calc(${U} * 1.2)`;
@@ -518,7 +518,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             alignItems: 'center',
             width: '100%',
             gap: '12px',
-            padding: '0 8px',
+            padding: '0 4px',
             maxWidth: RAIL_W,
             margin: '0 auto',
             boxSizing: 'border-box',
