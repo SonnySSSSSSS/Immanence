@@ -480,7 +480,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     textAlign: 'center',
   };
   const sidePanelRollZoneStyle = {
-    ...sidePanelCoverRectStyle,
+    width: '100%',
+    height: coverH,
     cursor: 'pointer',
   };
   const sidePanelCollapseSlotStyle = {
@@ -605,7 +606,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 <div style={sidePanelCollapseSlotStyle}>
                   <div
                     style={{
+                      ...sidePanelCoverRectStyle,
                       ...sidePanelCoverMediaStyle,
+                      height: coverH,
                       backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.18)), url("/assets/homeSnow_hearth_stylized_frame.webp")`,
                     }}
                   >
@@ -713,7 +716,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 <div style={sidePanelCollapseSlotStyle}>
                   <div
                     style={{
+                      ...sidePanelCoverRectStyle,
                       ...sidePanelCoverMediaStyle,
+                      height: coverH,
                       backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.24)), url("/assets/card_bg_cosmic_1.webp")`,
                     }}
                   >
