@@ -653,11 +653,21 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     darkFillAlpha: 0.9,
                     lightFillAlpha: 0.88,
                   })}
-                  <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                    {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
-                  </div>
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    ON-TIME
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      width: '100%',
+                    }}
+                  >
+                    <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                      {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
+                    </div>
+                    <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                      ON-TIME
+                    </div>
                   </div>
                 </div>
               </div>
