@@ -520,7 +520,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             gap: '12px',
             padding: '0 4px',
             maxWidth: RAIL_W,
-            margin: '0 auto',
+            margin: '0 auto 16px',
             boxSizing: 'border-box',
           }}
         >
