@@ -488,6 +488,15 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     width: '100%',
     height: coverH,
   };
+  const sidePanelCoverBleedStyle = {
+    width: `calc(100% + (${panelPad} * 2))`,
+    height: `calc(${coverH} + (${panelPad} * 2))`,
+    marginLeft: `calc(${panelPad} * -1)`,
+    marginTop: `calc(${panelPad} * -1)`,
+    marginRight: `calc(${panelPad} * -1)`,
+    borderRadius: panelRadius,
+    overflow: 'hidden',
+  };
   const sidePanelCoverMediaStyle = {
     width: '100%',
     height: '100%',
@@ -604,16 +613,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             >
               <Collapse isOpened={!leftOpen}>
                 <div style={sidePanelCollapseSlotStyle}>
-                  <div
-                    style={{
-                      ...sidePanelCoverRectStyle,
-                      ...sidePanelCoverMediaStyle,
-                      height: coverH,
-                      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.18)), url("/assets/homeSnow_hearth_stylized_frame.webp")`,
-                    }}
-                  >
-                    <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
-                      PRACTICE LOG
+                  <div style={sidePanelCoverBleedStyle}>
+                    <div
+                      style={{
+                        ...sidePanelCoverRectStyle,
+                        ...sidePanelCoverMediaStyle,
+                        height: coverH,
+                        backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.18)), url("/assets/homeSnow_hearth_stylized_frame.webp")`,
+                      }}
+                    >
+                      <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
+                        PRACTICE LOG
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -714,16 +725,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             >
               <Collapse isOpened={!rightOpen}>
                 <div style={sidePanelCollapseSlotStyle}>
-                  <div
-                    style={{
-                      ...sidePanelCoverRectStyle,
-                      ...sidePanelCoverMediaStyle,
-                      height: coverH,
-                      backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.24)), url("/assets/card_bg_cosmic_1.webp")`,
-                    }}
-                  >
-                    <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
-                      RHYTHM REPORT
+                  <div style={sidePanelCoverBleedStyle}>
+                    <div
+                      style={{
+                        ...sidePanelCoverRectStyle,
+                        ...sidePanelCoverMediaStyle,
+                        height: coverH,
+                        backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.24)), url("/assets/card_bg_cosmic_1.webp")`,
+                      }}
+                    >
+                      <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
+                        RHYTHM REPORT
+                      </div>
                     </div>
                   </div>
                 </div>
