@@ -42,7 +42,8 @@
       "Bash(grep -n \"from.*''\\\\./\" \"d:/Unity Apps/immanence-os/src/components/rainbowPreset/\"*.jsx)",
       "Bash(pkill -f \"vite\")",
       "Bash(pkill -f \"node.*vite\")",
-      "Bash(grep -v \"//\")"
+      "Bash(grep -v \"//\")",
+      "Bash(pkill -f \"npm run dev\")"
     ]
   },
   "mcpServers": {

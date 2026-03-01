@@ -414,6 +414,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.227 - ui(homehub): make side panel covers full-bleed and stabilize roll-up collapse (HOMEHUB_SIDE_PANELS_ROLLUP_V1)
   // v3.27.226 - ui(homehub): move stats into avatar side panels; remove swipe page 2 (HOMEHUB_SIDE_PANELS_V1)
   // v3.27.225 - fix(breath): skip benchmark modal if already completed in navigation path (hasBenchmarkForRun guard)
   // v3.27.224 - fix(polygon): velocity-based rotation (no phase-transition jumps); inhale/exhale oppose on Y; holds differ in drift+sway
@@ -812,7 +813,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.226
+                        v3.27.227
                       </button>
                     </div>
                   </div>

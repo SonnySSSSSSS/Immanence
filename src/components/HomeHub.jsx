@@ -422,7 +422,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'stretch',
-    padding: panelPad,
+    padding: 0,
     boxSizing: 'border-box',
     background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
     backdropFilter: 'blur(12px)',
@@ -435,16 +435,12 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelCoverRectStyle = {
     width: '100%',
-    height: coverH,
+    height: '100%',
     flexShrink: 0,
-    borderRadius: `calc((${panelRadius}) * 0.85)`,
-    border: `1px solid ${isLight ? 'rgba(160, 120, 60, 0.12)' : 'rgba(255, 255, 255, 0.08)'}`,
-    background: isLight
-      ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.14))'
-      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))',
-    boxShadow: isLight
-      ? 'inset 0 1px 0 rgba(255,255,255,0.4)'
-      : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+    borderRadius: panelRadius,
+    border: 'none',
+    background: 'none',
+    boxShadow: 'none',
     overflow: 'hidden',
   };
   const sidePanelCoverContentStyle = {
@@ -479,24 +475,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     boxSizing: 'border-box',
     textAlign: 'center',
   };
-  const sidePanelRollZoneStyle = {
-    width: '100%',
-    height: coverH,
-    cursor: 'pointer',
-  };
-  const sidePanelCollapseSlotStyle = {
-    width: '100%',
-    height: coverH,
-  };
-  const sidePanelCoverBleedStyle = {
-    width: `calc(100% + (${panelPad} * 2))`,
-    height: `calc(${coverH} + (${panelPad} * 2))`,
-    marginLeft: `calc(${panelPad} * -1)`,
-    marginTop: `calc(${panelPad} * -1)`,
-    marginRight: `calc(${panelPad} * -1)`,
-    borderRadius: panelRadius,
-    overflow: 'hidden',
-  };
   const sidePanelCoverMediaStyle = {
     width: '100%',
     height: '100%',
@@ -516,6 +494,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     color: isLight ? 'rgba(65, 48, 28, 0.92)' : 'rgba(255, 255, 255, 0.92)',
     letterSpacing: '0.08em',
     textAlign: 'center',
+  };
+  const sidePanelInnerPadStyle = {
+    width: '100%',
+    padding: panelPad,
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
   };
 
   // Render helper: donut ring for rate metrics (completion/on-time)
@@ -607,18 +593,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* PROBE:HOMEHUB_SIDE_PANELS_ROLLUP_V1 */}
           {/* LEFT PANEL - Sessions + Active Days */}
           <div style={sidePanelFrameStyle}>
-            <div
-              style={sidePanelRollZoneStyle}
-              onClick={() => setLeftOpen((open) => !open)}
-            >
-              <Collapse isOpened={!leftOpen}>
-                <div style={sidePanelCollapseSlotStyle}>
-                  <div style={sidePanelCoverBleedStyle}>
+            <div style={{ width: '100%', height: coverH, borderRadius: panelRadius, overflow: 'hidden' }}>
+              <div
+                style={{ width: '100%', height: coverH, cursor: 'pointer' }}
+                onClick={() => setLeftOpen((open) => !open)}
+              >
+                <Collapse isOpened={!leftOpen}>
+                  <div style={{ width: '100%', height: coverH }}>
                     <div
                       style={{
                         ...sidePanelCoverRectStyle,
                         ...sidePanelCoverMediaStyle,
-                        height: coverH,
+                        height: '100%',
                         backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.18)), url("/assets/homeSnow_hearth_stylized_frame.webp")`,
                       }}
                     >
@@ -627,52 +613,54 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       </div>
                     </div>
                   </div>
-                </div>
-              </Collapse>
-              <Collapse isOpened={leftOpen}>
-                <div style={sidePanelCollapseSlotStyle}>
-                  <div style={sidePanelCoverContentStyle}>
-                    <div style={sidePanelMetricCellStyle}>
-                      <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                        {Math.round(hubTiles?.sessions_total ?? 0)}
+                </Collapse>
+                <Collapse isOpened={leftOpen}>
+                  <div style={{ width: '100%', height: coverH }}>
+                    <div style={{ ...sidePanelCoverContentStyle, height: '100%' }}>
+                      <div style={sidePanelMetricCellStyle}>
+                        <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                          {Math.round(hubTiles?.sessions_total ?? 0)}
+                        </div>
+                        <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                          SESSIONS
+                        </div>
                       </div>
-                      <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                        SESSIONS
-                      </div>
-                    </div>
-                    <div style={sidePanelMetricCellStyle}>
-                      <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                        {Math.round(hubTiles?.days_active ?? 0)}
-                      </div>
-                      <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                        ACTIVE DAYS
+                      <div style={sidePanelMetricCellStyle}>
+                        <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                          {Math.round(hubTiles?.days_active ?? 0)}
+                        </div>
+                        <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                          ACTIVE DAYS
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Collapse>
+                </Collapse>
+              </div>
             </div>
-            <div style={{ ...sidePanelFooterStyle, flexDirection: 'column' }}>
-              <div
-                aria-hidden="true"
-                style={{
-                  height: 1,
-                  width: '70%',
-                  margin: '10px auto 10px',
-                  background: isLight ? 'rgba(100, 80, 60, 0.10)' : 'rgba(255, 255, 255, 0.10)',
-                  flexShrink: 0,
-                }}
-              />
-              <div
-                className="type-label text-[9px]"
-                style={{
-                  width: '100%',
-                  textAlign: 'center',
-                  color: isLight ? 'rgba(100, 80, 60, 0.48)' : 'rgba(255, 255, 255, 0.34)',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                14D WINDOW
+            <div style={sidePanelInnerPadStyle}>
+              <div style={{ ...sidePanelFooterStyle, flexDirection: 'column', height: 'auto' }}>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    height: 1,
+                    width: '70%',
+                    margin: '10px auto 10px',
+                    background: isLight ? 'rgba(100, 80, 60, 0.10)' : 'rgba(255, 255, 255, 0.10)',
+                    flexShrink: 0,
+                  }}
+                />
+                <div
+                  className="type-label text-[9px]"
+                  style={{
+                    width: '100%',
+                    textAlign: 'center',
+                    color: isLight ? 'rgba(100, 80, 60, 0.48)' : 'rgba(255, 255, 255, 0.34)',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  14D WINDOW
+                </div>
               </div>
             </div>
           </div>
@@ -719,18 +707,18 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFrameStyle}>
-            <div
-              style={sidePanelRollZoneStyle}
-              onClick={() => setRightOpen((open) => !open)}
-            >
-              <Collapse isOpened={!rightOpen}>
-                <div style={sidePanelCollapseSlotStyle}>
-                  <div style={sidePanelCoverBleedStyle}>
+            <div style={{ width: '100%', height: coverH, borderRadius: panelRadius, overflow: 'hidden' }}>
+              <div
+                style={{ width: '100%', height: coverH, cursor: 'pointer' }}
+                onClick={() => setRightOpen((open) => !open)}
+              >
+                <Collapse isOpened={!rightOpen}>
+                  <div style={{ width: '100%', height: coverH }}>
                     <div
                       style={{
                         ...sidePanelCoverRectStyle,
                         ...sidePanelCoverMediaStyle,
-                        height: coverH,
+                        height: '100%',
                         backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.24)), url("/assets/card_bg_cosmic_1.webp")`,
                       }}
                     >
@@ -739,76 +727,78 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       </div>
                     </div>
                   </div>
-                </div>
-              </Collapse>
-              <Collapse isOpened={rightOpen}>
-                <div style={sidePanelCollapseSlotStyle}>
-                  <div
-                    style={{
-                      ...sidePanelCoverContentStyle,
-                      width: '100%',
-                      height: coverH,
-                      justifyContent: 'space-evenly',
-                      paddingTop: '4px',
-                      paddingBottom: '8px',
-                      rowGap: '6px',
-                    }}
-                  >
-                    <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
-                      {renderRateRing(hubTiles?.completion_rate, isLight, {
-                        size: 48,
-                        strokeWidth: 3.5,
-                        darkTrackAlpha: 0.16,
-                        lightTrackAlpha: 0.26,
-                        darkFillAlpha: 0.9,
-                        lightFillAlpha: 0.88,
-                      })}
-                      <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                        COMPLETION
+                </Collapse>
+                <Collapse isOpened={rightOpen}>
+                  <div style={{ width: '100%', height: coverH }}>
+                    <div
+                      style={{
+                        ...sidePanelCoverContentStyle,
+                        width: '100%',
+                        height: '100%',
+                        justifyContent: 'space-evenly',
+                        paddingTop: '4px',
+                        paddingBottom: '8px',
+                        rowGap: '6px',
+                      }}
+                    >
+                      <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
+                        {renderRateRing(hubTiles?.completion_rate, isLight, {
+                          size: 48,
+                          strokeWidth: 3.5,
+                          darkTrackAlpha: 0.16,
+                          lightTrackAlpha: 0.26,
+                          darkFillAlpha: 0.9,
+                          lightFillAlpha: 0.88,
+                        })}
+                        <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                          COMPLETION
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
-                      {renderRateRing(hubTiles?.on_time_rate, isLight, {
-                        size: 48,
-                        strokeWidth: 3.5,
-                        darkTrackAlpha: 0.16,
-                        lightTrackAlpha: 0.26,
-                        darkFillAlpha: 0.9,
-                        lightFillAlpha: 0.88,
-                      })}
-                      <div
-                        className="type-label text-[9px]"
-                        style={{
-                          color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
-                          letterSpacing: '0.06em',
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                        }}
-                      >
-                        ON‑TIME
+                      <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
+                        {renderRateRing(hubTiles?.on_time_rate, isLight, {
+                          size: 48,
+                          strokeWidth: 3.5,
+                          darkTrackAlpha: 0.16,
+                          lightTrackAlpha: 0.26,
+                          darkFillAlpha: 0.9,
+                          lightFillAlpha: 0.88,
+                        })}
+                        <div
+                          className="type-label text-[9px]"
+                          style={{
+                            color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)',
+                            letterSpacing: '0.06em',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                          }}
+                        >
+                          ON‑TIME
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Collapse>
+                </Collapse>
+              </div>
             </div>
-            <div style={{ ...sidePanelFooterStyle, height: `calc(${U} * 3.0)` }}>
-              <button
-                onClick={() => openArchive(ARCHIVE_TABS.REPORTS)}
-                className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
-                style={{
-                  background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
-                  color: '#fff',
-                  boxShadow: '0 3px 10px var(--accent-30)',
-                  width: '100%',
-                  fontSize: '9px',
-                  letterSpacing: '0.08em',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                VIEW REPORT
-              </button>
+            <div style={sidePanelInnerPadStyle}>
+              <div style={{ height: `calc(${U} * 3.0)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button
+                  onClick={() => openArchive(ARCHIVE_TABS.REPORTS)}
+                  className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
+                  style={{
+                    background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
+                    color: '#fff',
+                    boxShadow: '0 3px 10px var(--accent-30)',
+                    width: '100%',
+                    fontSize: '9px',
+                    letterSpacing: '0.08em',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  VIEW REPORT
+                </button>
+              </div>
             </div>
           </div>
         </div>
