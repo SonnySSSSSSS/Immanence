@@ -628,25 +628,16 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFrameStyle}>
-            <div
-              style={{
-                // PROBE:COVER_RECT_CLIP_TEST
-                ...sidePanelCoverRectStyle,
-                position: 'relative',
-                overflow: 'visible',
-                outline: '2px solid magenta',
-              }}
-            >
+            <div style={sidePanelCoverRectStyle}>
               <div
                 style={{
-                  // PROBE:METRICS_CLIP_TEST
                   ...sidePanelCoverContentStyle,
                   width: '100%',
                   height: coverH,
-                  gap: '8px',
-                  justifyContent: 'space-evenly',
-                  overflow: 'visible',
-                  outline: '2px solid magenta',
+                  justifyContent: 'flex-start',
+                  paddingTop: '6px',
+                  paddingBottom: '10px',
+                  rowGap: '10px',
                 }}
               >
                 <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
@@ -676,7 +667,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   })}
                   <div
                     style={{
-                      // PROBE:ON_TIME_VISIBILITY
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -685,12 +675,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       flexWrap: 'nowrap',
                       whiteSpace: 'nowrap',
                       lineHeight: 1.1,
-                      background: isLight ? 'rgba(100, 80, 60, 0.18)' : 'rgba(255, 255, 255, 0.18)',
-                      border: isLight ? '1px solid rgba(100, 80, 60, 0.35)' : '1px solid rgba(255,255,255,0.35)',
-                      padding: '4px 8px',
-                      borderRadius: '999px',
-                      color: isLight ? 'rgba(45, 35, 25, 0.92)' : 'rgba(255,255,255,0.92)',
-                      textShadow: isLight ? '0 1px 2px rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.35)',
                     }}
                   >
                     <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
@@ -709,28 +693,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     </div>
                   </div>
                 </div>
-              </div>
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  left: 8,
-                  right: 8,
-                  bottom: 8,
-                  zIndex: 9999,
-                  background: '#ffe500',
-                  color: '#111',
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  textAlign: 'center',
-                  padding: '4px 6px',
-                  borderRadius: '999px',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.28)',
-                }}
-              >
-                PROBE COVER RECT
               </div>
             </div>
             <div style={{ ...sidePanelFooterStyle, height: `calc(${U} * 3.0)` }}>
