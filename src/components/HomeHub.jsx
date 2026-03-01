@@ -403,6 +403,73 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     activeRunId: hubPolicy.activeRunId,
   });
 
+  // PROBE:HOMEHUB_SIDE_PANEL_GEOM
+  const RAIL_W = SANCTUARY_MODULE_MAX_WIDTH;
+  const U = `calc(${RAIL_W} / 24)`;
+  const panelW = `clamp(120px, calc(${RAIL_W} * 0.22), 180px)`;
+  const panelH = `clamp(180px, calc(${RAIL_W} * 0.55), 260px)`;
+  const panelPad = `calc(${U} * 1.0)`;
+  const panelRadius = `calc(${U} * 1.2)`;
+  const coverH = `calc((${panelH}) - ((${panelPad}) * 2) - ((${U}) * 3.0))`;
+  const panelFooterH = `calc((${panelH}) - ((${panelPad}) * 2) - (${coverH}))`;
+  const sidePanelFrameStyle = {
+    width: panelW,
+    height: panelH,
+    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    padding: panelPad,
+    boxSizing: 'border-box',
+    background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    borderRadius: panelRadius,
+    border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
+  };
+  const sidePanelCoverRectStyle = {
+    width: '100%',
+    height: coverH,
+    flexShrink: 0,
+    borderRadius: `calc((${panelRadius}) * 0.85)`,
+    border: `1px solid ${isLight ? 'rgba(160, 120, 60, 0.12)' : 'rgba(255, 255, 255, 0.08)'}`,
+    background: isLight
+      ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.14))'
+      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))',
+    boxShadow: isLight
+      ? 'inset 0 1px 0 rgba(255,255,255,0.4)'
+      : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+    overflow: 'hidden',
+  };
+  const sidePanelCoverContentStyle = {
+    width: '100%',
+    height: '100%',
+    padding: `calc(${U} * 0.6)`,
+    boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
+    gap: `calc(${U} * 0.4)`,
+  };
+  const sidePanelMetricCellStyle = {
+    flex: '1 1 0',
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+  };
+  const sidePanelFooterStyle = {
+    width: '100%',
+    height: panelFooterH,
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+  };
+
   // Render helper: donut ring for rate metrics (completion/on-time)
   const renderRateRing = (value, isLight) => {
     const r = 14;
@@ -445,41 +512,49 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         style={{ paddingTop: '12px' }}
       >
         {/* PROBE:HOMEHUB_SIDE_PANELS_V1:START */}
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px', padding: '0 8px', maxWidth: 'var(--ui-rail-max, min(430px, 94vw))', margin: '0 auto' }}>
-          {/* LEFT PANEL - Sessions + Active Days */}
-          <div style={{
-            flex: 1,
+        <div
+          style={{
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '16px',
-            padding: '14px 8px',
-            background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: '16px',
-            border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                {Math.round(hubTiles?.sessions_total ?? 0)}
-              </div>
-              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                SESSIONS
+            width: '100%',
+            gap: '12px',
+            padding: '0 8px',
+            maxWidth: RAIL_W,
+            margin: '0 auto',
+            boxSizing: 'border-box',
+          }}
+        >
+          {/* LEFT PANEL - Sessions + Active Days */}
+          <div style={sidePanelFrameStyle}>
+            <div style={sidePanelCoverRectStyle}>
+              <div style={sidePanelCoverContentStyle}>
+                <div style={sidePanelMetricCellStyle}>
+                  <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                    {Math.round(hubTiles?.sessions_total ?? 0)}
+                  </div>
+                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                    SESSIONS
+                  </div>
+                </div>
+                <div style={sidePanelMetricCellStyle}>
+                  <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                    {Math.round(hubTiles?.days_active ?? 0)}
+                  </div>
+                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                    ACTIVE DAYS
+                  </div>
+                </div>
               </div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                {Math.round(hubTiles?.days_active ?? 0)}
-              </div>
-              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                ACTIVE DAYS
+            <div style={sidePanelFooterStyle}>
+              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.55)' : 'rgba(255, 255, 255, 0.4)', letterSpacing: '0.08em' }}>
+                14D WINDOW
               </div>
             </div>
           </div>
 
           {/* CENTER - Bloom Halo + Avatar */}
-          <div className="relative flex items-center justify-center overflow-visible" style={{ flexShrink: 0 }}>
+          <div className="relative flex items-center justify-center overflow-visible" style={{ flex: '1 1 auto', minWidth: 0 }}>
             {/* Bloom halo - EXPANDED in Sanctuary mode to fill space */}
             <div
               className="absolute transition-all duration-500"
@@ -519,58 +594,47 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           </div>
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '14px 8px',
-            background: isLight ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.28)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: '16px',
-            border: `1px solid ${isLight ? 'rgba(200, 160, 100, 0.2)' : 'rgba(255, 255, 255, 0.09)'}`,
-          }}>
-            {/* Completion Ring */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              {renderRateRing(hubTiles?.completion_rate, isLight)}
-              <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                {hubTiles?.completion_rate === null || hubTiles?.completion_rate === undefined ? '—' : `${Math.round(hubTiles.completion_rate)}%`}
-              </div>
-              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                COMPLETION
-              </div>
-            </div>
-
-            {/* On-Time Ring */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              {renderRateRing(hubTiles?.on_time_rate, isLight)}
-              <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
-                {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
-              </div>
-              <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                ON-TIME
+          <div style={sidePanelFrameStyle}>
+            <div style={sidePanelCoverRectStyle}>
+              <div style={sidePanelCoverContentStyle}>
+                <div style={{ ...sidePanelMetricCellStyle, gap: '4px' }}>
+                  {renderRateRing(hubTiles?.completion_rate, isLight)}
+                  <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                    {hubTiles?.completion_rate === null || hubTiles?.completion_rate === undefined ? '—' : `${Math.round(hubTiles.completion_rate)}%`}
+                  </div>
+                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                    COMPLETION
+                  </div>
+                </div>
+                <div style={{ ...sidePanelMetricCellStyle, gap: '4px' }}>
+                  {renderRateRing(hubTiles?.on_time_rate, isLight)}
+                  <div className="type-metric text-[12px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                    {hubTiles?.on_time_rate === null || hubTiles?.on_time_rate === undefined ? '—' : `${Math.round(hubTiles.on_time_rate)}%`}
+                  </div>
+                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
+                    ON-TIME
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* View Report Button */}
-            <button
-              onClick={() => openArchive(ARCHIVE_TABS.REPORTS)}
-              className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
-              style={{
-                background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
-                color: '#fff',
-                boxShadow: '0 3px 10px var(--accent-30)',
-                width: '100%',
-                fontSize: '9px',
-                letterSpacing: '0.08em',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              VIEW REPORT
-            </button>
+            <div style={sidePanelFooterStyle}>
+              <button
+                onClick={() => openArchive(ARCHIVE_TABS.REPORTS)}
+                className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
+                style={{
+                  background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
+                  color: '#fff',
+                  boxShadow: '0 3px 10px var(--accent-30)',
+                  width: '100%',
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                VIEW REPORT
+              </button>
+            </div>
           </div>
         </div>
         {/* PROBE:HOMEHUB_SIDE_PANELS_V1:END */}
