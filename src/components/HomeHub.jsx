@@ -561,13 +561,23 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 </div>
               </div>
             </div>
-            <div style={sidePanelFooterStyle}>
+            <div style={{ ...sidePanelFooterStyle, flexDirection: 'column' }}>
+              <div
+                aria-hidden="true"
+                style={{
+                  height: 1,
+                  width: '70%',
+                  margin: '10px auto 10px',
+                  background: isLight ? 'rgba(100, 80, 60, 0.10)' : 'rgba(255, 255, 255, 0.10)',
+                  flexShrink: 0,
+                }}
+              />
               <div
                 className="type-label text-[9px]"
                 style={{
                   width: '100%',
                   textAlign: 'center',
-                  color: isLight ? 'rgba(100, 80, 60, 0.55)' : 'rgba(255, 255, 255, 0.4)',
+                  color: isLight ? 'rgba(100, 80, 60, 0.48)' : 'rgba(255, 255, 255, 0.34)',
                   letterSpacing: '0.08em',
                 }}
               >
