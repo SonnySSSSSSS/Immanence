@@ -631,11 +631,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             <div style={sidePanelCoverRectStyle}>
               <div
                 style={{
+                  // PROBE:METRICS_CLIP_TEST
                   ...sidePanelCoverContentStyle,
                   width: '100%',
                   height: coverH,
                   gap: '8px',
                   justifyContent: 'space-evenly',
+                  overflow: 'visible',
+                  outline: '2px solid magenta',
                 }}
               >
                 <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
