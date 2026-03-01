@@ -634,8 +634,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   ...sidePanelCoverContentStyle,
                   width: '100%',
                   height: '100%',
-                  gap: 0,
-                  justifyContent: 'space-evenly',
+                  gap: '12px',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '2px' }}>
@@ -693,7 +693,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 </div>
               </div>
             </div>
-            <div style={sidePanelFooterStyle}>
+            <div style={{ ...sidePanelFooterStyle, marginTop: '12px' }}>
               <button
                 onClick={() => openArchive(ARCHIVE_TABS.REPORTS)}
                 className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
