@@ -111,6 +111,7 @@ These are the minimum fields that should be authorable in V1 to cover the curren
 
 | Field | Current consumer / usage | Why it is required |
 | --- | --- | --- |
+| `id` | No current runtime consumer; proposed as the stable authored identifier for a leg | Stable leg identity prevents future migration churn and gives adherence/matching a durable key beyond `legNumber` if sequencing or editorial copy changes later. |
 | `legNumber` | `src/state/curriculumStore.js` `getActivePracticeLeg()` / `getDayLegsWithStatus()`; `src/services/infographics/contractObligations.js`; `src/components/DailyPracticeCard.jsx` | Slot ordering, time-slot mapping, and adherence matching all depend on this ordinal. |
 | `label` | `src/components/DailyPracticeCard.jsx` leg title display | Current UI renders this when present. |
 | `description` | `src/components/DailyPracticeCard.jsx` leg body copy | Current UI renders this directly. |
@@ -131,11 +132,15 @@ These are the minimum fields that should be authorable in V1 to cover the curren
 | `practiceParamsPatch` | `src/state/uiStore.js` launch context shape; `src/components/PracticeSection.jsx` `mergePracticeParamsPatch()` | Existing escape hatch for launch-scoped parameter overrides. Keep it authorable so the editor does not need a second schema later. |
 | `guidance` (`GuidanceSpec v1`) | Future editor field; current sink is `src/state/tempoAudioStore.js` `setSource()` and `src/components/audio/GuidanceAudioController.jsx`; current placeholder assignment is `src/components/PracticeSection.jsx` guidance-audio effect | This is the smallest additive place to put per-practice guidance audio without changing the rest of the launch shape later. |
 
+Compatibility note: `PracticeInstance.durationMin` is the canonical V1 duration field. In V1, duration should not also be authored under `practiceConfig.duration`; the current runtime's `activeLeg.practiceConfig.duration` usage should be treated as a legacy boundary alias only.
+
 #### GuidanceSpec v1
 
 | Field | Current consumer / usage | Why it is required |
 | --- | --- | --- |
-| `audioUrl` | Future source for `src/state/tempoAudioStore.js` `setSource()`; current hard-coded placeholder in `src/components/PracticeSection.jsx` | Minimal field needed to replace the placeholder with authored guidance. |
+| `audioUrl` | Future source for `src/state/tempoAudioStore.js` `setSource()`; current hard-coded placeholder in `src/components/PracticeSection.jsx` | Required audio asset pointer for authored guidance. |
+| `startMode` | No current runtime consumer; future guidance launch policy at the practice boundary | Required so authored guidance can declare whether playback should begin automatically or wait for manual start without a later schema change. |
+| `resumeMode` | No current runtime consumer; future pause/resume behavior at the practice boundary | Required so authored guidance can declare whether resumed playback continues or restarts without a later schema change. |
 
 Notes for `GuidanceSpec v1`:
 
@@ -179,7 +184,6 @@ These fields already exist in content/data, but the current runtime does not str
 | Field | Current consumer / usage | Why it is optional-soon |
 | --- | --- | --- |
 | `displayName` | No current consumer | Editor-friendly label only. |
-| `startPaused` | Could map to `useTempoAudioStore.pause()` in the future; no current authoring consumer | Small behavior toggle, but current runtime always auto-plays. |
 | `volume` | `src/state/tempoAudioStore.js` has `setVolume()`, but current guidance path does not set per-practice volume | Useful once guidance balancing is needed. |
 
 ### Deferred
@@ -239,6 +243,7 @@ type DayPlan = {
 };
 
 type Leg = {
+  id: string;
   legNumber: number;
   label: string;
   description: string;
@@ -263,13 +268,15 @@ type PracticeInstance = {
   practiceParamsPatch?: Record<string, unknown>;
   guidance?: GuidanceSpec;
 };
+// V1 normalization: duration lives at PracticeInstance.durationMin, not practiceConfig.duration.
 
 type GuidanceSpec = {
   audioUrl: string;
+  startMode: 'onPracticeStart' | 'manual';
+  resumeMode: 'resume' | 'restart';
 
   // optional-soon
   displayName?: string;
-  startPaused?: boolean;
   volume?: number;
 };
 ```
@@ -298,7 +305,13 @@ type GuidanceSpec = {
 5. **Guidance audio has a sink but not a real authored source yet**
    - The runtime already has a transport (`useTempoAudioStore` + `GuidanceAudioController`).
    - The current assignment is hard-coded to `GUIDANCE_AUDIO_PLACEHOLDER` in `PracticeSection`.
-   - That makes `GuidanceSpec v1.audioUrl` the right additive field, but it should be documented as a schema target, not treated as already wired.
+   - That makes `GuidanceSpec v1` the right additive schema target, but it should be documented as authored data, not treated as already wired.
+
+## Compatibility notes (V1 normalization)
+
+- Canonical duration: `PracticeInstance.durationMin`
+- Legacy aliases: `showBreathBenchmark` <-> `requiresBenchmark` (doc-only compatibility note; no code change)
+- Guidance placeholder: the current runtime uses `GUIDANCE_AUDIO_PLACEHOLDER`; V1 authoring should replace that boundary input via `PracticeInstance.guidance`
 
 ## Best insertion point for future authoring
 
@@ -319,4 +332,3 @@ The next atomic step should be **schema-only wiring**, not editor UI:
 1. Normalize `navigationData` into the proposed `PathDefinition` field names while keeping compatibility aliases (`showBreathBenchmark` -> `requiresBenchmark`, `duration` fallback retained temporarily).
 2. Add a documented `practice.guidance.audioUrl` field to authored day/leg data, but do not change runtime behavior yet.
 3. Keep `programRegistry` / `ritualInitiation14v2` as the day-plan source for V1 and defer any unification work until after the field list is human-approved.
-
