@@ -1667,9 +1667,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleInitiationBenchmarkSave = useCallback((results) => {
     const ctx = initiationBenchmarkContext || {};
     const runId = ctx.runId || activePathContextRef.current?.runId || activePath?.runId || null;
-    const activePathId = ctx.activePathId || activePathContextRef.current?.activePathId || activePath?.activePathId || null;
     const dayIndex = Number(ctx.dayIndex || activePathContextRef.current?.dayIndex || 0);
-    const weekIndex = Number(ctx.weekIndex || activePathContextRef.current?.weekIndex || 0);
 
     const snapshot = {
       inhale: Math.max(0, Math.round(Number(results?.inhale) || 0)),
@@ -1677,9 +1675,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       exhale: Math.max(0, Math.round(Number(results?.exhale) || 0)),
       hold2: Math.max(0, Math.round(Number(results?.hold2) || 0)),
     };
-    const totalDurationSec = snapshot.inhale + snapshot.hold1 + snapshot.exhale + snapshot.hold2;
-    const actualDurationSec = Math.max(1, totalDurationSec);
-    const actualDurationMinutes = Math.round((actualDurationSec / 60) * 10) / 10;
 
     saveRunBenchmark?.({
       runId,
@@ -1687,65 +1682,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       results: snapshot,
     });
 
-    let recordedSession = null;
-    try {
-      const endedAtIso = new Date().toISOString();
-      const startedAtIso = new Date(Date.now() - (actualDurationSec * 1000)).toISOString();
-      recordedSession = recordPracticeSession({
-        domain: 'breathwork',
-        duration: actualDurationMinutes,
-        durationSec: actualDurationSec,
-        exitType: 'completed',
-        practiceId: 'breath',
-        practiceMode: breathSubmode ?? null,
-        configSnapshot: {
-          breathSubmode: breathSubmode ?? null,
-          benchmarkDay: dayIndex,
-          benchmarkType: 'initiation-v2',
-          isComparison: dayIndex === 14,
-          baselineDay1: dayIndex === 14 ? initiationComparisonBaseline || null : null,
-          snapshot,
-        },
-        startedAt: startedAtIso,
-        endedAt: endedAtIso,
-        activePathId,
-        runId,
-        dayIndex: Number.isFinite(dayIndex) && dayIndex > 0 ? dayIndex : null,
-        weekIndex: Number.isFinite(weekIndex) && weekIndex > 0 ? weekIndex : null,
-      });
-    } catch (e) {
-      console.error("Failed to save initiation benchmark session:", e);
-    }
-
-    setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
+    setShowInitiationBenchmark(false);
 
-    queueSummaryAfterRingUnmount({
-      practice: 'Breath & Stillness',
-      duration: actualDurationMinutes,
-      tapStats: null,
-      breathCount: 0,
-      exitType: 'completed',
-      curriculumDayNumber: null,
-      legNumber: null,
-      totalLegs: null,
-      benchmarkSnapshot: snapshot,
-      benchmarkDay: dayIndex,
-      sessionRecord: recordedSession,
-    }, false);
-
-    if (recordedSession) {
-      setLastSessionId(recordedSession.id);
-      startMicroNote(recordedSession.id);
-    }
+    // Let the benchmark modal unmount before starting the real practice.
+    setTimeout(() => {
+      handleStart();
+    }, 100);
   }, [
     initiationBenchmarkContext,
     activePath,
-    breathSubmode,
     saveRunBenchmark,
-    initiationComparisonBaseline,
-    queueSummaryAfterRingUnmount,
-    startMicroNote,
   ]);
 
   // Declare executeStart before useEffect that calls it
