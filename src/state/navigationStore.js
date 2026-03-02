@@ -559,7 +559,7 @@ export const useNavigationStore = create(
                 const startDay = new Date(startedAtLocalKey);
                 const today = new Date(todayKey);
                 const daysSinceStart = Math.floor((today - startDay) / (1000 * 60 * 60 * 24));
-                const dayIndex = Math.min(Math.max(daysSinceStart + 1, 1), durationDays);
+                const dayIndex = Math.min(Math.max(daysSinceStart + 1, 0), durationDays);
                 const timePct = Math.round((dayIndex / durationDays) * 100);
 
                 // Contract obligations are the source of truth for expected/completed adherence metrics.
