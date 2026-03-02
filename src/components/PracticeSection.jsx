@@ -68,7 +68,6 @@ import { useProgressStore } from '../state/progressStore.js';
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
 const PRESET_SWITCHER_Z_INDEX = 10020;
-const GUIDANCE_AUDIO_PLACEHOLDER = "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3";
 
 function isTypingIntoEditableElement(activeEl) {
   if (!activeEl) return false;
@@ -1054,7 +1053,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     const audioStore = useTempoAudioStore.getState();
-
+    
     if (!isRunning) {
       audioStore.stopReset();
       if (audioStore.source) {
@@ -1062,16 +1061,38 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
       return;
     }
-
-    if (guidanceSource !== GUIDANCE_AUDIO_PLACEHOLDER) {
-      audioStore.setSource(GUIDANCE_AUDIO_PLACEHOLDER);
+ 
+    // Get current leg from curriculum store
+    const curriculumState = useCurriculumStore.getState();
+    const currentDayNumber = curriculumState.getCurrentDayNumber();
+    const activeLeg = curriculumState.getActivePracticeLeg();
+    
+    // Get the program definition
+    const program = curriculumState.getActiveCurriculum();
+    
+    // If we have the program and can locate the current leg, extract guidanceAudio
+    let audioFile = null;
+    if (program && program.days && currentDayNumber && activeLeg) {
+      const dayIndex = currentDayNumber - 1;
+      const day = program.days[dayIndex];
+      if (day && day.legs && Array.isArray(day.legs)) {
+        const leg = day.legs.find(l => l.legNumber === activeLeg.legNumber);
+        if (leg && leg.guidanceAudio) {
+          audioFile = leg.guidanceAudio;
+        }
+      }
     }
-
+    
+    // Set the audio file (or null if not found)
+    if (guidanceSource !== audioFile) {
+      audioStore.setSource(audioFile);
+    }
+    
     if (isSessionPaused) {
       audioStore.pause();
       return;
     }
-
+    
     audioStore.play();
   }, [guidanceSource, isRunning, isSessionPaused]);
 
