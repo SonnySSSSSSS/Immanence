@@ -1525,6 +1525,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     }
 
     const handleStartLeg = (leg, evt) => {
+        // DEBUG: Log shift-click events
+        console.log('[SHIFT+CLICK DEBUG]', {
+            shiftKey: evt?.shiftKey,
+            eventType: evt?.type,
+            buttonDisabled: evt?.target?.disabled,
+        });
+
         // DEV: Shift-click bypasses time window restrictions
         const isDevForceStart = evt?.shiftKey === true;
 
@@ -1537,8 +1544,17 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const expired = isLegExpired(leg);
         const tooEarly = isLegTooEarly(leg);
 
+        console.log('[TIME WINDOW CHECK]', {
+            isDevForceStart,
+            expired,
+            tooEarly,
+            leg: leg?.legNumber,
+            dayNumber,
+        });
+
         // Outside the allowed +/- 60 minute window: block start UNLESS shift-click bypass
         if (!isDevForceStart && (expired || tooEarly)) {
+            console.log('[BLOCKED] Time window violation (shift+click would bypass)');
             const t = resolveLegTimeStr(leg);
             setMissedLegWarning({
                 legNumber: leg?.legNumber || null,
