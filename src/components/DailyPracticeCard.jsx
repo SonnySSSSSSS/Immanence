@@ -1857,7 +1857,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         )}
                                                         {/* Wrapper catches shift-click even when button disabled */}
                                                         <div onClick={(e) => {
+                                                            console.log('[WRAPPER CLICK]', { shiftKey: e.shiftKey, target: e.target });
                                                             if (e.shiftKey) {
+                                                                console.log('[WRAPPER] Shift detected, calling handleStartLeg');
                                                                 e.preventDefault();
                                                                 e.stopPropagation();
                                                                 startTransition(() => handleStartLeg(leg, e));
