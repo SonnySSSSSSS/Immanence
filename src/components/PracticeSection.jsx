@@ -2731,6 +2731,27 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           </button>
         )}
       </div>
+      {isRunning && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 52,
+            right: 10,
+            zIndex: 10059,
+            fontSize: '12px',
+            color: 'rgba(255, 255, 255, 0.5)',
+            marginBottom: '8px',
+            fontFamily: 'monospace',
+            padding: '4px 8px',
+            borderRadius: 8,
+            background: 'rgba(8, 10, 18, 0.42)',
+            maxWidth: 'min(92vw, 420px)',
+            wordBreak: 'break-all',
+          }}
+        >
+          Audio: {guidanceSource || 'NULL'}
+        </div>
+      )}
       {!isActiveBreathSession && (
         <DevCompleteNowOverlay
           isRunning={isRunning}
