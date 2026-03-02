@@ -65,6 +65,22 @@ const sanitizeModeTileBackgroundImage = (bgUrl) => {
   return `url("${raw}")`;
 };
 
+const HOME_HUB_SIDE_PANEL_ASSETS = Object.freeze({
+  practiceLog: 'locker.png',
+  rhythmReport: 'elements.png',
+});
+
+function resolveHomeHubAssetUrl(fileName) {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${normalizedBaseUrl}assets/${fileName}`;
+}
+
+const HOME_HUB_SIDE_PANEL_ASSET_URLS = Object.freeze({
+  practiceLog: resolveHomeHubAssetUrl(HOME_HUB_SIDE_PANEL_ASSETS.practiceLog),
+  rhythmReport: resolveHomeHubAssetUrl(HOME_HUB_SIDE_PANEL_ASSETS.rhythmReport),
+});
+
 
 function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false, debugDisableDailyCard = false, debugBuildProbe = false, debugShadowScan = false, debugDailyCardShadowOff = false, debugDailyCardBlurOff = false, debugDailyCardBorderOff = false, debugDailyCardMaskOff = false }) {
   // Real data from stores
@@ -626,7 +642,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               onClick={() => setLeftOpen((open) => !open)}
             >
               <Collapse isOpened={!leftOpen}>
-                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("/assets/locker.png")`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                   <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
                     PRACTICE LOG
                   </div>
@@ -732,7 +748,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               onClick={() => setRightOpen((open) => !open)}
             >
               <Collapse isOpened={!rightOpen}>
-                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("/assets/elements.png")`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                   <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
                     RHYTHM REPORT
                   </div>
