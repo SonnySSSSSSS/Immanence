@@ -1062,14 +1062,36 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
  
-    // Get current leg from curriculum store
+    // DEBUG: Log the entire audio lookup chain
+    console.log('=== AUDIO LOOKUP DEBUG ===');
+
     const curriculumState = useCurriculumStore.getState();
     const currentDayNumber = curriculumState.getCurrentDayNumber();
     const activeLeg = curriculumState.getActivePracticeLeg();
+    const program = curriculumState.getActiveCurriculum();
+
+    console.log('currentDayNumber:', currentDayNumber);
+    console.log('activeLeg:', activeLeg);
+    console.log('program:', program);
+
+    if (program && program.days) {
+      const dayIndex = currentDayNumber - 1;
+      console.log('dayIndex:', dayIndex);
+      console.log('program.days[dayIndex]:', program.days[dayIndex]);
+      
+      if (program.days[dayIndex] && program.days[dayIndex].legs) {
+        const legObj = program.days[dayIndex].legs.find(l => l.legNumber === activeLeg?.legNumber);
+        console.log('found leg:', legObj);
+        console.log('leg.guidanceAudio:', legObj?.guidanceAudio);
+      }
+    }
+
+    console.log('=== END DEBUG ===');
+
+    // Get current leg from curriculum store
     
     // Get the program definition
-    const program = curriculumState.getActiveCurriculum();
-    
+
     // If we have the program and can locate the current leg, extract guidanceAudio
     let audioFile = null;
     if (program && program.days && currentDayNumber && activeLeg) {
