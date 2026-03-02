@@ -87,13 +87,11 @@ export function computeScheduleAnchorStartAt({
   const todayAtFirst = localDateTimeFromDateKeyAndTime(todayKey, firstSlotTime);
   if (!todayAtFirst) return new Date(now);
 
-  const lateByMs = now.getTime() - todayAtFirst.getTime();
-  if (lateByMs > lateWindowMin * 60 * 1000) {
-    const tomorrowKey = addDaysToDateKey(todayKey, 1);
-    return localDateTimeFromDateKeyAndTime(tomorrowKey, firstSlotTime) ?? new Date(now);
-  }
+  void lateWindowMin;
 
-  return todayAtFirst;
+  // Always anchor to the next calendar day so activation day behaves as Day 0.
+  const tomorrowKey = addDaysToDateKey(todayKey, 1);
+  return localDateTimeFromDateKeyAndTime(tomorrowKey, firstSlotTime) ?? new Date(now);
 }
 
 export function timeStringToMinutes(str) {
