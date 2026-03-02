@@ -62,6 +62,7 @@ function getDayStyle(dayStatus, isLight) {
         fontWeight: '600',
         textAlign: 'center',
         lineHeight: '1.2',
+        position: 'relative',
     };
 
     switch (dayStatus) {
@@ -104,6 +105,59 @@ function getDayStyle(dayStatus, isLight) {
     }
 }
 
+function getLocalDateKey(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getRequiredCountForDay(day, activePath) {
+    if (Number.isFinite(day?.requiredCount) && day.requiredCount > 0) {
+        return day.requiredCount;
+    }
+    if (Number.isFinite(day?.expectedLegCount) && day.expectedLegCount > 0) {
+        return day.expectedLegCount;
+    }
+    if (Array.isArray(day?.requiredSlots) && day.requiredSlots.length > 0) {
+        return day.requiredSlots.length;
+    }
+    if (Array.isArray(day?.expectedSlots) && day.expectedSlots.length > 0) {
+        return day.expectedSlots.length;
+    }
+    if (Array.isArray(activePath?.schedule?.selectedTimes) && activePath.schedule.selectedTimes.length > 0) {
+        return activePath.schedule.selectedTimes.length;
+    }
+    if (Number.isFinite(activePath?.schedule?.maxLegsPerDay) && activePath.schedule.maxLegsPerDay > 0) {
+        return activePath.schedule.maxLegsPerDay;
+    }
+    return 0;
+}
+
+function getCompletedCountForDay(day) {
+    if (Number.isFinite(day?.completedCount) && day.completedCount >= 0) {
+        return day.completedCount;
+    }
+    if (Array.isArray(day?.satisfiedSlots)) {
+        return day.satisfiedSlots.length;
+    }
+    return 0;
+}
+
+function shouldShowMissOverlay(day, activePath, todayDateKey) {
+    if (!day || typeof day.dateKeyLocal !== 'string') return false;
+    if (day.dayStatus === 'gray' || day.isOffDay || day.isVacation) return false;
+
+    const hasDayPassed = day.dateKeyLocal < todayDateKey;
+    if (!hasDayPassed) return false;
+
+    const requiredCount = getRequiredCountForDay(day, activePath);
+    if (requiredCount <= 0) return false;
+
+    const completedCount = getCompletedCountForDay(day);
+    return completedCount < requiredCount;
+}
+
 /**
  * CurriculumPrecisionRail — Read-only infographic showing 14-day rolling precision window
  * No interactions; hover tooltip only.
@@ -117,6 +171,7 @@ export function CurriculumPrecisionRail() {
     const gridRef = useRef(null);
     const [gridRect, setGridRect] = useState(null);
     const activePath = useNavigationStore(s => s.activePath);
+    const todayDateKey = getLocalDateKey();
 
     // Fetch the 14-day rail
     const rail = useCurriculumStore(s => s.getPrecisionRailWindow)(14, {
@@ -197,6 +252,7 @@ export function CurriculumPrecisionRail() {
                     const tooltip = buildDayTooltip(day);
                     const dayStyle = getDayStyle(day.dayStatus, isLight);
                     const isHovered = hoveredIndex === index;
+                    const showMissOverlay = shouldShowMissOverlay(day, activePath, todayDateKey);
 
                     return (
                         <div
@@ -210,8 +266,42 @@ export function CurriculumPrecisionRail() {
                             }}
                             title={tooltip}
                         >
-                            {day.dayStatus === 'green' && '✓'}
-                            {day.dayStatus === 'red' && '!'}
+                            {!showMissOverlay && day.dayStatus === 'green' && '✓'}
+                            {!showMissOverlay && day.dayStatus === 'red' && '!'}
+                            {showMissOverlay && (
+                                <svg
+                                    viewBox="0 0 12 12"
+                                    aria-hidden="true"
+                                    focusable="false"
+                                    style={{
+                                        position: 'absolute',
+                                        inset: '18%',
+                                        width: '64%',
+                                        height: '64%',
+                                        pointerEvents: 'none',
+                                        overflow: 'visible',
+                                    }}
+                                >
+                                    <line
+                                        x1="2"
+                                        y1="2"
+                                        x2="10"
+                                        y2="10"
+                                        stroke={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 247, 250, 0.95)'}
+                                        strokeWidth="1.6"
+                                        strokeLinecap="round"
+                                    />
+                                    <line
+                                        x1="10"
+                                        y1="2"
+                                        x2="2"
+                                        y2="10"
+                                        stroke={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 247, 250, 0.95)'}
+                                        strokeWidth="1.6"
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            )}
                         </div>
                     );
                 })}
