@@ -53,6 +53,7 @@ const buildPilotDays = (totalDays = 14) => {
                     practiceConfig: { breathPattern: 'box', duration: 7 },
                     description: 'Pranayama/Breath',
                     focusArea: 'breath',
+                    guidanceAudio: `/audio/pilot-test-program/day-${dayNumber}/leg-1/breathing-guidance.wav`,
                 },
                 {
                     legNumber: 2,
@@ -64,6 +65,7 @@ const buildPilotDays = (totalDays = 14) => {
                     practiceConfig: { circuitId: 'evening-test-circuit', duration: 15 },
                     description: 'Breath / Visualization / Feeling Meditation',
                     focusArea: 'integration',
+                    guidanceAudio: `/audio/pilot-test-program/day-${dayNumber}/leg-2/evening-circuit-guidance.wav`,
                 },
             ],
         };
