@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.230 - fix(precision-rail): restore synthetic getCurriculumDay + fix satisfied slot counting
   // v3.27.229 - ui(homehub): redesign side panels as image blind overlay with stats underneath
   // v3.27.228 - ui(homehub): replace side panel cover images with locker/elements
   // v3.27.227 - ui(homehub): make side panel covers full-bleed and stabilize roll-up collapse (HOMEHUB_SIDE_PANELS_ROLLUP_V1)
@@ -836,7 +837,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.229
+                        v3.27.230
                       </button>
                     </div>
                   </div>

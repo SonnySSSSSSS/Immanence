@@ -139,23 +139,41 @@ function getCompletedCountForDay(day) {
         return day.completedCount;
     }
     if (Array.isArray(day?.satisfiedSlots)) {
-        return day.satisfiedSlots.length;
+        // Only count slots that were actually satisfied (status !== null)
+        return day.satisfiedSlots.filter(s => s.status !== null).length;
     }
     return 0;
+}
+
+// For today only: returns true if any scheduled slot window has closed
+// (current local time > slot time + 30-min tolerance) without a session.
+function hasTodayAnyClosedMissedSlot(day, todayDateKey) {
+    if (!day || day.dateKeyLocal !== todayDateKey) return false;
+    if (!Array.isArray(day.satisfiedSlots) || day.satisfiedSlots.length === 0) return false;
+    const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+    return day.satisfiedSlots.some(slot => {
+        if (slot.status !== null) return false;
+        if (!slot.time || typeof slot.time !== 'string') return false;
+        const [h, m] = slot.time.split(':').map(Number);
+        if (Number.isNaN(h) || Number.isNaN(m)) return false;
+        return nowMinutes > h * 60 + m + 30;
+    });
 }
 
 function shouldShowMissOverlay(day, activePath, todayDateKey) {
     if (!day || typeof day.dateKeyLocal !== 'string') return false;
     if (day.dayStatus === 'gray' || day.isOffDay || day.isVacation) return false;
 
-    const hasDayPassed = day.dateKeyLocal < todayDateKey;
-    if (!hasDayPassed) return false;
-
     const requiredCount = getRequiredCountForDay(day, activePath);
     if (requiredCount <= 0) return false;
 
-    const completedCount = getCompletedCountForDay(day);
-    return completedCount < requiredCount;
+    // Past days: show X if any required slot went unfilled
+    if (day.dateKeyLocal < todayDateKey) {
+        return getCompletedCountForDay(day) < requiredCount;
+    }
+
+    // Today: show X as soon as any slot window closes without a session
+    return hasTodayAnyClosedMissedSlot(day, todayDateKey);
 }
 
 /**
@@ -173,6 +191,31 @@ export function CurriculumPrecisionRail() {
     const activePath = useNavigationStore(s => s.activePath);
     const todayDateKey = getLocalDateKey();
 
+    // Path-based runs have no program registry (activeCurriculumId is null in curriculumStore).
+    // Inject correct start date + a synthetic getCurriculumDay so the rail service
+    // produces 'blank' for obligation days instead of 'gray'.
+    const curriculumSnapshot = useCurriculumStore.getState();
+    let effectiveCurriculumState = curriculumSnapshot;
+    if (activePath?.startedAt) {
+        const pathRequiredLegs = activePath.schedule?.requiredLegsPerDay ?? 1;
+        effectiveCurriculumState = {
+            ...curriculumSnapshot,
+            curriculumStartDate: activePath.startedAt,
+            getCurriculumDay: (dayNumber) => {
+                if (!Number.isInteger(dayNumber) || dayNumber < 1) return null;
+                return {
+                    dayNumber,
+                    legs: Array.from({ length: pathRequiredLegs }, (_, i) => ({
+                        legNumber: i + 1,
+                        required: true,
+                        categoryId: '_path_',
+                        matchPolicy: 'ANY',
+                    })),
+                };
+            },
+        };
+    }
+
     // Fetch the 14-day rail
     const rail = useCurriculumStore(s => s.getPrecisionRailWindow)(14, {
         selectedDaysOfWeek: Array.isArray(activePath?.schedule?.selectedDaysOfWeek) &&
@@ -181,6 +224,7 @@ export function CurriculumPrecisionRail() {
             : (activePath ? [0, 1, 2, 3, 4, 5, 6] : null),
         selectedTimes: activePath?.schedule?.selectedTimes || null,
         maxLegsPerDay: activePath?.schedule?.maxLegsPerDay ?? null,
+        curriculumStoreState: effectiveCurriculumState,
     });
 
     if (!rail || rail.length === 0) {
