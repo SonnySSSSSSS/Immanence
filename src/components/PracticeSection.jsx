@@ -2654,29 +2654,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }}
       >
         <div style={{ fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>GUIDE PROBE</div>
-        <div>{`curSourceTag=${curGuideProbeSourceTag}`}</div>
-        <div>{`curPathId=${curGuideProbePathId}`}</div>
-        <div>{`curSlotIndex=${curGuideProbeSlotIndex}`}</div>
-        <div>{`curGuidanceUrl=${curGuideProbeGuidanceUrl}`}</div>
-        <div>{`curCtxKeys=${curGuideProbeKeys}`}</div>
+        <div>{`curSourceTag=${typeof curGuideProbeSourceTag === 'undefined' ? 'n/a' : String(curGuideProbeSourceTag)}`}</div>
+        <div>{`curPathId=${typeof curGuideProbePathId === 'undefined' ? 'n/a' : String(curGuideProbePathId)}`}</div>
+        <div>{`curSlotIndex=${typeof curGuideProbeSlotIndex === 'undefined' ? 'n/a' : String(curGuideProbeSlotIndex)}`}</div>
+        <div>{`curGuidanceUrl=${typeof curGuideProbeGuidanceUrl === 'undefined' ? 'n/a' : String(curGuideProbeGuidanceUrl)}`}</div>
+        <div>{`curCtxKeys=${typeof curGuideProbeKeys === 'undefined' ? 'n/a' : String(curGuideProbeKeys)}`}</div>
         {/* PROBE:GUIDANCE_CTX_OVERLAY:START */}
-        <div>{`lastSourceTag=${lastGuideProbeSourceTag}`}</div>
-        <div>{`lastPathId=${lastGuideProbePathId}`}</div>
-        <div>{`lastSlotIndex=${lastGuideProbeSlotIndex}`}</div>
-        <div>{`lastGuidanceUrl=${lastGuideProbeGuidanceUrl}`}</div>
-        <div>{`lastCtxKeys=${lastGuideProbeKeys}`}</div>
+        <div>{`lastSourceTag=${typeof lastGuideProbeSourceTag === 'undefined' ? 'n/a' : String(lastGuideProbeSourceTag)}`}</div>
+        <div>{`lastPathId=${typeof lastGuideProbePathId === 'undefined' ? 'n/a' : String(lastGuideProbePathId)}`}</div>
+        <div>{`lastSlotIndex=${typeof lastGuideProbeSlotIndex === 'undefined' ? 'n/a' : String(lastGuideProbeSlotIndex)}`}</div>
+        <div>{`lastGuidanceUrl=${typeof lastGuideProbeGuidanceUrl === 'undefined' ? 'n/a' : String(lastGuideProbeGuidanceUrl)}`}</div>
+        <div>{`lastCtxKeys=${typeof lastGuideProbeKeys === 'undefined' ? 'n/a' : String(lastGuideProbeKeys)}`}</div>
         {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
         {/* PROBE:PRACTICE_START_CALLSITE:START */}
-        <div>{`activePracticeId=${activePracticeIdentity}`}</div>
-        <div>{`lastStartCaller=${lastStartCaller}`}</div>
-        <div>{`lastStartAtMsAgo=${lastStartAtMsAgo}`}</div>
+        <div>{`activePracticeId=${typeof activePracticeIdentity === 'undefined' ? 'n/a' : String(activePracticeIdentity)}`}</div>
+        <div>{`lastStartCaller=${typeof lastStartCaller === 'undefined' ? 'n/a' : String(lastStartCaller)}`}</div>
+        <div>{`lastStartAtMsAgo=${typeof lastStartAtMsAgo === 'undefined' ? 'n/a' : String(lastStartAtMsAgo)}`}</div>
         {/* PROBE:PRACTICE_START_CALLSITE:END */}
         {/* PROBE:PATH_CONTEXT_AT_START:START */}
-        <div>{`apcPathId=${apcPathIdProbe}`}</div>
-        <div>{`apcSlotIndex=${apcSlotIndexProbe}`}</div>
+        <div>{`apcPathId=${typeof apcPathIdProbe === 'undefined' ? 'n/a' : String(apcPathIdProbe)}`}</div>
+        <div>{`apcSlotIndex=${typeof apcSlotIndexProbe === 'undefined' ? 'n/a' : String(apcSlotIndexProbe)}`}</div>
         {/* PROBE:PATH_CONTEXT_AT_START:END */}
         {/* PROBE:GUIDANCE_RESOLVE_AT_START:START */}
-        <div>{`resolvedGuidanceUrl=${resolvedGuidanceUrlProbe}`}</div>
+        <div>{`resolvedGuidanceUrl=${typeof resolvedGuidanceUrlProbe === 'undefined' ? 'n/a' : String(resolvedGuidanceUrlProbe)}`}</div>
         {/* PROBE:GUIDANCE_RESOLVE_AT_START:END */}
       </div>
       {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}

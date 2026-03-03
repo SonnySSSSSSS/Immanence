@@ -435,7 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
-  // v3.27.232 - refactor: remove display-mode residue and unify rail sizing
+  // v3.27.233 - refactor: remove display-mode residue and unify rail sizing
   // v3.27.231 - fix: remove in-session benchmark gating; student-mode shift+click warning when no benchmark
   // v3.27.230 - fix(precision-rail): restore synthetic getCurriculumDay + fix satisfied slot counting
   // v3.27.229 - ui(homehub): redesign side panels as image blind overlay with stats underneath
@@ -839,7 +839,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.232
+                        v3.27.233
                       </button>
                     </div>
                   </div>
