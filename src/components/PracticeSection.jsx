@@ -440,6 +440,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
   const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
   const lastPracticeLaunchContext = useUiStore(s => s.lastPracticeLaunchContext);
+  const lastPracticeStartProbe = useUiStore(s => s.lastPracticeStartProbe);
+  const setLastPracticeStartProbe = useUiStore(s => s.setLastPracticeStartProbe);
   const clearPracticeLaunchContext = useUiStore(s => s.clearPracticeLaunchContext);
   const applyLaunchConstraints = useSessionOverrideStore(s => s.applyLaunchConstraints);
   const clearLaunchConstraints = useSessionOverrideStore(s => s.clearLaunchConstraints);
@@ -1869,6 +1871,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
       setRingTeardownRequested(false);
+      setLastPracticeStartProbe?.({
+        caller: 'executeStart',
+        practiceId: actualPracticeId,
+        atMs: Date.now(),
+      });
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1887,6 +1894,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
     setRingTeardownRequested(false);
+    setLastPracticeStartProbe?.({
+      caller: 'executeStart',
+      practiceId: actualPracticeId,
+      atMs: Date.now(),
+    });
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -1944,7 +1956,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, setLastPracticeStartProbe]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
@@ -2746,6 +2758,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const lastGuideProbeSlotIndex = lastPracticeLaunchContext?.pathContext?.slotIndex ?? 'NONE';
   const lastGuideProbeGuidanceUrl = lastPracticeLaunchContext?.guidance?.audioUrl ?? 'NULL';
   const lastGuideProbeSourceTag = lastPracticeLaunchContext?.__sourceTag ?? 'NONE';
+  const activePracticeIdentity = isRunning ? (actualRunningPracticeId ?? 'NONE') : 'NONE';
+  const lastStartCaller = lastPracticeStartProbe?.caller ?? 'NONE';
+  const lastStartAtMsAgo = Number.isFinite(lastPracticeStartProbe?.atMs)
+    ? Math.max(0, Math.round(Date.now() - lastPracticeStartProbe.atMs))
+    : 'NONE';
 
   return (
     <>
@@ -2797,6 +2814,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div>{`lastGuidanceUrl=${lastGuideProbeGuidanceUrl}`}</div>
         <div>{`lastCtxKeys=${lastGuideProbeKeys}`}</div>
         {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
+        {/* PROBE:PRACTICE_START_CALLSITE:START */}
+        <div>{`activePracticeId=${activePracticeIdentity}`}</div>
+        <div>{`lastStartCaller=${lastStartCaller}`}</div>
+        <div>{`lastStartAtMsAgo=${lastStartAtMsAgo}`}</div>
+        {/* PROBE:PRACTICE_START_CALLSITE:END */}
       </div>
       {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       <div

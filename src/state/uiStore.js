@@ -32,6 +32,7 @@ export const useUiStore = create((set, get) => ({
     practiceLaunchContext: null,
     lastPracticeLaunchContext: null,
     lastPracticeLaunchContextAt: null,
+    lastPracticeStartProbe: null,
     
     setPracticeLaunchContext: (ctx) => {
         if (ctx?.source === 'dailySchedule' && ctx?.pathContext?.activePathId) {
@@ -52,6 +53,12 @@ export const useUiStore = create((set, get) => ({
     },
     
     clearPracticeLaunchContext: () => set({ practiceLaunchContext: null }),
+
+    setLastPracticeStartProbe: (probe) => set({
+        // PROBE:PRACTICE_START_CALLSITE:START
+        lastPracticeStartProbe: probe || null,
+        // PROBE:PRACTICE_START_CALLSITE:END
+    }),
 
     // Content launch context for Wisdom (chapters) and Videos.
     // This should be treated as transient (consume then clear).
