@@ -226,6 +226,22 @@ function getRailColor(id) {
   return colors[id] || "rgba(255,255,255,0.65)";
 }
 
+function getPathPracticeOccurrences(pathDef, dayIndex) {
+  if (!pathDef || typeof pathDef !== "object") return [];
+
+  const weekIndex = Number.isFinite(dayIndex) ? Math.ceil(dayIndex / 7) : null;
+  const currentWeek = weekIndex && Array.isArray(pathDef.weeks)
+    ? pathDef.weeks.find((week) => week?.number === weekIndex) || null
+    : null;
+  const weekPracticesRaw = Array.isArray(currentWeek?.practices) ? currentWeek.practices : null;
+  const weekPracticesStructured = weekPracticesRaw && weekPracticesRaw.some((entry) => entry && typeof entry === "object")
+    ? weekPracticesRaw
+    : null;
+  const topLevelPractices = Array.isArray(pathDef.practices) ? pathDef.practices : null;
+
+  return weekPracticesStructured || topLevelPractices || weekPracticesRaw || [];
+}
+
 function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   const isLight = colorScheme === 'light';
   const wheelRef = useRef(null);
@@ -453,6 +469,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
   const pathContextAtStartProbeRef = useRef({ pathId: 'NONE', slotIndex: 'NONE' });
+  const resolvedGuidanceUrlProbeRef = useRef('NULL');
   const pausedAtRef = useRef(null);
   const pathGuidanceStartedRef = useRef(false);
   const pathGuidanceWasPausedRef = useRef(false);
@@ -538,6 +555,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
     setPathLaunchGuidance(undefined);
+    activePathContextRef.current = null;
+    resolvedGuidanceUrlProbeRef.current = 'NULL';
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
@@ -703,17 +722,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       });
     }
     setGuideProbeCtx(ctx);
-    if (ctx.pathContext) {
-      setPathLaunchGuidance(Object.prototype.hasOwnProperty.call(ctx, 'guidance') ? (ctx.guidance ?? null) : null);
-      pathGuidanceStartedRef.current = false;
-      pathGuidanceWasPausedRef.current = false;
-      pathGuidanceRanRef.current = false;
-    } else {
-      setPathLaunchGuidance(undefined);
-      pathGuidanceStartedRef.current = false;
-      pathGuidanceWasPausedRef.current = false;
-      pathGuidanceRanRef.current = false;
-    }
+    setPathLaunchGuidance(undefined);
+    resolvedGuidanceUrlProbeRef.current = 'NULL';
+    pathGuidanceStartedRef.current = false;
+    pathGuidanceWasPausedRef.current = false;
+    pathGuidanceRanRef.current = false;
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
     setInitiationBenchmarkContext(benchmarkCtx);
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
@@ -816,6 +829,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Preserve pathContext for session recording (survives clearPracticeLaunchContext)
     if (ctx.pathContext) {
       activePathContextRef.current = ctx.pathContext;
+    } else {
+      activePathContextRef.current = null;
     }
 
     clearPracticeLaunchContext?.();
@@ -831,6 +846,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceRanRef.current = false;
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
+      activePathContextRef.current = null;
+      resolvedGuidanceUrlProbeRef.current = 'NULL';
       setPathLaunchGuidance(undefined);
     }
   }, [isRunning, pathLaunchGuidance]);
@@ -1830,6 +1847,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
 
+    const activePathContext = activePathContextRef.current;
+    const pathSlotIndex = Number(activePathContext?.slotIndex);
+    const hasPathOccurrenceContext = Boolean(activePathContext?.activePathId) && Number.isFinite(pathSlotIndex);
+    let resolvedPathGuidance = null;
+
+    if (hasPathOccurrenceContext) {
+      const pathDef = getPathById(activePathContext.activePathId);
+      const pathDayIndex = Number(activePathContext?.dayIndex);
+      const occurrences = getPathPracticeOccurrences(pathDef, pathDayIndex);
+      const occurrence = occurrences[pathSlotIndex] ?? null;
+      resolvedPathGuidance = occurrence && typeof occurrence === 'object'
+        ? (occurrence.guidance ?? null)
+        : null;
+    }
+
+    resolvedGuidanceUrlProbeRef.current = resolvedPathGuidance?.audioUrl ?? 'NULL';
+
     // Persist preferences only for manual starts (not curriculum/schedule recommendations).
     if (!activePracticeSession && !suppressPrefSaveRef.current) {
       savePreferences({
@@ -1883,6 +1917,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         slotIndex: Number.isFinite(activePathContextRef.current?.slotIndex) ? String(activePathContextRef.current.slotIndex) : 'NONE',
       };
       // PROBE:PATH_CONTEXT_AT_START:END
+      setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1912,6 +1947,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       slotIndex: Number.isFinite(activePathContextRef.current?.slotIndex) ? String(activePathContextRef.current.slotIndex) : 'NONE',
     };
     // PROBE:PATH_CONTEXT_AT_START:END
+    setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -2778,6 +2814,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     : 'NONE';
   const apcPathIdProbe = pathContextAtStartProbeRef.current?.pathId ?? 'NONE';
   const apcSlotIndexProbe = pathContextAtStartProbeRef.current?.slotIndex ?? 'NONE';
+  const resolvedGuidanceUrlProbe = resolvedGuidanceUrlProbeRef.current || 'NULL';
 
   return (
     <>
@@ -2838,6 +2875,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div>{`apcPathId=${apcPathIdProbe}`}</div>
         <div>{`apcSlotIndex=${apcSlotIndexProbe}`}</div>
         {/* PROBE:PATH_CONTEXT_AT_START:END */}
+        {/* PROBE:GUIDANCE_RESOLVE_AT_START:START */}
+        <div>{`resolvedGuidanceUrl=${resolvedGuidanceUrlProbe}`}</div>
+        {/* PROBE:GUIDANCE_RESOLVE_AT_START:END */}
       </div>
       {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       <div
