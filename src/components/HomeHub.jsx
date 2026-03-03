@@ -426,6 +426,35 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
+    gap: '1px',
+  };
+  const sidePanelMetricValueBaseStyle = {
+    color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
+    letterSpacing: '0.01em',
+    lineHeight: 0.94,
+  };
+  const sidePanelHeadlineValueStyle = {
+    ...sidePanelMetricValueBaseStyle,
+    fontSize: '18px',
+  };
+  const sidePanelRingValueStyle = {
+    ...sidePanelMetricValueBaseStyle,
+    fontSize: '10px',
+  };
+  const sidePanelMetricLabelStyle = {
+    color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)',
+    fontSize: '10px',
+    lineHeight: 1.08,
+    letterSpacing: '0.07em',
+    fontWeight: '400',
+  };
+  const sidePanelMetricSubLabelStyle = {
+    color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.30)',
+    fontSize: '7px',
+    lineHeight: 1,
+    letterSpacing: '0.07em',
+    fontWeight: '400',
   };
   const sidePanelFooterStyle = {
     width: '100%',
@@ -486,8 +515,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       ? (value === null ? ringColor : `rgba(100, 80, 60, ${lightFillAlpha})`)
       : (value === null ? ringColor : `rgba(76, 175, 80, ${darkFillAlpha})`);
     const displayValue = value === null || value === undefined ? '—' : `${Math.round(value)}%`;
-    const valueColor = isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-
     return (
       <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
         <svg width={size} height={size} viewBox="0 0 44 44" style={{ overflow: 'visible', display: 'block' }}>
@@ -512,11 +539,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             alignItems: 'center',
             justifyContent: 'center',
             pointerEvents: 'none',
-            color: valueColor,
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: '0.02em',
-            lineHeight: 1,
+            ...sidePanelRingValueStyle,
             transform: 'translateY(1px)',
             textShadow: '-1px 0 0 rgba(0,0,0,0.22), 1px 0 0 rgba(0,0,0,0.22), 0 -1px 0 rgba(0,0,0,0.18), 0 1px 0 rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.24)',
           }}
@@ -556,24 +579,24 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* LEFT PANEL - Sessions + Active Days */}
           <div style={sidePanelFramePrimaryRowStyle}>
             {/* Stats layer — always visible underneath */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: panelPad, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setLeftOpen((open) => !open)}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: `calc(${U} * 0.8)` }}>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: `calc(${panelPad} * 0.9)`, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setLeftOpen((open) => !open)}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: `calc(${U} * 0.45)` }}>
                 <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric text-[22px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', fontWeight: '600' }}>
+                  <div className="type-metric" style={sidePanelHeadlineValueStyle}>
                     {Math.round(hubTiles?.sessions_total ?? 0)}
                   </div>
-                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.08em', fontWeight: '400' }}>
+                  <div className="type-label" style={sidePanelMetricLabelStyle}>
                     Sessions
                   </div>
-                  <div className="type-label text-[8px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.30)', letterSpacing: '0.08em' }}>
+                  <div className="type-label" style={sidePanelMetricSubLabelStyle}>
                     (14D WINDOW)
                   </div>
                 </div>
                 <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric text-[22px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', fontWeight: '600' }}>
+                  <div className="type-metric" style={sidePanelHeadlineValueStyle}>
                     {Math.round(hubTiles?.days_active ?? 0)}
                   </div>
-                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.08em', fontWeight: '400' }}>
+                  <div className="type-label" style={sidePanelMetricLabelStyle}>
                     Active Days
                   </div>
                 </div>
@@ -637,52 +660,52 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFramePrimaryRowStyle}>
             {/* Stats layer — always visible underneath */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: panelPad, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setRightOpen((open) => !open)}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', paddingTop: '4px', paddingBottom: '8px' }}>
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: `calc(${panelPad} * 0.9)`, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setRightOpen((open) => !open)}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', gap: `calc(${U} * 0.18)`, paddingTop: '1px', paddingBottom: '1px' }}>
+                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '1px' }}>
                   {renderRateRing(hubTiles?.completion_rate, isLight, {
-                    size: 48,
-                    strokeWidth: 3.5,
+                    size: 42,
+                    strokeWidth: 3.25,
                     darkTrackAlpha: 0.16,
                     lightTrackAlpha: 0.26,
                     darkFillAlpha: 0.9,
                     lightFillAlpha: 0.88,
                   })}
-                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.08em', fontWeight: '400' }}>
+                  <div className="type-label" style={{ ...sidePanelMetricLabelStyle, fontSize: '9px', lineHeight: 1.02, letterSpacing: '0.06em' }}>
                     Completion
                   </div>
                 </div>
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
-                  {renderRateRing(hubTiles?.on_time_rate, isLight, {
-                    size: 48,
-                    strokeWidth: 3.5,
-                    darkTrackAlpha: 0.16,
-                    lightTrackAlpha: 0.26,
-                    darkFillAlpha: 0.9,
-                    lightFillAlpha: 0.88,
-                  })}
-                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: '400' }}>
-                    On-Time
-                  </div>
-                </div>
-              </div>
-              <div style={{ height: `calc(${U} * 3.0)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); openArchive(ARCHIVE_TABS.REPORTS); }}
-                  className="type-label px-3 py-2 rounded-full font-bold transition-all hover:scale-105"
+                  className="type-label rounded-full font-bold transition-all hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
                     color: '#fff',
                     boxShadow: '0 3px 10px var(--accent-15)',
                     width: '100%',
-                    fontSize: '9px',
-                    letterSpacing: '0.08em',
+                    fontSize: '7px',
+                    lineHeight: 1,
+                    letterSpacing: '0.06em',
                     border: 'none',
                     cursor: 'pointer',
+                    padding: '4px 0',
                   }}
                 >
                   REPORT
                 </button>
+                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '1px' }}>
+                  {renderRateRing(hubTiles?.on_time_rate, isLight, {
+                    size: 42,
+                    strokeWidth: 3.25,
+                    darkTrackAlpha: 0.16,
+                    lightTrackAlpha: 0.26,
+                    darkFillAlpha: 0.9,
+                    lightFillAlpha: 0.88,
+                  })}
+                  <div className="type-label" style={{ ...sidePanelMetricLabelStyle, fontSize: '9px', lineHeight: 1.02, letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    On-Time
+                  </div>
+                </div>
               </div>
             </div>
             {/* Image cover — rolls up on tap to reveal stats */}
