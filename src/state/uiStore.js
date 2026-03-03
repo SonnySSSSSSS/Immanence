@@ -31,7 +31,17 @@ export const useUiStore = create((set, get) => ({
     // }
     practiceLaunchContext: null,
     
-    setPracticeLaunchContext: (ctx) => set({ practiceLaunchContext: ctx }),
+    setPracticeLaunchContext: (ctx) => {
+        if (ctx?.source === 'dailySchedule' && ctx?.pathContext?.activePathId) {
+            console.log('[GUIDE-PROBE]', {
+                practiceId: ctx.practiceId ?? null,
+                legId: ctx.legId ?? ctx.pathContext?.slotIndex ?? null,
+                guidance: ctx.guidance ?? null,
+                guidanceState: ctx.guidance ? 'present' : 'absent',
+            });
+        }
+        set({ practiceLaunchContext: ctx });
+    },
     
     clearPracticeLaunchContext: () => set({ practiceLaunchContext: null }),
 

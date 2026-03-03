@@ -681,6 +681,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!practiceLaunchContext) return;
 
     const ctx = practiceLaunchContext;
+    if (ctx.source === 'dailySchedule' && ctx.pathContext?.activePathId) {
+      console.log('[GUIDE-PROBE-PS]', {
+        practiceId: ctx.practiceId ?? null,
+        legId: ctx.legId ?? ctx.pathContext?.slotIndex ?? null,
+        guidance: ctx.guidance ?? null,
+        guidanceState: ctx.guidance ? 'present' : 'absent',
+      });
+    }
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
     setInitiationBenchmarkContext(benchmarkCtx);
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
