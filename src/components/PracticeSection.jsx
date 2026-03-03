@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { createPortal } from 'react-dom';
 import { InsightMeditationPortal } from './vipassana/InsightMeditationPortal.jsx';
 import { SensorySession } from "./SensorySession.jsx";
+import { GuidanceAudioController } from "./audio/GuidanceAudioController.jsx";
 import { BreathingRing } from "./BreathingRing.jsx";
 import { VisualizationCanvas } from "./VisualizationCanvas.jsx";
 import { CymaticsVisualization } from "./CymaticsVisualization.jsx";
@@ -218,6 +219,22 @@ function getRailColor(id) {
   return colors[id] || "rgba(255,255,255,0.65)";
 }
 
+function getPathPracticeOccurrences(pathDef, dayIndex) {
+  if (!pathDef || typeof pathDef !== "object") return [];
+
+  const weekIndex = Number.isFinite(dayIndex) ? Math.ceil(dayIndex / 7) : null;
+  const currentWeek = weekIndex && Array.isArray(pathDef.weeks)
+    ? pathDef.weeks.find((week) => week?.number === weekIndex) || null
+    : null;
+  const weekPracticesRaw = Array.isArray(currentWeek?.practices) ? currentWeek.practices : null;
+  const weekPracticesStructured = weekPracticesRaw && weekPracticesRaw.some((entry) => entry && typeof entry === "object")
+    ? weekPracticesRaw
+    : null;
+  const topLevelPractices = Array.isArray(pathDef.practices) ? pathDef.practices : null;
+
+  return weekPracticesStructured || topLevelPractices || weekPracticesRaw || [];
+}
+
 function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   const isLight = colorScheme === 'light';
   const wheelRef = useRef(null);
@@ -417,6 +434,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
   const [showInitiationBenchmark, setShowInitiationBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
+  const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
@@ -437,6 +455,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
+  const pausedAtRef = useRef(null);
+  const pathGuidanceStartedRef = useRef(false);
+  const pathGuidanceWasPausedRef = useRef(false);
+  const pathGuidanceRanRef = useRef(false);
 
   const resolveInitiationV2BenchmarkContext = useCallback((ctx) => {
     if (!ctx || ctx.source !== 'dailySchedule' || ctx.practiceId !== 'breath') {
@@ -517,6 +539,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
     setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
+    setPathLaunchGuidance(undefined);
+    activePathContextRef.current = null;
+    pathGuidanceStartedRef.current = false;
+    pathGuidanceWasPausedRef.current = false;
+    pathGuidanceRanRef.current = false;
     setPracticeId(id);
     // Save immediately with current state
     savePreferences({
@@ -622,6 +649,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!practiceLaunchContext) return;
 
     const ctx = practiceLaunchContext;
+    setPathLaunchGuidance(undefined);
+    pathGuidanceStartedRef.current = false;
+    pathGuidanceWasPausedRef.current = false;
+    pathGuidanceRanRef.current = false;
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
     setInitiationBenchmarkContext(benchmarkCtx);
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
@@ -724,11 +755,27 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Preserve pathContext for session recording (survives clearPracticeLaunchContext)
     if (ctx.pathContext) {
       activePathContextRef.current = ctx.pathContext;
+    } else {
+      activePathContextRef.current = null;
     }
 
     clearPracticeLaunchContext?.();
   }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit, resolveInitiationV2BenchmarkContext]);
 
+  useEffect(() => {
+    if (isRunning && pathLaunchGuidance !== undefined) {
+      pathGuidanceRanRef.current = true;
+      return;
+    }
+
+    if (!isRunning && pathGuidanceRanRef.current) {
+      pathGuidanceRanRef.current = false;
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      activePathContextRef.current = null;
+      setPathLaunchGuidance(undefined);
+    }
+  }, [isRunning, pathLaunchGuidance]);
   const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
@@ -953,6 +1000,64 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setTimeLeft(duration * 60);
     }
   }, [duration, isRunning]);
+
+  useEffect(() => {
+    const audioStore = useTempoAudioStore.getState();
+
+    if (!isRunning) {
+      audioStore.stopReset();
+      if (audioStore.source) {
+        audioStore.setSource(null);
+      }
+      return;
+    }
+
+    if (pathLaunchGuidance === undefined) {
+      return;
+    }
+
+    const guidanceSpec = pathLaunchGuidance;
+    const audioFile = guidanceSpec?.audioUrl || null;
+
+    if (!audioFile) {
+      audioStore.stopReset();
+      if (audioStore.source) {
+        audioStore.setSource(null);
+      }
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      return;
+    }
+
+    if (Number.isFinite(guidanceSpec?.volume)) {
+      audioStore.setVolume(guidanceSpec.volume);
+    }
+
+    if (audioStore.source !== audioFile) {
+      audioStore.setSource(audioFile);
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+    }
+
+    if (isSessionPaused) {
+      pathGuidanceWasPausedRef.current = pathGuidanceStartedRef.current;
+      audioStore.pause();
+      return;
+    }
+
+    if (pathGuidanceWasPausedRef.current && guidanceSpec.resumeMode === 'restart') {
+      audioStore.setSource(audioFile);
+    }
+
+    const shouldAutoplay = guidanceSpec.startMode !== 'manual' || pathGuidanceStartedRef.current;
+    if (!shouldAutoplay) {
+      return;
+    }
+
+    pathGuidanceWasPausedRef.current = false;
+    pathGuidanceStartedRef.current = true;
+    audioStore.play();
+  }, [isRunning, isSessionPaused, pathLaunchGuidance]);
 
   useEffect(() => {
     if (!isRunning && hasSong && isSongPlaying) {
@@ -1595,6 +1700,21 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Get the actual practice ID to run (handles subModes)
     const actualPracticeId = getActualPracticeId(practiceId);
 
+    const activePathContext = activePathContextRef.current;
+    const pathSlotIndex = Number(activePathContext?.slotIndex);
+    const hasPathOccurrenceContext = Boolean(activePathContext?.activePathId) && Number.isFinite(pathSlotIndex);
+    let resolvedPathGuidance = null;
+
+    if (hasPathOccurrenceContext) {
+      const pathDef = getPathById(activePathContext.activePathId);
+      const pathDayIndex = Number(activePathContext?.dayIndex);
+      const occurrences = getPathPracticeOccurrences(pathDef, pathDayIndex);
+      const occurrence = occurrences[pathSlotIndex] ?? null;
+      resolvedPathGuidance = occurrence && typeof occurrence === 'object'
+        ? (occurrence.guidance ?? null)
+        : null;
+    }
+
     // Persist preferences only for manual starts (not curriculum/schedule recommendations).
     if (!activePracticeSession && !suppressPrefSaveRef.current) {
       savePreferences({
@@ -1636,6 +1756,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
+      setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1653,6 +1774,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
+    setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -2353,9 +2475,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     selectedRitualId: activeRitual?.id,
     isEmbedded: true
   };
-
   return (
     <>
+      <GuidanceAudioController />
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
       <BenchmarkBreathworkUI
         isOpen={showInitiationBenchmark}
