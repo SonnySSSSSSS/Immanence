@@ -683,6 +683,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
         useUiStore.getState().setPracticeLaunchContext({
             source: "dailySchedule",
+            // PROBE:GUIDANCE_CTX_OVERLAY:START
+            __sourceTag: "DailyPracticeCard",
+            // PROBE:GUIDANCE_CTX_OVERLAY:END
             practiceId,
             durationMin: Number.isFinite(Number(slot?.durationMin)) ? Number(slot.durationMin) : undefined,
             practiceParamsPatch: slot?.practiceParamsPatch || undefined,

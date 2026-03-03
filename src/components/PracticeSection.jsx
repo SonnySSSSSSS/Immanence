@@ -428,6 +428,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showInitiationBenchmark, setShowInitiationBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
   const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
+  const [guideProbeCtx, setGuideProbeCtx] = useState(null);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
@@ -697,6 +698,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         guidanceState: ctx.guidance ? 'present' : 'absent',
       });
     }
+    setGuideProbeCtx(ctx);
     if (ctx.pathContext) {
       setPathLaunchGuidance(Object.prototype.hasOwnProperty.call(ctx, 'guidance') ? (ctx.guidance ?? null) : null);
       pathGuidanceStartedRef.current = false;
@@ -2729,6 +2731,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     selectedRitualId: activeRitual?.id,
     isEmbedded: true
   };
+  const guideProbeKeys = guideProbeCtx ? Object.keys(guideProbeCtx).join(',').slice(0, 120) : 'NONE';
+  const guideProbePathId = guideProbeCtx?.pathContext?.pathId
+    ?? guideProbeCtx?.pathContext?.activePathId
+    ?? 'NONE';
+  const guideProbeSlotIndex = guideProbeCtx?.pathContext?.slotIndex ?? 'NONE';
+  const guideProbeGuidanceUrl = guideProbeCtx?.guidance?.audioUrl ?? 'NULL';
+  const guideProbeSourceTag = guideProbeCtx?.__sourceTag ?? 'NONE';
 
   return (
     <>
@@ -2741,6 +2750,40 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         onCancel={handleInitiationBenchmarkCancel}
         onSave={handleInitiationBenchmarkSave}
       />
+      {/* PROBE:GUIDANCE_CTX_OVERLAY:START */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 56,
+          right: 10,
+          zIndex: 10061,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          minWidth: 220,
+          maxWidth: 320,
+          padding: '8px 10px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.22)',
+          background: 'rgba(8, 10, 18, 0.9)',
+          color: 'rgba(255,255,255,0.96)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.32)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          fontFamily: 'monospace',
+          fontSize: 11,
+          lineHeight: 1.35,
+          pointerEvents: 'none',
+        }}
+      >
+        <div style={{ fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>GUIDE PROBE</div>
+        <div>{`sourceTag=${guideProbeSourceTag}`}</div>
+        <div>{`pathId=${guideProbePathId}`}</div>
+        <div>{`slotIndex=${guideProbeSlotIndex}`}</div>
+        <div>{`guidanceUrl=${guideProbeGuidanceUrl}`}</div>
+        <div>{`ctxKeys=${guideProbeKeys}`}</div>
+      </div>
+      {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       <div
         style={{
           position: 'fixed',
