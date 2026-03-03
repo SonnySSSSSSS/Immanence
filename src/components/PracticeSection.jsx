@@ -63,6 +63,8 @@ import { getRitualById } from "../data/bhaktiRituals.js";
 import { EmotionConfig } from './EmotionConfig.jsx';
 import { getEmotionClosingLine, getEmotionLabel } from '../data/emotionPractices.js';
 import { useProgressStore } from '../state/progressStore.js';
+import { useProbeState } from '../hooks/useProbeState.js';
+import { useBreathSessionManager } from '../hooks/useBreathSessionManager.js';
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
@@ -617,7 +619,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Shared UI states (non-practice specific)
   const [isRunning, setIsRunning] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(duration * 60);
   
   // When running a practice, get the actual practice ID (accounting for subModes)
   const actualRunningPracticeId = isRunning ? getActualPracticeId(practiceId) : practiceId;
@@ -924,17 +925,51 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     notifyPracticingChange(false, tutorialPracticeId ?? null, false);
   }, [isRunning, tutorialPracticeId, notifyPracticingChange]);
 
-  // Practice session internals - MUST be declared before any useEffect that references them
-  const [activeCircuitId, setActiveCircuitId] = useState(null);
-  const [circuitConfig, setCircuitConfig] = useState(null);
-  const [circuitExerciseIndex, setCircuitExerciseIndex] = useState(0);
-  const [_circuitSavedPractice, setCircuitSavedPractice] = useState(null);
-  const [circuitValidationError, setCircuitValidationError] = useState(null);
-  const [tapErrors, setTapErrors] = useState([]);
-  const [_lastErrorMs, setLastErrorMs] = useState(null);
-  const [lastSignedErrorMs, setLastSignedErrorMs] = useState(null);
-  const [breathCount, setBreathCount] = useState(0);
-  const [sessionStartTime, setSessionStartTime] = useState(null);
+  // Initialize custom hooks for state management
+  const breathSessionState = useBreathSessionManager();
+  const probeState = useProbeState();
+
+  // Destructure breath session state for convenience
+  const {
+    timeLeft, setTimeLeft,
+    countdownValue, setCountdownValue,
+    circuitCountdownRef,
+    breathCount, setBreathCount,
+    sessionStartTime, setSessionStartTime,
+    tapErrors, setTapErrors,
+    lastErrorMs, setLastErrorMs,
+    lastSignedErrorMs, setLastSignedErrorMs,
+    activeCircuitId, setActiveCircuitId,
+    circuitValidationError, setCircuitValidationError,
+    circuitExerciseIndex, setCircuitExerciseIndex,
+    circuitConfig, setCircuitConfig,
+    setCircuitSavedPractice,
+    setVisualizationCycles,
+    activeRitual, setActiveRitual,
+    currentStepIndex, setCurrentStepIndex,
+    ringPresetIndex, setRingPresetIndex,
+    isPresetSwitcherOpen, setIsPresetSwitcherOpen,
+  } = breathSessionState;
+
+  // Destructure probe state for convenience
+  const {
+    curGuideProbeSourceTag, setCurGuideProbeSourceTag,
+    curGuideProbePathId, setCurGuideProbePathId,
+    curGuideProbeSlotIndex, setCurGuideProbeSlotIndex,
+    curGuideProbeGuidanceUrl, setCurGuideProbeGuidanceUrl,
+    curGuideProbeKeys, setCurGuideProbeKeys,
+    lastGuideProbeSourceTag, setLastGuideProbeSourceTag,
+    lastGuideProbePathId, setLastGuideProbePathId,
+    lastGuideProbeSlotIndex, setLastGuideProbeSlotIndex,
+    lastGuideProbeGuidanceUrl, setLastGuideProbeGuidanceUrl,
+    lastGuideProbeKeys, setLastGuideProbeKeys,
+    activePracticeIdentity, setActivePracticeIdentity,
+    lastStartCaller, setLastStartCaller,
+    lastStartAtMsAgo, setLastStartAtMsAgo,
+    apcPathIdProbe, setApcPathIdProbe,
+    apcSlotIndexProbe, setApcSlotIndexProbe,
+    resolvedGuidanceUrlProbe, setResolvedGuidanceUrlProbe,
+  } = probeState;
 
   // Fail-on-exit: Mark pilot session failed if unmounting mid-practice (pilot only, no curriculum mutation)
   useEffect(() => {
@@ -958,15 +993,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
     };
     }, [isRunning, activePracticeSession, activeCircuitId]);
-  const [_visualizationCycles, setVisualizationCycles] = useState(0);
-  const [activeRitual, setActiveRitual] = useState(null);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [countdownValue, setCountdownValue] = useState(null);
-  const circuitCountdownRef = useRef(null);
 
-  // Breath ring preset switcher state (legacy FX preset system removed)
-  const [ringPresetIndex, setRingPresetIndex] = useState(0);
-  const [isPresetSwitcherOpen, setIsPresetSwitcherOpen] = useState(false);
   const currentRingPreset = BREATH_RING_PRESETS[ringPresetIndex] || BREATH_RING_PRESETS[0];
 
   // REFACTOR BRIDGE: Map practiceParams to legacy variable names for stable behavior

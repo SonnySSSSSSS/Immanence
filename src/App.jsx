@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.246 - refactor(PracticeSection): extract probe state and breath session state into custom hooks
   // v3.27.245 - fix(homehub): roll entire side panel container (not inner layer)
   // v3.27.244 - fix(homehub): rollable side panels with stats above images
   // v3.27.243 - fix(homehub): center right panel stack around report action
