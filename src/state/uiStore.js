@@ -30,6 +30,8 @@ export const useUiStore = create((set, get) => ({
     //   persistPreferences?: boolean, // default true; set false for recommendations
     // }
     practiceLaunchContext: null,
+    lastPracticeLaunchContext: null,
+    lastPracticeLaunchContextAt: null,
     
     setPracticeLaunchContext: (ctx) => {
         if (ctx?.source === 'dailySchedule' && ctx?.pathContext?.activePathId) {
@@ -40,7 +42,13 @@ export const useUiStore = create((set, get) => ({
                 guidanceState: ctx.guidance ? 'present' : 'absent',
             });
         }
-        set({ practiceLaunchContext: ctx });
+        set({
+            practiceLaunchContext: ctx,
+            // PROBE:GUIDANCE_CTX_OVERLAY:START
+            lastPracticeLaunchContext: ctx,
+            lastPracticeLaunchContextAt: Date.now(),
+            // PROBE:GUIDANCE_CTX_OVERLAY:END
+        });
     },
     
     clearPracticeLaunchContext: () => set({ practiceLaunchContext: null }),

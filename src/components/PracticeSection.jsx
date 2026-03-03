@@ -439,6 +439,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
   const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
+  const lastPracticeLaunchContext = useUiStore(s => s.lastPracticeLaunchContext);
   const clearPracticeLaunchContext = useUiStore(s => s.clearPracticeLaunchContext);
   const applyLaunchConstraints = useSessionOverrideStore(s => s.applyLaunchConstraints);
   const clearLaunchConstraints = useSessionOverrideStore(s => s.clearLaunchConstraints);
@@ -2731,13 +2732,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     selectedRitualId: activeRitual?.id,
     isEmbedded: true
   };
-  const guideProbeKeys = guideProbeCtx ? Object.keys(guideProbeCtx).join(',').slice(0, 120) : 'NONE';
-  const guideProbePathId = guideProbeCtx?.pathContext?.pathId
+  const curGuideProbeKeys = guideProbeCtx ? Object.keys(guideProbeCtx).join(',').slice(0, 120) : 'NONE';
+  const curGuideProbePathId = guideProbeCtx?.pathContext?.pathId
     ?? guideProbeCtx?.pathContext?.activePathId
     ?? 'NONE';
-  const guideProbeSlotIndex = guideProbeCtx?.pathContext?.slotIndex ?? 'NONE';
-  const guideProbeGuidanceUrl = guideProbeCtx?.guidance?.audioUrl ?? 'NULL';
-  const guideProbeSourceTag = guideProbeCtx?.__sourceTag ?? 'NONE';
+  const curGuideProbeSlotIndex = guideProbeCtx?.pathContext?.slotIndex ?? 'NONE';
+  const curGuideProbeGuidanceUrl = guideProbeCtx?.guidance?.audioUrl ?? 'NULL';
+  const curGuideProbeSourceTag = guideProbeCtx?.__sourceTag ?? 'NONE';
+  const lastGuideProbeKeys = lastPracticeLaunchContext ? Object.keys(lastPracticeLaunchContext).join(',').slice(0, 120) : 'NONE';
+  const lastGuideProbePathId = lastPracticeLaunchContext?.pathContext?.pathId
+    ?? lastPracticeLaunchContext?.pathContext?.activePathId
+    ?? 'NONE';
+  const lastGuideProbeSlotIndex = lastPracticeLaunchContext?.pathContext?.slotIndex ?? 'NONE';
+  const lastGuideProbeGuidanceUrl = lastPracticeLaunchContext?.guidance?.audioUrl ?? 'NULL';
+  const lastGuideProbeSourceTag = lastPracticeLaunchContext?.__sourceTag ?? 'NONE';
 
   return (
     <>
@@ -2777,11 +2785,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }}
       >
         <div style={{ fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>GUIDE PROBE</div>
-        <div>{`sourceTag=${guideProbeSourceTag}`}</div>
-        <div>{`pathId=${guideProbePathId}`}</div>
-        <div>{`slotIndex=${guideProbeSlotIndex}`}</div>
-        <div>{`guidanceUrl=${guideProbeGuidanceUrl}`}</div>
-        <div>{`ctxKeys=${guideProbeKeys}`}</div>
+        <div>{`curSourceTag=${curGuideProbeSourceTag}`}</div>
+        <div>{`curPathId=${curGuideProbePathId}`}</div>
+        <div>{`curSlotIndex=${curGuideProbeSlotIndex}`}</div>
+        <div>{`curGuidanceUrl=${curGuideProbeGuidanceUrl}`}</div>
+        <div>{`curCtxKeys=${curGuideProbeKeys}`}</div>
+        {/* PROBE:GUIDANCE_CTX_OVERLAY:START */}
+        <div>{`lastSourceTag=${lastGuideProbeSourceTag}`}</div>
+        <div>{`lastPathId=${lastGuideProbePathId}`}</div>
+        <div>{`lastSlotIndex=${lastGuideProbeSlotIndex}`}</div>
+        <div>{`lastGuidanceUrl=${lastGuideProbeGuidanceUrl}`}</div>
+        <div>{`lastCtxKeys=${lastGuideProbeKeys}`}</div>
+        {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       </div>
       {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       <div
