@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.245 - fix(homehub): roll entire side panel container (not inner layer)
   // v3.27.244 - fix(homehub): rollable side panels with stats above images
   // v3.27.243 - fix(homehub): center right panel stack around report action
   // v3.27.242 - fix(homehub): rebalance side panel typography for new panel size
@@ -850,7 +851,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.244
+                        v3.27.245
                       </button>
                     </div>
                   </div>

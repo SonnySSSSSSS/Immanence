@@ -537,6 +537,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelTileExpandedMaxHeight = `calc(${panelH} - ((${panelPad}) * 0.9) - 12px)`;
   const sidePanelTileRolledMaxHeight = `calc(${U} * 1.6)`;
+  const PANEL_EXPANDED_H = panelH;
+  const PANEL_COLLAPSED_H = `calc(${U} * 1.35)`;
   const sidePanelTileReportButtonStyle = {
     background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
     color: '#fff',
@@ -659,7 +661,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         >
           {/* PROBE:HOMEHUB_SIDE_PANELS_ROLLUP_V1 */}
           {/* LEFT PANEL - Sessions + Active Days */}
-          <div style={sidePanelFramePrimaryRowStyle}>
+          <div
+            style={{
+              ...sidePanelFramePrimaryRowStyle,
+              height: leftRolled ? PANEL_COLLAPSED_H : PANEL_EXPANDED_H,
+              transition: 'height 220ms ease',
+              overflow: 'hidden',
+            }}
+          >
             <div style={sidePanelTileWrapStyle}>
               <button
                 type="button"
@@ -753,7 +762,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           </div>
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
-          <div style={sidePanelFramePrimaryRowStyle}>
+          <div
+            style={{
+              ...sidePanelFramePrimaryRowStyle,
+              height: rightRolled ? PANEL_COLLAPSED_H : PANEL_EXPANDED_H,
+              transition: 'height 220ms ease',
+              overflow: 'hidden',
+            }}
+          >
             <div style={sidePanelTileWrapStyle}>
               <button
                 type="button"
