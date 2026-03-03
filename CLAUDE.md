@@ -41,6 +41,13 @@ npm run deploy
 
 ## Critical Development Rules
 
+### ⚠️ MANDATORY: Task Spec Path Format
+
+- For task specs, ALLOWLIST and DENYLIST must use exact repo-relative paths (example: `src/components/HomeHub.jsx`).
+- Never use filename-only entries in file scope lists.
+- Do not mix repo-relative and absolute paths in one spec.
+- Only use absolute paths if a task explicitly requires absolute-path mode; if chosen, use absolute paths for all listed files.
+
 ### ⚠️ MANDATORY: Increment Build Version
 
 **Location**: `src/App.jsx` (around line 369)

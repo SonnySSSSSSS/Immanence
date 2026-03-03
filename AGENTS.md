@@ -37,6 +37,13 @@ Every task MUST define:
 
 If any of the above are missing, the task is invalid.
 
+### Path Format Rule (Mandatory)
+
+- In task specs, ALLOWLIST and DENYLIST entries MUST use exact repo-relative paths (for example: `src/components/HomeHub.jsx`).
+- Do not use filename-only entries (for example: `HomeHub.jsx`).
+- Do not mix repo-relative and absolute paths in the same spec.
+- Use absolute paths only when a task explicitly requires absolute-path mode; if used, apply it consistently to every listed file.
+
 Optional task-level flags (must be explicit if used):
 - `NO COMMIT WITHOUT HUMAN APPROVAL`
 - `IMPLEMENT UNCOMMITTED, VERIFY FIRST`
