@@ -43,7 +43,8 @@
       "Bash(pkill -f \"vite\")",
       "Bash(pkill -f \"node.*vite\")",
       "Bash(grep -v \"//\")",
-      "Bash(pkill -f \"npm run dev\")"
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(python3 -c:*)"
     ]
   },
   "mcpServers": {

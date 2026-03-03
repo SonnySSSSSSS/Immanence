@@ -442,7 +442,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
   const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
-  const [guideProbeCtx, setGuideProbeCtx] = useState(null);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
@@ -466,8 +465,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
-  const pathContextAtStartProbeRef = useRef({ pathId: 'NONE', slotIndex: 'NONE' });
-  const resolvedGuidanceUrlProbeRef = useRef('NULL');
   const pausedAtRef = useRef(null);
   const pathGuidanceStartedRef = useRef(false);
   const pathGuidanceWasPausedRef = useRef(false);
@@ -553,7 +550,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setInitiationBenchmarkContext(null);
     setPathLaunchGuidance(undefined);
     activePathContextRef.current = null;
-    resolvedGuidanceUrlProbeRef.current = 'NULL';
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
@@ -710,17 +706,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!practiceLaunchContext) return;
 
     const ctx = practiceLaunchContext;
-    if (ctx.source === 'dailySchedule' && ctx.pathContext?.activePathId) {
-      console.log('[GUIDE-PROBE-PS]', {
-        practiceId: ctx.practiceId ?? null,
-        legId: ctx.legId ?? ctx.pathContext?.slotIndex ?? null,
-        guidance: ctx.guidance ?? null,
-        guidanceState: ctx.guidance ? 'present' : 'absent',
-      });
-    }
-    setGuideProbeCtx(ctx);
     setPathLaunchGuidance(undefined);
-    resolvedGuidanceUrlProbeRef.current = 'NULL';
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
@@ -844,11 +830,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
       activePathContextRef.current = null;
-      resolvedGuidanceUrlProbeRef.current = 'NULL';
       setPathLaunchGuidance(undefined);
     }
   }, [isRunning, pathLaunchGuidance]);
-
   const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
@@ -1114,7 +1098,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     const audioStore = useTempoAudioStore.getState();
-    
+
     if (!isRunning) {
       audioStore.stopReset();
       if (audioStore.source) {
@@ -1123,106 +1107,52 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
 
-    if (pathLaunchGuidance !== undefined) {
-      const guidanceSpec = pathLaunchGuidance;
-      const audioFile = guidanceSpec?.audioUrl || null;
-
-      if (!audioFile) {
-        audioStore.stopReset();
-        if (audioStore.source) {
-          audioStore.setSource(null);
-        }
-        pathGuidanceStartedRef.current = false;
-        pathGuidanceWasPausedRef.current = false;
-        return;
-      }
-
-      if (Number.isFinite(guidanceSpec?.volume)) {
-        audioStore.setVolume(guidanceSpec.volume);
-      }
-
-      if (guidanceSource !== audioFile) {
-        audioStore.setSource(audioFile);
-        pathGuidanceStartedRef.current = false;
-        pathGuidanceWasPausedRef.current = false;
-      }
-
-      if (isSessionPaused) {
-        pathGuidanceWasPausedRef.current = pathGuidanceStartedRef.current;
-        audioStore.pause();
-        return;
-      }
-
-      if (pathGuidanceWasPausedRef.current && guidanceSpec.resumeMode === 'restart') {
-        audioStore.setSource(audioFile);
-      }
-
-      const shouldAutoplay = guidanceSpec.startMode !== 'manual' || pathGuidanceStartedRef.current;
-      if (!shouldAutoplay) {
-        return;
-      }
-
-      pathGuidanceWasPausedRef.current = false;
-      pathGuidanceStartedRef.current = true;
-      audioStore.play();
+    if (pathLaunchGuidance === undefined) {
       return;
     }
- 
-    // DEBUG: Log the entire audio lookup chain
-    console.log('=== AUDIO LOOKUP DEBUG ===');
 
-    const curriculumState = useCurriculumStore.getState();
-    const currentDayNumber = curriculumState.getCurrentDayNumber();
-    const activeLeg = curriculumState.getActivePracticeLeg();
-    const program = curriculumState.getActiveCurriculum();
+    const guidanceSpec = pathLaunchGuidance;
+    const audioFile = guidanceSpec?.audioUrl || null;
 
-    console.log('currentDayNumber:', currentDayNumber);
-    console.log('activeLeg:', activeLeg);
-    console.log('program:', program);
-
-    if (program && program.days) {
-      const dayIndex = currentDayNumber - 1;
-      console.log('dayIndex:', dayIndex);
-      console.log('program.days[dayIndex]:', program.days[dayIndex]);
-      
-      if (program.days[dayIndex] && program.days[dayIndex].legs) {
-        const legObj = program.days[dayIndex].legs.find(l => l.legNumber === activeLeg?.legNumber);
-        console.log('found leg:', legObj);
-        console.log('leg.guidanceAudio:', legObj?.guidanceAudio);
+    if (!audioFile) {
+      audioStore.stopReset();
+      if (audioStore.source) {
+        audioStore.setSource(null);
       }
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      return;
     }
 
-    console.log('=== END DEBUG ===');
-
-    // Get current leg from curriculum store
-    
-    // Get the program definition
-
-    // If we have the program and can locate the current leg, extract guidanceAudio
-    let audioFile = null;
-    if (program && program.days && currentDayNumber && activeLeg) {
-      const dayIndex = currentDayNumber - 1;
-      const day = program.days[dayIndex];
-      if (day && day.legs && Array.isArray(day.legs)) {
-        const leg = day.legs.find(l => l.legNumber === activeLeg.legNumber);
-        if (leg && leg.guidanceAudio) {
-          audioFile = leg.guidanceAudio;
-        }
-      }
+    if (Number.isFinite(guidanceSpec?.volume)) {
+      audioStore.setVolume(guidanceSpec.volume);
     }
-    
-    // Set the audio file (or null if not found)
-    if (guidanceSource !== audioFile) {
+
+    if (audioStore.source !== audioFile) {
       audioStore.setSource(audioFile);
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
     }
-    
+
     if (isSessionPaused) {
+      pathGuidanceWasPausedRef.current = pathGuidanceStartedRef.current;
       audioStore.pause();
       return;
     }
-    
+
+    if (pathGuidanceWasPausedRef.current && guidanceSpec.resumeMode === 'restart') {
+      audioStore.setSource(audioFile);
+    }
+
+    const shouldAutoplay = guidanceSpec.startMode !== 'manual' || pathGuidanceStartedRef.current;
+    if (!shouldAutoplay) {
+      return;
+    }
+
+    pathGuidanceWasPausedRef.current = false;
+    pathGuidanceStartedRef.current = true;
     audioStore.play();
-  }, [guidanceSource, isRunning, isSessionPaused, pathLaunchGuidance]);
+  }, [isRunning, isSessionPaused, pathLaunchGuidance]);
 
   useEffect(() => {
     if (!isRunning && hasSong && isSongPlaying) {
@@ -1819,8 +1749,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         : null;
     }
 
-    resolvedGuidanceUrlProbeRef.current = resolvedPathGuidance?.audioUrl ?? 'NULL';
-
     // Persist preferences only for manual starts (not curriculum/schedule recommendations).
     if (!activePracticeSession && !suppressPrefSaveRef.current) {
       savePreferences({
@@ -1862,18 +1790,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
-      setRingTeardownRequested(false);
-      setLastPracticeStartProbe?.({
-        caller: 'executeStart',
-        practiceId: actualPracticeId,
-        atMs: Date.now(),
-      });
-      // PROBE:PATH_CONTEXT_AT_START:START
-      pathContextAtStartProbeRef.current = {
-        pathId: activePathContextRef.current?.activePathId ?? 'NONE',
-        slotIndex: Number.isFinite(activePathContextRef.current?.slotIndex) ? String(activePathContextRef.current.slotIndex) : 'NONE',
-      };
-      // PROBE:PATH_CONTEXT_AT_START:END
       setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
@@ -1892,18 +1808,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
-    setRingTeardownRequested(false);
-    setLastPracticeStartProbe?.({
-      caller: 'executeStart',
-      practiceId: actualPracticeId,
-      atMs: Date.now(),
-    });
-    // PROBE:PATH_CONTEXT_AT_START:START
-    pathContextAtStartProbeRef.current = {
-      pathId: activePathContextRef.current?.activePathId ?? 'NONE',
-      slotIndex: Number.isFinite(activePathContextRef.current?.slotIndex) ? String(activePathContextRef.current.slotIndex) : 'NONE',
-    };
-    // PROBE:PATH_CONTEXT_AT_START:END
     setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
@@ -2718,29 +2622,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     selectedRitualId: activeRitual?.id,
     isEmbedded: true
   };
-  const curGuideProbeKeys = guideProbeCtx ? Object.keys(guideProbeCtx).join(',').slice(0, 120) : 'NONE';
-  const curGuideProbePathId = guideProbeCtx?.pathContext?.pathId
-    ?? guideProbeCtx?.pathContext?.activePathId
-    ?? 'NONE';
-  const curGuideProbeSlotIndex = guideProbeCtx?.pathContext?.slotIndex ?? 'NONE';
-  const curGuideProbeGuidanceUrl = guideProbeCtx?.guidance?.audioUrl ?? 'NULL';
-  const curGuideProbeSourceTag = guideProbeCtx?.__sourceTag ?? 'NONE';
-  const lastGuideProbeKeys = lastPracticeLaunchContext ? Object.keys(lastPracticeLaunchContext).join(',').slice(0, 120) : 'NONE';
-  const lastGuideProbePathId = lastPracticeLaunchContext?.pathContext?.pathId
-    ?? lastPracticeLaunchContext?.pathContext?.activePathId
-    ?? 'NONE';
-  const lastGuideProbeSlotIndex = lastPracticeLaunchContext?.pathContext?.slotIndex ?? 'NONE';
-  const lastGuideProbeGuidanceUrl = lastPracticeLaunchContext?.guidance?.audioUrl ?? 'NULL';
-  const lastGuideProbeSourceTag = lastPracticeLaunchContext?.__sourceTag ?? 'NONE';
-  const activePracticeIdentity = isRunning ? (actualRunningPracticeId ?? 'NONE') : 'NONE';
-  const lastStartCaller = lastPracticeStartProbe?.caller ?? 'NONE';
-  const lastStartAtMsAgo = Number.isFinite(lastPracticeStartProbe?.atMs)
-    ? Math.max(0, Math.round(Date.now() - lastPracticeStartProbe.atMs))
-    : 'NONE';
-  const apcPathIdProbe = pathContextAtStartProbeRef.current?.pathId ?? 'NONE';
-  const apcSlotIndexProbe = pathContextAtStartProbeRef.current?.slotIndex ?? 'NONE';
-  const resolvedGuidanceUrlProbe = resolvedGuidanceUrlProbeRef.current || 'NULL';
-
   return (
     <>
       <GuidanceAudioController />
