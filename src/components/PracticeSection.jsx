@@ -427,6 +427,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
   const [showInitiationBenchmark, setShowInitiationBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
+  const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
@@ -448,6 +449,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
   const pausedAtRef = useRef(null);
+  const pathGuidanceStartedRef = useRef(false);
+  const pathGuidanceWasPausedRef = useRef(false);
+  const pathGuidanceRanRef = useRef(false);
 
   const resolveInitiationV2BenchmarkContext = useCallback((ctx) => {
     if (!ctx || ctx.source !== 'dailySchedule' || ctx.practiceId !== 'breath') {
@@ -528,6 +532,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
     setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
+    setPathLaunchGuidance(undefined);
+    pathGuidanceStartedRef.current = false;
+    pathGuidanceWasPausedRef.current = false;
+    pathGuidanceRanRef.current = false;
     setPracticeId(id);
     // Save immediately with current state
     savePreferences({
@@ -689,6 +697,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         guidanceState: ctx.guidance ? 'present' : 'absent',
       });
     }
+    if (ctx.pathContext) {
+      setPathLaunchGuidance(Object.prototype.hasOwnProperty.call(ctx, 'guidance') ? (ctx.guidance ?? null) : null);
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      pathGuidanceRanRef.current = false;
+    } else {
+      setPathLaunchGuidance(undefined);
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      pathGuidanceRanRef.current = false;
+    }
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
     setInitiationBenchmarkContext(benchmarkCtx);
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
@@ -795,6 +814,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     clearPracticeLaunchContext?.();
   }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit, resolveInitiationV2BenchmarkContext]);
+
+  useEffect(() => {
+    if (isRunning && pathLaunchGuidance !== undefined) {
+      pathGuidanceRanRef.current = true;
+      return;
+    }
+
+    if (!isRunning && pathGuidanceRanRef.current) {
+      pathGuidanceRanRef.current = false;
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      setPathLaunchGuidance(undefined);
+    }
+  }, [isRunning, pathLaunchGuidance]);
 
   const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -1069,6 +1102,51 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
       return;
     }
+
+    if (pathLaunchGuidance !== undefined) {
+      const guidanceSpec = pathLaunchGuidance;
+      const audioFile = guidanceSpec?.audioUrl || null;
+
+      if (!audioFile) {
+        audioStore.stopReset();
+        if (audioStore.source) {
+          audioStore.setSource(null);
+        }
+        pathGuidanceStartedRef.current = false;
+        pathGuidanceWasPausedRef.current = false;
+        return;
+      }
+
+      if (Number.isFinite(guidanceSpec?.volume)) {
+        audioStore.setVolume(guidanceSpec.volume);
+      }
+
+      if (guidanceSource !== audioFile) {
+        audioStore.setSource(audioFile);
+        pathGuidanceStartedRef.current = false;
+        pathGuidanceWasPausedRef.current = false;
+      }
+
+      if (isSessionPaused) {
+        pathGuidanceWasPausedRef.current = pathGuidanceStartedRef.current;
+        audioStore.pause();
+        return;
+      }
+
+      if (pathGuidanceWasPausedRef.current && guidanceSpec.resumeMode === 'restart') {
+        audioStore.setSource(audioFile);
+      }
+
+      const shouldAutoplay = guidanceSpec.startMode !== 'manual' || pathGuidanceStartedRef.current;
+      if (!shouldAutoplay) {
+        return;
+      }
+
+      pathGuidanceWasPausedRef.current = false;
+      pathGuidanceStartedRef.current = true;
+      audioStore.play();
+      return;
+    }
  
     // DEBUG: Log the entire audio lookup chain
     console.log('=== AUDIO LOOKUP DEBUG ===');
@@ -1124,7 +1202,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
     
     audioStore.play();
-  }, [guidanceSource, isRunning, isSessionPaused]);
+  }, [guidanceSource, isRunning, isSessionPaused, pathLaunchGuidance]);
 
   useEffect(() => {
     if (!isRunning && hasSong && isSongPlaying) {

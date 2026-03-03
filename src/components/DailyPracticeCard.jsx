@@ -1,10 +1,11 @@
 // src/components/DailyPracticeCard.jsx
-import React, { useState, useMemo, useTransition } from 'react';
+import React, { useEffect, useState, useMemo, useTransition } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
+import { useUiStore } from '../state/uiStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey, parseDateKeyToUtcMs } from '../utils/dateUtils.js';
@@ -234,6 +235,25 @@ function extractBreathPresetKeyFromString(s) {
     return null;
 }
 
+function normalizeGuidanceSpec(guidance) {
+    if (!guidance || typeof guidance !== 'object') return null;
+
+    const audioUrl = typeof guidance.audioUrl === 'string' ? guidance.audioUrl.trim() : '';
+    if (!audioUrl) return null;
+
+    const startMode = guidance.startMode === 'manual' ? 'manual' : 'onPracticeStart';
+    const resumeMode = guidance.resumeMode === 'restart' ? 'restart' : 'resume';
+    const volumeRaw = Number(guidance.volume);
+    const volume = Number.isFinite(volumeRaw) ? Math.min(1, Math.max(0, volumeRaw)) : undefined;
+
+    return {
+        audioUrl,
+        startMode,
+        resumeMode,
+        ...(volume !== undefined ? { volume } : {}),
+    };
+}
+
 function resolvePracticeLaunchFromEntry(entry) {
     if (!entry) return null;
 
@@ -253,6 +273,9 @@ function resolvePracticeLaunchFromEntry(entry) {
             entry.practiceParamsPatch && typeof entry.practiceParamsPatch === 'object'
                 ? { ...entry.practiceParamsPatch }
                 : {};
+        const guidance = Object.prototype.hasOwnProperty.call(entry, 'guidance')
+            ? normalizeGuidanceSpec(entry.guidance)
+            : undefined;
 
         // Backward-compat convenience: allow shorthand breathPattern/pattern to map into breath preset.
         if (practiceId === 'breath' && practiceConfig.breathPattern) {
@@ -267,6 +290,7 @@ function resolvePracticeLaunchFromEntry(entry) {
             durationMin: durationMin ?? undefined,
             practiceConfig: Object.keys(practiceConfig).length ? practiceConfig : undefined,
             practiceParamsPatch: Object.keys(practiceParamsPatch).length ? practiceParamsPatch : undefined,
+            guidance,
             overrides: entry.overrides || undefined,
             locks: entry.locks || undefined,
         };
@@ -653,6 +677,84 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Show path-based daily card when an active path with scheduled times exists,
     // regardless of onboarding status â€” prevents falling through to stale curriculum modal
     const hasActivePath = activePathObj && times.length > 0;
+    const launchPathPractice = (slot, slotIndex, slotTime) => {
+        const practiceId = slot?.practiceId;
+        if (!practiceId) return;
+
+        useUiStore.getState().setPracticeLaunchContext({
+            source: "dailySchedule",
+            practiceId,
+            durationMin: Number.isFinite(Number(slot?.durationMin)) ? Number(slot.durationMin) : undefined,
+            practiceParamsPatch: slot?.practiceParamsPatch || undefined,
+            overrides: slot?.overrides || undefined,
+            locks: slot?.locks || undefined,
+            practiceConfig: slot?.practiceConfig || undefined,
+            guidance: slot?.guidance ?? null,
+            pathContext: {
+                runId: activePath?.runId,
+                activePathId: activePath?.activePathId ?? null,
+                slotTime,
+                slotIndex,
+                dayIndex: metrics.dayIndex,
+                weekIndex: Math.ceil(metrics.dayIndex / 7),
+            },
+            persistPreferences: false,
+        });
+        onNavigate?.('practice');
+    };
+
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        if (!hasActivePath) return;
+
+        const onKeyDown = (event) => {
+            const key = String(event.key || '').toLowerCase();
+            if (!(event.ctrlKey && event.shiftKey && key === 's')) return;
+
+            event.preventDefault();
+
+            const targetIndex = times.findIndex((_, idx) => {
+                if (completedSlotIndices.has(idx)) return false;
+                const launch = slotLaunches[idx];
+                if (!launch?.practiceId) return false;
+
+                const requiresBenchmark = activePathObj?.showBreathBenchmark
+                    && !isInitiationV2Path
+                    && launch.practiceId === 'breath';
+
+                return !(requiresBenchmark && !hasBenchmark());
+            });
+
+            if (targetIndex < 0) {
+                console.log('[DEV] Ctrl+Shift+S: no force-start target slot found');
+                return;
+            }
+
+            const slot = slotLaunches[targetIndex];
+            console.log('[DEV] Ctrl+Shift+S: force-starting slot', {
+                slotIndex: targetIndex,
+                practiceId: slot?.practiceId,
+                slotTime: times[targetIndex],
+            });
+
+            launchPathPractice(slot, targetIndex, times[targetIndex]);
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [
+        hasActivePath,
+        times,
+        completedSlotIndices,
+        slotLaunches,
+        activePathObj?.showBreathBenchmark,
+        isInitiationV2Path,
+        hasBenchmark,
+        activePath?.runId,
+        activePath?.activePathId,
+        metrics.dayIndex,
+        onNavigate,
+    ]);
 
     if (hasActivePath || needsSetup || showNoCurriculumSetupState || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
@@ -1043,38 +1145,23 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                     </div>
                                                                 )}
                                                                 {/* Wrapper catches shift-click even when button disabled */}
-                                                                <div onClick={(e) => {
-                                                                    if (e.shiftKey && slotLaunches[idx]?.practiceId) {
+                                                                <div style={{ pointerEvents: 'auto' }} onPointerDown={(e) => {
+                                                                    if (e.shiftKey && slotLaunches[idx]?.practiceId && !benchmarkMissing) {
                                                                         e.preventDefault();
                                                                         e.stopPropagation();
-                                                                        console.log('[DEV] Shift-click override: bypassing time window');
+                                                                        console.log('[DEV] Shift-click override: bypassing time window slot', { idx, practiceId: slotLaunches[idx]?.practiceId });
                                                                         const slot = slotLaunches[idx];
-                                                                        const practiceId = slot?.practiceId;
-                                                                        const durationMin = slot?.durationMin;
-                                                                        const practiceParamsPatch = slot?.practiceParamsPatch;
-                                                                        const practiceConfig = slot?.practiceConfig;
-                                                                        onStartPractice?.({
-                                                                            practiceId,
-                                                                            durationMin,
-                                                                            practiceParamsPatch,
-                                                                            overrides: slot?.overrides,
-                                                                            locks: slot?.locks,
-                                                                            practiceConfig,
-                                                                            pathContext: {
-                                                                                runId: activePath?.runId,
-                                                                                activePathId: activePath?.activePathId,
-                                                                                slotTime: time,
-                                                                                slotIndex: idx,
-                                                                                dayIndex: metrics.dayIndex,
-                                                                                weekIndex: Math.ceil(metrics.dayIndex / 7)
-                                                                            }
-                                                                        });
+                                                                        launchPathPractice(slot, idx, time);
                                                                     }
                                                                 }}>
                                                                     <button
                                                                         onClick={(e) => {
                                                                             if (isUiPickingActive()) return;
                                                                             if (!e.shiftKey) {
+                                                                                if (isOutsideWindow) {
+                                                                                    console.log('[BLOCKED] Time window violation on slot click (shift+click bypasses)');
+                                                                                    return;
+                                                                                }
                                                                                 const slot = slotLaunches[idx];
                                                                                 const practiceId = slot?.practiceId;
                                                                                 const durationMin = slot?.durationMin;
@@ -1095,25 +1182,10 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                                     return;
                                                                                 }
 
-                                                                                onStartPractice?.({
-                                                                                    practiceId,
-                                                                                    durationMin,
-                                                                                    practiceParamsPatch,
-                                                                                    overrides: slot?.overrides,
-                                                                                    locks: slot?.locks,
-                                                                                    practiceConfig,
-                                                                                    pathContext: {
-                                                                                        runId: activePath?.runId,
-                                                                                        activePathId: activePath?.activePathId,
-                                                                                        slotTime: time,
-                                                                                        slotIndex: idx,
-                                                                                        dayIndex: metrics.dayIndex,
-                                                                                        weekIndex: Math.ceil(metrics.dayIndex / 7)
-                                                                                    }
-                                                                                });
+                                                                                launchPathPractice(slot, idx, time);
                                                                             }
                                                                         }}
-                                                                        disabled={isOutsideWindow || benchmarkMissing}
+                                                                        disabled={benchmarkMissing}
                                                                         data-ui-target="true"
                                                                         data-ui-scope="role"
                                                                         data-ui-role-group="dailyPractice"
@@ -1133,7 +1205,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                             ...(isActionable && {
                                                                                 boxShadow: '0 8px 20px var(--accent-30)',
                                                                             }),
-                                                                            pointerEvents: (isOutsideWindow || benchmarkMissing) ? 'none' : 'auto',
                                                                         }}
                                                                     >
                                                                         {benchmarkMissing ? 'Benchmark Required' : (expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start'))}
@@ -1455,27 +1526,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             type="button"
                                             onClick={() => {
                                                 const slot = slotLaunches[idx];
-                                                const practiceId = slot?.practiceId;
-                                                const durationMin = slot?.durationMin;
-                                                const practiceParamsPatch = slot?.practiceParamsPatch;
-                                                const practiceConfig = slot?.practiceConfig;
-                                                if (!practiceId) return;
-                                                onStartPractice?.({
-                                                    practiceId,
-                                                    durationMin,
-                                                    practiceParamsPatch,
-                                                    overrides: slot?.overrides,
-                                                    locks: slot?.locks,
-                                                    practiceConfig,
-                                                    pathContext: {
-                                                        runId: activePath?.runId,
-                                                        activePathId: activePath?.activePathId,
-                                                        slotTime: time,
-                                                        slotIndex: idx,
-                                                        dayIndex: metrics.dayIndex,
-                                                        weekIndex: Math.ceil(metrics.dayIndex / 7),
-                                                    },
-                                                });
+                                                if (!slot?.practiceId) return;
+                                                launchPathPractice(slot, idx, time);
                                             }}
                                             disabled={!isNext || !slotLaunches[idx]?.practiceId}
                                             style={{
@@ -1585,6 +1637,41 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         setActivePracticeSession(dayNumber, leg.legNumber, metadata);
         onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId, metadata });
     };
+
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        if (hasActivePath) return;
+
+        const onKeyDown = (event) => {
+            const key = String(event.key || '').toLowerCase();
+            if (!(event.ctrlKey && event.shiftKey && key === 's')) return;
+
+            event.preventDefault();
+
+            const targetLeg = legs.find((leg) => !leg.completed && (isLegTooEarly(leg) || isLegExpired(leg)))
+                || legs.find((leg) => !leg.completed);
+
+            if (!targetLeg) {
+                console.log('[DEV] Ctrl+Shift+S: no force-start target leg found');
+                return;
+            }
+
+            console.log('[DEV] Ctrl+Shift+S: force-starting leg', {
+                dayNumber,
+                legNumber: targetLeg.legNumber,
+                label: targetLeg.label,
+            });
+
+            handleStartLeg(targetLeg, {
+                shiftKey: true,
+                type: 'keydown',
+                target: { disabled: false },
+            });
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [hasActivePath, legs, dayNumber, handleStartLeg]);
 
     const completedLegs = legs.filter(l => l.completed).length;
     const isDailyComplete = legs.length > 0 && completedLegs === legs.length;
@@ -1856,12 +1943,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                             </div>
                                                         )}
                                                         {/* Wrapper catches shift-click even when button disabled */}
-                                                        <div onClick={(e) => {
-                                                            console.log('[WRAPPER CLICK]', { shiftKey: e.shiftKey, target: e.target });
+                                                        <div style={{ pointerEvents: 'auto' }} onPointerDown={(e) => {
                                                             if (e.shiftKey) {
-                                                                console.log('[WRAPPER] Shift detected, calling handleStartLeg');
                                                                 e.preventDefault();
                                                                 e.stopPropagation();
+                                                                console.log('[DEV] Shift-click override: bypassing time window leg', { legNumber: leg.legNumber, label: leg.label });
                                                                 startTransition(() => handleStartLeg(leg, e));
                                                             }
                                                         }}>
@@ -1869,10 +1955,11 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 onClick={(e) => {
                                                                     if (isUiPickingActive()) return;
                                                                     if (!e.shiftKey) {
+                                                                        if (isLockedLeg) return;
                                                                         handleStartLeg(leg, e);
                                                                     }
                                                                 }}
-                                                                disabled={isLockedLeg || isSoftLocked}
+                                                                disabled={isLockedLeg}
                                                                 data-ui-target="true"
                                                                 data-ui-scope="role"
                                                                 data-ui-role-group="dailyPractice"
@@ -1892,7 +1979,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                     ...(!isLockedLeg && !isSoftLocked && {
                                                                         background: 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
                                                                     }),
-                                                                    pointerEvents: (isLockedLeg || isSoftLocked) ? 'none' : 'auto',
                                                                 }}
                                                             >
                                                                 {expired ? 'Missed' : (tooEarly ? 'Not Yet' : (lastSessionFailed && isActionable ? 'Restart' : (isActionable ? 'Start' : 'Locked')))}

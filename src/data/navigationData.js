@@ -75,8 +75,27 @@ export const paths = [
         showBreathBenchmark: true,
 
         practices: [
-            { type: "Breathing", pattern: "Resonance", duration: 10 },
-            { type: "Body Scan", duration: 12 }
+            {
+                type: "Breathing",
+                pattern: "Resonance",
+                duration: 10,
+                guidance: {
+                    audioUrl: "/audio/breathing guidance/meditation guidance 1.wav",
+                    startMode: "onPracticeStart",
+                    resumeMode: "resume",
+                    volume: 0.8,
+                },
+            },
+            {
+                type: "Body Scan",
+                duration: 12,
+                guidance: {
+                    audioUrl: "/audio/breathing guidance/meditation guidance 2.wav",
+                    startMode: "onPracticeStart",
+                    resumeMode: "resume",
+                    volume: 0.8,
+                },
+            }
         ],
 
         chapters: [],
