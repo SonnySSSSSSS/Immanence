@@ -11,7 +11,6 @@ import {
 import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
-import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUiStore } from "../state/uiStore.js";
 
 const TABS = [
@@ -36,7 +35,6 @@ function ChapterModal({
   onNavigate,
   timeBudgetMin,
 }) {
-  const { mode: displayMode } = useDisplayModeStore();
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isReadingMode, setIsReadingMode] = useState(false);
   const contentRef = useRef(null);
@@ -238,8 +236,8 @@ function ChapterModal({
           className="border-b border-[var(--accent-15)] py-5 flex items-center justify-between gap-4 flex-shrink-0 transition-opacity duration-500"
           style={{ 
             opacity: isReadingMode ? 0.3 : 1,
-            paddingLeft: displayMode === 'hearth' ? '20px' : '32px',
-            paddingRight: displayMode === 'hearth' ? '20px' : '32px',
+            paddingLeft: '20px',
+            paddingRight: '20px',
           }}
         >
           <div
@@ -274,8 +272,8 @@ function ChapterModal({
         <div 
           className="pt-[100px] pb-[80px] text-center"
           style={{
-            paddingLeft: displayMode === 'hearth' ? '24px' : '48px',
-            paddingRight: displayMode === 'hearth' ? '24px' : '48px',
+            paddingLeft: '24px',
+            paddingRight: '24px',
           }}
         >
           <h2
@@ -327,13 +325,13 @@ function ChapterModal({
           className="py-8 prose-content"
           style={{
             fontFamily: "var(--font-body)",
-            fontSize: displayMode === 'hearth' ? '15px' : '17px',
+            fontSize: '15px',
             lineHeight: "1.7",
             color: "rgba(253,251,245,0.92)",
             maxWidth: "65ch", // ~70-80 chars max line length
             margin: "0 auto",
-            paddingLeft: displayMode === 'hearth' ? '24px' : '48px',
-            paddingRight: displayMode === 'hearth' ? '24px' : '48px',
+            paddingLeft: '24px',
+            paddingRight: '24px',
           }}
         >
           {sanitizedExcerpt && (
@@ -380,8 +378,8 @@ function ChapterModal({
               isReadingMode && !isNearBottom
                 ? "translateY(4px)"
                 : "translateY(0)",
-            paddingLeft: displayMode === 'hearth' ? '20px' : '32px',
-            paddingRight: displayMode === 'hearth' ? '20px' : '32px',
+            paddingLeft: '20px',
+            paddingRight: '20px',
           }}
         >
           <button

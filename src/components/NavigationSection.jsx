@@ -76,7 +76,6 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
           lastModeChange={lastModeChange}
           lastSessionComplete={lastSessionComplete}
           path={avatarPath}
-          size="hearth"
         />
       </div>
       {/* The Threshold - Foundation & Path Finder (only show if no active path) */}
@@ -182,7 +181,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
         )}
       </div>
 
-      {/* Path Overlay Modal - adapts to hearth/sanctuary */}
+      {/* Path Overlay Modal - fixed rail layout */}
       {/* Uses LOCAL state (overlayPathId) so it NEVER auto-opens from persisted store */}
       {/* Shows ActivePathState if clicking on already-active path, else PathOverviewPanel */}
       {overlayPathId && createPortal((

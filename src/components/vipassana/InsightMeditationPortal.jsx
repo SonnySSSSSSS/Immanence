@@ -172,7 +172,7 @@ export function InsightMeditationPortal({ onExit }) {
                      <div 
                         className="absolute inset-0 bg-repeat-x bg-contain"
                         style={{ 
-                            backgroundImage: `url(/homeSnow_sanctuary_stylized_mid.webp)`,
+                            backgroundImage: `url(/assets/homeSnow_stylized_mid.webp)`,
                             transform: `translateX(-${offsets.mid}px)`,
                             width: '300%'
                         }}

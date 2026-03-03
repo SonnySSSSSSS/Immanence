@@ -99,8 +99,11 @@ function resolveSizeStyle(size) {
   if (typeof size === 'number' && Number.isFinite(size)) {
     return { width: `${size}px`, height: `${size}px` };
   }
-  if (typeof size === 'string' && size.trim() && size !== 'hearth' && size !== 'sanctuary') {
-    return { width: size, height: size };
+  if (typeof size === 'string') {
+    const trimmed = size.trim();
+    if (trimmed && /\d/.test(trimmed)) {
+      return { width: trimmed, height: trimmed };
+    }
   }
   return { width: '100%', height: '100%' };
 }

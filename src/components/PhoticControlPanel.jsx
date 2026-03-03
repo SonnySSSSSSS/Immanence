@@ -23,7 +23,6 @@ const COLOR_PRESETS = [
 export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbedded = false }) {
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const isHearth = true;
 
     const photic = useEffectivePhotic();
     const setPhoticSettingBase = useSettingsStore((s) => s.setPhoticSetting);
@@ -84,26 +83,16 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
           }
         : {
             position: 'fixed',
-            ...(isHearth
-                ? {
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        maxWidth: '100vw',
-                        maxHeight: '70vh',
-                    }
-                : {
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 'min(340px, 90vw)',
-                        maxHeight: '85vh',
-                    }),
+            bottom: 0,
+            left: 0,
+            right: 0,
+            maxWidth: '100vw',
+            maxHeight: '70vh',
             backgroundColor: isLight ? 'rgba(250, 246, 238, 0.98)' : 'rgba(20, 15, 25, 0.98)',
             border: `1px solid ${isLight ? 'rgba(160, 120, 60, 0.2)' : 'rgba(255,255,255,0.1)'}`,
-            borderRadius: isHearth ? '24px 24px 0 0' : '16px',
+            borderRadius: '24px 24px 0 0',
             backdropFilter: 'blur(12px)',
-            padding: isHearth ? '16px' : '20px',
+            padding: '16px',
             boxShadow: isLight
                 ? '0 -4px 20px rgba(0,0,0,0.1)'
                 : '0 4px 20px rgba(0,0,0,0.4)',
@@ -144,10 +133,7 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
     };
 
     return (
-        <div 
-            className={`photic-control-panel ${isHearth ? 'hearth-mode' : 'sanctuary-mode'}`} 
-            style={containerStyle}
-        >
+        <div className="photic-control-panel" style={containerStyle}>
             {/* Header - Hidden if embedded */}
             {!isEmbedded && (
                 <div

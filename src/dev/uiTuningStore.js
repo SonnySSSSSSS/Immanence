@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   DEFAULT_STAGE,
-  DEFAULT_LAYOUT,
   PLAYGROUND_PRESETS,
 } from "./playgroundPresets.js";
 
@@ -10,13 +9,11 @@ export const useUiTuningStore = create(
   persist(
     (set, get) => ({
       stage: DEFAULT_STAGE,
-      layoutMode: DEFAULT_LAYOUT,
       showBottomLayer: true,
       selectedPreset: "default",
       customPreset: null,
 
       setStage: (stage) => set({ stage }),
-      setLayoutMode: (layoutMode) => set({ layoutMode }),
       setShowBottomLayer: (showBottomLayer) => set({ showBottomLayer }),
       loadPreset: (presetId) => {
         if (presetId === "custom") {
@@ -25,7 +22,6 @@ export const useUiTuningStore = create(
           set({
             selectedPreset: "custom",
             stage: state.customPreset.stage,
-            layoutMode: state.customPreset.layoutMode || DEFAULT_LAYOUT,
             showBottomLayer: state.customPreset.showBottomLayer,
           });
           return;
@@ -36,7 +32,6 @@ export const useUiTuningStore = create(
         set({
           selectedPreset: presetId,
           stage: preset.stage,
-          layoutMode: preset.layoutMode || DEFAULT_LAYOUT,
           showBottomLayer: typeof preset.showBottomLayer === "boolean" ? preset.showBottomLayer : true,
         });
       },
@@ -45,14 +40,12 @@ export const useUiTuningStore = create(
           selectedPreset: "custom",
           customPreset: {
             stage: state.stage,
-            layoutMode: state.layoutMode,
             showBottomLayer: state.showBottomLayer,
           },
         })),
       reset: () =>
         set({
           stage: DEFAULT_STAGE,
-          layoutMode: DEFAULT_LAYOUT,
           showBottomLayer: true,
           selectedPreset: "default",
         }),

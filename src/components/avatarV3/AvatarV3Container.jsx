@@ -2,7 +2,6 @@ import React from 'react';
 import './AvatarV3.css';
 
 export function AvatarV3Container({
-  size = 'hearth',
   isPracticing = false,
   breathDuration,
   breathMin,
@@ -15,7 +14,6 @@ export function AvatarV3Container({
   onTap,
   children,
 }) {
-  const sizeClass = size === 'sanctuary' ? 'avatar-v3--sanctuary' : 'avatar-v3--hearth';
   const presenceClass = settleActive ? 'avatar-v3__presence avatar-v3__presence--settle' : 'avatar-v3__presence';
   const handleTap = (event) => {
     if (onTap) onTap(event);
@@ -23,7 +21,7 @@ export function AvatarV3Container({
 
   return (
     <div
-      className={`avatar-v3 ${sizeClass}`}
+      className="avatar-v3 avatar-v3--default"
       role="img"
       aria-label={ariaLabel}
       onClick={handleTap}

@@ -11,15 +11,12 @@ export function Playground() {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [frameWidth, setFrameWidth] = useState(0);
   const exitingRef = useRef(false);
-  const syncingFromLayoutRef = useRef(false);
 
   const {
     stage,
-    layoutMode,
     showBottomLayer,
     selectedPreset,
     setStage,
-    setLayoutMode,
     setShowBottomLayer,
     loadPreset,
     saveCustomPreset,
@@ -30,7 +27,6 @@ export function Playground() {
   const overridePath = useDevOverrideStore((s) => s.avatarPath);
   const setOverrideStage = useDevOverrideStore((s) => s.setStage);
   const setOverridePath = useDevOverrideStore((s) => s.setAvatarPath);
-  const setOverrideLayoutMode = useDevOverrideStore((s) => s.setLayoutMode);
   const captureSnapshot = useDevOverrideStore((s) => s.captureSnapshot);
   const restoreSnapshot = useDevOverrideStore((s) => s.restoreSnapshot);
   const activatePlayground = useDevOverrideStore((s) => s.activatePlayground);
@@ -49,7 +45,6 @@ export function Playground() {
 
   if (initialUiStateRef.current == null) {
     initialUiStateRef.current = {
-      layoutMode,
       stage,
     };
   }
@@ -59,14 +54,11 @@ export function Playground() {
       if (!snapshot) return;
       const restoredStage = snapshot.previewStage || "Seedling";
       const restoredPath = snapshot.previewPath ?? null;
-      // Layout width modes were removed; keep a single, fixed rail.
       setStage(restoredStage);
       setOverrideStage(restoredStage);
       setOverridePath(restoredPath);
     },
     [
-      setLayoutMode,
-      setOverrideLayoutMode,
       setOverridePath,
       setOverrideStage,
       setStage,
@@ -93,8 +85,6 @@ export function Playground() {
     captureSnapshot(snapshot);
     activatePlayground(snapshot);
 
-    syncingFromLayoutRef.current = true;
-    setOverrideLayoutMode(initialUiState.layoutMode);
     setOverrideStage(initialUiState.stage);
 
     return () => {
@@ -106,7 +96,6 @@ export function Playground() {
     activatePlayground,
     captureSnapshot,
     restorePlaygroundState,
-    setOverrideLayoutMode,
     setOverrideStage,
   ]);
 
@@ -122,16 +111,9 @@ export function Playground() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleExitPlayground]);
 
-  // Drawer -> app stage
-  useEffect(() => {
-    setOverrideLayoutMode(layoutMode);
-  }, [layoutMode, setOverrideLayoutMode]);
-
   useEffect(() => {
     setOverrideStage(stage);
   }, [setOverrideStage, stage]);
-
-  // App -> drawer mode two-way sync removed (width modes removed).
 
   // DevPanel <-> drawer stage sync through shared override store
   useEffect(() => {
@@ -177,9 +159,8 @@ export function Playground() {
   }, []);
 
   const debugLine = useMemo(
-    () =>
-      `BUILD_PROBE: LAYOUT_WIDTH_DEBUG | mode:${layoutMode} | width:${frameWidth}px`,
-    [frameWidth, layoutMode]
+    () => `BUILD_PROBE: LAYOUT_WIDTH_DEBUG | width:${frameWidth}px`,
+    [frameWidth]
   );
 
   return (
@@ -239,14 +220,6 @@ export function Playground() {
                   {opt}
                 </option>
               ))}
-            </select>
-          </div>
-
-          <div className="ui-playground__control-field">
-            <label>Layout</label>
-            <select value={layoutMode} onChange={(e) => setLayoutMode(e.target.value)}>
-              <option value="hearth">Hearth</option>
-              <option value="sanctuary">Sanctuary</option>
             </select>
           </div>
 

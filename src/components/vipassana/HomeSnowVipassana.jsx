@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useDisplayModeStore } from '../../state/displayModeStore';
 
 const CATEGORIES = [
     { id: 'pull', label: 'PULL', icon: '🧲', color: '#60A5FA' },
@@ -9,8 +8,6 @@ const CATEGORIES = [
 ];
 
 export function HomeSnowVipassana({ onExit }) {
-    const { mode } = useDisplayModeStore();
-    const isHearth = mode === 'hearth';
     const assetsPrefix = import.meta.env.BASE_URL + 'assets/';
     
     const [thoughts, setThoughts] = useState([]);
@@ -20,10 +17,10 @@ export function HomeSnowVipassana({ onExit }) {
 
     // Asset paths - using stylized versions
     const assets = {
-        frame: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_frame.png' : 'homeSnow_sanctuary_stylized_frame.png'),
-        bg: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_bg.png' : 'homeSnow_sanctuary_stylized_bg.png'),
-        mid: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_mid.png' : 'homeSnow_sanctuary_stylized_mid.png'),
-        fg: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_fg.png' : 'homeSnow_sanctuary_stylized_fg.png'),
+        frame: assetsPrefix + 'homeSnow_stylized_frame.webp',
+        bg: assetsPrefix + 'homeSnow_stylized_mid.webp',
+        mid: assetsPrefix + 'homeSnow_stylized_mid.webp',
+        fg: assetsPrefix + 'homeSnow_stylized_mid.webp',
         thoughtPack: assetsPrefix + 'thoughtObjects_homeSnow_stylized_pack.png',
     };
 
@@ -51,8 +48,8 @@ export function HomeSnowVipassana({ onExit }) {
             const elapsed = (time - startTime) / 1000;
             
             // Horizontal speeds: BG 0.2x, MID 0.5x, FG 1.0x
-            // We use a modular loop based on image width (860px for hearth)
-            const width = isHearth ? 860 : 1640; // Double the viewport width
+            // We use a modular loop based on image width (860px rail)
+            const width = 860; // Double the viewport width
             setOffsets({
                 bg: (elapsed * 15) % (width / 2),
                 mid: (elapsed * 40) % (width / 2),
@@ -75,7 +72,7 @@ export function HomeSnowVipassana({ onExit }) {
         };
         animationFrameRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrameRef.current);
-    }, [activeThought, isHearth, spawnThought]);
+    }, [activeThought, spawnThought]);
 
     const handleTag = (categoryId) => {
         if (!activeThought) return;

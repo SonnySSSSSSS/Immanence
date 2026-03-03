@@ -17,7 +17,6 @@ export function AvatarV3({
   lastModeChange: _lastModeChange,
   lastSessionComplete: _lastSessionComplete,
   path = null,
-  size = 'hearth',
   onTap,
   showDetailsOnTap = true,
 }) {
@@ -36,12 +35,10 @@ export function AvatarV3({
   };
 
   const ariaLabel = `${STAGE_LABELS[stage] || 'Seedling'} stage, ${MODE_LABELS[dominantMode] || 'Photic'} dominant mode`;
-  const sizeClass = size === 'sanctuary' ? 'avatar-v3--sanctuary' : 'avatar-v3--hearth';
-
   return (
     <>
       <div
-        className={`avatar-v3 ${sizeClass}`}
+        className="avatar-v3 avatar-v3--default"
         role="img"
         aria-label={ariaLabel}
         onClick={handleTap}

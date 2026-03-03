@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useDisplayModeStore } from '../state/displayModeStore';
 
 export function SakshiVisual() {
-    const { mode } = useDisplayModeStore();
-    const isHearth = mode === 'hearth';
     const assetsPrefix = import.meta.env.BASE_URL + 'assets/';
 
     const [offset, setOffset] = useState(0);
@@ -11,9 +8,9 @@ export function SakshiVisual() {
     const lastSpawnTime = useRef(0);
 
     const assets = {
-        frame: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_frame.png' : 'homeSnow_sanctuary_stylized_frame.png'),
-        bg: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_bg.png' : 'homeSnow_sanctuary_stylized_bg.png'),
-        mid: assetsPrefix + (isHearth ? 'homeSnow_hearth_stylized_mid.png' : 'homeSnow_sanctuary_stylized_mid.png'),
+        frame: assetsPrefix + 'homeSnow_stylized_frame.webp',
+        bg: assetsPrefix + 'homeSnow_stylized_mid.webp',
+        mid: assetsPrefix + 'homeSnow_stylized_mid.webp',
         thoughtPack: assetsPrefix + 'thoughtObjects_homeSnow_stylized_pack.png',
     };
 

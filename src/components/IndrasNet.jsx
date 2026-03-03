@@ -2,17 +2,17 @@
 // INDRA'S NET - Stage-aware cosmic particles at bottom
 //
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// CRITICAL PATTERN: Display Mode Particle Rendering
+// CRITICAL PATTERN: Layout Width Particle Rendering
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //
-// PROBLEM: When switching between hearth (430px) and sanctuary (820px) modes,
+// PROBLEM: When switching between layout widths (e.g., 430px and 820px),
 // canvas-rendered particles would stretch or shrink because the canvas element
 // was being resized while particles were still visible.
 //
 // SOLUTION: THREE-LAYER PROTECTION SYSTEM
 //
 // 1. KEY-BASED REMOUNTING (Primary Protection)
-//    - Canvas gets a new React key when displayMode changes
+//    - Canvas gets a new React key when the layout key changes
 //    - Forces complete unmount/remount cycle with clean state
 //    - Prevents any possibility of stretched particles persisting
 //
@@ -27,12 +27,12 @@
 //    - Resize handler only reinitializes on significant width changes (>50px)
 //
 // âš ï¸ DO NOT REMOVE OR MODIFY THIS PATTERN WITHOUT TESTING:
-//    - Toggle between hearth/sanctuary modes multiple times
+//    - Toggle between different layout widths multiple times
 //    - Verify particles maintain consistent size across transitions
 //    - Check that no stretching, squashing, or duplication occurs
 //
 // TESTING CHECKLIST:
-// [ ] Switch hearth â†’ sanctuary â†’ hearth â†’ sanctuary rapidly
+// [ ] Switch layout widths rapidly
 // [ ] Verify particle size stays constant (no stretch/shrink)
 // [ ] Confirm smooth fade transition (no flicker or jump)
 // [ ] Check particle count remains consistent (no duplication)
@@ -53,11 +53,12 @@ const STAGE_PARTICLE_COLORS = {
     stellar: { primary: 'rgba(192, 132, 252, ', glow: 'rgba(168, 85, 247, ' },   // Purple
 };
 
-export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false, displayMode = 'hearth' }) {
+export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = false }) {
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const widthRef = useRef(430);
     const heightRef = useRef(600);
+    const layoutKey = 'rail';
 
     // Hide particles during any practice session
     const hideParticles = isPracticing;
@@ -67,22 +68,22 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
     // LAYER 1: KEY-BASED REMOUNTING
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     // âš ï¸ CRITICAL: This key forces React to unmount/remount the canvas element
-    // when displayMode changes, ensuring particles are never stretched
-    const [canvasKey, setCanvasKey] = useState(`canvas-${displayMode}-0`);
+    // when the layout key changes, ensuring particles are never stretched
+    const [canvasKey, setCanvasKey] = useState(`canvas-${layoutKey}-0`);
     const [opacity, setOpacity] = useState(1);
 
-    // Track mode changes and trigger remount with fade transition
-    const prevModeRef = useRef(displayMode);
+    // Track layout key changes and trigger remount with fade transition
+    const prevLayoutRef = useRef(layoutKey);
     useEffect(() => {
-        if (prevModeRef.current !== displayMode) {
+        if (prevLayoutRef.current !== layoutKey) {
             // LAYER 2: FADE TRANSITION - Smooth visual experience
             setOpacity(0);
 
             // After fade completes, remount canvas with new key
             const timer = setTimeout(() => {
                 // Update key â†’ React unmounts old canvas, mounts new one
-                setCanvasKey(`canvas-${displayMode}-${Date.now()}`);
-                prevModeRef.current = displayMode;
+                setCanvasKey(`canvas-${layoutKey}-${Date.now()}`);
+                prevLayoutRef.current = layoutKey;
 
                 // Reset state for fresh initialization
                 initializedRef.current = false;
@@ -96,7 +97,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
 
             return () => clearTimeout(timer);
         }
-    }, [displayMode]);
+    }, [layoutKey]);
 
     // NORMALIZED COORDINATE SYSTEM - Particles stored in 0-1 space
     // This ensures they never stretch regardless of canvas width
@@ -202,7 +203,7 @@ export function IndrasNet({ stage = 'flame', isPracticing = false, isLight = fal
             window.removeEventListener('resize', resize);
             cancelAnimationFrame(animationFrame);
         };
-    }, [stage, isPracticing, isLight, displayMode, PARTICLE_VERSION]);
+    }, [stage, isPracticing, isLight, PARTICLE_VERSION]);
 
     // Don't render particles during body scan practice
     if (hideParticles) {

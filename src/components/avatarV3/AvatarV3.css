@@ -7,14 +7,9 @@
   filter: drop-shadow(0 18px 38px rgba(0, 0, 0, 0.35));
 }
 
-.avatar-v3--hearth {
+.avatar-v3--default {
   width: min(48vw, 195px);
   height: min(48vw, 195px);
-}
-
-.avatar-v3--sanctuary {
-  width: min(42vw, 240px);
-  height: min(42vw, 240px);
 }
 
 .avatar-v3__drift {

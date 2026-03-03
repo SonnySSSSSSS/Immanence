@@ -16,9 +16,6 @@ export function clearSettingsPersistedState() {
 export const useSettingsStore = create(
     persist(
         (set) => ({
-            // Display mode: 'sanctuary' (default cosmic UI) or 'hearth' (alternative)
-            displayMode: 'sanctuary',
-
             // LLM model preference
             llmModel: 'gemma3:1b',
 
@@ -74,8 +71,6 @@ export const useSettingsStore = create(
             setLightModeRingType: (type) => set({ lightModeRingType: type }),
             setCoordinateHelper: (show) => set({ showCoordinateHelper: show }),
             setUseNewAvatars: (useNew) => set({ useNewAvatars: useNew }),
-            setDisplayMode: (mode) => set({ displayMode: mode }),
-
             setLlmModel: (model) => set({ llmModel: model }),
 
             setThemeStageOverride: (stage) => set({ themeStageOverride: stage }),
@@ -159,7 +154,6 @@ export const useSettingsStore = create(
 
             // Reset to defaults
             resetSettings: () => set({
-                displayMode: 'sanctuary',
                 llmModel: 'gemma3:1b',
                 themeStageOverride: null,
                 masterVolume: 0.7,
