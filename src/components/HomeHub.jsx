@@ -148,20 +148,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [launcherContext, setLauncherContext] = useState(null);
   const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
   const [frameRect, setFrameRect] = useState(null);
-  const homeSwipeRailRef = useRef(null);
-  const [homeSwipePage, setHomeSwipePage] = useState(0);
-  const homeSwipePracticeRef = useRef(null);
-  const homeSwipeProgressRef = useRef(null);
-  const [homeSwipeHeight, setHomeSwipeHeight] = useState(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  void homeSwipeHeight;
 
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent('dev:card-carousel-change', { detail: { carouselId: 'homeHubSwipe', page: homeSwipePage } }));
-  }, [homeSwipePage]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -173,54 +162,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     }
   }, []);
 
-  useEffect(() => {
-    const el = homeSwipeRailRef.current;
-    if (!el) return;
-    if (typeof ResizeObserver === 'undefined') return;
-
-    const getPageWidth = () => {
-      const cs = window.getComputedStyle(el);
-      const pl = Number.parseFloat(cs.paddingLeft) || 0;
-      const pr = Number.parseFloat(cs.paddingRight) || 0;
-      return Math.max(1, el.clientWidth - pl - pr);
-    };
-
-    const updateMetrics = () => {
-      const w = getPageWidth();
-      const idx = Math.max(0, Math.min(1, Math.round(el.scrollLeft / w)));
-      setHomeSwipePage(idx);
-
-      const activeNode = idx === 0 ? homeSwipePracticeRef.current : homeSwipeProgressRef.current;
-      if (activeNode) {
-        const h = Math.round(activeNode.getBoundingClientRect().height);
-        if (Number.isFinite(h) && h > 0) setHomeSwipeHeight(h);
-      }
-    };
-
-    const ro = new ResizeObserver(() => updateMetrics());
-
-    if (homeSwipePracticeRef.current) ro.observe(homeSwipePracticeRef.current);
-    if (homeSwipeProgressRef.current) ro.observe(homeSwipeProgressRef.current);
-
-    updateMetrics();
-    el.addEventListener('scroll', updateMetrics, { passive: true });
-    window.addEventListener('resize', updateMetrics);
-    return () => {
-      ro.disconnect();
-      el.removeEventListener('scroll', updateMetrics);
-      window.removeEventListener('resize', updateMetrics);
-    };
-  }, []);
-
-  const scrollHomeSwipeTo = (index) => {
-    const el = homeSwipeRailRef.current;
-    if (!el) return;
-    const cs = window.getComputedStyle(el);
-    const pl = Number.parseFloat(cs.paddingLeft) || 0;
-    const pr = Number.parseFloat(cs.paddingRight) || 0;
-    const w = Math.max(1, el.clientWidth - pl - pr);
-    el.scrollTo({ left: index * w, behavior: 'smooth' });
-  };
 
   useLayoutEffect(() => {
     const update = (tag = "update") => {
@@ -425,8 +366,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   // PROBE:HOMEHUB_SIDE_PANEL_GEOM
   const RAIL_W = SANCTUARY_MODULE_MAX_WIDTH;
   const U = `calc(${RAIL_W} / 24)`;
-  const panelW = `clamp(110px, calc(${RAIL_W} * 0.22), 180px)`;
-  const panelH = `clamp(180px, calc(${RAIL_W} * 0.55), 260px)`;
+  const panelW = `clamp(94px, calc(${RAIL_W} * 0.185), 153px)`;
+  const panelH = `clamp(164px, calc(${RAIL_W} * 0.56), 211px)`;
   const panelPad = `calc(${U} * 1.0)`;
   const panelRadius = `calc(${U} * 1.2)`;
   const coverH = `calc((${panelH}) - ((${panelPad}) * 2) - ((${U}) * 3.0))`;
@@ -451,6 +392,10 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     overflow: 'hidden',
     position: 'relative',
   };
+  const sidePanelFramePrimaryRowStyle = {
+    ...sidePanelFrameStyle,
+    transform: 'translateY(0)',
+  };
   const sidePanelCoverRectStyle = {
     width: '100%',
     height: '100%',
@@ -473,8 +418,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelMetricCellStyle = {
     width: '100%',
-    flex: '1 1 0',
+    flex: '0 1 auto',
     minWidth: 0,
+    minHeight: '32px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -599,7 +545,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
             display: 'flex',
             alignItems: 'center',
             width: '100%',
-            gap: '12px',
+            gap: '18px',
             padding: '0 4px',
             maxWidth: RAIL_W,
             margin: '0 auto 16px',
@@ -608,31 +554,28 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         >
           {/* PROBE:HOMEHUB_SIDE_PANELS_ROLLUP_V1 */}
           {/* LEFT PANEL - Sessions + Active Days */}
-          <div style={sidePanelFrameStyle}>
+          <div style={sidePanelFramePrimaryRowStyle}>
             {/* Stats layer — always visible underneath */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: panelPad, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setLeftOpen((open) => !open)}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: `calc(${U} * 0.8)` }}>
                 <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                  <div className="type-metric text-[22px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', fontWeight: '600' }}>
                     {Math.round(hubTiles?.sessions_total ?? 0)}
                   </div>
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    SESSIONS
+                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.08em', fontWeight: '400' }}>
+                    Sessions
+                  </div>
+                  <div className="type-label text-[8px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.4)' : 'rgba(255, 255, 255, 0.30)', letterSpacing: '0.08em' }}>
+                    (14D WINDOW)
                   </div>
                 </div>
                 <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric text-[20px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)' }}>
+                  <div className="type-metric text-[22px]" style={{ color: isLight ? 'rgba(45, 35, 25, 0.95)' : 'rgba(255, 255, 255, 0.95)', fontWeight: '600' }}>
                     {Math.round(hubTiles?.days_active ?? 0)}
                   </div>
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    ACTIVE DAYS
+                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.08em', fontWeight: '400' }}>
+                    Active Days
                   </div>
-                </div>
-              </div>
-              <div style={{ flexShrink: 0 }}>
-                <div aria-hidden="true" style={{ height: 1, width: '70%', margin: '10px auto 10px', background: isLight ? 'rgba(100, 80, 60, 0.10)' : 'rgba(255, 255, 255, 0.10)' }} />
-                <div className="type-label text-[9px]" style={{ width: '100%', textAlign: 'center', color: isLight ? 'rgba(100, 80, 60, 0.48)' : 'rgba(255, 255, 255, 0.34)', letterSpacing: '0.08em' }}>
-                  14D WINDOW
                 </div>
               </div>
             </div>
@@ -642,7 +585,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               onClick={() => setLeftOpen((open) => !open)}
             >
               <Collapse isOpened={!leftOpen}>
-                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(0.72) contrast(0.94) brightness(0.93)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                   <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
                     PRACTICE LOG
                   </div>
@@ -692,7 +635,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           </div>
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
-          <div style={sidePanelFrameStyle}>
+          <div style={sidePanelFramePrimaryRowStyle}>
             {/* Stats layer — always visible underneath */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: panelPad, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setRightOpen((open) => !open)}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', paddingTop: '4px', paddingBottom: '8px' }}>
@@ -705,8 +648,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     darkFillAlpha: 0.9,
                     lightFillAlpha: 0.88,
                   })}
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.08em' }}>
-                    COMPLETION
+                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.08em', fontWeight: '400' }}>
+                    Completion
                   </div>
                 </div>
                 <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '4px' }}>
@@ -718,8 +661,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     darkFillAlpha: 0.9,
                     lightFillAlpha: 0.88,
                   })}
-                  <div className="type-label text-[9px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.6)' : 'rgba(255, 255, 255, 0.45)', letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    ON‑TIME
+                  <div className="type-label text-[12px]" style={{ color: isLight ? 'rgba(100, 80, 60, 0.52)' : 'rgba(255, 255, 255, 0.40)', letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: '400' }}>
+                    On-Time
                   </div>
                 </div>
               </div>
@@ -730,7 +673,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   style={{
                     background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
                     color: '#fff',
-                    boxShadow: '0 3px 10px var(--accent-30)',
+                    boxShadow: '0 3px 10px var(--accent-15)',
                     width: '100%',
                     fontSize: '9px',
                     letterSpacing: '0.08em',
@@ -738,7 +681,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     cursor: 'pointer',
                   }}
                 >
-                  VIEW REPORT
+                  REPORT
                 </button>
               </div>
             </div>
@@ -748,7 +691,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               onClick={() => setRightOpen((open) => !open)}
             >
               <Collapse isOpened={!rightOpen}>
-                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(0.72) contrast(0.94) brightness(0.93)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                   <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
                     RHYTHM REPORT
                   </div>
@@ -759,17 +702,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         </div>
         {/* PROBE:HOMEHUB_SIDE_PANELS_V1:END */}
 
-        {/* STATUS & CONTROL INSTRUMENT - Agency | Continuity (No StageTitle - moved to top) */}
-        <HubStagePanel
-          stage={effectiveStage}
-          path={previewPath}
-          showCore={previewShowCore}
-          attention={previewAttention}
-          lastPracticed={lastPracticed}
-          onOpenHardwareGuide={onOpenHardwareGuide}
-          onOpenHonorLog={() => setShowHonorModal(true)}
-          hideStageTitle={true}
-        />
       </div>
 
       {/* Honor Log Modal */}
@@ -792,7 +724,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
       {/* ──────────────────────────────────────────────────────────────────────
           CONTENT SECTIONS - Full width, controlled by parent container
           ────────────────────────────────────────────────────────────────────── */}
-      <div className="w-full px-4 flex flex-col items-center gap-3 pb-4">
+      <div className="w-full px-4 flex flex-col items-center gap-2 pb-4">
 
         {/* EXPLORE MODES - Navigation Buttons */}
         {userMode !== 'student' && (
@@ -876,110 +808,28 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           </div>
         )}
 
-        {/* PRACTICE + PROGRESS: Swipe Rail (1 card per page) */}
-        <div className="w-full" style={SANCTUARY_RAIL_STYLE}>
-          <div
-            className="w-full overflow-x-hidden overflow-y-visible"
-            style={{
-              minHeight: '200px',
-              transition: 'height 280ms ease',
-              willChange: 'height',
-              paddingBottom: '12px',
-            }}
-          >
-              <div
-                ref={homeSwipeRailRef}
-                data-card-carousel-root="homeHubSwipe"
-                className="flex w-full items-start gap-0 overflow-x-auto no-scrollbar"
-                style={{
-                  scrollSnapType: 'x mandatory',
-                  WebkitOverflowScrolling: 'touch',
-                  scrollBehavior: 'smooth',
-                  overflowY: 'visible',
-                  overscrollBehaviorX: 'contain',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                }}
-              >
-                <section
-                  className="shrink-0 basis-full w-full"
-                  style={{ minWidth: '100%', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-                >
-                <div ref={homeSwipePracticeRef} className="w-full">
-                {disableDailyCard ? (
-                  <div
-                    className="w-full relative"
-                    style={{
-                      maxWidth: 'var(--ui-rail-max, min(430px, 94vw))',
-                      margin: '0 auto',
-                      borderRadius: '24px',
-                      // Intentionally no shadow, no blur, no filter. If jagged corners persist, it is not this card.
-                      boxShadow: 'none',
-                      filter: 'none',
-                      transform: 'none',
-                      background: isLight ? 'rgba(250, 246, 238, 0.10)' : 'rgba(0, 0, 0, 0.10)',
-                      border: '1px dashed rgba(255, 80, 80, 0.65)',
-                      minHeight: '520px',
-                    }}
-                    >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 10,
-                        left: 12,
-                        fontSize: 12,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        opacity: 0.85,
-                        color: isLight ? 'rgba(60, 50, 35, 0.75)' : 'rgba(255,255,255,0.75)',
-                      }}
-                    >
-                      BUILD_PROBE: DailyPracticeCard disabled
-                    </div>
-                  </div>
-                ) : (
-                  <DailyPracticeCard
-                    onStartPractice={handleStartPractice}
-                    onViewCurriculum={openCurriculumHub}
-                    onNavigate={handleSelectSection}
-                    devCardActive={homeSwipePage === 0}
-                    devCardCarouselId="homeHubSwipe"
-                    hasPersistedCurriculumData={hasPersistedCurriculumData}
-                    onboardingComplete={curriculumOnboardingComplete}
-                    practiceTimeSlots={practiceTimeSlots}
-                    onStartSetup={() => handleSelectSection('navigation')}
-                    isTutorialTarget={isDailyCardTutorialTarget}
-                    showPerLegCompletion={false}
-                    showDailyCompletionNotice={true}
-                    showSessionMeter={false}
-                    debugShadowOff={dailyCardShadowOff}
-                    debugBlurOff={dailyCardBlurOff}
-                    debugBorderOff={dailyCardBorderOff}
-                    debugMaskOff={dailyCardMaskOff}
-                  />
-                )}
-
-                {showBuildProbe && (
-                  <div
-                    className="mt-2 text-[11px] uppercase tracking-[0.12em]"
-                    style={{
-                      opacity: 0.8,
-                      color: isLight ? 'rgba(60, 50, 35, 0.65)' : 'rgba(255,255,255,0.65)',
-                      userSelect: 'text',
-                    }}
-                  >
-                    BUILD_PROBE: HomeHub flags | disableDailyCard:{String(disableDailyCard)}
-                  </div>
-                )}
-                </div>
-                </section>
-              </div>
-            </div>
+        {/* PRACTICE + PROGRESS: Curriculum Card */}
+        <div className="w-full pt-2" style={{
+          ...SANCTUARY_RAIL_STYLE,
+          borderTop: `1px solid ${isLight ? 'rgba(100, 80, 60, 0.15)' : 'rgba(255, 255, 255, 0.08)'}`,
+        }}>
+          <div className="w-full">
+            <DailyPracticeCard
+              onStartPractice={handleStartPractice}
+              onViewCurriculum={openCurriculumHub}
+              onNavigate={handleSelectSection}
+              hasPersistedCurriculumData={hasPersistedCurriculumData}
+              onboardingComplete={curriculumOnboardingComplete}
+              practiceTimeSlots={practiceTimeSlots}
+              onStartSetup={() => handleSelectSection('navigation')}
+              isTutorialTarget={isDailyCardTutorialTarget}
+              showPerLegCompletion={false}
+              showDailyCompletionNotice={true}
+              showSessionMeter={false}
+            />
+          </div>
         </div>
 
-
-        {/* MODES SELECTION - Container with consistent width */}
-        
         {/* Curriculum Hub/Report Modal - Portaled to document.body */}
         {showCurriculumHub && createPortal(
           (() => {

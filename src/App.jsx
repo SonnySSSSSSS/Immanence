@@ -435,6 +435,13 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.240 - fix(homehub): align side panels to avatar ring band (geometry only)
+  // v3.27.239 - ui(homehub): desaturate side-panel cover images for better visual blending
+  // v3.27.238 - refactor(homehub): scope side-panel Y offset to primary row style only
+  // v3.27.237 - ui(homehub): reduce side panel footprint, increase center gap, and lower panel row emphasis
+  // v3.27.236 - refactor(homehub): spacing adjustments (tighten gap, add curriculum section separator)
+  // v3.27.235 - refactor(homehub): typography refinements (soften text scale, lock metrics) + button text reduction
+  // v3.27.234 - refactor(homehub): remove stage title and daily practice card; consolidate to avatar + side panels
   // v3.27.233 - refactor: remove display-mode residue and unify rail sizing
   // v3.27.231 - fix: remove in-session benchmark gating; student-mode shift+click warning when no benchmark
   // v3.27.230 - fix(precision-rail): restore synthetic getCurriculumDay + fix satisfied slot counting
@@ -839,7 +846,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.233
+                        v3.27.240
                       </button>
                     </div>
                   </div>
