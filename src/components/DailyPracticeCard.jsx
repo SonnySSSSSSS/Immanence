@@ -5,6 +5,7 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
+import { useUserModeStore } from '../state/userModeStore.js';
 import { useUiStore } from '../state/uiStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
@@ -543,6 +544,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const benchmark = useBreathBenchmarkStore(s => s.benchmark);
     const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
     const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark);
+    const userMode = useUserModeStore(s => s.userMode);
 
     // Canonical practice launches for each slot (practiceId + duration + params)
     const slotLaunches = useMemo(() => {
@@ -721,11 +723,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 const launch = slotLaunches[idx];
                 if (!launch?.practiceId) return false;
 
-                const requiresBenchmark = activePathObj?.showBreathBenchmark
-                    && !isInitiationV2Path
-                    && launch.practiceId === 'breath';
-
-                return !(requiresBenchmark && !hasBenchmark());
+                return true;
             });
 
             if (targetIndex < 0) {
@@ -1077,13 +1075,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                 const scheduledAt = localDateTimeFromDateKeyAndTime(slotDateKey, time);
                                                 const { tooEarly, expired } = scheduledAt ? getStartWindowState({ now: new Date(), scheduledAt }) : { tooEarly: false, expired: false };
                                                 const isOutsideWindow = tooEarly || expired;
-                                                // Check if benchmark is required but not completed
-                                                const requiresBenchmark = activePathObj?.showBreathBenchmark
-                                                    && !isInitiationV2Path
-                                                    && slotLaunches[idx]?.practiceId === 'breath';
-                                                const benchmarkMissing = requiresBenchmark && !hasBenchmark();
                                                 // Each slot opens independently based on its own time window (allows partial day completion)
-                                                const isActionable = !isDone && !isOutsideWindow && !benchmarkMissing && slotLaunches[idx]?.practiceId;
+                                                const isActionable = !isDone && !isOutsideWindow && slotLaunches[idx]?.practiceId;
                                                 // Format the date for display
                                                 const slotDate = new Date(`${slotDateKey}T00:00:00`);
                                                 const dateStr = slotDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -1149,9 +1142,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                 )}
                                                                 {/* Wrapper catches shift-click even when button disabled */}
                                                                 <div style={{ pointerEvents: 'auto' }} onPointerDown={(e) => {
-                                                                    if (e.shiftKey && slotLaunches[idx]?.practiceId && !benchmarkMissing) {
+                                                                    if (e.shiftKey && slotLaunches[idx]?.practiceId) {
                                                                         e.preventDefault();
                                                                         e.stopPropagation();
+                                                                        if (userMode === 'student' && activePathObj?.showBreathBenchmark && !hasBenchmark()) {
+                                                                            alert('No breathing benchmark recorded.\n\nTo complete your benchmark: go to Navigation, select your path, and complete the Benchmark step before activating.');
+                                                                            return;
+                                                                        }
                                                                         console.log('[DEV] Shift-click override: bypassing time window slot', { idx, practiceId: slotLaunches[idx]?.practiceId });
                                                                         const slot = slotLaunches[idx];
                                                                         launchPathPractice(slot, idx, time);
@@ -1188,7 +1185,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                                 launchPathPractice(slot, idx, time);
                                                                             }
                                                                         }}
-                                                                        disabled={benchmarkMissing}
                                                                         data-ui-target="true"
                                                                         data-ui-scope="role"
                                                                         data-ui-role-group="dailyPractice"
@@ -1199,18 +1195,18 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                         data-practice-id={slotLaunches[idx]?.practiceId ? `daily-slot:${idx}:${slotLaunches[idx].practiceId}` : undefined}
                                                                         className="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                         style={{
-                                                                            background: (isOutsideWindow || benchmarkMissing)
+                                                                            background: isOutsideWindow
                                                                                 ? (isLight ? 'rgba(60,50,35,0.06)' : 'rgba(255,255,255,0.08)')
                                                                                 : 'linear-gradient(135deg, var(--accent-color), var(--accent-70))',
-                                                                            color: (isOutsideWindow || benchmarkMissing) ? (isLight ? '#3c3020' : 'var(--accent-color)') : '#fff',
-                                                                            boxShadow: (isOutsideWindow || benchmarkMissing) ? 'none' : '0 3px 10px var(--accent-30)',
-                                                                            cursor: (isOutsideWindow || benchmarkMissing) ? 'not-allowed' : 'pointer',
+                                                                            color: isOutsideWindow ? (isLight ? '#3c3020' : 'var(--accent-color)') : '#fff',
+                                                                            boxShadow: isOutsideWindow ? 'none' : '0 3px 10px var(--accent-30)',
+                                                                            cursor: isOutsideWindow ? 'not-allowed' : 'pointer',
                                                                             ...(isActionable && {
                                                                                 boxShadow: '0 8px 20px var(--accent-30)',
                                                                             }),
                                                                         }}
                                                                     >
-                                                                        {benchmarkMissing ? 'Benchmark Required' : (expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start'))}
+                                                                        {expired ? 'Missed' : (tooEarly ? 'Not Yet' : 'Start')}
                                                                     </button>
                                                                 </div>
                                                             </div>

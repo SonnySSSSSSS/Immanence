@@ -13,7 +13,6 @@ import { VIPASSANA_THEMES } from "../data/vipassanaThemes.js";
 import { SoundConfig, BINAURAL_PRESETS, ISOCHRONIC_PRESETS, SOUND_TYPES } from "./SoundConfig.jsx";
 import { BreathConfig, BREATH_PRESETS } from "./BreathConfig.jsx";
 import { BreathBenchmark } from "./BreathBenchmark.jsx";
-import { BenchmarkBreathworkUI } from "./BenchmarkBreathworkUI.jsx";
 import { SensoryConfig, SENSORY_TYPES } from "./SensoryConfig.jsx";
 import { VisualizationConfig } from "./VisualizationConfig.jsx";
 import { CymaticsConfig } from "./CymaticsConfig.jsx";
@@ -441,7 +440,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [duration, setDuration] = useState(savedPrefs.duration || 10);
   const [isSessionPaused, setIsSessionPaused] = useState(false);
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
-  const [showInitiationBenchmark, setShowInitiationBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
   const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
   const [guideProbeCtx, setGuideProbeCtx] = useState(null);
@@ -552,7 +550,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const handleSelectPractice = useCallback((id) => {
     suppressPrefSaveRef.current = false;
     clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
-    setShowInitiationBenchmark(false);
     setInitiationBenchmarkContext(null);
     setPathLaunchGuidance(undefined);
     activePathContextRef.current = null;
@@ -1785,46 +1782,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   };
 
-  const initiationComparisonBaseline = useMemo(() => {
-    const runId = initiationBenchmarkContext?.runId || null;
-    if (!runId) return null;
-    return benchmarksByRunId?.[runId]?.day1 || null;
-  }, [benchmarksByRunId, initiationBenchmarkContext?.runId]);
-
-  const handleInitiationBenchmarkCancel = useCallback(() => {
-    setShowInitiationBenchmark(false);
-  }, []);
-
-  const handleInitiationBenchmarkSave = useCallback((results) => {
-    const ctx = initiationBenchmarkContext || {};
-    const runId = ctx.runId || activePathContextRef.current?.runId || activePath?.runId || null;
-    const dayIndex = Number(ctx.dayIndex || activePathContextRef.current?.dayIndex || 0);
-
-    const snapshot = {
-      inhale: Math.max(0, Math.round(Number(results?.inhale) || 0)),
-      hold1: Math.max(0, Math.round(Number(results?.hold1) || 0)),
-      exhale: Math.max(0, Math.round(Number(results?.exhale) || 0)),
-      hold2: Math.max(0, Math.round(Number(results?.hold2) || 0)),
-    };
-
-    saveRunBenchmark?.({
-      runId,
-      dayNumber: dayIndex,
-      results: snapshot,
-    });
-
-    setInitiationBenchmarkContext(null);
-    setShowInitiationBenchmark(false);
-
-    // Let the benchmark modal unmount before starting the real practice.
-    setTimeout(() => {
-      handleStart();
-    }, 100);
-  }, [
-    initiationBenchmarkContext,
-    activePath,
-    saveRunBenchmark,
-  ]);
 
   // Declare executeStart before useEffect that calls it
   const executeStart = useCallback(() => {
@@ -2015,41 +1972,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [circuitConfig, practiceId, circuitValidationError]);
 
   const handleStart = (durationOverrideSec = null, ritualOverride = null) => {
+    // Clear initiation context — benchmark gating removed; recording happens at path selection only
     if (practiceId === 'breath' && initiationBenchmarkContext) {
-      const runId = initiationBenchmarkContext.runId;
-      const benchmarkState = useBreathBenchmarkStore.getState();
-      const alreadySatisfied = runId && benchmarkState.hasBenchmarkForRun(runId);
-
-      if (alreadySatisfied) {
-        // Benchmark already completed in navigation — copy to benchmarksByRunId for day-14 baseline
-        const attemptData = benchmarkState.getAttemptBenchmark(runId);
-        if (attemptData?.benchmark) {
-          // saveRunBenchmark param is named 'results'; value comes from attemptData.benchmark snapshot
-          saveRunBenchmark?.({
-            runId,
-            dayNumber: initiationBenchmarkContext.dayIndex, // 1-based: 1 or 14
-            results: attemptData.benchmark,
-          });
-        } else {
-          console.warn('[PracticeSection] hasBenchmarkForRun satisfied but benchmark payload missing', { runId });
-        }
-        // Apply 75% starting pattern to practice config
-        const startingPattern = benchmarkState.getStartingPattern();
-        if (startingPattern) {
-          setPattern(startingPattern);
-          setPreset(null);
-        }
-        // Clear context so it doesn't re-gate on next Start
-        setInitiationBenchmarkContext(null);
-        // Fall through to normal executeStart path below
-      } else {
-        const logScheduleAdherenceStart = useNavigationStore.getState().logScheduleAdherenceStart;
-        if (logScheduleAdherenceStart) {
-          logScheduleAdherenceStart({ actualStartTime: Date.now() });
-        }
-        setShowInitiationBenchmark(true);
-        return;
-      }
+      setInitiationBenchmarkContext(null);
     }
 
     // Get the actual practice ID to run (handles subModes)
@@ -2820,13 +2745,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     <>
       <GuidanceAudioController />
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
-      <BenchmarkBreathworkUI
-        isOpen={showInitiationBenchmark}
-        dayNumber={initiationBenchmarkContext?.dayIndex || 1}
-        comparisonBaseline={initiationComparisonBaseline}
-        onCancel={handleInitiationBenchmarkCancel}
-        onSave={handleInitiationBenchmarkSave}
-      />
+
       {/* PROBE:GUIDANCE_CTX_OVERLAY:START */}
       <div
         style={{
