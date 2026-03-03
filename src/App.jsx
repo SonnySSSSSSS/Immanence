@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.244 - fix(homehub): rollable side panels with stats above images
   // v3.27.243 - fix(homehub): center right panel stack around report action
   // v3.27.242 - fix(homehub): rebalance side panel typography for new panel size
   // v3.27.241 - fix(homehub): retune side panel bounds to avatar visible ring
@@ -849,7 +850,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.243
+                        v3.27.244
                       </button>
                     </div>
                   </div>

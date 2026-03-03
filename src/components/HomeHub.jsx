@@ -6,7 +6,6 @@ import { createPortal } from 'react-dom';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Collapse } from 'react-collapse';
 import { StageTitle } from "./StageTitle.jsx";
 import { HubCardSwiper } from "./HubCardSwiper.jsx";
 import { CompactStatsCard } from "./CompactStatsCard.jsx";
@@ -148,8 +147,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const [launcherContext, setLauncherContext] = useState(null);
   const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
   const [frameRect, setFrameRect] = useState(null);
-  const [leftOpen, setLeftOpen] = useState(false);
-  const [rightOpen, setRightOpen] = useState(false);
+  const [leftRolled, setLeftRolled] = useState(false);
+  const [rightRolled, setRightRolled] = useState(false);
 
 
   useEffect(() => {
@@ -456,6 +455,101 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     letterSpacing: '0.07em',
     fontWeight: '400',
   };
+  const sidePanelTileWrapStyle = {
+    position: 'absolute',
+    inset: 0,
+    padding: `calc(${panelPad} * 0.45)`,
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: `calc(${U} * 0.28)`,
+  };
+  const sidePanelHandleButtonStyle = {
+    alignSelf: 'center',
+    width: `clamp(24px, calc(${U} * 1.7), 36px)`,
+    height: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    flexShrink: 0,
+  };
+  const sidePanelHandleLineStyle = {
+    width: '100%',
+    height: '2px',
+    borderRadius: '999px',
+    background: isLight ? 'rgba(100, 80, 60, 0.42)' : 'rgba(255, 255, 255, 0.32)',
+  };
+  const sidePanelTileContentBaseStyle = {
+    width: '100%',
+    flex: '1 1 auto',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: `calc(${U} * 0.28)`,
+    transition: 'max-height 260ms ease, opacity 220ms ease',
+  };
+  const sidePanelTileStatsRowStyle = {
+    width: '100%',
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: `calc(${U} * 0.18)`,
+    alignItems: 'start',
+    flexShrink: 0,
+  };
+  const sidePanelTileMetricCellStyle = {
+    ...sidePanelMetricCellStyle,
+    minHeight: 'auto',
+    gap: 0,
+  };
+  const sidePanelTileValueStyle = {
+    ...sidePanelHeadlineValueStyle,
+    fontSize: '16px',
+    lineHeight: 0.9,
+  };
+  const sidePanelTileLabelStyle = {
+    ...sidePanelMetricLabelStyle,
+    fontSize: '8px',
+    lineHeight: 1,
+    letterSpacing: '0.06em',
+  };
+  const sidePanelTileSubLabelStyle = {
+    ...sidePanelMetricSubLabelStyle,
+    fontSize: '6px',
+    lineHeight: 1,
+    letterSpacing: '0.06em',
+  };
+  const sidePanelTileImageStyle = {
+    width: '100%',
+    height: `calc(${U} * 2.2)`,
+    flexShrink: 0,
+    borderRadius: `calc(${panelRadius} * 0.72)`,
+    overflow: 'hidden',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    opacity: 0.3,
+    transition: 'opacity 220ms ease',
+  };
+  const sidePanelTileExpandedMaxHeight = `calc(${panelH} - ((${panelPad}) * 0.9) - 12px)`;
+  const sidePanelTileRolledMaxHeight = `calc(${U} * 1.6)`;
+  const sidePanelTileReportButtonStyle = {
+    background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
+    color: '#fff',
+    boxShadow: '0 3px 10px var(--accent-15)',
+    width: '100%',
+    fontSize: '6px',
+    lineHeight: 1,
+    letterSpacing: '0.06em',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '3px 0',
+    flexShrink: 0,
+  };
   const sidePanelFooterStyle = {
     width: '100%',
     height: panelFooterH,
@@ -474,17 +568,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     display: 'flex',
     alignItems: 'flex-end',
     justifyContent: 'center',
-  };
-  const sidePanelCoverLabelStyle = {
-    width: '100%',
-    padding: `calc(${U} * 0.65)`,
-    boxSizing: 'border-box',
-    background: isLight
-      ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 248, 236, 0.78))'
-      : 'linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.62))',
-    color: isLight ? 'rgba(65, 48, 28, 0.92)' : 'rgba(255, 255, 255, 0.92)',
-    letterSpacing: '0.08em',
-    textAlign: 'center',
   };
   const sidePanelInnerPadStyle = {
     width: '100%',
@@ -552,7 +635,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
   return (
     <div className="w-full flex flex-col items-center relative overflow-visible">
-      <style>{`.ReactCollapse--collapse { transition: height 260ms ease; overflow: hidden; }`}</style>
       {/* Background is handled by Background.jsx globally */}
 
       {/* ──────────────────────────────────────────────────────────────────────
@@ -578,42 +660,55 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
           {/* PROBE:HOMEHUB_SIDE_PANELS_ROLLUP_V1 */}
           {/* LEFT PANEL - Sessions + Active Days */}
           <div style={sidePanelFramePrimaryRowStyle}>
-            {/* Stats layer — always visible underneath */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: `calc(${panelPad} * 0.9)`, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setLeftOpen((open) => !open)}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: `calc(${U} * 0.45)` }}>
-                <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric" style={sidePanelHeadlineValueStyle}>
-                    {Math.round(hubTiles?.sessions_total ?? 0)}
+            <div style={sidePanelTileWrapStyle}>
+              <button
+                type="button"
+                aria-expanded={!leftRolled}
+                aria-label={leftRolled ? 'Expand practice log panel' : 'Collapse practice log panel'}
+                onClick={() => setLeftRolled((rolled) => !rolled)}
+                style={sidePanelHandleButtonStyle}
+              >
+                <span aria-hidden="true" style={sidePanelHandleLineStyle} />
+              </button>
+              <div
+                style={{
+                  ...sidePanelTileContentBaseStyle,
+                  maxHeight: leftRolled ? sidePanelTileRolledMaxHeight : sidePanelTileExpandedMaxHeight,
+                  opacity: leftRolled ? 0.86 : 1,
+                }}
+              >
+                <div style={sidePanelTileStatsRowStyle}>
+                  <div style={sidePanelTileMetricCellStyle}>
+                    <div className="type-metric" style={sidePanelTileValueStyle}>
+                      {Math.round(hubTiles?.sessions_total ?? 0)}
+                    </div>
+                    <div className="type-label" style={sidePanelTileLabelStyle}>
+                      Sessions
+                    </div>
+                    <div className="type-label" style={sidePanelTileSubLabelStyle}>
+                      14D
+                    </div>
                   </div>
-                  <div className="type-label" style={sidePanelMetricLabelStyle}>
-                    Sessions
-                  </div>
-                  <div className="type-label" style={sidePanelMetricSubLabelStyle}>
-                    (14D WINDOW)
+                  <div style={sidePanelTileMetricCellStyle}>
+                    <div className="type-metric" style={sidePanelTileValueStyle}>
+                      {Math.round(hubTiles?.days_active ?? 0)}
+                    </div>
+                    <div className="type-label" style={sidePanelTileLabelStyle}>
+                      Active
+                    </div>
+                    <div className="type-label" style={sidePanelTileSubLabelStyle}>
+                      Days
+                    </div>
                   </div>
                 </div>
-                <div style={sidePanelMetricCellStyle}>
-                  <div className="type-metric" style={sidePanelHeadlineValueStyle}>
-                    {Math.round(hubTiles?.days_active ?? 0)}
-                  </div>
-                  <div className="type-label" style={sidePanelMetricLabelStyle}>
-                    Active Days
-                  </div>
-                </div>
+                <div
+                  style={{
+                    ...sidePanelTileImageStyle,
+                    backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`,
+                    filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
+                  }}
+                />
               </div>
-            </div>
-            {/* Image cover — rolls up on tap to reveal stats */}
-            <div
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, cursor: 'pointer' }}
-              onClick={() => setLeftOpen((open) => !open)}
-            >
-              <Collapse isOpened={!leftOpen}>
-                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(0.72) contrast(0.94) brightness(0.93)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                  <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
-                    PRACTICE LOG
-                  </div>
-                </div>
-              </Collapse>
             </div>
           </div>
 
@@ -659,67 +754,68 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
 
           {/* RIGHT PANEL - Completion + On-Time + View Report */}
           <div style={sidePanelFramePrimaryRowStyle}>
-            {/* Stats layer — always visible underneath */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: `calc(${panelPad} * 0.9)`, boxSizing: 'border-box', cursor: 'pointer' }} onClick={() => setRightOpen((open) => !open)}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', gap: `calc(${U} * 0.18)`, paddingTop: '1px', paddingBottom: '1px' }}>
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '1px' }}>
-                  {renderRateRing(hubTiles?.completion_rate, isLight, {
-                    size: 42,
-                    strokeWidth: 3.25,
-                    darkTrackAlpha: 0.16,
-                    lightTrackAlpha: 0.26,
-                    darkFillAlpha: 0.9,
-                    lightFillAlpha: 0.88,
-                  })}
-                  <div className="type-label" style={{ ...sidePanelMetricLabelStyle, fontSize: '9px', lineHeight: 1.02, letterSpacing: '0.06em' }}>
-                    Completion
+            <div style={sidePanelTileWrapStyle}>
+              <button
+                type="button"
+                aria-expanded={!rightRolled}
+                aria-label={rightRolled ? 'Expand rhythm report panel' : 'Collapse rhythm report panel'}
+                onClick={() => setRightRolled((rolled) => !rolled)}
+                style={sidePanelHandleButtonStyle}
+              >
+                <span aria-hidden="true" style={sidePanelHandleLineStyle} />
+              </button>
+              <div
+                style={{
+                  ...sidePanelTileContentBaseStyle,
+                  maxHeight: rightRolled ? sidePanelTileRolledMaxHeight : sidePanelTileExpandedMaxHeight,
+                  opacity: rightRolled ? 0.86 : 1,
+                }}
+              >
+                <div style={sidePanelTileStatsRowStyle}>
+                  <div style={{ ...sidePanelTileMetricCellStyle, gap: '1px' }}>
+                    {renderRateRing(hubTiles?.completion_rate, isLight, {
+                      size: 28,
+                      strokeWidth: 3,
+                      darkTrackAlpha: 0.16,
+                      lightTrackAlpha: 0.26,
+                      darkFillAlpha: 0.9,
+                      lightFillAlpha: 0.88,
+                    })}
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap' }}>
+                      Complete
+                    </div>
+                  </div>
+                  <div style={{ ...sidePanelTileMetricCellStyle, gap: '1px' }}>
+                    {renderRateRing(hubTiles?.on_time_rate, isLight, {
+                      size: 28,
+                      strokeWidth: 3,
+                      darkTrackAlpha: 0.16,
+                      lightTrackAlpha: 0.26,
+                      darkFillAlpha: 0.9,
+                      lightFillAlpha: 0.88,
+                    })}
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap' }}>
+                      On-Time
+                    </div>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); openArchive(ARCHIVE_TABS.REPORTS); }}
                   className="type-label rounded-full font-bold transition-all hover:scale-105"
-                  style={{
-                    background: `linear-gradient(135deg, var(--accent-color), var(--accent-70))`,
-                    color: '#fff',
-                    boxShadow: '0 3px 10px var(--accent-15)',
-                    width: '100%',
-                    fontSize: '7px',
-                    lineHeight: 1,
-                    letterSpacing: '0.06em',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px 0',
-                  }}
+                  style={sidePanelTileReportButtonStyle}
                 >
                   REPORT
                 </button>
-                <div style={{ ...sidePanelMetricCellStyle, flex: '0 0 auto', gap: '1px' }}>
-                  {renderRateRing(hubTiles?.on_time_rate, isLight, {
-                    size: 42,
-                    strokeWidth: 3.25,
-                    darkTrackAlpha: 0.16,
-                    lightTrackAlpha: 0.26,
-                    darkFillAlpha: 0.9,
-                    lightFillAlpha: 0.88,
-                  })}
-                  <div className="type-label" style={{ ...sidePanelMetricLabelStyle, fontSize: '9px', lineHeight: 1.02, letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    On-Time
-                  </div>
-                </div>
+                <div
+                  style={{
+                    ...sidePanelTileImageStyle,
+                    height: `calc(${U} * 1.8)`,
+                    backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`,
+                    filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
+                  }}
+                />
               </div>
-            </div>
-            {/* Image cover — rolls up on tap to reveal stats */}
-            <div
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, cursor: 'pointer' }}
-              onClick={() => setRightOpen((open) => !open)}
-            >
-              <Collapse isOpened={!rightOpen}>
-                <div style={{ width: '100%', height: panelH, backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(0.72) contrast(0.94) brightness(0.93)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                  <div className="type-label text-[9px]" style={sidePanelCoverLabelStyle}>
-                    RHYTHM REPORT
-                  </div>
-                </div>
-              </Collapse>
             </div>
           </div>
         </div>
