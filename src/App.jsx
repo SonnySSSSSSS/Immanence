@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.241 - fix(homehub): retune side panel bounds to avatar visible ring
   // v3.27.240 - fix(homehub): align side panels to avatar ring band (geometry only)
   // v3.27.239 - ui(homehub): desaturate side-panel cover images for better visual blending
   // v3.27.238 - refactor(homehub): scope side-panel Y offset to primary row style only
@@ -846,7 +847,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.240
+                        v3.27.241
                       </button>
                     </div>
                   </div>

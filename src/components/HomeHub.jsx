@@ -367,7 +367,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const RAIL_W = SANCTUARY_MODULE_MAX_WIDTH;
   const U = `calc(${RAIL_W} / 24)`;
   const panelW = `clamp(94px, calc(${RAIL_W} * 0.185), 153px)`;
-  const panelH = `clamp(164px, calc(${RAIL_W} * 0.56), 211px)`;
+  const panelH = `clamp(112px, calc(${RAIL_W} * 0.305), 132px)`;
   const panelPad = `calc(${U} * 1.0)`;
   const panelRadius = `calc(${U} * 1.2)`;
   const coverH = `calc((${panelH}) - ((${panelPad}) * 2) - ((${U}) * 3.0))`;
@@ -394,7 +394,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   };
   const sidePanelFramePrimaryRowStyle = {
     ...sidePanelFrameStyle,
-    transform: 'translateY(0)',
+    transform: 'translateY(-18px)',
   };
   const sidePanelCoverRectStyle = {
     width: '100%',
