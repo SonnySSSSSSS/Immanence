@@ -452,6 +452,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
+  const pathContextAtStartProbeRef = useRef({ pathId: 'NONE', slotIndex: 'NONE' });
   const pausedAtRef = useRef(null);
   const pathGuidanceStartedRef = useRef(false);
   const pathGuidanceWasPausedRef = useRef(false);
@@ -1876,6 +1877,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         practiceId: actualPracticeId,
         atMs: Date.now(),
       });
+      // PROBE:PATH_CONTEXT_AT_START:START
+      pathContextAtStartProbeRef.current = {
+        pathId: activePathContextRef.current?.activePathId ?? 'NONE',
+        slotIndex: Number.isFinite(activePathContextRef.current?.slotIndex) ? String(activePathContextRef.current.slotIndex) : 'NONE',
+      };
+      // PROBE:PATH_CONTEXT_AT_START:END
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1899,6 +1906,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       practiceId: actualPracticeId,
       atMs: Date.now(),
     });
+    // PROBE:PATH_CONTEXT_AT_START:START
+    pathContextAtStartProbeRef.current = {
+      pathId: activePathContextRef.current?.activePathId ?? 'NONE',
+      slotIndex: Number.isFinite(activePathContextRef.current?.slotIndex) ? String(activePathContextRef.current.slotIndex) : 'NONE',
+    };
+    // PROBE:PATH_CONTEXT_AT_START:END
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -2763,6 +2776,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const lastStartAtMsAgo = Number.isFinite(lastPracticeStartProbe?.atMs)
     ? Math.max(0, Math.round(Date.now() - lastPracticeStartProbe.atMs))
     : 'NONE';
+  const apcPathIdProbe = pathContextAtStartProbeRef.current?.pathId ?? 'NONE';
+  const apcSlotIndexProbe = pathContextAtStartProbeRef.current?.slotIndex ?? 'NONE';
 
   return (
     <>
@@ -2819,6 +2834,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         <div>{`lastStartCaller=${lastStartCaller}`}</div>
         <div>{`lastStartAtMsAgo=${lastStartAtMsAgo}`}</div>
         {/* PROBE:PRACTICE_START_CALLSITE:END */}
+        {/* PROBE:PATH_CONTEXT_AT_START:START */}
+        <div>{`apcPathId=${apcPathIdProbe}`}</div>
+        <div>{`apcSlotIndex=${apcSlotIndexProbe}`}</div>
+        {/* PROBE:PATH_CONTEXT_AT_START:END */}
       </div>
       {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       <div
