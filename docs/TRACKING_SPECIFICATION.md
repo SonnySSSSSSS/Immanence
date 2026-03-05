@@ -299,6 +299,21 @@ The following are not tracked or stored:
 
 ---
 
+### Persistence Ownership Contract Alignment
+
+This tracking spec follows the canonical contract in `docs/ARCHITECTURE.md` (`Canonical Persistence Ownership Contract`).
+
+| Concept | Authoritative owner | Tracking alignment rule |
+|---|---|---|
+| Session completion history | `progressStore` | All completion writes flow through `recordPracticeSession` into `progressStore`; no parallel canonical write path |
+| Schedule adherence and slot-window outcomes | `navigationStore` | Adherence events remain owned by `navigationStore` and may be consumed by reporting selectors |
+| Curriculum day/leg completion state | `curriculumStore` | Tracking does not persist leg-completion truth; it only consumes completion context |
+| Benchmark prerequisite truth | `breathBenchmarkStore` | Tracking may annotate benchmark context but does not own benchmark state |
+| Ritual defaults and completion markers | `ritualStore` | Ritual usage metrics derive from canonical ritual/session state; tracking is non-owner |
+| Tutorial completion state | `tutorialStore` | Tutorial completion is not duplicated in tracking state |
+
+---
+
 ### Enforcement Rule
 
 Any new tracking feature must answer:

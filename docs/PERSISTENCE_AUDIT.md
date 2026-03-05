@@ -4,6 +4,15 @@ Date: 2026-03-05
 Scope: `src/state`, `src/components`, `src/hooks`  
 Method: repository grep of `persist(`, `name:`, and `localStorage.getItem/setItem/removeItem`
 
+## Contract Locked On
+
+Contract locked on: **2026-03-05**
+
+- Canonical owner contract: `docs/ARCHITECTURE.md` -> `Canonical Persistence Ownership Contract`
+- Tracking alignment contract: `docs/TRACKING_SPECIFICATION.md` -> `Persistence Ownership Contract Alignment`
+
+Any future ownership change must update both linked sections and this audit in the same change.
+
 ## Coverage Summary
 
 | Metric | Count |
@@ -151,4 +160,3 @@ Method: repository grep of `persist(`, `name:`, and `localStorage.getItem/setIte
 rg -n "persist\\(|name:\\s*['\"]|localStorage\\.(getItem|setItem|removeItem)" src/state src/components src/hooks
 rg -n "Key Inventory|Overlap Matrix|Authoritative Owner|Orphan|Remediation Plan|Coverage Summary" docs/PERSISTENCE_AUDIT.md
 ```
-

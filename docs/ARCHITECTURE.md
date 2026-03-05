@@ -232,6 +232,19 @@ Checkpoints occur every 14 days. Users can switch between consecutive and flexib
 | `avatarV3Store` | (persisted) | Avatar layer tuning, mode weights |
 | `devPanelStore` | (persisted) | Dev panel composite tuning |
 
+### Canonical Persistence Ownership Contract
+
+Contract intent: one concept -> one authoritative owner. Non-owner stores may derive or consume, but must not become a second persisted source of truth.
+
+| Concept | Authoritative owner | Non-owner boundaries |
+|---|---|---|
+| Session completion history | `progressStore` (`immanenceOS.progress`) | `trackingStore` is derived/reporting only; legacy `immanence_sessions_v1` remains migration-compat only |
+| Schedule adherence and slot-window outcomes | `navigationStore` (`immanenceOS.navigationState`) | `curriculumStore` consumes adherence outcomes for gating/expectations but does not own adherence logs |
+| Curriculum day/leg completion state | `curriculumStore` (`immanenceOS.curriculum`) | `navigationStore` and `progressStore` must not duplicate leg-completion persistence |
+| Benchmark prerequisite truth | `breathBenchmarkStore` (`immanence-breath-benchmark`) | Other stores/components are read-only consumers of benchmark state |
+| Ritual defaults and ritual completion markers | `ritualStore` (`ritual-storage`) | UI components should not persist ad-hoc ritual keys as long-term ownership |
+| Tutorial completion state | `tutorialStore` (`immanence.tutorial`) | Dev tutorial override/admin flags remain separate dev-scope controls, not canonical completion truth |
+
 ### Session-Only Stores
 
 | Store | Purpose |
