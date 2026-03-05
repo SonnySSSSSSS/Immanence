@@ -22,6 +22,19 @@ import {
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
 const SCHEDULE_MATCH_RADIUS_MIN = 90;
+const createFallbackRunId = () => `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+const generateRunId = () => {
+    try {
+        const uuid = globalThis?.crypto?.randomUUID?.();
+        if (typeof uuid === 'string' && uuid.trim().length > 0) {
+            return uuid;
+        }
+    } catch {
+        // Fall back below.
+    }
+    return createFallbackRunId();
+};
 
 const getPathDurationDays = (pathId) => {
     const path = getPathById(pathId);
@@ -114,7 +127,7 @@ export const useNavigationStore = create(
                     state.pendingAttemptRunId.length > 0;
                 const pendingAttemptRunId = keepExistingPending
                     ? state.pendingAttemptRunId
-                    : (requiresBenchmark ? (crypto?.randomUUID?.() || String(Date.now())) : null);
+                    : (requiresBenchmark ? generateRunId() : null);
                 if (!keepExistingPending && requiresBenchmark && pendingAttemptRunId) {
                     useBreathBenchmarkStore.getState().resetAttemptBenchmark(pendingAttemptRunId);
                 }
@@ -150,7 +163,7 @@ export const useNavigationStore = create(
                     state.pendingAttemptRunId.length > 0;
                 const runId = hasPendingAttempt
                     ? state.pendingAttemptRunId
-                    : (crypto?.randomUUID?.() || String(Date.now()));
+                    : generateRunId();
                 // Align Day 1 to the selected first slot time:
                 // if the first slot window has already passed today, Day 1 begins tomorrow.
                 const curriculumState = useCurriculumStore.getState();
@@ -749,7 +762,7 @@ export const useNavigationStore = create(
                 const state = get();
                 if (!state.activePath) return;
 
-                const runId = crypto.randomUUID();
+                const runId = generateRunId();
                 useBreathBenchmarkStore.getState().resetAttemptBenchmark(runId);
                 console.log('[restartPath] NEW RUN', runId);
                 const pathId = state.activePath.activePathId;
