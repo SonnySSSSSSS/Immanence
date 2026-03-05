@@ -31,12 +31,18 @@ export function DonutChart({
     // Calculate arcs
     const { arcs, total } = useMemo(() => {
         const t = segments.reduce((sum, s) => sum + (s.value || 0), 0) || 1;
-        let currentAngle = -Math.PI / 2; // Start at top
+
+        // Pre-compute all slice angles and start angles (no mutation)
+        const sliceAngles = segments.map(s => (s.value / t) * 2 * Math.PI);
+        const startAngles = sliceAngles.reduce(
+            (acc, angle) => [...acc, acc[acc.length - 1] + angle],
+            [-Math.PI / 2]
+        ).slice(0, -1);
 
         const arcSegments = segments.map((segment, i) => {
-            const sliceAngle = (segment.value / t) * 2 * Math.PI;
-            const startAngle = currentAngle;
-            const endAngle = currentAngle + sliceAngle;
+            const sliceAngle = sliceAngles[i];
+            const startAngle = startAngles[i];
+            const endAngle = startAngle + sliceAngle;
 
             // Calculate start point
             const x1 = radius + outerR * Math.cos(startAngle);
@@ -62,8 +68,6 @@ export function DonutChart({
                 `A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4}`,
                 'Z'
             ].join(' ');
-
-            currentAngle = endAngle;
 
             // Midpoint for label positioning
             const midAngle = startAngle + sliceAngle / 2;
