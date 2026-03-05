@@ -2,7 +2,6 @@
 // Shared Stop button and timer display for all practice types
 
 import React from 'react';
-import { useDisplayModeStore } from '../../state/displayModeStore.js';
 
 /**
  * Unified Stop button and timer display for practice sessions
@@ -26,8 +25,6 @@ export function PracticeControls({
   radialGlow = null,
   children,
 }) {
-  const colorScheme = useDisplayModeStore(s => s.colorScheme);
-  const isLight = colorScheme === 'light';
 
   const defaultButtonBg = 'linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)';
   const defaultShadow = 'inset 0 1px 0 rgba(255,255,255,0.35)';

@@ -121,16 +121,6 @@ export function PhoticControlPanel({ isRunning, onToggleRunning, onClose, isEmbe
         flexShrink: 0,
     };
 
-    const controlValueStyle = {
-        fontFamily: 'var(--font-display)',
-        fontSize: '8px',
-        fontWeight: 600,
-        color: 'var(--accent-color)',
-        minWidth: '48px',
-        textAlign: 'right',
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
-    };
 
     return (
         <div className="photic-control-panel" style={containerStyle}>

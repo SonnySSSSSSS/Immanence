@@ -3,7 +3,6 @@
 // Replaces the tracking view with an always-available awareness logging tool
 
 import React, { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { useApplicationStore } from '../state/applicationStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';

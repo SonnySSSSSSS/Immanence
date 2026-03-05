@@ -104,7 +104,7 @@ const RainbowMaterial = shaderMaterial(
 
 extend({ RainbowMaterial })
 
-export const Rainbow = forwardRef(({ startRadius = 0, endRadius = 0.5, emissiveIntensity = 2.5, fade = 0.25, ...props }, fRef) => {
+export const Rainbow = forwardRef(({ startRadius = 0, endRadius = 0.5, fade = 0.25, ...props }, fRef) => {
   const material = useRef(null)
   const { width, height } = useThree((state) => state.viewport)
   // calculate the maximum length the rainbow has to have to reach all screen corners
