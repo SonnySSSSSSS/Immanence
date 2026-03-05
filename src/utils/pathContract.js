@@ -59,22 +59,37 @@ export function normalizePathSelections({ selectedDaysOfWeek = [], selectedTimes
   };
 }
 
+const normalizeContractSafe = (contract) => {
+  const next = { ...contract };
+  let warning = null;
+
+  const hasRequiredLegs = Number.isInteger(next.requiredLegsPerDay);
+  const hasMaxLegs = Number.isInteger(next.maxLegsPerDay);
+  if (hasRequiredLegs && hasMaxLegs && next.requiredLegsPerDay > next.maxLegsPerDay) {
+    next.requiredLegsPerDay = next.maxLegsPerDay;
+    warning = 'contract_invariant_normalized';
+  }
+
+  const hasRequiredTimeSlots = Number.isInteger(next.requiredTimeSlots);
+  if (hasRequiredTimeSlots && hasMaxLegs && next.requiredTimeSlots > next.maxLegsPerDay) {
+    next.requiredTimeSlots = next.maxLegsPerDay;
+    warning = 'contract_invariant_normalized';
+  }
+
+  return { contract: next, warning };
+};
+
 export function validatePathActivationSelections(pathOrId, selections = {}) {
   const path = typeof pathOrId === 'string' ? getPathById(pathOrId) : pathOrId;
-  const contract = getPathContract(path);
+  const normalizedContract = normalizeContractSafe(getPathContract(path));
+  const contract = normalizedContract.contract;
   const normalized = normalizePathSelections(selections);
 
   if (path?.id === 'initiation-2' && contract.totalDays !== 14) {
-    return { ok: false, error: 'Initiation Path 2 must be a 14-day program.', contract, ...normalized };
-  }
-  if (
-    Number.isInteger(contract.requiredLegsPerDay) &&
-    Number.isInteger(contract.maxLegsPerDay) &&
-    contract.requiredLegsPerDay > contract.maxLegsPerDay
-  ) {
     return {
       ok: false,
-      error: 'Path contract is invalid: required legs exceed max legs per day.',
+      error: 'Initiation Path 2 must be a 14-day program.',
+      warning: normalizedContract.warning,
       contract,
       ...normalized,
     };
@@ -86,6 +101,7 @@ export function validatePathActivationSelections(pathOrId, selections = {}) {
     return {
       ok: false,
       error: `Select exactly ${contract.practiceDaysPerWeek} active practice days.`,
+      warning: normalizedContract.warning,
       contract,
       ...normalized,
     };
@@ -97,10 +113,17 @@ export function validatePathActivationSelections(pathOrId, selections = {}) {
     return {
       ok: false,
       error: `Select exactly ${contract.requiredTimeSlots} time slots.`,
+      warning: normalizedContract.warning,
       contract,
       ...normalized,
     };
   }
 
-  return { ok: true, error: null, contract, ...normalized };
+  return {
+    ok: true,
+    error: null,
+    warning: normalizedContract.warning,
+    contract,
+    ...normalized,
+  };
 }
