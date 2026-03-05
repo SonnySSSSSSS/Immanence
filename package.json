@@ -8,6 +8,7 @@
     "dev:clean": "powershell -ExecutionPolicy Bypass -File ./dev-reset.ps1 && npm run dev",
     "guard:typography": "node scripts/guard-typography.mjs",
     "guard:typography:report": "node scripts/guard-typography.mjs --report",
+    "guard:persistence-audit": "node scripts/guard-persistence-audit.mjs",
     "build": "vite build",
     "test:smoke": "npx playwright test -c tests/playwright.config.ts tests/smoke/critical-flows.spec.ts --project=chromium",
     "preview": "vite preview",

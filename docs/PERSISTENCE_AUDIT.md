@@ -136,7 +136,7 @@ Any future ownership change must update both linked sections and this audit in t
 |---|---|---|
 | P0 | Freeze canonical owner contract for overlapping concepts (table above) in architecture docs | Eliminates ambiguous ownership during bugfixes |
 | P0 | Stop expanding legacy session key usage (`immanence_sessions_v1`) and define migration-off timeline to `immanenceOS.progress` | Removes duplicate session truth |
-| P0 | Add automated key-inventory check in CI (docs drift detector vs grep output) | Prevents undocumented keys from creeping in |
+| P0 | Add automated key-inventory check in CI (docs drift detector vs grep output) | Implemented via `scripts/guard-persistence-audit.mjs` + `.github/workflows/ci-guards.yml`; blocks undocumented key drift |
 
 ### P1
 
@@ -158,5 +158,6 @@ Any future ownership change must update both linked sections and this audit in t
 
 ```bash
 rg -n "persist\\(|name:\\s*['\"]|localStorage\\.(getItem|setItem|removeItem)" src/state src/components src/hooks
+npm run guard:persistence-audit
 rg -n "Key Inventory|Overlap Matrix|Authoritative Owner|Orphan|Remediation Plan|Coverage Summary" docs/PERSISTENCE_AUDIT.md
 ```
