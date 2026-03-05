@@ -6,7 +6,7 @@
 // 3) Inner sigil core (PNG, stage-aware)
 // 4) Metrics text
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import "../Avatar.css";
 import { LABELS, STAGE_GLOW_COLORS, getMandalaState } from "./constants";
 import { AvatarContainer } from "./AvatarContainer";
@@ -23,8 +23,6 @@ export function Avatar({
     attention = 'vigilance',
     isPracticing = false,
 }) {
-    const label = LABELS[mode] || "Center";
-
     // Get avatar naming preference from settings
     const useNewAvatars = useSettingsStore(s => s.useNewAvatars);
 
@@ -39,8 +37,10 @@ export function Avatar({
 
     useEffect(() => {
         if (!path || showCore || !attention || attention === 'none') {
-            setMaxVariations(1);
-            setVariationIndex(0);
+            queueMicrotask(() => {
+                setMaxVariations(1);
+                setVariationIndex(0);
+            });
             return;
         }
         const stageLower = currentStage.toLowerCase();
@@ -99,7 +99,6 @@ export function Avatar({
     }, []);
 
     const mandalaData = mandalaSnapshot || {};
-    const avgAccuracy = mandalaData.avgAccuracy || 0;
     const weeklyConsistency = mandalaData.weeklyConsistency || 0;
     const weeklyPracticeLog = mandalaData.weeklyPracticeLog || [false, false, false, false, false, false, false];
 
