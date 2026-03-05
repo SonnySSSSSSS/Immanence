@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.250 - chore(lint): remove unused vars in visual utilities (batch 4)
   // v3.27.249 - chore(lint): remove unused vars in practice controls (batch 3)
   // v3.27.248 - chore(lint): remove unused vars in ui micro components (batch 2)
   // v3.27.247 - chore(lint): remove unused vars in ritual micro components (batch 1)

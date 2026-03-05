@@ -1,11 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function RitualStepContainer({ 
-    children, 
-    backgroundUrl, 
-    stepNumber,
-    isOverlay = false 
+export function RitualStepContainer({
+    children,
+    backgroundUrl,
 }) {
     return (
         <div className="relative w-full h-full min-h-[600px] flex flex-col items-center justify-center overflow-hidden bg-black text-white p-6">

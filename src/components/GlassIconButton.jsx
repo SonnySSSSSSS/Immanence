@@ -210,26 +210,6 @@ export function GlassIconButton({
     return icons[iconName] || icons.cognitive;
   };
 
-  // Border color based on selection state
-  const getBorderColor = () => {
-    if (selected) {
-      return isLight ? `${primaryHex}80` : `${primaryHex}90`;
-    }
-    return isLight ? `${primaryHex}40` : `${primaryHex}50`;
-  };
-
-  // Box shadow based on selection state
-  const getBoxShadow = () => {
-    if (selected) {
-      return isLight
-        ? `0 10px 28px rgba(100, 80, 60, 0.35), 0 6px 12px rgba(100, 80, 60, 0.25), 0 0 30px ${primaryHex}50, inset 0 0 20px ${primaryHex}30, inset 0 2px 6px rgba(255, 255, 255, 0.9)`
-        : `0 10px 32px rgba(0, 0, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 40px ${primaryHex}70, inset 0 0 20px ${primaryHex}20, inset 0 1px 2px rgba(255, 255, 255, 0.15)`;
-    }
-    return isLight
-      ? `0 6px 18px rgba(100, 80, 60, 0.2), 0 3px 8px rgba(100, 80, 60, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px ${primaryHex}25`
-      : `0 6px 20px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 0 20px ${primaryHex}40`;
-  };
-
   const handleClick = () => {
     if (disabled) return;
     if (isUiPickingActive()) return;

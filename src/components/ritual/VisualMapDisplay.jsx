@@ -11,7 +11,7 @@ const PULSE_FRAMES = [
     `${BASE}assets/ritual/glow_frame_5.webp`,
 ];
 
-export function VisualMapDisplay({ isPulsing = false, showOverlay = false }) {
+export function VisualMapDisplay({ isPulsing = false }) {
     return (
         <div className="relative w-80 h-80 flex items-center justify-center">
             {/* Base Map */}
