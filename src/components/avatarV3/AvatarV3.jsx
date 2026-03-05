@@ -12,10 +12,6 @@ import './AvatarV3.css';
 export function AvatarV3({
   stage,
   modeWeights,
-  isPracticing: _isPracticing = false,
-  lastStageChange: _lastStageChange,
-  lastModeChange: _lastModeChange,
-  lastSessionComplete: _lastSessionComplete,
   path = null,
   onTap,
   showDetailsOnTap = true,

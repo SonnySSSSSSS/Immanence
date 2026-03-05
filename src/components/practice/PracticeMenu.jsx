@@ -29,11 +29,8 @@ const CONFIG_COMPONENTS = {
 
 function PracticeMenu({
   containerKey,
-  label,
   showRitualSubtitle,
   ritualSubtitleText,
-  titleContainerMarginBottom,
-  titleTextMarginBottom,
   configPanelMarginBottom,
   practice,
   ConfigComponent,
@@ -45,7 +42,6 @@ function PracticeMenu({
   onDurationChange,
   durationOptions,
   durationMarginBottom,
-  durationTitleMarginBottom,
   showStartButton,
   onStart,
   onQuickStart,
