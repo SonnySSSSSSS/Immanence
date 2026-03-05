@@ -183,8 +183,8 @@ function shouldShowMissOverlay(day, activePath, todayDateKey) {
 export function CurriculumPrecisionRail() {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
-    const [hoveredIndex, setHoveredIndex] = useState(null);
-    const [tooltipPos, setTooltipPos] = useState(null);
+    const [, setHoveredIndex] = useState(null);
+    const [, setTooltipPos] = useState(null);
     const [showLegend, setShowLegend] = useState(false);
     const gridRef = useRef(null);
     const [gridRect, setGridRect] = useState(null);
@@ -295,7 +295,6 @@ export function CurriculumPrecisionRail() {
                 {rail.map((day, index) => {
                     const tooltip = buildDayTooltip(day);
                     const dayStyle = getDayStyle(day.dayStatus, isLight);
-                    const isHovered = hoveredIndex === index;
                     const showMissOverlay = shouldShowMissOverlay(day, activePath, todayDateKey);
 
                     return (

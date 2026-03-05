@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { ANIM, RADIUS, TYPOGRAPHY } from './tokens';
 import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 
@@ -16,21 +16,16 @@ import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 export function HorizontalBarStack({
     bars = [],
     maxValue = null,
-    height = null,
     showLabels = true,
     showTooltip = true
 }) {
-    const { tooltipProps, showTooltip: onShowTooltip, hideTooltip, moveTooltip } = useChartTooltip();
+    const { tooltipProps, showTooltip: onShowTooltip, hideTooltip } = useChartTooltip();
     const [activeIndex, setActiveIndex] = useState(null);
 
     const barHeight = 24;
-    const chartHeight = height ?? bars.length * (barHeight + 8);
     const computedMaxValue = maxValue ?? Math.max(1, ...bars.map(b => b.value || 0));
 
-    // Container ref for tooltip positioning
-    const containerWidth = 300;
     const labelWidth = 80;
-    const chartWidth = containerWidth - labelWidth - 40;
 
     const handleMouseEnter = (e, bar, index) => {
         setActiveIndex(index);
@@ -77,8 +72,6 @@ export function HorizontalBarStack({
         >
             {bars.map((bar, i) => {
                 const percent = (bar.value / computedMaxValue) * 100;
-                const barWidth = (percent / 100) * chartWidth;
-
                 return (
                     <div
                         key={i}
