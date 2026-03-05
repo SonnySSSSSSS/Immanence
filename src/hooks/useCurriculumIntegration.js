@@ -1,7 +1,7 @@
 // useCurriculumIntegration.js
 // Handles curriculum-specific practice session logic
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 
 /**
@@ -18,7 +18,7 @@ export function useCurriculumIntegration(onSessionReady = null) {
 
   // Ref to track if we've already auto-started for this session
   const autoStartedRef = useRef(null);
-  const [wasFromCurriculum, setWasFromCurriculum] = useState(false);
+  const curriculumDay = getActivePracticeDay();
 
   // Parse curriculum day into practice configuration
   const parseCurriculumDay = useCallback((curriculumDay) => {
@@ -70,12 +70,9 @@ export function useCurriculumIntegration(onSessionReady = null) {
 
   // Check for active curriculum session and trigger auto-start
   useEffect(() => {
-    const curriculumDay = getActivePracticeDay();
-    
     if (curriculumDay && activePracticeSession && autoStartedRef.current !== activePracticeSession) {
       // Mark this session as auto-started to prevent re-triggering
       autoStartedRef.current = activePracticeSession;
-      setWasFromCurriculum(true);
       
       const config = parseCurriculumDay(curriculumDay);
       
@@ -84,13 +81,9 @@ export function useCurriculumIntegration(onSessionReady = null) {
         onSessionReady(config);
       }
     }
-  }, [activePracticeSession, getActivePracticeDay, parseCurriculumDay, onSessionReady]);
+  }, [activePracticeSession, curriculumDay, parseCurriculumDay, onSessionReady]);
 
-  useEffect(() => {
-    if (!activePracticeSession) {
-      setWasFromCurriculum(false);
-    }
-  }, [activePracticeSession]);
+  const wasFromCurriculum = Boolean(activePracticeSession && curriculumDay);
 
   // Get next leg info for summary display
   const getNextLeg = useCallback((currentSession, offset = 1) => {
