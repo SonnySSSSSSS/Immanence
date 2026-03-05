@@ -5,7 +5,6 @@ import {
   getDebugStorageValue,
   isDebugFlagEnabled,
   resetAllDebugFlags,
-  setDebugFlag,
   setDebugStorageValue,
   toggleDebugFlag,
 } from "./debugFlags.js";
@@ -164,7 +163,7 @@ export function ShadowScanOverlay({ enabled = false }) {
 
   useEffect(() => {
     if (!enabled) {
-      setFrameRect(null);
+      queueMicrotask(() => setFrameRect(null));
       return undefined;
     }
 
@@ -192,8 +191,8 @@ export function ShadowScanOverlay({ enabled = false }) {
 
   useEffect(() => {
     if (!enabled) {
-      setLocked(null);
-      setHovered(null);
+      queueMicrotask(() => setLocked(null));
+      queueMicrotask(() => setHovered(null));
       return undefined;
     }
 
@@ -239,22 +238,22 @@ export function ShadowScanOverlay({ enabled = false }) {
 
   useEffect(() => {
     if (!enabled) {
-      setSelectedKey(null);
+      queueMicrotask(() => setSelectedKey(null));
       return;
     }
 
     if (!active) {
-      setSelectedKey(null);
+      queueMicrotask(() => setSelectedKey(null));
       return;
     }
 
     if (locked) {
       // Keep selection stable while locked unless it's missing.
-      setSelectedKey((prev) => prev || active.bestKey || null);
+      queueMicrotask(() => setSelectedKey((prev) => prev || active.bestKey || null));
       return;
     }
 
-    setSelectedKey(active.bestKey || null);
+    queueMicrotask(() => setSelectedKey(active.bestKey || null));
   }, [enabled, active, locked]);
 
   const selected = useMemo(() => {
