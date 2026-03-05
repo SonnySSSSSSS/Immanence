@@ -29,31 +29,43 @@ export default function AuthGate({ children, onAuthChange }) {
     }
 
     let mounted = true;
+    let unsubscribe = null;
 
-    Promise.all([getSupabase(), getSetAuthUser()]).then(([supabase, setAuthUser]) => {
-      supabase.auth.getSession().then(({ data, error }) => {
+    const init = async () => {
+      try {
+        const [supabase, setAuthUser] = await Promise.all([getSupabase(), getSetAuthUser()]);
+        const { data, error } = await supabase.auth.getSession();
         if (!mounted) return;
+
         if (error) console.error("[AuthGate] getSession error", error);
         const nextSession = data?.session ?? null;
         setSession(nextSession);
         setAuthUser(nextSession?.user ?? null);
         onAuthChange?.("INITIAL_SESSION", nextSession);
         setLoading(false);
-      });
 
-      const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
-        const nextSession = newSession ?? null;
-        setSession(nextSession);
-        setAuthUser(nextSession?.user ?? null);
-        onAuthChange?.(event, nextSession);
-      });
+        const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+          if (!mounted) return;
+          const nextAuthSession = newSession ?? null;
+          setSession(nextAuthSession);
+          setAuthUser(nextAuthSession?.user ?? null);
+          onAuthChange?.(event, nextAuthSession);
+        });
+        unsubscribe = () => sub?.subscription?.unsubscribe?.();
+      } catch (error) {
+        if (!mounted) return;
+        console.error("[AuthGate] init error", error);
+        setLoading(false);
+      }
+    };
 
-      return () => {
-        mounted = false;
-        sub?.subscription?.unsubscribe?.();
-      };
-    });
-  }, []);
+    init();
+
+    return () => {
+      mounted = false;
+      unsubscribe?.();
+    };
+  }, [onAuthChange]);
 
   useEffect(() => {
     if (mode !== "signup") setNameErr("");
