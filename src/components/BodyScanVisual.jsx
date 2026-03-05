@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { CoordinateHelper } from './dev/CoordinateHelper';
 export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanPoints = [], scanPrompts = [], image = null, isLight = false }) {
     const [activePoint, setActivePoint] = useState(scanPoints[0] || { id: 'default', x: 50, y: 50, name: 'Center' });
@@ -12,7 +12,7 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
         if (activePointId) {
             // Use provided point ID (dev mode)
             const point = scanPoints.find(p => p.id === activePointId) || scanPoints[0];
-            if (point) setActivePoint(point);
+            if (point) queueMicrotask(() => setActivePoint(point));
         } else {
             // Use time-based selection (normal mode)
             let activePrompt = scanPrompts[0];
@@ -25,7 +25,7 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
             }
             if (activePrompt) {
                 const point = scanPoints.find(p => p.id === activePrompt.point) || scanPoints[0];
-                if (point) setActivePoint(point);
+                if (point) queueMicrotask(() => setActivePoint(point));
             }
         }
     }, [elapsedSeconds, activePointId, scanPoints, scanPrompts]);
@@ -88,7 +88,7 @@ export function BodyScanVisual({ elapsedSeconds = 0, activePointId = null, scanP
             const animId = requestAnimationFrame(animatePulse);
             return () => cancelAnimationFrame(animId);
         } else {
-            setSushumnaPos(null);
+            queueMicrotask(() => setSushumnaPos(null));
         }
     }, [activePoint, scanPoints]);
 

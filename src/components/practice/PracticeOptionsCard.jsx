@@ -1,7 +1,6 @@
 // src/components/practice/PracticeOptionsCard.jsx
 // Extracted practice configuration card component
 import React, { useState, useEffect, useRef } from 'react';
-import { useDisplayModeStore } from '../../state/displayModeStore.js';
 import { useTempoSyncStore } from '../../state/tempoSyncStore.js';
 import { useTempoSyncSessionStore } from '../../state/tempoSyncSessionStore.js';
 import { useTempoAudioStore } from '../../state/tempoAudioStore.js';
@@ -40,9 +39,6 @@ export function PracticeOptionsCard({
   setHasExpandedOnce, 
   onOpenTrajectory, 
   isRunning, 
-  tempoSyncEnabled, 
-  tempoPhaseDuration, 
-  tempoBeatsPerPhase, 
   onRunBenchmark, 
   onDisableBenchmark, 
   breathSubmode, 
@@ -51,7 +47,6 @@ export function PracticeOptionsCard({
 }) {
   const cardRef = useRef(null);
   const p = getPracticeConfig(practiceId);
-  const practice = p?.label;
   const isCollapsed = !practiceId;
   const isSanctuary = false;
   const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
@@ -81,7 +76,7 @@ export function PracticeOptionsCard({
   const menuStartButtonLabel = practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice';
 
   useEffect(() => {
-    setShowTrajectory(false);
+    queueMicrotask(() => setShowTrajectory(false));
   }, [practiceId]);
 
   useEffect(() => {
@@ -92,7 +87,7 @@ export function PracticeOptionsCard({
 
   useEffect(() => {
     if (practiceId !== 'breath' || breathSubmode !== 'stillness') return;
-    setShowTempoSync(false);
+    queueMicrotask(() => setShowTempoSync(false));
     useTempoSyncStore.getState().setEnabled(false);
     useTempoSyncSessionStore.getState().endSession();
     useTempoAudioStore.getState().stop("stillness-submode");
