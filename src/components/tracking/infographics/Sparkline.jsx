@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useId } from 'react';
 import { STROKE, ANIM, DOMAIN_COLORS } from './tokens';
 import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 
@@ -24,11 +24,11 @@ export function Sparkline({
     showDot = true,
     showTooltip = true
 }) {
-    const { tooltipProps, showTooltip: onShowTooltip, hideTooltip, moveTooltip } = useChartTooltip();
+    const { tooltipProps, showTooltip: onShowTooltip, hideTooltip } = useChartTooltip();
     const [activeIndex, setActiveIndex] = useState(null);
 
     // Compute line path and points
-    const { path, areaPath, points, minValue, maxValue } = useMemo(() => {
+    const { path, areaPath, points } = useMemo(() => {
         if (!data.length) {
             return { path: '', areaPath: '', points: [], minValue: 0, maxValue: 0 };
         }
@@ -63,14 +63,13 @@ export function Sparkline({
         return {
             path: linePath,
             areaPath: area,
-            points: pts,
-            minValue: min,
-            maxValue: max
+            points: pts
         };
     }, [data, width, height]);
 
-    // Gradient ID
-    const gradientId = useMemo(() => `sparkline-grad-${Math.random().toString(36).slice(2)}`, []);
+    // Gradient ID — stable per component instance
+    const _baseId = useId();
+    const gradientId = `sparkline-grad-${_baseId.replace(/:/g, '')}`;
 
     // Handle mouse events for tooltip
     const handleMouseMove = (e) => {
