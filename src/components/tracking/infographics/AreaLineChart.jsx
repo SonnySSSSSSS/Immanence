@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useId } from 'react';
 import { STROKE, ANIM } from './tokens';
 import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 
@@ -22,12 +22,12 @@ export function AreaLineChart({
     showGrid = true,
     showTooltip = true
 }) {
-    const { tooltipProps, showTooltip: onShowTooltip, hideTooltip, moveTooltip } = useChartTooltip();
+    const { tooltipProps, showTooltip: onShowTooltip, hideTooltip } = useChartTooltip();
     const [activeIndex, setActiveIndex] = useState(null);
 
     // Compute line paths and max value
-    const { lines, maxValue, minValue, points } = useMemo(() => {
-        if (!series.length) return { lines: [], maxValue: 1, minValue: 0, points: [] };
+    const { lines, points } = useMemo(() => {
+        if (!series.length) return { lines: [], points: [] };
 
         // Flatten all values to find min/max
         const allValues = series.flatMap(s => s.data.map(d => d.value || 0));
@@ -66,7 +66,7 @@ export function AreaLineChart({
 
         // Flatten all points for hover detection
         const allPoints = [];
-        series.forEach((s, seriesIdx) => {
+        series.forEach((s) => {
             s.data.forEach((d, dataIdx) => {
                 allPoints.push({
                     x: padding + (dataIdx / Math.max(1, s.data.length - 1)) * chartWidth,
@@ -82,11 +82,13 @@ export function AreaLineChart({
 
         return {
             lines: lineSeries,
-            maxValue: max,
-            minValue: min,
             points: allPoints
         };
     }, [series, width, height]);
+
+    // Gradient IDs — stable per component instance
+    const _baseId = useId();
+    const gradientIds = series.map((_s, i) => `area-gradient-${_baseId.replace(/:/g, '')}-${i}`);
 
     // Grid lines (5 horizontal)
     const gridLines = useMemo(() => {
@@ -149,12 +151,6 @@ export function AreaLineChart({
             </div>
         );
     }
-
-    // Gradient ID
-    const gradientIds = useMemo(
-        () => series.map((_, i) => `area-gradient-${Math.random().toString(36).slice(2)}`),
-        [series.length]
-    );
 
     return (
         <div
