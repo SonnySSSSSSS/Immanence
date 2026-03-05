@@ -68,6 +68,10 @@ import { useBreathSessionManager } from '../hooks/useBreathSessionManager.js';
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
 const PRESET_SWITCHER_Z_INDEX = 10020;
+const SAFE_LAUNCH_FALLBACK = Object.freeze({
+  practiceId: 'breath',
+  durationMin: 10,
+});
 
 function isTypingIntoEditableElement(activeEl) {
   if (!activeEl) return false;
@@ -240,6 +244,60 @@ function getPathPracticeOccurrences(pathDef, dayIndex) {
   const topLevelPractices = Array.isArray(pathDef.practices) ? pathDef.practices : null;
 
   return weekPracticesStructured || topLevelPractices || weekPracticesRaw || [];
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function getInvalidPracticeLaunchContextReason(ctx) {
+  if (!isPlainObject(ctx)) return 'ctx_not_object';
+
+  if (typeof ctx.source !== 'undefined' && typeof ctx.source !== 'string') {
+    return 'source_not_string';
+  }
+
+  if (typeof ctx.practiceId !== 'undefined') {
+    if (typeof ctx.practiceId !== 'string') return 'practice_id_not_string';
+    const resolvedPracticeId = resolvePracticeId(ctx.practiceId);
+    if (!PRACTICE_REGISTRY[resolvedPracticeId]) return `unknown_practice_id:${ctx.practiceId}`;
+  }
+
+  if (typeof ctx.durationMin !== 'undefined') {
+    const durationMin = Number(ctx.durationMin);
+    if (!Number.isFinite(durationMin) || durationMin <= 0) return 'duration_min_invalid';
+  }
+
+  if (typeof ctx.practiceParamsPatch !== 'undefined' && !isPlainObject(ctx.practiceParamsPatch)) {
+    return 'practice_params_patch_invalid';
+  }
+
+  if (typeof ctx.overrides !== 'undefined') {
+    if (!isPlainObject(ctx.overrides)) return 'overrides_invalid';
+
+    if ('practiceParams' in ctx.overrides && !isPlainObject(ctx.overrides.practiceParams)) {
+      return 'overrides_practice_params_invalid';
+    }
+    if ('settings' in ctx.overrides && !isPlainObject(ctx.overrides.settings)) {
+      return 'overrides_settings_invalid';
+    }
+    if ('tempoSync' in ctx.overrides && !isPlainObject(ctx.overrides.tempoSync)) {
+      return 'overrides_tempo_sync_invalid';
+    }
+    if ('awarenessScene' in ctx.overrides && !isPlainObject(ctx.overrides.awarenessScene)) {
+      return 'overrides_awareness_scene_invalid';
+    }
+  }
+
+  if (typeof ctx.pathContext !== 'undefined' && !isPlainObject(ctx.pathContext)) {
+    return 'path_context_invalid';
+  }
+
+  if (typeof ctx.locks !== 'undefined' && !Array.isArray(ctx.locks) && !isPlainObject(ctx.locks)) {
+    return 'locks_invalid';
+  }
+
+  return null;
 }
 
 function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
@@ -704,6 +762,34 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     if (isRunning) return;
     if (!practiceLaunchContext) return;
+
+    const invalidLaunchContextReason = getInvalidPracticeLaunchContextReason(practiceLaunchContext);
+    if (invalidLaunchContextReason) {
+      console.warn('[PracticeSection] Invalid practiceLaunchContext; applying safe fallback.', {
+        reason: invalidLaunchContextReason,
+        practiceLaunchContext,
+      });
+
+      setPathLaunchGuidance(undefined);
+      pathGuidanceStartedRef.current = false;
+      pathGuidanceWasPausedRef.current = false;
+      pathGuidanceRanRef.current = false;
+      activePathContextRef.current = null;
+      setInitiationBenchmarkContext(null);
+      suppressPrefSaveRef.current = false;
+      clearLaunchConstraints?.();
+
+      if (practiceId !== SAFE_LAUNCH_FALLBACK.practiceId) {
+        setPracticeId(SAFE_LAUNCH_FALLBACK.practiceId);
+      }
+      setHasExpandedOnce(true);
+      if (duration !== SAFE_LAUNCH_FALLBACK.durationMin) {
+        setDuration(SAFE_LAUNCH_FALLBACK.durationMin);
+      }
+
+      clearPracticeLaunchContext?.();
+      return;
+    }
 
     const ctx = practiceLaunchContext;
     setPathLaunchGuidance(undefined);
