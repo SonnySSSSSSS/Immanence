@@ -1,8 +1,29 @@
-export function validateBenchmarkPrerequisite({ path = null, hasBenchmark = false } = {}) {
-  if (path?.showBreathBenchmark && !hasBenchmark) {
-    return { ok: false, error: 'Complete the breathing benchmark first.' };
+export function validateBenchmarkPrerequisite({
+  path = null,
+  hasBenchmark = false,
+  benchmarkStateValid = true,
+  benchmarkStateError = null,
+} = {}) {
+  const requiresBenchmark = Boolean(path?.showBreathBenchmark);
+  if (!requiresBenchmark) {
+    return { ok: true, error: null, warning: null };
   }
-  return { ok: true, error: null };
+
+  // Fail-safe: unreadable/corrupt benchmark state should not block training start.
+  if (benchmarkStateValid === false) {
+    return {
+      ok: true,
+      error: null,
+      warning: 'benchmark_state_unreadable',
+      detail: benchmarkStateError || null,
+    };
+  }
+
+  if (!hasBenchmark) {
+    return { ok: false, error: 'Complete the breathing benchmark first.', warning: null };
+  }
+
+  return { ok: true, error: null, warning: null };
 }
 
 /**
@@ -22,4 +43,3 @@ export function getBenchmarkCtaLabel({ hasBenchmark, contractComplete }) {
   if (hasBenchmark) return 'Benchmark complete';
   return 'Take benchmark';
 }
-

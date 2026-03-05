@@ -160,12 +160,43 @@ export const useNavigationStore = create(
                     || [];
                 const path = getPathById(pathId);
                 const contract = getPathContract(path);
+                let hasBenchmark = false;
+                let benchmarkStateValid = true;
+                let benchmarkStateError = null;
+                try {
+                    const benchmarkStoreState = useBreathBenchmarkStore.getState?.();
+                    const hasBenchmarkForRun = benchmarkStoreState?.hasBenchmarkForRun;
+                    if (typeof hasBenchmarkForRun !== 'function') {
+                        benchmarkStateValid = false;
+                        benchmarkStateError = 'missing_hasBenchmarkForRun';
+                    } else {
+                        const probeResult = hasBenchmarkForRun(runId);
+                        if (typeof probeResult !== 'boolean') {
+                            benchmarkStateValid = false;
+                            benchmarkStateError = 'non_boolean_hasBenchmarkForRun_result';
+                        } else {
+                            hasBenchmark = probeResult;
+                        }
+                    }
+                } catch (error) {
+                    benchmarkStateValid = false;
+                    benchmarkStateError = error?.message || String(error);
+                }
                 const benchmarkCheck = validateBenchmarkPrerequisite({
                     path,
-                    hasBenchmark: useBreathBenchmarkStore.getState().hasBenchmarkForRun(runId),
+                    hasBenchmark,
+                    benchmarkStateValid,
+                    benchmarkStateError,
                 });
                 if (!benchmarkCheck.ok) {
                     return benchmarkCheck;
+                }
+                if (benchmarkCheck.warning === 'benchmark_state_unreadable') {
+                    console.warn('[navigationStore.beginPath] Benchmark state unreadable; allowing start in fail-safe mode.', {
+                        pathId,
+                        runId,
+                        detail: benchmarkCheck.detail || benchmarkStateError || null,
+                    });
                 }
                 const scheduleConstraint = getScheduleConstraintForPath(pathId);
                 const normalizedSelections = normalizePathSelections({
@@ -227,7 +258,9 @@ export const useNavigationStore = create(
                     pendingAttemptPathId: null,
                 });
 
-                return { ok: true };
+                return benchmarkCheck.warning
+                    ? { ok: true, warning: benchmarkCheck.warning, detail: benchmarkCheck.detail || null }
+                    : { ok: true };
             },
 
             // Mark current week as complete and advance
