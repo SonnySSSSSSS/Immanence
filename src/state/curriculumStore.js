@@ -180,11 +180,19 @@ export const useCurriculumStore = create(
                 const state = get();
                 if (!state.curriculumStartDate) return 1;
                 const start = new Date(state.curriculumStartDate);
+                if (!Number.isFinite(start.getTime())) return 1;
                 start.setHours(0, 0, 0, 0);
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
-                const daysDiff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-                return Math.max(1, Math.min(daysDiff + 1, 15));
+                const startMs = start.getTime();
+                const nowMs = now.getTime();
+                if (!Number.isFinite(startMs) || !Number.isFinite(nowMs)) return 1;
+
+                const daysDiff = Math.floor((nowMs - startMs) / (1000 * 60 * 60 * 24));
+                if (!Number.isFinite(daysDiff)) return 1;
+
+                const dayNumber = Math.max(1, Math.min(daysDiff + 1, 15));
+                return Number.isFinite(dayNumber) ? dayNumber : 1;
             },
 
             getTodaysPractice: () => {
