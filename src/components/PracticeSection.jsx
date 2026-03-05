@@ -313,7 +313,7 @@ function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   useEffect(() => {
     const index = options.indexOf(value);
     if (index !== -1) {
-      setScrollOffset(index * itemHeight);
+      queueMicrotask(() => setScrollOffset(index * itemHeight));
     }
   }, [value, options, itemHeight]);
 
@@ -441,7 +441,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Breath benchmark for progressive patterns
   const benchmark = useBreathBenchmarkStore(s => s.benchmark);
-  const benchmarksByRunId = useBreathBenchmarkStore(s => s.benchmarksByRunId);
   const hasBenchmark = Boolean(
     benchmark &&
     Number.isFinite(benchmark.inhale) && benchmark.inhale > 0 &&
@@ -450,7 +449,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     Number.isFinite(benchmark.hold2) && benchmark.hold2 > 0
   );
   const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
-  const saveRunBenchmark = useBreathBenchmarkStore(s => s.saveRunBenchmark);
   const hasSong = useTempoAudioStore((s) => s.hasSong);
   const isSongPlaying = useTempoAudioStore((s) => s.isPlaying);
   const guidanceStatus = useTempoAudioStore((s) => s.status);
@@ -511,8 +509,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
   const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
-  const lastPracticeLaunchContext = useUiStore(s => s.lastPracticeLaunchContext);
-  const lastPracticeStartProbe = useUiStore(s => s.lastPracticeStartProbe);
   const setLastPracticeStartProbe = useUiStore(s => s.setLastPracticeStartProbe);
   const clearPracticeLaunchContext = useUiStore(s => s.clearPracticeLaunchContext);
   const applyLaunchConstraints = useSessionOverrideStore(s => s.applyLaunchConstraints);
@@ -692,7 +688,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useLayoutEffect(() => {
     if (!isBreathRunningSession) {
-      setBreathViewportHeightPx(null);
+      queueMicrotask(() => setBreathViewportHeightPx(null));
       return undefined;
     }
 
@@ -746,17 +742,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (pid !== practiceId) {
       console.error(`[CURRICULUM EFFECT] Resetting from ${practiceId} to ${pid}`);
       console.trace(`Stack trace - curriculum resetting practiceId to ${pid}`);
-      setPracticeId(pid);
-      setHasExpandedOnce(true); // Bypass animation for auto-starts
+      queueMicrotask(() => setPracticeId(pid));
+      queueMicrotask(() => setHasExpandedOnce(true)); // Bypass animation for auto-starts
     }
 
     // Apply curriculum leg duration (minutes) to the practice timer.
     const nextDurationMinRaw = activeLeg?.practiceConfig?.duration;
     const nextDurationMin = Number(nextDurationMinRaw);
     if (Number.isFinite(nextDurationMin) && nextDurationMin > 0 && nextDurationMin !== duration) {
-      setDuration(nextDurationMin);
+      queueMicrotask(() => setDuration(nextDurationMin));
     }
   }, [activePracticeSession, isRunning, practiceId, duration, getActivePracticeLeg]);
+
+  const _circuitPendingRef = useRef(null);
 
   // Apply launch context (from paths / navigation recommendations / schedule tiles).
   useEffect(() => {
@@ -770,34 +768,32 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         practiceLaunchContext,
       });
 
-      setPathLaunchGuidance(undefined);
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
       pathGuidanceRanRef.current = false;
       activePathContextRef.current = null;
-      setInitiationBenchmarkContext(null);
       suppressPrefSaveRef.current = false;
       clearLaunchConstraints?.();
-
-      if (practiceId !== SAFE_LAUNCH_FALLBACK.practiceId) {
-        setPracticeId(SAFE_LAUNCH_FALLBACK.practiceId);
-      }
-      setHasExpandedOnce(true);
-      if (duration !== SAFE_LAUNCH_FALLBACK.durationMin) {
-        setDuration(SAFE_LAUNCH_FALLBACK.durationMin);
-      }
-
+      const _fbResetPracticeId = practiceId !== SAFE_LAUNCH_FALLBACK.practiceId;
+      const _fbResetDuration = duration !== SAFE_LAUNCH_FALLBACK.durationMin;
+      queueMicrotask(() => {
+        setPathLaunchGuidance(undefined);
+        setInitiationBenchmarkContext(null);
+        if (_fbResetPracticeId) setPracticeId(SAFE_LAUNCH_FALLBACK.practiceId);
+        setHasExpandedOnce(true);
+        if (_fbResetDuration) setDuration(SAFE_LAUNCH_FALLBACK.durationMin);
+      });
       clearPracticeLaunchContext?.();
       return;
     }
 
     const ctx = practiceLaunchContext;
-    setPathLaunchGuidance(undefined);
+    queueMicrotask(() => setPathLaunchGuidance(undefined));
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
-    setInitiationBenchmarkContext(benchmarkCtx);
+    queueMicrotask(() => setInitiationBenchmarkContext(benchmarkCtx));
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
 
     // Apply session overrides + locks (ephemeral). This prevents global defaults (e.g. photic) from being mutated.
@@ -845,29 +841,29 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     if (ctx.practiceId && ctx.practiceId !== practiceId) {
-      setPracticeId(ctx.practiceId);
-      setHasExpandedOnce(true);
+      queueMicrotask(() => setPracticeId(ctx.practiceId));
+      queueMicrotask(() => setHasExpandedOnce(true));
     } else if (ctx.practiceId) {
-      setHasExpandedOnce(true);
+      queueMicrotask(() => setHasExpandedOnce(true));
     }
 
     const nextDurationMin = Number(ctx.durationMin);
     if (Number.isFinite(nextDurationMin) && nextDurationMin > 0 && nextDurationMin !== duration) {
-      setDuration(nextDurationMin);
+      queueMicrotask(() => setDuration(nextDurationMin));
     }
 
     // Apply practice param overrides.
     if (ctx.overrides?.practiceParams && typeof ctx.overrides.practiceParams === 'object') {
-      mergePracticeParamsPatch(ctx.overrides.practiceParams);
+      queueMicrotask(() => mergePracticeParamsPatch(ctx.overrides.practiceParams));
     } else if (ctx.practiceParamsPatch) {
-      mergePracticeParamsPatch(ctx.practiceParamsPatch);
+      queueMicrotask(() => mergePracticeParamsPatch(ctx.practiceParamsPatch));
     }
 
     // Best-effort mapping for common config fields.
     if (ctx.practiceId === 'breath') {
       const breathPattern = ctx.practiceConfig?.breathPattern;
       if (breathPattern && typeof breathPattern === 'string') {
-        mergePracticeParamsPatch({ breath: { preset: breathPattern.toLowerCase() } });
+        queueMicrotask(() => mergePracticeParamsPatch({ breath: { preset: breathPattern.toLowerCase() } }));
       }
     }
 
@@ -887,11 +883,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           },
           duration: ex.duration,
         }));
-        setCircuitConfig({
+        _circuitPendingRef.current = {
           exercises: circuitExercises,
           intervalBreakSec: circuitDef.intervalBreakSec ?? 10,
-        });
-        setActiveCircuitId(ctx.practiceConfig.circuitId);
+          circuitId: ctx.practiceConfig.circuitId,
+        };
       }
     }
 
@@ -916,7 +912,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
       activePathContextRef.current = null;
-      setPathLaunchGuidance(undefined);
+      queueMicrotask(() => setPathLaunchGuidance(undefined));
     }
   }, [isRunning, pathLaunchGuidance]);
   const [_isStarting, setIsStarting] = useState(false);
@@ -982,10 +978,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (shouldRenderRingCanvas) return;
     if (pendingSummaryNeedsRingUnmount && !ringUnmountedForSummaryRef.current) return;
 
-    setSessionSummary(pendingSummaryPayload);
-    setShowSummary(true);
-    setPendingSummaryPayload(null);
-    setPendingSummaryNeedsRingUnmount(false);
+    const _payload = pendingSummaryPayload;
+    queueMicrotask(() => {
+      setSessionSummary(_payload);
+      setShowSummary(true);
+      setPendingSummaryPayload(null);
+      setPendingSummaryNeedsRingUnmount(false);
+    });
     awaitingRingUnmountForSummaryRef.current = false;
     ringUnmountedForSummaryRef.current = false;
     console.log("[SessionSummaryModal] mounted after ring unmount");
@@ -1020,7 +1019,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     breathCount, setBreathCount,
     sessionStartTime, setSessionStartTime,
     tapErrors, setTapErrors,
-    lastErrorMs, setLastErrorMs,
+    setLastErrorMs,
     lastSignedErrorMs, setLastSignedErrorMs,
     activeCircuitId, setActiveCircuitId,
     circuitValidationError, setCircuitValidationError,
@@ -1029,10 +1028,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setCircuitSavedPractice,
     setVisualizationCycles,
     activeRitual, setActiveRitual,
-    currentStepIndex, setCurrentStepIndex,
+    setCurrentStepIndex,
     ringPresetIndex, setRingPresetIndex,
     isPresetSwitcherOpen, setIsPresetSwitcherOpen,
   } = breathSessionState;
+  // Apply pending circuit setup written by the launch-context effect above
+  useEffect(() => {
+    if (!_circuitPendingRef.current) return;
+    const pending = _circuitPendingRef.current;
+    _circuitPendingRef.current = null;
+    queueMicrotask(() => {
+      setCircuitConfig({ exercises: pending.exercises, intervalBreakSec: pending.intervalBreakSec });
+      setActiveCircuitId(pending.circuitId);
+    });
+  }, [practiceLaunchContext, setCircuitConfig, setActiveCircuitId]);
 
   // Fail-on-exit: Mark pilot session failed if unmounting mid-practice (pilot only, no curriculum mutation)
   useEffect(() => {
@@ -1290,7 +1299,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     if (preset && BREATH_PRESETS[preset]) {
-      setPattern(BREATH_PRESETS[preset]);
+      queueMicrotask(() => setPattern(BREATH_PRESETS[preset]));
     }
   }, [preset]);
 
@@ -1301,7 +1310,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         { exercise: { id: 'cognitive', name: 'Cognitive Vipassana', type: 'focus', practiceType: 'Cognitive Vipassana' }, duration: 5 },
         { exercise: { id: 'somatic', name: 'Somatic Vipassana', type: 'body', practiceType: 'Somatic Vipassana', sensoryType: 'body' }, duration: 5 },
       ];
-      setCircuitConfig({ exercises: defaultExercises, exerciseDuration: 5 });
+      queueMicrotask(() => setCircuitConfig({ exercises: defaultExercises, exerciseDuration: 5 }));
     }
   }, [practice, circuitConfig]);
 
@@ -1503,7 +1512,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
       return false;
     });
-  }, [isRunning]);
+  }, [isRunning, setIsSessionPaused, setSessionStartTime]);
 
   const handleStop = (options = {}) => {
     // options.completed = true means the session timer naturally reached 0
@@ -1956,12 +1965,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, setLastPracticeStartProbe]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, setLastPracticeStartProbe, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
     if (circuitValidationError && practiceId === 'circuit') {
-      setCircuitValidationError(null);
+      queueMicrotask(() => setCircuitValidationError(null));
     }
   }, [circuitConfig, practiceId, circuitValidationError]);
 
@@ -2113,7 +2122,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         if (activeCircuitId && circuitConfig) {
           advanceCircuitExercise();
         } else {
-          handleStop({ completed: true });
+          queueMicrotask(() => handleStop({ completed: true }));
         }
       }
     }
