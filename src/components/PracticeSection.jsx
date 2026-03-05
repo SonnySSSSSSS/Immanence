@@ -63,7 +63,6 @@ import { getRitualById } from "../data/bhaktiRituals.js";
 import { EmotionConfig } from './EmotionConfig.jsx';
 import { getEmotionClosingLine, getEmotionLabel } from '../data/emotionPractices.js';
 import { useProgressStore } from '../state/progressStore.js';
-import { useProbeState } from '../hooks/useProbeState.js';
 import { useBreathSessionManager } from '../hooks/useBreathSessionManager.js';
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
@@ -927,8 +926,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Initialize custom hooks for state management
   const breathSessionState = useBreathSessionManager();
-  const probeState = useProbeState();
-
   // Destructure breath session state for convenience
   const {
     timeLeft, setTimeLeft,
@@ -950,26 +947,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     ringPresetIndex, setRingPresetIndex,
     isPresetSwitcherOpen, setIsPresetSwitcherOpen,
   } = breathSessionState;
-
-  // Destructure probe state for convenience
-  const {
-    curGuideProbeSourceTag, setCurGuideProbeSourceTag,
-    curGuideProbePathId, setCurGuideProbePathId,
-    curGuideProbeSlotIndex, setCurGuideProbeSlotIndex,
-    curGuideProbeGuidanceUrl, setCurGuideProbeGuidanceUrl,
-    curGuideProbeKeys, setCurGuideProbeKeys,
-    lastGuideProbeSourceTag, setLastGuideProbeSourceTag,
-    lastGuideProbePathId, setLastGuideProbePathId,
-    lastGuideProbeSlotIndex, setLastGuideProbeSlotIndex,
-    lastGuideProbeGuidanceUrl, setLastGuideProbeGuidanceUrl,
-    lastGuideProbeKeys, setLastGuideProbeKeys,
-    activePracticeIdentity, setActivePracticeIdentity,
-    lastStartCaller, setLastStartCaller,
-    lastStartAtMsAgo, setLastStartAtMsAgo,
-    apcPathIdProbe, setApcPathIdProbe,
-    apcSlotIndexProbe, setApcSlotIndexProbe,
-    resolvedGuidanceUrlProbe, setResolvedGuidanceUrlProbe,
-  } = probeState;
 
   // Fail-on-exit: Mark pilot session failed if unmounting mid-practice (pilot only, no curriculum mutation)
   useEffect(() => {
@@ -2653,60 +2630,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     <>
       <GuidanceAudioController />
       <BreathBenchmark isOpen={showBreathBenchmark} onClose={handleBenchmarkClose} />
-
-      {/* PROBE:GUIDANCE_CTX_OVERLAY:START */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 56,
-          right: 10,
-          zIndex: 10061,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          minWidth: 220,
-          maxWidth: 320,
-          padding: '8px 10px',
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.22)',
-          background: 'rgba(8, 10, 18, 0.9)',
-          color: 'rgba(255,255,255,0.96)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.32)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          fontFamily: 'monospace',
-          fontSize: 11,
-          lineHeight: 1.35,
-          pointerEvents: 'none',
-        }}
-      >
-        <div style={{ fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>GUIDE PROBE</div>
-        <div>{`curSourceTag=${typeof curGuideProbeSourceTag === 'undefined' ? 'n/a' : String(curGuideProbeSourceTag)}`}</div>
-        <div>{`curPathId=${typeof curGuideProbePathId === 'undefined' ? 'n/a' : String(curGuideProbePathId)}`}</div>
-        <div>{`curSlotIndex=${typeof curGuideProbeSlotIndex === 'undefined' ? 'n/a' : String(curGuideProbeSlotIndex)}`}</div>
-        <div>{`curGuidanceUrl=${typeof curGuideProbeGuidanceUrl === 'undefined' ? 'n/a' : String(curGuideProbeGuidanceUrl)}`}</div>
-        <div>{`curCtxKeys=${typeof curGuideProbeKeys === 'undefined' ? 'n/a' : String(curGuideProbeKeys)}`}</div>
-        {/* PROBE:GUIDANCE_CTX_OVERLAY:START */}
-        <div>{`lastSourceTag=${typeof lastGuideProbeSourceTag === 'undefined' ? 'n/a' : String(lastGuideProbeSourceTag)}`}</div>
-        <div>{`lastPathId=${typeof lastGuideProbePathId === 'undefined' ? 'n/a' : String(lastGuideProbePathId)}`}</div>
-        <div>{`lastSlotIndex=${typeof lastGuideProbeSlotIndex === 'undefined' ? 'n/a' : String(lastGuideProbeSlotIndex)}`}</div>
-        <div>{`lastGuidanceUrl=${typeof lastGuideProbeGuidanceUrl === 'undefined' ? 'n/a' : String(lastGuideProbeGuidanceUrl)}`}</div>
-        <div>{`lastCtxKeys=${typeof lastGuideProbeKeys === 'undefined' ? 'n/a' : String(lastGuideProbeKeys)}`}</div>
-        {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
-        {/* PROBE:PRACTICE_START_CALLSITE:START */}
-        <div>{`activePracticeId=${typeof activePracticeIdentity === 'undefined' ? 'n/a' : String(activePracticeIdentity)}`}</div>
-        <div>{`lastStartCaller=${typeof lastStartCaller === 'undefined' ? 'n/a' : String(lastStartCaller)}`}</div>
-        <div>{`lastStartAtMsAgo=${typeof lastStartAtMsAgo === 'undefined' ? 'n/a' : String(lastStartAtMsAgo)}`}</div>
-        {/* PROBE:PRACTICE_START_CALLSITE:END */}
-        {/* PROBE:PATH_CONTEXT_AT_START:START */}
-        <div>{`apcPathId=${typeof apcPathIdProbe === 'undefined' ? 'n/a' : String(apcPathIdProbe)}`}</div>
-        <div>{`apcSlotIndex=${typeof apcSlotIndexProbe === 'undefined' ? 'n/a' : String(apcSlotIndexProbe)}`}</div>
-        {/* PROBE:PATH_CONTEXT_AT_START:END */}
-        {/* PROBE:GUIDANCE_RESOLVE_AT_START:START */}
-        <div>{`resolvedGuidanceUrl=${typeof resolvedGuidanceUrlProbe === 'undefined' ? 'n/a' : String(resolvedGuidanceUrlProbe)}`}</div>
-        {/* PROBE:GUIDANCE_RESOLVE_AT_START:END */}
-      </div>
-      {/* PROBE:GUIDANCE_CTX_OVERLAY:END */}
       <div
         style={{
           position: 'fixed',
