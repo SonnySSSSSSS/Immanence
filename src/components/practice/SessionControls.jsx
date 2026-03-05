@@ -10,8 +10,6 @@ export function SessionControls({
   feedbackText,
   onStop,
   buttonBg,
-  radialGlow,
-  buttonShadow,
   timeLeftText,
   showBreathCount,
   breathCount,

@@ -26,7 +26,7 @@ const PRACTICE_SUGGESTIONS = {
  * @param {function} props.onStartNext - Callback to start next practice (receives practice type)
  * @param {function} props.onFocusRating - Callback when focus rating is selected (1-5)
  */
-export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusRating, practiceTimeSlots = [], legNumber = 1, totalLegs = 2 }) {
+export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusRating, legNumber = 1, totalLegs = 2 }) {
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const isLight = colorScheme === 'light';
   const [focusRating, setFocusRating] = React.useState(null);
@@ -39,7 +39,6 @@ export function SessionSummaryModal({ summary, onContinue, onStartNext, onFocusR
 
   if (!summary) return null;
 
-  const suggestions = PRACTICE_SUGGESTIONS[summary.practice] || ["Breath & Stillness", "Visualization"];
   const isFromCurriculum = summary.curriculumDayNumber !== null && summary.curriculumDayNumber !== undefined;
   const allLegsComplete = isFromCurriculum && !summary.nextLeg;
   const isFirstLeg = isFromCurriculum && legNumber === 1 && totalLegs > 1;

@@ -1,6 +1,6 @@
 import React from "react";
 
-function PracticeHeader({ isSanctuary, practiceId, onSelectPractice, selector }) {
+function PracticeHeader({ selector }) {
   return (
     <>
       {/* Radial glow backdrop emanating from center (avatar area) */}
