@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useRitualStore } from '../../state/ritualStore';
 
 export function PhotoReview({ onProceed }) {

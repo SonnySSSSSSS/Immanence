@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useRitualStore } from '../../state/ritualStore';
 
 const BASE = import.meta.env.BASE_URL || '/';
