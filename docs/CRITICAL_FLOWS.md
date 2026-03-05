@@ -2,6 +2,9 @@
 
 Goal: a checklist of the highest-risk user journeys across app boot + HomeHub + Practice + Navigation + persisted Zustand stores.
 
+Related runtime-proof matrix for fail-safe design:
+- `docs/SINGLE_FAILURE_NODES_AUDIT.md`
+
 ---
 
 ## 1) App Boot → HomeHub Renders (No Crash)
