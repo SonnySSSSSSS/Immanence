@@ -143,8 +143,6 @@ function createDigitTexture(value) {
   ctx.filter = 'none'
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  const w = canvas.width
-  const h = canvas.height
   const font = '700 170px Cinzel, Georgia, serif'
 
   ctx.save()
@@ -182,8 +180,8 @@ function createDigitTexture(value) {
   return tex
 }
 
-export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber, reducedEffects = false }) {
-  const { gl, size, scene, camera } = useThree()
+export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNumber }) {
+  const { gl, size, camera } = useThree()
   const runtimeQualityInfo = useMemo(() => {
     if (typeof window === 'undefined') {
       return { initialTier: 'hi', fxKillSwitch: false, autoDowngrade: false }
@@ -232,7 +230,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
   // Permanent fix: disable shadows and environment for polygon preset stability
   useEffect(() => {
-    gl.shadowMap.enabled = false
+    Object.assign(gl.shadowMap, { enabled: false })
   }, [gl])
 
   // Optional: cleanup detector for debug builds (can be disabled for production)
@@ -250,12 +248,9 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
 
     const PREMULT = glContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL
     const FLIPY = glContext.UNPACK_FLIP_Y_WEBGL
-    let texSubImageCallCount = 0
-    let pixelStoreiCallCount = 0
     const pixelStoreiLogMap = new Map()
 
     function wrappedPixelStorei(...args) {
-      pixelStoreiCallCount += 1
       const pname = args[0]
       if (pname === PREMULT || pname === FLIPY) {
         const key = `${pname}:${args[1]}`
@@ -269,7 +264,6 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
     }
 
     function wrappedTexSubImage2D(...args) {
-      texSubImageCallCount += 1
       return originalTexSubImage2D.apply(glContext, args)
     }
 
@@ -584,26 +578,7 @@ export function PolygonBreathSceneContent({ accentColor, breathDriver, displayNu
         </mesh>
       )}
 
-      {/* P3 probe: exaggerated readable reflection clone below the polygon. */}
-      {false && !useSafeDigit && digitTexture && (
-        <mesh
-          ref={reflectionRef}
-          position={[0, -0.78, -0.04]}
-          scale={[1, 1, 1]}
-        >
-          <planeGeometry args={[0.72, 0.72]} />
-          <meshBasicMaterial
-            map={digitTexture}
-            color={accentColor}
-            transparent
-            opacity={0.26}
-            alphaTest={0.02}
-            toneMapped={false}
-            depthWrite={false}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      )}
+      {/* P3 probe: exaggerated readable reflection clone below the polygon — disabled */}
 
     </>
   )

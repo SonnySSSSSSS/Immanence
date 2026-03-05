@@ -435,6 +435,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.254 - fix(lint): medium-risk hook/purity remediation (PracticeSection, ShadowScanOverlay, ThoughtObservation, PolygonBreathScene)
+  // v3.27.253 - fix(instrument-preset): remove white orb sphere from center
   // v3.27.252 - chore(lint): remove unused vars in avatar/practice menu (batch 6)
   // v3.27.251 - chore(lint): remove unused vars in safe chart components (batch 5)
   // v3.27.250 - chore(lint): remove unused vars in visual utilities (batch 4)
@@ -858,7 +860,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.245
+                        v3.27.246
                       </button>
                     </div>
                   </div>
