@@ -60,6 +60,7 @@ README.md                          [Public: Overview + features]
 ```
 docs/ARCHITECTURE.md               [Component wiring + data flows]
 docs/SESSION_FLOW_MAP.md           [Canonical end-to-end session runtime]
+docs/PERSISTENCE_AUDIT.md          [Persistence keys, ownership, overlap risks]
 docs/DEVELOPMENT.md                [Setup + troubleshooting]
 docs/LLM_INTEGRATION.md            [Ollama + validation]
 docs/PHILOSOPHY.md                 [Design principles]
@@ -103,6 +104,7 @@ DOCUMENTATION_COMPLETE.md          [This summary]
 | Start productivity | `.github/copilot-instructions.md` | 5 min |
 | Understand architecture | `docs/ARCHITECTURE.md` | 15 min |
 | Trace session runtime end-to-end | `docs/SESSION_FLOW_MAP.md` | 10 min |
+| Audit storage ownership | `docs/PERSISTENCE_AUDIT.md` | 10 min |
 | Modify a store | `.github/copilot-instructions.md` (example) + `docs/ARCHITECTURE.md` | 10 min |
 | Validate LLM prompts | `.github/copilot-instructions.md` (Four Modes example) + `docs/LLM_INTEGRATION.md` | 10 min |
 | Check project status | `docs/DOC_INVENTORY.md` + `PROJECT_STATUS.md` | 5 min |
