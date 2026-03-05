@@ -1,5 +1,5 @@
-// src/components/DailyPracticeCard.jsx
-import React, { useEffect, useState, useMemo, useTransition } from 'react';
+﻿// src/components/DailyPracticeCard.jsx
+import React, { useEffect, useState, useMemo, useTransition, useRef } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -11,7 +11,6 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey, parseDateKeyToUtcMs } from '../utils/dateUtils.js';
 import { getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
-import { useAuthUser, getDisplayName } from "../state/useAuthUser";
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
 import { getProgramDefinition } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
@@ -45,17 +44,6 @@ const THEME_CONFIG = {
         shadow: '0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.10)'
     }
 };
-
-/**
- * Adherence color: neutral gray at 0%, transitions to soft green when >0%.
- * Avoids competing with the START button's saturated accent.
- */
-function getAdherenceColor(adherencePct, isLight) {
-    if (Math.round(adherencePct) <= 0) {
-        return isLight ? 'rgba(60, 50, 35, 0.45)' : 'rgba(253, 251, 245, 0.40)';
-    }
-    return isLight ? 'rgba(60, 110, 60, 0.75)' : 'rgba(120, 200, 140, 0.75)';
-}
 
 /**
  * Map practice type to canonical practiceId
@@ -625,8 +613,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const [_isPending, startTransition] = useTransition();
 
     const theme = useTheme();
-    const currentStage = theme?.stage || 'Flame';
-    const stageLower = currentStage.toLowerCase();
     const primaryHex = theme?.accent?.primary || '#4ade80';
     const progressBarColor = theme?.ui?.progressBar || '#4ade80';
 
@@ -672,9 +658,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     });
 
     const needsSetup = !onboardingComplete && (!practiceTimeSlots || practiceTimeSlots.length === 0);
-
-    const user = useAuthUser();
-    const displayName = getDisplayName(user);
 
     // Show path-based daily card when an active path with scheduled times exists,
     // regardless of onboarding status â€” prevents falling through to stale curriculum modal
@@ -756,6 +739,30 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         metrics.dayIndex,
         onNavigate,
     ]);
+
+    // DEV keyboard shortcut — must be above all early returns; deps supplied via ref
+    const _devKeyRef = useRef(null);
+    const _devDepsRef = useRef({ legs: [], dayNumber: 1, isLegTooEarly: () => false, isLegExpired: () => false });
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        if (hasActivePath) return;
+        const onKeyDown = (event) => {
+            const key = String(event.key || '').toLowerCase();
+            if (!(event.ctrlKey && event.shiftKey && key === 's')) return;
+            event.preventDefault();
+            const { legs: dl, dayNumber: dn, isLegTooEarly: isTooEarly, isLegExpired: isExp } = _devDepsRef.current;
+            const targetLeg = dl.find((leg) => !leg.completed && (isTooEarly(leg) || isExp(leg)))
+                || dl.find((leg) => !leg.completed);
+            if (!targetLeg) {
+                console.log('[DEV] Ctrl+Shift+S: no force-start target leg found');
+                return;
+            }
+            console.log('[DEV] Ctrl+Shift+S: force-starting leg', { dayNumber: dn, legNumber: targetLeg.legNumber, label: targetLeg.label });
+            _devKeyRef.current?.(targetLeg, { shiftKey: true, type: 'keydown', target: { disabled: false } });
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [hasActivePath]);
 
     if (hasActivePath || needsSetup || showNoCurriculumSetupState || (!onboardingComplete && hasPersistedCurriculumData === false)) {
         const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
@@ -1165,9 +1172,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                                 const slot = slotLaunches[idx];
                                                                                 const practiceId = slot?.practiceId;
                                                                                 const durationMin = slot?.durationMin;
-                                                                                const practiceParamsPatch = slot?.practiceParamsPatch;
-                                                                                const practiceConfig = slot?.practiceConfig;
-                                                                                console.log("[DailyPracticeCard] START slot", {
+                                                                                                                                                                console.log("[DailyPracticeCard] START slot", {
                                                                                     slotTime: time,
                                                                                     slotIndex: idx,
                                                                                     practiceId,
@@ -1249,7 +1254,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
     const dayNumber = getCurrentDayNumber();
     const todaysPractice = getTodaysPractice();
-    const progress = progressSnapshot;
     const streak = getStreak();
     const legs = getDayLegsWithStatus(dayNumber);
     const hasStartedCurriculum = !!activePracticeSession || (legCompletions && Object.keys(legCompletions).length > 0);
@@ -1320,6 +1324,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const { tooEarly } = getStartWindowState({ now: new Date(), scheduledAt });
         return tooEarly;
     };
+
+    // Update DEV shortcut deps (used by the effect registered before the early returns)
+    _devDepsRef.current = { legs, dayNumber, isLegTooEarly, isLegExpired };
 
     if ((isCurriculumActive && dayNumber > 14) || isCurriculumComplete) {
         const bgAssetUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
@@ -1576,6 +1583,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     }
 
     const handleStartLeg = (leg, evt) => {
+        _devKeyRef.current = handleStartLeg;
         // DEBUG: Log shift-click events
         console.log('[SHIFT+CLICK DEBUG]', {
             shiftKey: evt?.shiftKey,
@@ -1636,41 +1644,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         setActivePracticeSession(dayNumber, leg.legNumber, metadata);
         onStartPractice?.(leg, { dayNumber, programId: activeCurriculumId, metadata });
     };
-
-    useEffect(() => {
-        if (!import.meta.env.DEV) return;
-        if (hasActivePath) return;
-
-        const onKeyDown = (event) => {
-            const key = String(event.key || '').toLowerCase();
-            if (!(event.ctrlKey && event.shiftKey && key === 's')) return;
-
-            event.preventDefault();
-
-            const targetLeg = legs.find((leg) => !leg.completed && (isLegTooEarly(leg) || isLegExpired(leg)))
-                || legs.find((leg) => !leg.completed);
-
-            if (!targetLeg) {
-                console.log('[DEV] Ctrl+Shift+S: no force-start target leg found');
-                return;
-            }
-
-            console.log('[DEV] Ctrl+Shift+S: force-starting leg', {
-                dayNumber,
-                legNumber: targetLeg.legNumber,
-                label: targetLeg.label,
-            });
-
-            handleStartLeg(targetLeg, {
-                shiftKey: true,
-                type: 'keydown',
-                target: { disabled: false },
-            });
-        };
-
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, [hasActivePath, legs, dayNumber, handleStartLeg]);
 
     const completedLegs = legs.filter(l => l.completed).length;
     const isDailyComplete = legs.length > 0 && completedLegs === legs.length;
@@ -1928,7 +1901,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                         )}
                                                         {isActionable && lastSessionFailed && (
                                                             <div className="text-[10px] uppercase font-black tracking-widest" style={{ color: isLight ? '#dc2626' : '#ff6b6b' }}>
-                                                                âš  Incomplete
+                                                                âš  Incomplete
                                                             </div>
                                                         )}
                                                         {expired && (
