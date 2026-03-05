@@ -17,7 +17,6 @@ import { DOMAIN_COLORS, METRIC_STATE_COLORS } from './tokens';
 export function NavigationDashboardHeader({
     navigationSummary,
     adherenceSummary7,
-    adherenceSummary30,
     scheduleSlots = [],
     isLight = false
 }) {
@@ -25,7 +24,6 @@ export function NavigationDashboardHeader({
         activePath = null,
         unlockedCount = 0,
         hasFoundation = false,
-        pathAssessment = null
     } = navigationSummary || {};
 
     // Calculate weeks completed

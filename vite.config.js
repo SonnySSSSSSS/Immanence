@@ -1,13 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-const { execSync } = require('child_process');
+import { execSync } from 'node:child_process'
 
 // PROBE:DEPLOY_BUILD_ID_V1:START
 let DEPLOY_GIT_SHA = 'unknown';
 try {
   DEPLOY_GIT_SHA = execSync('git rev-parse --short HEAD').toString().trim();
-} catch (e) {}
+} catch {
+  DEPLOY_GIT_SHA = 'unknown';
+}
 const DEPLOY_BUILD_TIME = new Date().toISOString();
 // PROBE:DEPLOY_BUILD_ID_V1:END
 

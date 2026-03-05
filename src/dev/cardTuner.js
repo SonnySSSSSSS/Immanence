@@ -4,7 +4,6 @@ const CARD_PICK_SELECTOR = '[data-card-id]';
 const ROOT_ENABLED_CLASS = 'dev-card-tuner-enabled';
 const PICK_MODE_CLASS = 'dev-card-picker-active';
 const SELECTED_CLASS = 'dev-card-selected';
-const PICK_FAILED_CLASS = 'dev-card-pick-failed';
 
 const GLOBAL_PRESET_KEY = 'dev.cardTuner.global.v1';
 const CARD_PRESET_KEY = 'dev.cardTuner.cards.v1';
@@ -158,13 +157,6 @@ function debugLogPick(event, resolvedEl) {
   } catch (err) {
     console.info('[pick-debug] failed to log', err);
   }
-}
-
-function flashPickFailed(el) {
-  if (!hasDom()) return;
-  if (!(el instanceof Element)) return;
-  el.classList.add(PICK_FAILED_CLASS);
-  window.setTimeout(() => el.classList.remove(PICK_FAILED_CLASS), 750);
 }
 
 export function findCardFromEvent(event) {

@@ -60,11 +60,6 @@ export function StatCard({
         minWidth: '120px'
     };
 
-    const hoverStyle = {
-        transform: 'translateY(-1px)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
-    };
-
     return (
         <div
             style={containerStyle}
