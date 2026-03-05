@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useDisplayModeStore } from '../../state/displayModeStore';
 
 const POSITIVE_THOUGHTS = [
@@ -31,7 +31,7 @@ export function ThoughtObservation({ photoUrl, onComplete }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
     const timerRef = useRef(null);
-    const startTimeRef = useRef(Date.now());
+    const startTimeRef = useRef(0);
     const selectedThoughtsRef = useRef([]);
     const thoughtIndexRef = useRef(0);
 
@@ -44,6 +44,7 @@ export function ThoughtObservation({ photoUrl, onComplete }) {
 
     // Track observation duration
     useEffect(() => {
+        startTimeRef.current = Date.now();
         const interval = setInterval(() => {
             setObservationTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
         }, 1000);
