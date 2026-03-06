@@ -18,10 +18,9 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 
 **Public Launch Gate verdict: FAIL** — remaining blocking conditions for public launch:
 1. ~~Auth disabled while launch goal includes account creation/login.~~ ✅ RESOLVED — auth re-enabled for beta.
-2. Redirect allowlist (GH Pages site URL + email confirmation/recovery flows) not verified.
-3. `supabase.from('user_documents')` table exists — RLS posture not inventoried or verified.
-4. Signup anti-abuse posture (rate limits / CAPTCHA / email confirmation) not decided or verified.
-5. Unused auth providers/mechanisms not audited or disabled.
+2. Email confirmation/recovery flows still need an end-to-end live redirect test on the GitHub Pages subpath.
+3. Signup anti-abuse posture still needs an explicit human decision for public exposure (`mailer_autoconfirm` was enabled until 2026-03-06 dashboard hardening).
+4. Rate limits/CAPTCHA are now reviewed for beta, but broader public-launch abuse posture is still a product decision.
 
 **Smoke test coverage vs real beta auth verification:**
 
@@ -37,10 +36,15 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 | `user_documents` upsert (write path) under RLS | ✅ Smoke TEST 7 VERIFIED | Authenticated upsert succeeded; probe row written + deleted (2026-03-06) |
 | `user_documents` DELETE policy present for owner | ✅ Smoke TEST 7 VERIFIED | Owner delete of probe row succeeded; cleanup confirmed (2026-03-06) |
 | `user_documents` anon read isolation (RLS ON) | ✅ Smoke TEST 7 VERIFIED | Signed-out SELECT returned 0 rows — USING (auth.uid()=user_id) is active (2026-03-06) |
-| `user_documents` cross-user authenticated isolation | ❌ UNVERIFIED | Needs two beta accounts; cannot prove from single-session test |
-| Redirect allowlist covers GH Pages URL | ❌ DASHBOARD ONLY | Must be confirmed in Supabase Dashboard → Authentication → URL Configuration |
-| OAuth/phone provider surface reduction | ❌ DASHBOARD ONLY | Disable unused providers in Supabase Dashboard → Authentication → Providers |
-| Anti-abuse posture (rate limits/CAPTCHA/email confirm) | ❌ DASHBOARD ONLY | Decide and configure in Supabase Dashboard before public launch |
+| `user_documents` cross-user isolation: B SELECT on A | ✅ Smoke TEST 8 VERIFIED | B query for A's row by A's user_id returned 0 rows (2026-03-06) |
+| `user_documents` cross-user isolation: B UPDATE on A | ✅ Smoke TEST 8 VERIFIED | B tamper attempt silently blocked; A's row unchanged (2026-03-06) |
+| `user_documents` cross-user isolation: B DELETE on A | ✅ Smoke TEST 8 VERIFIED | B delete attempt silently blocked; A's row still exists (2026-03-06) |
+| `user_documents` forged INSERT (B with A's user_id) | ✅ Smoke TEST 8 VERIFIED | WITH CHECK rejected forged insert with RLS policy error (2026-03-06) |
+| OAuth/phone/SAML/anon provider surface | ✅ API VERIFIED | `/auth/v1/settings`: email only; all OAuth, phone, SAML, anon = false (2026-03-06) |
+| Redirect allowlist covers GH Pages URL | ✅ DASHBOARD VERIFIED | `Site URL` = `https://SonnySSSSSSS.github.io/Immanence/`; redirects = GH Pages subpath + `http://localhost:5173/` only (2026-03-06) |
+| Anti-abuse: email confirmation required on signup | ✅ DASHBOARD VERIFIED | `Authentication -> Sign In / Providers -> Confirm email` enabled (2026-03-06) |
+| Anti-abuse: rate limits and CAPTCHA posture | ✅ DASHBOARD VERIFIED | CAPTCHA off by explicit beta choice; rate limits reviewed in dashboard (2026-03-06) |
+| Provider surface reduced before launch | ✅ DASHBOARD VERIFIED | Email enabled; anonymous/manual linking off; `/auth/v1/settings` and dashboard both show no OAuth/phone/SAML providers (2026-03-06) |
 
 **Synthetic smoke sessions:** Tests 1–5 inject a fake JWT (`expires_at: 9999999999`) into
 `sb-snyozqiselfxfifpavmj-auth-token`. Supabase `getSession()` returns this without a network
@@ -48,9 +52,34 @@ call. `tick()` in `offlineFirstUserStateSync` will attempt DB calls with this fa
 receive 401/403 from Supabase, handled gracefully in local-only mode. TEST 5 additionally
 intercepts `/auth/v1/logout` so `supabase.auth.signOut()` runs its full local cleanup path.
 
-**Real beta auth status: UNVERIFIED in CI.** The sign-in/sign-up flows require a live Supabase
-account and cannot be safely automated without test credentials. Manual beta validation is
-required before public launch.
+**Real beta auth status: VERIFIED for beta, not for public launch automation.** Live beta sign-in,
+session restore, sign-out, `user_documents` RLS, and dashboard auth posture were verified on
+2026-03-06. CI still uses synthetic sessions for smoke coverage unless runtime credentials are
+supplied.
+
+**Dashboard verification summary (2026-03-06):**
+- `Authentication -> Sign In / Providers`
+  - `Allow new users to sign up` = enabled
+  - `Allow manual linking` = disabled
+  - `Allow anonymous sign-ins` = disabled
+  - `Confirm email` = enabled
+- `Authentication -> URL Configuration`
+  - `Site URL` = `https://SonnySSSSSSS.github.io/Immanence/`
+  - Redirect URLs = `https://SonnySSSSSSS.github.io/Immanence/`, `http://localhost:5173/`
+  - No wildcard redirects configured
+- `Authentication -> Rate Limits`
+  - emails = `2 / hour`
+  - token refreshes = `150 / 5 min / IP`
+  - token verifications = `30 / 5 min / IP`
+  - sign-ups and sign-ins = `30 / 5 min / IP`
+- `Authentication -> Attack Protection`
+  - CAPTCHA = disabled by explicit beta choice
+  - leaked-password protection = disabled in current dashboard state
+
+**Remaining manual/public-launch decisions:**
+- Decide whether the current email sending quota (`2 / hour`) is sufficient for expected beta volume.
+- Decide whether leaked-password protection should be enabled for a stricter public-launch posture.
+- Run one end-to-end email confirmation and password recovery flow against the GitHub Pages subpath to prove redirect behavior in practice, not only in configuration.
 
 **To disable auth** (e.g. for smoke testing without a session): set `ENABLE_AUTH = false` in all three files above.
 **To clear for public launch:** complete every unchecked item in this document and re-run the Launch Gate.
