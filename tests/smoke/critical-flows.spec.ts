@@ -512,6 +512,166 @@ test('TEST 7 — user_documents write-path and anon isolation under real RLS', a
   });
 });
 
+// TEST 8 — Cross-user isolation: Account B cannot read, update, delete, or forge Account A data
+//
+// Prerequisites (second test account required):
+//   BETA_TEST_EMAIL_B=... BETA_TEST_PASSWORD_B=... (plus A credentials from TEST 6/7)
+//
+// What this proves (when both credential pairs are supplied):
+//   a) B SELECT on A's row by A's user_id returns 0 rows (RLS USING predicate active)
+//   b) B UPDATE on A's row is silently blocked, A's data unchanged (tamper has no effect)
+//   c) B DELETE on A's row is silently blocked, A's row still exists after B's attempt
+//   d) B forged INSERT with A's user_id is rejected by WITH CHECK policy
+//
+// Probe uses doc_key 'smoke_crossuser_probe_v1' — cleaned up by Account A after the test.
+// Two separate browser contexts used for full localStorage/session isolation.
+test('TEST 8 — Cross-user isolation: Account B cannot access Account A data', async ({ browser }) => {
+  const emailA = process.env.BETA_TEST_EMAIL ?? '';
+  const passwordA = process.env.BETA_TEST_PASSWORD ?? '';
+  const emailB = process.env.BETA_TEST_EMAIL_B ?? '';
+  const passwordB = process.env.BETA_TEST_PASSWORD_B ?? '';
+
+  if (!emailA || !passwordA || !emailB || !passwordB) {
+    test.skip(true, [
+      'BETA_TEST_EMAIL/PASSWORD and BETA_TEST_EMAIL_B/PASSWORD_B are not both set.',
+      'Cross-user isolation is BLOCKED BY MISSING SECOND ACCOUNT — supply both pairs to run.',
+    ].join(' '));
+    return;
+  }
+
+  const contextA = await browser.newContext({ baseURL: 'http://127.0.0.1:4173' });
+  const contextB = await browser.newContext({ baseURL: 'http://127.0.0.1:4173' });
+  const pageA = await contextA.newPage();
+  const pageB = await contextB.newPage();
+
+  try {
+    await pageA.route('**/auth/v1/logout', route => route.fulfill({ status: 204, body: '' }));
+    await pageB.route('**/auth/v1/logout', route => route.fulfill({ status: 204, body: '' }));
+
+    // --- 1. Account A: sign in and create probe row ---
+    await gotoAppRoot(pageA);
+    await pageA.evaluate(() => { window.localStorage.clear(); window.sessionStorage.clear(); });
+    await pageA.reload();
+    await pageA.waitForLoadState('domcontentloaded');
+    await expect(pageA.getByPlaceholder('Email')).toBeVisible();
+    await pageA.getByPlaceholder('Email').fill(emailA);
+    await pageA.getByPlaceholder('Password').fill(passwordA);
+    await pageA.getByRole('button', { name: 'Sign in', exact: true }).click();
+    const dismissA = pageA.getByRole('button', { name: 'Not now', exact: true });
+    if (await dismissA.isVisible({ timeout: 3000 }).catch(() => false)) await dismissA.click();
+    await expectHubVisible(pageA);
+
+    const aSetup = await pageA.evaluate(async () => {
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+      const mod = await import('/src/lib/supabaseClient.js');
+      const supabase = (mod as any).supabase;
+      const { data: sd } = await supabase.auth.getSession();
+      const userId = sd?.session?.user?.id ?? null;
+      await supabase.from('user_documents').upsert({
+        user_id: userId,
+        doc_key: 'smoke_crossuser_probe_v1',
+        doc: { schema: 'smoke_crossuser_probe_v1', ownedBy: 'A', probedAt: new Date().toISOString() },
+        updated_at: new Date().toISOString(),
+        updated_by_device: 'playwright-smoke-A',
+      }, { onConflict: 'user_id,doc_key' });
+      return { userId };
+    });
+    expect(aSetup.userId).toBeTruthy();
+    const aUserId = aSetup.userId as string;
+
+    // --- 2. Account B: sign in in a fully separate browser context ---
+    await gotoAppRoot(pageB);
+    await pageB.evaluate(() => { window.localStorage.clear(); window.sessionStorage.clear(); });
+    await pageB.reload();
+    await pageB.waitForLoadState('domcontentloaded');
+    await expect(pageB.getByPlaceholder('Email')).toBeVisible();
+    await pageB.getByPlaceholder('Email').fill(emailB);
+    await pageB.getByPlaceholder('Password').fill(passwordB);
+    await pageB.getByRole('button', { name: 'Sign in', exact: true }).click();
+    const dismissB = pageB.getByRole('button', { name: 'Not now', exact: true });
+    if (await dismissB.isVisible({ timeout: 3000 }).catch(() => false)) await dismissB.click();
+    await expectHubVisible(pageB);
+
+    // --- 3. B mounts four attacks against A's row ---
+    const bAttack = await pageB.evaluate(async (targetUserId: string) => {
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+      const mod = await import('/src/lib/supabaseClient.js');
+      const supabase = (mod as any).supabase;
+      const { data: sd } = await supabase.auth.getSession();
+      const bUserId = sd?.session?.user?.id ?? null;
+
+      // Attack 1: read A's row by A's user_id (cross-user SELECT)
+      const sel = await supabase.from('user_documents')
+        .select('doc_key, doc')
+        .eq('user_id', targetUserId)
+        .eq('doc_key', 'smoke_crossuser_probe_v1');
+
+      // Attack 2: tamper A's row (cross-user UPDATE)
+      const upd = await supabase.from('user_documents')
+        .update({ doc: { tampered: true, by: bUserId }, updated_at: new Date().toISOString() })
+        .eq('user_id', targetUserId)
+        .eq('doc_key', 'smoke_crossuser_probe_v1');
+
+      // Attack 3: delete A's row (cross-user DELETE)
+      const del = await supabase.from('user_documents')
+        .delete()
+        .eq('user_id', targetUserId)
+        .eq('doc_key', 'smoke_crossuser_probe_v1');
+
+      // Attack 4: forge-insert with A's user_id (WITH CHECK violation attempt)
+      const forge = await supabase.from('user_documents')
+        .insert({
+          user_id: targetUserId,
+          doc_key: 'smoke_crossuser_forge_v1',
+          doc: { forgedBy: bUserId },
+          updated_at: new Date().toISOString(),
+          updated_by_device: 'playwright-smoke-B-forge',
+        });
+
+      return {
+        select: { rowCount: (sel.data ?? []).length, hasError: !!sel.error },
+        update: { hasError: !!upd.error, errorMessage: upd.error?.message ?? null },
+        delete: { hasError: !!del.error, errorMessage: del.error?.message ?? null },
+        forge: { hasError: !!forge.error, errorCode: forge.error?.code ?? null, errorMessage: forge.error?.message ?? null },
+      };
+    }, aUserId);
+
+    // B cannot read A's row
+    expect(bAttack.select.rowCount).toBe(0);
+    // B UPDATE and DELETE silently blocked by RLS USING predicate (0 rows affected, no error)
+    expect(bAttack.update.hasError).toBe(false);
+    expect(bAttack.delete.hasError).toBe(false);
+    // B forged INSERT rejected by WITH CHECK policy
+    expect(bAttack.forge.hasError).toBe(true);
+
+    // --- 4. A verifies row is still intact and untampered ---
+    const aVerify = await pageA.evaluate(async () => {
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+      const mod = await import('/src/lib/supabaseClient.js');
+      const supabase = (mod as any).supabase;
+      const result = await supabase.from('user_documents')
+        .select('doc')
+        .eq('doc_key', 'smoke_crossuser_probe_v1')
+        .maybeSingle();
+      return { hasData: result.data !== null, ownedBy: result.data?.doc?.ownedBy ?? null };
+    });
+    expect(aVerify.hasData).toBe(true);
+    expect(aVerify.ownedBy).toBe('A'); // B's UPDATE had no effect
+
+    // --- 5. A cleans up the probe row ---
+    await pageA.evaluate(async () => {
+      // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+      const mod = await import('/src/lib/supabaseClient.js');
+      const supabase = (mod as any).supabase;
+      await supabase.from('user_documents').delete().eq('doc_key', 'smoke_crossuser_probe_v1');
+    });
+
+  } finally {
+    await contextA.close();
+    await contextB.close();
+  }
+});
+
 test('TEST 4 — Reload persists active path and no overlays auto-open (Flow #8)', async ({ page }) => {
   await startFromCleanState(page);
   await beginInitiationPathWithTwoSlots(page);

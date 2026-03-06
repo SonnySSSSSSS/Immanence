@@ -26,7 +26,25 @@ $env:BETA_TEST_PASSWORD="secret"
 npm run test:smoke
 ```
 
-TEST 6 and TEST 7 are UNVERIFIED until they pass with live beta credentials. TEST 7 additionally verifies the `user_documents` write path, owner DELETE policy, and anon-read isolation under RLS. See `SECURITY_AUDIT_SUPABASE_GH_PAGES.md` for the full auth hardening checklist and remaining dashboard-only verification items.
+TEST 6 proves real sign-in, session restore, and authenticated read access. TEST 7 proves the `user_documents` write path, owner DELETE policy, and anon-read isolation. **TEST 8** proves cross-user isolation using two accounts — supply both credential pairs to run it:
+
+```bash
+# bash — two-account cross-user isolation
+BETA_TEST_EMAIL=account-a@example.com BETA_TEST_PASSWORD=secret-a \
+  BETA_TEST_EMAIL_B=account-b@example.com BETA_TEST_PASSWORD_B=secret-b \
+  npm run test:smoke
+```
+
+```powershell
+# PowerShell (Windows) — two-account cross-user isolation
+$env:BETA_TEST_EMAIL="account-a@example.com"
+$env:BETA_TEST_PASSWORD="secret-a"
+$env:BETA_TEST_EMAIL_B="account-b@example.com"
+$env:BETA_TEST_PASSWORD_B="secret-b"
+npm run test:smoke
+```
+
+See `SECURITY_AUDIT_SUPABASE_GH_PAGES.md` for the full audit status. Remaining blocked items (redirect allowlist, rate limits/CAPTCHA, email confirmation posture) require Supabase Dashboard inspection before public launch.
 
 ## Core Philosophy
 
