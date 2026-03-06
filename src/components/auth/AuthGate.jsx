@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-// NOTE: Multi-user sync feature is disabled until Supabase CORS is configured.
-// To enable, set ENABLE_AUTH to true and configure Supabase allowed origins.
-const ENABLE_AUTH = false;
+// NOTE: Auth is enabled for beta access. Supabase CORS must be configured for the deployment origin.
+// To disable the auth gate (e.g. for smoke testing), set ENABLE_AUTH to false.
+const ENABLE_AUTH = true;
 
 // Lazy import to avoid Supabase initialization when auth is disabled
 const getSupabase = () => import("../../lib/supabaseClient").then(m => m.supabase);

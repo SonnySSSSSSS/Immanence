@@ -3,6 +3,43 @@ import { expect, test, type Page } from '@playwright/test';
 const HUB_BUTTONS = ['Practice', 'Wisdom', 'Application', 'Navigation'] as const;
 // Note: slot enforcement is now tested via disabled wizard Next button at step 3
 
+// Supabase v2 reads the session from localStorage at this key on every page load.
+// getSession() returns the stored session immediately (no network call) when
+// expires_at is in the future. We inject a structurally-valid fake session with
+// expires_at in year 2286 so AuthGate renders children instead of the sign-in form.
+const SUPABASE_STORAGE_KEY = 'sb-snyozqiselfxfifpavmj-auth-token';
+const SMOKE_FAKE_JWT = [
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', // {"alg":"HS256","typ":"JWT"}
+  'eyJleHAiOjk5OTk5OTk5OTl9',              // {"exp":9999999999}
+  'fakesig',
+].join('.');
+
+async function injectSmokeSession(page: Page): Promise<void> {
+  await page.evaluate(
+    ([key, token]) => {
+      const session = {
+        access_token: token,
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: 9999999999,
+        refresh_token: 'smoke-refresh-token',
+        user: {
+          id: '00000000-0000-0000-0000-000000000001',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'smoke@test.example',
+          email_confirmed_at: '2021-01-01T00:00:00.000Z',
+          created_at: '2021-01-01T00:00:00.000Z',
+          updated_at: '2021-01-01T00:00:00.000Z',
+          user_metadata: { name: 'Smoke Test' },
+        },
+      };
+      window.localStorage.setItem(key, JSON.stringify(session));
+    },
+    [SUPABASE_STORAGE_KEY, SMOKE_FAKE_JWT] as const,
+  );
+}
+
 async function gotoAppRoot(page: Page): Promise<void> {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
@@ -50,6 +87,7 @@ async function startFromCleanState(page: Page): Promise<void> {
       })
     );
   });
+  await injectSmokeSession(page);
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
 }
@@ -146,6 +184,11 @@ async function beginInitiationPathWithTwoSlots(page: Page): Promise<void> {
 }
 
 test('TEST 1 — Boot → HomeHub renders (Flow #1)', async ({ page }) => {
+  // Unauthenticated boot must show sign-in gate (auth guard is active)
+  await gotoAppRoot(page);
+  await expect(page.getByPlaceholder('Email')).toBeVisible();
+
+  // With session injected HomeHub renders
   await startFromCleanState(page);
   await expectHubVisible(page);
 });

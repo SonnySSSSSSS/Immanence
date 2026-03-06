@@ -4,8 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { clearSettingsPersistedState, useSettingsStore } from '../state/settingsStore';
 import { setAuthUser, useAuthUser } from '../state/useAuthUser.js';
-// NOTE: Auth feature disabled - lazy import to prevent Supabase CORS errors
-const ENABLE_AUTH = false;
+// NOTE: Auth enabled for beta access - sign-out and account-update UI active when signed in
+const ENABLE_AUTH = true;
 const getSupabase = () => import('../lib/supabaseClient').then(m => m.supabase);
 
 export function resetLocalData() {

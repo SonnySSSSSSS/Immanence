@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.257 - fix(auth): re-enable supabase login for beta and align launch gating
   // v3.27.256 - docs(auth): mark supabase auth as disabled pending launch hardening
   // v3.27.255 - fix(homehub): restore initial hub render for smoke flows (ENABLE_AUTH=false)
   // v3.27.254 - fix(lint): medium-risk hook/purity remediation (PracticeSection, ShadowScanOverlay, ThoughtObservation, PolygonBreathScene)

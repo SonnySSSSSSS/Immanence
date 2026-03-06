@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// NOTE: Multi-user sync feature is disabled.
-// Set ENABLE_AUTH to true when Supabase CORS is configured.
-const ENABLE_AUTH = false;
+// NOTE: Multi-user sync is enabled for beta access.
+// Set ENABLE_AUTH to false to disable the auth gate (e.g. for smoke testing without a session).
+const ENABLE_AUTH = true;
 const SUPABASE_URL = 'https://snyozqiselfxfifpavmj.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_fVQsaU3JzAhoIa2znapxBA_dlSm6quO';
 

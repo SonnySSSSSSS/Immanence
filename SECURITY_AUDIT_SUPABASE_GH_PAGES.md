@@ -1,27 +1,30 @@
 AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 
 ---
-## CURRENT STATUS — AUTH DISABLED (Launch Gate: FAIL)
+## CURRENT STATUS — BETA AUTH ENABLED (Public Launch Gate: FAIL)
 
-**As of this revision, Supabase auth is intentionally disabled across all auth files:**
-- `src/components/auth/AuthGate.jsx`: `ENABLE_AUTH = false` — no sign-in gate rendered; app boots directly
-- `src/lib/supabaseClient.js`: `ENABLE_AUTH = false` — mock Supabase client used; no real network calls
-- `src/components/SettingsPanel.jsx`: `ENABLE_AUTH = false` — sign-out and account-update UI inactive
+**Auth is enabled for beta access across all auth files:**
+- `src/components/auth/AuthGate.jsx`: `ENABLE_AUTH = true` — sign-in/sign-up gate rendered on unauthenticated boot
+- `src/lib/supabaseClient.js`: `ENABLE_AUTH = true` — real Supabase client active; `sb_publishable_...` key in use
+- `src/components/SettingsPanel.jsx`: `ENABLE_AUTH = true` — sign-out and account-update UI active when signed in
+
+**Beta status: ENABLED** — beta users can sign in, sign up, and sign out via the existing Supabase-backed flows.
 
 **Key findings from code audit:**
-- Credentials: Supabase URL and anon key (`sb_publishable_...`) are hardcoded in `supabaseClient.js`. `.env.local` has `VITE_SUPABASE_*` vars but they are NOT consumed.
+- Credentials: Supabase URL and anon key (`sb_publishable_...`) are hardcoded in `supabaseClient.js`. `.env.local` has `VITE_SUPABASE_*` vars but they are NOT consumed. Anon key is safe to ship in browser bundles; security depends on RLS + policies.
 - No elevated keys: No `sb_secret_`, `service_role`, or `SUPABASE_SERVICE_ROLE` in any browser-delivered code.
-- Table queries detected: `src/state/offlineFirstUserStateSync.js` calls `supabase.from('user_documents')` (upsert + select). This is NOT auth-only. Section 3A below incorrectly claims no `from()` calls — this is a correction.
-- All Launch Gate checklist items remain unchecked (no flow testing done).
+- Table queries detected: `src/state/offlineFirstUserStateSync.js` calls `supabase.from('user_documents')` (upsert + select). This is NOT auth-only. Section 3A below incorrectly claimed no `from()` calls — corrected here.
+- All public-launch Launch Gate checklist items remain unchecked (no flow testing done).
 
-**Launch Gate verdict: FAIL** — multiple blocking conditions unresolved:
-1. Auth disabled while launch goal includes account creation/login.
+**Public Launch Gate verdict: FAIL** — remaining blocking conditions for public launch:
+1. ~~Auth disabled while launch goal includes account creation/login.~~ ✅ RESOLVED — auth re-enabled for beta.
 2. Redirect allowlist (GH Pages site URL + email confirmation/recovery flows) not verified.
 3. `supabase.from('user_documents')` table exists — RLS posture not inventoried or verified.
 4. Signup anti-abuse posture (rate limits / CAPTCHA / email confirmation) not decided or verified.
 5. Unused auth providers/mechanisms not audited or disabled.
 
-**To re-enable auth:** set `ENABLE_AUTH = true` in all three files above, then complete every checklist item in this document and re-run the Launch Gate.
+**To disable auth** (e.g. for smoke testing without a session): set `ENABLE_AUTH = false` in all three files above.
+**To clear for public launch:** complete every unchecked item in this document and re-run the Launch Gate.
 
 ---
 
