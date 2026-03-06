@@ -227,6 +227,37 @@ test('TEST 3 — Navigation selector modal + Initiation slot enforcement (Flows 
   await expect(page.getByTestId('active-path-root')).toBeVisible();
 });
 
+// TEST 5 — Sign-out cycle via real supabase.auth.signOut() (beta auth behavior)
+//
+// Why this tests real auth behavior:
+//   - Calls the real supabase.auth.signOut() method (not a mock or localStorage clear)
+//   - The Supabase auth-js _signOut() path: acquires lock → sends POST /auth/v1/logout
+//     → removes local session → fires onAuthStateChange("SIGNED_OUT")
+//   - App.jsx handleAuthChange("SIGNED_OUT") runs: stopUserStateSync, setAuthUser(null),
+//     AuthGate sets session to null → sign-in gate re-renders
+// Why we route-mock /auth/v1/logout:
+//   - CORS: if localhost isn't in the Supabase allowlist, the network error would NOT be
+//     treated as a 401/403 and _removeSession() would not run (see auth-js _signOut impl)
+//   - Route intercept returns 204 so auth-js proceeds to _removeSession() normally
+//   - All post-network code (local session clear, SIGNED_OUT event, UI teardown) runs real
+test('TEST 5 — Sign-out returns to auth gate (beta auth cycle)', async ({ page }) => {
+  // Intercept the Supabase logout API so CORS doesn't prevent _removeSession() from running
+  await page.route('**/auth/v1/logout', route => route.fulfill({ status: 204, body: '' }));
+
+  await startFromCleanState(page);
+  await expectHubVisible(page);
+
+  // Open settings via the Account button in the header
+  await page.getByTitle('Click for account / logout').click();
+  await expect(page.getByRole('button', { name: 'Sign Out', exact: true })).toBeVisible();
+
+  // Click sign-out — calls real supabase.auth.signOut(), clears session, fires SIGNED_OUT
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
+
+  // Auth gate must return (proves SIGNED_OUT propagated through AuthGate → App)
+  await expect(page.getByPlaceholder('Email')).toBeVisible();
+});
+
 test('TEST 4 — Reload persists active path and no overlays auto-open (Flow #8)', async ({ page }) => {
   await startFromCleanState(page);
   await beginInitiationPathWithTwoSlots(page);

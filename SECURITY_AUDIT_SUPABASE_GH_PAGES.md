@@ -23,6 +23,29 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 4. Signup anti-abuse posture (rate limits / CAPTCHA / email confirmation) not decided or verified.
 5. Unused auth providers/mechanisms not audited or disabled.
 
+**Smoke test coverage vs real beta auth verification:**
+
+| What is verified | Coverage | How |
+|---|---|---|
+| Auth gate blocks unauthenticated boot | ✅ Smoke TEST 1 | No session in localStorage → Email input visible |
+| Hub renders when session present | ✅ Smoke TEST 1–4 | Fake session injected into localStorage |
+| `offlineFirstUserStateSync` guarded by userId | ✅ Code + comment | `tick()` calls `getSession()` independently; returns early if `!userId` |
+| `supabase.auth.signOut()` clears session + fires SIGNED_OUT | ✅ Smoke TEST 5 | Real client call with mocked `/auth/v1/logout` → auth gate returns |
+| Real Supabase `signInWithPassword` works for beta users | ❌ UNVERIFIED | No test credentials in repo; requires manual or beta-credentialed test |
+| Real Supabase session token persists across reloads | ❌ UNVERIFIED | Smoke uses synthetic session; real token refresh not tested |
+| `user_documents` upsert/select succeeds under RLS | ❌ UNVERIFIED | RLS policy not inventoried; no authenticated DB test in CI |
+| Redirect allowlist covers GH Pages URL | ❌ UNVERIFIED | Must be confirmed in Supabase dashboard |
+
+**Synthetic smoke sessions:** Tests 1–5 inject a fake JWT (`expires_at: 9999999999`) into
+`sb-snyozqiselfxfifpavmj-auth-token`. Supabase `getSession()` returns this without a network
+call. `tick()` in `offlineFirstUserStateSync` will attempt DB calls with this fake JWT and
+receive 401/403 from Supabase, handled gracefully in local-only mode. TEST 5 additionally
+intercepts `/auth/v1/logout` so `supabase.auth.signOut()` runs its full local cleanup path.
+
+**Real beta auth status: UNVERIFIED in CI.** The sign-in/sign-up flows require a live Supabase
+account and cannot be safely automated without test credentials. Manual beta validation is
+required before public launch.
+
 **To disable auth** (e.g. for smoke testing without a session): set `ENABLE_AUTH = false` in all three files above.
 **To clear for public launch:** complete every unchecked item in this document and re-run the Launch Gate.
 

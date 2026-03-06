@@ -370,6 +370,14 @@ export function initOfflineFirstUserStateSync({ supabase, keys, debug = false })
     logDebug('applied remote', { capturedAt: remoteBundle.capturedAt, hash: appliedHash, userId });
   };
 
+  // tick() is the single auth-check bottleneck for all Supabase DB calls.
+  // It independently re-validates the session via supabase.auth.getSession() on every
+  // cycle — it does NOT rely on the AuthGate session state. supabase.from('user_documents')
+  // is only reached when userId is non-null (guarded at the if (!userId) return below).
+  // If the stored JWT is invalid or synthetic (e.g. smoke-test injection), the upsert/select
+  // network calls will fail with a 401/403 from Supabase; those errors are caught per-call
+  // and logged only in debug mode — local-only mode continues without interruption.
+  // On sign-out, App.jsx stopUserStateSync() clears this interval before any further tick.
   const tick = async () => {
     if (stopped) return;
     if (!isTabVisible()) return;

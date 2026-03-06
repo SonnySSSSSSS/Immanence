@@ -10,6 +10,8 @@ The system provides two usage modes, a curriculum engine with capacity-based gat
 
 Practice and progression data stay in browser storage. Supabase auth is active for beta users (`ENABLE_AUTH = true` across all auth files); sign-in is required to access the app. Public launch requires completing the remaining Supabase hardening checklist. No telemetry.
 
+**Smoke test coverage note:** The CI smoke suite (5 tests) injects a synthetic Supabase session into localStorage to bypass the auth gate. This proves the gate blocks unauthenticated boot and that the app renders correctly when a session is present, but does **not** verify real `signInWithPassword` flows, token refresh, or `user_documents` RLS. TEST 5 tests `supabase.auth.signOut()` via a route-intercepted logout call. Real end-to-end beta auth requires manual validation with live credentials — see `SECURITY_AUDIT_SUPABASE_GH_PAGES.md`.
+
 ## Core Philosophy
 
 **Breath as foundation.** Every training path begins with breathwork. Regulatory capacity is the prerequisite for attentional training — not the other way around.
