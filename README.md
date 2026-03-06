@@ -1,6 +1,6 @@
 # Immanence OS
 
-A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing, with browser-first state and optional authenticated access via Supabase.
+A local-first meditation training application built with React, Three.js, and Zustand. Structured progression through breathwork, awareness practices, entrainment, and cognitive processing, with browser-first state. Supabase auth infrastructure is present in the codebase but **currently disabled** pending CORS configuration and launch hardening (see `SECURITY_AUDIT_SUPABASE_GH_PAGES.md`).
 
 ## What It Is
 
@@ -8,7 +8,7 @@ Immanence OS is a practice instrument for building attentional and regulatory ca
 
 The system provides two usage modes, a curriculum engine with capacity-based gating, symbolic identity progression, and a full internal developer tooling layer for rapid iteration.
 
-Practice and progression data stay in browser storage. Authenticated account access is handled through the browser via Supabase in the current client code. No telemetry.
+Practice and progression data stay in browser storage. Supabase auth code exists but is disabled (`ENABLE_AUTH = false` across all auth files); all data is local-only until auth is hardened and re-enabled. No telemetry.
 
 ## Core Philosophy
 

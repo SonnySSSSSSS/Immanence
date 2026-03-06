@@ -435,6 +435,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.256 - docs(auth): mark supabase auth as disabled pending launch hardening
+  // v3.27.255 - fix(homehub): restore initial hub render for smoke flows (ENABLE_AUTH=false)
   // v3.27.254 - fix(lint): medium-risk hook/purity remediation (PracticeSection, ShadowScanOverlay, ThoughtObservation, PolygonBreathScene)
   // v3.27.253 - fix(instrument-preset): remove white orb sphere from center
   // v3.27.252 - chore(lint): remove unused vars in avatar/practice menu (batch 6)

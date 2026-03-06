@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const HUB_BUTTONS = ['Practice', 'Wisdom', 'Application', 'Navigation'] as const;
-const INITIATION_SLOT_ERROR = 'Please select exactly 2 time slots to begin this path.';
+// Note: slot enforcement is now tested via disabled wizard Next button at step 3
 
 async function gotoAppRoot(page: Page): Promise<void> {
   await page.goto('/');
@@ -99,6 +99,10 @@ async function openInitiationPathOverlay(page: Page): Promise<void> {
 
   await page.getByTestId('path-card-initiation').click();
   await expect(page.getByTestId('path-overview-overlay')).toBeVisible();
+  // Advance through wizard steps 1 and 2 (no prerequisites)
+  const wizardPanel = page.getByTestId('path-overview-panel');
+  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
+  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByText('Step 2: Select Time Slots', { exact: true })).toBeVisible();
   await page.evaluate(async () => {
     const navMod = await import('/src/state/navigationStore.js');
@@ -121,19 +125,22 @@ async function openInitiationPathOverlay(page: Page): Promise<void> {
   });
 }
 
-function getTimeSlotButtons(page: Page) {
+function getTimeSlotInputs(page: Page) {
   return page
     .getByTestId('path-overview-panel')
-    .getByRole('button')
-    .filter({ hasText: /^\d{1,2}:\d{2}\s(?:AM|PM)$/ });
+    .locator('input[type="time"]');
 }
 
 async function beginInitiationPathWithTwoSlots(page: Page): Promise<void> {
   await openInitiationPathOverlay(page);
-  const slotButtons = getTimeSlotButtons(page);
-  await expect(slotButtons.first()).toBeVisible();
-  await slotButtons.nth(0).click();
-  await slotButtons.nth(1).click();
+  const slotInputs = getTimeSlotInputs(page);
+  await expect(slotInputs.first()).toBeVisible();
+  await slotInputs.nth(0).fill('08:00');
+  await slotInputs.nth(1).fill('20:00');
+  // Advance wizard: step 3 → 4 (slots valid) → 5 (benchmark already satisfied)
+  const wizardPanel = page.getByTestId('path-overview-panel');
+  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
+  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByTestId('begin-path-button').click();
   await expect(page.getByTestId('active-path-root')).toBeVisible();
 }
@@ -161,14 +168,18 @@ test('TEST 3 — Navigation selector modal + Initiation slot enforcement (Flows 
   await startFromCleanState(page);
   await openInitiationPathOverlay(page);
 
-  const slotButtons = getTimeSlotButtons(page);
-  await expect(slotButtons.first()).toBeVisible();
-  await slotButtons.nth(0).click();
+  const slotInputs = getTimeSlotInputs(page);
+  await expect(slotInputs.first()).toBeVisible();
+  await slotInputs.nth(0).fill('08:00');
 
-  await page.getByTestId('begin-path-button').click({ force: true });
-  await expect(page.getByText(INITIATION_SLOT_ERROR, { exact: true })).toBeVisible();
+  // With only 1 slot filled, wizard Next (step 3 → 4) must be disabled (slot enforcement)
+  const wizardPanel = page.getByTestId('path-overview-panel');
+  await expect(wizardPanel.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
 
-  await slotButtons.nth(1).click();
+  await slotInputs.nth(1).fill('20:00');
+  // Advance wizard: step 3 → 4 (slots valid) → 5 (benchmark already satisfied)
+  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
+  await wizardPanel.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByTestId('begin-path-button').click();
   await expect(page.getByTestId('active-path-root')).toBeVisible();
 });

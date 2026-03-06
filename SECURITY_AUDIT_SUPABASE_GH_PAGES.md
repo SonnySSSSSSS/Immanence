@@ -1,5 +1,30 @@
 AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 
+---
+## CURRENT STATUS — AUTH DISABLED (Launch Gate: FAIL)
+
+**As of this revision, Supabase auth is intentionally disabled across all auth files:**
+- `src/components/auth/AuthGate.jsx`: `ENABLE_AUTH = false` — no sign-in gate rendered; app boots directly
+- `src/lib/supabaseClient.js`: `ENABLE_AUTH = false` — mock Supabase client used; no real network calls
+- `src/components/SettingsPanel.jsx`: `ENABLE_AUTH = false` — sign-out and account-update UI inactive
+
+**Key findings from code audit:**
+- Credentials: Supabase URL and anon key (`sb_publishable_...`) are hardcoded in `supabaseClient.js`. `.env.local` has `VITE_SUPABASE_*` vars but they are NOT consumed.
+- No elevated keys: No `sb_secret_`, `service_role`, or `SUPABASE_SERVICE_ROLE` in any browser-delivered code.
+- Table queries detected: `src/state/offlineFirstUserStateSync.js` calls `supabase.from('user_documents')` (upsert + select). This is NOT auth-only. Section 3A below incorrectly claims no `from()` calls — this is a correction.
+- All Launch Gate checklist items remain unchecked (no flow testing done).
+
+**Launch Gate verdict: FAIL** — multiple blocking conditions unresolved:
+1. Auth disabled while launch goal includes account creation/login.
+2. Redirect allowlist (GH Pages site URL + email confirmation/recovery flows) not verified.
+3. `supabase.from('user_documents')` table exists — RLS posture not inventoried or verified.
+4. Signup anti-abuse posture (rate limits / CAPTCHA / email confirmation) not decided or verified.
+5. Unused auth providers/mechanisms not audited or disabled.
+
+**To re-enable auth:** set `ENABLE_AUTH = true` in all three files above, then complete every checklist item in this document and re-run the Launch Gate.
+
+---
+
 CHANGES IN THIS REVISION:
 
 * Clarify `sb_publishable_...` (anon/publishable) is expected public; `sb_secret_...` / `service_role` are hard FAIL blockers if shipped to the browser.
@@ -116,12 +141,13 @@ Set these in **Supabase Dashboard -> Authentication -> URL Configuration**:
 
 Code search results:
 
-* `supabase.auth.*` calls exist (`getSession`, `onAuthStateChange`, `signUp`, `signInWithPassword`, `signOut`).
-* No detected `supabase.from(...)`, `supabase.rpc(...)`, or `supabase.storage...` usage in `src/`.
+* `supabase.auth.*` calls exist (`getSession`, `onAuthStateChange`, `signUp`, `signInWithPassword`, `signOut`, `updateUser`).
+* **CORRECTION:** `supabase.from('user_documents')` IS present in `src/state/offlineFirstUserStateSync.js` (upsert at line ~289, select at line ~320). The previous claim of "no from() calls" was incorrect.
+* No detected `supabase.rpc(...)` or `supabase.storage...` usage in `src/`.
 
 Enumerated app-touched objects (from code search):
 
-* [ ] **Tables:** none currently referenced by client code.
+* [ ] **Tables:** `user_documents` — referenced by `offlineFirstUserStateSync.js` (upsert + select). RLS posture must be inventoried before auth is re-enabled.
 * [ ] **Storage buckets:** none currently referenced by client code.
 
 Required Supabase-side inventory (Dashboard) — **do this even if the app currently doesn’t query tables**:
