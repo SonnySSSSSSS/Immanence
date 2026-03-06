@@ -122,6 +122,12 @@ function buildInitiationV2Days() {
             resumeMode: 'resume',
             volume: 0.8,
         },
+        6: {
+            audioUrl: '/audio/breathing guidance/meditation guidance 6.wav',
+            startMode: 'onPracticeStart',
+            resumeMode: 'resume',
+            volume: 0.8,
+        },
     };
 
     return DAY_COPY.map((day, index) => {
