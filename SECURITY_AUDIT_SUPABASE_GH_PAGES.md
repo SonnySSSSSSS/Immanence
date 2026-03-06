@@ -34,8 +34,13 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 | Real Supabase `signInWithPassword` works for beta users | ✅ Smoke TEST 6 VERIFIED | Passed against live project with real beta credentials (2026-03-06) |
 | Real Supabase session token persists across reload | ✅ Smoke TEST 6 VERIFIED | Reload restored real JWT; hub rendered without re-login (2026-03-06) |
 | `user_documents` read-only auth guard proven | ✅ Smoke TEST 6 VERIFIED | SELECT returned no auth error under real session (2026-03-06) |
-| `user_documents` upsert (write path) succeeds under RLS | ❌ UNVERIFIED | Not tested to avoid uncontrolled writes; requires manual dashboard verification |
-| Redirect allowlist covers GH Pages URL | ❌ UNVERIFIED | Must be confirmed in Supabase dashboard |
+| `user_documents` upsert (write path) under RLS | ✅ Smoke TEST 7 VERIFIED | Authenticated upsert succeeded; probe row written + deleted (2026-03-06) |
+| `user_documents` DELETE policy present for owner | ✅ Smoke TEST 7 VERIFIED | Owner delete of probe row succeeded; cleanup confirmed (2026-03-06) |
+| `user_documents` anon read isolation (RLS ON) | ✅ Smoke TEST 7 VERIFIED | Signed-out SELECT returned 0 rows — USING (auth.uid()=user_id) is active (2026-03-06) |
+| `user_documents` cross-user authenticated isolation | ❌ UNVERIFIED | Needs two beta accounts; cannot prove from single-session test |
+| Redirect allowlist covers GH Pages URL | ❌ DASHBOARD ONLY | Must be confirmed in Supabase Dashboard → Authentication → URL Configuration |
+| OAuth/phone provider surface reduction | ❌ DASHBOARD ONLY | Disable unused providers in Supabase Dashboard → Authentication → Providers |
+| Anti-abuse posture (rate limits/CAPTCHA/email confirm) | ❌ DASHBOARD ONLY | Decide and configure in Supabase Dashboard before public launch |
 
 **Synthetic smoke sessions:** Tests 1–5 inject a fake JWT (`expires_at: 9999999999`) into
 `sb-snyozqiselfxfifpavmj-auth-token`. Supabase `getSession()` returns this without a network

@@ -26,7 +26,7 @@ $env:BETA_TEST_PASSWORD="secret"
 npm run test:smoke
 ```
 
-TEST 6 is UNVERIFIED until it passes with live beta credentials. See `SECURITY_AUDIT_SUPABASE_GH_PAGES.md` for the full auth hardening checklist.
+TEST 6 and TEST 7 are UNVERIFIED until they pass with live beta credentials. TEST 7 additionally verifies the `user_documents` write path, owner DELETE policy, and anon-read isolation under RLS. See `SECURITY_AUDIT_SUPABASE_GH_PAGES.md` for the full auth hardening checklist and remaining dashboard-only verification items.
 
 ## Core Philosophy
 
