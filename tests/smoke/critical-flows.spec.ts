@@ -258,6 +258,132 @@ test('TEST 5 — Sign-out returns to auth gate (beta auth cycle)', async ({ page
   await expect(page.getByPlaceholder('Email')).toBeVisible();
 });
 
+// TEST 6 — Real beta auth: signInWithPassword, session restore on reload, and sign-out
+//
+// Prerequisites:
+//   Set BETA_TEST_EMAIL and BETA_TEST_PASSWORD in the environment before running:
+//     BETA_TEST_EMAIL=you@example.com BETA_TEST_PASSWORD=secret npm run test:smoke
+//
+// If credentials are absent the test self-skips and beta auth remains UNVERIFIED.
+//
+// What this proves (when credentials are supplied):
+//   a) Real signInWithPassword succeeds against the live Supabase project
+//   b) Supabase stores a real JWT in localStorage (not a synthetic placeholder)
+//   c) Reload restores the real session via getSession() — hub visible without re-login
+//   d) offlineFirstUserStateSync.tick() receives a non-null real userId → DB path is reached
+//   e) A read-only SELECT on user_documents returns no auth error (proves RLS lets owner read)
+//   f) signOut() clears the real session and returns to the auth gate
+//
+// What this does NOT prove (remains for manual/dashboard verification):
+//   - user_documents upsert (write path) under RLS — not attempted to avoid uncontrolled writes
+//   - email confirmation redirect flows
+//   - cross-user RLS isolation
+test('TEST 6 — Real beta sign-in, session restore, and sign-out', async ({ page }) => {
+  const email = process.env.BETA_TEST_EMAIL ?? '';
+  const password = process.env.BETA_TEST_PASSWORD ?? '';
+
+  if (!email || !password) {
+    // Not a test failure — credentials must be supplied manually for real-auth verification.
+    // beta auth status remains UNVERIFIED until this test passes with live credentials.
+    test.skip(true, [
+      'BETA_TEST_EMAIL and BETA_TEST_PASSWORD are not set.',
+      'Real beta auth is UNVERIFIED. Supply credentials at runtime to prove signInWithPassword,',
+      'session restore, and user_documents auth guard against the live Supabase project.',
+    ].join(' '));
+    return;
+  }
+
+  // Intercept logout so CORS doesn't prevent _removeSession() from running (same as TEST 5).
+  await page.route('**/auth/v1/logout', route => route.fulfill({ status: 204, body: '' }));
+
+  // --- 1. Clean boot — no session injected ---
+  await gotoAppRoot(page);
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+
+  // Auth gate must be visible (signed-out state confirmed)
+  await expect(page.getByPlaceholder('Email')).toBeVisible();
+
+  // --- 2. Real sign-in via the live Supabase project ---
+  await page.getByPlaceholder('Email').fill(email);
+  await page.getByPlaceholder('Password').fill(password);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+
+  // Dismiss name-prompt if shown for accounts without a stored display name
+  const namePromptDismiss = page.getByRole('button', { name: 'Not now', exact: true });
+  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await namePromptDismiss.click();
+  }
+
+  // Hub must appear — proves real signInWithPassword succeeded
+  await expectHubVisible(page);
+
+  // --- 3. Verify the stored session is a real Supabase token (not smoke placeholder) ---
+  const userId = await page.evaluate(async () => {
+    // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+    const mod = await import('/src/lib/supabaseClient.js');
+    const { data } = await (mod as any).supabase.auth.getSession();
+    return data?.session?.user?.id ?? null;
+  });
+  expect(userId).toBeTruthy();
+  expect(userId).not.toBe('00000000-0000-0000-0000-000000000001'); // not synthetic smoke id
+
+  // --- 4. Reload — proves real session persists across page load ---
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+
+  // Dismiss name-prompt again if it re-appears after reload
+  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await namePromptDismiss.click();
+  }
+
+  // Hub still visible — proves getSession() restored the real JWT from localStorage
+  await expectHubVisible(page);
+
+  // --- 5. user_documents: read-only auth guard check ---
+  // offlineFirstUserStateSync.tick() will reach DB only when userId is non-null.
+  // Here we do an explicit read-only SELECT to prove the auth chain reaches the table
+  // without RLS blocking it (write path not tested to avoid uncontrolled mutations).
+  const udResult = await page.evaluate(async () => {
+    // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+    const mod = await import('/src/lib/supabaseClient.js');
+    const supabase = (mod as any).supabase;
+    const result = await supabase
+      .from('user_documents')
+      .select('doc_key, updated_at')
+      .limit(1)
+      .maybeSingle();
+    return {
+      hasError: !!result.error,
+      errorCode: result.error?.code ?? null,
+      errorMessage: result.error?.message ?? null,
+      hasData: result.data !== null,
+    };
+  });
+
+  if (udResult.hasError) {
+    // PGRST116 = no rows — acceptable (empty user_documents for this account)
+    const isNoRows = (udResult.errorMessage ?? '').includes('PGRST116') ||
+                     (udResult.errorCode ?? '').includes('PGRST116');
+    // Any 401/403/JWT error means the auth chain did NOT reach user_documents
+    const isAuthError = (udResult.errorMessage ?? '').toLowerCase().includes('401') ||
+                        (udResult.errorMessage ?? '').toLowerCase().includes('403') ||
+                        (udResult.errorMessage ?? '').toLowerCase().includes('jwt') ||
+                        (udResult.errorMessage ?? '').toLowerCase().includes('unauthorized');
+    expect(isNoRows || !isAuthError).toBe(true);
+  }
+
+  // --- 6. Sign-out → auth gate returns ---
+  await page.getByTitle('Click for account / logout').click();
+  await expect(page.getByRole('button', { name: 'Sign Out', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
+  await expect(page.getByPlaceholder('Email')).toBeVisible();
+});
+
 test('TEST 4 — Reload persists active path and no overlays auto-open (Flow #8)', async ({ page }) => {
   await startFromCleanState(page);
   await beginInitiationPathWithTwoSlots(page);

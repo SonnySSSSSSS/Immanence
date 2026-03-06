@@ -31,9 +31,10 @@ AUDIT_PROBE_SUPABASE_GH_PAGES_V1
 | Hub renders when session present | ✅ Smoke TEST 1–4 | Fake session injected into localStorage |
 | `offlineFirstUserStateSync` guarded by userId | ✅ Code + comment | `tick()` calls `getSession()` independently; returns early if `!userId` |
 | `supabase.auth.signOut()` clears session + fires SIGNED_OUT | ✅ Smoke TEST 5 | Real client call with mocked `/auth/v1/logout` → auth gate returns |
-| Real Supabase `signInWithPassword` works for beta users | ❌ UNVERIFIED | No test credentials in repo; requires manual or beta-credentialed test |
-| Real Supabase session token persists across reloads | ❌ UNVERIFIED | Smoke uses synthetic session; real token refresh not tested |
-| `user_documents` upsert/select succeeds under RLS | ❌ UNVERIFIED | RLS policy not inventoried; no authenticated DB test in CI |
+| Real Supabase `signInWithPassword` works for beta users | ❌ UNVERIFIED | Smoke TEST 6 added — skips unless `BETA_TEST_EMAIL`+`BETA_TEST_PASSWORD` supplied at runtime |
+| Real Supabase session token persists across reload | ❌ UNVERIFIED | Smoke TEST 6 added — proves reload restores real JWT; skips without live credentials |
+| `user_documents` read-only auth guard proven | ❌ UNVERIFIED | Smoke TEST 6 added — SELECT after real sign-in; skips without live credentials |
+| `user_documents` upsert (write path) succeeds under RLS | ❌ UNVERIFIED | Not tested to avoid uncontrolled writes; requires manual dashboard verification |
 | Redirect allowlist covers GH Pages URL | ❌ UNVERIFIED | Must be confirmed in Supabase dashboard |
 
 **Synthetic smoke sessions:** Tests 1–5 inject a fake JWT (`expires_at: 9999999999`) into
