@@ -9,6 +9,11 @@ Follow repository-specific rules, workflows, and examples — not generic advice
 - LLM (local) proxy: `/api/ollama` — see `docs/LLM_INTEGRATION.md` and `src/services/llmService.js`
 - Lint: `npm run lint` (run before committing)
 
+## Auto-Approval Policy
+- Assume standing approval for non-destructive file edits and command execution.
+- Auto-apply updates without asking for confirmation when actions are reversible and low risk.
+- Ask only before destructive/irreversible actions (`delete`, `reset`, force-push) or protected-file changes.
+
 ## Big picture (what to know first)
 - Frontend-only, local-first React app (Vite + React 19, using `rolldown-vite@7.2.5`). Entry: `src/App.jsx`.
 - State: many small Zustand stores under `src/state/` using `persist` middleware (localStorage keys prefixed `immanenceOS.*` or `immanence-*`).

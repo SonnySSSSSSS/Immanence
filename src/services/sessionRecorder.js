@@ -186,7 +186,7 @@ function getCurriculumDayNumber(date, curriculumStartDate) {
  * Snapshots are persisted at record time so rail can use them without recomputing
  * Returns null if session does not satisfy any curriculum leg requirement
  */
-function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode }) {
+function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode, forceScheduleMatched = null }) {
     if (!startedAtISO) return null;
 
     const curriculumStore = useCurriculumStore.getState();
@@ -223,6 +223,48 @@ function computeScheduleMatchedSnapshot({ startedAtISO, practiceId, practiceMode
     // Resolve session category
     const sessionCategory = resolveCategoryIdFromSessionV2({ practiceId, practiceMode });
     if (!sessionCategory) return null;
+
+    // Explicit force-start override: treat the targeted slot as on-time.
+    if (forceScheduleMatched && typeof forceScheduleMatched === 'object') {
+        let forcedLegNumber = null;
+        const slotIndex = Number(forceScheduleMatched.slotIndex);
+        if (Number.isFinite(slotIndex) && slotIndex >= 0) {
+            forcedLegNumber = slotIndex + 1;
+        } else if (typeof forceScheduleMatched.slotTime === 'string') {
+            const normalizedSlotTime = forceScheduleMatched.slotTime.substring(0, 5);
+            const timeIndex = (curriculumStore.practiceTimeSlots || []).findIndex(
+                (time) => typeof time === 'string' && time.substring(0, 5) === normalizedSlotTime
+            );
+            if (timeIndex >= 0) forcedLegNumber = timeIndex + 1;
+        }
+
+        if (forcedLegNumber !== null) {
+            const forcedLeg = requiredLegs.find((leg) => leg.legNumber === forcedLegNumber) || null;
+            const forcedScheduledTime = curriculumStore.practiceTimeSlots?.[forcedLegNumber - 1] || null;
+            const forcedScheduledMinutes = parseTimeToMinutes(forcedScheduledTime);
+
+            if (
+                forcedLeg
+                && forcedScheduledMinutes !== null
+                && forcedLeg.categoryId === sessionCategory
+                && (
+                    forcedLeg.matchPolicy !== MATCH_POLICY.EXACT_PRACTICE
+                    || (forcedLeg.practiceId && practiceId === forcedLeg.practiceId)
+                )
+            ) {
+                return {
+                    legNumber: forcedLeg.legNumber,
+                    categoryId: forcedLeg.categoryId,
+                    matchPolicy: forcedLeg.matchPolicy,
+                    scheduledTime: forcedScheduledTime,
+                    deltaMinutes: 0,
+                    status: 'green',
+                    matchedAt: startedAtISO,
+                    forceStartApplied: true,
+                };
+            }
+        }
+    }
 
     // Try to match to a leg
     let bestMatch = null;
@@ -302,6 +344,7 @@ export function recordPracticeSession(payload = {}, options = {}) {
         startedAt = null,
         endedAt = null,
         durationSec = null,
+        forceScheduleMatched = null,
     } = payload;
 
     const persistSession = options.persistSession ?? payload.persistSession ?? true;
@@ -374,6 +417,7 @@ export function recordPracticeSession(payload = {}, options = {}) {
             startedAtISO: normalizedStartedAt,
             practiceId,
             practiceMode,
+            forceScheduleMatched,
         }) : null,
     };
 

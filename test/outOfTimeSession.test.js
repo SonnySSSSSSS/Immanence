@@ -112,6 +112,38 @@ test('session with satisfiedObligation=true + green status DOES satisfy obligati
     assert.equal(stats.daysPracticed, 1, 'active days should be 1');
 });
 
+test('force-started off-window session with forced on-time snapshot satisfies obligation', () => {
+    const summary = computeContractObligationSummary({
+        windowStartLocalDateKey: DAY_KEY,
+        windowEndLocalDateKey: DAY_KEY,
+        curriculumStoreState: makeCurriculumState(),
+        progressStoreState: createProgressState([
+            {
+                id: 's-force-start',
+                completion: 'completed',
+                startedAt: '2026-02-15T15:00:00.000Z', // 6 hours late in real time
+                practiceId: 'breath',
+                practiceMode: 'breathwork',
+                scheduleMatched: {
+                    legNumber: 1,
+                    categoryId: 'breathwork',
+                    matchPolicy: MATCH_POLICY.ANY_IN_CATEGORY,
+                    scheduledTime: '09:00',
+                    deltaMinutes: 0,
+                    status: 'green',
+                    matchedAt: '2026-02-15T15:00:00.000Z',
+                    forceStartApplied: true,
+                },
+                satisfiedObligation: true,
+            },
+        ]),
+    });
+
+    assert.equal(summary.totalObligations, 1, 'should have 1 obligation');
+    assert.equal(summary.satisfiedObligations, 1, 'forced on-time snapshot should satisfy');
+    assert.equal(summary.satisfiedDays, 1, 'day should be satisfied');
+});
+
 test('legacy session without satisfiedObligation field works via time-delta fallback', () => {
     // Construct 09:10 in local timezone (not UTC) so delta computation yields +10 min
     const localNine10 = new Date(2026, 1, 15, 9, 10, 0).toISOString();

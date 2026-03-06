@@ -535,6 +535,27 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     opacity: 0.3,
     transition: 'opacity 220ms ease',
   };
+  const sidePanelLeftTileStatsColStyle = {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: `calc(${U} * 0.2)`,
+    flexShrink: 0,
+  };
+  const sidePanelLeftMetricCellStyle = {
+    ...sidePanelTileMetricCellStyle,
+    minHeight: `calc(${U} * 1.65)`,
+    justifyContent: 'center',
+  };
+  const sidePanelLeftTileImageFillStyle = {
+    ...sidePanelTileImageStyle,
+    flex: '1 1 auto',
+    height: 'auto',
+    minHeight: `calc(${U} * 2.2)`,
+    opacity: 0.34,
+  };
   const sidePanelTileExpandedMaxHeight = `calc(${panelH} - ((${panelPad}) * 0.9) - 12px)`;
   const sidePanelTileRolledMaxHeight = `calc(${U} * 1.6)`;
   const PANEL_EXPANDED_H = panelH;
@@ -686,8 +707,8 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                   opacity: leftRolled ? 0.86 : 1,
                 }}
               >
-                <div style={sidePanelTileStatsRowStyle}>
-                  <div style={sidePanelTileMetricCellStyle}>
+                <div style={sidePanelLeftTileStatsColStyle}>
+                  <div style={sidePanelLeftMetricCellStyle}>
                     <div className="type-metric" style={sidePanelTileValueStyle}>
                       {Math.round(hubTiles?.sessions_total ?? 0)}
                     </div>
@@ -698,7 +719,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       14D
                     </div>
                   </div>
-                  <div style={sidePanelTileMetricCellStyle}>
+                  <div style={sidePanelLeftMetricCellStyle}>
                     <div className="type-metric" style={sidePanelTileValueStyle}>
                       {Math.round(hubTiles?.days_active ?? 0)}
                     </div>
@@ -712,7 +733,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 </div>
                 <div
                   style={{
-                    ...sidePanelTileImageStyle,
+                    ...sidePanelLeftTileImageFillStyle,
                     backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`,
                     filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
                   }}

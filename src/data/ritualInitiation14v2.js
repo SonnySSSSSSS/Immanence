@@ -91,8 +91,42 @@ const DAY_COPY = [
 ];
 
 function buildInitiationV2Days() {
+    const LEG_1_GUIDANCE_BY_DAY = {
+        1: {
+            audioUrl: '/audio/breathing guidance/meditation guidance 1.wav',
+            startMode: 'onPracticeStart',
+            resumeMode: 'resume',
+            volume: 0.8,
+        },
+        2: {
+            audioUrl: '/audio/breathing guidance/meditation guidance 2.wav',
+            startMode: 'onPracticeStart',
+            resumeMode: 'resume',
+            volume: 0.8,
+        },
+        3: {
+            audioUrl: '/audio/breathing guidance/meditation guidance 3.wav',
+            startMode: 'onPracticeStart',
+            resumeMode: 'resume',
+            volume: 0.8,
+        },
+        4: {
+            audioUrl: '/audio/breathing guidance/meditation guidance 4.wav',
+            startMode: 'onPracticeStart',
+            resumeMode: 'resume',
+            volume: 0.8,
+        },
+        5: {
+            audioUrl: '/audio/breathing guidance/meditation guidance 5.wav',
+            startMode: 'onPracticeStart',
+            resumeMode: 'resume',
+            volume: 0.8,
+        },
+    };
+
     return DAY_COPY.map((day, index) => {
         const dayNumber = index + 1;
+        const leg1Guidance = LEG_1_GUIDANCE_BY_DAY[dayNumber] || null;
         return {
             dayNumber,
             title: day.title,
@@ -112,6 +146,7 @@ function buildInitiationV2Days() {
                     practiceConfig: { breathPattern: 'box', duration: 7 },
                     description: 'Morning breath practice (7 minutes).',
                     focusArea: 'breath',
+                    ...(leg1Guidance ? { guidance: leg1Guidance } : {}),
                 },
                 {
                     legNumber: 2,

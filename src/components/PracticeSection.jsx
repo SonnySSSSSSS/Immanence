@@ -520,6 +520,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
+  const getForceScheduleMatchedPayload = () => {
+    const pathCtx = activePathContextRef.current;
+    if (!pathCtx || pathCtx.forceStart !== true || pathCtx.forceWindowBypass !== true) {
+      return null;
+    }
+
+    return {
+      source: 'shift-click',
+      slotIndex: Number.isFinite(Number(pathCtx.slotIndex)) ? Number(pathCtx.slotIndex) : null,
+      slotTime: typeof pathCtx.slotTime === 'string' ? pathCtx.slotTime : null,
+      scheduleDateKey: typeof pathCtx.scheduleDateKey === 'string' ? pathCtx.scheduleDateKey : null,
+    };
+  };
   const pausedAtRef = useRef(null);
   const pathGuidanceStartedRef = useRef(false);
   const pathGuidanceWasPausedRef = useRef(false);
@@ -1458,6 +1471,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         runId: activePathContextRef.current?.runId || null,
         dayIndex: activePathContextRef.current?.dayIndex || null,
         weekIndex: activePathContextRef.current?.weekIndex || null,
+        forceScheduleMatched: getForceScheduleMatchedPayload(),
       });
     } catch (e) {
       console.error("Failed to save circuit session:", e);
@@ -1639,6 +1653,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         runId: activePathContextRef.current?.runId || null,
         dayIndex: activePathContextRef.current?.dayIndex || null,
         weekIndex: activePathContextRef.current?.weekIndex || null,
+        forceScheduleMatched: getForceScheduleMatchedPayload(),
       });
     } catch (e) {
       console.error("Failed to save session:", e);
@@ -1848,6 +1863,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         : null;
     }
 
+    if (!hasPathOccurrenceContext && activePracticeSession) {
+      const activeLeg = getActivePracticeLeg();
+      resolvedPathGuidance = activeLeg?.guidance ?? null;
+    }
+
     // Persist preferences only for manual starts (not curriculum/schedule recommendations).
     if (!activePracticeSession && !suppressPrefSaveRef.current) {
       savePreferences({
@@ -1889,7 +1909,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
-      setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
+      setPathLaunchGuidance((hasPathOccurrenceContext || activePracticeSession) ? resolvedPathGuidance : undefined);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -1907,7 +1927,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
-    setPathLaunchGuidance(hasPathOccurrenceContext ? resolvedPathGuidance : undefined);
+    setPathLaunchGuidance((hasPathOccurrenceContext || activePracticeSession) ? resolvedPathGuidance : undefined);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());

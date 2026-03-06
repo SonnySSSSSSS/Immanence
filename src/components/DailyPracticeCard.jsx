@@ -662,9 +662,12 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Show path-based daily card when an active path with scheduled times exists,
     // regardless of onboarding status â€” prevents falling through to stale curriculum modal
     const hasActivePath = activePathObj && times.length > 0;
-    const launchPathPractice = (slot, slotIndex, slotTime) => {
+    const launchPathPractice = (slot, slotIndex, slotTime, launchMeta = null) => {
         const practiceId = slot?.practiceId;
         if (!practiceId) return;
+        const forceStart = launchMeta?.forceStart === true;
+        const forceWindowBypass = launchMeta?.forceWindowBypass === true;
+        const scheduleDateKey = typeof launchMeta?.scheduleDateKey === 'string' ? launchMeta.scheduleDateKey : null;
 
         useUiStore.getState().setPracticeLaunchContext({
             source: "dailySchedule",
@@ -685,6 +688,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 slotIndex,
                 dayIndex: metrics.dayIndex,
                 weekIndex: Math.ceil(metrics.dayIndex / 7),
+                forceStart,
+                forceWindowBypass,
+                scheduleDateKey,
             },
             persistPreferences: false,
         });
@@ -1152,13 +1158,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                     if (e.shiftKey && slotLaunches[idx]?.practiceId) {
                                                                         e.preventDefault();
                                                                         e.stopPropagation();
-                                                                        if (userMode === 'student' && activePathObj?.showBreathBenchmark && !hasBenchmark()) {
-                                                                            alert('No breathing benchmark recorded.\n\nTo complete your benchmark: go to Navigation, select your path, and complete the Benchmark step before activating.');
-                                                                            return;
-                                                                        }
                                                                         console.log('[DEV] Shift-click override: bypassing time window slot', { idx, practiceId: slotLaunches[idx]?.practiceId });
                                                                         const slot = slotLaunches[idx];
-                                                                        launchPathPractice(slot, idx, time);
+                                                                        launchPathPractice(slot, idx, time, {
+                                                                            forceStart: true,
+                                                                            forceWindowBypass: isOutsideWindow,
+                                                                            scheduleDateKey: slotDateKey,
+                                                                        });
                                                                     }
                                                                 }}>
                                                                     <button
@@ -1187,7 +1193,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                                     return;
                                                                                 }
 
-                                                                                launchPathPractice(slot, idx, time);
+                                                                                launchPathPractice(slot, idx, time, {
+                                                                                    scheduleDateKey: slotDateKey,
+                                                                                });
                                                                             }
                                                                         }}
                                                                         data-ui-target="true"

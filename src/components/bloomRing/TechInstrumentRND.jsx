@@ -519,13 +519,6 @@ export const TechInstrumentScene = memo(function TechInstrumentScene({
 	          </>
 	        )}
 
-	        {LIGHTING_PROBE_ENABLED && (
-	          <mesh position={[0, 0, 0.2]}>
-	            <sphereGeometry args={[0.08, 32, 32]} />
-	            <meshStandardMaterial color="#ffffff" metalness={0} roughness={0.2} />
-	          </mesh>
-	        )}
-
 	        {/* ── track ring ── */}
 	        <mesh position={[0, 0, TRACK_Z]} geometry={geometries.track}>
 	          <meshStandardMaterial
