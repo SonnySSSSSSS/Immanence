@@ -27,6 +27,15 @@ import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const formatTimeLabel = (timeValue) => {
+    if (!timeValue || typeof timeValue !== 'string') return null;
+    const [hours, minutes] = timeValue.split(':').map(Number);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return timeValue;
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 === 0 ? 12 : hours % 12;
+    return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+};
+
 // ═══════════════════════════════════════════════════════════════════════════
 // STEP COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -332,7 +341,7 @@ function StepConfirm({ onComplete, onBack, selectedTimes, selectedDays, isLight,
     const startAt = firstSlotTime ? computeScheduleAnchorStartAt({ now, firstSlotTime }) : null;
     const startsTomorrow = !!startAt && getLocalDateKey(startAt) !== getLocalDateKey(now);
     const selectedDayLabels = (selectedDays || []).map((d) => DAY_LABELS[d]).filter(Boolean).join(' ');
-    const selectedTimeLabels = selectedTimes.map(t => TIME_OPTIONS.find(o => o.value === t)?.label || t).join(' and ');
+    const selectedTimeLabels = selectedTimes.map((timeValue) => formatTimeLabel(timeValue) || timeValue).join(' and ');
 
     return (
         <div className="space-y-8 text-center" style={{ animation: 'fadeIn 400ms ease-out' }}>

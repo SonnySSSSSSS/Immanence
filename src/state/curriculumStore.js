@@ -63,7 +63,7 @@ export const useCurriculumStore = create(
             thoughtCatalog: [], // User's 5-8 personal thoughts for ritual observation
 
             // CURRICULUM STATE
-            activeCurriculumId: 'pilot-test-program',
+            activeCurriculumId: 'ritual-initiation-14-v2',
             curriculumStartDate: null,
             dayCompletions: {},
 			legCompletions: {},
@@ -162,6 +162,16 @@ export const useCurriculumStore = create(
                     const hoursSince = (Date.now() - dismissedAt.getTime()) / (1000 * 60 * 60);
                     return hoursSince >= 24;
                 }
+                return true;
+            },
+
+            setActiveCurriculumId: (programId) => {
+                const normalizedId = typeof programId === 'string' ? programId.trim() : '';
+                if (!normalizedId) return false;
+                if (!getProgramDefinition(normalizedId) && normalizedId !== 'ritual-foundation-14') {
+                    return false;
+                }
+                set({ activeCurriculumId: normalizedId });
                 return true;
             },
 
@@ -543,7 +553,7 @@ getNextLeg: (dayNumber, offset = 1) => {
                     practiceTimeSlots: [],
                     selectedDaysOfWeekDraft: DEFAULT_SELECTED_DAYS_OF_WEEK,
                     thoughtCatalog: [],
-                    activeCurriculumId: 'pilot-test-program',
+                    activeCurriculumId: 'ritual-initiation-14-v2',
                     curriculumStartDate: null,
                     dayCompletions: {},
 					legCompletions: {},

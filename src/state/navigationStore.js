@@ -266,7 +266,7 @@ export const useNavigationStore = create(
                         },
                         weekCompletionDates: {} // { 1: "2024-01-15", 2: "2024-01-22", ... }
                     },
-                    selectedPathId: pathId, // Keep selection synced
+                    selectedPathId: null,
                     pendingAttemptRunId: null,
                     pendingAttemptPathId: null,
                 });
@@ -274,6 +274,42 @@ export const useNavigationStore = create(
                 return benchmarkCheck.warning
                     ? { ok: true, warning: benchmarkCheck.warning, detail: benchmarkCheck.detail || null }
                     : { ok: true };
+            },
+
+            beginPathForCurriculum: (programId = null) => {
+                const curriculumState = useCurriculumStore.getState();
+                const targetProgramId = typeof programId === 'string' && programId.trim().length > 0
+                    ? programId.trim()
+                    : (curriculumState.activeCurriculumId || null);
+
+                if (targetProgramId !== 'ritual-initiation-14-v2') {
+                    return {
+                        ok: false,
+                        error: `No path adapter is configured for curriculum "${targetProgramId || 'unknown'}".`,
+                    };
+                }
+
+                const pathId = 'initiation-2';
+                const state = get();
+                if (state.pendingAttemptPathId !== pathId || !state.pendingAttemptRunId) {
+                    state.setSelectedPath(pathId);
+                }
+
+                const nextState = get();
+                const runId = nextState.pendingAttemptRunId || null;
+                const benchmarkStore = useBreathBenchmarkStore.getState();
+                if (runId && !benchmarkStore.hasBenchmarkForRun(runId)) {
+                    const benchmarkSnapshot = benchmarkStore.benchmark || benchmarkStore.lastBenchmark || null;
+                    if (benchmarkSnapshot) {
+                        benchmarkStore.completeAttemptBenchmark({
+                            runId,
+                            results: benchmarkSnapshot,
+                            source: 'curriculum-bridge',
+                        });
+                    }
+                }
+
+                return get().beginPath(pathId);
             },
 
             // Mark current week as complete and advance
@@ -404,7 +440,8 @@ export const useNavigationStore = create(
              * Kept for UI compatibility but internally delegates to curriculum store
              */
             setScheduleSlots: (slots = []) => {
-                const pathId = get().activePath?.activePathId || get().selectedPathId || null;
+                const activePathId = get().activePath?.activePathId || null;
+                const pathId = activePathId || get().selectedPathId || null; // Pre-start fallback only.
                 const scheduleConstraint = getScheduleConstraintForPath(pathId);
                 const maxAllowed = scheduleConstraint?.maxCount || 3;
                 // Extract times from slot objects
@@ -873,7 +910,7 @@ export const useNavigationStore = create(
                         },
                     };
                 }
-                 
+                
                 return {
                     ...rest,
                     selectedPathId: null,

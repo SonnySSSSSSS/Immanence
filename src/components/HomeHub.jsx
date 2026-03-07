@@ -26,6 +26,7 @@ import { SimpleModeButton } from "./SimpleModeButton.jsx";
 import { DailyPracticeCard } from "./DailyPracticeCard.jsx";
 import { QuickDashboardTiles } from "./dashboard/QuickDashboardTiles.jsx";
 import { CurriculumHub } from "./CurriculumHub.jsx";
+import { CurriculumOnboarding } from "./CurriculumOnboarding.jsx";
 import { CurriculumCompletionReport } from "./CurriculumCompletionReport.jsx";
 import { ThoughtDetachmentOnboarding } from "./ThoughtDetachmentOnboarding.jsx";
 import { useCurriculumStore } from "../state/curriculumStore.js";
@@ -34,7 +35,7 @@ import { useUiStore } from "../state/uiStore.js";
 import { getQuickDashboardTiles } from "../reporting/dashboardProjection.js";
 import { getHomeDashboardPolicy } from "../reporting/tilePolicy.js";
 import { useTutorialStore } from "../state/tutorialStore.js";
-import { getProgramLauncher } from "../data/programRegistry.js";
+import { getProgramDefinition, getProgramLauncher } from "../data/programRegistry.js";
 import { ARCHIVE_TABS, REPORT_DOMAINS } from "./tracking/archiveLinkConstants.js";
 import { TUTORIALS } from "../tutorials/tutorialRegistry.js";
 import { AvatarV3 } from "./avatarV3/AvatarV3.jsx";
@@ -133,17 +134,38 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     : curriculumPracticeTimeSlots;
   const isCurriculumComplete = useCurriculumStore(s => s.isCurriculumComplete);
   const activeCurriculumId = useCurriculumStore(s => s.activeCurriculumId);
+  const setActiveCurriculumId = useCurriculumStore(s => s.setActiveCurriculumId);
   const [showCurriculumHub, setShowCurriculumHubState] = useState(false);
-  const openCurriculumHub = React.useCallback(() => {
-    console.log('[HomeHub] openCurriculumHub -> true');
-    console.trace('[HomeHub] openCurriculumHub stack');
+  const [showCurriculumOnboarding, setShowCurriculumOnboarding] = useState(false);
+  const [curriculumSetupError, setCurriculumSetupError] = useState(null);
+  const activeProgram = React.useMemo(
+    () => getProgramDefinition(activeCurriculumId) || null,
+    [activeCurriculumId]
+  );
+  const openCurriculumHub = React.useCallback(({ beginSetup = false, programId = 'ritual-initiation-14-v2' } = {}) => {
+    setActiveCurriculumId?.(programId);
+    setCurriculumSetupError(null);
+    setShowCurriculumOnboarding(beginSetup);
     setShowCurriculumHubState(true);
-  }, []);
+  }, [setActiveCurriculumId]);
   const closeCurriculumHub = React.useCallback(() => {
-    console.log('[HomeHub] closeCurriculumHub -> false');
-    console.trace('[HomeHub] closeCurriculumHub stack');
+    setShowCurriculumOnboarding(false);
+    setCurriculumSetupError(null);
     setShowCurriculumHubState(false);
   }, []);
+  const handleOpenCurriculumSetup = React.useCallback(() => {
+    openCurriculumHub({ beginSetup: true });
+  }, [openCurriculumHub]);
+  const handleCurriculumSetupComplete = React.useCallback(() => {
+    const result = useNavigationStore.getState().beginPathForCurriculum(activeCurriculumId || 'ritual-initiation-14-v2');
+    if (result?.ok === false) {
+      setCurriculumSetupError(result.error || 'Unable to begin the selected curriculum.');
+      return;
+    }
+    setCurriculumSetupError(null);
+    setShowCurriculumOnboarding(false);
+    setShowCurriculumHubState(false);
+  }, [activeCurriculumId]);
   const [launcherContext, setLauncherContext] = useState(null);
   const [hasPersistedCurriculumData, setHasPersistedCurriculumData] = useState(null);
   const [frameRect, setFrameRect] = useState(null);
@@ -165,45 +187,14 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   useLayoutEffect(() => {
     const update = (tag = "update") => {
       const el = document.querySelector("[data-app-frame]");
-
-      console.groupCollapsed(`[CurriculumModal] ${tag}`);
-
       if (!el) {
-        console.warn("No frame element found. Tried [data-app-frame].");
-        console.groupEnd();
         return;
       }
 
       const rect = el.getBoundingClientRect();
-      const cs = window.getComputedStyle(el);
-
-      console.log("frame element:", el);
-      console.table({
-        rect_left: rect.left,
-        rect_right: rect.right,
-        rect_width: rect.width,
-        rect_top: rect.top,
-        rect_bottom: rect.bottom,
-        rect_height: rect.height,
-        vw: window.innerWidth,
-        vh: window.innerHeight,
-        dpr: window.devicePixelRatio,
-        maxWidth: cs.maxWidth,
-        width: cs.width,
-        paddingLeft: cs.paddingLeft,
-        paddingRight: cs.paddingRight,
-        marginLeft: cs.marginLeft,
-        marginRight: cs.marginRight,
-        position: cs.position,
-        overflowX: cs.overflowX,
-        overflowY: cs.overflowY,
-        transform: cs.transform,
-        filter: cs.filter,
-        contain: cs.contain,
-      });
 
       setFrameRect(rect);
-      console.groupEnd();
+      void tag;
     };
 
     update("initial");
@@ -977,7 +968,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               hasPersistedCurriculumData={hasPersistedCurriculumData}
               onboardingComplete={curriculumOnboardingComplete}
               practiceTimeSlots={practiceTimeSlots}
-              onStartSetup={() => handleSelectSection('navigation')}
+              onStartSetup={handleOpenCurriculumSetup}
               isTutorialTarget={isDailyCardTutorialTarget}
               showPerLegCompletion={false}
               showDailyCompletionNotice={true}
@@ -989,7 +980,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
         {/* Curriculum Hub/Report Modal - Portaled to document.body */}
         {showCurriculumHub && createPortal(
           (() => {
-            console.log('[HomeHub] Rendering curriculum modal, showCurriculumHub:', showCurriculumHub, 'isComplete:', isCurriculumComplete());
             const isComplete = isCurriculumComplete();
             
             // Calculate clamped bounds for the host
@@ -1000,16 +990,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               const rawRight = frameRect.left + frameRect.width;
               const left = Math.max(0, rawLeft);
               const right = Math.max(0, vw - rawRight);
-
-              console.log("[CurriculumModal] bounds", {
-                vw,
-                rawLeft,
-                rawRight,
-                frameWidth: frameRect.width,
-                clampedLeft: left,
-                clampedRight: right,
-                clampedWidth: vw - left - right,
-              });
               return { left, right };
             };
 
@@ -1027,7 +1007,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 <div 
                   className="absolute inset-0 bg-black/40 backdrop-blur-xl"
                   onClick={() => {
-                    console.log('[HomeHub] Backdrop clicked');
                     closeCurriculumHub();
                   }}
                 />
@@ -1036,17 +1015,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 <div
                   className="absolute top-0 bottom-0 flex justify-center py-6"
                   style={hostStyle}
-                  ref={(node) => {
-                    if (!node) return;
-                    const s = node.style;
-                    console.log("[CurriculumModal] host style", {
-                      left: s.left,
-                      width: s.width,
-                      right: s.right,
-                      top: s.top,
-                      bottom: s.bottom,
-                    });
-                  }}
                 >
                   {/* PANEL - now always mounts to avoid "ghosted app" state */}
                   <div 
@@ -1058,31 +1026,32 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       maxHeight: 'calc(100vh - 48px)',
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    ref={(node) => {
-                      if (!node) return;
-                      const cs = getComputedStyle(node);
-                      console.log("[CurriculumModal] panel computed", {
-                        width: cs.width,
-                        maxWidth: cs.maxWidth,
-                      });
-                    }}
                   >
                     {/* Header - fixed, non-scrolling */}
                     <div className="shrink-0 px-6 pt-6 pb-4 flex items-center justify-between" style={{
                       background: isLight ? '#f6f1e6' : 'rgba(10, 10, 15, 1)',
                       borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
                     }}>
-                      <h2
-                        className="type-h2"
-                        style={{
-                          color: 'var(--accent-color)',
-                        }}
-                      >
-                        Ritual Foundation
-                      </h2>
+                      <div className="min-w-0">
+                        <h2
+                          className="type-h2"
+                          style={{
+                            color: 'var(--accent-color)',
+                          }}
+                        >
+                          {activeProgram?.name || 'Curriculum'}
+                        </h2>
+                        {activeProgram?.curriculum?.description && (
+                          <div
+                            className="text-sm mt-1"
+                            style={{ color: isLight ? 'rgba(60, 50, 40, 0.65)' : 'rgba(253,251,245,0.65)' }}
+                          >
+                            {activeProgram.curriculum.description}
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={() => {
-                          console.log('[HomeHub] Close button clicked');
                           closeCurriculumHub();
                         }}
                         className="p-2 rounded-full transition-colors"
@@ -1097,11 +1066,37 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                     </div>
 
                     {/* Body - THE ONLY SCROLL CONTAINER */}
-                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar\">
-                      <CurriculumHub onClose={closeCurriculumHub} isInModal />
+                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+                      {curriculumSetupError && (
+                        <div
+                          className="mx-6 mt-5 rounded-xl px-4 py-3 text-sm"
+                          style={{
+                            background: isLight ? 'rgba(200, 100, 80, 0.1)' : 'rgba(200, 100, 80, 0.12)',
+                            border: `1px solid ${isLight ? 'rgba(200, 100, 80, 0.22)' : 'rgba(255, 170, 140, 0.22)'}`,
+                            color: isLight ? 'rgba(110, 55, 35, 0.92)' : 'rgba(255, 205, 190, 0.95)',
+                          }}
+                        >
+                          {curriculumSetupError}
+                        </div>
+                      )}
+                      <CurriculumHub
+                        isInModal
+                        onBeginSetup={() => {
+                          setCurriculumSetupError(null);
+                          setShowCurriculumOnboarding(true);
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
+                {showCurriculumOnboarding && (
+                  <CurriculumOnboarding
+                    onDismiss={() => {
+                      setShowCurriculumOnboarding(false);
+                    }}
+                    onComplete={handleCurriculumSetupComplete}
+                  />
+                )}
               </div>
             );
           })(),

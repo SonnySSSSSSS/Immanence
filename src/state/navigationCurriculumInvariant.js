@@ -1,5 +1,17 @@
 const hasOwnKeys = (value) => !!value && typeof value === 'object' && Object.keys(value).length > 0;
 
+const hasPreRunCurriculumSetupState = (curriculumState = {}) => {
+    return Boolean(
+        curriculumState?.activeCurriculumId
+        && !hasOwnKeys(curriculumState?.dayCompletions)
+        && !hasOwnKeys(curriculumState?.legCompletions)
+        && !curriculumState?.activePracticeSession
+        && !curriculumState?.activePracticeLeg
+        && !curriculumState?.activePracticeStartedAt
+        && !curriculumState?.lastSessionFailed
+    );
+};
+
 export function hasActiveCurriculumMarkers(curriculumState = {}) {
     return Boolean(
         curriculumState?.activeCurriculumId
@@ -41,6 +53,10 @@ export function reconcileCurriculumForNavigation({
         return { cleared: false, reason: 'already-clear' };
     }
 
+    if (hasPreRunCurriculumSetupState(curriculumState)) {
+        return { cleared: false, reason: 'setup-pending' };
+    }
+
     const patch = buildCurriculumInactivePatch();
     if (typeof applyPatch === 'function') {
         applyPatch(patch);
@@ -52,4 +68,3 @@ export function reconcileCurriculumForNavigation({
 
     return { cleared: true, reason: 'cleared', patch };
 }
-

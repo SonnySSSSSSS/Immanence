@@ -1,23 +1,8 @@
-// src/components/CurriculumHub.jsx
-// ═══════════════════════════════════════════════════════════════════════════
-// CURRICULUM HUB — Full 14-day schedule view
-// ═══════════════════════════════════════════════════════════════════════════
-//
-// Shows:
-// - Complete 14-day timeline
-// - Day status (pending/complete/today/missed)
-// - Quick stats (streak, progress, avg focus)
-// - Today's practice quick-start
-//
-// ═══════════════════════════════════════════════════════════════════════════
-
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
+import { useNavigationStore } from '../state/navigationStore.js';
+import { getProgramDefinition } from '../data/programRegistry.js';
 import { RITUAL_FOUNDATION_14 } from '../data/ritualFoundation14.js';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DAY CARD COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
 
 function DayCard({ day, status, completion, isLight, onSelect }) {
     const statusConfig = {
@@ -55,10 +40,12 @@ function DayCard({ day, status, completion, isLight, onSelect }) {
 
     const config = statusConfig[status] || statusConfig.pending;
     const isClickable = status === 'today' && !completion?.completed;
-
-    const duration = day.circuit 
-        ? day.circuit.totalDuration 
-        : day.practiceConfig?.duration || 10;
+    const totalDuration = Array.isArray(day?.legs)
+        ? day.legs.reduce((sum, leg) => sum + (Number(leg?.practiceConfig?.duration) || 0), 0)
+        : (day?.practiceConfig?.duration || 10);
+    const dayType = Array.isArray(day?.legs) && day.legs.length > 1
+        ? `${day.legs.length} legs`
+        : (day?.practiceType || 'Practice');
 
     return (
         <div
@@ -69,16 +56,14 @@ function DayCard({ day, status, completion, isLight, onSelect }) {
             }}
             onClick={() => isClickable && onSelect?.(day)}
         >
-            {/* Today indicator */}
             {status === 'today' && (
-                <div 
+                <div
                     className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse"
                     style={{ background: 'var(--accent-color)', boxShadow: '0 0 8px var(--accent-color)' }}
                 />
             )}
 
             <div className="flex items-start gap-3">
-                {/* Day badge */}
                 <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                     style={{
@@ -89,7 +74,6 @@ function DayCard({ day, status, completion, isLight, onSelect }) {
                     {config.icon}
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                     <h4
                         className="font-medium text-sm truncate"
@@ -108,20 +92,19 @@ function DayCard({ day, status, completion, isLight, onSelect }) {
                             opacity: status === 'future' ? 0.5 : 1,
                         }}
                     >
-                        {day.circuit ? 'Circuit' : day.practiceType} • {duration}m
+                        {dayType} • {totalDuration}m
                     </p>
                 </div>
 
-                {/* Focus rating (if complete) */}
                 {completion?.focusRating && (
                     <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map(n => (
+                        {[1, 2, 3, 4, 5].map((n) => (
                             <div
                                 key={n}
                                 className="w-1.5 h-1.5 rounded-full"
                                 style={{
-                                    background: n <= completion.focusRating 
-                                        ? 'var(--accent-color)' 
+                                    background: n <= completion.focusRating
+                                        ? 'var(--accent-color)'
                                         : isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
                                 }}
                             />
@@ -133,28 +116,24 @@ function DayCard({ day, status, completion, isLight, onSelect }) {
     );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// STATS SUMMARY
-// ═══════════════════════════════════════════════════════════════════════════
-
 function StatsSummary({ isLight }) {
     const { getProgress, getStreak, getAverageFocus, getTotalPracticeMinutes } = useCurriculumStore();
-    
+
     const progress = getProgress();
     const streak = getStreak();
     const avgFocus = getAverageFocus();
     const totalMinutes = getTotalPracticeMinutes();
 
     const stats = [
-        { label: 'Progress', value: `${progress.completed}/${progress.total}`, icon: '📊' },
-        { label: 'Streak', value: `${streak} day${streak !== 1 ? 's' : ''}`, icon: '🔥' },
-        { label: 'Avg Focus', value: avgFocus ? `${avgFocus}/5` : '—', icon: '🎯' },
-        { label: 'Total Time', value: `${totalMinutes}m`, icon: '⏱️' },
+        { label: 'Progress', value: `${progress.completed}/${progress.total}`, icon: 'P' },
+        { label: 'Streak', value: `${streak} day${streak !== 1 ? 's' : ''}`, icon: 'S' },
+        { label: 'Avg Focus', value: avgFocus ? `${avgFocus}/5` : '-', icon: 'F' },
+        { label: 'Total Time', value: `${totalMinutes}m`, icon: 'T' },
     ];
 
     return (
         <div className="grid grid-cols-4 gap-3">
-            {stats.map(stat => (
+            {stats.map((stat) => (
                 <div
                     key={stat.label}
                     className="text-center p-3 rounded-xl"
@@ -162,7 +141,7 @@ function StatsSummary({ isLight }) {
                         background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)',
                     }}
                 >
-                    <span className="text-lg">{stat.icon}</span>
+                    <span className="text-sm font-semibold" style={{ color: 'var(--accent-color)' }}>{stat.icon}</span>
                     <p
                         className="font-semibold text-sm mt-1"
                         style={{
@@ -185,70 +164,168 @@ function StatsSummary({ isLight }) {
     );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
+function ProgramIntroCard({ program, isLight, hasActivePath, onBeginSetup, selectedDays, selectedTimes }) {
+    if (!program?.curriculum) return null;
 
-export function CurriculumHub({ onSelectDay, isInModal = false }) {
-    const colorScheme = useDisplayModeStore(s => s.colorScheme);
+    const contractDays = Array.isArray(selectedDays) ? selectedDays : [];
+    const contractTimes = Array.isArray(selectedTimes) ? selectedTimes : [];
+    const daysSummary = contractDays.length > 0 ? `${contractDays.length} active days selected` : 'No practice days selected yet';
+    const timesSummary = contractTimes.length > 0 ? contractTimes.join(' + ') : 'No contract times selected yet';
+
+    return (
+        <div
+            className="rounded-2xl p-5 space-y-4"
+            style={{
+                background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
+            }}
+        >
+            <div className="space-y-2">
+                <div
+                    className="text-[11px] font-semibold uppercase tracking-[0.16em]"
+                    style={{ color: isLight ? 'rgba(60, 50, 40, 0.55)' : 'rgba(253,251,245,0.5)' }}
+                >
+                    Active Program
+                </div>
+                <h3
+                    className="text-xl font-semibold"
+                    style={{
+                        fontFamily: 'var(--font-display)',
+                        color: 'var(--accent-color)',
+                    }}
+                >
+                    {program.name}
+                </h3>
+                <p
+                    className="text-sm leading-relaxed"
+                    style={{ color: isLight ? 'rgba(60, 50, 40, 0.72)' : 'rgba(253,251,245,0.72)' }}
+                >
+                    {program.curriculum.description || 'Program schedule and contract overview.'}
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl p-3" style={{ background: isLight ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.18)' }}>
+                    <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: isLight ? 'rgba(60,50,40,0.48)' : 'rgba(253,251,245,0.46)' }}>
+                        Length
+                    </div>
+                    <div className="text-sm font-semibold" style={{ color: isLight ? 'rgba(60,50,40,0.9)' : 'rgba(253,251,245,0.92)' }}>
+                        {program.curriculum.durationDays || program.curriculum.duration || 14} days
+                    </div>
+                </div>
+                <div className="rounded-xl p-3" style={{ background: isLight ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.18)' }}>
+                    <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: isLight ? 'rgba(60,50,40,0.48)' : 'rgba(253,251,245,0.46)' }}>
+                        Days
+                    </div>
+                    <div className="text-sm font-semibold" style={{ color: isLight ? 'rgba(60,50,40,0.9)' : 'rgba(253,251,245,0.92)' }}>
+                        {daysSummary}
+                    </div>
+                </div>
+                <div className="rounded-xl p-3" style={{ background: isLight ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.18)' }}>
+                    <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: isLight ? 'rgba(60,50,40,0.48)' : 'rgba(253,251,245,0.46)' }}>
+                        Times
+                    </div>
+                    <div className="text-sm font-semibold" style={{ color: isLight ? 'rgba(60,50,40,0.9)' : 'rgba(253,251,245,0.92)' }}>
+                        {timesSummary}
+                    </div>
+                </div>
+            </div>
+
+            {!hasActivePath && typeof onBeginSetup === 'function' && (
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={onBeginSetup}
+                        className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:scale-[1.02]"
+                        style={{
+                            color: '#fff',
+                            background: 'linear-gradient(135deg, var(--accent-color), var(--accent-secondary))',
+                            boxShadow: '0 8px 20px var(--accent-20)',
+                        }}
+                    >
+                        Begin Contract Setup
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export function CurriculumHub({ onSelectDay, isInModal = false, onBeginSetup = null }) {
+    const colorScheme = useDisplayModeStore((s) => s.colorScheme);
     const isLight = colorScheme === 'light';
-    
-    const { 
-        getCurrentDayNumber, 
-        getDayStatus, 
+    const activePath = useNavigationStore((s) => s.activePath);
+
+    const {
+        activeCurriculumId,
+        getActiveCurriculum,
+        getCurrentDayNumber,
+        getDayStatus,
+        getProgress,
+        getSelectedDaysOfWeekDraft,
+        getPracticeTimeSlots,
         dayCompletions,
         curriculumStartDate,
         isCurriculumComplete,
     } = useCurriculumStore();
 
     const currentDay = getCurrentDayNumber();
-    const curriculum = RITUAL_FOUNDATION_14;
+    const activeProgram = getProgramDefinition(activeCurriculumId) || null;
+    const curriculum = getActiveCurriculum() || activeProgram?.curriculum || RITUAL_FOUNDATION_14;
     const isComplete = isCurriculumComplete();
-
-    // Format start date
-    const startDateStr = curriculumStartDate 
+    const totalDays = curriculum?.days?.length || curriculum?.durationDays || curriculum?.duration || 14;
+    const progress = getProgress();
+    const progressCount = Math.max(
+        Object.keys(dayCompletions || {}).length,
+        Number(progress?.completed || 0)
+    );
+    const startDateStr = curriculumStartDate
         ? new Date(curriculumStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : 'Not started';
-
-    console.log('[CurriculumHub] Rendering, isLight:', isLight, 'currentDay:', currentDay, 'isInModal:', isInModal);
+    const selectedDays = getSelectedDaysOfWeekDraft?.() || [];
+    const selectedTimes = getPracticeTimeSlots?.({ maxCount: 2 }) || [];
 
     return (
         <div className="px-6 py-6 space-y-6">
-            {/* Subtitle */}
+            <ProgramIntroCard
+                program={activeProgram}
+                isLight={isLight}
+                hasActivePath={Boolean(activePath)}
+                onBeginSetup={onBeginSetup}
+                selectedDays={selectedDays}
+                selectedTimes={selectedTimes}
+            />
+
             <p
                 className="text-sm"
                 style={{
                     color: isLight ? 'rgba(60, 50, 40, 0.6)' : 'rgba(253,251,245,0.6)',
                 }}
             >
-                Started {startDateStr} • Day {currentDay} of 14
+                Started {startDateStr} • Day {currentDay} of {totalDays}
+                {isInModal ? ' • modal view' : ''}
             </p>
 
-            {/* Progress bar */}
             <div className="relative h-2 rounded-full overflow-hidden" style={{ background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)' }}>
                 <div
                     className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
                     style={{
-                        width: `${(Object.keys(dayCompletions).length / 14) * 100}%`,
+                        width: `${Math.min((progressCount / totalDays) * 100, 100)}%`,
                         background: 'linear-gradient(90deg, var(--accent-color), var(--accent-secondary))',
                     }}
                 />
-                {/* Current day marker */}
                 <div
                     className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 bg-white dark:bg-gray-900"
                     style={{
-                        left: `${((currentDay - 1) / 14) * 100}%`,
+                        left: `${Math.min(((currentDay - 1) / totalDays) * 100, 100)}%`,
                         borderColor: 'var(--accent-color)',
                     }}
                 />
             </div>
 
-            {/* Stats summary */}
             <StatsSummary isLight={isLight} />
 
-            {/* Week labels and day grid */}
             <div className="space-y-4">
-                {/* Week 1 */}
                 <div>
                     <h3
                         className="text-xs uppercase tracking-wider mb-2 font-medium"
@@ -256,10 +333,10 @@ export function CurriculumHub({ onSelectDay, isInModal = false }) {
                             color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.4)',
                         }}
                     >
-                        Week 1 — Settling
+                        Week 1
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {curriculum.days.slice(0, 7).map(day => (
+                        {(curriculum.days || []).slice(0, 7).map((day) => (
                             <DayCard
                                 key={day.dayNumber}
                                 day={day}
@@ -272,7 +349,6 @@ export function CurriculumHub({ onSelectDay, isInModal = false }) {
                     </div>
                 </div>
 
-                {/* Week 2 */}
                 <div>
                     <h3
                         className="text-xs uppercase tracking-wider mb-2 font-medium"
@@ -280,10 +356,10 @@ export function CurriculumHub({ onSelectDay, isInModal = false }) {
                             color: isLight ? 'rgba(60, 50, 40, 0.5)' : 'rgba(253,251,245,0.4)',
                         }}
                     >
-                        Week 2 — Deepening
+                        Week 2
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {curriculum.days.slice(7, 14).map(day => (
+                        {(curriculum.days || []).slice(7, 14).map((day) => (
                             <DayCard
                                 key={day.dayNumber}
                                 day={day}
@@ -297,7 +373,6 @@ export function CurriculumHub({ onSelectDay, isInModal = false }) {
                 </div>
             </div>
 
-            {/* Completion banner */}
             {isComplete && (
                 <div
                     className="p-4 rounded-xl text-center"
@@ -306,7 +381,6 @@ export function CurriculumHub({ onSelectDay, isInModal = false }) {
                         border: '1px solid var(--accent-30)',
                     }}
                 >
-                    <span className="text-2xl">🎉</span>
                     <p
                         className="font-semibold mt-2"
                         style={{
