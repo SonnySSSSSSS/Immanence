@@ -681,7 +681,20 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               overflow: 'hidden',
             }}
           >
-            <div style={sidePanelTileWrapStyle}>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: `url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: isLight ? 0.30 : 0.20,
+                filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+            <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1 }}>
               <button
                 type="button"
                 aria-expanded={!leftRolled}
@@ -700,35 +713,28 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               >
                 <div style={sidePanelLeftTileStatsColStyle}>
                   <div style={sidePanelLeftMetricCellStyle}>
-                    <div className="type-metric" style={sidePanelTileValueStyle}>
+                    <div className="type-metric" style={{ ...sidePanelTileValueStyle, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                       {Math.round(hubTiles?.sessions_total ?? 0)}
                     </div>
-                    <div className="type-label" style={sidePanelTileLabelStyle}>
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                       Sessions
                     </div>
-                    <div className="type-label" style={sidePanelTileSubLabelStyle}>
+                    <div className="type-label" style={{ ...sidePanelTileSubLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                       14D
                     </div>
                   </div>
                   <div style={sidePanelLeftMetricCellStyle}>
-                    <div className="type-metric" style={sidePanelTileValueStyle}>
+                    <div className="type-metric" style={{ ...sidePanelTileValueStyle, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                       {Math.round(hubTiles?.days_active ?? 0)}
                     </div>
-                    <div className="type-label" style={sidePanelTileLabelStyle}>
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                       Active
                     </div>
-                    <div className="type-label" style={sidePanelTileSubLabelStyle}>
+                    <div className="type-label" style={{ ...sidePanelTileSubLabelStyle, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                       Days
                     </div>
                   </div>
                 </div>
-                <div
-                  style={{
-                    ...sidePanelLeftTileImageFillStyle,
-                    backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.practiceLog}")`,
-                    filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
-                  }}
-                />
               </div>
             </div>
           </div>
@@ -782,7 +788,20 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
               overflow: 'hidden',
             }}
           >
-            <div style={sidePanelTileWrapStyle}>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: `url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: isLight ? 0.30 : 0.20,
+                filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+            <div style={{ ...sidePanelTileWrapStyle, position: 'relative', zIndex: 1 }}>
               <button
                 type="button"
                 aria-expanded={!rightRolled}
@@ -809,7 +828,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       darkFillAlpha: 0.9,
                       lightFillAlpha: 0.88,
                     })}
-                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap' }}>
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                       Complete
                     </div>
                   </div>
@@ -822,7 +841,7 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                       darkFillAlpha: 0.9,
                       lightFillAlpha: 0.88,
                     })}
-                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap' }}>
+                    <div className="type-label" style={{ ...sidePanelTileLabelStyle, fontSize: '7px', whiteSpace: 'nowrap', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                       On-Time
                     </div>
                   </div>
@@ -835,14 +854,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
                 >
                   REPORT
                 </button>
-                <div
-                  style={{
-                    ...sidePanelTileImageStyle,
-                    height: `calc(${U} * 1.8)`,
-                    backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0.52) 100%), url("${HOME_HUB_SIDE_PANEL_ASSET_URLS.rhythmReport}")`,
-                    filter: 'saturate(0.72) contrast(0.94) brightness(0.93)',
-                  }}
-                />
               </div>
             </div>
           </div>

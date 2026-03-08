@@ -435,6 +435,8 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.259 - fix(homehub): restore side panel collapse, fix image opacity, add text shadows
+  // v3.27.258 - fix(homehub): side panel images now fill full container as background
   // v3.27.257 - fix(auth): re-enable supabase login for beta and align launch gating
   // v3.27.256 - docs(auth): mark supabase auth as disabled pending launch hardening
   // v3.27.255 - fix(homehub): restore initial hub render for smoke flows (ENABLE_AUTH=false)
