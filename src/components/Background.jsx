@@ -7,6 +7,20 @@ import { getStageWallpaperUrl } from "./bg/wallpaperUrl.js";
 import { useDisplayModeStore } from "../state/displayModeStore";
 import { normalizeStageKey } from "../config/avatarStageAssets.js";
 
+const LIGHT_STAGE_CLOUDIEST = {
+  seedling: "bg/seedling_cloudiest.webp",
+  ember: "bg/ember_cloudiest.webp",
+  flame: "bg/flame_cloudiest.webp",
+  beacon: "bg/beacon_cloudiest.webp",
+  stellar: "bg/stellar_cloudiest.webp",
+};
+
+function withBaseUrl(publicPath) {
+  const base = import.meta.env.BASE_URL || "/";
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  return `${normalizedBase}${String(publicPath || "").replace(/^\/+/, "")}`;
+}
+
 // Vignette edge colors for each stage
 const STAGE_VIGNETTE_COLOR = {
   seedling: 'rgba(92, 64, 51, 0.34)',    // Earth brown
@@ -34,6 +48,9 @@ export function Background({ stage = 'seedling', showBottomLayer = true }) {
   const vignetteColor = isLight
     ? (STAGE_VIGNETTE_LIGHT[stageLower] ?? 'rgba(180, 155, 110, 0.12)')
     : (STAGE_VIGNETTE_COLOR[stageLower] ?? 'rgba(150, 40, 20, 0.3)');
+  const lightStageWallpaperSrc = withBaseUrl(
+    LIGHT_STAGE_CLOUDIEST[stageLower] ?? LIGHT_STAGE_CLOUDIEST.seedling
+  );
 
   // Cloud background state (synced with DevPanel)
   const [cloudBackground, setCloudBackground] = useState('cloudier');
@@ -80,19 +97,19 @@ export function Background({ stage = 'seedling', showBottomLayer = true }) {
             <div
               className="absolute inset-0 pointer-events-none z-[1]"
               style={{
-                backgroundImage: `url(/_${cloudBackground}.webp)`,
+                backgroundImage: `url(${lightStageWallpaperSrc})`,
                 backgroundSize: 'auto 100%',
                 backgroundPosition: 'center bottom',
                 backgroundRepeat: 'no-repeat',
-                opacity: 0.85,
-                filter: 'contrast(1.1) saturate(1.1)',
+                opacity: 0.92,
+                filter: 'contrast(1.06) saturate(1.03)',
                 animation: 'cloudDriftGlobal 60s ease-in-out infinite',
               }}
             />
             <div
               className="absolute inset-0 pointer-events-none z-[2]"
               style={{
-                background: 'linear-gradient(to bottom, rgba(245, 240, 230, 0.7) 0%, rgba(245, 240, 230, 0.4) 30%, transparent 75%)',
+                background: 'linear-gradient(to bottom, rgba(245, 240, 230, 0.58) 0%, rgba(245, 240, 230, 0.26) 30%, transparent 75%)',
               }}
             />
           </>

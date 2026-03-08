@@ -42,6 +42,11 @@ export const SECONDARY_IMAGES = [
     'bg/bg-flame-bottom.webp',
     'bg/bg-beacon-bottom.webp',
     'bg/bg-stellar-bottom.webp',
+    'bg/seedling_cloudiest.webp',
+    'bg/ember_cloudiest.webp',
+    'bg/flame_cloudiest.webp',
+    'bg/beacon_cloudiest.webp',
+    'bg/stellar_cloudiest.webp',
 
     // Practice backgrounds
     'bg/practice-breath-mandala.webp',
