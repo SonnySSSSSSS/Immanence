@@ -13,6 +13,11 @@ function BreathPracticeCard({
   pattern,
   onPatternChange,
   onRunBenchmark,
+  stillnessConfig,
+  onStillnessConfigChange,
+  isStillnessLocked,
+  breathPreDelaySec,
+  onBreathPreDelayChange,
   duration,
   onDurationChange,
   durationOptions,
@@ -32,6 +37,20 @@ function BreathPracticeCard({
   const [mode, setMode] = useState("focus");
   const isFocusMode = mode === "focus";
   const editButtonRef = useRef(null);
+  const focusSec = Number(stillnessConfig?.focusSec) || 45;
+  const restSec = Number(stillnessConfig?.restSec) || 15;
+  const stillnessPreDelaySec = Number(stillnessConfig?.preDelaySec) || 0;
+  const stillnessIntensity = String(stillnessConfig?.focusIntensity || "medium").toLowerCase();
+  const stillnessIntensityLabel = stillnessIntensity === "heavy"
+    ? "Heavy"
+    : stillnessIntensity === "light"
+      ? "Light"
+      : "Medium";
+  const stillnessPrompt = stillnessIntensity === "light"
+    ? "Hold the kind of focus you would use in a normal conversation."
+    : stillnessIntensity === "heavy"
+      ? "Hold the focus you would use to catch a whisper."
+      : "Hold the focus you would use to remember a spoken list.";
 
   // Determine tutorial ID based on current submode
   const tutorialId = breathSubmode === 'stillness' ? 'practice:stillness' : 'practice:breath';
@@ -66,24 +85,42 @@ function BreathPracticeCard({
         </div>
         {/* Cycle */}
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Cycle</div>
+          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {breathSubmode === 'stillness' ? 'Focus/Rest' : 'Cycle'}
+          </div>
           <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
-            {pattern?.inhale ?? 4}–{pattern?.hold1 ?? 0}–{pattern?.exhale ?? 4}–{pattern?.hold2 ?? 0}
+            {breathSubmode === 'stillness'
+              ? `${focusSec}s / ${restSec}s`
+              : `${pattern?.inhale ?? 4}–${pattern?.hold1 ?? 0}–${pattern?.exhale ?? 4}–${pattern?.hold2 ?? 0}`}
           </div>
         </div>
         {/* Duration */}
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Duration</div>
+          <div style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {breathSubmode === 'stillness' ? 'Intensity' : 'Duration'}
+          </div>
           <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
-            {duration} min
+            {breathSubmode === 'stillness' ? stillnessIntensityLabel : `${duration} min`}
           </div>
         </div>
       </div>
+      {breathSubmode === 'stillness' && (
+        <div
+          style={{
+            fontSize: '11px',
+            color: 'rgba(255,255,255,0.68)',
+            marginBottom: '10px',
+          }}
+        >
+          Pre-delay {stillnessPreDelaySec}s
+        </div>
+      )}
       {/* Edit Button - use onMouseDown to bypass capture-phase click interception */}
       <button
         ref={editButtonRef}
         type="button"
         onMouseDown={handleEditClick}
+        disabled={breathSubmode === 'stillness' && isStillnessLocked}
         style={{
           width: '100%',
           padding: '8px 12px',
@@ -95,11 +132,12 @@ function BreathPracticeCard({
           border: '1px solid rgba(212, 175, 55, 0.3)',
           borderRadius: '8px',
           color: 'rgba(212, 175, 55, 0.9)',
-          cursor: 'pointer',
+          cursor: breathSubmode === 'stillness' && isStillnessLocked ? 'not-allowed' : 'pointer',
           fontFamily: 'var(--font-display)',
           transition: 'all 200ms',
           WebkitTouchCallout: 'none',
           userSelect: 'none',
+          opacity: breathSubmode === 'stillness' && isStillnessLocked ? 0.5 : 1,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
@@ -282,6 +320,49 @@ function BreathPracticeCard({
               </div>
             </div>
 
+            <div style={{ marginTop: '8px', marginBottom: '18px' }}>
+              <div
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'rgba(255,255,255,0.4)',
+                  marginBottom: '8px',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  textAlign: 'center',
+                }}
+              >
+                Pre-Delay (seconds)
+              </div>
+              <div className="flex justify-center">
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  value={Number.isFinite(Number(breathPreDelaySec)) ? Number(breathPreDelaySec) : 0}
+                  onChange={(e) => {
+                    const val = Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0));
+                    onBreathPreDelayChange?.(val);
+                  }}
+                  className="breath-input"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '6px',
+                    padding: '6px 0',
+                    width: '70px',
+                    color: 'rgba(212, 175, 55, 0.8)',
+                    textAlign: 'center',
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-display)',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
             {/* Traditional Ratios Panel - shown when traditional method selected */}
             {breathMethod === 'traditional' && (
               <div style={{ marginBottom: '28px' }}>
@@ -389,34 +470,84 @@ function BreathPracticeCard({
         {/* Stillness Mode Content */}
         {breathSubmode === 'stillness' && !isFocusMode && (
           <>
-            {/* Waveform - visible in stillness mode */}
-            <div
-              className="breath-wave-glow"
-              style={{
-                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.1) 100%)',
-                backdropFilter: 'blur(32px) saturate(160%)',
-                WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-                borderRadius: '16px',
-                padding: '20px',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 12px rgba(212, 175, 55, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              <BreathWaveform pattern={pattern} />
+            {isStillnessLocked && (
+              <div
+                className="type-caption text-center"
+                style={{
+                  marginBottom: '16px',
+                  color: 'rgba(255,255,255,0.6)',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Student mode: timing from navigation path
+              </div>
+            )}
+
+            <div style={{ marginBottom: '18px' }}>
+              <div
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'rgba(255,255,255,0.4)',
+                  marginBottom: '10px',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  textAlign: 'center',
+                }}
+              >
+                Focus Intensity
+              </div>
+              <div className="flex items-center justify-center gap-8">
+                {['light', 'medium', 'heavy'].map((level) => {
+                  const active = stillnessIntensity === level;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      disabled={isStillnessLocked}
+                      onClick={() => onStillnessConfigChange?.({ focusIntensity: level })}
+                      style={{
+                        minWidth: '88px',
+                        padding: '8px 10px',
+                        borderRadius: '999px',
+                        border: active ? '1px solid rgba(212, 175, 55, 0.6)' : '1px solid rgba(255, 255, 255, 0.18)',
+                        background: active ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                        color: active ? 'rgba(212, 175, 55, 0.95)' : 'rgba(255, 255, 255, 0.65)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        fontSize: '10px',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        cursor: isStillnessLocked ? 'not-allowed' : 'pointer',
+                        opacity: isStillnessLocked ? 0.6 : 1,
+                      }}
+                    >
+                      {level}
+                    </button>
+                  );
+                })}
+              </div>
+              <div
+                className="type-body text-center"
+                style={{
+                  marginTop: '12px',
+                  color: 'rgba(255,255,255,0.78)',
+                  fontSize: '13px',
+                }}
+              >
+                {stillnessPrompt}
+              </div>
             </div>
 
-            {/* Phase Display - read-only in stillness mode */}
-            <div
-              className="flex justify-center gap-8"
-              style={{ marginTop: '24px', marginBottom: '16px' }}
-            >
+            <div className="flex justify-center gap-6" style={{ marginBottom: '18px' }}>
               {[
-                { label: 'INHALE', key: 'inhale', min: 1 },
-                { label: 'HOLD 1', key: 'hold1', min: 0 },
-                { label: 'EXHALE', key: 'exhale', min: 1 },
-                { label: 'HOLD 2', key: 'hold2', min: 0 }
-              ].map((phase) => (
-                <div key={phase.key} className="flex flex-col items-center">
+                { label: 'Focus', key: 'focusSec', value: focusSec, min: 5, max: 300 },
+                { label: 'Rest', key: 'restSec', value: restSec, min: 3, max: 180 },
+                { label: 'Pre-Delay', key: 'preDelaySec', value: stillnessPreDelaySec, min: 0, max: 20 },
+              ].map((field) => (
+                <div key={field.key} className="flex flex-col items-center">
                   <label
                     style={{
                       fontSize: '9px',
@@ -425,60 +556,38 @@ function BreathPracticeCard({
                       marginBottom: '8px',
                       fontFamily: 'var(--font-display)',
                       fontWeight: 600,
-                      textTransform: 'uppercase'
+                      textTransform: 'uppercase',
                     }}
                   >
-                    {phase.label}
+                    {field.label}
                   </label>
-                  <div
+                  <input
+                    type="number"
+                    min={field.min}
+                    max={field.max}
+                    disabled={isStillnessLocked}
+                    value={field.value}
+                    onChange={(e) => {
+                      const val = Math.max(field.min, Math.min(field.max, parseInt(e.target.value, 10) || 0));
+                      onStillnessConfigChange?.({ [field.key]: val });
+                    }}
                     style={{
                       background: 'rgba(255,255,255,0.03)',
                       border: '1px solid rgba(255,255,255,0.1)',
                       borderRadius: '6px',
                       padding: '8px 0',
-                      width: '44px',
+                      width: '64px',
                       color: 'var(--accent-color)',
                       textAlign: 'center',
                       fontSize: '18px',
                       fontWeight: 700,
                       fontFamily: 'var(--font-display)',
+                      opacity: isStillnessLocked ? 0.6 : 1,
                     }}
-                  >
-                    {pattern?.[phase.key] ?? (phase.min === 1 ? 4 : 0)}
-                  </div>
+                  />
                 </div>
               ))}
             </div>
-
-            <style>{`
-            .breath-wave-glow {
-              position: relative;
-            }
-            .breath-wave-glow::before {
-              content: "";
-              position: absolute;
-              inset: -12px;
-              background: radial-gradient(
-                ellipse at center,
-                rgba(233,195,90,0.25),
-                rgba(233,195,90,0.12) 40%,
-                rgba(233,195,90,0.04) 60%,
-                transparent 70%
-              );
-              filter: blur(12px);
-              pointer-events: none;
-              z-index: 0;
-              animation: breath-pulse-glow 8s infinite ease-in-out;
-            }
-            .breath-wave-glow > * {
-              position: relative;
-              z-index: 1;
-            }
-            @keyframes breath-pulse-glow {
-              0%, 100% { opacity: 0.7; }
-              50%      { opacity: 1; }
-            }
-            `}</style>
           </>
         )}
       </div>

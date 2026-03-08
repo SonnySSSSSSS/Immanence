@@ -15,6 +15,13 @@ const PER_PRACTICE_DEFAULTS = {
   breath: {
     preset: "Box",
     pattern: { inhale: 4, hold1: 4, exhale: 4, hold2: 4 },
+    preDelaySec: 0,
+    stillness: {
+      focusIntensity: 'medium',
+      focusSec: 45,
+      restSec: 15,
+      preDelaySec: 0,
+    },
   },
   ritual: {
     activeRitualId: null,
@@ -151,8 +158,12 @@ export function loadPreferences() {
         // Partially fill practiceParams with legacy data
         if (practiceId === 'breath') {
           migrated.practiceParams.breath = {
+            ...DEFAULT_PREFERENCES.practiceParams.breath,
             preset: legacy.preset || "Box",
-            pattern: legacy.pattern || { inhale: 4, hold1: 4, exhale: 4, hold2: 4 }
+            pattern: legacy.pattern || { inhale: 4, hold1: 4, exhale: 4, hold2: 4 },
+            stillness: {
+              ...DEFAULT_PREFERENCES.practiceParams.breath.stillness,
+            },
           };
         }
         return migrated;
@@ -167,12 +178,20 @@ export function loadPreferences() {
       ...DEFAULT_PREFERENCES,
       ...stored,
       practiceId: normalizedPracticeId,
-      practiceParams: {
-        ...DEFAULT_PREFERENCES.practiceParams,
-        ...(stored.practiceParams || {}),
-        sound: {
-          ...DEFAULT_PREFERENCES.practiceParams.sound,
-          ...(stored.practiceParams?.sound || {}),
+        practiceParams: {
+          ...DEFAULT_PREFERENCES.practiceParams,
+          ...(stored.practiceParams || {}),
+          breath: {
+            ...DEFAULT_PREFERENCES.practiceParams.breath,
+            ...(stored.practiceParams?.breath || {}),
+            stillness: {
+              ...DEFAULT_PREFERENCES.practiceParams.breath.stillness,
+              ...(stored.practiceParams?.breath?.stillness || {}),
+            },
+          },
+          sound: {
+            ...DEFAULT_PREFERENCES.practiceParams.sound,
+            ...(stored.practiceParams?.sound || {}),
         },
         feeling: {
           ...DEFAULT_PREFERENCES.practiceParams.feeling,

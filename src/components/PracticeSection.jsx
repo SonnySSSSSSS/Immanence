@@ -48,6 +48,7 @@ import { FeedbackModal } from "./FeedbackModal.jsx";
 import PracticeHeader from "./practice/PracticeHeader.jsx";
 import BreathPracticeCard from "./practice/BreathPracticeCard.jsx";
 import { SessionControls } from "./practice/SessionControls.jsx";
+import { StillnessRingSession } from "./practice/StillnessRingSession.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { PracticeOptionsCard } from "./practice/PracticeOptionsCard.jsx";
 import { GlassIconButton, SUB_MODE_ICON_MAP } from "./GlassIconButton.jsx";
@@ -72,6 +73,44 @@ const SAFE_LAUNCH_FALLBACK = Object.freeze({
   practiceId: 'breath',
   durationMin: 10,
 });
+const DEFAULT_STILLNESS_CONFIG = Object.freeze({
+  focusIntensity: "medium",
+  focusSec: 45,
+  restSec: 15,
+  preDelaySec: 0,
+});
+
+function normalizeSeconds(value, fallback, min = 0, max = 600) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+function normalizeFocusIntensity(value, fallback = "medium") {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw === "light" || raw === "medium" || raw === "heavy") return raw;
+  return fallback;
+}
+
+function normalizeStillnessConfig(raw, { fallback = DEFAULT_STILLNESS_CONFIG, sharedPreDelaySec = 0 } = {}) {
+  const src = raw && typeof raw === "object" ? raw : {};
+  const fallbackCfg = fallback && typeof fallback === "object" ? fallback : DEFAULT_STILLNESS_CONFIG;
+  const fallbackPreDelay = Number.isFinite(Number(fallbackCfg.preDelaySec))
+    ? Number(fallbackCfg.preDelaySec)
+    : Number(sharedPreDelaySec) || 0;
+
+  return {
+    focusIntensity: normalizeFocusIntensity(src.focusIntensity, fallbackCfg.focusIntensity || "medium"),
+    focusSec: normalizeSeconds(src.focusSec, normalizeSeconds(fallbackCfg.focusSec, DEFAULT_STILLNESS_CONFIG.focusSec, 5, 300), 5, 300),
+    restSec: normalizeSeconds(src.restSec, normalizeSeconds(fallbackCfg.restSec, DEFAULT_STILLNESS_CONFIG.restSec, 3, 180), 3, 180),
+    preDelaySec: normalizeSeconds(
+      src.preDelaySec,
+      normalizeSeconds(fallbackPreDelay, DEFAULT_STILLNESS_CONFIG.preDelaySec, 0, 20),
+      0,
+      20
+    ),
+  };
+}
 
 function isTypingIntoEditableElement(activeEl) {
   if (!activeEl) return false;
@@ -508,6 +547,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   
   // STABILIZE STATE: Keyed Parameters Object
   const [practiceParams, setPracticeParams] = useState(savedPrefs.practiceParams);
+  const [launchStillnessConfig, setLaunchStillnessConfig] = useState(null);
+  const sharedBreathPreDelaySec = normalizeSeconds(
+    practiceParams?.breath?.preDelaySec,
+    DEFAULT_STILLNESS_CONFIG.preDelaySec,
+    0,
+    20
+  );
+  const persistedStillnessDefaults = useMemo(
+    () => normalizeStillnessConfig(practiceParams?.breath?.stillness, {
+      fallback: DEFAULT_STILLNESS_CONFIG,
+      sharedPreDelaySec: sharedBreathPreDelaySec,
+    }),
+    [practiceParams?.breath?.stillness, sharedBreathPreDelaySec]
+  );
   const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
   const setLastPracticeStartProbe = useUiStore(s => s.setLastPracticeStartProbe);
   const clearPracticeLaunchContext = useUiStore(s => s.clearPracticeLaunchContext);
@@ -617,6 +670,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
     setInitiationBenchmarkContext(null);
     setPathLaunchGuidance(undefined);
+    setLaunchStillnessConfig(null);
     activePathContextRef.current = null;
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
@@ -765,7 +819,32 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (Number.isFinite(nextDurationMin) && nextDurationMin > 0 && nextDurationMin !== duration) {
       queueMicrotask(() => setDuration(nextDurationMin));
     }
-  }, [activePracticeSession, isRunning, practiceId, duration, getActivePracticeLeg]);
+
+    if (pid === "breath") {
+      const legStillnessConfig = activeLeg?.practiceConfig?.stillness;
+      if (legStillnessConfig && typeof legStillnessConfig === "object") {
+        queueMicrotask(() => setBreathSubmode("stillness"));
+        setLaunchStillnessConfig(
+          normalizeStillnessConfig(legStillnessConfig, {
+            fallback: persistedStillnessDefaults,
+            sharedPreDelaySec: sharedBreathPreDelaySec,
+          })
+        );
+      } else {
+        setLaunchStillnessConfig(null);
+      }
+    } else {
+      setLaunchStillnessConfig(null);
+    }
+  }, [
+    activePracticeSession,
+    isRunning,
+    practiceId,
+    duration,
+    getActivePracticeLeg,
+    persistedStillnessDefaults,
+    sharedBreathPreDelaySec,
+  ]);
 
   const _circuitPendingRef = useRef(null);
 
@@ -786,6 +865,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceRanRef.current = false;
       activePathContextRef.current = null;
       suppressPrefSaveRef.current = false;
+      setLaunchStillnessConfig(null);
       clearLaunchConstraints?.();
       const _fbResetPracticeId = practiceId !== SAFE_LAUNCH_FALLBACK.practiceId;
       const _fbResetDuration = duration !== SAFE_LAUNCH_FALLBACK.durationMin;
@@ -875,9 +955,24 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     // Best-effort mapping for common config fields.
     if (ctx.practiceId === 'breath') {
       const breathPattern = ctx.practiceConfig?.breathPattern;
+      const stillnessConfig = ctx.practiceConfig?.stillness;
       if (breathPattern && typeof breathPattern === 'string') {
+        queueMicrotask(() => setBreathSubmode('breath'));
         queueMicrotask(() => mergePracticeParamsPatch({ breath: { preset: breathPattern.toLowerCase() } }));
       }
+      if (stillnessConfig && typeof stillnessConfig === 'object') {
+        queueMicrotask(() => setBreathSubmode('stillness'));
+        setLaunchStillnessConfig(
+          normalizeStillnessConfig(stillnessConfig, {
+            fallback: persistedStillnessDefaults,
+            sharedPreDelaySec: sharedBreathPreDelaySec,
+          })
+        );
+      } else {
+        setLaunchStillnessConfig(null);
+      }
+    } else {
+      setLaunchStillnessConfig(null);
     }
 
     // Handle circuit practice from curriculum (load circuit definition by ID)
@@ -912,7 +1007,20 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     clearPracticeLaunchContext?.();
-  }, [practiceLaunchContext, isRunning, practiceId, duration, mergePracticeParamsPatch, clearPracticeLaunchContext, applyLaunchConstraints, clearLaunchConstraints, getCircuit, resolveInitiationV2BenchmarkContext]);
+  }, [
+    practiceLaunchContext,
+    isRunning,
+    practiceId,
+    duration,
+    mergePracticeParamsPatch,
+    clearPracticeLaunchContext,
+    applyLaunchConstraints,
+    clearLaunchConstraints,
+    getCircuit,
+    resolveInitiationV2BenchmarkContext,
+    persistedStillnessDefaults,
+    sharedBreathPreDelaySec,
+  ]);
 
   useEffect(() => {
     if (isRunning && pathLaunchGuidance !== undefined) {
@@ -941,9 +1049,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const showSummaryModal = Boolean(showSummary && sessionSummary);
   const practiceActive = isRunning;
   const appMarker = practiceActive ? "practice:running" : "practice:idle";
+  const isStillnessRuntime = Boolean(
+    practiceActive
+    && actualRunningPracticeId === "breath"
+    && breathSubmode === "stillness"
+  );
   const shouldRenderRingCanvas = Boolean(
     practiceActive
     && actualRunningPracticeId === "breath"
+    && breathSubmode !== "stillness"
     && appMarker !== "practice:idle"
     && !showSummaryModal
     && !ringTeardownRequested
@@ -1198,6 +1312,33 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setDriftEnabled = (val) => updateParams('cymatics', { driftEnabled: val });
   const setEmotionMode = (val) => updateParams('feeling', { mode: val });
   const setEmotionPromptMode = (val) => updateParams('feeling', { promptMode: val });
+  const launchStillnessRuntimeConfig = launchStillnessConfig
+    ? normalizeStillnessConfig(launchStillnessConfig, {
+      fallback: persistedStillnessDefaults,
+      sharedPreDelaySec: sharedBreathPreDelaySec,
+    })
+    : null;
+  const isStillnessLocked = Boolean(
+    breathSubmode === 'stillness'
+    && launchStillnessRuntimeConfig
+    && (activePracticeSession || isLocked?.('practiceParams.breath.stillness') || isLocked?.('practiceParams.breath') || isLocked?.('practiceParams'))
+  );
+  const stillnessConfig = isStillnessLocked && launchStillnessRuntimeConfig
+    ? launchStillnessRuntimeConfig
+    : persistedStillnessDefaults;
+  const setPreDelaySec = (val) => {
+    updateParams('breath', { preDelaySec: normalizeSeconds(val, sharedBreathPreDelaySec, 0, 20) });
+  };
+  const setStillness = (updates) => {
+    if (!updates || typeof updates !== 'object') return;
+    if (isStillnessLocked) return;
+
+    const nextStillness = normalizeStillnessConfig(
+      { ...(stillnessConfig || DEFAULT_STILLNESS_CONFIG), ...updates },
+      { fallback: stillnessConfig || DEFAULT_STILLNESS_CONFIG, sharedPreDelaySec: sharedBreathPreDelaySec }
+    );
+    updateParams('breath', { stillness: nextStillness });
+  };
 
   // Generic setter for consolidated practices with subModes (awareness, resonance, perception)
   const setActiveMode = (practiceId, modeKey) => updateParams(practiceId, { activeMode: modeKey });
@@ -2028,13 +2169,16 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setIsSessionPaused(false);
     setIsStarting(true);
 
-    // Check if we need to start audio with countdown
-    const needsAudioCountdown = practiceId === "breath" && tempoSyncEnabled;
-    
-    if (needsAudioCountdown) {
-      // 3-second countdown before starting breath practice with audio
-      setCountdownValue(3);
-      
+    const isStillnessStart = practiceId === "breath" && breathSubmode === "stillness";
+    const modePreDelaySec = isStillnessStart
+      ? normalizeSeconds(stillnessConfig?.preDelaySec, sharedBreathPreDelaySec, 0, 20)
+      : normalizeSeconds(sharedBreathPreDelaySec, 0, 0, 20);
+    const needsAudioCountdown = practiceId === "breath" && !isStillnessStart && tempoSyncEnabled;
+    const totalCountdownSec = modePreDelaySec + (needsAudioCountdown ? 3 : 0);
+
+    if (totalCountdownSec > 0) {
+      setCountdownValue(totalCountdownSec);
+
       const countdownInterval = setInterval(() => {
         setCountdownValue((prev) => {
           if (prev <= 1) {
@@ -2049,7 +2193,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setIsStarting(false);
         setCountdownValue(null);
         executeStart();
-      }, 3000); // 3 seconds for countdown
+      }, totalCountdownSec * 1000);
     } else {
       // Normal start animation (1.4 seconds)
       setTimeout(() => {
@@ -2183,7 +2327,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     onBreathStateChange: notifyBreathStateChange,
   });
 
-  const showFeedback = lastSignedErrorMs !== null && isBreathPractice;
+  const showFeedback = lastSignedErrorMs !== null && isBreathPractice && !isStillnessRuntime;
+  const showBreathCountUi = showBreathCount && !isStillnessRuntime;
   const timeLeftText = formatTime(timeLeft);
 
   const isBreathPracticeRef = useRef(isBreathPractice);
@@ -2540,7 +2685,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   justifyContent: "center",
                 }}
               >
-                {shouldRenderRingCanvas ? (
+                {breathSubmode === 'stillness' ? (
+                  <StillnessRingSession
+                    isRunning={isRunning}
+                    isPaused={isSessionPaused}
+                    sessionStartTime={sessionStartTime}
+                    totalDurationSec={duration * 60}
+                    config={stillnessConfig}
+                    ringMode={currentRingPreset.id}
+                    onComplete={() => handleStop({ completed: true })}
+                  />
+                ) : shouldRenderRingCanvas ? (
                   <BreathingRing
                     breathPattern={breathingPatternForRing}
                     onTap={handleAccuracyTap}
@@ -2567,7 +2722,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   paddingBottom: "env(safe-area-inset-bottom)",
                 }}
               >
-                {tempoSessionActive && (
+                {tempoSessionActive && breathSubmode !== 'stillness' && (
                   <div style={{ width: '100%', maxWidth: '320px' }}>
                     <TempoSyncSessionPanel />
                   </div>
@@ -2586,7 +2741,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   radialGlow={radialGlow}
                   buttonShadow={buttonShadow}
                   timeLeftText={timeLeftText}
-                  showBreathCount={showBreathCount}
+                  showBreathCount={showBreathCountUi}
                   breathCount={breathCount}
                 />
               </div>
@@ -2645,7 +2800,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           radialGlow={radialGlow}
           buttonShadow={buttonShadow}
           timeLeftText={timeLeftText}
-          showBreathCount={showBreathCount}
+          showBreathCount={showBreathCountUi}
           breathCount={breathCount}
         />}
 
@@ -2725,11 +2880,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const configProps = {
     preset, pattern, soundType, soundVolume, binauralPreset, isochronicPreset, carrierFrequency,
     isochronicExactHz, isochronicReverbWet, isochronicChorusWet,
+    stillness: stillnessConfig,
+    isStillnessLocked,
+    preDelaySec: sharedBreathPreDelaySec,
     sensoryType, vipassanaTheme, vipassanaElement, scanType, geometry, fadeInDuration, displayDuration,
     fadeOutDuration, voidDuration, audioEnabled, frequencySet, selectedFrequency, driftEnabled,
     mode: emotionMode, promptMode: emotionPromptMode,
     activeMode,
     setPreset, setPattern, setSoundType, setSoundVolume, setBinauralPreset, setIsochronicPreset,
+    setStillness, setPreDelaySec,
     setCarrierFrequency, setIsochronicExactHz, setIsochronicReverbWet, setIsochronicChorusWet,
     setSensoryType, setVipassanaTheme, setVipassanaElement, setScanType, setGeometry,
     setFadeInDuration, setDisplayDuration, setFadeOutDuration, setVoidDuration, setAudioEnabled,

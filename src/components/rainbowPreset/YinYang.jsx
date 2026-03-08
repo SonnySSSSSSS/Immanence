@@ -87,8 +87,9 @@ const LIGHT_MAT = {
   resolution: 256,
 }
 
-export function YinYang({ onRayOver, onRayOut, onRayMove, ...props }) {
+export function YinYang({ onRayOver, onRayOut, onRayMove, quality = 'default', ...props }) {
   const visualRef = useRef(null)
+  const useCheapMaterial = quality === 'stillness'
 
   const [darkGeo, lightGeo] = useMemo(() => [
     new THREE.ExtrudeGeometry(buildDarkShape(), EXTRUDE_OPTS),
@@ -124,11 +125,35 @@ export function YinYang({ onRayOver, onRayOut, onRayMove, ...props }) {
       {/* Visual — rotates independently of hitbox */}
       <group ref={visualRef}>
         <mesh geometry={darkGeo} position={[0, 0, z0]} dispose={null}>
-          <MeshTransmissionMaterial {...DARK_MAT} />
+          {useCheapMaterial ? (
+            <meshPhysicalMaterial
+              color={DARK_MAT.color}
+              emissive={DARK_MAT.emissive}
+              emissiveIntensity={DARK_MAT.emissiveIntensity}
+              roughness={0.16}
+              metalness={0.08}
+              clearcoat={0.4}
+              toneMapped={false}
+            />
+          ) : (
+            <MeshTransmissionMaterial {...DARK_MAT} />
+          )}
         </mesh>
 
         <mesh geometry={lightGeo} position={[0, 0, z0]} dispose={null}>
-          <MeshTransmissionMaterial {...LIGHT_MAT} />
+          {useCheapMaterial ? (
+            <meshPhysicalMaterial
+              color={LIGHT_MAT.color}
+              emissive={LIGHT_MAT.emissive}
+              emissiveIntensity={LIGHT_MAT.emissiveIntensity}
+              roughness={0.14}
+              metalness={0.08}
+              clearcoat={0.4}
+              toneMapped={false}
+            />
+          ) : (
+            <MeshTransmissionMaterial {...LIGHT_MAT} />
+          )}
         </mesh>
 
         {/* Light dot on dark half */}

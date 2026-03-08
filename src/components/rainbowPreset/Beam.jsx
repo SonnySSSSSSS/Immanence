@@ -1,13 +1,14 @@
 import * as THREE from 'three'
-import { forwardRef, useImperativeHandle, useRef, useEffect } from 'react'
+import { forwardRef, useImperativeHandle, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { Reflect } from './Reflect.jsx'
 
-export const Beam = forwardRef(({ children, position, stride = 4, width = 8, ...props }, fRef) => {
+export const Beam = forwardRef(({ children, position, stride = 4, width = 8, updateEveryFrames = 1, ...props }, fRef) => {
   const streaks = useRef(null)
   const glow = useRef(null)
   const reflect = useRef(null)
+  const frameCounterRef = useRef(0)
   const [streakTexture, glowTexture] = useTexture(['/textures/lensflare/lensflare2.png', '/textures/lensflare/lensflare0_bw.jpg'])
 
   const obj = new THREE.Object3D()
@@ -25,6 +26,11 @@ export const Beam = forwardRef(({ children, position, stride = 4, width = 8, ...
   let range = 0
 
   useFrame(() => {
+    frameCounterRef.current += 1
+    if (frameCounterRef.current % Math.max(1, Math.round(updateEveryFrames)) !== 0) {
+      return
+    }
+
     range = reflect.current.update() - 1
 
     for (i = 0; i < range; i++) {
@@ -73,10 +79,6 @@ export const Beam = forwardRef(({ children, position, stride = 4, width = 8, ...
   })
 
   useImperativeHandle(fRef, () => reflect.current, [])
-
-  useEffect(() => {
-    console.log(streaks.current)
-  }, [])
 
   return (
     <group position={position}>

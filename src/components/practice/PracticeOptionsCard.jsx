@@ -62,6 +62,11 @@ export function PracticeOptionsCard({
   const label = p?.label;
   const pattern = setters?.pattern;
   const onPatternChange = setters?.setPattern;
+  const stillnessConfig = setters?.stillness;
+  const onStillnessConfigChange = setters?.setStillness;
+  const isStillnessLocked = Boolean(setters?.isStillnessLocked);
+  const breathPreDelaySec = setters?.preDelaySec;
+  const onBreathPreDelayChange = setters?.setPreDelaySec;
   const durationOptions = DURATIONS;
   const supportsDuration = p?.supportsDuration;
   const onToggleTrajectory = () => setShowTrajectory(v => !v);
@@ -224,6 +229,11 @@ export function PracticeOptionsCard({
             pattern={pattern}
             onPatternChange={onPatternChange}
             onRunBenchmark={onRunBenchmark}
+            stillnessConfig={stillnessConfig}
+            onStillnessConfigChange={onStillnessConfigChange}
+            isStillnessLocked={isStillnessLocked}
+            breathPreDelaySec={breathPreDelaySec}
+            onBreathPreDelayChange={onBreathPreDelayChange}
             duration={duration}
             onDurationChange={onDurationChange}
             durationOptions={durationOptions}
