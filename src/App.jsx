@@ -435,6 +435,9 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.262 - fix(ui): replace corrupted triangle/arrow/middot Unicode in CircuitTrainingSelector and TrackingHub
+  // v3.27.261 - fix(rituals): replace corrupted icon byte sequences with correct UTF-8 emoji
+  // v3.27.260 - feat(practice): swap nav buttons above selector dropdown
   // v3.27.259 - fix(homehub): restore side panel collapse, fix image opacity, add text shadows
   // v3.27.258 - fix(homehub): side panel images now fill full container as background
   // v3.27.257 - fix(auth): re-enable supabase login for beta and align launch gating
@@ -865,7 +868,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.246
+                        v3.27.262
                       </button>
                     </div>
                   </div>

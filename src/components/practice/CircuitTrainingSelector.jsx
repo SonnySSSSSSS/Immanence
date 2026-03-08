@@ -162,7 +162,7 @@ export function CircuitTrainingSelector({
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
           }}
         >
-          â–¾
+          ▾
         </div>
       </button>
 

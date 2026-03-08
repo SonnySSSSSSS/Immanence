@@ -347,7 +347,7 @@ function StatsCard({ domain, stats, isLight }) {
                         zIndex: 11,
                     }}
                 >
-                    âŸ¨ PERFORMANCE.VECTOR âŸ©
+                    ⟨ PERFORMANCE.VECTOR ⟩
                 </div>
                 <div
                     className="text-[9px] font-bold mb-2 text-center relative font-mono opacity-40"
@@ -746,7 +746,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                     textShadow: isLight ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5)',
                 }}
             >
-                âŸ¨ PRACTICE HUB âŸ©
+                ⟨ PRACTICE HUB ⟩
             </div>
 
             {/* Single domain stats card */}
@@ -775,7 +775,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                         className="text-xs font-black"
                         style={{ color: isLight ? 'rgba(60, 45, 35, 0.7)' : 'rgba(253, 251, 245, 0.7)' }}
                     >
-                        {isHeatmapOpen ? 'â–¾' : 'â–¸'}
+                        {isHeatmapOpen ? '▾' : '▸'}
                     </div>
                 </button>
 
@@ -785,7 +785,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                             className="text-[8px] uppercase tracking-[0.15em]"
                             style={{ color: isLight ? 'rgba(60, 45, 35, 0.55)' : 'rgba(253, 251, 245, 0.55)' }}
                         >
-                            Last 84 local days Â· Reacted vs Chose Â· T_REF={T_REF}
+                            Last 84 local days · Reacted vs Chose · T_REF={T_REF}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -919,7 +919,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                                                                 color: isLight ? 'rgba(60,45,35,0.75)' : 'rgba(253,251,245,0.75)',
                                                             }}
                                                         >
-                                                            â†‘
+                                                            ↑
                                                         </button>
                                                         <button
                                                             type="button"
@@ -931,7 +931,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                                                                 color: isLight ? 'rgba(60,45,35,0.75)' : 'rgba(253,251,245,0.75)',
                                                             }}
                                                         >
-                                                            â†“
+                                                            ↓
                                                         </button>
                                                         <button
                                                             type="button"
@@ -955,7 +955,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                                                             key={`${row.itemId}-${cell.dateKey}`}
                                                             className="w-[10px] h-[10px] rounded-[2px]"
                                                             style={getHeatmapCellStyle(cell, isLight)}
-                                                            title={`${row.label} Â· ${cell.dateKey} Â· Reacted ${cell.reacted} Â· Chose ${cell.chose}`}
+                                                            title={`${row.label} · ${cell.dateKey} · Reacted ${cell.reacted} · Chose ${cell.chose}`}
                                                         />
                                                     ))}
                                                 </div>
@@ -970,7 +970,7 @@ export function TrackingHub({ streakInfo: propStreakInfo }) {
                             className="text-[8px] uppercase tracking-[0.15em]"
                             style={{ color: isLight ? 'rgba(60,45,35,0.45)' : 'rgba(253,251,245,0.45)' }}
                         >
-                            Max Daily Total: {trackerRange.maxTotal} Â· T_REF: {trackerRange.tRef}
+                            Max Daily Total: {trackerRange.maxTotal} · T_REF: {trackerRange.tRef}
                         </div>
                     </div>
                 )}
