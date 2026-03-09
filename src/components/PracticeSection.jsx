@@ -1351,7 +1351,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (!isRunning) {
       setTimeLeft(duration * 60);
     }
-  }, [duration, isRunning]);
+  }, [duration, isRunning, setTimeLeft]);
 
   useEffect(() => {
     const audioStore = useTempoAudioStore.getState();
