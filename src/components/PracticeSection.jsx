@@ -1973,6 +1973,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
 
   // Declare executeStart before useEffect that calls it
+  // Deferred exhaustive-deps follow-up: this callback participates in a broader
+  // start-session helper chain, so dependency cleanup should be handled as one
+  // bounded callback-surface task rather than a one-line dependency edit.
   const executeStart = useCallback(() => {
     // Validate circuit for consecutive duplicate exercises
     const validateCircuitExercises = (exercises) => {
@@ -2277,6 +2280,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     });
   };
 
+  // Deferred exhaustive-deps follow-up: this timer effect is coupled to the
+  // circuit countdown, advance, and stop lifecycle, so dependency cleanup
+  // should be handled as one bounded lifecycle-surface task.
   useEffect(() => {
     let interval = null;
 
