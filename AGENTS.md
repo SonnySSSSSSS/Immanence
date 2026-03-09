@@ -1,33 +1,30 @@
-# AGENTS - Authority & Roles
+# AGENTS
 
-This document governs how all AI agents operate in this repository.
-If any repo instructions conflict, this file wins.
-Use `docs/DOCS_INDEX.md` for the doc map.
+This is the canonical agent policy for `D:\Unity Apps\immanence-os`.
+If repo instructions conflict, this file wins.
+Use `docs/DOCS_INDEX.md` for the current doc map.
 
-## Workspace Rule (Mandatory)
+## Workspace Rule
 
 - Work only in the canonical workspace: `D:\Unity Apps\immanence-os`.
 - Do not run, edit, or back up from `.claude-worktrees/...`.
-- If changes are made in a worktree during an AI session, copy them back to the main folder before running or committing.
-- Run dev servers (`npm run dev`) and backups from the main folder only.
-
----
+- If a tool edits a worktree during an AI session, copy the changes back to the main folder before running or committing.
+- Run dev servers and backups from the main folder only.
 
 ## Authority Chain
 
 1. HUMAN (repo owner) - final authority
-2. ChatGPT (planner/adviser) - planning, specs, review, debugging guidance (no repo edits)
-3. VS Code agent (Copilot) - small/medium code edits and docs
+2. ChatGPT (planner/adviser) - planning, specs, review, debugging guidance without repo edits
+3. VS Code agent (Copilot) - small or medium code edits and docs
 4. Codex CLI / Codex - multi-file refactors and harder bug fixes
 5. Claude Code - last resort for complex or high-stakes changes
 
 No agent may override a higher authority.
 
----
+## Task Spec Requirements
 
-## Task Rules
+Every task must define:
 
-Every task MUST define:
 - Goal
 - Files to modify (ALLOWLIST)
 - Files NOT to modify (DENYLIST)
@@ -35,191 +32,169 @@ Every task MUST define:
 - Verification step(s)
 - Commit message
 
-If any of the above are missing, the task is invalid.
+If any item is missing, the task is invalid.
 
-### Path Format Rule (Mandatory)
+### Path Format Rule
 
-- In task specs, ALLOWLIST and DENYLIST entries MUST use exact repo-relative paths (for example: `src/components/HomeHub.jsx`).
-- Do not use filename-only entries (for example: `HomeHub.jsx`).
+- ALLOWLIST and DENYLIST entries must use exact repo-relative paths such as `src/components/HomeHub.jsx`.
+- Do not use filename-only entries.
 - Do not mix repo-relative and absolute paths in the same spec.
-- Use absolute paths only when a task explicitly requires absolute-path mode; if used, apply it consistently to every listed file.
+- Use absolute paths only when a task explicitly requires absolute-path mode, and then use them consistently.
 
-Optional task-level flags (must be explicit if used):
+Optional task flags:
+
 - `NO COMMIT WITHOUT HUMAN APPROVAL`
 - `IMPLEMENT UNCOMMITTED, VERIFY FIRST`
 - `COMMIT AFTER HUMAN PASS/FAIL ONLY`
 
-## Pre-Implementation Gates (Mandatory)
+## Pre-Implementation Gates
 
 ### Spec Lint Gate
 
-Before implementation, the executing agent MUST validate the spec against this checklist:
+Before implementation, validate the spec against this checklist:
 
-- Single hypothesis
-- Single atomic change
-- Exact file allowlist
-- Explicit no-sequencing rule
-- Clear success/fail screenshot signal
-- Explicit stop gate (halt after commit and wait for human pass/fail)
+- single hypothesis
+- single atomic change
+- exact file allowlist
+- explicit no-sequencing rule
+- clear success/fail screenshot signal, or `N/A` for non-visual work
+- explicit stop gate
 
-If the requested step is a probe, the spec MUST also include:
-- Probe markers (`// PROBE:<domain>:START` and `// PROBE:<domain>:END`)
+If the step is a probe, the spec must also include probe markers:
+
+- `// PROBE:<domain>:START`
+- `// PROBE:<domain>:END`
 
 If any required item is missing, ambiguous, or conflicting:
-- REJECT implementation
-- Return a concise lint-fail report
-- Request a corrected spec
-- Do not edit files
+
+- reject implementation
+- return a concise lint-fail report
+- request a corrected spec
+- do not edit files
 
 ### Stateful UI Debug Gate
 
-Applies when the task is a UI bug and the displayed result depends on derived state, selectors, services, or multi-step logic.
+Use this gate when a UI bug depends on derived state, selectors, services, or multi-step logic.
 
-Before implementation, the executing agent MUST:
+Before implementation, the executing agent must:
 
-1. Identify the exact render surface
-   - File + component that directly renders the failing UI element
-2. Identify the exact upstream state source
-   - Store selector, helper, service, or computation that determines the displayed state
-3. Prove one concrete failing runtime case
-   - Exact rendered item/index
-   - Runtime object backing it
-   - Field/value expected to drive the UI but currently failing
-4. Isolate visual layer vs logic layer
-   - Temporarily force the visual change on one known item to prove the layer is visible
-   - Remove the force before final implementation
-5. State the exact implementation predicate
-   - The precise condition that will control the UI change, based on proven runtime data
+1. Identify the exact render surface.
+2. Identify the exact upstream state source.
+3. Prove one concrete failing runtime case.
+4. Isolate visual layer versus logic layer by forcing the change on one known item, then remove that force before the final implementation.
+5. State the exact implementation predicate.
 
-If any step above is missing:
-- STOP
-- Report which proof is missing
-- Do not commit
-- Do not continue implementation
+If any proof is missing:
+
+- stop
+- report what is missing
+- do not implement or commit
 
 ### Runtime Proof Gate
 
-Applies when the task is a bug in logic, state, data flow, or any non-trivial behavior where the visible failure depends on derived runtime conditions.
+Use this gate when the failure is in logic, state, data flow, or other derived runtime behavior.
 
-Before implementation, the executing agent MUST:
+Before implementation, the executing agent must:
 
-1. Identify the exact failing behavior
-   - What is wrong in the live product, in one sentence
-2. Identify the runtime source of truth
-   - The function, helper, selector, service, or data structure that actually determines the failing behavior
-3. Prove one concrete failing case
-   - Input/state
-   - Actual output
-   - Expected output
-4. State the exact correction boundary
-   - Which layer is wrong: rendering, predicate, transformation, matching, or persistence
+1. State the exact failing behavior in one sentence.
+2. Identify the runtime source of truth.
+3. Prove one concrete failing case with input or state, actual output, and expected output.
+4. State the correction boundary: rendering, predicate, transformation, matching, or persistence.
 
-If this proof is missing:
-- STOP
-- Report the missing runtime proof
-- Do not implement
+If the runtime proof is missing:
+
+- stop
+- report the missing proof
+- do not implement
 
 ### Verification Hierarchy
 
-Verification must match the failure type:
+- Visual or UI bugs: build success is not enough. Confirm the target surface, and use screenshots when the spec asks for them.
+- Logic or behavior bugs: provide at least one concrete before and after case. Build success is not enough.
+- Build or config work: build success is enough only when the requested outcome is purely build or config scoped.
 
-- Visual/UI bugs:
-  - Build success is not sufficient
-  - Require visual confirmation in the actual target surface
-  - Prefer screenshot confirmation when the spec asks for it
-- Logic/behavior bugs:
-  - Require one concrete before/after case
-  - Build success is not sufficient
-- Build or config tasks:
-  - Build success may be sufficient only if the requested outcome is purely build/config scoped
-
-When a task has a visual success signal, implementation is not considered validated until the visible surface matches that signal.
+When a task defines a visual success signal, validation is incomplete until the visible surface matches it.
 
 ### Runtime Semantics Rule
 
 - Do not infer runtime state from comments, labels, or docstrings alone.
-- Do not reconstruct existing business logic in the UI layer if a source-of-truth service already computes that state.
-- When a service already defines the state meaning, consume that meaning directly unless the task explicitly requires changing the service.
+- Do not recreate business logic in the UI layer if an existing service already computes that state.
+- When a service already defines the meaning of a state, consume that meaning directly unless the task explicitly requires changing the service.
 
----
-
-## Pre-Build Reality Check (Mandatory for New Builds)
+## Pre-Build Reality Check
 
 // PROBE:REALITY_CHECK:START
-Before creating a new project, feature, tool, library, or large refactor, run a Reality Check first. Do not write implementation code until it is complete.
+Before creating a new project, feature, tool, library, or large refactor, run a Reality Check first.
 
 Input:
-- One sentence describing what you want to build
+
+- one sentence describing what you want to build
 
 Minimum evidence source:
-- GitHub repository search (required; must use real search, not memory)
 
-Optional evidence sources (if quick):
+- GitHub repository search, using a real search rather than memory
+
+Optional evidence sources:
+
 - Hacker News (Algolia)
 - npm registry
 - PyPI
-- Product Hunt (if token is available)
+- Product Hunt, if a token is available
 
 Required output:
+
 - `Reality Signal: <0-100>`
-- `Top competitors found` (at least 3, GitHub-first, with stars + links)
-- `Coverage summary` (numbers only, not vibes)
-  - GitHub repo count + top star counts
-  - HN mentions (optional)
-  - npm package count (optional)
-  - PyPI package count (optional)
+- `Top competitors found` with at least 3 GitHub-first competitors, including stars and links
+- `Coverage summary` with numbers only:
+  - GitHub repo count and top star counts
+  - HN mentions, if used
+  - npm package count, if used
+  - PyPI package count, if used
 
 Scoring rubric:
+
 - Start at 0
 - Add GitHub coverage points (0-60)
   - Repo count: 0 (none), 10 (1-10), 20 (11-100), 30 (101+)
   - Star pressure: 0 (top <50), 10 (50-499), 20 (500-1999), 30 (2000+)
-- Add discussion/registry points (0-40)
+- Add discussion and registry points (0-40)
   - HN mentions: 0 (0), 5 (1-10), 10 (11-50), 20 (51+)
   - Package ecosystem: 0 (none), 10 (some), 20 (many)
 - Clamp to 0-100
 
 Decision gate:
-- If Reality Signal > 80: STOP. Warn: `High existing coverage.` Recommend pivot/differentiation before building.
-- If Reality Signal 61-80: Proceed with caution. Require 2-3 explicit differentiation angles.
-- If Reality Signal <= 60: Green light. Proceed normally.
 
-Required prompt when score > 60:
+- If `Reality Signal > 80`: stop and warn `High existing coverage.`
+- If `Reality Signal 61-80`: proceed with caution and require 2-3 explicit differentiation angles
+- If `Reality Signal <= 60`: green light
+
+Required prompt when the score is above 60:
+
 - `What specific gap will we own that competitors do not (workflow, audience, integration, distribution, performance, or UX)?`
 // PROBE:REALITY_CHECK:END
 
----
-
 ## Locks
 
-- Files listed in an ACTIVE task are LOCKED.
+- Files listed in an active task are locked.
 - Other agents must not modify locked files.
 - No "small fixes" or "while I'm here" edits.
 
----
-
 ## Planning Constraint - Reuse First
 
-Applies to all planning agents (ChatGPT, Codex CLI/Codex, Claude Code when creating specs, and any LLM writing task specs).
+Before proposing any new component, hook, store, or utility, planning agents must:
 
-Before proposing any NEW component, hook, store, or utility, the agent MUST:
+1. List existing components or systems that may already serve the role.
+2. State whether each can be reused as-is, reused with minor extension, or is unsuitable with a specific reason.
+3. Propose a new component only when reuse would add more complexity than it removes.
 
-1. Explicitly list existing components or systems that may already serve the role
-2. State whether each can be:
-   - Reused AS-IS
-   - Reused with minor extension
-   - Unsuitable (with a specific reason)
-3. Propose a new component only if reuse would add more complexity than it removes
+If reuse is possible, the plan must prefer reuse.
 
-If reuse is possible, the plan MUST prefer reuse.
+## Definition of Done
 
----
+A task is done only when:
 
-## Definition of DONE
+- requested changes are committed, if a commit was requested
+- required verification steps were run
+- task status is updated if the task record uses one
 
-A task is DONE only when:
-- Changes are committed (if a commit was requested)
-- Verification steps were run (if required)
-- Status is updated in the task record, if the task uses one
-
-If the task includes any `NO COMMIT` or human-approval flag, DONE cannot be reached until that approval condition is satisfied.
+If a task includes any no-commit or human-approval flag, done is blocked until that condition is satisfied.

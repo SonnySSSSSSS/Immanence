@@ -1,116 +1,105 @@
 # Architecture
 
-// PROBE:DOCS:START
-Doc Refresh Notes:
-- This is the canonical top-level technical map for the current repo.
-- Claims below were checked against repo files on 2026-03-01.
-// PROBE:DOCS:END
+Current technical map for the repo, checked against local files on 2026-03-09.
+This is the canonical top-level system map. Use [docs/DOCS_INDEX.md](docs/DOCS_INDEX.md) for the wider doc set.
 
-Technical map for the current Immanence OS app shell, runtime boundaries, and the main places to change behavior.
+## System At A Glance
 
-## Top-Level Stack
+- UI runtime: React 18 with Vite (`rolldown-vite`) and a single root entry in [src/main.jsx](src/main.jsx).
+- Rendering: standard React UI plus React Three Fiber scenes.
+- State: Zustand stores across [src/state](src/state), with a mix of persisted and transient state.
+- Auth and sync: Supabase browser auth in [src/lib/supabaseClient.js](src/lib/supabaseClient.js) and offline-first sync helpers in [src/state/offlineFirstUserStateSync.js](src/state/offlineFirstUserStateSync.js).
+- Local AI integration: Vite proxies `/api/ollama` to the local Ollama service in [vite.config.js](vite.config.js).
 
-- UI shell: React 18 with Vite (`rolldown-vite`) and a single `ReactDOM.createRoot()` entry in [src/main.jsx](src/main.jsx).
-- Primary rendering: standard React UI plus React Three Fiber for 3D/visual scenes (`@react-three/fiber` in [package.json](package.json)).
-- Animation/content: Framer Motion, React Markdown, and a large component-first UI tree.
-- State: Zustand stores across `src/state/`, with a mix of persisted stores (`persist`) and transient stores.
-- External services:
-  - Supabase browser client for auth/session in [src/lib/supabaseClient.js](src/lib/supabaseClient.js)
-  - Local Ollama proxy at `/api/ollama` in [vite.config.js](vite.config.js)
+## Boot And Shell
 
-## Runtime Entry Points
+[src/main.jsx](src/main.jsx) uses simple path-based boot logic:
 
-### Boot Flow
+- `/__playground` loads the dev playground in development only
+- paths ending in `/trace` or `/trace/` load `TracePage`
+- all other paths render `App`
 
-1. [src/main.jsx](src/main.jsx) chooses a route by pathname.
-2. `/__playground` loads the dev playground only in dev builds.
-3. Paths ending in `/trace` or `/trace/` load `TracePage`.
-4. All other routes render `App`.
+[src/App.jsx](src/App.jsx) is the runtime coordinator. It:
 
-### App Shell
+- wraps the shell in `AuthGate`, then `ThemeProvider`
+- owns hub versus section navigation and top-level shell state
+- controls settings, tutorial, install prompt, photic overlay, and gated dev tooling
+- renders `HomeHub` when `activeSection === null`
+- renders `SectionView` for `practice`, `wisdom`, `application`, and `navigation`
 
-[src/App.jsx](src/App.jsx) is the runtime coordinator:
+The current top-level tree is intentionally shallow:
 
-- Wraps the app in `AuthGate`, then `ThemeProvider`.
-- Owns top-level shell state such as:
-  - active section
-  - settings panel visibility
-  - dev panel visibility
-  - auth user handoff
-  - photic overlay visibility
-- Renders one hub-first shell:
-  - `HomeHub` when `activeSection === null`
-  - `SectionView` for `practice`, `wisdom`, `application`, or `navigation`
+```text
+main.jsx
+└── RootComponent
+    ├── TracePage
+    ├── Playground
+    └── App
+        └── AuthGate
+            └── ThemeProvider
+                ├── overlays and header chrome
+                ├── HomeHub or SectionView
+                ├── SettingsPanel
+                ├── InstallPrompt
+                ├── TutorialOverlay
+                ├── ShadowScanOverlay
+                └── DevPanel
+```
 
-## Navigation And Gating
+## Navigation And Gates
 
 ### Section Model
 
-The app is path-based, not router-based, after boot:
+After boot, the app uses internal section state rather than React Router:
 
-- `null` = home hub
+- `null` for the hub
 - `practice`
 - `wisdom`
 - `application`
 - `navigation`
 
-The switching logic lives in `handleSectionSelect()` in [src/App.jsx](src/App.jsx).
+Section switching is coordinated in `handleSectionSelect()` in [src/App.jsx](src/App.jsx).
 
 ### User Mode Gate
 
 [src/state/userModeStore.js](src/state/userModeStore.js) persists:
 
-- `userMode`: `student` or `explorer`
+- `userMode` as `student` or `explorer`
 - `hasChosenUserMode`
 
-Current gating behavior in [src/App.jsx](src/App.jsx):
+Current behavior in [src/App.jsx](src/App.jsx):
 
-- Explorer mode can open any section.
-- Student mode only allows:
-  - `navigation` when onboarding/setup is still incomplete
-  - `practice` when `practiceLaunchContext` exists in [src/state/uiStore.js](src/state/uiStore.js)
-  - returning to the hub (`null`)
-- Student mode does not directly open `wisdom` or `application` from the section selector path in `App`.
+- explorer mode can open any section
+- student mode can always return to the hub
+- student mode can open `navigation` while setup is incomplete
+- student mode can open `practice` when `practiceLaunchContext` exists in [src/state/uiStore.js](src/state/uiStore.js)
+- student mode does not directly open `wisdom` or `application` from the main section selector path
 
 ### Auth Gate
 
-[src/components/auth/AuthGate.jsx](src/components/auth/AuthGate.jsx):
+[src/components/auth/AuthGate.jsx](src/components/auth/AuthGate.jsx) currently ships with `ENABLE_AUTH = true`.
 
-- Currently has `ENABLE_AUTH = true`.
-- Lazy-loads the Supabase client so auth setup can be bypassed if disabled later.
-- Blocks the shell until `supabase.auth.getSession()` resolves.
-- Shows built-in sign-in/sign-up UI when there is no session.
-- Passes the resolved user into [src/state/useAuthUser.js](src/state/useAuthUser.js).
+- it lazy-loads Supabase so auth can still be disabled later if needed
+- it blocks the shell until `supabase.auth.getSession()` resolves
+- it renders built-in sign-in and sign-up UI when there is no session
+- it hands the resolved user to [src/state/useAuthUser.js](src/state/useAuthUser.js)
 
-This means the repo is no longer "no accounts"; the browser app is local-first for practice data, but account auth is active in the current client code.
+The app is therefore local-first for practice data, but account auth is active in the current client.
 
-## Dev Surface
+### Dev Surfaces
 
-There are two separate production gates, and the old docs merged them incorrectly.
+There are two separate production gates:
 
-### Dev Panel Visibility Gate
+- [src/lib/devPanelGate.js](src/lib/devPanelGate.js) controls whether the visible `DevPanel` can appear in production. It uses `?devpanel=1` and latches `localStorage.immanence-devpanel-enabled`.
+- [src/dev/uiDevtoolsGate.js](src/dev/uiDevtoolsGate.js) controls broader devtools-only affordances. In production it requires both `?devtools=1` and `localStorage.immanence.devtools.enabled = 1`.
 
-[src/lib/devPanelGate.js](src/lib/devPanelGate.js) controls whether the `DevPanel` can render in production:
+Do not collapse these into one gate by accident.
 
-- Dev build: always enabled
-- Production build: requires `?devpanel=1` once, which latches `localStorage.immanence-devpanel-enabled`
+## Persistence Boundaries
 
-### Devtools Unlock Gate
+### Core User State Contract
 
-[src/dev/uiDevtoolsGate.js](src/dev/uiDevtoolsGate.js) controls broader devtools-only affordances:
-
-- Dev build: always enabled
-- Production build: requires both
-  - `?devtools=1`
-  - `localStorage.immanence.devtools.enabled = 1`
-
-`App` also supports keyboard toggling for the visible Dev Panel when the dev panel gate is open.
-
-## Persistence Model
-
-### Core User State
-
-[src/state/offlineFirstUserStateKeys.js](src/state/offlineFirstUserStateKeys.js) defines the explicit "core user state" export/import allowlist:
+[src/state/offlineFirstUserStateKeys.js](src/state/offlineFirstUserStateKeys.js) defines the explicit export and import allowlist for core user state:
 
 - `immanenceOS.progress`
 - `immanence-breath-benchmark`
@@ -125,64 +114,46 @@ There are two separate production gates, and the old docs merged them incorrectl
 
 ### Important Persisted Stores
 
-- Progress and recorded sessions: [src/state/progressStore.js](src/state/progressStore.js)
-- Curriculum and onboarding: [src/state/curriculumStore.js](src/state/curriculumStore.js)
-- Active path runs and schedules: [src/state/navigationStore.js](src/state/navigationStore.js)
-- Path emergence/history: [src/state/pathStore.js](src/state/pathStore.js)
-- Breath benchmark snapshots: [src/state/breathBenchmarkStore.js](src/state/breathBenchmarkStore.js)
-- Settings: [src/state/settingsStore.js](src/state/settingsStore.js)
-- Dev panel tuning (dev only): [src/state/devPanelStore.js](src/state/devPanelStore.js)
+- progress and session history: [src/state/progressStore.js](src/state/progressStore.js)
+- curriculum and onboarding: [src/state/curriculumStore.js](src/state/curriculumStore.js)
+- active path runs and schedules: [src/state/navigationStore.js](src/state/navigationStore.js)
+- path emergence and history: [src/state/pathStore.js](src/state/pathStore.js)
+- breath benchmarks: [src/state/breathBenchmarkStore.js](src/state/breathBenchmarkStore.js)
+- settings: [src/state/settingsStore.js](src/state/settingsStore.js)
+- dev panel tuning in development: [src/state/devPanelStore.js](src/state/devPanelStore.js)
 
 ### Direct Local Storage Keys Outside `persist`
 
-Not everything goes through Zustand `persist`:
+- `immanenceOS.colorScheme` in [src/state/displayModeStore.js](src/state/displayModeStore.js)
+- `immanenceOS.stageAssetStyle` in [src/state/displayModeStore.js](src/state/displayModeStore.js)
+- `immanence-devpanel-enabled` in [src/lib/devPanelGate.js](src/lib/devPanelGate.js)
+- `immanence.devtools.enabled` in [src/dev/uiDevtoolsGate.js](src/dev/uiDevtoolsGate.js)
 
-- Color scheme: `immanenceOS.colorScheme` in [src/state/displayModeStore.js](src/state/displayModeStore.js)
-- Stage asset style: `immanenceOS.stageAssetStyle` in [src/state/displayModeStore.js](src/state/displayModeStore.js)
-- Dev panel production latch: `immanence-devpanel-enabled` in [src/lib/devPanelGate.js](src/lib/devPanelGate.js)
-- Devtools production latch: `immanence.devtools.enabled` in [src/dev/uiDevtoolsGate.js](src/dev/uiDevtoolsGate.js)
-
-### Breath Benchmark Storage
-
-[src/state/breathBenchmarkStore.js](src/state/breathBenchmarkStore.js) persists under `immanence-breath-benchmark` and stores:
-
-- current effective benchmark (`benchmark`)
-- latest snapshot (`lastBenchmark`)
-- append-only history (`benchmarkHistory`)
-- run-scoped day 1 / day 14 snapshots (`benchmarksByRunId`)
-- initiation-attempt status (`attemptBenchmarksByRunId`)
-- lifetime maxima (`lifetimeMax`)
-
-## Practice, Curriculum, And Progression
+## Feature Ownership
 
 ### Practice Runtime
 
-[src/components/PracticeSection.jsx](src/components/PracticeSection.jsx) is the largest runtime surface for active sessions. It owns:
+[src/components/PracticeSection.jsx](src/components/PracticeSection.jsx) is the largest active-session surface. It owns:
 
-- practice selection and config panels
-- breath benchmark entry points
-- session start/stop flow
-- circuit training entry
-- post-session summary and journaling
-- session instrumentation hooks
+- practice selection and configuration
+- benchmark entry points
+- session start and stop flow
+- circuit entry
+- post-session summaries and journaling
+- instrumentation hooks
 
-Completed sessions funnel through [src/services/sessionRecorder.js](src/services/sessionRecorder.js), which:
+Completed sessions funnel through [src/services/sessionRecorder.js](src/services/sessionRecorder.js), which writes normalized records to `progressStore`, computes `pathContext`, and captures schedule-match snapshots used by curriculum reporting.
 
-- writes normalized session records into `progressStore`
-- computes `pathContext`
-- computes `scheduleMatched` snapshots for curriculum precision tracking
-- updates path signals and mandala sync hooks
+### Curriculum And Navigation Contract
 
-### Curriculum Contract Model
+Current path and curriculum logic is split across:
 
-Current curriculum/path contract logic is split across:
+- program definitions in [src/data/programRegistry.js](src/data/programRegistry.js)
+- onboarding and leg completion state in [src/state/curriculumStore.js](src/state/curriculumStore.js)
+- contract normalization and validation in [src/utils/pathContract.js](src/utils/pathContract.js)
+- active run state in [src/state/navigationStore.js](src/state/navigationStore.js)
 
-- program definitions and launchers in [src/data/programRegistry.js](src/data/programRegistry.js)
-- onboarding, leg completions, and time-slot state in [src/state/curriculumStore.js](src/state/curriculumStore.js)
-- path contract normalization and validation in [src/utils/pathContract.js](src/utils/pathContract.js)
-- active path run state in [src/state/navigationStore.js](src/state/navigationStore.js)
-
-Verified contract fields in [src/utils/pathContract.js](src/utils/pathContract.js):
+The verified contract fields in [src/utils/pathContract.js](src/utils/pathContract.js) are:
 
 - `totalDays`
 - `practiceDaysPerWeek`
@@ -190,109 +161,35 @@ Verified contract fields in [src/utils/pathContract.js](src/utils/pathContract.j
 - `requiredLegsPerDay`
 - `requiredTimeSlots`
 
+### Section Surfaces
+
+- [src/components/HomeHub.jsx](src/components/HomeHub.jsx) is the hub surface for avatar, daily practice, dashboards, curriculum access, history, and side navigation.
+- [src/components/NavigationSection.jsx](src/components/NavigationSection.jsx) owns path selection, overview, and active path reporting.
+- [src/components/WisdomSection.jsx](src/components/WisdomSection.jsx) owns treatise reading, bookmarks, videos, and self-knowledge flows.
+- [src/components/ApplicationSection.jsx](src/components/ApplicationSection.jsx) is currently narrow and path-dependent, including `SigilSealingArea` and application tracking.
+
 ### Stage And Identity Signals
 
-There is not one single stage system in the repo.
+There is no single global stage system.
 
-- Avatar-facing stage and mode weights are computed from practice history by `useAvatarV3State()` in [src/state/avatarV3Store.js](src/state/avatarV3Store.js).
-- `lunarStore` and `mandalaStore` still exist as separate progression/visual systems in [src/state/lunarStore.js](src/state/lunarStore.js) and [src/state/mandalaStore.js](src/state/mandalaStore.js).
+- avatar-facing stage and mode weights are computed from practice history through [src/state/avatarV3Store.js](src/state/avatarV3Store.js)
+- [src/state/lunarStore.js](src/state/lunarStore.js) and [src/state/mandalaStore.js](src/state/mandalaStore.js) remain separate progression and visual systems
 
-Treat avatar stage as session-derived unless a component explicitly reads a different store.
-
-## Stable Component Map
-
-This is a navigable map of the current top-level UI tree, kept shallow on purpose.
-
-```text
-main.jsx
-└── RootComponent
-    ├── TracePage                (/trace path)
-    ├── Playground               (/__playground in dev only)
-    └── App
-        └── AuthGate
-            └── ThemeProvider
-                ├── Background / active-session blackout
-                ├── PhoticCirclesOverlay
-                ├── Header controls
-                ├── HomeHub OR SectionView
-                ├── SettingsPanel
-                ├── InstallPrompt
-                ├── TutorialOverlay
-                ├── ShadowScanOverlay
-                └── DevPanel (lazy, gated)
-```
-
-### SectionView
-
-`SectionView` in [src/App.jsx](src/App.jsx) conditionally renders:
-
-- `PracticeSection`
-- `WisdomSection` (lazy)
-- `ApplicationSection` (lazy)
-- `NavigationSection`
-
-### HomeHub
-
-[src/components/HomeHub.jsx](src/components/HomeHub.jsx) currently bundles:
-
-- `AvatarV3`
-- `DailyPracticeCard`
-- `QuickDashboardTiles`
-- `CurriculumHub` / `CurriculumCompletionReport` modal flow
-- `SessionHistoryView`
-- `TrackingHub`
-- `SideNavigation`
-
-### Navigation
-
-[src/components/NavigationSection.jsx](src/components/NavigationSection.jsx) currently bundles:
-
-- `AvatarV3`
-- `PathFinderCard`
-- `PathSelectionGrid`
-- `PathOverviewPanel`
-- `ActivePathState`
-- `NavigationPathReport`
-- `NavigationSelectionModal`
-- optional `CodexChamber`
-
-### Practice
-
-[src/components/PracticeSection.jsx](src/components/PracticeSection.jsx) currently bundles:
-
-- `PracticeHeader`
-- `CircuitTrainingSelector`
-- `PracticeOptionsCard`
-- runtime session surfaces such as `BreathingRing`, `SensorySession`, `VisualizationCanvas`, `TempoSyncSessionPanel`
-- modals for benchmarking, summaries, and feedback
-
-### Wisdom
-
-[src/components/WisdomSection.jsx](src/components/WisdomSection.jsx) currently bundles:
-
-- `WisdomSelectionModal`
-- treatise reader and bookmarks
-- `VideoLibrary`
-- `SelfKnowledgeView`
-
-### Application
-
-[src/components/ApplicationSection.jsx](src/components/ApplicationSection.jsx) is currently narrow and path-dependent:
-
-- empty-state handoff to Navigation when no active path exists
-- `SigilSealingArea`
-- `ApplicationTrackingCard`
+Treat avatar stage as session-derived unless a component explicitly reads another source.
 
 ## Where To Change X
 
-- Avatar: use [src/components/avatarV3](src/components/avatarV3), [src/state/avatarV3Store.js](src/state/avatarV3Store.js), [src/config/avatarStageAssets.js](src/config/avatarStageAssets.js), and dev tuning in [src/state/devPanelStore.js](src/state/devPanelStore.js).
-- Rings: use [src/components/BreathingRing.jsx](src/components/BreathingRing.jsx) for the live breath ring, [src/components/BenchmarkBreathworkUI.jsx](src/components/BenchmarkBreathworkUI.jsx) for benchmark flow, and avatar ring layer defaults in [src/state/devPanelStore.js](src/state/devPanelStore.js).
-- Curriculum: use [src/state/curriculumStore.js](src/state/curriculumStore.js), [src/data/programRegistry.js](src/data/programRegistry.js), [src/utils/pathContract.js](src/utils/pathContract.js), and [src/services/infographics/curriculumRail.js](src/services/infographics/curriculumRail.js).
-- Stores: start in [src/state](src/state), then check [src/state/offlineFirstUserStateKeys.js](src/state/offlineFirstUserStateKeys.js) before changing persisted user-state behavior.
-- Reporting: use [src/reporting](src/reporting), especially [src/reporting/tilePolicy.js](src/reporting/tilePolicy.js), [src/reporting/dashboardProjection.js](src/reporting/dashboardProjection.js), and hub consumers in [src/components/dashboard](src/components/dashboard).
-- Dev panel: use [src/components/DevPanel.jsx](src/components/DevPanel.jsx), [src/state/devPanelStore.js](src/state/devPanelStore.js), [src/lib/devPanelGate.js](src/lib/devPanelGate.js), and [src/dev/uiDevtoolsGate.js](src/dev/uiDevtoolsGate.js).
+- Avatar visuals: [src/components/avatarV3](src/components/avatarV3), [src/state/avatarV3Store.js](src/state/avatarV3Store.js), [src/config/avatarStageAssets.js](src/config/avatarStageAssets.js), and [src/state/devPanelStore.js](src/state/devPanelStore.js)
+- Breath rings and benchmarks: [src/components/BreathingRing.jsx](src/components/BreathingRing.jsx), [src/components/BenchmarkBreathworkUI.jsx](src/components/BenchmarkBreathworkUI.jsx), and [src/state/devPanelStore.js](src/state/devPanelStore.js)
+- Curriculum and path contracts: [src/state/curriculumStore.js](src/state/curriculumStore.js), [src/data/programRegistry.js](src/data/programRegistry.js), [src/utils/pathContract.js](src/utils/pathContract.js), and [src/services/infographics/curriculumRail.js](src/services/infographics/curriculumRail.js)
+- Persisted user-state behavior: start in [src/state](src/state), then check [src/state/offlineFirstUserStateKeys.js](src/state/offlineFirstUserStateKeys.js)
+- Reporting and dashboard projections: [src/reporting](src/reporting) and [src/components/dashboard](src/components/dashboard)
+- Dev tooling: [src/components/DevPanel.jsx](src/components/DevPanel.jsx), [src/state/devPanelStore.js](src/state/devPanelStore.js), [src/lib/devPanelGate.js](src/lib/devPanelGate.js), and [src/dev/uiDevtoolsGate.js](src/dev/uiDevtoolsGate.js)
 
 ## Related Docs
 
-- Legacy architecture doc still present at [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-- Gap scan for the current docs set: [docs/DOC_GAPS.md](docs/DOC_GAPS.md).
+- Doc map: [docs/DOCS_INDEX.md](docs/DOCS_INDEX.md)
+- Development setup: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+- LLM integration: [docs/LLM_INTEGRATION.md](docs/LLM_INTEGRATION.md)
+- Avatar specifics: [docs/AVATAR_SYSTEM.md](docs/AVATAR_SYSTEM.md)
+- Persistence audit: [docs/PERSISTENCE_AUDIT.md](docs/PERSISTENCE_AUDIT.md)
