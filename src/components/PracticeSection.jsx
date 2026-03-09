@@ -2348,7 +2348,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     if (isBreathPractice) return;
     setIsPresetSwitcherOpen(false);
-  }, [isBreathPractice]);
+  }, [isBreathPractice, setIsPresetSwitcherOpen]);
 
   useEffect(() => {
     const onWindowKeyDown = (event) => {
