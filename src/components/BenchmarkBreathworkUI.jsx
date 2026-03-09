@@ -56,10 +56,10 @@ export function BenchmarkBreathworkUI({
         }
     }, []);
 
-    const updateTimer = useCallback(() => {
+    const updateTimer = useCallback(function updateTimerTick() {
         if (startedAtRef.current) {
             setElapsedMs(Date.now() - startedAtRef.current);
-            rafRef.current = requestAnimationFrame(updateTimer);
+            rafRef.current = requestAnimationFrame(updateTimerTick);
         }
     }, []);
 

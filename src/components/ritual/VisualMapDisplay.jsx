@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+void motion;
+
 const BASE = import.meta.env.BASE_URL || '/';
 
 const PULSE_FRAMES = [

@@ -48,12 +48,19 @@ export function WaveRide({ onComplete }) {
     useEffect(() => {
         if (timerRunning && timeRemaining > 0) {
             timerRef.current = setInterval(() => {
-                setTimeRemaining(t => t - 1);
+                setTimeRemaining((currentTime) => {
+                    if (currentTime <= 1) {
+                        clearInterval(timerRef.current);
+                        timerRef.current = null;
+                        setTimerRunning(false);
+                        setPhase('complete');
+                        return 0;
+                    }
+
+                    return currentTime - 1;
+                });
             }, 1000);
             return () => clearInterval(timerRef.current);
-        } else if (timeRemaining === 0 && timerRunning) {
-            setTimerRunning(false);
-            setPhase('complete');
         }
     }, [timerRunning, timeRemaining]);
 

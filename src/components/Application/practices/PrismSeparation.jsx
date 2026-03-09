@@ -149,7 +149,7 @@ export function PrismSeparation({ onComplete }) {
 
                 {/* Interpretation list */}
                 <div className="flex-1 mb-4 space-y-2 overflow-y-auto max-h-40">
-                    {interpretations.map((interp) => (
+                    {interpretations.map((interp, idx) => (
                         <div
                             key={interp.id}
                             className="px-3 py-2 rounded text-sm"

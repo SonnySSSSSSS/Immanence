@@ -9,6 +9,7 @@ import { normalizeScheduleActiveDays } from './dailyPracticeCardLogic.js';
 import { getLocalDateKey } from '../utils/dateUtils.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const EMPTY_ARRAY = [];
 
 const formatTimeLabel = (timeValue) => {
     if (!timeValue || typeof timeValue !== 'string') return null;
@@ -41,16 +42,12 @@ export function ActivePathState() {
     const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
-    if (!activePath) return null;
-
-    const path = getPathById(activePath.activePathId);
-    if (!path) return null;
-
-    const contract = getPathContract(path);
+    const path = activePath ? getPathById(activePath.activePathId) : null;
+    const contract = path ? getPathContract(path) : {};
     const totalDays = contract.totalDays || 14;
     const metrics = computeProgressMetrics();
     const dayIndex = Math.max(1, Math.min(totalDays, metrics?.dayIndex ?? 1));
-    const selectedTimes = Array.isArray(activePath?.schedule?.selectedTimes) ? activePath.schedule.selectedTimes : [];
+    const selectedTimes = Array.isArray(activePath?.schedule?.selectedTimes) ? activePath.schedule.selectedTimes : EMPTY_ARRAY;
     const activeDays = normalizeScheduleActiveDays(
         activePath?.schedule?.activeDays || activePath?.schedule?.selectedDaysOfWeek || []
     );
@@ -58,6 +55,7 @@ export function ActivePathState() {
     const isRestDay = activeDays.length > 0 && !activeDays.includes(todayDow);
 
     const nextSessionLabel = useMemo(() => {
+        if (!activePath || !path) return null;
         if (isRestDay || selectedTimes.length === 0) return null;
         const now = new Date();
         const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -85,7 +83,10 @@ export function ActivePathState() {
             return (h * 60 + m) >= nowMin;
         });
         return upcoming ? formatTimeLabel(upcoming) : null;
-    }, [isRestDay, selectedTimes, sessionsV2, activePath.activePathId, activePath.runId]);
+    }, [activePath, path, isRestDay, selectedTimes, sessionsV2]);
+
+    if (!activePath) return null;
+    if (!path) return null;
 
     return (
         <div
@@ -240,4 +241,3 @@ export function ActivePathState() {
         </div>
     );
 }
-

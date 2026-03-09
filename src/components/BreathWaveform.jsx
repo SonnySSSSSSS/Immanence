@@ -80,6 +80,8 @@ function buildBreathPath({ inhale, hold1, exhale, hold2 }, cycles = 2) {
 
 import { useId, useMemo } from 'react';
 
+const DEFAULT_PATTERN = { inhale: 4, hold1: 4, exhale: 4, hold2: 4 };
+
 function getTotalSeconds({ inhale, hold1, exhale, hold2 }) {
   const safeInhale = clampNumber(inhale, 0, 9999);
   const safeHold1 = clampNumber(hold1, 0, 9999);
@@ -91,23 +93,26 @@ function getTotalSeconds({ inhale, hold1, exhale, hold2 }) {
 
 export default function BreathWaveform({ pattern, cycles = 1, showTracer = true }) {
   const uid = useId().replace(/:/g, '');
-  const defaultPattern = { inhale: 4, hold1: 4, exhale: 4, hold2: 4 };
-  const effectivePattern = pattern || defaultPattern;
+  const effectivePattern = pattern || DEFAULT_PATTERN;
+  const inhale = effectivePattern?.inhale;
+  const hold1 = effectivePattern?.hold1;
+  const exhale = effectivePattern?.exhale;
+  const hold2 = effectivePattern?.hold2;
 
   const d = useMemo(
-    () => buildBreathPath(effectivePattern, cycles),
-    [effectivePattern?.inhale, effectivePattern?.hold1, effectivePattern?.exhale, effectivePattern?.hold2, cycles]
+    () => buildBreathPath({ inhale, hold1, exhale, hold2 }, cycles),
+    [inhale, hold1, exhale, hold2, cycles]
   );
 
   const totalSeconds = useMemo(
-    () => getTotalSeconds(effectivePattern),
-    [effectivePattern?.inhale, effectivePattern?.hold1, effectivePattern?.exhale, effectivePattern?.hold2]
+    () => getTotalSeconds({ inhale, hold1, exhale, hold2 }),
+    [inhale, hold1, exhale, hold2]
   );
 
   const glowFilterId = `breath-glow-${uid}`;
   const tracerGlowId = `breath-tracer-${uid}`;
   const motionPathId = `breath-motion-path-${uid}`;
-  const tracerKey = `${effectivePattern?.inhale}-${effectivePattern?.hold1}-${effectivePattern?.exhale}-${effectivePattern?.hold2}-${cycles}`;
+  const tracerKey = `${inhale}-${hold1}-${exhale}-${hold2}-${cycles}`;
 
   return (
     <svg viewBox="-20 -20 470 104" style={{ width: "100%", height: "64px", display: "block" }}>

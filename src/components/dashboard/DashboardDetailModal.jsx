@@ -20,7 +20,7 @@ export function DashboardDetailModal({ isOpen = false, onClose = null, detail = 
         return null;
     }
 
-    const { completionBreakdown = {}, scheduleAdherence = {}, weeklyActivity = [] } = detail;
+    const { completionBreakdown = {}, scheduleAdherence = {} } = detail;
 
     return (
         <>
@@ -94,14 +94,13 @@ export function DashboardDetailModal({ isOpen = false, onClose = null, detail = 
                         onClick={onClose}
                         style={{
                             padding: '4px 8px',
-                            fontSize: '14px',
+                            fontSize: '20px',
                             background: 'transparent',
                             border: 'none',
                             color: isLight
                                 ? 'rgba(100, 80, 60, 0.6)'
                                 : 'rgba(255, 255, 255, 0.5)',
                             cursor: 'pointer',
-                            fontSize: '20px',
                             lineHeight: '1',
                         }}
                     >

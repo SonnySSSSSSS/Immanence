@@ -76,6 +76,19 @@ function ModeCheck({ onComplete }) {
 
 // Main ModeTraining modal
 export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
+    if (!isOpen) return null;
+
+    return (
+        <ModeTrainingSession
+            key={mode}
+            mode={mode}
+            onClose={onClose}
+            onSwitchMode={onSwitchMode}
+        />
+    );
+}
+
+function ModeTrainingSession({ mode, onClose, onSwitchMode }) {
     const {
         practiceState,
         setPracticeState,
@@ -92,18 +105,10 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
 
     const config = PRACTICE_DEFINITIONS[mode];
 
-    // Reset chain transition state when modal opens or mode changes
+    // Start session when the modal session mounts
+    // Also reset if stuck in HANDOFF state from a previous session
     useEffect(() => {
-        if (isOpen) {
-            setShowChainTransition(false);
-            setCompletedMode(null);
-        }
-    }, [isOpen, mode]);
-
-    // Start session when modal opens
-    // Also reset if stuck in HANDOFF state from previous session
-    useEffect(() => {
-        if (isOpen && !showChainTransition) {
+        if (!showChainTransition) {
             if (practiceState === PRACTICE_STATES.HANDOFF || practiceState === PRACTICE_STATES.REFLECTION) {
                 // Reset stuck state
                 endSession();
@@ -112,7 +117,7 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                 startSession(mode);
             }
         }
-    }, [isOpen, practiceState, mode, startSession, endSession, showChainTransition]);
+    }, [practiceState, mode, startSession, endSession, showChainTransition]);
 
     // Handle practice complete → check for Harmony trigger
     // Skip Harmony for chain-based modes (they use chainStore for progression)
@@ -165,11 +170,9 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                 handleClose();
             }
         };
-        if (isOpen) {
-            window.addEventListener('keydown', handleKeyDown);
-            return () => window.removeEventListener('keydown', handleKeyDown);
-        }
-    }, [isOpen, handleClose]);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleClose]);
 
     // Render the appropriate practice component
     const renderPractice = () => {
@@ -324,8 +327,6 @@ export function ModeTraining({ mode, isOpen, onClose, onSwitchMode }) {
                 );
         }
     };
-
-    if (!isOpen) return null;
 
     return (
         <div

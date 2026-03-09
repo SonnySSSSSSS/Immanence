@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+void motion;
+
 export function RitualStepContainer({
     children,
     backgroundUrl,

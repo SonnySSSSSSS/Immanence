@@ -9,6 +9,14 @@ import {
     generatePathReport,
 } from '../../reporting/pathReport.js';
 
+const scheduleReportUpdate = (callback) => {
+    if (typeof queueMicrotask === 'function') {
+        queueMicrotask(callback);
+        return;
+    }
+    Promise.resolve().then(callback);
+};
+
 export function NavigationPathReport() {
     const activePath = useNavigationStore(s => s.activePath);
     const sessionsV2 = useProgressStore(s => s.sessionsV2);
@@ -16,34 +24,41 @@ export function NavigationPathReport() {
 
     useEffect(() => {
         if (!activePath) {
-            setReport(null);
-            return;
+            return undefined;
         }
 
         const pathId = activePath.activePathId || null;
         const startedAt = activePath.startedAt || null;
-        if (!pathId || !startedAt) {
-            setReport(null);
-            return;
-        }
+        let nextReport = null;
 
-        const key = buildPathReportKey(pathId, startedAt);
-        const reports = loadPathReports();
-        let nextReport = key ? reports[key] : null;
+        if (pathId && startedAt) {
+            const key = buildPathReportKey(pathId, startedAt);
+            const reports = loadPathReports();
+            nextReport = key ? reports[key] : null;
 
-        const endsAt = activePath.endsAt ? new Date(activePath.endsAt) : null;
-        const shouldGenerate = !nextReport && endsAt && endsAt <= new Date();
-        if (shouldGenerate) {
-            nextReport = generatePathReport({
-                activePath,
-                sessions: sessionsV2 || [],
-            });
-            if (nextReport) {
-                savePathReport(nextReport);
+            const endsAt = activePath.endsAt ? new Date(activePath.endsAt) : null;
+            const shouldGenerate = !nextReport && endsAt && endsAt <= new Date();
+            if (shouldGenerate) {
+                nextReport = generatePathReport({
+                    activePath,
+                    sessions: sessionsV2 || [],
+                });
+                if (nextReport) {
+                    savePathReport(nextReport);
+                }
             }
         }
 
-        setReport(nextReport || null);
+        let cancelled = false;
+        scheduleReportUpdate(() => {
+            if (!cancelled) {
+                setReport(nextReport || null);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
     }, [activePath, sessionsV2]);
 
     if (!report) return null;

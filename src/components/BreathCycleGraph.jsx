@@ -5,6 +5,14 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { calculateRhythmFrequency, rhythmOscillation } from '../utils/rhythmUtils.js';
 
+const scheduleGlowReset = (callback) => {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback);
+    return;
+  }
+  Promise.resolve().then(callback);
+};
+
 export function BreathCycleGraph({
   inhale = 4,
   hold1 = 4,
@@ -30,6 +38,7 @@ export function BreathCycleGraph({
   // Animate rhythm pulsing for the dot
   useEffect(() => {
     let frameId = null;
+    let cancelled = false;
     
     if (showDot && isAnimating) {
       const startTime = performance.now();
@@ -48,11 +57,15 @@ export function BreathCycleGraph({
       
       frameId = requestAnimationFrame(animate);
     } else {
-      // Reset to default when not animating
-      setDotGlowIntensity(1.0);
+      scheduleGlowReset(() => {
+        if (!cancelled) {
+          setDotGlowIntensity(1.0);
+        }
+      });
     }
     
     return () => {
+      cancelled = true;
       if (frameId) cancelAnimationFrame(frameId);
     };
   }, [showDot, isAnimating]);
@@ -92,7 +105,7 @@ export function BreathCycleGraph({
     const t2 = (inhale + hold1) / totalCycleTime;
     const t3 = (inhale + hold1 + exhale) / totalCycleTime;
     return `0; ${t1.toFixed(3)}; ${t2.toFixed(3)}; ${t3.toFixed(3)}; 1`;
-  }, [inhale, hold1, exhale, hold2, totalCycleTime]);
+  }, [inhale, hold1, exhale, totalCycleTime]);
 
   const animationDuration = `${totalCycleTime}s`;
 
