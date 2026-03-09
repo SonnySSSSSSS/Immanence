@@ -2137,7 +2137,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (circuitValidationError && practiceId === 'circuit') {
       queueMicrotask(() => setCircuitValidationError(null));
     }
-  }, [circuitConfig, practiceId, circuitValidationError]);
+  }, [circuitConfig, practiceId, circuitValidationError, setCircuitValidationError]);
 
   const handleStart = (durationOverrideSec = null, ritualOverride = null) => {
     // Clear initiation context — benchmark gating removed; recording happens at path selection only
