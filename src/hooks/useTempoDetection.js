@@ -642,6 +642,8 @@ export const useTempoDetection = () => {
   };
 
   const getAudioElement = () => audioElementRef.current;
+  const getAudioContext = () => audioContextRef.current;
+  const getAnalyser = () => analyserRef.current;
 
   const resetDetection = () => {
     resetBeatTracking();
@@ -658,11 +660,9 @@ export const useTempoDetection = () => {
     pauseAudio,
     stopAudio,
     getAudioElement,
+    getAudioContext,
+    getAnalyser,
     setLoopState,
     resetDetection,
-    // eslint-disable-next-line react-hooks/refs -- exposed for diagnostics
-    audioContext: audioContextRef.current,
-    // eslint-disable-next-line react-hooks/refs -- exposed for diagnostics
-    analyser: analyserRef.current,
   };
 };

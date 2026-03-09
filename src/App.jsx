@@ -1,3 +1,4 @@
+/* global __DEPLOY_GIT_SHA__, __DEPLOY_BUILD_TIME__ */
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 // Test CI lane enforcement - trivial comment
 import { StageTitle } from "./components/StageTitle.jsx";
@@ -37,7 +38,7 @@ import { ShadowScanOverlay } from "./components/debug/ShadowScanOverlay.jsx";
 import { getDebugFlagValue, parseDebugBool, toggleDebugFlag as toggleDebugFlagLs } from "./components/debug/debugFlags.js";
 import { useTutorialStore } from "./state/tutorialStore.js";
 import { TUTORIALS } from "./tutorials/tutorialRegistry.js";
-import { hasDevtoolsQueryFlag, isDevtoolsEnabled, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
+import { hasDevtoolsQueryFlag, isDevtoolsUnlocked, setDevtoolsUnlocked } from "./dev/uiDevtoolsGate.js";
 import { getDevPanelProdGate } from "./lib/devPanelGate.js";
 // import { VerificationGallery } from "./components/avatar/VerificationGallery.jsx"; // Dev tool - not used
 import "./App.css";
@@ -46,7 +47,7 @@ import AuthGate from "./components/auth/AuthGate";
 const DISABLE_SELECTION = false;
 const USER_STATE_SYNC_DEBUG = false;
 
-function SectionView({ section, isPracticing, currentPracticeId, onPracticingChange, breathState, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onRitualComplete, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
+function SectionView({ section, isPracticing, onPracticingChange, onBreathStateChange, onStageChange, currentStage, previewPath, previewShowCore, previewAttention, showFxGallery, onNavigate, onOpenHardwareGuide, onOpenPhotic, hideCards, isActiveBreathSession = false, isBreathLayoutLocked = false }) {
   // NOTE: Previously had a special vipassana branch that rendered PracticeSection without wrapper divs.
   // This caused unmount/remount when transitioning to vipassana practices because the tree structure changed.
   // REMOVED: The vipassana InsightMeditationPortal uses createPortal to render to document.body,
@@ -165,7 +166,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const isDev = import.meta.env.DEV;
   const devPanelGateEnabled = getDevPanelProdGate();
   const [showDevPanel, setShowDevPanel] = useState(() => (isDev ? false : devPanelGateEnabled)); // Dev Panel (🎨 button)
-  const [devtoolsGateTick, setDevtoolsGateTick] = useState(0);
+  const [, setDevtoolsGateTick] = useState(0);
   const [showSettings, setShowSettings] = useState(false); // Settings panel
   const [authUser, setAuthUser] = useState(null);
   const [hideCards, setHideCards] = useState(false); // Dev mode: hide cards to view wallpaper
@@ -176,7 +177,6 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   const [isPhoticOpen, setIsPhoticOpen] = useState(false);
   const [isMinimized] = useState(false);
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
-  const devtoolsEnabled = isDevtoolsEnabled();
   const selectionEnabled = !DISABLE_SELECTION;
   const devtoolsTapRef = useRef({ count: 0, firstTs: 0 });
 

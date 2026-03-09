@@ -79,7 +79,7 @@ export function useVisualizationEngine({
     }, [onCycleComplete]);
 
     // Main animation loop - drift-free using absolute timestamps
-    const animate = useCallback((now) => {
+    function animate(now) {
         if (!isRunningRef.current) return;
 
         if (!startTimeRef.current) {
@@ -128,11 +128,11 @@ export function useVisualizationEngine({
 
         // Continue animation loop
         frameRef.current = requestAnimationFrame(animate);
-    }, []);
+    }
 
     // Start the engine
      
-    const start = useCallback(() => {
+    const start = () => {
         if (isRunningRef.current) return;
 
         // Generate new session seed
@@ -153,7 +153,7 @@ export function useVisualizationEngine({
         isRunningRef.current = true;
         setIsRunning(true);
         frameRef.current = requestAnimationFrame(animate);
-    }, [animate]);
+    };
 
     // Stop the engine
     const stop = useCallback(() => {

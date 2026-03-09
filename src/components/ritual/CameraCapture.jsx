@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRitualStore } from '../../state/ritualStore';
 
+void motion;
+
 const BASE = import.meta.env.BASE_URL || '/';
 
 export function CameraCapture({ onCapture }) {
@@ -13,9 +15,12 @@ export function CameraCapture({ onCapture }) {
     const { setPhotoUrl } = useRitualStore();
 
     useEffect(() => {
+        let activeStream = null;
+
         async function startCamera() {
             try {
                 const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                activeStream = s;
                 setStream(s);
                 if (videoRef.current) {
                     videoRef.current.srcObject = s;
@@ -27,8 +32,8 @@ export function CameraCapture({ onCapture }) {
         startCamera();
 
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
             }
         };
     }, []);

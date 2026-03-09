@@ -7,8 +7,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 void motion;
 
+function createDissolutionParticles(count = 30) {
+    return Array.from({ length: count }, (_, i) => ({
+        id: i,
+        delay: i * 0.03,
+        x: (Math.random() - 0.5) * 200,
+        y: (Math.random() - 0.5) * 100 - 50,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+    }));
+}
+
 // Particle component for dissolution effect
-function DissolutionParticle({ delay }) {
+function DissolutionParticle({ particle }) {
     return (
         <motion.div
             className="absolute w-1 h-1 rounded-full bg-[var(--accent-color)]"
@@ -21,17 +32,17 @@ function DissolutionParticle({ delay }) {
             animate={{
                 opacity: 0,
                 scale: 0.3,
-                x: (Math.random() - 0.5) * 200,
-                y: (Math.random() - 0.5) * 100 - 50,
+                x: particle.x,
+                y: particle.y,
             }}
             transition={{
                 duration: 1.5,
-                delay,
+                delay: particle.delay,
                 ease: 'easeOut',
             }}
             style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
+                left: particle.left,
+                top: particle.top,
             }}
         />
     );
@@ -161,12 +172,6 @@ export function MirrorSeal({
     // Generate particles for dissolution effect
     useEffect(() => {
         if (phase === 'transforming') {
-            const newParticles = Array.from({ length: 30 }, (_, i) => ({
-                id: i,
-                delay: i * 0.03,
-            }));
-            setParticles(newParticles);
-
             // Transition to sealed after animation
             const timer = setTimeout(() => {
                 setPhase('sealed');
@@ -177,6 +182,7 @@ export function MirrorSeal({
     }, [phase]);
 
     const handleTransform = () => {
+        setParticles(createDissolutionParticles());
         setPhase('transforming');
     };
 
@@ -260,7 +266,7 @@ export function MirrorSeal({
                         {/* Dissolution particles */}
                         <div className="absolute inset-0 overflow-hidden pointer-events-none">
                             {particles.map((p) => (
-                                <DissolutionParticle key={p.id} delay={p.delay} />
+                                <DissolutionParticle key={p.id} particle={p} />
                             ))}
                         </div>
 

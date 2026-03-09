@@ -18,12 +18,6 @@ function VoicePreviewModal({ isOpen, transcript, onConfirm, onCancel, onRetry })
     const [editedText, setEditedText] = useState(transcript);
     const inputRef = useRef(null);
 
-    // Sync edited text when transcript changes
-    useEffect(() => {
-        setEditedText(transcript);
-        setEditMode(false);
-    }, [transcript]);
-
     // Focus input when entering edit mode
     useEffect(() => {
         if (editMode && inputRef.current) {
@@ -398,6 +392,7 @@ export function VoiceInput({ onTranscription, lang = 'en-US', className = '' }) 
 
             {/* Preview Modal */}
             <VoicePreviewModal
+                key={`${showPreview ? 'open' : 'closed'}:${transcript}`}
                 isOpen={showPreview}
                 transcript={transcript}
                 onConfirm={handleConfirm}

@@ -6,7 +6,6 @@ import { useVideoStore } from '../../../state/videoStore.js';
 import { useApplicationStore } from '../../../state/applicationStore.js';
 import { useModeTrainingStore } from '../../../state/modeTrainingStore.js';
 import { useChainStore } from '../../../state/chainStore.js';
-import { useDisplayModeStore } from '../../../state/displayModeStore.js';
 import { PracticeEvolutionReport } from './PracticeEvolutionReport.jsx';
 import { PracticeConsistencyReport } from './PracticeConsistencyReport.jsx';
 import { NavigationAdherenceReport } from './NavigationAdherenceReport.jsx';
@@ -529,6 +528,7 @@ export function ReportsPanel({ initialReportDomain = 'practice' }) {
         portfolioCompare,
         lifetimeMilestones,
         annualRollups,
+        sessions,
         compareOn,
         rangeKey,
         bucketKind,
