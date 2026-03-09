@@ -1,1 +1,1 @@
-export * from "../graveyard/avatarV1/AvatarPreview.jsx";
+export { AvatarPreview } from "../graveyard/avatarV1/AvatarPreview.jsx";
