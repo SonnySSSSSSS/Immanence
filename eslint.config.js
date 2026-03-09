@@ -7,6 +7,19 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores([
     'dist',
+    '.vite',
+    'public/**',
+    'logs/**',
+    'scripts/**',
+    'gh-pages/**',
+    'tmp/**',
+    'test-results/**',
+    'src/__quarantine__graveyard/**',
+    'src/__quarantine__legacy/**',
+    'src/data/*.generated.js',
+    '**/*_GRAVEYARD.*',
+    '**/*_REPAIR.*',
+    '**/*_BACKUP.*',
     '_tmp_live_bundle.js',
     '_tmp_live_bundle_new.js',
     '_tmp_live_bundle_after_deploy.js',
@@ -40,6 +53,15 @@ export default defineConfig([
         require: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['*.js', 'scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
       },
     },
   },

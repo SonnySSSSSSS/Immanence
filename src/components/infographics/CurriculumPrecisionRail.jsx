@@ -105,13 +105,6 @@ function getDayStyle(dayStatus, isLight) {
     }
 }
 
-function getLocalDateKey(date = new Date()) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
 function getRequiredCountForDay(day, activePath) {
     if (Number.isFinite(day?.requiredCount) && day.requiredCount > 0) {
         return day.requiredCount;
@@ -145,35 +138,157 @@ function getCompletedCountForDay(day) {
     return 0;
 }
 
-// For today only: returns true if any scheduled slot window has closed
-// (current local time > slot time + 30-min tolerance) without a session.
-function hasTodayAnyClosedMissedSlot(day, todayDateKey) {
-    if (!day || day.dateKeyLocal !== todayDateKey) return false;
-    if (!Array.isArray(day.satisfiedSlots) || day.satisfiedSlots.length === 0) return false;
-    const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
-    return day.satisfiedSlots.some(slot => {
-        if (slot.status !== null) return false;
-        if (!slot.time || typeof slot.time !== 'string') return false;
-        const [h, m] = slot.time.split(':').map(Number);
-        if (Number.isNaN(h) || Number.isNaN(m)) return false;
-        return nowMinutes > h * 60 + m + 30;
+function getMarkerPalette(isLight) {
+    return {
+        greenFill: isLight ? 'rgba(100, 150, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
+        redFill: isLight ? 'rgba(200, 100, 80, 0.7)' : 'rgba(244, 67, 54, 0.6)',
+        greenBorder: isLight ? 'rgba(100, 150, 80, 0.9)' : 'rgba(76, 175, 80, 0.8)',
+        redBorder: isLight ? 'rgba(200, 100, 80, 0.9)' : 'rgba(244, 67, 54, 0.8)',
+        grayFill: isLight ? 'rgba(180, 140, 90, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+        grayBorder: isLight ? 'rgba(180, 140, 90, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+        xStroke: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 247, 250, 0.95)',
+        text: isLight ? 'rgba(140, 100, 60, 0.6)' : 'rgba(255, 255, 255, 0.4)',
+    };
+}
+
+function getStatusFill(status, palette) {
+    if (status === 'green') {
+        return { fill: palette.greenFill, border: palette.greenBorder };
+    }
+    if (status === 'red') {
+        return { fill: palette.redFill, border: palette.redBorder };
+    }
+    return { fill: 'transparent', border: palette.grayBorder };
+}
+
+function getSortedSlots(day) {
+    if (!Array.isArray(day?.satisfiedSlots)) return [];
+    return [...day.satisfiedSlots].sort((a, b) => {
+        const legDiff = (a?.legNumber ?? 0) - (b?.legNumber ?? 0);
+        if (legDiff !== 0) return legDiff;
+        return String(a?.time || '').localeCompare(String(b?.time || ''));
     });
 }
 
-function shouldShowMissOverlay(day, activePath, todayDateKey) {
-    if (!day || typeof day.dateKeyLocal !== 'string') return false;
-    if (day.dayStatus === 'gray' || day.isOffDay || day.isVacation) return false;
+function getMissedMarkerModel(day, activePath) {
+    if (!day || day.dayStatus === 'gray' || day.isOffDay || day.isVacation) return null;
 
     const requiredCount = getRequiredCountForDay(day, activePath);
-    if (requiredCount <= 0) return false;
+    const completedCount = getCompletedCountForDay(day);
 
-    // Past days: show X if any required slot went unfilled
-    if (day.dateKeyLocal < todayDateKey) {
-        return getCompletedCountForDay(day) < requiredCount;
+    if (requiredCount <= 0 || completedCount >= requiredCount) {
+        return null;
     }
 
-    // Today: show X as soon as any slot window closes without a session
-    return hasTodayAnyClosedMissedSlot(day, todayDateKey);
+    const slots = getSortedSlots(day);
+    const completedSlots = slots.filter(slot => slot.status !== null);
+
+    if (requiredCount >= 3) {
+        if (completedSlots.length === 0) {
+            return { shape: 'empty', showX: true };
+        }
+        if (completedSlots.length >= 2) {
+            return {
+                shape: 'split',
+                showX: true,
+                topStatus: completedSlots[0].status,
+                bottomStatus: completedSlots[completedSlots.length - 1].status,
+            };
+        }
+
+        const onlyCompleted = completedSlots[0];
+        const coloredHalf = onlyCompleted?.legNumber === 1 ? 'top' : 'bottom';
+        return {
+            shape: 'split',
+            showX: true,
+            topStatus: coloredHalf === 'top' ? onlyCompleted.status : null,
+            bottomStatus: coloredHalf === 'bottom' ? onlyCompleted.status : null,
+        };
+    }
+
+    if (completedSlots.length === 1) {
+        return {
+            shape: 'solid',
+            showX: true,
+            status: completedSlots[0].status,
+        };
+    }
+
+    return { shape: 'empty', showX: true };
+}
+
+function renderMissedMarker(model, isLight, size = '64%') {
+    const palette = getMarkerPalette(isLight);
+    const baseStyle = {
+        position: 'absolute',
+        inset: '18%',
+        width: size,
+        height: size,
+        pointerEvents: 'none',
+        overflow: 'visible',
+    };
+
+    if (!model) return null;
+
+    if (model.shape === 'solid') {
+        const solid = getStatusFill(model.status, palette);
+        return (
+            <svg
+                viewBox="0 0 12 12"
+                aria-hidden="true"
+                focusable="false"
+                style={baseStyle}
+            >
+                <circle cx="6" cy="6" r="5" fill={solid.fill} stroke={solid.border} strokeWidth="1" />
+                {model.showX && (
+                    <>
+                        <line x1="2" y1="2" x2="10" y2="10" stroke={palette.xStroke} strokeWidth="1.6" strokeLinecap="round" />
+                        <line x1="10" y1="2" x2="2" y2="10" stroke={palette.xStroke} strokeWidth="1.6" strokeLinecap="round" />
+                    </>
+                )}
+            </svg>
+        );
+    }
+
+    if (model.shape === 'split') {
+        const top = getStatusFill(model.topStatus, palette);
+        const bottom = getStatusFill(model.bottomStatus, palette);
+        return (
+            <svg
+                viewBox="0 0 12 12"
+                aria-hidden="true"
+                focusable="false"
+                style={baseStyle}
+            >
+                <circle cx="6" cy="6" r="5" fill={palette.grayFill} stroke={palette.grayBorder} strokeWidth="1" />
+                <path d="M1 6 A5 5 0 0 1 11 6 L11 1 L1 1 Z" fill={top.fill} />
+                <path d="M1 6 A5 5 0 0 0 11 6 L11 11 L1 11 Z" fill={bottom.fill} />
+                {model.showX && (
+                    <>
+                        <line x1="2" y1="2" x2="10" y2="10" stroke={palette.xStroke} strokeWidth="1.6" strokeLinecap="round" />
+                        <line x1="10" y1="2" x2="2" y2="10" stroke={palette.xStroke} strokeWidth="1.6" strokeLinecap="round" />
+                    </>
+                )}
+            </svg>
+        );
+    }
+
+    return (
+        <svg
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+            focusable="false"
+            style={baseStyle}
+        >
+            <circle cx="6" cy="6" r="5" fill="transparent" stroke={palette.grayBorder} strokeWidth="1" />
+            {model.showX && (
+                <>
+                    <line x1="2" y1="2" x2="10" y2="10" stroke={palette.xStroke} strokeWidth="1.6" strokeLinecap="round" />
+                    <line x1="10" y1="2" x2="2" y2="10" stroke={palette.xStroke} strokeWidth="1.6" strokeLinecap="round" />
+                </>
+            )}
+        </svg>
+    );
 }
 
 /**
@@ -189,8 +304,6 @@ export function CurriculumPrecisionRail() {
     const gridRef = useRef(null);
     const [gridRect, setGridRect] = useState(null);
     const activePath = useNavigationStore(s => s.activePath);
-    const todayDateKey = getLocalDateKey();
-
     // Path-based runs have no program registry (activeCurriculumId is null in curriculumStore).
     // Inject correct start date + a synthetic getCurriculumDay so the rail service
     // produces 'blank' for obligation days instead of 'gray'.
@@ -295,7 +408,7 @@ export function CurriculumPrecisionRail() {
                 {rail.map((day, index) => {
                     const tooltip = buildDayTooltip(day);
                     const dayStyle = getDayStyle(day.dayStatus, isLight);
-                    const showMissOverlay = shouldShowMissOverlay(day, activePath, todayDateKey);
+                    const missMarkerModel = getMissedMarkerModel(day, activePath);
 
                     return (
                         <div
@@ -309,42 +422,9 @@ export function CurriculumPrecisionRail() {
                             }}
                             title={tooltip}
                         >
-                            {!showMissOverlay && day.dayStatus === 'green' && '✓'}
-                            {!showMissOverlay && day.dayStatus === 'red' && '!'}
-                            {showMissOverlay && (
-                                <svg
-                                    viewBox="0 0 12 12"
-                                    aria-hidden="true"
-                                    focusable="false"
-                                    style={{
-                                        position: 'absolute',
-                                        inset: '18%',
-                                        width: '64%',
-                                        height: '64%',
-                                        pointerEvents: 'none',
-                                        overflow: 'visible',
-                                    }}
-                                >
-                                    <line
-                                        x1="2"
-                                        y1="2"
-                                        x2="10"
-                                        y2="10"
-                                        stroke={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 247, 250, 0.95)'}
-                                        strokeWidth="1.6"
-                                        strokeLinecap="round"
-                                    />
-                                    <line
-                                        x1="10"
-                                        y1="2"
-                                        x2="2"
-                                        y2="10"
-                                        stroke={isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 247, 250, 0.95)'}
-                                        strokeWidth="1.6"
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
-                            )}
+                            {!missMarkerModel && day.dayStatus === 'green' && '✓'}
+                            {!missMarkerModel && day.dayStatus === 'red' && '!'}
+                            {missMarkerModel && renderMissedMarker(missMarkerModel, isLight)}
                         </div>
                     );
                 })}
@@ -435,6 +515,30 @@ export function CurriculumPrecisionRail() {
                             }}
                         />
                         off/pause
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ position: 'relative', width: '12px', height: '12px', display: 'inline-block' }}>
+                            {renderMissedMarker({ shape: 'empty', showX: true }, isLight, '100%')}
+                        </span>
+                        X means missed a practice that day
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ position: 'relative', width: '12px', height: '12px', display: 'inline-block' }}>
+                            {renderMissedMarker({ shape: 'solid', showX: true, status: 'green' }, isLight, '100%')}
+                        </span>
+                        2-leg: one missed, one completed
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ position: 'relative', width: '12px', height: '12px', display: 'inline-block' }}>
+                            {renderMissedMarker({ shape: 'split', showX: true, topStatus: 'green', bottomStatus: 'red' }, isLight, '100%')}
+                        </span>
+                        3-leg: one missed, two completed
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ position: 'relative', width: '12px', height: '12px', display: 'inline-block' }}>
+                            {renderMissedMarker({ shape: 'split', showX: true, topStatus: 'green', bottomStatus: null }, isLight, '100%')}
+                        </span>
+                        3-leg: two missed, one earlier completed
                     </span>
                 </div>,
                 document.body

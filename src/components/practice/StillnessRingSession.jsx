@@ -63,7 +63,6 @@ export function StillnessRingSession({
 
   const {
     isComplete,
-    elapsedSec,
     totalRemainingSec,
     segmentType,
     nextSegmentType,
@@ -101,10 +100,11 @@ export function StillnessRingSession({
   }, [isPaused, isRunning, segmentIndex, segmentRemainingSec, segmentType]);
 
   useEffect(() => {
+    const audioContext = audioContextRef.current;
     return () => {
-      if (audioContextRef.current) {
+      if (audioContext) {
         try {
-          void audioContextRef.current.close();
+          void audioContext.close();
         } catch {
           // noop
         }
@@ -112,7 +112,6 @@ export function StillnessRingSession({
     };
   }, []);
 
-  const cycleDurationSec = Math.max(1, focusSec + restSec);
   const segmentProgress01 = segmentDurationSec > 0
     ? Math.max(0, Math.min(1, segmentElapsedSec / segmentDurationSec))
     : 0;

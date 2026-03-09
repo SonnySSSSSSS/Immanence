@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useId } from 'react';
 import { STROKE, ANIM } from './tokens';
-import { ChartTooltip, useChartTooltip } from './ChartTooltip';
+import { ChartTooltip } from './ChartTooltip';
+import { useChartTooltip } from './useChartTooltip';
 
 /**
  * Enhanced line chart with gradient area fill.

@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useTutorialStore } from "../../state/tutorialStore.js";
+
+const TUTORIAL_HINT_KEY = "immanence.tutorialHintSeen";
+
+function getInitialTutorialHintVisibility() {
+  try {
+    return localStorage.getItem(TUTORIAL_HINT_KEY) !== "true";
+  } catch {
+    return true;
+  }
+}
 
 /**
  * Unified practice menu header component.
@@ -20,32 +30,17 @@ export function PracticeMenuHeader({
 }) {
   const hasTitle = Boolean(title);
   const hasHeaderRows = showTutorial || hasTitle;
-  // Tutorial hint state
-  const TUTORIAL_HINT_KEY = "immanence.tutorialHintSeen";
-  const [showTutorialHint, setShowTutorialHint] = useState(false);
+  const [showTutorialHint, setShowTutorialHint] = useState(getInitialTutorialHintVisibility);
   const openTutorial = useTutorialStore((s) => s.openTutorial);
   const isOpen = useTutorialStore((s) => s.isOpen);
-
-  useEffect(() => {
-    try {
-      const seen = localStorage.getItem(TUTORIAL_HINT_KEY) === "true";
-      if (!seen) setShowTutorialHint(true);
-    } catch {
-      setShowTutorialHint(true);
-    }
-  }, []);
-
-  // Hide hint if tutorial is open
-  useEffect(() => {
-    if (isOpen) {
-      setShowTutorialHint(false);
-    }
-  }, [isOpen]);
+  const tutorialHintVisible = showTutorialHint && !isOpen;
 
   const dismissTutorialHint = () => {
     try {
       localStorage.setItem(TUTORIAL_HINT_KEY, "true");
-    } catch {}
+    } catch {
+      // Local storage persistence is best-effort only.
+    }
     setShowTutorialHint(false);
   };
 
@@ -90,7 +85,7 @@ export function PracticeMenuHeader({
               TUTORIAL
             </button>
 
-            {showTutorialHint && (
+            {tutorialHintVisible && (
               <div className="tutorialHint" role="note" aria-label="Tutorial hint">
                 <div className="tutorialHintText">
                   Need a guide? Click <b>Tutorial</b>.

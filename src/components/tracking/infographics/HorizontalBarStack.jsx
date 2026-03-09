@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ANIM, RADIUS, TYPOGRAPHY } from './tokens';
-import { ChartTooltip, useChartTooltip } from './ChartTooltip';
+import { ChartTooltip } from './ChartTooltip';
+import { useChartTooltip } from './useChartTooltip';
 
 /**
  * Horizontal bar chart for comparisons.

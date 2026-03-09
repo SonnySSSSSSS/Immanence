@@ -12,7 +12,6 @@ export function useBreathSessionState({
   tempoSyncEnabled,
   tempoSyncBpm,
   tempoPhaseDuration,
-  tempoBeatsPerPhase,
   tempoSessionActive,
   tempoSessionEffective,
   sessionStartTime,
@@ -47,11 +46,14 @@ export function useBreathSessionState({
   };
 
   const [capacityMultiplier, setCapacityMultiplier] = useState(0.5);
+  const shouldDriveCapacityMultiplier = Boolean(
+    isRunning && isBreathPractice && sessionStartTime && duration
+  );
+  const effectiveCapacityMultiplier = shouldDriveCapacityMultiplier ? capacityMultiplier : 0.5;
 
   // Keep a session-wide capacity multiplier in sync with elapsed time (50% -> 75% -> 90% -> 100% landing).
   useEffect(() => {
-    if (!isRunning || !isBreathPractice || !sessionStartTime || !duration) {
-      setCapacityMultiplier(0.5);
+    if (!shouldDriveCapacityMultiplier) {
       return;
     }
 
@@ -66,7 +68,7 @@ export function useBreathSessionState({
     tick();
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
-  }, [isRunning, isBreathPractice, sessionStartTime, duration]);
+  }, [duration, sessionStartTime, shouldDriveCapacityMultiplier]);
 
   const breathingPatternForRing = useMemo(() => {
     // Tempo-sync mode uses its own 3-phase cap schedule (tempoSyncSessionStore) and should not be double-scaled.
@@ -103,10 +105,10 @@ export function useBreathSessionState({
         };
 
     const scaled = {
-      inhale: Math.max(1, quantizeHalf(baseMax.inhale * capacityMultiplier)),
-      hold1: Math.max(0, quantizeHalf(baseMax.hold1 * capacityMultiplier)),
-      exhale: Math.max(1, quantizeHalf(baseMax.exhale * capacityMultiplier)),
-      hold2: Math.max(0, quantizeHalf((baseMax.hold2 ?? 0) * capacityMultiplier)),
+      inhale: Math.max(1, quantizeHalf(baseMax.inhale * effectiveCapacityMultiplier)),
+      hold1: Math.max(0, quantizeHalf(baseMax.hold1 * effectiveCapacityMultiplier)),
+      exhale: Math.max(1, quantizeHalf(baseMax.exhale * effectiveCapacityMultiplier)),
+      hold2: Math.max(0, quantizeHalf((baseMax.hold2 ?? 0) * effectiveCapacityMultiplier)),
     };
 
     // Optional: when BPM is provided (but not in full tempo-session mode), quantize the scaled pattern to music.
@@ -130,14 +132,13 @@ export function useBreathSessionState({
     tempoSyncEnabled,
     tempoSyncBpm,
     tempoPhaseDuration,
-    tempoBeatsPerPhase,
     tempoSessionActive,
     tempoSessionEffective,
     isBreathPractice,
     hasBenchmark,
     benchmark,
     pattern,
-    capacityMultiplier,
+    effectiveCapacityMultiplier,
   ]);
 
   // Drive external breath state from the same effective pattern that the ring is using.

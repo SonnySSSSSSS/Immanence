@@ -21,7 +21,8 @@ export {
 } from './tokens';
 
 // Core components
-export { ChartTooltip, useChartTooltip } from './ChartTooltip';
+export { ChartTooltip } from './ChartTooltip';
+export { useChartTooltip } from './useChartTooltip';
 export { CircularProgress } from './CircularProgress';
 export { StatCard } from './StatCard';
 export { Sparkline } from './Sparkline';

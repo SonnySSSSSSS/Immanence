@@ -105,10 +105,11 @@ export function StillnessIntervalSession({
   }, [isPaused, isRunning, segmentIndex, segmentRemainingSec, segmentType]);
 
   useEffect(() => {
+    const audioContext = audioContextRef.current;
     return () => {
-      if (audioContextRef.current) {
+      if (audioContext) {
         try {
-          void audioContextRef.current.close();
+          void audioContext.close();
         } catch {
           // noop
         }
@@ -202,4 +203,3 @@ export function StillnessIntervalSession({
     </div>
   );
 }
-

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useId } from 'react';
 import { STROKE, ANIM, DOMAIN_COLORS } from './tokens';
-import { ChartTooltip, useChartTooltip } from './ChartTooltip';
+import { ChartTooltip } from './ChartTooltip';
+import { useChartTooltip } from './useChartTooltip';
 
 /**
  * Mini inline trend line (80-120px wide).

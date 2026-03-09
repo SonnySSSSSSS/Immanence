@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { STROKE, RADIUS, ANIM } from './tokens';
-import { ChartTooltip, useChartTooltip } from './ChartTooltip';
+import { ChartTooltip } from './ChartTooltip';
+import { useChartTooltip } from './useChartTooltip';
 
 /**
  * Donut chart for category breakdowns.
