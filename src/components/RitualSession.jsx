@@ -12,7 +12,7 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
     const [stepTimeRemaining, setStepTimeRemaining] = useState(0);
     const [totalTimeElapsed, setTotalTimeElapsed] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
-    const [sessionState, setSessionState] = useState('intro');
+    const [sessionState, setSessionState] = useState('active');
 
     // Refs for timer
     const timerRef = useRef(null);
@@ -114,59 +114,6 @@ const RitualSession = ({ ritual, onComplete, onExit, isLight = false }) => {
             `}</style>
         </div>
     );
-
-    // Render Intro
-    if (sessionState === 'intro') {
-        return (
-            <div
-                className="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none bg-black/90 backdrop-blur-sm transition-opacity duration-300"
-                style={{ width: 'var(--app-frame-width, 100vw)', margin: '0 auto' }}
-            >
-                <div 
-                    className={`relative w-full max-w-lg flex flex-col rounded-3xl border overflow-hidden pointer-events-auto shadow-2xl transition-all duration-500 ${isLight ? 'bg-white/95 border-amber-900/10' : 'bg-[#0a0a12]/95 border-white/10'}`}
-                    style={{ 
-                        maxHeight: 'min(720px, calc(100dvh - 48px))'
-                    }}
-                >
-                    <div className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar p-5 sm:p-8 text-center items-center justify-center">
-                        <div className="flex items-center justify-center text-5xl sm:text-7xl mb-2" style={{ color: 'var(--accent-color)' }}>
-                            {ritual.iconName ? <Icon name={ritual.iconName} size={window.innerWidth < 480 ? 56 : 72} /> : ritual.icon}
-                        </div>
-                        <h1 className="text-3xl sm:text-4xl font-light text-[var(--accent-primary)] font-h1 leading-tight mb-2">{ritual.name}</h1>
-                        <div className="text-[var(--accent-muted)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] mb-4">
-                            {ritual.tradition} • {ritual.duration.min}-{ritual.duration.max} Min
-                        </div>
-                        <p className="text-sm sm:text-base text-white/80 leading-relaxed font-body italic border-l-2 border-[var(--accent-secondary)] pl-4 text-left my-4 opacity-90" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                            {ritual.history}
-                        </p>
-                        <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-6">{ritual.description}</p>
-
-                        <div className="flex flex-col gap-4 items-center w-full">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSessionState('active');
-                                }}
-                                className={`w-full sm:w-auto px-10 sm:px-16 py-4 sm:py-5 ${isLight ? 'bg-[#5A4D3C] text-[#FDFBF5]' : 'bg-[var(--accent-primary)] text-black'} font-bold tracking-[0.3em] hover:scale-105 active:scale-95 transition-all rounded-full text-xs sm:text-sm shadow-xl`}
-                            >
-                                BEGIN RITUAL
-                            </button>
-
-                            <button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onExit();
-                                }}
-                                className={`text-xs sm:text-sm transition-colors ${isLight ? 'text-amber-900/40 hover:text-amber-900/80' : 'text-white/40 hover:text-white'}`}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     // Render Completion
     if (sessionState === 'completion') {

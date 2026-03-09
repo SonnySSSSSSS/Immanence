@@ -2212,7 +2212,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const totalSeconds = ritual.steps?.reduce((sum, s) => sum + (s.duration || 60), 0) || 600;
     setDuration(Math.ceil(totalSeconds / 60));
     setTimeLeft(totalSeconds);
-    handleStart(null, ritual);
   };
 
   const handleRitualReturn = () => {

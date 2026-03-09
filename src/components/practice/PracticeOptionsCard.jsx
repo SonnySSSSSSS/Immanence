@@ -77,7 +77,7 @@ export function PracticeOptionsCard({
   const menuShowDuration = p?.supportsDuration && practiceId !== 'circuit';
   const menuDurationMarginBottom = practiceId === 'breath' ? '24px' : '40px';
   const menuDurationTitleMarginBottom = practiceId === 'breath' ? '16px' : '24px';
-  const menuShowStartButton = practiceId !== 'ritual';
+  const menuShowStartButton = true;
   const menuStartButtonLabel = practiceId === 'photic' ? 'Enter Photic Circles' : 'Begin Practice';
 
   useEffect(() => {
