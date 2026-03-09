@@ -2,8 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRitualStore } from '../../state/ritualStore';
 
-void motion;
-
 const BASE = import.meta.env.BASE_URL || '/';
 
 export function CameraCapture({ onCapture }) {
@@ -13,6 +11,10 @@ export function CameraCapture({ onCapture }) {
     const [capturedImage, setCapturedImage] = useState(null);
     const [showStopNotif, setShowStopNotif] = useState(false);
     const { setPhotoUrl } = useRitualStore();
+
+    // Extract motion components to satisfy linter usage detection
+    const MotionDiv = motion.div;
+    const MotionButton = motion.button;
 
     useEffect(() => {
         let activeStream = null;
@@ -100,7 +102,7 @@ export function CameraCapture({ onCapture }) {
                     {/* Privacy Confirmation Overlay */}
                     <AnimatePresence>
                         {showStopNotif && (
-                            <motion.div 
+                            <MotionDiv
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0 }}
@@ -108,7 +110,7 @@ export function CameraCapture({ onCapture }) {
                             >
                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                 <span className="text-[10px] font-bold text-white uppercase tracking-[2px]">Camera Offline â€¢ Secure</span>
-                            </motion.div>
+                            </MotionDiv>
                         )}
                     </AnimatePresence>
                 </div>
@@ -118,7 +120,7 @@ export function CameraCapture({ onCapture }) {
 
             <AnimatePresence>
                 {!capturedImage && (
-                    <motion.button
+                    <MotionButton
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8 }}
@@ -126,7 +128,7 @@ export function CameraCapture({ onCapture }) {
                         className="absolute bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full border-4 border-white flex items-center justify-center p-1 bg-white/20 backdrop-blur-md z-20 transition-transform active:scale-90"
                     >
                         <div className="w-full h-full rounded-full bg-white shadow-inner" />
-                    </motion.button>
+                    </MotionButton>
                 )}
             </AnimatePresence>
         </div>
