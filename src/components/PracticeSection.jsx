@@ -1470,7 +1470,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       ];
       queueMicrotask(() => setCircuitConfig({ exercises: defaultExercises, exerciseDuration: 5 }));
     }
-  }, [practice, circuitConfig]);
+  }, [practice, circuitConfig, setCircuitConfig]);
 
   const setupCircuitExercise = (exerciseItem) => {
     const { exercise, duration: exDuration } = exerciseItem;
