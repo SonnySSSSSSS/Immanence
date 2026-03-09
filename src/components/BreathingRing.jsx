@@ -39,6 +39,14 @@ function isRingFrameActive(practiceActive = true) {
   return practiceActive;
 }
 
+const scheduleBreathingRingUpdate = (callback) => {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback);
+    return;
+  }
+  Promise.resolve().then(callback);
+};
+
 function RingSceneRouter({
   rndRingMode,
   productionParams,
@@ -999,9 +1007,9 @@ export function BreathingRing({
   ringMode = null,
   stillnessVisual = null,
 }) {
-  if (stillnessVisual) {
-    return <StillnessVisualRing stillnessVisual={{ ...stillnessVisual, ringMode }} practiceActive={practiceActive} />;
-  }
+  const isStillnessMode = Boolean(stillnessVisual);
+  const startTimeValid = startTime != null && Number.isFinite(startTime);
+  const canRunBreathingRuntime = !isStillnessMode && !!startTime;
 
   const theme = useTheme();
   const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
@@ -1023,26 +1031,50 @@ export function BreathingRing({
   useEffect(() => {
     if (ringMode != null) return;
     if (import.meta.env.DEV !== true || typeof window === 'undefined') return;
+    let cancelled = false;
 
     const ringParam = new URLSearchParams(window.location.search).get('ring');
     const normalizedQueryMode = normalizeRingMode(ringParam);
     if (normalizedQueryMode) {
-      setRndRingMode(normalizedQueryMode);
+      scheduleBreathingRingUpdate(() => {
+        if (!cancelled) {
+          setRndRingMode(normalizedQueryMode);
+        }
+      });
     }
+    return () => {
+      cancelled = true;
+    };
   }, [ringMode]);
 
   useEffect(() => {
     if (ringMode == null) return;
     const normalizedRingMode = normalizeRingMode(ringMode);
     if (!normalizedRingMode) return;
-    setRndRingMode((prev) => (prev === normalizedRingMode ? prev : normalizedRingMode));
+    let cancelled = false;
+    scheduleBreathingRingUpdate(() => {
+      if (!cancelled) {
+        setRndRingMode((prev) => (prev === normalizedRingMode ? prev : normalizedRingMode));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [ringMode]);
 
   // Compatibility normalization for legacy/persisted values.
   useEffect(() => {
     const normalizedMode = normalizeRingMode(rndRingMode) || RING_MODE_CYCLE[0];
     if (normalizedMode !== rndRingMode) {
-      setRndRingMode(normalizedMode);
+      let cancelled = false;
+      scheduleBreathingRingUpdate(() => {
+        if (!cancelled) {
+          setRndRingMode(normalizedMode);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
   }, [rndRingMode]);
 
@@ -1052,7 +1084,15 @@ export function BreathingRing({
     if (!lockedPatternRef.current && breathPattern) {
       lockedPatternRef.current = breathPattern;
       incomingPatternRef.current = breathPattern;
-      setDisplayedPattern(breathPattern);
+      let cancelled = false;
+      scheduleBreathingRingUpdate(() => {
+        if (!cancelled) {
+          setDisplayedPattern(breathPattern);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
   }, []); // Empty deps: runs ONLY on mount
 
@@ -1060,11 +1100,16 @@ export function BreathingRing({
   useEffect(() => {
     const incoming = breathPattern || {};
     incomingPatternRef.current = incoming;
+    let cancelled = false;
 
     if (!lockedPatternRef.current) {
       // If locked not yet set (shouldn't happen due to mount effect above)
       lockedPatternRef.current = incoming;
-      setDisplayedPattern(incoming);
+      scheduleBreathingRingUpdate(() => {
+        if (!cancelled) {
+          setDisplayedPattern(incoming);
+        }
+      });
       return;
     }
 
@@ -1074,6 +1119,9 @@ export function BreathingRing({
       // Queue pattern change for next wrap boundary
       pendingPatternRef.current = incoming;
     }
+    return () => {
+      cancelled = true;
+    };
   }, [breathPattern]);
 
   // Use displayed pattern state for rendering (triggers re-render when pattern changes)
@@ -1124,21 +1172,29 @@ export function BreathingRing({
 
   // Track current phase for enso feedback
   useEffect(() => {
-    if (progress < tInhale) {
-      setCurrentPhase('inhale');
-    } else if (progress < tHoldTop) {
-      setCurrentPhase('hold-top');
-    } else if (progress < tExhale) {
-      setCurrentPhase('exhale');
-    } else {
-      setCurrentPhase('hold-bottom');
-    }
-  }, [progress, tInhale, tHoldTop, tExhale]);
+    if (isStillnessMode) return;
+    let cancelled = false;
+    const nextPhase =
+      progress < tInhale ? 'inhale' :
+      progress < tHoldTop ? 'hold-top' :
+      progress < tExhale ? 'exhale' :
+      'hold-bottom';
+
+    scheduleBreathingRingUpdate(() => {
+      if (!cancelled) {
+        setCurrentPhase((prev) => (prev === nextPhase ? prev : nextPhase));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [progress, tInhale, tHoldTop, tExhale, isStillnessMode]);
 
   // Calculate normalized capacity phase (0-1) for session-wide UI display
   // Updates based on elapsed time and total session duration
   useEffect(() => {
-    if (!startTime || !totalSessionDurationSec || totalSessionDurationSec <= 0) return;
+    if (isStillnessMode || !startTime || !totalSessionDurationSec || totalSessionDurationSec <= 0) return;
 
     const updateCapacityPhase = () => {
       const elapsed = (performance.now() - startTime) / 1000; // in seconds
@@ -1151,7 +1207,7 @@ export function BreathingRing({
     const interval = setInterval(updateCapacityPhase, 500); // Update every 500ms
     updateCapacityPhase(); // Initial update
     return () => clearInterval(interval);
-  }, [startTime, totalSessionDurationSec]);
+  }, [startTime, totalSessionDurationSec, isStillnessMode]);
 
   // Breath sound engine - continuous audio feedback synced to breath phases
   const soundPhase = currentPhase === 'hold-top' ? 'holdTop' :
@@ -1160,12 +1216,14 @@ export function BreathingRing({
   useBreathSoundEngine({
     phase: soundPhase,
     pattern: displayedPattern,
-    isRunning: !!startTime,
+    isRunning: canRunBreathingRuntime,
   });
 
   // Trigger echo visual effect
   const triggerEcho = () => {
-    setEcho({ id: Date.now() });
+    scheduleBreathingRingUpdate(() => {
+      setEcho({ id: Date.now() });
+    });
   };
 
   // Web Audio API sound generation
@@ -1195,6 +1253,7 @@ export function BreathingRing({
 
   // Detect phase transitions and trigger sounds + echo
   useEffect(() => {
+    if (!canRunBreathingRuntime) return;
     const prevP = previousProgressRef.current;
     const currP = progress;
 
@@ -1223,7 +1282,7 @@ export function BreathingRing({
     }
 
     previousProgressRef.current = currP;
-  }, [progress, tInhale, tHoldTop, tExhale, onCycleComplete]);
+  }, [progress, tInhale, tHoldTop, tExhale, onCycleComplete, canRunBreathingRuntime]);
 
   // Cycle start time - resets only on wrap boundaries
   // This prevents t discontinuity when pattern changes mid-cycle
@@ -1234,7 +1293,7 @@ export function BreathingRing({
   // Pattern changes queue as pending and apply at wrap boundaries only
   // Cycle time is continuous and resets only on actual wraps
   useEffect(() => {
-    if (!startTime) return;
+    if (!canRunBreathingRuntime) return;
 
     let frameId = null;
 
@@ -1312,7 +1371,7 @@ export function BreathingRing({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [startTime]); // ONLY depends on startTime
+  }, [canRunBreathingRuntime, startTime]); // ONLY depends on startTime when runtime is active
 
   // Remove echo after animation completes
   useEffect(() => {
@@ -1429,7 +1488,7 @@ export function BreathingRing({
   // DEV guard — must be after all hooks to satisfy Rules of Hooks.
   // Fires once on mount and whenever startTime changes.
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
+    if (isStillnessMode || process.env.NODE_ENV === 'production') return;
     const now = performance.now();
     if (startTime == null || !Number.isFinite(startTime)) {
       console.error(
@@ -1448,20 +1507,20 @@ export function BreathingRing({
         '| diff (ms):', startTime - now
       );
     }
-  }, [startTime]);
+  }, [startTime, isStillnessMode]);
 
   // After all hooks: bail if startTime is absent so the rAF loop and audio
   // engine never start with a missing clock anchor.
   useEffect(() => {
+    if (isStillnessMode) return undefined;
     return () => {
       if (typeof onUnmount === "function") {
         onUnmount();
       }
     };
-  }, [onUnmount]);
+  }, [onUnmount, isStillnessMode]);
 
   const phaseArcPathId = useId();
-  const startTimeValid = startTime != null && Number.isFinite(startTime);
   const isFrameActive = isRingFrameActive(practiceActive);
   const isOrb = rndRingMode === 'orb';
   const normalizedMode = normalizeRingMode(rndRingMode);
@@ -1543,6 +1602,9 @@ export function BreathingRing({
       (stagePlateSize.height || 560) * 0.64
     )
   );
+  if (isStillnessMode) {
+    return <StillnessVisualRing stillnessVisual={{ ...stillnessVisual, ringMode }} practiceActive={practiceActive} />;
+  }
   if (!startTimeValid) return null;
 
   return (
