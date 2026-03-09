@@ -86,7 +86,6 @@ export function SelectedCardElectricBorderOverlay() {
         setModel(null);
         if (isDevBuild() && !warnOnceRef.current) {
           warnOnceRef.current = true;
-          // eslint-disable-next-line no-console
           console.warn("[SelectedCardElectricBorderOverlay] No selected card element found for:", {
             selectedCardId,
             selectedCardCarouselId,
