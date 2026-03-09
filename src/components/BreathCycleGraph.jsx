@@ -5,14 +5,6 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { calculateRhythmFrequency, rhythmOscillation } from '../utils/rhythmUtils.js';
 
-const scheduleGlowReset = (callback) => {
-  if (typeof queueMicrotask === 'function') {
-    queueMicrotask(callback);
-    return;
-  }
-  Promise.resolve().then(callback);
-};
-
 export function BreathCycleGraph({
   inhale = 4,
   hold1 = 4,
@@ -38,34 +30,26 @@ export function BreathCycleGraph({
   // Animate rhythm pulsing for the dot
   useEffect(() => {
     let frameId = null;
-    let cancelled = false;
-    
+
     if (showDot && isAnimating) {
       const startTime = performance.now();
-      
+
       const animate = (now) => {
         const elapsed = (now - startTime) / 1000;
         animationTimeRef.current = elapsed;
-        
+
         // Calculate rhythm oscillation for dot glow: 1 ± 0.15 (±15%)
         const rhythmOsc = rhythmOscillation(elapsed, rhythmFreqRef.current, 1.0);
         const glowIntensity = 1.0 + rhythmOsc * 0.15; // Subtle ±15% pulsing
         setDotGlowIntensity(glowIntensity);
-        
+
         frameId = requestAnimationFrame(animate);
       };
-      
+
       frameId = requestAnimationFrame(animate);
-    } else {
-      scheduleGlowReset(() => {
-        if (!cancelled) {
-          setDotGlowIntensity(1.0);
-        }
-      });
     }
-    
+
     return () => {
-      cancelled = true;
       if (frameId) cancelAnimationFrame(frameId);
     };
   }, [showDot, isAnimating]);
@@ -108,6 +92,9 @@ export function BreathCycleGraph({
   }, [inhale, hold1, exhale, totalCycleTime]);
 
   const animationDuration = `${totalCycleTime}s`;
+
+  // Derive effective glow intensity: use state only when animating, otherwise default to 1.0
+  const effectiveGlowIntensity = isAnimating && showDot ? dotGlowIntensity : 1.0;
 
   return (
     <div
@@ -158,10 +145,10 @@ export function BreathCycleGraph({
         {/* Animated dot tracer with rhythm pulsing */}
         {showDot && (
           <circle
-            r={5 * dotGlowIntensity}
+            r={5 * effectiveGlowIntensity}
             fill="var(--accent-primary)"
             filter="url(#breath-glow)"
-            opacity={isAnimating ? 0.9 * dotGlowIntensity : 0.6}
+            opacity={isAnimating ? 0.9 * effectiveGlowIntensity : 0.6}
             style={{ transition: 'none' }} // Disable transition for smooth rhythm
           >
             <animateMotion
