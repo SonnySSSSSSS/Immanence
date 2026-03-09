@@ -144,10 +144,7 @@ export function PracticeButtonElectricBorderOverlay() {
     moRef.current?.disconnect();
     moRef.current = null;
 
-    if (!enabled) {
-      setTargets([]);
-      return undefined;
-    }
+    if (!enabled) return undefined;
 
     scheduleScan();
 
@@ -176,6 +173,13 @@ export function PracticeButtonElectricBorderOverlay() {
       moRef.current = null;
     };
   }, [enabled, scheduleScan]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    return () => {
+      setTargets([]);
+    };
+  }, [enabled]);
 
   const overlays = useMemo(() => {
     if (!enabled) return [];

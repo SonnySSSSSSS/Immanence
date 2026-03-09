@@ -1,7 +1,20 @@
 // src/components/countdown/particleText/Sparks.jsx
-import { useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
+
+function createSeeds(count, depth) {
+  return new Array(count).fill(0).map(() => ({
+    orbitAngle: Math.random() * Math.PI * 2,
+    orbitSpeed: 0.1 + Math.random() * 0.45,
+    orbitRadius: 0.38 + Math.random() * 0.75,
+    phase: Math.random() * Math.PI * 2,
+    tilt: Math.random() * Math.PI * 2,
+    len: 0.12 + Math.random() * 0.3,
+    thick: 0.008 + Math.random() * 0.02,
+    depth: (Math.random() * 2 - 1) * depth,
+  }));
+}
 
 export default function Sparks({
   accentColor = '#22d3ee',
@@ -10,6 +23,7 @@ export default function Sparks({
   mouseRef = null,
 }) {
   const meshRef = useRef(null);
+  const seedsRef = useRef([]);
   const viewport = useThree((state) => state.viewport);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const color = useMemo(() => new THREE.Color(accentColor), [accentColor]);
@@ -22,21 +36,13 @@ export default function Sparks({
     [viewport.width, viewport.height]
   );
 
-  const seeds = useMemo(() => {
-    return new Array(count).fill(0).map(() => ({
-      orbitAngle: Math.random() * Math.PI * 2,
-      orbitSpeed: 0.1 + Math.random() * 0.45,
-      orbitRadius: 0.38 + Math.random() * 0.75,
-      phase: Math.random() * Math.PI * 2,
-      tilt: Math.random() * Math.PI * 2,
-      len: 0.12 + Math.random() * 0.3,
-      thick: 0.008 + Math.random() * 0.02,
-      depth: (Math.random() * 2 - 1) * field.depth,
-    }));
+  useLayoutEffect(() => {
+    seedsRef.current = createSeeds(count, field.depth);
   }, [count, field.depth]);
 
   useFrame(({ clock }) => {
     if (!enabled || !meshRef.current) return;
+    const seeds = seedsRef.current;
     const t = clock.elapsedTime;
     const sweep = Math.sin(t * 0.12) * Math.PI * 0.2;
 

@@ -383,7 +383,7 @@ function PersistentBreathRingCanvas({
             background: 'rgba(255, 0, 0, 0.95)',
             color: '#fff',
             fontFamily:
-              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace',
+              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
             fontSize: 14,
             fontWeight: 800,
             letterSpacing: '0.02em',
@@ -1128,13 +1128,6 @@ export function BreathingRing({
     exhale = 4,
     holdBottom = 2,
   } = displayedPattern || {};
-
-  const formatSec = (v) => {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return "0";
-    return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10).replace(/\\.0$/, "");
-  };
-  const patternText = `${formatSec(inhale)}-${formatSec(holdTop)}-${formatSec(exhale)}-${formatSec(holdBottom)}s`;
   // Total cycle duration - derived from the effective (locked or initial) pattern
   // This is used for phase boundary calculations
   const total = inhale + holdTop + exhale + holdBottom;

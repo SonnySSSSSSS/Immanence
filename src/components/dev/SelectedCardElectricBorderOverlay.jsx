@@ -168,10 +168,7 @@ export function SelectedCardElectricBorderOverlay() {
     moRef.current?.disconnect();
     moRef.current = null;
 
-    if (!enabled) {
-      setModel(null);
-      return undefined;
-    }
+    if (!enabled) return undefined;
 
     scheduleMeasure();
 
@@ -195,6 +192,13 @@ export function SelectedCardElectricBorderOverlay() {
       moRef.current = null;
     };
   }, [enabled, scheduleMeasure]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    return () => {
+      setModel(null);
+    };
+  }, [enabled]);
 
   const overlay = useMemo(() => {
     if (!enabled || !model) return null;

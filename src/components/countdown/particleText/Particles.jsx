@@ -1,7 +1,28 @@
 // src/components/countdown/particleText/Particles.jsx
-import { useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
+
+function createSeeds(count, depth) {
+  return new Array(count).fill(0).map(() => ({
+    baseAngle: Math.random() * Math.PI * 2,
+    band: Math.random() * Math.PI * 2,
+    baseRadius: 0.2 + Math.random() * 1.05,
+    angVel: 0.07 + Math.random() * 0.22,
+    radialFreq: 0.1 + Math.random() * 0.28,
+    radialWobble: 0.05 + Math.random() * 0.16,
+    phase: Math.random() * Math.PI * 2,
+    driftPhaseX: Math.random() * Math.PI * 2,
+    driftPhaseY: Math.random() * Math.PI * 2,
+    driftAmpX: 0.08 + Math.random() * 0.45,
+    driftAmpY: 0.06 + Math.random() * 0.32,
+    turbAmp: 0.03 + Math.random() * 0.08,
+    turbFreq: 0.15 + Math.random() * 0.38,
+    depth: (Math.random() * 2 - 1) * depth,
+    size: 0.006 + Math.random() * 0.015,
+    spin: Math.random() * Math.PI * 2,
+  }));
+}
 
 function isCoarsePointer() {
   if (typeof window === 'undefined') return false;
@@ -20,6 +41,7 @@ export default function Particles({
   parallaxScale = 0.10,
 }) {
   const meshRef = useRef(null);
+  const seedsRef = useRef([]);
   const viewport = useThree((state) => state.viewport);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const color = useMemo(() => new THREE.Color(accentColor), [accentColor]);
@@ -34,29 +56,13 @@ export default function Particles({
     [depthScale, fieldScale, viewport.width, viewport.height]
   );
 
-  const seeds = useMemo(() => {
-    return new Array(count).fill(0).map(() => ({
-      baseAngle: Math.random() * Math.PI * 2,
-      band: Math.random() * Math.PI * 2,
-      baseRadius: 0.2 + Math.random() * 1.05,
-      angVel: 0.07 + Math.random() * 0.22,
-      radialFreq: 0.1 + Math.random() * 0.28,
-      radialWobble: 0.05 + Math.random() * 0.16,
-      phase: Math.random() * Math.PI * 2,
-      driftPhaseX: Math.random() * Math.PI * 2,
-      driftPhaseY: Math.random() * Math.PI * 2,
-      driftAmpX: 0.08 + Math.random() * 0.45,
-      driftAmpY: 0.06 + Math.random() * 0.32,
-      turbAmp: 0.03 + Math.random() * 0.08,
-      turbFreq: 0.15 + Math.random() * 0.38,
-      depth: (Math.random() * 2 - 1) * field.depth,
-      size: 0.006 + Math.random() * 0.015,
-      spin: Math.random() * Math.PI * 2,
-    }));
+  useLayoutEffect(() => {
+    seedsRef.current = createSeeds(count, field.depth);
   }, [count, field.depth]);
 
   useFrame(({ clock }) => {
     if (!enabled || !meshRef.current) return;
+    const seeds = seedsRef.current;
     const t = clock.elapsedTime;
     const windX = Math.sin(t * 0.11) * field.width * 0.08;
     const windY = Math.cos(t * 0.09) * field.height * 0.06;

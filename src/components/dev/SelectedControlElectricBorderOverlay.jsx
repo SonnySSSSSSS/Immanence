@@ -76,6 +76,7 @@ export function SelectedControlElectricBorderOverlay() {
   const reduceMotionSetting = useSettingsStore((s) => Boolean(s.reduceMotion));
   const [pickConfig, setPickConfig] = useState(() => readPickConfig());
   const [preset, setPreset] = useState(() => getControlsFxPreset(pickConfig.selectedId));
+  const hasActiveSelection = enabled && isDevtoolsEnabled() && Boolean(pickConfig.selectedId);
 
   const [targets, setTargets] = useState([]);
   const roRef = useRef(null);
@@ -137,10 +138,7 @@ export function SelectedControlElectricBorderOverlay() {
     moRef.current?.disconnect();
     moRef.current = null;
 
-    if (!enabled || !isDevtoolsEnabled() || !pickConfig.selectedId) {
-      setTargets([]);
-      return undefined;
-    }
+    if (!enabled || !isDevtoolsEnabled() || !pickConfig.selectedId) return undefined;
 
     scheduleScan();
 
@@ -171,8 +169,15 @@ export function SelectedControlElectricBorderOverlay() {
     };
   }, [enabled, pickConfig.selectedId, scheduleScan]);
 
+  useEffect(() => {
+    if (!hasActiveSelection) return undefined;
+    return () => {
+      setTargets([]);
+    };
+  }, [hasActiveSelection]);
+
   const overlays = useMemo(() => {
-    if (!enabled || !isDevtoolsEnabled()) return [];
+    if (!enabled || !isDevtoolsEnabled() || !pickConfig.selectedId) return [];
 
     const effectiveSpeed = reduceMotionSetting ? 0 : (preset?.speed ?? 0.052);
     const effectiveChaos = preset?.chaos ?? 0.095;
@@ -207,7 +212,7 @@ export function SelectedControlElectricBorderOverlay() {
         thickness,
       };
     });
-  }, [enabled, reduceMotionSetting, preset, targets]);
+  }, [enabled, pickConfig.selectedId, preset, reduceMotionSetting, targets]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;

@@ -23,7 +23,7 @@ export function CymaticsCanvas({
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const animationIdRef = useRef(null);
-    const startTimeRef = useRef(performance.now());
+    const startTimeRef = useRef(null);
 
     const PARTICLE_COUNT = 4000;
     const PARTICLE_SIZE = 1.5;
@@ -46,6 +46,10 @@ export function CymaticsCanvas({
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
+
+        if (startTimeRef.current === null) {
+            startTimeRef.current = performance.now();
+        }
 
         const ctx = canvas.getContext('2d');
         const particles = particlesRef.current;
