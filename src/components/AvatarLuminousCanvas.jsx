@@ -1,1 +1,1 @@
-export * from "../graveyard/avatarV1/AvatarLuminousCanvas.jsx";
+export { AvatarLuminousCanvas } from "../__quarantine__graveyard/avatarV1/AvatarLuminousCanvas.jsx";
