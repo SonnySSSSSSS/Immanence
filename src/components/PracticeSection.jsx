@@ -799,6 +799,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
   }, [isBreathRunningSession]);
 
+  const [breathSubmode, setBreathSubmode] = useState("breath");
+
   // Handle curriculum auto-start and initialization (with guards to prevent override during practice)
   useEffect(() => {
     if (isRunning) return;
@@ -824,18 +826,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (pid === "breath") {
       const legStillnessConfig = activeLeg?.practiceConfig?.stillness;
       if (legStillnessConfig && typeof legStillnessConfig === "object") {
-        queueMicrotask(() => setBreathSubmode("stillness"));
-        setLaunchStillnessConfig(
-          normalizeStillnessConfig(legStillnessConfig, {
-            fallback: persistedStillnessDefaults,
-            sharedPreDelaySec: sharedBreathPreDelaySec,
-          })
-        );
+        const normalizedStillnessConfig = normalizeStillnessConfig(legStillnessConfig, {
+          fallback: persistedStillnessDefaults,
+          sharedPreDelaySec: sharedBreathPreDelaySec,
+        });
+        queueMicrotask(() => {
+          setLaunchStillnessConfig(normalizedStillnessConfig);
+          setBreathSubmode("stillness");
+        });
       } else {
-        setLaunchStillnessConfig(null);
+        queueMicrotask(() => setLaunchStillnessConfig(null));
       }
     } else {
-      setLaunchStillnessConfig(null);
+      queueMicrotask(() => setLaunchStillnessConfig(null));
     }
   }, [
     activePracticeSession,
@@ -866,7 +869,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceRanRef.current = false;
       activePathContextRef.current = null;
       suppressPrefSaveRef.current = false;
-      setLaunchStillnessConfig(null);
+      queueMicrotask(() => setLaunchStillnessConfig(null));
       clearLaunchConstraints?.();
       const _fbResetPracticeId = practiceId !== SAFE_LAUNCH_FALLBACK.practiceId;
       const _fbResetDuration = duration !== SAFE_LAUNCH_FALLBACK.durationMin;
@@ -962,18 +965,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         queueMicrotask(() => mergePracticeParamsPatch({ breath: { preset: breathPattern.toLowerCase() } }));
       }
       if (stillnessConfig && typeof stillnessConfig === 'object') {
-        queueMicrotask(() => setBreathSubmode('stillness'));
-        setLaunchStillnessConfig(
-          normalizeStillnessConfig(stillnessConfig, {
-            fallback: persistedStillnessDefaults,
-            sharedPreDelaySec: sharedBreathPreDelaySec,
-          })
-        );
+        const normalizedStillnessConfig = normalizeStillnessConfig(stillnessConfig, {
+          fallback: persistedStillnessDefaults,
+          sharedPreDelaySec: sharedBreathPreDelaySec,
+        });
+        queueMicrotask(() => {
+          setLaunchStillnessConfig(normalizedStillnessConfig);
+          setBreathSubmode('stillness');
+        });
       } else {
-        setLaunchStillnessConfig(null);
+        queueMicrotask(() => setLaunchStillnessConfig(null));
       }
     } else {
-      setLaunchStillnessConfig(null);
+      queueMicrotask(() => setLaunchStillnessConfig(null));
     }
 
     // Handle circuit practice from curriculum (load circuit definition by ID)
@@ -1045,7 +1049,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [ringTeardownRequested, setRingTeardownRequested] = useState(false);
   const [_lastSessionId, setLastSessionId] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [breathSubmode, setBreathSubmode] = useState("breath");
   const { startMicroNote, pendingMicroNote } = useJournalStore();
   const showSummaryModal = Boolean(showSummary && sessionSummary);
   const practiceActive = isRunning;
@@ -2127,7 +2130,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, setLastPracticeStartProbe, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, getActivePracticeLeg, setLastPracticeStartProbe, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
