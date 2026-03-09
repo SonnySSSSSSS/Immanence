@@ -18,15 +18,9 @@ import { RainbowPresetCanvas } from './rainbowPreset/RainbowPresetCanvas.jsx';
 import ParticleCountdownPreset from './countdown/ParticleCountdownPreset.jsx';
 import { PRODUCTION_RING_DEFAULTS } from './bloomRing/bloomRingProductionDefaults.js';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { BREATH_RING_PRESETS } from './breathingRingPresets.js';
 
 const BREATH_RING_MAX_DPR = 1.5;
-export const BREATH_RING_PRESETS = [
-  { id: 'instrument', label: 'Instrument' },
-  { id: 'bracelet', label: 'Bracelet' },
-  { id: 'polygon', label: 'Polygon' },
-  { id: 'orb', label: 'Countdown' },
-  { id: 'rainbow', label: 'Rainbow Prism' },
-];
 const RING_MODE_CYCLE = BREATH_RING_PRESETS.map((preset) => preset.id);
 
 function normalizeRingMode(mode) {
