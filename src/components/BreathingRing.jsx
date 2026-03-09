@@ -7,7 +7,7 @@
 // - PATH FX: path-specific particle effects sync with breath
 
 import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useId } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { EnsoStroke } from "./EnsoStroke";
 import { useBreathSoundEngine } from '../hooks/useBreathSoundEngine.js';
@@ -37,6 +37,10 @@ function normalizeRingMode(mode) {
 
 function isRingFrameActive(practiceActive = true) {
   return practiceActive;
+}
+
+function getHybridOverlayZoom(size) {
+  return Math.max(1, Math.min(size?.width || 0, size?.height || 0) / 2);
 }
 
 const scheduleBreathingRingUpdate = (callback) => {
@@ -142,7 +146,6 @@ function HybridInstrumentTickOverlayScene({ accentColor, breathDriver }) {
     };
   }, [gapHalfSpanRad]);
 
-  const { camera, size, invalidate } = useThree();
   useEffect(() => {
     const baseMesh = baseMeshRef.current;
     const glowMesh = glowMeshRef.current;
@@ -168,12 +171,6 @@ function HybridInstrumentTickOverlayScene({ accentColor, breathDriver }) {
     baseMesh.frustumCulled = false;
     glowMesh.frustumCulled = false;
   }, [dummy, visibleTickMeta.rankByIndex]);
-
-  useEffect(() => {
-    camera.zoom = Math.min(size.width, size.height) / 2;
-    camera.updateProjectionMatrix();
-    invalidate();
-  }, [size.width, size.height, camera, invalidate]);
 
   useFrame(() => {
     const mesh = glowMeshRef.current;
@@ -506,6 +503,12 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
       (stagePlateSize.height || 560) * 0.64
     )
   );
+  const hybridOverlayCamera = useMemo(() => ({
+    position: [0, 0, 10],
+    near: 0.1,
+    far: 50,
+    zoom: getHybridOverlayZoom(stagePlateSize),
+  }), [stagePlateSize]);
   const segmentDisplay = segmentRemainingSec > 59
     ? formatStillnessClock(segmentRemainingSec)
     : String(segmentRemainingSec);
@@ -699,7 +702,7 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
                       frameloop="always"
                       dpr={[1, BREATH_RING_MAX_DPR]}
                       orthographic
-                      camera={{ position: [0, 0, 10], near: 0.1, far: 50, zoom: 1 }}
+                      camera={hybridOverlayCamera}
                       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
                     >
                       <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} breathDriver={breathDriver} />
@@ -1602,6 +1605,12 @@ export function BreathingRing({
       (stagePlateSize.height || 560) * 0.64
     )
   );
+  const hybridOverlayCamera = useMemo(() => ({
+    position: [0, 0, 10],
+    near: 0.1,
+    far: 50,
+    zoom: getHybridOverlayZoom(stagePlateSize),
+  }), [stagePlateSize]);
   if (isStillnessMode) {
     return <StillnessVisualRing stillnessVisual={{ ...stillnessVisual, ringMode }} practiceActive={practiceActive} />;
   }
@@ -1862,7 +1871,7 @@ export function BreathingRing({
               frameloop="always"
               dpr={[1, BREATH_RING_MAX_DPR]}
               orthographic
-              camera={{ position: [0, 0, 10], near: 0.1, far: 50, zoom: 1 }}
+              camera={hybridOverlayCamera}
               gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
             >
               <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} breathDriver={breathDriver} />
