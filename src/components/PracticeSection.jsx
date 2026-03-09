@@ -3156,20 +3156,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning ? 'none' : 'flex' }}
       >
         <div className="relative z-[1] w-full flex flex-col items-center justify-start">
-          <PracticeHeader
-            isSanctuary={isSanctuary}
-            practiceId={practiceId}
-            onSelectPractice={handleSelectPractice}
-            selector={(
-              <PracticeSelector
-                selectedId={practiceId}
-                onSelect={handleSelectPractice}
-                tokens={uiTokens}
-              />
-            )}
-          />
-
-        {/* Sub-Mode Toggle Buttons (between header and card) */}
+        {/* Sub-Mode Toggle Buttons (above selector) */}
         {(() => {
           const practice = getPracticeConfig(practiceId);
           const hasSubModes = practice?.subModes && Object.keys(practice.subModes).length > 0;
@@ -3255,6 +3242,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             </div>
           );
         })()}
+
+          <PracticeHeader
+            isSanctuary={isSanctuary}
+            practiceId={practiceId}
+            onSelectPractice={handleSelectPractice}
+            selector={(
+              <PracticeSelector
+                selectedId={practiceId}
+                onSelect={handleSelectPractice}
+                tokens={uiTokens}
+              />
+            )}
+          />
 
         {/* Bottom Layer: Dynamic Options Card */}
         <PracticeOptionsCard

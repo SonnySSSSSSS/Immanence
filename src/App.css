@@ -210,10 +210,7 @@
 .PracticePanelShell {
   position: relative;
   overflow: hidden;
-  background-image: var(--practice-panel-wallpaper, none);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-image: none;
 }
 
 /* Tutorial System Styles */

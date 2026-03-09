@@ -52,8 +52,6 @@ function PracticeMenu({
   const activeMode = hasSubModes ? (setters.activeMode || practice.defaultSubMode) : null;
   const activeSubMode = hasSubModes ? practice.subModes[activeMode] : null;
 
-  const wallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
-
   // Resolve config components from string names
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
 
@@ -69,21 +67,6 @@ function PracticeMenu({
       className="relative px-4 sm:px-8 animate-in fade-in duration-300"
       style={{ borderRadius: '24px', overflow: 'hidden' }}
     >
-      {/* Per-card wallpaper layer */}
-      <div
-        className="practice-card-wallpaper"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: 'none',
-          backgroundImage: `url(${wallpaperUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.28,
-        }}
-      />
       <div style={{ position: 'relative', zIndex: 1 }}>
     {/* HEADER - using shared component */}
     <PracticeMenuHeader

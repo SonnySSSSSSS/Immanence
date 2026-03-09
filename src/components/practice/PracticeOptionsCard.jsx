@@ -50,9 +50,9 @@ export function PracticeOptionsCard({
   const isCollapsed = !practiceId;
   const isSanctuary = false;
   const practicePanelWallpaperUrl = `${import.meta.env.BASE_URL}bg/practice-breath-mandala.webp`;
-  const practicePanelWallpaper = tokens?.isLight
-    ? `linear-gradient(rgba(245, 240, 230, 0.70), rgba(245, 240, 230, 0.86)), url("${practicePanelWallpaperUrl}")`
-    : `linear-gradient(rgba(10, 12, 18, 0.35), rgba(10, 12, 18, 0.62)), url("${practicePanelWallpaperUrl}")`;
+  const practicePanelTint = tokens?.isLight
+    ? 'linear-gradient(rgba(245, 240, 230, 0.52), rgba(245, 240, 230, 0.68))'
+    : 'linear-gradient(rgba(10, 12, 18, 0.10), rgba(10, 12, 18, 0.24))';
   const cardPadding = practiceId === 'breath'
     ? (isSanctuary ? '8px 28px 28px' : '8px 20px 20px')
     : (isSanctuary ? '24px' : '20px');
@@ -151,7 +151,7 @@ export function PracticeOptionsCard({
           padding: cardPadding,
           minHeight: isCollapsed ? '88px' : 'auto',
           border: '1px solid var(--accent-30)',
-          '--practice-panel-wallpaper': practicePanelWallpaper,
+          backgroundColor: tokens?.isLight ? 'rgba(245, 240, 230, 0.22)' : 'rgba(10, 12, 18, 0.12)',
           boxShadow: `
             0 12px 48px rgba(0, 0, 0, 0.6),
             0 4px 16px var(--accent-15),
@@ -161,6 +161,44 @@ export function PracticeOptionsCard({
           `,
         }}
       >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 0,
+            backgroundImage: `url(${practicePanelWallpaperUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: tokens?.isLight ? 0.96 : 0.88,
+            transform: 'scale(1.01)',
+            filter: tokens?.isLight
+              ? 'saturate(0.92) contrast(1.02) brightness(1.02)'
+              : 'saturate(1.04) contrast(1.08) brightness(0.92)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 1,
+            background: practicePanelTint,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 2,
+            background: tokens?.isLight
+              ? 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 30%, rgba(120, 90, 50, 0.04) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 34%, rgba(0,0,0,0.08) 100%)',
+          }}
+        />
+
         {/* Inner decorative border line */}
         <div 
           className="absolute pointer-events-none"
@@ -169,6 +207,7 @@ export function PracticeOptionsCard({
             left: '8px',
             right: '8px',
             bottom: '8px',
+            zIndex: 3,
             border: '1px solid var(--accent-25)',
             borderRadius: '10px',
           }}
@@ -206,8 +245,8 @@ export function PracticeOptionsCard({
         {/* Top highlight line */}
         <div className="absolute top-0 left-[20%] right-[20%] h-[1px] pointer-events-none" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)' }} />
       
-        {isCollapsed ? (
-        <div className="h-[88px] flex items-center justify-center">
+      {isCollapsed ? (
+        <div className="relative z-[4] h-[88px] flex items-center justify-center">
           <span style={{ 
             fontFamily: 'var(--font-display)', 
             fontSize: '11px', 
@@ -221,7 +260,8 @@ export function PracticeOptionsCard({
         </div>
       ) : (
         practiceId === 'breath' ? (
-          <BreathPracticeCard
+          <div className="relative z-[4]">
+            <BreathPracticeCard
             practiceId={practiceId}
             label={label}
             breathSubmode={breathSubmode}
@@ -246,8 +286,10 @@ export function PracticeOptionsCard({
             onToggleTrajectory={onToggleTrajectory}
             onOpenTrajectory={onOpenTrajectory}
           />
+          </div>
         ) : (
-          <PracticeMenu
+          <div className="relative z-[4]">
+            <PracticeMenu
             containerKey={practiceId}
             label={label}
             showRitualSubtitle={menuShowRitualSubtitle}
@@ -271,6 +313,7 @@ export function PracticeOptionsCard({
             onQuickStart={onQuickStart}
             startButtonLabel={menuStartButtonLabel}
           />
+          </div>
         ))}
         </div>
       </div>

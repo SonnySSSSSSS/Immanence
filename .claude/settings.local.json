@@ -44,7 +44,8 @@
       "Bash(pkill -f \"node.*vite\")",
       "Bash(grep -v \"//\")",
       "Bash(pkill -f \"npm run dev\")",
-      "Bash(python3 -c:*)"
+      "Bash(python3 -c:*)",
+      "Bash(del \"D:\\\\Unity Apps\\\\immanence-os\\\\fix_ritual_icons.py\")"
     ]
   },
   "mcpServers": {
