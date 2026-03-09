@@ -167,7 +167,9 @@ export class IsochronicEngine {
     // Rewire: envGain -> chorus -> reverb -> masterGain
     try {
       this.envGain.disconnect();
-    } catch {}
+    } catch (error) {
+      void error;
+    }
     this.envGain.connect(this._chorus.input);
     this._chorus.output.connect(this._reverb.input);
     this._reverb.output.connect(this.masterGain);
@@ -229,7 +231,9 @@ export class IsochronicEngine {
         this._reverb.input.disconnect();
         this._reverb.output.disconnect();
       }
-    } catch {}
+    } catch (error) {
+      void error;
+    }
 
     this._chorus = null;
     this._reverb = null;

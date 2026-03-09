@@ -92,13 +92,17 @@ export function useIsochronicEngine() {
       if (engineRef.current) {
         try {
           engineRef.current.stop();
-        } catch {}
+        } catch (error) {
+          void error;
+        }
         engineRef.current = null;
       }
       if (ctxRef.current) {
         try {
           ctxRef.current.close();
-        } catch {}
+        } catch (error) {
+          void error;
+        }
         ctxRef.current = null;
       }
     };
