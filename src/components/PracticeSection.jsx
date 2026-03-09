@@ -2395,7 +2395,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     window.addEventListener('keydown', onWindowKeyDown);
     return () => window.removeEventListener('keydown', onWindowKeyDown);
-  }, []);
+  }, [setIsPresetSwitcherOpen, setRingPresetIndex]);
 
   // RENDER PRIORITY 1: Active Practice Session
   const sessionView = isRunning ? (() => {
