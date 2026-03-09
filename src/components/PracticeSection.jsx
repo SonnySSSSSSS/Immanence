@@ -1249,7 +1249,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // HELPER SETTERS: Bridging old calls to new updateParams logic
   const setPreset = (val) => updateParams('breath', { preset: val });
-  const setPattern = (val) => {
+  const setPattern = useCallback((val) => {
     if (typeof val === 'function') {
       // Handle updater function (must respect locks; do not bypass updateParams).
       setPracticeParams((prev) => {
@@ -1276,7 +1276,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       // Handle direct value
       updateParams('breath', { pattern: val });
     }
-  };
+  }, [isLocked, setPracticeParams, updateParams]);
   const handleBenchmarkClose = (results) => {
     setShowBreathBenchmark(false);
     if (results) {
@@ -1459,7 +1459,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (preset && BREATH_PRESETS[preset]) {
       queueMicrotask(() => setPattern(BREATH_PRESETS[preset]));
     }
-  }, [preset]);
+  }, [preset, setPattern]);
 
   useEffect(() => {
     if (practice === "Circuit" && !circuitConfig) {
