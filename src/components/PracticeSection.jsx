@@ -1195,7 +1195,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }
       }
     };
-    }, [isRunning, activePracticeSession, activeCircuitId]);
+    }, [isRunning, activePracticeSession, activeCircuitId, clearActivePracticeSession]);
 
   const currentRingPreset = BREATH_RING_PRESETS[ringPresetIndex] || BREATH_RING_PRESETS[0];
 
