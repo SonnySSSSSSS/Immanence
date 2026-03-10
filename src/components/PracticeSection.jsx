@@ -575,7 +575,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
-  const getForceScheduleMatchedPayload = () => {
+  const getForceScheduleMatchedPayload = useCallback(() => {
     const pathCtx = activePathContextRef.current;
     if (!pathCtx || pathCtx.forceStart !== true || pathCtx.forceWindowBypass !== true) {
       return null;
@@ -587,7 +587,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       slotTime: typeof pathCtx.slotTime === 'string' ? pathCtx.slotTime : null,
       scheduleDateKey: typeof pathCtx.scheduleDateKey === 'string' ? pathCtx.scheduleDateKey : null,
     };
-  };
+  }, []);
   const pausedAtRef = useRef(null);
   const pathGuidanceStartedRef = useRef(false);
   const pathGuidanceWasPausedRef = useRef(false);
@@ -730,14 +730,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [isLocked]);
 
   // Get the actual practice ID to run, accounting for subModes in consolidated practices
-  const getActualPracticeId = (baseId) => {
+  const getActualPracticeId = useCallback((baseId) => {
     const practice = PRACTICE_REGISTRY[baseId];
     if (!practice?.subModes) return baseId; // No subModes, return as-is
     
     const activeMode = practiceParams[baseId]?.activeMode || practice.defaultSubMode;
     const subMode = practice.subModes[activeMode];
     return subMode?.id || baseId; // Return the subMode's practice ID
-  };
+  }, [practiceParams]);
 
   // Shared UI states (non-practice specific)
   const [isRunning, setIsRunning] = useState(false);
@@ -1261,7 +1261,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const isochronicPreset = ISOCHRONIC_PRESETS.find(p => p.name === isochronicPresetId) || ISOCHRONIC_PRESETS[0];
 
   // HELPER SETTERS: Bridging old calls to new updateParams logic
-  const setPreset = (val) => updateParams('breath', { preset: val });
+  const setPreset = useCallback((val) => updateParams('breath', { preset: val }), [updateParams]);
   const setPattern = useCallback((val) => {
     if (typeof val === 'function') {
       // Handle updater function (must respect locks; do not bypass updateParams).
@@ -1310,7 +1310,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setIsochronicExactHz = (val) => updateParams('sound', { exactHz: val });
   const setIsochronicReverbWet = (val) => updateParams('sound', { reverbWet: val });
   const setIsochronicChorusWet = (val) => updateParams('sound', { chorusWet: val });
-  const setSensoryType = (val) => updateParams(vTarget, { sensoryType: val });
+  const setSensoryType = useCallback((val) => updateParams(vTarget, { sensoryType: val }), [updateParams, vTarget]);
   const setVipassanaTheme = (val) => updateParams(vTarget, { vipassanaTheme: val });
   const setVipassanaElement = (val) => updateParams(vTarget, { vipassanaElement: val });
   const setScanType = (val) => updateParams(vTarget, { scanType: val });
@@ -1485,7 +1485,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [practice, circuitConfig, setCircuitConfig]);
 
-  const setupCircuitExercise = (exerciseItem) => {
+  const setupCircuitExercise = useCallback((exerciseItem) => {
     const { exercise, duration: exDuration } = exerciseItem;
     console.error(`[CIRCUIT SETUP] Setting up exercise: ${exercise.practiceType}`);
     prepareSessionSurfaceForRun();
@@ -1525,9 +1525,24 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
     setBreathCount(0);
-  };
+  }, [
+    notifyPracticingChange,
+    prepareSessionSurfaceForRun,
+    setBreathCount,
+    setDuration,
+    setIsRunning,
+    setLastErrorMs,
+    setLastSignedErrorMs,
+    setPattern,
+    setPracticeId,
+    setPreset,
+    setSensoryType,
+    setSessionStartTime,
+    setTapErrors,
+    setTimeLeft,
+  ]);
 
-  const startCircuitCountdown = (nextExercise) => {
+  const startCircuitCountdown = useCallback((nextExercise) => {
     if (circuitCountdownRef.current) {
       clearInterval(circuitCountdownRef.current);
     }
@@ -1546,22 +1561,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         return prev - 1;
       });
     }, 1000);
-  };
+  }, [circuitConfig, circuitCountdownRef, setCountdownValue, setupCircuitExercise]);
 
-  const advanceCircuitExercise = () => {
-    if (!activeCircuitId || !circuitConfig) return;
-
-    const nextIndex = circuitExerciseIndex + 1;
-    if (nextIndex < circuitConfig.exercises.length) {
-      setCircuitExerciseIndex(nextIndex);
-      const nextExercise = circuitConfig.exercises[nextIndex];
-      startCircuitCountdown(nextExercise);
-    } else {
-      handleCircuitComplete();
-    }
-  };
-
-  const handleCircuitComplete = () => {
+  const handleCircuitComplete = useCallback(() => {
     // Capture curriculum context BEFORE clearing (same pattern as handleStop)
     const savedActivePracticeSession = activePracticeSession;
     const ringCanvasWasMounted = shouldRenderRingCanvas;
@@ -1655,7 +1657,44 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setActiveCircuitId(null);
     setCircuitExerciseIndex(0);
     setPracticeId('circuit');
-  };
+  }, [
+    activeCircuitId,
+    activePracticeSession,
+    circuitConfig,
+    clearActivePracticeSession,
+    getForceScheduleMatchedPayload,
+    logCircuitCompletionEvent,
+    notifyPracticingChange,
+    queueSummaryAfterRingUnmount,
+    setActiveCircuitId,
+    setCircuitExerciseIndex,
+    setIsRunning,
+    setLastSessionId,
+    setPracticeId,
+    setRingTeardownRequested,
+    shouldRenderRingCanvas,
+    startMicroNote,
+  ]);
+
+  const advanceCircuitExercise = useCallback(() => {
+    if (!activeCircuitId || !circuitConfig) return;
+
+    const nextIndex = circuitExerciseIndex + 1;
+    if (nextIndex < circuitConfig.exercises.length) {
+      setCircuitExerciseIndex(nextIndex);
+      const nextExercise = circuitConfig.exercises[nextIndex];
+      startCircuitCountdown(nextExercise);
+    } else {
+      handleCircuitComplete();
+    }
+  }, [
+    activeCircuitId,
+    circuitConfig,
+    circuitExerciseIndex,
+    handleCircuitComplete,
+    setCircuitExerciseIndex,
+    startCircuitCountdown,
+  ]);
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -1686,7 +1725,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     });
   }, [isRunning, setIsSessionPaused, setSessionStartTime]);
 
-  const handleStop = (options = {}) => {
+  const handleStop = useCallback((options = {}) => {
     // options.completed = true means the session timer naturally reached 0
     // If not provided (manual stop), we check timeLeft
     const wasNaturalCompletion = options.completed === true;
@@ -1965,7 +2004,40 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         startMicroNote(recordedSession.id);
       }
     }
-  };
+  }, [
+    activeCircuitId,
+    activePracticeSession,
+    breathCount,
+    breathSubmode,
+    circuitConfig,
+    clearActivePracticeSession,
+    duration,
+    emotionMode,
+    endSession,
+    getActualPracticeId,
+    getForceScheduleMatchedPayload,
+    handleCircuitComplete,
+    notifyBreathStateChange,
+    notifyPracticingChange,
+    practice,
+    practiceId,
+    practiceParams,
+    preset,
+    queueSummaryAfterRingUnmount,
+    sakshiVersion,
+    sensoryType,
+    setActiveRitual,
+    setCurrentStepIndex,
+    setIsRunning,
+    setIsSessionPaused,
+    setLastSessionId,
+    setRingTeardownRequested,
+    setTimeLeft,
+    shouldRenderRingCanvas,
+    startMicroNote,
+    tapErrors,
+    timeLeft,
+  ]);
 
   const handleFocusRating = (rating) => {
     // Update the leg completion with focus rating
@@ -2300,51 +2372,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     });
   };
 
-  // Stable refs for values used in the countdown effect that must not cause
-  // interval churn or re-trigger the zero-boundary branch when their identity
-  // or value changes independently of the countdown progression.
-  //
-  // handleStop / advanceCircuitExercise: plain functions (not useCallback) that
-  // close over many render-cycle values — re-created on every render.
-  //
-  // circuitConfig: object from useBreathSessionManager — may get a new reference
-  // on state updates unrelated to the active circuit (e.g. settings edits).
-  // Adding directly to deps caused premature handleStop on session start when
-  // circuitConfig changed identity while timeLeft was still 0.
-  //
-  // countdownValue: adding directly to deps caused a double-fire at the circuit
-  // exercise boundary. When a countdown finishes, setCountdownValue(null) and
-  // setTimeLeft(next) are batched, but the dep-triggered re-run could see
-  // timeLeft===0 and countdownValue===null simultaneously, calling
-  // advanceCircuitExercise a second time. The original mechanism relies on the
-  // timeLeft change (not countdownValue change) to re-trigger the effect.
-  const handleStopRef = useRef(handleStop);
-  const advanceCircuitExerciseRef = useRef(advanceCircuitExercise);
-  const circuitConfigRef = useRef(circuitConfig);
-  const countdownValueRef = useRef(countdownValue);
-  // useLayoutEffect keeps refs current after every render, before effects fire.
-  // This avoids the react-hooks/refs lint error from assigning .current during render,
-  // while preserving the same stale-closure protection as the inline pattern.
-  useLayoutEffect(() => {
-    handleStopRef.current = handleStop;
-    advanceCircuitExerciseRef.current = advanceCircuitExercise;
-    circuitConfigRef.current = circuitConfig;
-    countdownValueRef.current = countdownValue;
-  });
+  const previousTimeLeftRef = useRef(timeLeft);
 
   useEffect(() => {
     let interval = null;
+    const reachedZeroThisRender = previousTimeLeftRef.current > 0 && timeLeft === 0;
 
     if (isRunning && !isSessionPaused && practice !== "Rituals") {
       if (timeLeft > 0) {
         interval = setInterval(() => {
           setTimeLeft((prev) => prev - 1);
         }, 1000);
-      } else if (timeLeft === 0 && countdownValueRef.current === null) {
-        if (activeCircuitId && circuitConfigRef.current) {
-          advanceCircuitExerciseRef.current();
+      } else if (reachedZeroThisRender && countdownValue === null) {
+        if (activeCircuitId && circuitConfig) {
+          queueMicrotask(() => advanceCircuitExercise());
         } else {
-          queueMicrotask(() => handleStopRef.current({ completed: true }));
+          queueMicrotask(() => handleStop({ completed: true }));
         }
       }
     }
@@ -2352,7 +2395,22 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, isSessionPaused, timeLeft, practice, activeCircuitId, setTimeLeft]);
+  }, [
+    activeCircuitId,
+    advanceCircuitExercise,
+    circuitConfig,
+    countdownValue,
+    handleStop,
+    isRunning,
+    isSessionPaused,
+    practice,
+    setTimeLeft,
+    timeLeft,
+  ]);
+
+  useEffect(() => {
+    previousTimeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   // Update tempo sync session elapsed time (calculates segment transitions)
   useEffect(() => {
@@ -2361,6 +2419,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const totalElapsedSec = songDurationSec - timeLeft;
     useTempoSyncSessionStore.getState().updateElapsed(totalElapsedSec, tempoSyncBpm);
   }, [tempoSessionActive, isRunning, timeLeft, songDurationSec, tempoSyncBpm]);
+
+  const runtimeBreathBenchmarkActive = Boolean(tempoSyncEnabled && hasBenchmark);
+  const runtimeBreathBenchmark = runtimeBreathBenchmarkActive ? benchmark : null;
 
   const {
     isBreathPractice,
@@ -2373,8 +2434,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pattern,
     duration,
     breathCount,
-    hasBenchmark,
-    benchmark,
+    hasBenchmark: runtimeBreathBenchmarkActive,
+    benchmark: runtimeBreathBenchmark,
     tempoSyncEnabled,
     tempoSyncBpm,
     tempoPhaseDuration,
