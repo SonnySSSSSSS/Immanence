@@ -11,6 +11,7 @@ import {
 import { sanitizeText } from "../utils/textUtils.js";
 import { VideoLibrary } from "./VideoLibrary.jsx";
 import { SelfKnowledgeView } from "./wisdom/SelfKnowledgeView.jsx";
+import { useDisplayModeStore } from "../state/displayModeStore.js";
 import { useUiStore } from "../state/uiStore.js";
 
 const TABS = [

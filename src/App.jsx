@@ -435,6 +435,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.263 - fix(wisdom): restore missing display mode store import in WisdomSection
   // v3.27.262 - fix(ui): replace corrupted triangle/arrow/middot Unicode in CircuitTrainingSelector and TrackingHub
   // v3.27.261 - fix(rituals): replace corrupted icon byte sequences with correct UTF-8 emoji
   // v3.27.260 - feat(practice): swap nav buttons above selector dropdown
