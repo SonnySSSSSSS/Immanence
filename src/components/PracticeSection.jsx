@@ -1105,6 +1105,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     console.log("[BreathingRing] unmounted before summary");
   }, []);
 
+  const prepareSessionSurfaceForRun = useCallback(() => {
+    // A fresh run must clear any pending summary teardown before the next
+    // ring-mount gate is evaluated, but only on an actual new run.
+    awaitingRingUnmountForSummaryRef.current = false;
+    ringUnmountedForSummaryRef.current = false;
+    setPendingSummaryPayload(null);
+    setPendingSummaryNeedsRingUnmount(false);
+    setShowSummary(false);
+    setSessionSummary(null);
+    setRingTeardownRequested(false);
+  }, []);
+
   useEffect(() => {
     if (!pendingSummaryPayload) return;
     if (shouldRenderRingCanvas) return;
@@ -1476,6 +1488,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const setupCircuitExercise = (exerciseItem) => {
     const { exercise, duration: exDuration } = exerciseItem;
     console.error(`[CIRCUIT SETUP] Setting up exercise: ${exercise.practiceType}`);
+    prepareSessionSurfaceForRun();
 
     if (exercise.practiceType === 'Breath & Stillness') {
       console.trace(`[CIRCUIT] Setting practiceId to 'breath' for ${exercise.practiceType}`);
@@ -1505,7 +1518,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setDuration(exDuration);
     setTimeLeft(exDuration * 60);
 
-    setRingTeardownRequested(false);
     setIsRunning(true);
     notifyPracticingChange(true);
     setSessionStartTime(performance.now());
@@ -2173,6 +2185,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       setTimeLeft(durationOverrideSec);
     }
 
+    prepareSessionSurfaceForRun();
     pausedAtRef.current = null;
     setIsSessionPaused(false);
     setIsStarting(true);
@@ -2281,9 +2294,38 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     });
   };
 
-  // Deferred exhaustive-deps follow-up: this timer effect is coupled to the
-  // circuit countdown, advance, and stop lifecycle, so dependency cleanup
-  // should be handled as one bounded lifecycle-surface task.
+  // Stable refs for values used in the countdown effect that must not cause
+  // interval churn or re-trigger the zero-boundary branch when their identity
+  // or value changes independently of the countdown progression.
+  //
+  // handleStop / advanceCircuitExercise: plain functions (not useCallback) that
+  // close over many render-cycle values — re-created on every render.
+  //
+  // circuitConfig: object from useBreathSessionManager — may get a new reference
+  // on state updates unrelated to the active circuit (e.g. settings edits).
+  // Adding directly to deps caused premature handleStop on session start when
+  // circuitConfig changed identity while timeLeft was still 0.
+  //
+  // countdownValue: adding directly to deps caused a double-fire at the circuit
+  // exercise boundary. When a countdown finishes, setCountdownValue(null) and
+  // setTimeLeft(next) are batched, but the dep-triggered re-run could see
+  // timeLeft===0 and countdownValue===null simultaneously, calling
+  // advanceCircuitExercise a second time. The original mechanism relies on the
+  // timeLeft change (not countdownValue change) to re-trigger the effect.
+  const handleStopRef = useRef(handleStop);
+  const advanceCircuitExerciseRef = useRef(advanceCircuitExercise);
+  const circuitConfigRef = useRef(circuitConfig);
+  const countdownValueRef = useRef(countdownValue);
+  // useLayoutEffect keeps refs current after every render, before effects fire.
+  // This avoids the react-hooks/refs lint error from assigning .current during render,
+  // while preserving the same stale-closure protection as the inline pattern.
+  useLayoutEffect(() => {
+    handleStopRef.current = handleStop;
+    advanceCircuitExerciseRef.current = advanceCircuitExercise;
+    circuitConfigRef.current = circuitConfig;
+    countdownValueRef.current = countdownValue;
+  });
+
   useEffect(() => {
     let interval = null;
 
@@ -2292,11 +2334,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         interval = setInterval(() => {
           setTimeLeft((prev) => prev - 1);
         }, 1000);
-      } else if (timeLeft === 0 && countdownValue === null) {
-        if (activeCircuitId && circuitConfig) {
-          advanceCircuitExercise();
+      } else if (timeLeft === 0 && countdownValueRef.current === null) {
+        if (activeCircuitId && circuitConfigRef.current) {
+          advanceCircuitExerciseRef.current();
         } else {
-          queueMicrotask(() => handleStop({ completed: true }));
+          queueMicrotask(() => handleStopRef.current({ completed: true }));
         }
       }
     }
@@ -2304,7 +2346,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, isSessionPaused, timeLeft, practice, activeCircuitId]);
+  }, [isRunning, isSessionPaused, timeLeft, practice, activeCircuitId, setTimeLeft]);
 
   // Update tempo sync session elapsed time (calculates segment transitions)
   useEffect(() => {
