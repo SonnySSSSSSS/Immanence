@@ -668,6 +668,9 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const forceStart = launchMeta?.forceStart === true;
         const forceWindowBypass = launchMeta?.forceWindowBypass === true;
         const scheduleDateKey = typeof launchMeta?.scheduleDateKey === 'string' ? launchMeta.scheduleDateKey : null;
+        const autoStartRequestId = practiceId === 'breath'
+            ? `${Date.now()}:${Math.random().toString(36).slice(2, 8)}`
+            : null;
 
         useUiStore.getState().setPracticeLaunchContext({
             source: "dailySchedule",
@@ -675,6 +678,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             __sourceTag: "DailyPracticeCard",
             // PROBE:GUIDANCE_CTX_OVERLAY:END
             practiceId,
+            autoStart: practiceId === 'breath',
+            autoStartRequestId,
             durationMin: Number.isFinite(Number(slot?.durationMin)) ? Number(slot.durationMin) : undefined,
             practiceParamsPatch: slot?.practiceParamsPatch || undefined,
             overrides: slot?.overrides || undefined,

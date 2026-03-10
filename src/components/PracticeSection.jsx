@@ -540,6 +540,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
   const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
+  const [pendingPathAutoStart, setPendingPathAutoStart] = useState(null);
+  const queuedPathAutoStartRequestIdRef = useRef(null);
+  const consumedPathAutoStartRequestIdRef = useRef(null);
 
   // CURRICULUM INTEGRATION (use selectors to prevent unnecessary re-renders)
   const getActivePracticeLeg = useCurriculumStore(s => s.getActivePracticeLeg);
@@ -877,6 +880,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       queueMicrotask(() => {
         setPathLaunchGuidance(undefined);
         setInitiationBenchmarkContext(null);
+        setPendingPathAutoStart(null);
+        queuedPathAutoStartRequestIdRef.current = null;
         if (_fbResetPracticeId) setPracticeId(SAFE_LAUNCH_FALLBACK.practiceId);
         setHasExpandedOnce(true);
         if (_fbResetDuration) setDuration(SAFE_LAUNCH_FALLBACK.durationMin);
@@ -1010,6 +1015,41 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activePathContextRef.current = ctx.pathContext;
     } else {
       activePathContextRef.current = null;
+    }
+
+    const shouldAutoStartBreathLaunch =
+      ctx.source === 'dailySchedule' &&
+      ctx.autoStart === true &&
+      ctx.practiceId === 'breath';
+    const autoStartRequestId =
+      typeof ctx.autoStartRequestId === 'string' && ctx.autoStartRequestId.length > 0
+        ? ctx.autoStartRequestId
+        : null;
+    const expectedDurationSec =
+      Number.isFinite(nextDurationMin) && nextDurationMin > 0
+        ? Math.round(nextDurationMin * 60)
+        : null;
+    const expectedBreathSubmode =
+      ctx.practiceConfig?.stillness && typeof ctx.practiceConfig.stillness === 'object'
+        ? 'stillness'
+        : 'breath';
+    if (
+      shouldAutoStartBreathLaunch &&
+      autoStartRequestId &&
+      queuedPathAutoStartRequestIdRef.current !== autoStartRequestId &&
+      consumedPathAutoStartRequestIdRef.current !== autoStartRequestId
+    ) {
+      queuedPathAutoStartRequestIdRef.current = autoStartRequestId;
+      queueMicrotask(() => {
+        setPendingPathAutoStart({
+          requestId: autoStartRequestId,
+          practiceId: 'breath',
+          durationSec: expectedDurationSec,
+          breathSubmode: expectedBreathSubmode,
+        });
+      });
+    } else if (!shouldAutoStartBreathLaunch) {
+      queueMicrotask(() => setPendingPathAutoStart(null));
     }
 
     clearPracticeLaunchContext?.();
@@ -2302,6 +2342,25 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   };
 
+  useLayoutEffect(() => {
+    if (!pendingPathAutoStart || isRunning) return;
+    if (consumedPathAutoStartRequestIdRef.current === pendingPathAutoStart.requestId) return;
+    if (practiceId !== pendingPathAutoStart.practiceId) return;
+    if (
+      pendingPathAutoStart.durationSec !== null &&
+      Math.round(duration * 60) !== pendingPathAutoStart.durationSec
+    ) {
+      return;
+    }
+    if (practiceId === 'breath' && breathSubmode !== pendingPathAutoStart.breathSubmode) {
+      return;
+    }
+
+    consumedPathAutoStartRequestIdRef.current = pendingPathAutoStart.requestId;
+    setPendingPathAutoStart(null);
+    handleStart();
+  }, [pendingPathAutoStart, isRunning, practiceId, duration, breathSubmode, handleStart]);
+
   const handleSelectRitual = (ritual) => {
     // Persist default ritual on selection
     localStorage.setItem('immanenceOS.rituals.defaultRitualId', ritual.id);
@@ -3272,7 +3331,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
       <PracticeSectionShell
         className="practice-section-container w-full flex flex-col items-center justify-start"
-        style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning ? 'none' : 'flex' }}
+        style={{ paddingTop: '8px', paddingBottom: '16px', position: 'relative', display: showSummaryModal || isRunning || _isStarting || pendingPathAutoStart ? 'none' : 'flex' }}
       >
         <div className="relative z-[1] w-full flex flex-col items-center justify-start">
         {/* Sub-Mode Toggle Buttons (above selector) */}
