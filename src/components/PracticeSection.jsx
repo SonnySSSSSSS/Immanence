@@ -2089,6 +2089,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
     setPathLaunchGuidance((hasPathOccurrenceContext || activePracticeSession) ? resolvedPathGuidance : undefined);
+    // Clear any residual teardown state in the same batch as isRunning=true so that
+    // shouldRenderRingCanvas evaluates true on the first render of the new session.
+    // Pre-session edits can leave ringTeardownRequested=true from a prior session's
+    // teardown; resetting here pairs with prepareSessionSurfaceForRun to guarantee
+    // the gate is open exactly when the run becomes active.
+    setRingTeardownRequested(false);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
     setSessionStartTime(performance.now());
@@ -2146,7 +2152,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, getActivePracticeLeg, setLastPracticeStartProbe, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, getActivePracticeLeg, setLastPracticeStartProbe, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setRingTeardownRequested, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
