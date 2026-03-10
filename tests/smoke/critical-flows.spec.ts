@@ -672,6 +672,95 @@ test('TEST 8 — Cross-user isolation: Account B cannot access Account A data', 
   }
 });
 
+// TEST 9 — Forced token refresh: session identity survives refreshSession()
+//
+// Why this matters:
+//   Supabase access tokens expire after ~1 hour. The client auto-refreshes via a background
+//   timer, but that timer path cannot be triggered in a time-bounded smoke run. Instead, this
+//   test calls supabase.auth.refreshSession() directly to prove the refresh endpoint is
+//   reachable from this deployment and that the session identity (userId) survives the exchange.
+//
+// What this proves (when credentials are supplied):
+//   a) supabase.auth.refreshSession() succeeds against the live project — endpoint reachable
+//   b) The returned session carries the same userId (identity preserved through refresh)
+//   c) The app (hub) remains functional after the refresh (Supabase client accepts the new token)
+//
+// What this does NOT prove:
+//   - The Supabase client auto-refresh timer (triggered by background setInterval ~60s before expiry)
+//   - Token refresh behavior under network failure or mid-session outage
+//   - Whether the re-stored access_token is identical or different from before
+//     (either outcome is acceptable; we care about session continuity, not token stability)
+test('TEST 9 — Forced token refresh: session identity survives refreshSession()', async ({ page }) => {
+  const email = process.env.BETA_TEST_EMAIL ?? '';
+  const password = process.env.BETA_TEST_PASSWORD ?? '';
+
+  if (!email || !password) {
+    test.skip(true, [
+      'BETA_TEST_EMAIL and BETA_TEST_PASSWORD are not set.',
+      'Forced token refresh is UNVERIFIED. Supply credentials at runtime to prove refreshSession()',
+      'reaches the live Supabase project and preserves session identity.',
+    ].join(' '));
+    return;
+  }
+
+  await page.route('**/auth/v1/logout', route => route.fulfill({ status: 204, body: '' }));
+
+  // --- 1. Sign in with real credentials ---
+  await gotoAppRoot(page);
+  await page.evaluate(() => { window.localStorage.clear(); window.sessionStorage.clear(); });
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByPlaceholder('Email')).toBeVisible();
+
+  await page.getByPlaceholder('Email').fill(email);
+  await page.getByPlaceholder('Password').fill(password);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+
+  const namePromptDismiss = page.getByRole('button', { name: 'Not now', exact: true });
+  if (await namePromptDismiss.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await namePromptDismiss.click();
+  }
+  await expectHubVisible(page);
+
+  // --- 2. Capture userId before refresh, then force refresh ---
+  const refreshResult = await page.evaluate(async () => {
+    // @ts-ignore — runtime browser import; TypeScript cannot resolve Vite src paths from Node
+    const mod = await import('/src/lib/supabaseClient.js');
+    const supabase = (mod as any).supabase;
+
+    const { data: before } = await supabase.auth.getSession();
+    const userIdBefore = before?.session?.user?.id ?? null;
+
+    // Force immediate token refresh via refresh_token → new access_token exchange
+    const { data: refreshed, error } = await supabase.auth.refreshSession();
+
+    return {
+      userIdBefore,
+      hasError: !!error,
+      errorMessage: error?.message ?? null,
+      userIdAfter: refreshed?.session?.user?.id ?? null,
+      hasSessionAfter: !!refreshed?.session,
+    };
+  });
+
+  // Refresh must complete without error — proves endpoint reachable + refresh_token valid
+  expect(refreshResult.userIdBefore).toBeTruthy();
+  expect(refreshResult.userIdBefore).not.toBe('00000000-0000-0000-0000-000000000001');
+  expect(refreshResult.hasError).toBe(false);
+  expect(refreshResult.hasSessionAfter).toBe(true);
+  // Session identity must be preserved — proves continuity through the refresh exchange
+  expect(refreshResult.userIdAfter).toBe(refreshResult.userIdBefore);
+
+  // --- 3. App still functional after refresh (Supabase client accepted the new token) ---
+  await expectHubVisible(page);
+
+  // --- 4. Sign out (cleanup) ---
+  await page.getByTitle('Click for account / logout').click();
+  await expect(page.getByRole('button', { name: 'Sign Out', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
+  await expect(page.getByPlaceholder('Email')).toBeVisible();
+});
+
 test('TEST 4 — Reload persists active path and no overlays auto-open (Flow #8)', async ({ page }) => {
   await startFromCleanState(page);
   await beginInitiationPathWithTwoSlots(page);
