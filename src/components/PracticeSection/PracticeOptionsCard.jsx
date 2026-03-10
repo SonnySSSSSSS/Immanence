@@ -48,6 +48,9 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
   const ActiveSubModeConfig = activeSubMode?.configComponent ? CONFIG_COMPONENTS[activeSubMode.configComponent] : null;
 
   // Intentional Reveal Logic: Scroll into view when expanded
+  // Note: effect is dead in the common flow — hasExpandedOnce initializes true from
+  // persisted practiceId prefs (PracticeSection.jsx:537). setHasExpandedOnce included
+  // for dep-array hygiene; carries zero runtime risk.
   useEffect(() => {
     if (practiceId && !hasExpandedOnce && cardRef.current) {
       const timer = setTimeout(() => {
@@ -56,7 +59,7 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
       }, 400); // Wait for CSS transition
       return () => clearTimeout(timer);
     }
-  }, [practiceId, hasExpandedOnce]);
+  }, [practiceId, hasExpandedOnce, setHasExpandedOnce]);
 
   return (
     <div
@@ -92,7 +95,7 @@ export function PracticeOptionsCard({ practiceId, duration, onDurationChange, on
         }}
       >
         {/* Inner decorative border line */}
-        <div 
+        <div
           className="absolute pointer-events-none"
           style={{
             top: '8px',
