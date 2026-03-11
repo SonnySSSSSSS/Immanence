@@ -651,7 +651,7 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
                   />
                 )}
 
-                {normalizedMode !== "rainbow" && (
+                {normalizedMode !== "rainbow" && !isOrb && (
                   <div
                     style={{
                       position: "absolute",
@@ -679,28 +679,6 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
                       activePresetLabel={normalizedMode}
                       normalizedPresetNumber={null}
                     />
-                  </div>
-                )}
-
-                {normalizedMode === "bracelet" && !isOrb && practiceActive && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      pointerEvents: "none",
-                      background: "transparent",
-                      zIndex: 20,
-                    }}
-                  >
-                    <Canvas
-                      frameloop="always"
-                      dpr={[1, BREATH_RING_MAX_DPR]}
-                      orthographic
-                      camera={hybridOverlayCamera}
-                      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-                    >
-                      <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} breathDriver={breathDriver} />
-                    </Canvas>
                   </div>
                 )}
 
@@ -1813,7 +1791,7 @@ export function BreathingRing({
 
 	        {/* DEV ring-mode overlay removed (was used for probe targeting) */}
 
-        {rndRingMode !== 'rainbow' && (
+        {rndRingMode !== 'rainbow' && !isOrb && (
           <div
             style={{
               position: "absolute",
@@ -1841,28 +1819,6 @@ export function BreathingRing({
               activePresetLabel={activePresetLabel}
               normalizedPresetNumber={normalizedPresetNumber}
             />
-          </div>
-        )}
-
-        {rndRingMode === 'bracelet' && !isOrb && isFrameActive && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              background: 'transparent',
-              zIndex: 20,
-            }}
-          >
-            <Canvas
-              frameloop="always"
-              dpr={[1, BREATH_RING_MAX_DPR]}
-              orthographic
-              camera={hybridOverlayCamera}
-              gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-            >
-              <HybridInstrumentTickOverlayScene accentColor={liveAccentColor} breathDriver={breathDriver} />
-            </Canvas>
           </div>
         )}
 
