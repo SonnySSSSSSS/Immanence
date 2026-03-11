@@ -5,14 +5,13 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
-import { useUserModeStore } from '../state/userModeStore.js';
 import { useUiStore } from '../state/uiStore.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getPathById } from '../data/navigationData.js';
 import { addDaysToDateKey, getLocalDateKey, parseDateKeyToUtcMs } from '../utils/dateUtils.js';
 import { getStartWindowState, localDateTimeFromDateKeyAndTime, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
 import { CurriculumPrecisionRail } from './infographics/CurriculumPrecisionRail.jsx';
-import { getProgramDefinition } from '../data/programRegistry.js';
+import { getProgramDefinition, getProgramDay } from '../data/programRegistry.js';
 import { isUiPickingActive } from '../dev/uiControlsCaptureManager.js';
 import {
     computeCurriculumCompletionState,
@@ -330,6 +329,34 @@ function resolvePracticeLaunchFromEntry(entry) {
     return null;
 }
 
+function resolvePracticeLaunchFromProgramLeg(leg) {
+    if (!leg || typeof leg !== 'object') return null;
+
+    const practiceId = resolvePracticeIdFromType(leg.practiceType) || leg.practiceId || null;
+    if (!practiceId) return null;
+
+    const practiceConfigRaw = leg.practiceConfig && typeof leg.practiceConfig === 'object'
+        ? leg.practiceConfig
+        : {};
+    const durationMin = Number.isFinite(Number(practiceConfigRaw.duration))
+        ? Number(practiceConfigRaw.duration)
+        : null;
+    const normalizedEntry = {
+        practiceId,
+        duration: durationMin ?? undefined,
+        guidance: leg.guidance,
+        practiceParamsPatch: leg.practiceParamsPatch,
+        overrides: leg.overrides,
+        locks: leg.locks,
+    };
+
+    if (practiceConfigRaw.breathPattern) normalizedEntry.breathPattern = practiceConfigRaw.breathPattern;
+    if (practiceConfigRaw.variant) normalizedEntry.variant = practiceConfigRaw.variant;
+    if (practiceConfigRaw.circuitId) normalizedEntry.circuitId = practiceConfigRaw.circuitId;
+
+    return resolvePracticeLaunchFromEntry(normalizedEntry);
+}
+
 export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigate, hasPersistedCurriculumData, onStartSetup, onboardingComplete: onboardingCompleteProp, practiceTimeSlots: practiceTimeSlotsProp, isTutorialTarget = false, showPerLegCompletion = true, showDailyCompletionNotice = false, showSessionMeter = true, debugShadowOff = false, debugBlurOff = false, debugBorderOff = false, debugMaskOff = false, devCardActive = null, devCardCarouselId = null }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
@@ -454,7 +481,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         if (Number.isNaN(fromMs) || Number.isNaN(toMs)) return 1;
         return Math.max(1, Math.round((toMs - fromMs) / (24 * 60 * 60 * 1000)) + 1);
     }, [activePath?.startedAt, startDayKey, displayDayKey]);
-
     const displaySessions = useMemo(() => {
         const activeRunId = activePath?.runId || null;
         const activePathIdForRun = activePath?.activePathId || null;
@@ -539,6 +565,13 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const abandonPath = useNavigationStore(s => s.abandonPath);
     
     const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics]);
+    const scheduledDayIndex = displayDayIndex || metrics?.dayIndex || 1;
+    const scheduledWeekIndex = Math.ceil(scheduledDayIndex / 7);
+    const scheduledProgramDay = useMemo(() => {
+        const programId = activePathObj?.tracking?.curriculumId || null;
+        if (!programId || !scheduledDayIndex) return null;
+        return getProgramDay(programId, scheduledDayIndex);
+    }, [activePathObj?.tracking?.curriculumId, scheduledDayIndex]);
 
     const pathDayIndexDisplay = metrics?.dayIndex ?? 1;
 
@@ -548,13 +581,15 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Benchmark data for breath practices
     const benchmark = useBreathBenchmarkStore(s => s.benchmark);
     const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
-    const userMode = useUserModeStore(s => s.userMode);
 
     // Canonical practice launches for each slot (practiceId + duration + params)
     const slotLaunches = useMemo(() => {
-        if (!activePathObj || !metrics.dayIndex || times.length === 0) return [];
+        if (!activePathObj || !scheduledDayIndex || times.length === 0) return [];
 
-        const week = getWeekForDay(activePathObj, metrics.dayIndex);
+        const scheduledProgramLegs = Array.isArray(scheduledProgramDay?.legs)
+            ? scheduledProgramDay.legs
+            : null;
+        const week = getWeekForDay(activePathObj, scheduledDayIndex);
 
         // Prefer structured practices, but many week.practices entries are descriptive strings.
         const weekPracticesRaw = Array.isArray(week?.practices) ? week.practices : null;
@@ -563,8 +598,15 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             : null;
         const fallbackPractices = Array.isArray(activePathObj?.practices) ? activePathObj.practices : null;
 
-        const raw = normalizeListForSlots(weekPracticesStructured ?? fallbackPractices ?? weekPracticesRaw ?? [], times.length);
-        const resolved = raw.map(resolvePracticeLaunchFromEntry);
+        const raw = normalizeListForSlots(
+            scheduledProgramLegs ?? weekPracticesStructured ?? fallbackPractices ?? weekPracticesRaw ?? [],
+            times.length
+        );
+        const resolved = raw.map((entry) => (
+            scheduledProgramLegs
+                ? resolvePracticeLaunchFromProgramLeg(entry)
+                : resolvePracticeLaunchFromEntry(entry)
+        ));
 
         // If path requires benchmark and user has completed it, add breath cycle patterns
         if (activePathObj.showBreathBenchmark && benchmark) {
@@ -591,24 +633,33 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         }
 
         return resolved;
-    }, [activePathObj, metrics.dayIndex, times.length, benchmark, getStartingPattern]);
+    }, [activePathObj, scheduledDayIndex, scheduledProgramDay, times.length, benchmark, getStartingPattern]);
 
     // Practice names for each slot (based on current week)
     const practiceLabels = useMemo(() => {
-        if (!activePathObj || !metrics.dayIndex) return [];
-
-        const weekIndex = Math.ceil(metrics.dayIndex / 7);
-        const week = activePathObj.weeks?.find(w => w.number === weekIndex) || activePathObj.weeks?.[0];
-
-        if (!week) return [];
+        if (!activePathObj || !scheduledDayIndex) return [];
 
         // Extract practice labels from week.focus or week.practices
         let labels = [];
-        if (week.focus) {
+        const scheduledProgramLegs = Array.isArray(scheduledProgramDay?.legs)
+            ? scheduledProgramDay.legs
+            : null;
+        const weekIndex = scheduledWeekIndex;
+        const week = activePathObj.weeks?.find(w => w.number === weekIndex) || activePathObj.weeks?.[0];
+        if (!scheduledProgramLegs && !week) return [];
+
+        if (scheduledProgramLegs) {
+            labels = scheduledProgramLegs.map((leg) => (
+                leg?.label
+                || leg?.description
+                || leg?.practiceType
+                || ''
+            ));
+        } else if (week?.focus) {
             // If focus is a string like "Morning breath (7min) + Evening circuit (15min)", split by " + "
             const parts = week.focus.split(' + ').map(s => s.trim());
             labels = parts.length > 1 ? parts : [week.focus];
-        } else if (week.practices && Array.isArray(week.practices)) {
+        } else if (week?.practices && Array.isArray(week.practices)) {
             labels = week.practices.map(p => typeof p === 'string' ? p : (p.name || p.type || ''));
         }
 
@@ -618,13 +669,52 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         }
 
         return labels.slice(0, times.length);
-    }, [activePathObj, metrics.dayIndex, times.length]);
+    }, [activePathObj, scheduledDayIndex, scheduledWeekIndex, scheduledProgramDay, times.length]);
 
     // Calculate slot dates based on path start time and current time
     const slotDates = useMemo(() => {
         if (times.length === 0 || !activePath?.startedAt) return [];
         return times.map(() => displayDayKey);
     }, [times, activePath?.startedAt, displayDayKey]);
+    // PROBE:daily-preclick-slot-trace:START
+    const dailySlotTrace = useMemo(() => {
+        if (!import.meta.env.DEV) return null;
+        const selectedSlotIndex = 0;
+        const selectedSlot = slotLaunches[selectedSlotIndex] ?? null;
+        return {
+            displayedDay: {
+                dayIndex: displayDayIndex ?? null,
+                dayKey: displayDayKey ?? null,
+                weekIndex: Number.isFinite(displayDayIndex) ? Math.ceil(displayDayIndex / 7) : null,
+            },
+            slotLaunchesSource: {
+                dayIndex: scheduledDayIndex ?? null,
+                weekIndex: scheduledWeekIndex ?? null,
+                metricsDayIndex: metrics?.dayIndex ?? null,
+                timesCount: times.length,
+            },
+            selectedSlot: {
+                idx: selectedSlotIndex,
+                slotTime: times[selectedSlotIndex] ?? null,
+                label: practiceLabels[selectedSlotIndex] ?? null,
+                practiceId: selectedSlot?.practiceId ?? null,
+                durationMin: selectedSlot?.durationMin ?? null,
+                guidanceAudioUrl: selectedSlot?.guidance?.audioUrl ?? null,
+                guidanceStartMode: selectedSlot?.guidance?.startMode ?? null,
+                guidanceResumeMode: selectedSlot?.guidance?.resumeMode ?? null,
+            },
+        };
+    }, [
+        displayDayIndex,
+        displayDayKey,
+        scheduledDayIndex,
+        scheduledWeekIndex,
+        metrics?.dayIndex,
+        times,
+        practiceLabels,
+        slotLaunches,
+    ]);
+    // PROBE:daily-preclick-slot-trace:END
 
     const [missedLegWarning, setMissedLegWarning] = useState(null);
     const [_isPending, startTransition] = useTransition();
@@ -707,14 +797,39 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 activePathId: activePath?.activePathId ?? null,
                 slotTime,
                 slotIndex,
-                dayIndex: metrics.dayIndex,
-                weekIndex: Math.ceil(metrics.dayIndex / 7),
+                dayIndex: scheduledDayIndex,
+                weekIndex: scheduledWeekIndex,
                 forceStart,
                 forceWindowBypass,
                 scheduleDateKey,
             },
             persistPreferences: false,
         };
+
+        // PROBE:scheduled-guidance-trace:START
+        if (import.meta.env.DEV && typeof window !== 'undefined') {
+            const existingTrace =
+                window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__ && typeof window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__ === 'object'
+                    ? window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__
+                    : {};
+            window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__ = {
+                ...existingTrace,
+                launchPayload: {
+                    source: 'DailyPracticeCard.launchPathPractice',
+                    dayIndex: scheduledDayIndex ?? null,
+                    weekIndex: Number.isFinite(scheduledDayIndex) ? scheduledWeekIndex : null,
+                    slotIndex,
+                    slotTime: slotTime ?? null,
+                    practiceId,
+                    audioUrl: launchPayload.guidance?.audioUrl ?? null,
+                    guidanceSource: Object.prototype.hasOwnProperty.call(slot ?? {}, 'guidance')
+                        ? 'slot.guidance'
+                        : 'slot.guidance missing',
+                    ts: new Date().toISOString(),
+                },
+            };
+        }
+        // PROBE:scheduled-guidance-trace:END
 
         // PROBE:daily-benchmark-launch:START
         const emittedPattern = launchPayload.practiceParamsPatch?.breath?.pattern || null;
@@ -752,7 +867,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     }, [
         activePath?.runId,
         activePath?.activePathId,
-        metrics.dayIndex,
+        scheduledDayIndex,
+        scheduledWeekIndex,
         activePathObj?.showBreathBenchmark,
         benchmark,
         onNavigate,
@@ -1130,6 +1246,28 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                             {activePathObj.title}
                                         </div>
 
+                                        {/* PROBE:daily-preclick-slot-trace:START */}
+                                        {import.meta.env.DEV && dailySlotTrace && (
+                                            <pre
+                                                style={{
+                                                    marginTop: 12,
+                                                    padding: '10px 12px',
+                                                    borderRadius: 12,
+                                                    border: isLight ? '1px solid rgba(60, 50, 35, 0.12)' : '1px solid rgba(255,255,255,0.12)',
+                                                    background: isLight ? 'rgba(255,255,255,0.74)' : 'rgba(8, 10, 18, 0.68)',
+                                                    color: isLight ? '#3c3020' : '#fdfbf5',
+                                                    fontSize: 11,
+                                                    lineHeight: 1.35,
+                                                    fontFamily: 'monospace',
+                                                    whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word',
+                                                }}
+                                            >
+                                                {JSON.stringify(dailySlotTrace, null, 2)}
+                                            </pre>
+                                        )}
+                                        {/* PROBE:daily-preclick-slot-trace:END */}
+
                                         {/* Precision Rail Infographic */}
                                         <div className="mt-4 pt-3 border-t" style={{ borderColor: isLight ? 'rgba(180, 140, 60, 0.15)' : 'rgba(255, 255, 255, 0.05)' }}>
                                             <CurriculumPrecisionRail />
@@ -1233,14 +1371,14 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                                                                 const slot = slotLaunches[idx];
                                                                                 const practiceId = slot?.practiceId;
                                                                                 const durationMin = slot?.durationMin;
-                                                                                                                                                                console.log("[DailyPracticeCard] START slot", {
+                                                                                console.log("[DailyPracticeCard] START slot", {
                                                                                     slotTime: time,
                                                                                     slotIndex: idx,
                                                                                     practiceId,
                                                                                     durationMin,
                                                                                     activePathId: activePath?.activePathId,
-                                                                                    dayIndex: metrics.dayIndex,
-                                                                                    weekIndex: Math.ceil(metrics.dayIndex / 7)
+                                                                                    dayIndex: scheduledDayIndex,
+                                                                                    weekIndex: scheduledWeekIndex
                                                                                 });
 
                                                                                 if (!practiceId) {
