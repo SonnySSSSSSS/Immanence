@@ -497,12 +497,6 @@ function StillnessVisualRing({ stillnessVisual, practiceActive = true }) {
       (stagePlateSize.height || 560) * 0.64
     )
   );
-  const hybridOverlayCamera = useMemo(() => ({
-    position: [0, 0, 10],
-    near: 0.1,
-    far: 50,
-    zoom: getHybridOverlayZoom(stagePlateSize),
-  }), [stagePlateSize]);
   const segmentDisplay = segmentRemainingSec > 59
     ? formatStillnessClock(segmentRemainingSec)
     : String(segmentRemainingSec);
@@ -1572,12 +1566,6 @@ export function BreathingRing({
       (stagePlateSize.height || 560) * 0.64
     )
   );
-  const hybridOverlayCamera = useMemo(() => ({
-    position: [0, 0, 10],
-    near: 0.1,
-    far: 50,
-    zoom: getHybridOverlayZoom(stagePlateSize),
-  }), [stagePlateSize]);
   if (isStillnessMode) {
     return <StillnessVisualRing stillnessVisual={{ ...stillnessVisual, ringMode }} practiceActive={practiceActive} />;
   }
