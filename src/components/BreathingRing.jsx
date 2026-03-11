@@ -988,6 +988,7 @@ export function BreathingRing({
 
   const theme = useTheme();
   const liveAccentColor = theme?.accent?.primary ?? '#22d3ee';
+  const initialBreathPatternRef = useRef(breathPattern);
   const lockedPatternRef = useRef(null);
   const pendingPatternRef = useRef(null);
   const incomingPatternRef = useRef(breathPattern);
@@ -1056,13 +1057,14 @@ export function BreathingRing({
   // Initialize locked pattern on mount (ONLY ONCE)
   // This ensures lockedPatternRef is set before animation loop runs
   useEffect(() => {
-    if (!lockedPatternRef.current && breathPattern) {
-      lockedPatternRef.current = breathPattern;
-      incomingPatternRef.current = breathPattern;
+    const initialPattern = initialBreathPatternRef.current;
+    if (!lockedPatternRef.current && initialPattern) {
+      lockedPatternRef.current = initialPattern;
+      incomingPatternRef.current = initialPattern;
       let cancelled = false;
       scheduleBreathingRingUpdate(() => {
         if (!cancelled) {
-          setDisplayedPattern(breathPattern);
+          setDisplayedPattern(initialPattern);
         }
       });
       return () => {
