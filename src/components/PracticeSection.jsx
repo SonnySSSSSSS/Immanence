@@ -2657,79 +2657,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const previousTimeLeftRef = useRef(timeLeft);
 
   useEffect(() => {
-    let interval = null;
-    const reachedZeroThisRender = previousTimeLeftRef.current > 0 && timeLeft === 0;
-    const isBreathCycleCompletionSession =
-      isBreathRunningSession &&
-      breathSubmode !== 'stillness' &&
-      !activeCircuitId &&
-      !circuitConfig;
-
-    if (isRunning && !isSessionPaused && practice !== "Rituals") {
-      if (timeLeft > 0) {
-        interval = setInterval(() => {
-          setTimeLeft((prev) => Math.max(0, prev - 1));
-        }, 1000);
-      } else if (reachedZeroThisRender && countdownValue === null) {
-        const now = performance.now();
-        const cycleSnapshot = getBreathCycleSnapshot(now);
-        console.info("[PROBE:session-raw-expiry]", {
-          expiredAtMs: now,
-          phase: cycleSnapshot?.phase || 'unknown',
-          pendingFinish: pendingCycleFinishRef.current,
-        });
-
-        if (activeCircuitId && circuitConfig) {
-          queueMicrotask(() => advanceCircuitExercise());
-        } else if (isBreathCycleCompletionSession) {
-          const boundaryJustCrossed =
-            Number.isFinite(lastCycleBoundaryAtRef.current) &&
-            Math.abs(now - lastCycleBoundaryAtRef.current) <= BREATH_CYCLE_BOUNDARY_EPSILON_MS;
-
-          if (boundaryJustCrossed || cycleSnapshot?.atBoundary) {
-            queueNaturalSessionCompletion({
-              trigger: 'raw-expiry-immediate',
-              phase: cycleSnapshot?.phase || 'inhale',
-              boundary: 'exact-cycle-boundary',
-            });
-          } else {
-            pendingCycleFinishRef.current = true;
-            setPendingCycleFinish(true);
-            console.info("[PROBE:session-pending-finish]", {
-              armedAtMs: now,
-              phase: cycleSnapshot?.phase || 'unknown',
-            });
-          }
-        } else {
-          queueNaturalSessionCompletion({
-            trigger: 'raw-expiry-non-breath',
-            phase: 'n/a',
-            boundary: 'timer-zero',
-          });
-        }
-      }
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [
-    activeCircuitId,
-    advanceCircuitExercise,
-    breathSubmode,
-    circuitConfig,
-    countdownValue,
-    getBreathCycleSnapshot,
-    isBreathRunningSession,
-    isRunning,
-    isSessionPaused,
-    practice,
-    queueNaturalSessionCompletion,
-    setTimeLeft,
-    timeLeft,
-  ]);
-
-  useEffect(() => {
     previousTimeLeftRef.current = timeLeft;
   }, [timeLeft]);
 
@@ -2810,6 +2737,79 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       atBoundary: boundaryDistanceMs <= BREATH_CYCLE_BOUNDARY_EPSILON_MS,
     };
   }, [breathSubmode, breathingPatternForRing, isBreathRunningSession, sessionStartTime]);
+
+  useEffect(() => {
+    let interval = null;
+    const reachedZeroThisRender = previousTimeLeftRef.current > 0 && timeLeft === 0;
+    const isBreathCycleCompletionSession =
+      isBreathRunningSession &&
+      breathSubmode !== 'stillness' &&
+      !activeCircuitId &&
+      !circuitConfig;
+
+    if (isRunning && !isSessionPaused && practice !== "Rituals") {
+      if (timeLeft > 0) {
+        interval = setInterval(() => {
+          setTimeLeft((prev) => Math.max(0, prev - 1));
+        }, 1000);
+      } else if (reachedZeroThisRender && countdownValue === null) {
+        const now = performance.now();
+        const cycleSnapshot = getBreathCycleSnapshot(now);
+        console.info("[PROBE:session-raw-expiry]", {
+          expiredAtMs: now,
+          phase: cycleSnapshot?.phase || 'unknown',
+          pendingFinish: pendingCycleFinishRef.current,
+        });
+
+        if (activeCircuitId && circuitConfig) {
+          queueMicrotask(() => advanceCircuitExercise());
+        } else if (isBreathCycleCompletionSession) {
+          const boundaryJustCrossed =
+            Number.isFinite(lastCycleBoundaryAtRef.current) &&
+            Math.abs(now - lastCycleBoundaryAtRef.current) <= BREATH_CYCLE_BOUNDARY_EPSILON_MS;
+
+          if (boundaryJustCrossed || cycleSnapshot?.atBoundary) {
+            queueNaturalSessionCompletion({
+              trigger: 'raw-expiry-immediate',
+              phase: cycleSnapshot?.phase || 'inhale',
+              boundary: 'exact-cycle-boundary',
+            });
+          } else {
+            pendingCycleFinishRef.current = true;
+            setPendingCycleFinish(true);
+            console.info("[PROBE:session-pending-finish]", {
+              armedAtMs: now,
+              phase: cycleSnapshot?.phase || 'unknown',
+            });
+          }
+        } else {
+          queueNaturalSessionCompletion({
+            trigger: 'raw-expiry-non-breath',
+            phase: 'n/a',
+            boundary: 'timer-zero',
+          });
+        }
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [
+    activeCircuitId,
+    advanceCircuitExercise,
+    breathSubmode,
+    circuitConfig,
+    countdownValue,
+    getBreathCycleSnapshot,
+    isBreathRunningSession,
+    isRunning,
+    isSessionPaused,
+    practice,
+    queueNaturalSessionCompletion,
+    setTimeLeft,
+    timeLeft,
+  ]);
 
   const isBreathPracticeRef = useRef(isBreathPractice);
   const isPresetSwitcherOpenRef = useRef(isPresetSwitcherOpen);

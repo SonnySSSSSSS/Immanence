@@ -6,7 +6,7 @@
 // - CLICKABLE: tapping calculates accuracy error and passes to onTap callback
 // - PATH FX: path-specific particle effects sync with breath
 
-import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useId } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useId, useCallback } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { EnsoStroke } from "./EnsoStroke";
@@ -997,12 +997,12 @@ export function BreathingRing({
   const [displayedPattern, setDisplayedPattern] = useState(breathPattern || { inhale: 4, holdTop: 4, exhale: 4, holdBottom: 2 });
   const [rndRingMode, setRndRingMode] = useState(() => normalizeRingMode(ringMode) || 'instrument');
 
-  const patternKey = (pattern) => ([
+  const patternKey = useCallback((pattern) => ([
     pattern?.inhale ?? 0,
     pattern?.holdTop ?? 0,
     pattern?.exhale ?? 0,
     pattern?.holdBottom ?? 0,
-  ]).join('|');
+  ]).join('|'), []);
 
   useEffect(() => {
     if (ringMode != null) return;
@@ -1099,7 +1099,7 @@ export function BreathingRing({
     return () => {
       cancelled = true;
     };
-  }, [breathPattern]);
+  }, [breathPattern, patternKey]);
 
   // Use displayed pattern state for rendering (triggers re-render when pattern changes)
   const {
@@ -1623,7 +1623,6 @@ export function BreathingRing({
           justifyContent: "center",
         }}
       >
-
       {/* Image-based Enso - authentic brush stroke (OUTSIDE SVG to avoid overlay) */}
       {ensoFeedback.active && (
         <div
