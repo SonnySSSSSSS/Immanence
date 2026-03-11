@@ -67,6 +67,7 @@ import { EmotionConfig } from './EmotionConfig.jsx';
 import { getEmotionClosingLine, getEmotionLabel } from '../data/emotionPractices.js';
 import { useProgressStore } from '../state/progressStore.js';
 import { useBreathSessionManager } from '../hooks/useBreathSessionManager.js';
+import { audioGuidance } from "../services/audioGuidanceService.js";
 
 // CONFIG_COMPONENTS moved to PracticeOptionsCard.jsx
 
@@ -81,6 +82,12 @@ const DEFAULT_STILLNESS_CONFIG = Object.freeze({
   restSec: 15,
   preDelaySec: 0,
 });
+const GUIDANCE_FALLBACK_LINE = "For the remaining time, continue breathing until the timer ends.";
+const GUIDANCE_FALLBACK_MIN_REMAINING_MS = 8000;
+const GUIDANCE_LOOP_WRAP_EPSILON_SEC = 0.75;
+const GUIDANCE_LOOP_END_WINDOW_SEC = 1.25;
+const GUIDANCE_FALLBACK_SUBTITLE_MS = 6000;
+const BREATH_CYCLE_BOUNDARY_EPSILON_MS = 180;
 
 function normalizeSeconds(value, fallback, min = 0, max = 600) {
   const n = Number(value);
@@ -494,6 +501,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const isSongPlaying = useTempoAudioStore((s) => s.isPlaying);
   const guidanceStatus = useTempoAudioStore((s) => s.status);
   const guidanceSource = useTempoAudioStore((s) => s.source);
+  const guidanceCurrentTime = useTempoAudioStore((s) => s.currentTime);
+  const guidanceDuration = useTempoAudioStore((s) => s.duration);
   const activePath = useNavigationStore(s => s.activePath);
   
   // Tempo sync state for music-synced breathing
@@ -595,6 +604,31 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const pathGuidanceStartedRef = useRef(false);
   const pathGuidanceWasPausedRef = useRef(false);
   const pathGuidanceRanRef = useRef(false);
+  const pathGuidanceCompletedRef = useRef(false);
+  const guidanceFallbackFiredRef = useRef(false);
+  const previousGuidanceTimeRef = useRef(0);
+  const guidanceFallbackSubtitleTimerRef = useRef(null);
+  const guidanceFallbackSessionIdRef = useRef(null);
+  const [guidanceFallbackSubtitle, setGuidanceFallbackSubtitle] = useState(null);
+  const clearGuidanceFallbackCue = useCallback(() => {
+    if (guidanceFallbackSubtitleTimerRef.current !== null) {
+      clearTimeout(guidanceFallbackSubtitleTimerRef.current);
+      guidanceFallbackSubtitleTimerRef.current = null;
+    }
+    setGuidanceFallbackSubtitle(null);
+  }, []);
+  const resetGuidanceCompletionState = useCallback(() => {
+    pathGuidanceCompletedRef.current = false;
+    guidanceFallbackFiredRef.current = false;
+    previousGuidanceTimeRef.current = 0;
+    guidanceFallbackSessionIdRef.current = null;
+    clearGuidanceFallbackCue();
+  }, [clearGuidanceFallbackCue]);
+
+  useEffect(() => () => {
+    clearGuidanceFallbackCue();
+    audioGuidance.stop();
+  }, [clearGuidanceFallbackCue]);
 
   const resolveInitiationV2BenchmarkContext = useCallback((ctx) => {
     if (!ctx || ctx.source !== 'dailySchedule' || ctx.practiceId !== 'breath') {
@@ -680,6 +714,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
+    resetGuidanceCompletionState();
     setPracticeId(id);
     // Save immediately with current state
     savePreferences({
@@ -694,7 +729,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
     // Notify parent of menu selection (for tutorial context)
     onPracticingChange(false, null, false, id);
-  }, [duration, practiceParams, onPracticingChange, clearLaunchConstraints]);
+  }, [duration, practiceParams, onPracticingChange, clearLaunchConstraints, resetGuidanceCompletionState]);
 
   const updateParams = useCallback((pid, updates) => {
     if (!pid || !updates || typeof updates !== 'object') return;
@@ -852,6 +887,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     getActivePracticeLeg,
     persistedStillnessDefaults,
     sharedBreathPreDelaySec,
+    resetGuidanceCompletionState,
   ]);
 
   const _circuitPendingRef = useRef(null);
@@ -871,6 +907,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
       pathGuidanceRanRef.current = false;
+      resetGuidanceCompletionState();
       activePathContextRef.current = null;
       activePathLaunchGuidanceRef.current = undefined;
       suppressPrefSaveRef.current = false;
@@ -896,6 +933,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
+    resetGuidanceCompletionState();
     const benchmarkCtx = resolveInitiationV2BenchmarkContext(ctx);
     queueMicrotask(() => setInitiationBenchmarkContext(benchmarkCtx));
     suppressPrefSaveRef.current = ctx.persistPreferences === false;
@@ -1070,6 +1108,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     resolveInitiationV2BenchmarkContext,
     persistedStillnessDefaults,
     sharedBreathPreDelaySec,
+    resetGuidanceCompletionState,
   ]);
 
   useEffect(() => {
@@ -1082,11 +1121,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceRanRef.current = false;
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
+      resetGuidanceCompletionState();
       activePathContextRef.current = null;
       activePathLaunchGuidanceRef.current = undefined;
       queueMicrotask(() => setPathLaunchGuidance(undefined));
     }
-  }, [isRunning, pathLaunchGuidance]);
+  }, [isRunning, pathLaunchGuidance, resetGuidanceCompletionState]);
+
+  useEffect(() => {
+    if (isRunning) return;
+    clearGuidanceFallbackCue();
+    audioGuidance.stop();
+  }, [isRunning, clearGuidanceFallbackCue]);
+
   const [_isStarting, setIsStarting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
@@ -1436,6 +1483,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       }
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
+      resetGuidanceCompletionState();
       return;
     }
 
@@ -1443,10 +1491,19 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       audioStore.setVolume(guidanceSpec.volume);
     }
 
+    if (pathGuidanceCompletedRef.current) {
+      audioStore.stopReset();
+      if (audioStore.source) {
+        audioStore.setSource(null);
+      }
+      return;
+    }
+
     if (audioStore.source !== audioFile) {
       audioStore.setSource(audioFile);
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
+      resetGuidanceCompletionState();
     }
 
     if (isSessionPaused) {
@@ -1467,7 +1524,81 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceStartedRef.current = true;
     audioStore.play();
-  }, [isRunning, isSessionPaused, pathLaunchGuidance]);
+  }, [isRunning, isSessionPaused, pathLaunchGuidance, resetGuidanceCompletionState]);
+
+  useEffect(() => {
+    if (!isRunning || !guidanceSource || pathLaunchGuidance === undefined || pathGuidanceCompletedRef.current) {
+      previousGuidanceTimeRef.current = Number.isFinite(guidanceCurrentTime) ? guidanceCurrentTime : 0;
+      return;
+    }
+
+    if (guidanceStatus !== "playing" || isSessionPaused) {
+      previousGuidanceTimeRef.current = Number.isFinite(guidanceCurrentTime) ? guidanceCurrentTime : 0;
+      return;
+    }
+
+    const durationSec = Number.isFinite(guidanceDuration) ? guidanceDuration : 0;
+    const currentTimeSec = Number.isFinite(guidanceCurrentTime) ? guidanceCurrentTime : 0;
+    const previousTimeSec = Number.isFinite(previousGuidanceTimeRef.current) ? previousGuidanceTimeRef.current : 0;
+    const nearGuidanceEndSec = Math.max(GUIDANCE_LOOP_WRAP_EPSILON_SEC, durationSec - GUIDANCE_LOOP_END_WINDOW_SEC);
+    const wrappedFromLoop =
+      durationSec > GUIDANCE_LOOP_END_WINDOW_SEC &&
+      previousTimeSec >= nearGuidanceEndSec &&
+      currentTimeSec <= GUIDANCE_LOOP_WRAP_EPSILON_SEC;
+
+    previousGuidanceTimeRef.current = currentTimeSec;
+    if (!wrappedFromLoop) {
+      return;
+    }
+
+    pathGuidanceCompletedRef.current = true;
+    useTempoAudioStore.getState().stopReset();
+    if (useTempoAudioStore.getState().source) {
+      useTempoAudioStore.getState().setSource(null);
+    }
+
+    const remainingMs = Math.max(0, Math.round((Number.isFinite(timeLeft) ? timeLeft : 0) * 1000));
+    if (remainingMs < GUIDANCE_FALLBACK_MIN_REMAINING_MS || guidanceFallbackFiredRef.current) {
+      return;
+    }
+
+    const sessionId =
+      guidanceFallbackSessionIdRef.current ||
+      activePathContextRef.current?.runId ||
+      `practice-${Math.round(Number.isFinite(sessionStartTime) ? sessionStartTime : Date.now())}`;
+    guidanceFallbackSessionIdRef.current = sessionId;
+    guidanceFallbackFiredRef.current = true;
+
+    console.info("[PROBE:guidance-ended-with-remaining-time]", {
+      remainingMs,
+      sessionId,
+      source: guidanceSource,
+      guidanceDurationSec: durationSec,
+      guidanceCurrentTimeSec: currentTimeSec,
+    });
+
+    setGuidanceFallbackSubtitle(GUIDANCE_FALLBACK_LINE);
+    guidanceFallbackSubtitleTimerRef.current = window.setTimeout(() => {
+      guidanceFallbackSubtitleTimerRef.current = null;
+      setGuidanceFallbackSubtitle(null);
+    }, GUIDANCE_FALLBACK_SUBTITLE_MS);
+
+    try {
+      audioGuidance.speak(GUIDANCE_FALLBACK_LINE);
+    } catch {
+      void 0;
+    }
+  }, [
+    guidanceCurrentTime,
+    guidanceDuration,
+    guidanceSource,
+    guidanceStatus,
+    isRunning,
+    isSessionPaused,
+    pathLaunchGuidance,
+    sessionStartTime,
+    timeLeft,
+  ]);
 
   useEffect(() => {
     if (!isRunning && hasSong && isSongPlaying) {
@@ -1792,6 +1923,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       handleCircuitComplete();
       return;
     }
+    if (wasNaturalCompletion) {
+      const completionMeta = completionProbeMetaRef.current;
+      console.info("[PROBE:session-cycle-boundary-complete]", {
+        completedAtMs: performance.now(),
+        trigger: completionMeta?.trigger || 'direct-natural-completion',
+        phase: completionMeta?.phase || 'unknown',
+        boundary: completionMeta?.boundary || 'unknown',
+        pendingFinish: completionMeta?.pendingFinish ?? pendingCycleFinishRef.current,
+      });
+      completionProbeMetaRef.current = null;
+    }
     const wasFromCurriculum = !!activeSessionDayNumber;
 
     // Stop tempo sync audio if playing
@@ -2084,6 +2226,35 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     timeLeft,
   ]);
 
+  const queueNaturalSessionCompletion = useCallback((meta) => {
+    if (completionDispatchedRef.current) return;
+    const pendingFinishWasArmed = pendingCycleFinishRef.current;
+    completionDispatchedRef.current = true;
+    pendingCycleFinishRef.current = false;
+    setPendingCycleFinish(false);
+    completionProbeMetaRef.current = {
+      ...meta,
+      pendingFinish: pendingFinishWasArmed,
+      completedAtMs: performance.now(),
+    };
+    queueMicrotask(() => handleStop({ completed: true }));
+  }, [handleStop]);
+
+  const handleBreathCycleComplete = useCallback(() => {
+    lastCycleBoundaryAtRef.current = performance.now();
+    setBreathCount((prev) => prev + 1);
+
+    if (!pendingCycleFinishRef.current) {
+      return;
+    }
+
+    queueNaturalSessionCompletion({
+      trigger: 'pending-finish-cycle-boundary',
+      phase: 'cycle-end',
+      boundary: 'cycle-end',
+    });
+  }, [queueNaturalSessionCompletion, setBreathCount]);
+
   const handleFocusRating = (rating) => {
     // Update the leg completion with focus rating
     if (sessionSummary?.curriculumDayNumber) {
@@ -2215,7 +2386,8 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     setRingTeardownRequested(false);
     setIsRunning(true);
     notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
-    setSessionStartTime(performance.now());
+    const nextSessionStartTime = performance.now();
+    setSessionStartTime(nextSessionStartTime);
     setTapErrors([]);
     setLastErrorMs(null);
     setLastSignedErrorMs(null);
@@ -2326,9 +2498,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       : normalizeSeconds(sharedBreathPreDelaySec, 0, 0, 20);
     const needsAudioCountdown = practiceId === "breath" && !isStillnessStart && tempoSyncEnabled;
     const totalCountdownSec = modePreDelaySec + (needsAudioCountdown ? 3 : 0);
+    const shouldSkipDirectBreathPreDelay = (
+      practiceId === "breath"
+      && !isStillnessStart
+      && !consumePendingAutoStart
+      && !needsAudioCountdown
+      && modePreDelaySec > 0
+    );
+    const effectiveCountdownSec = shouldSkipDirectBreathPreDelay ? 0 : totalCountdownSec;
+    const shouldBypassDirectBreathHandoff = (
+      practiceId === "breath"
+      && !isStillnessStart
+      && !consumePendingAutoStart
+      && effectiveCountdownSec === 0
+    );
 
-    if (totalCountdownSec > 0) {
-      setCountdownValue(totalCountdownSec);
+    if (effectiveCountdownSec > 0) {
+      setCountdownValue(effectiveCountdownSec);
 
       const countdownInterval = setInterval(() => {
         setCountdownValue((prev) => {
@@ -2344,7 +2530,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         setIsStarting(false);
         setCountdownValue(null);
         executeStart();
-      }, totalCountdownSec * 1000);
+      }, effectiveCountdownSec * 1000);
+    } else if (shouldBypassDirectBreathHandoff) {
+      setIsStarting(false);
+      queueMicrotask(() => {
+        executeStart();
+      });
     } else {
       // Normal start animation (1.4 seconds)
       setTimeout(() => {
@@ -2468,17 +2659,53 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   useEffect(() => {
     let interval = null;
     const reachedZeroThisRender = previousTimeLeftRef.current > 0 && timeLeft === 0;
+    const isBreathCycleCompletionSession =
+      isBreathRunningSession &&
+      breathSubmode !== 'stillness' &&
+      !activeCircuitId &&
+      !circuitConfig;
 
     if (isRunning && !isSessionPaused && practice !== "Rituals") {
       if (timeLeft > 0) {
         interval = setInterval(() => {
-          setTimeLeft((prev) => prev - 1);
+          setTimeLeft((prev) => Math.max(0, prev - 1));
         }, 1000);
       } else if (reachedZeroThisRender && countdownValue === null) {
+        const now = performance.now();
+        const cycleSnapshot = getBreathCycleSnapshot(now);
+        console.info("[PROBE:session-raw-expiry]", {
+          expiredAtMs: now,
+          phase: cycleSnapshot?.phase || 'unknown',
+          pendingFinish: pendingCycleFinishRef.current,
+        });
+
         if (activeCircuitId && circuitConfig) {
           queueMicrotask(() => advanceCircuitExercise());
+        } else if (isBreathCycleCompletionSession) {
+          const boundaryJustCrossed =
+            Number.isFinite(lastCycleBoundaryAtRef.current) &&
+            Math.abs(now - lastCycleBoundaryAtRef.current) <= BREATH_CYCLE_BOUNDARY_EPSILON_MS;
+
+          if (boundaryJustCrossed || cycleSnapshot?.atBoundary) {
+            queueNaturalSessionCompletion({
+              trigger: 'raw-expiry-immediate',
+              phase: cycleSnapshot?.phase || 'inhale',
+              boundary: 'exact-cycle-boundary',
+            });
+          } else {
+            pendingCycleFinishRef.current = true;
+            setPendingCycleFinish(true);
+            console.info("[PROBE:session-pending-finish]", {
+              armedAtMs: now,
+              phase: cycleSnapshot?.phase || 'unknown',
+            });
+          }
         } else {
-          queueMicrotask(() => handleStop({ completed: true }));
+          queueNaturalSessionCompletion({
+            trigger: 'raw-expiry-non-breath',
+            phase: 'n/a',
+            boundary: 'timer-zero',
+          });
         }
       }
     }
@@ -2489,12 +2716,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [
     activeCircuitId,
     advanceCircuitExercise,
+    breathSubmode,
     circuitConfig,
     countdownValue,
-    handleStop,
+    getBreathCycleSnapshot,
+    isBreathRunningSession,
     isRunning,
     isSessionPaused,
     practice,
+    queueNaturalSessionCompletion,
     setTimeLeft,
     timeLeft,
   ]);
@@ -2540,6 +2770,46 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const showFeedback = lastSignedErrorMs !== null && isBreathPractice && !isStillnessRuntime;
   const showBreathCountUi = showBreathCount && !isStillnessRuntime;
   const timeLeftText = formatTime(timeLeft);
+  const pendingCycleFinishRef = useRef(false);
+  const completionDispatchedRef = useRef(false);
+  const completionProbeMetaRef = useRef(null);
+  const lastCycleBoundaryAtRef = useRef(null);
+  const [pendingCycleFinish, setPendingCycleFinish] = useState(false);
+
+  const getBreathCycleSnapshot = useCallback((atMs = performance.now()) => {
+    if (!isBreathRunningSession || breathSubmode === 'stillness') return null;
+    if (!Number.isFinite(sessionStartTime)) return null;
+
+    const inhale = Number(breathingPatternForRing?.inhale) || 0;
+    const holdTop = Number(breathingPatternForRing?.holdTop) || 0;
+    const exhale = Number(breathingPatternForRing?.exhale) || 0;
+    const holdBottom = Number(breathingPatternForRing?.holdBottom) || 0;
+    const cycleDurationSec = inhale + holdTop + exhale + holdBottom;
+    if (!(cycleDurationSec > 0)) return null;
+
+    const cycleDurationMs = cycleDurationSec * 1000;
+    const elapsedMs = Math.max(0, atMs - sessionStartTime);
+    const cyclePositionMs = elapsedMs % cycleDurationMs;
+    const boundaryDistanceMs = Math.min(cyclePositionMs, cycleDurationMs - cyclePositionMs);
+    const cyclePositionSec = cyclePositionMs / 1000;
+
+    let phase = 'holdBottom';
+    if (cyclePositionSec < inhale) {
+      phase = 'inhale';
+    } else if (cyclePositionSec < inhale + holdTop) {
+      phase = 'holdTop';
+    } else if (cyclePositionSec < inhale + holdTop + exhale) {
+      phase = 'exhale';
+    }
+
+    return {
+      phase,
+      cycleDurationMs,
+      cyclePositionMs,
+      boundaryDistanceMs,
+      atBoundary: boundaryDistanceMs <= BREATH_CYCLE_BOUNDARY_EPSILON_MS,
+    };
+  }, [breathSubmode, breathingPatternForRing, isBreathRunningSession, sessionStartTime]);
 
   const isBreathPracticeRef = useRef(isBreathPractice);
   const isPresetSwitcherOpenRef = useRef(isPresetSwitcherOpen);
@@ -2556,6 +2826,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (isBreathPractice) return;
     setIsPresetSwitcherOpen(false);
   }, [isBreathPractice, setIsPresetSwitcherOpen]);
+
+  useEffect(() => {
+    if (isRunning) return;
+    pendingCycleFinishRef.current = false;
+    completionDispatchedRef.current = false;
+    completionProbeMetaRef.current = null;
+    lastCycleBoundaryAtRef.current = null;
+    setPendingCycleFinish(false);
+  }, [isRunning]);
 
   useEffect(() => {
     const onWindowKeyDown = (event) => {
@@ -2909,7 +3188,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                   <BreathingRing
                     breathPattern={breathingPatternForRing}
                     onTap={handleAccuracyTap}
-                    onCycleComplete={() => setBreathCount(prev => prev + 1)}
+                    onCycleComplete={handleBreathCycleComplete}
                     startTime={sessionStartTime}
                     practiceActive={isRunning}
                     onUnmount={handleBreathingRingUnmount}
@@ -2935,6 +3214,14 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
                 {tempoSessionActive && breathSubmode !== 'stillness' && (
                   <div style={{ width: '100%', maxWidth: '320px' }}>
                     <TempoSyncSessionPanel />
+                  </div>
+                )}
+                {pendingCycleFinish && (
+                  <div
+                    className="type-caption text-center"
+                    style={{ color: 'var(--text-muted)', maxWidth: '320px' }}
+                  >
+                    Finishing the current breath cycle...
                   </div>
                 )}
                 <SessionControls
@@ -3185,6 +3472,32 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           isRunning={isRunning}
           onCompleteNow={() => handleStop({ completed: true })}
         />
+      )}
+      {isRunning && guidanceFallbackSubtitle && (
+        <div
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            left: '50%',
+            bottom: 'max(88px, calc(env(safe-area-inset-bottom) + 72px))',
+            transform: 'translateX(-50%)',
+            zIndex: 10058,
+            width: 'min(92vw, 460px)',
+            padding: '10px 14px',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(8, 10, 18, 0.84)',
+            color: 'rgba(255,255,255,0.94)',
+            boxShadow: '0 16px 40px rgba(0,0,0,0.32)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            textAlign: 'center',
+          }}
+        >
+          <div className="type-caption" style={{ fontSize: 12, lineHeight: 1.5 }}>
+            {guidanceFallbackSubtitle}
+          </div>
+        </div>
       )}
       {sessionView}
       {summaryView}
