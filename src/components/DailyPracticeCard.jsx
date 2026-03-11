@@ -676,46 +676,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         if (times.length === 0 || !activePath?.startedAt) return [];
         return times.map(() => displayDayKey);
     }, [times, activePath?.startedAt, displayDayKey]);
-    // PROBE:daily-preclick-slot-trace:START
-    const dailySlotTrace = useMemo(() => {
-        if (!import.meta.env.DEV) return null;
-        const selectedSlotIndex = 0;
-        const selectedSlot = slotLaunches[selectedSlotIndex] ?? null;
-        return {
-            displayedDay: {
-                dayIndex: displayDayIndex ?? null,
-                dayKey: displayDayKey ?? null,
-                weekIndex: Number.isFinite(displayDayIndex) ? Math.ceil(displayDayIndex / 7) : null,
-            },
-            slotLaunchesSource: {
-                dayIndex: scheduledDayIndex ?? null,
-                weekIndex: scheduledWeekIndex ?? null,
-                metricsDayIndex: metrics?.dayIndex ?? null,
-                timesCount: times.length,
-            },
-            selectedSlot: {
-                idx: selectedSlotIndex,
-                slotTime: times[selectedSlotIndex] ?? null,
-                label: practiceLabels[selectedSlotIndex] ?? null,
-                practiceId: selectedSlot?.practiceId ?? null,
-                durationMin: selectedSlot?.durationMin ?? null,
-                guidanceAudioUrl: selectedSlot?.guidance?.audioUrl ?? null,
-                guidanceStartMode: selectedSlot?.guidance?.startMode ?? null,
-                guidanceResumeMode: selectedSlot?.guidance?.resumeMode ?? null,
-            },
-        };
-    }, [
-        displayDayIndex,
-        displayDayKey,
-        scheduledDayIndex,
-        scheduledWeekIndex,
-        metrics?.dayIndex,
-        times,
-        practiceLabels,
-        slotLaunches,
-    ]);
-    // PROBE:daily-preclick-slot-trace:END
-
     const [missedLegWarning, setMissedLegWarning] = useState(null);
     const [_isPending, startTransition] = useTransition();
 
@@ -780,9 +740,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             : null;
         const launchPayload = {
             source: "dailySchedule",
-            // PROBE:GUIDANCE_CTX_OVERLAY:START
-            __sourceTag: "DailyPracticeCard",
-            // PROBE:GUIDANCE_CTX_OVERLAY:END
             practiceId,
             autoStart: practiceId === 'breath',
             autoStartRequestId,
@@ -805,31 +762,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             },
             persistPreferences: false,
         };
-
-        // PROBE:scheduled-guidance-trace:START
-        if (import.meta.env.DEV && typeof window !== 'undefined') {
-            const existingTrace =
-                window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__ && typeof window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__ === 'object'
-                    ? window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__
-                    : {};
-            window.__IMMANENCE_SCHEDULED_GUIDANCE_TRACE__ = {
-                ...existingTrace,
-                launchPayload: {
-                    source: 'DailyPracticeCard.launchPathPractice',
-                    dayIndex: scheduledDayIndex ?? null,
-                    weekIndex: Number.isFinite(scheduledDayIndex) ? scheduledWeekIndex : null,
-                    slotIndex,
-                    slotTime: slotTime ?? null,
-                    practiceId,
-                    audioUrl: launchPayload.guidance?.audioUrl ?? null,
-                    guidanceSource: Object.prototype.hasOwnProperty.call(slot ?? {}, 'guidance')
-                        ? 'slot.guidance'
-                        : 'slot.guidance missing',
-                    ts: new Date().toISOString(),
-                },
-            };
-        }
-        // PROBE:scheduled-guidance-trace:END
 
         // PROBE:daily-benchmark-launch:START
         const emittedPattern = launchPayload.practiceParamsPatch?.breath?.pattern || null;
@@ -1245,28 +1177,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                                         }}>
                                             {activePathObj.title}
                                         </div>
-
-                                        {/* PROBE:daily-preclick-slot-trace:START */}
-                                        {import.meta.env.DEV && dailySlotTrace && (
-                                            <pre
-                                                style={{
-                                                    marginTop: 12,
-                                                    padding: '10px 12px',
-                                                    borderRadius: 12,
-                                                    border: isLight ? '1px solid rgba(60, 50, 35, 0.12)' : '1px solid rgba(255,255,255,0.12)',
-                                                    background: isLight ? 'rgba(255,255,255,0.74)' : 'rgba(8, 10, 18, 0.68)',
-                                                    color: isLight ? '#3c3020' : '#fdfbf5',
-                                                    fontSize: 11,
-                                                    lineHeight: 1.35,
-                                                    fontFamily: 'monospace',
-                                                    whiteSpace: 'pre-wrap',
-                                                    wordBreak: 'break-word',
-                                                }}
-                                            >
-                                                {JSON.stringify(dailySlotTrace, null, 2)}
-                                            </pre>
-                                        )}
-                                        {/* PROBE:daily-preclick-slot-trace:END */}
 
                                         {/* Precision Rail Infographic */}
                                         <div className="mt-4 pt-3 border-t" style={{ borderColor: isLight ? 'rgba(180, 140, 60, 0.15)' : 'rgba(255, 255, 255, 0.05)' }}>

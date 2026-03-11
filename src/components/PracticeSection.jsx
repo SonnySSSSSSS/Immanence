@@ -567,7 +567,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     [practiceParams?.breath?.stillness, sharedBreathPreDelaySec]
   );
   const practiceLaunchContext = useUiStore(s => s.practiceLaunchContext);
-  const setLastPracticeStartProbe = useUiStore(s => s.setLastPracticeStartProbe);
   const clearPracticeLaunchContext = useUiStore(s => s.clearPracticeLaunchContext);
   const applyLaunchConstraints = useSessionOverrideStore(s => s.applyLaunchConstraints);
   const clearLaunchConstraints = useSessionOverrideStore(s => s.clearLaunchConstraints);
@@ -578,6 +577,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
+  const activePathLaunchGuidanceRef = useRef(undefined);
   const getForceScheduleMatchedPayload = useCallback(() => {
     const pathCtx = activePathContextRef.current;
     if (!pathCtx || pathCtx.forceStart !== true || pathCtx.forceWindowBypass !== true) {
@@ -872,6 +872,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceWasPausedRef.current = false;
       pathGuidanceRanRef.current = false;
       activePathContextRef.current = null;
+      activePathLaunchGuidanceRef.current = undefined;
       suppressPrefSaveRef.current = false;
       queueMicrotask(() => setLaunchStillnessConfig(null));
       clearLaunchConstraints?.();
@@ -1016,6 +1017,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     } else {
       activePathContextRef.current = null;
     }
+    activePathLaunchGuidanceRef.current = Object.prototype.hasOwnProperty.call(ctx, 'guidance')
+      ? (ctx.guidance ?? null)
+      : undefined;
 
     const shouldAutoStartBreathLaunch =
       ctx.source === 'dailySchedule' &&
@@ -1079,6 +1083,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       pathGuidanceStartedRef.current = false;
       pathGuidanceWasPausedRef.current = false;
       activePathContextRef.current = null;
+      activePathLaunchGuidanceRef.current = undefined;
       queueMicrotask(() => setPathLaunchGuidance(undefined));
     }
   }, [isRunning, pathLaunchGuidance]);
@@ -2122,11 +2127,12 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     const actualPracticeId = getActualPracticeId(practiceId);
 
     const activePathContext = activePathContextRef.current;
+    const launchedPathGuidance = activePathLaunchGuidanceRef.current;
     const pathSlotIndex = Number(activePathContext?.slotIndex);
     const hasPathOccurrenceContext = Boolean(activePathContext?.activePathId) && Number.isFinite(pathSlotIndex);
-    let resolvedPathGuidance = null;
+    let resolvedPathGuidance = launchedPathGuidance;
 
-    if (hasPathOccurrenceContext) {
+    if (resolvedPathGuidance === undefined && hasPathOccurrenceContext) {
       const pathDef = getPathById(activePathContext.activePathId);
       const pathDayIndex = Number(activePathContext?.dayIndex);
       const occurrences = getPathPracticeOccurrences(pathDef, pathDayIndex);
@@ -2136,7 +2142,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         : null;
     }
 
-    if (!hasPathOccurrenceContext && activePracticeSession) {
+    if (resolvedPathGuidance === undefined && !hasPathOccurrenceContext && activePracticeSession) {
       const activeLeg = getActivePracticeLeg();
       resolvedPathGuidance = activeLeg?.guidance ?? null;
     }
@@ -2182,7 +2188,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     if (practiceId === "awareness" || actualPracticeId === "cognitive_vipassana" || actualPracticeId === "somatic_vipassana") {
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
-      setPathLaunchGuidance((hasPathOccurrenceContext || activePracticeSession) ? resolvedPathGuidance : undefined);
+      setPathLaunchGuidance(resolvedPathGuidance !== undefined ? resolvedPathGuidance : undefined);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -2200,7 +2206,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
-    setPathLaunchGuidance((hasPathOccurrenceContext || activePracticeSession) ? resolvedPathGuidance : undefined);
+    setPathLaunchGuidance(resolvedPathGuidance !== undefined ? resolvedPathGuidance : undefined);
     // Clear any residual teardown state in the same batch as isRunning=true so that
     // shouldRenderRingCanvas evaluates true on the first render of the new session.
     // Pre-session edits can leave ringTeardownRequested=true from a prior session's
@@ -2264,7 +2270,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       activeRitual?.category || null,
       p === 'somatic_vipassana' ? sensoryType : null
     );
-  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, getActivePracticeLeg, setLastPracticeStartProbe, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setRingTeardownRequested, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
+  }, [practiceId, circuitConfig, duration, practiceParams, sensoryType, tempoSyncEnabled, tempoSyncBpm, setupCircuitExercise, startSession, getActualPracticeId, notifyPracticingChange, practice, activeRitual, isCognitive, activePracticeSession, getActivePracticeLeg, setCircuitValidationError, setCircuitSavedPractice, setActiveCircuitId, setCircuitExerciseIndex, setPathLaunchGuidance, setRingTeardownRequested, setIsRunning, setSessionStartTime, setTapErrors, setLastErrorMs, setLastSignedErrorMs, setBreathCount]);
 
   // Clear validation error when circuit config changes (user edits circuit)
   useEffect(() => {
@@ -2273,7 +2279,13 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
   }, [circuitConfig, practiceId, circuitValidationError, setCircuitValidationError]);
 
-  const handleStart = (durationOverrideSec = null, ritualOverride = null) => {
+  const handleStart = useCallback((durationOverrideSec = null, ritualOverride = null, options = null) => {
+    const consumePendingAutoStart = options?.consumePendingAutoStart === true;
+
+    if (consumePendingAutoStart) {
+      setPendingPathAutoStart(null);
+    }
+
     // Clear initiation context — benchmark gating removed; recording happens at path selection only
     if (practiceId === 'breath' && initiationBenchmarkContext) {
       setInitiationBenchmarkContext(null);
@@ -2340,7 +2352,26 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         executeStart();
       }, 1400);
     }
-  };
+  }, [
+    practiceId,
+    initiationBenchmarkContext,
+    getActualPracticeId,
+    onOpenPhotic,
+    activeRitual,
+    setPendingPathAutoStart,
+    setInitiationBenchmarkContext,
+    setDuration,
+    setTimeLeft,
+    prepareSessionSurfaceForRun,
+    breathSubmode,
+    stillnessConfig,
+    sharedBreathPreDelaySec,
+    tempoSyncEnabled,
+    setIsSessionPaused,
+    setIsStarting,
+    setCountdownValue,
+    executeStart,
+  ]);
 
   useLayoutEffect(() => {
     if (!pendingPathAutoStart || isRunning) return;
@@ -2357,8 +2388,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
 
     consumedPathAutoStartRequestIdRef.current = pendingPathAutoStart.requestId;
-    setPendingPathAutoStart(null);
-    handleStart();
+    queueMicrotask(() => {
+      handleStart(null, null, { consumePendingAutoStart: true });
+    });
   }, [pendingPathAutoStart, isRunning, practiceId, duration, breathSubmode, handleStart]);
 
   const handleSelectRitual = (ritual) => {
