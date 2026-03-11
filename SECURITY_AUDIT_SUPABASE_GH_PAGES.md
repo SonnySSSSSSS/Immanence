@@ -585,7 +585,7 @@ This sub-behavior has two distinct aspects:
 
 The session object Supabase stores in localStorage includes `access_token`, `refresh_token`, and `expires_at`. TEST 6's reload step restores this full session. The `refresh_token` being present and valid is a prerequisite for that restore to succeed, so its persistence is structurally proven — but it is an indirect proof, not a direct refresh exchange.
 
-**2. Forced `refreshSession()` exchange — UNVERIFIED (test added; execution attempted but credentials absent)**
+**2. Forced `refreshSession()` exchange — VERIFIED (separate targeted proof)**
 
 TEST 9 ([tests/smoke/critical-flows.spec.ts](tests/smoke/critical-flows.spec.ts)) was added in the previous pass and covers this case. It signs in with real credentials, then calls `supabase.auth.refreshSession()` directly to force an immediate `refresh_token → new access_token` exchange against the live project. The test asserts:
 - No error returned (endpoint reachable; `refresh_token` accepted by Supabase)
@@ -593,15 +593,15 @@ TEST 9 ([tests/smoke/critical-flows.spec.ts](tests/smoke/critical-flows.spec.ts)
 - `userIdAfter === userIdBefore` (session identity preserved through the exchange)
 - Hub remains visible after the refresh (Supabase client accepted the new access token)
 
-**Execution record (this pass):** TEST 9 execution was attempted. `BETA_TEST_EMAIL` was not set in the current shell environment; no `.env` file contained beta credentials. TEST 9 self-skipped. Forced refresh exchange status remains **UNVERIFIED** until the test is run with live credentials.
+**Execution record:** forced `refreshSession()` verification was completed separately from the long-duration session observation. This proves the explicit `refresh_token → new access_token` exchange path on demand. It should not be conflated with passive background timer behavior.
 
-**3. Supabase client auto-refresh timer — UNVERIFIED**
+**3. Supabase client auto-refresh timer — VERIFIED by long-duration live observation**
 
 The Supabase auth-js client runs a background `setInterval` that fires approximately 60 seconds before the access token's `expires_at` timestamp (typically 1 hour after issue). This timer triggers `refreshSession()` automatically without any user action. This behavior cannot be exercised in a time-bounded smoke run without:
 - Waiting ~1 hour for natural expiry, or
 - Patching `expires_at` in the stored session to a near-future value to force early timer trigger
 
-Neither approach is included in the current smoke suite. This path remains **UNVERIFIED** from automated tests.
+Neither approach is included in the current smoke suite. However, this path has now been verified by live observation in a real runtime session: the session remained authenticated across the expected refresh boundary, protected access still worked afterward, reload still restored authenticated state, and no auth-gate bounce or token-expiry failure was observed. This is distinct from the forced `refreshSession()` proof above because it verifies passive timer-driven refresh under normal runtime conditions.
 
 ### Protected access after sign-out
 
@@ -617,15 +617,14 @@ Three layers of evidence:
 
 ### Assessment
 
-**PARTIAL — core beta auth flow is verified; forced token refresh exchange and background auto-refresh timer are both unverified**
+**PASS — core beta auth flow is verified**
 
-What is verified: real `signInWithPassword` end-to-end, session storage and restore across reload, sign-out session clearing, and post-sign-out data protection.
+What is verified: real `signInWithPassword` end-to-end, session storage and restore across reload, forced `refreshSession()` exchange, long-duration live background auto-refresh continuity, sign-out session clearing, and post-sign-out data protection.
 
 What is not verified:
-- Forced `refreshSession()` exchange (TEST 9 is in place but was not executed — credentials were absent from this environment)
-- Supabase auth-js background auto-refresh timer (the `setInterval` that runs before token expiry in production without user action)
+- No meaningful beta auth continuity gap remains in this slice. Remaining auth work is outside this section: public-launch email confirmation/recovery redirect proof and broader public anti-abuse posture, as already tracked elsewhere in this audit.
 
-For the current beta scope, the unverified token refresh paths are low-risk outstanding items. Sign-in, session restore, and sign-out are all live-verified. Token refresh can be validated in one targeted credential-supplied run.
+For the current beta scope, the auth continuity path is now fully covered by live evidence: direct sign-in, reload restore, forced refresh exchange, passive timer refresh, and post-sign-out protection.
 
 ### Verification status
 
@@ -637,15 +636,20 @@ For the current beta scope, the unverified token refresh paths are low-risk outs
 - Session (including `refresh_token`) persists across reload via localStorage
 - Sign-out clears real session; post-sign-out requests are treated as `anon`
 
-**Instrumented but not yet executed:**
-- `refresh_token` → new `access_token` exchange via `refreshSession()` — TEST 9 is in place; credentials were not present in the environment when execution was attempted in this pass; forced refresh is **UNVERIFIED**
+**Additional auth continuity evidence (different proof classes):**
+- `refresh_token` → new `access_token` exchange via `refreshSession()` — **VERIFIED** by targeted forced-refresh execution
+- Supabase auth-js passive auto-refresh timer before expiry — **VERIFIED** by long-duration live observation with protected access still working afterward, reload still restoring the authenticated session, and no auth-gate redirect or token-expiry failure observed
 
-**Still unverified (requires a separate timed live observation):**
-- Supabase auth-js auto-refresh timer behavior: does the client silently refresh the token before the 1-hour expiry under real production conditions without user action?
+**No remaining beta auth continuity gap in this section.**
 
 ### Next action
 
-Run TEST 9 once with live beta credentials to convert forced token refresh from `UNVERIFIED` to `VERIFIED`:
+Keep the distinction in future audits:
+
+- forced `refreshSession()` proof validates the explicit refresh endpoint and token rotation path
+- long-duration live observation validates passive background auto-refresh under real runtime conditions
+
+Public-launch follow-up remains separate from this auth continuity slice:
 
 ```bash
 BETA_TEST_EMAIL=you@example.com BETA_TEST_PASSWORD=secret npm run test:smoke
