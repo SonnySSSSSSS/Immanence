@@ -1924,14 +1924,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       return;
     }
     if (wasNaturalCompletion) {
-      const completionMeta = completionProbeMetaRef.current;
-      console.info("[PROBE:session-cycle-boundary-complete]", {
-        completedAtMs: performance.now(),
-        trigger: completionMeta?.trigger || 'direct-natural-completion',
-        phase: completionMeta?.phase || 'unknown',
-        boundary: completionMeta?.boundary || 'unknown',
-        pendingFinish: completionMeta?.pendingFinish ?? pendingCycleFinishRef.current,
-      });
       completionProbeMetaRef.current = null;
     }
     const wasFromCurriculum = !!activeSessionDayNumber;
@@ -2655,6 +2647,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const previousTimeLeftRef = useRef(timeLeft);
+  const previousTimeLeft = previousTimeLeftRef.current;
 
   useEffect(() => {
     previousTimeLeftRef.current = timeLeft;
@@ -2739,8 +2732,46 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [breathSubmode, breathingPatternForRing, isBreathRunningSession, sessionStartTime]);
 
   useEffect(() => {
+    if (!pendingCycleFinish) return undefined;
+    if (!isRunning || isSessionPaused || !isBreathRunningSession || breathSubmode === 'stillness') {
+      return undefined;
+    }
+
+    let frameId = null;
+
+    const checkBoundary = () => {
+      const now = performance.now();
+      const cycleSnapshot = getBreathCycleSnapshot(now);
+      if (cycleSnapshot?.atBoundary) {
+        lastCycleBoundaryAtRef.current = now;
+        queueNaturalSessionCompletion({
+          trigger: 'pending-finish-local-boundary',
+          phase: cycleSnapshot.phase || 'inhale',
+          boundary: 'exact-cycle-boundary',
+        });
+        return;
+      }
+
+      frameId = requestAnimationFrame(checkBoundary);
+    };
+
+    frameId = requestAnimationFrame(checkBoundary);
+    return () => {
+      if (frameId != null) cancelAnimationFrame(frameId);
+    };
+  }, [
+    breathSubmode,
+    getBreathCycleSnapshot,
+    isBreathRunningSession,
+    isRunning,
+    isSessionPaused,
+    pendingCycleFinish,
+    queueNaturalSessionCompletion,
+  ]);
+
+  useEffect(() => {
     let interval = null;
-    const reachedZeroThisRender = previousTimeLeftRef.current > 0 && timeLeft === 0;
+    const reachedZeroThisRender = previousTimeLeft > 0 && timeLeft === 0;
     const isBreathCycleCompletionSession =
       isBreathRunningSession &&
       breathSubmode !== 'stillness' &&
@@ -2755,11 +2786,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       } else if (reachedZeroThisRender && countdownValue === null) {
         const now = performance.now();
         const cycleSnapshot = getBreathCycleSnapshot(now);
-        console.info("[PROBE:session-raw-expiry]", {
-          expiredAtMs: now,
-          phase: cycleSnapshot?.phase || 'unknown',
-          pendingFinish: pendingCycleFinishRef.current,
-        });
 
         if (activeCircuitId && circuitConfig) {
           queueMicrotask(() => advanceCircuitExercise());
@@ -2777,10 +2803,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           } else {
             pendingCycleFinishRef.current = true;
             setPendingCycleFinish(true);
-            console.info("[PROBE:session-pending-finish]", {
-              armedAtMs: now,
-              phase: cycleSnapshot?.phase || 'unknown',
-            });
           }
         } else {
           queueNaturalSessionCompletion({
@@ -2809,6 +2831,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     queueNaturalSessionCompletion,
     setTimeLeft,
     timeLeft,
+    previousTimeLeft,
   ]);
 
   const isBreathPracticeRef = useRef(isBreathPractice);
