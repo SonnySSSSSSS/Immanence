@@ -1,32 +1,30 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 export function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' }) {
   const isLight = colorScheme === 'light';
   const wheelRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
-  const [scrollOffset, setScrollOffset] = useState(0);
+  const [dragOffset, setDragOffset] = useState(null);
 
   const itemHeight = 48;
   const visibleItems = 3;
-
-  useEffect(() => {
-    const index = options.indexOf(value);
-    if (index !== -1) {
-      setScrollOffset(index * itemHeight);
-    }
-  }, [value, options, itemHeight]);
+  const selectedIndex = options.indexOf(value);
+  const controlledOffset = selectedIndex === -1 ? 0 : selectedIndex * itemHeight;
+  const maxOffset = Math.max(0, (options.length - 1) * itemHeight);
+  const scrollOffset = dragOffset ?? controlledOffset;
 
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartY(e.clientY);
+    setDragOffset(controlledOffset);
   };
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     const deltaY = startY - e.clientY;
-    const newOffset = Math.max(0, Math.min(scrollOffset + deltaY, (options.length - 1) * itemHeight));
-    setScrollOffset(newOffset);
+    const newOffset = Math.max(0, Math.min(scrollOffset + deltaY, maxOffset));
+    setDragOffset(newOffset);
     setStartY(e.clientY);
   };
 
@@ -35,19 +33,16 @@ export function ScrollingWheel({ value, onChange, options, colorScheme = 'dark' 
     setIsDragging(false);
 
     const nearestIndex = Math.round(scrollOffset / itemHeight);
-    const snappedOffset = nearestIndex * itemHeight;
-    setScrollOffset(snappedOffset);
+    setDragOffset(null);
     onChange(options[nearestIndex]);
   };
 
   const handleWheel = (e) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? itemHeight : -itemHeight;
-    const newOffset = Math.max(0, Math.min(scrollOffset + delta, (options.length - 1) * itemHeight));
-    setScrollOffset(newOffset);
-
+    const newOffset = Math.max(0, Math.min(scrollOffset + delta, maxOffset));
     const nearestIndex = Math.round(newOffset / itemHeight);
-    setScrollOffset(nearestIndex * itemHeight);
+    setDragOffset(null);
     onChange(options[nearestIndex]);
   };
 
