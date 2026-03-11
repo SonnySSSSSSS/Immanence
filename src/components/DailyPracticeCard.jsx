@@ -1,5 +1,5 @@
 ﻿// src/components/DailyPracticeCard.jsx
-import React, { useEffect, useState, useMemo, useTransition, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useTransition, useRef, useCallback } from 'react';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { useNavigationStore } from '../state/navigationStore.js';
@@ -243,6 +243,31 @@ function normalizeGuidanceSpec(guidance) {
     };
 }
 
+function normalizeBenchmarkPatternForLaunch(pattern) {
+    if (!pattern || typeof pattern !== 'object') return null;
+
+    const inhale = Number(pattern.inhale);
+    const holdTop = Number(pattern.holdTop ?? pattern.hold1);
+    const exhale = Number(pattern.exhale);
+    const holdBottom = Number(pattern.holdBottom ?? pattern.hold2);
+
+    if (
+        !Number.isFinite(inhale)
+        || !Number.isFinite(holdTop)
+        || !Number.isFinite(exhale)
+        || !Number.isFinite(holdBottom)
+    ) {
+        return null;
+    }
+
+    return {
+        inhale,
+        holdTop,
+        exhale,
+        holdBottom,
+    };
+}
+
 function resolvePracticeLaunchFromEntry(entry) {
     if (!entry) return null;
 
@@ -316,7 +341,6 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Navigation path fallback
     const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
     const activePathObj = activePathId ? getPathById(activePathId) : null;
-    const isInitiationV2Path = activePathObj?.tracking?.curriculumId === 'ritual-initiation-14-v2';
     const activePath = useNavigationStore(s => s.activePath);
     const todayDow = new Date().getDay();
     const frozenActiveDays = normalizeScheduleActiveDays(
@@ -514,24 +538,16 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const restartPath = useNavigationStore(s => s.restartPath);
     const abandonPath = useNavigationStore(s => s.abandonPath);
     
-    const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics, activePath?.startedAt, sessionsV2.length]);
+    const metrics = useMemo(() => computeProgressMetrics(), [computeProgressMetrics]);
 
     const pathDayIndexDisplay = metrics?.dayIndex ?? 1;
 
     const pathDayProgressRatio = metrics.durationDays > 0 ? pathDayIndexDisplay / metrics.durationDays : 0;
-    const missState = useMemo(() => computeMissState(), [
-        computeMissState,
-        sessionsV2.length,
-        activePath?.runId,
-        activePath?.startedAt,
-        activePath?.activePathId,
-        activePath?.schedule?.selectedTimes?.length,
-    ]);
+    const missState = useMemo(() => computeMissState(), [computeMissState]);
 
     // Benchmark data for breath practices
     const benchmark = useBreathBenchmarkStore(s => s.benchmark);
     const getStartingPattern = useBreathBenchmarkStore(s => s.getStartingPattern);
-    const hasBenchmark = useBreathBenchmarkStore(s => s.hasBenchmark);
     const userMode = useUserModeStore(s => s.userMode);
 
     // Canonical practice launches for each slot (practiceId + duration + params)
@@ -557,7 +573,8 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
                 // Calculate starting pattern (75% of benchmark)
                 const startingPattern = getStartingPattern();
-                if (!startingPattern) return slot;
+                const normalizedStartingPattern = normalizeBenchmarkPatternForLaunch(startingPattern);
+                if (!normalizedStartingPattern) return slot;
 
                 // Add the pattern to practiceParamsPatch
                 return {
@@ -566,7 +583,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                         ...(slot.practiceParamsPatch || {}),
                         breath: {
                             ...(slot.practiceParamsPatch?.breath || {}),
-                            pattern: startingPattern,
+                            pattern: normalizedStartingPattern,
                         },
                     },
                 };
@@ -662,7 +679,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     // Show path-based daily card when an active path with scheduled times exists,
     // regardless of onboarding status â€” prevents falling through to stale curriculum modal
     const hasActivePath = activePathObj && times.length > 0;
-    const launchPathPractice = (slot, slotIndex, slotTime, launchMeta = null) => {
+    const launchPathPractice = useCallback((slot, slotIndex, slotTime, launchMeta = null) => {
         const practiceId = slot?.practiceId;
         if (!practiceId) return;
         const forceStart = launchMeta?.forceStart === true;
@@ -671,8 +688,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         const autoStartRequestId = practiceId === 'breath'
             ? `${Date.now()}:${Math.random().toString(36).slice(2, 8)}`
             : null;
-
-        useUiStore.getState().setPracticeLaunchContext({
+        const launchPayload = {
             source: "dailySchedule",
             // PROBE:GUIDANCE_CTX_OVERLAY:START
             __sourceTag: "DailyPracticeCard",
@@ -698,9 +714,49 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
                 scheduleDateKey,
             },
             persistPreferences: false,
-        });
+        };
+
+        // PROBE:daily-benchmark-launch:START
+        const emittedPattern = launchPayload.practiceParamsPatch?.breath?.pattern || null;
+        const isBenchmarkEnabledBreathLaunch = Boolean(
+            practiceId === 'breath'
+            && activePathObj?.showBreathBenchmark
+            && benchmark
+            && emittedPattern
+        );
+        if (isBenchmarkEnabledBreathLaunch && typeof window !== 'undefined') {
+            const probeSnapshot = {
+                source: 'DailyPracticeCard.launchPathPractice',
+                slotIndex,
+                slotTime,
+                activePathId: activePath?.activePathId ?? null,
+                runId: activePath?.runId ?? null,
+                emittedPattern,
+                keys: Object.keys(emittedPattern),
+                timing: {
+                    inhale: emittedPattern?.inhale ?? null,
+                    holdTop: emittedPattern?.holdTop ?? null,
+                    exhale: emittedPattern?.exhale ?? null,
+                    holdBottom: emittedPattern?.holdBottom ?? null,
+                    hold1: emittedPattern?.hold1 ?? null,
+                    hold2: emittedPattern?.hold2 ?? null,
+                },
+            };
+            window.__IMMANENCE_DAILY_BENCHMARK_LAUNCH_PROBE__ = probeSnapshot;
+            console.info('[PROBE:daily-benchmark-launch]', probeSnapshot);
+        }
+        // PROBE:daily-benchmark-launch:END
+
+        useUiStore.getState().setPracticeLaunchContext(launchPayload);
         onNavigate?.('practice');
-    };
+    }, [
+        activePath?.runId,
+        activePath?.activePathId,
+        metrics.dayIndex,
+        activePathObj?.showBreathBenchmark,
+        benchmark,
+        onNavigate,
+    ]);
 
     useEffect(() => {
         if (!import.meta.env.DEV) return;
@@ -742,13 +798,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
         times,
         completedSlotIndices,
         slotLaunches,
-        activePathObj?.showBreathBenchmark,
-        isInitiationV2Path,
-        hasBenchmark,
-        activePath?.runId,
-        activePath?.activePathId,
-        metrics.dayIndex,
-        onNavigate,
+        launchPathPractice,
     ]);
 
     // DEV keyboard shortcut — must be above all early returns; deps supplied via ref
