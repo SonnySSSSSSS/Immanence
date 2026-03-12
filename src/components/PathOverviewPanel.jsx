@@ -11,7 +11,6 @@ import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 import { getPathContract, validatePathActivationSelections } from '../utils/pathContract.js';
 import { InstructionVideoModal } from './InstructionVideoModal.jsx';
-import { PathLifecycleActions } from './ActivePathState.jsx';
 import { getResumableNavigationPathId } from '../state/curriculumStore.js';
 
 const ACCEPTANCE_STEP_VIDEO_MAP = Object.freeze({
@@ -73,7 +72,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const normalizedResumablePathId = normalizeInitiationPathIdentity(resumablePathId);
     const isViewedPathActive = normalizedViewedPathId === normalizedActivePathId;
     const isViewedPathResumable = normalizedViewedPathId === normalizedResumablePathId;
-    const shouldShowLifecycleActions = isViewedPathActive || isViewedPathResumable;
     const contract = getPathContract(path);
     const orderedDayOptions = [
         { value: 1, label: 'Mon' },
@@ -332,27 +330,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 videoUrl={activeInstructionVideo?.videoUrl}
                 onClose={() => setActiveInstructionVideo(null)}
             />
-            {shouldShowLifecycleActions && (
-                <div
-                    className="mb-6 rounded-2xl border p-4"
-                    style={{
-                        background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
-                        borderColor: isLight ? 'rgba(180, 140, 90, 0.14)' : 'rgba(250, 208, 120, 0.12)',
-                    }}
-                >
-                    <div
-                        className="text-[10px] uppercase tracking-[0.18em] mb-3"
-                        style={{ color: goldLabelColor }}
-                    >
-                        Path Actions
-                    </div>
-                    <PathLifecycleActions
-                        compact
-                        ensureActivePath={ensureViewedPathLoaded}
-                        onAfterAbandon={onClose}
-                    />
-                </div>
-            )}
             {/* Center top ornament */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />
@@ -949,7 +926,6 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                     )}
                 </div>
             )}
-
             <style>{`
                 @keyframes benchmarkRadiate {
                     0%, 100% {

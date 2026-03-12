@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { PathSelectionGrid } from './PathSelectionGrid.jsx';
 import { PathOverviewPanel } from './PathOverviewPanel.jsx';
-import { ActivePathState } from './ActivePathState.jsx';
+import { ActivePathState, PathLifecycleActions } from './ActivePathState.jsx';
 import { NavigationPathReport } from './navigation/NavigationPathReport.jsx';
 import { PathFinderCard } from './PathFinderCard.jsx';
 import { CodexChamber } from './Codex/CodexChamber.jsx';
@@ -123,6 +123,8 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
             data-nav-pill-id="nav:paths"
             style={{
               color: isLight ? (showCodex ? 'rgba(140, 100, 40, 1)' : 'rgba(180, 120, 40, 1)') : (showCodex ? 'rgba(220, 210, 180, 1)' : '#F5D18A'),
+              fontWeight: 700,
+              textShadow: !isLight ? '0 1px 4px rgba(0,0,0,0.4)' : undefined,
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
@@ -153,6 +155,38 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
             ▼
           </span>
         </button>
+
+        {!showCodex && activePath && (
+          <div
+            className="flex flex-col items-center px-4 py-3 rounded-2xl"
+            style={{
+              marginTop: '8px',
+              gap: '6px',
+              background: isLight
+                ? 'rgba(60, 52, 37, 0.25)'
+                : 'rgba(0, 0, 0, 0.45)',
+              border: isLight
+                ? '1px solid rgba(180, 140, 90, 0.2)'
+                : '1px solid rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}
+          >
+            <div
+              className="type-caption uppercase"
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.1em',
+                fontWeight: 700,
+                color: isLight ? 'rgba(90, 77, 60, 0.9)' : '#ffffff',
+                textShadow: !isLight ? '0 1px 2px rgba(0,0,0,0.8)' : undefined,
+              }}
+            >
+              Path actions
+            </div>
+            <PathLifecycleActions compact />
+          </div>
+        )}
       </div>
 
       {/* Content Container */}
@@ -177,6 +211,10 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
                 </div>
                 <ActivePathState onNavigate={onNavigate} />
                 <NavigationPathReport />
+                <div
+                  className="mt-4 pt-4 border-t"
+                  style={{ borderColor: 'rgba(253,251,245,0.06)' }}
+                />
               </div>
             )}
           </div>

@@ -435,6 +435,10 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
   // }, [curriculumOnboardingComplete, isCurriculumComplete]);
 
 
+  // v3.27.268 - fix(dedup): remove duplicate restart/abandon buttons from active path state component
+  // v3.27.267 - fix(legibility): add dark background container with white text for path actions
+  // v3.27.266 - fix(legibility): boost text contrast for path buttons and labels; add text shadows
+  // v3.27.264 - fix(ui): move path lifecycle actions to panel bottom, remove probe
   // v3.27.263 - fix(wisdom): restore missing display mode store import in WisdomSection
   // v3.27.262 - fix(ui): replace corrupted triangle/arrow/middot Unicode in CircuitTrainingSelector and TrackingHub
   // v3.27.261 - fix(rituals): replace corrupted icon byte sequences with correct UTF-8 emoji
@@ -869,7 +873,7 @@ function App({ playgroundMode = false, playgroundBottomLayer = true }) {
                         }}
                         style={{ background: 'transparent' }}
                       >
-                        v3.27.263
+                        v3.27.268
                       </button>
                     </div>
                   </div>

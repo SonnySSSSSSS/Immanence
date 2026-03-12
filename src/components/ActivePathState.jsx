@@ -75,14 +75,15 @@ export function PathLifecycleActions({
             <div className={`flex flex-wrap items-center ${compact ? 'gap-2' : 'gap-4'}`}>
                 <button
                     onClick={() => setShowRestartConfirm(true)}
-                    className={compact ? 'px-4 py-2 rounded-full text-[10px] uppercase transition-colors' : 'px-4 py-3 text-sm transition-colors'}
+                    className={compact ? 'px-3 py-1.5 rounded-full text-[9px] uppercase transition-colors' : 'px-4 py-3 text-sm transition-colors'}
                     style={{
                         fontFamily: compact ? 'var(--font-display)' : undefined,
-                        fontWeight: compact ? 600 : undefined,
+                        fontWeight: compact ? 700 : undefined,
                         letterSpacing: compact ? 'var(--tracking-mythic)' : undefined,
                         border: compact ? '1px solid var(--accent-20)' : undefined,
                         background: compact ? 'transparent' : undefined,
-                        color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)',
+                        color: compact && !isLight ? '#ffffff' : (isLight ? 'rgba(90, 77, 60, 0.78)' : 'rgba(253,251,245,0.85)'),
+                        textShadow: compact && !isLight ? '0 1px 3px rgba(0,0,0,0.8)' : undefined,
                     }}
                 >
                     Restart path
@@ -90,14 +91,15 @@ export function PathLifecycleActions({
                 {!showAbandonConfirm ? (
                     <button
                         onClick={() => setShowAbandonConfirm(true)}
-                        className={compact ? 'px-4 py-2 rounded-full text-[10px] uppercase transition-colors' : 'px-4 py-3 text-sm transition-colors'}
+                        className={compact ? 'px-3 py-1.5 rounded-full text-[9px] uppercase transition-colors' : 'px-4 py-3 text-sm transition-colors'}
                         style={{
                             fontFamily: compact ? 'var(--font-display)' : undefined,
-                            fontWeight: compact ? 600 : undefined,
+                            fontWeight: compact ? 700 : undefined,
                             letterSpacing: compact ? 'var(--tracking-mythic)' : undefined,
-                            border: compact ? '1px solid var(--accent-20)' : undefined,
+                            border: compact ? '1px solid var(--accent-15)' : undefined,
                             background: compact ? 'transparent' : undefined,
-                            color: isLight ? 'rgba(90, 77, 60, 0.4)' : 'rgba(253,251,245,0.4)',
+                            color: compact && !isLight ? 'rgba(255, 255, 255, 0.85)' : (isLight ? 'rgba(90, 77, 60, 0.62)' : 'rgba(253,251,245,0.68)'),
+                            textShadow: compact && !isLight ? '0 1px 3px rgba(0,0,0,0.7)' : undefined,
                         }}
                     >
                         Abandon path
@@ -286,8 +288,6 @@ export function ActivePathState() {
                     <strong>Status:</strong> {isRestDay ? 'Rest day' : (nextSessionLabel ? `Next session ${nextSessionLabel}` : 'No remaining sessions today')}
                 </div>
             </div>
-
-            <PathLifecycleActions />
         </div>
     );
 }
