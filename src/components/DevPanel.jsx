@@ -308,7 +308,7 @@ export function DevPanel({
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
         if (!uiTargetProbeEnabled && !universalPickMode) {
-            setUtcViolations([]);
+            queueMicrotask(() => setUtcViolations([]));
             return undefined;
         }
 
@@ -334,7 +334,7 @@ export function DevPanel({
         return () => {
             if (raf) window.cancelAnimationFrame(raf);
         };
-    }, [isOpen, devtoolsEnabled, uiTargetProbeEnabled, universalPickMode]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled, uiTargetProbeEnabled, universalPickMode]);
 
     const debugLogPick = useCallback((mode, picker, event, resolvedEl) => {
         if (!pickDebugEnabled) return;
@@ -456,13 +456,13 @@ export function DevPanel({
         if (!canRunDevEffects) return undefined;
         try {
             const raw = window.localStorage.getItem(PICK_DEBUG_FLAG_KEY);
-            if (raw === "1") setPickDebugEnabledLocal(true);
-            if (raw === "0") setPickDebugEnabledLocal(false);
+            if (raw === "1") queueMicrotask(() => setPickDebugEnabledLocal(true));
+            if (raw === "0") queueMicrotask(() => setPickDebugEnabledLocal(false));
         } catch {
             // ignore
         }
         return undefined;
-    }, [isOpen, devtoolsEnabled]);
+    }, [canRunDevEffects, isOpen, devtoolsEnabled]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -1473,7 +1473,6 @@ export function DevPanel({
                         </div>
                     </Section>
 
-
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* DESIGN & DIAGNOSTIC SECTION */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
@@ -2099,4 +2098,3 @@ function CurriculumSection({
 }
 
 export default DevPanel;
-
