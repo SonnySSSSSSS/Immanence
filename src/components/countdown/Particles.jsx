@@ -3,6 +3,16 @@ import * as THREE from 'three'
 import { useRef, useMemo } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 
+function createSeededRandom(seed) {
+  let state = seed >>> 0
+  return () => {
+    state = (state + 0x6D2B79F5) >>> 0
+    let t = Math.imul(state ^ (state >>> 15), state | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
 export default function Particles({ count, mouse }) {
   const mesh = useRef()
   const light = useRef()
@@ -12,20 +22,21 @@ export default function Particles({ count, mouse }) {
   const dummy = useMemo(() => new THREE.Object3D(), [])
   // Generate some random positions, speed factors and timings
   const particles = useMemo(() => {
+    const random = createSeededRandom((0x41c6ce57 + count) >>> 0)
     const temp = []
     for (let i = 0; i < count; i++) {
-      const t = Math.random() * 100
-      const factor = 20 + Math.random() * 100
-      const speed = 0.01 + Math.random() / 200
-      const xFactor = -50 + Math.random() * 100
-      const yFactor = -50 + Math.random() * 100
-      const zFactor = -50 + Math.random() * 100
+      const t = random() * 100
+      const factor = 20 + random() * 100
+      const speed = 0.01 + random() / 200
+      const xFactor = -50 + random() * 100
+      const yFactor = -50 + random() * 100
+      const zFactor = -50 + random() * 100
       temp.push({ t, factor, speed, xFactor, yFactor, zFactor, mx: 0, my: 0 })
     }
     return temp
   }, [count])
   // The innards of this hook will run every frame
-  useFrame((state) => {
+  useFrame(() => {
     // Makes the light follow the mouse
     light.current.position.set(mouse.current[0] / aspect, -mouse.current[1] / aspect, 0)
     // Run through the randomized data to calculate some movement
