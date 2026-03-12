@@ -29,7 +29,7 @@ function PracticeCardWallpaperDiagnostics({ stageKey }) {
     );
 }
 
-import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
 import { useProgressStore } from '../state/progressStore';
 import { useSettingsStore } from '../state/settingsStore';
@@ -167,9 +167,6 @@ export function DevPanel({
     // DevPanel should be fully functional in dev builds; do not require extra devtools unlock gates.
     const devtoolsEnabled = Boolean(isDevBuild || devPanelGateEnabled);
     const canRunDevEffects = useDevPanelGate(isOpen, devtoolsEnabled);
-    const currentPathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    const isPlaygroundPath = currentPathname === '/__playground';
-
     // Avatar preview controls (fallback to local state if no props supplied)
     const [avatarStageLocal, setAvatarStageLocal] = useState('Flame');
     const [avatarPathLocal, setAvatarPathLocal] = useState(PATH_OPTIONS[0] || 'Yantra');
@@ -199,7 +196,6 @@ export function DevPanel({
         inspectorNew: false,
         cardTuner: true,
         navBtnTuner: false,
-        playground: false,
         curriculum: false,
         tracking: false,
         data: false
@@ -423,18 +419,6 @@ export function DevPanel({
             localStorage.setItem("immanence.tutorial.admin", "1");
         }
         location.reload();
-    };
-
-    const handleOpenPlayground = () => {
-        if (typeof window === 'undefined') return;
-        sessionStorage.setItem('dev:returnPath', window.location.pathname);
-        window.location.assign('/__playground');
-    };
-
-    const handleBackFromPlayground = () => {
-        if (typeof window === 'undefined') return;
-        const returnPath = sessionStorage.getItem('dev:returnPath') || '/';
-        window.location.assign(returnPath);
     };
 
     useEffect(() => {
@@ -1236,48 +1220,6 @@ export function DevPanel({
                         onChangeNavBtnSetting={onChangeNavBtnSetting}
                         resetNavButtonSettings={makeGuardedAction(resetNavButtonSettings)}
                     />
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* UI PLAYGROUND SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-
-                    <Section
-                        title="UI Playground"
-                        expanded={expandedSections.playground}
-                        onToggle={() => toggleSection('playground')}
-                        isLight={isLight}
-                    >
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs opacity-70" style={{ color: isLight ? 'rgba(60, 50, 40, 0.75)' : 'rgba(255, 255, 255, 0.7)' }}>
-                                Launcher <span className="font-mono text-[10px] opacity-80">BUILD_PROBE</span>
-                            </span>
-                            {!isPlaygroundPath ? (
-                                <button
-                                    onClick={handleOpenPlayground}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border"
-                                    style={{
-                                        background: isLight ? 'rgba(180, 155, 110, 0.12)' : 'rgba(255, 255, 255, 0.06)',
-                                        color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                                        borderColor: isLight ? 'rgba(180, 155, 110, 0.35)' : 'rgba(255, 255, 255, 0.22)',
-                                    }}
-                                >
-                                    Open Playground
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleBackFromPlayground}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border"
-                                    style={{
-                                        background: isLight ? 'rgba(180, 155, 110, 0.12)' : 'rgba(255, 255, 255, 0.06)',
-                                        color: isLight ? 'rgba(60, 50, 40, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                                        borderColor: isLight ? 'rgba(180, 155, 110, 0.35)' : 'rgba(255, 255, 255, 0.22)',
-                                    }}
-                                >
-                                    Back
-                                </button>
-                            )}
-                        </div>
-                    </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     {/* CURRICULUM SIMULATION SECTION */}
