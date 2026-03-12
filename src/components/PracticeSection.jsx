@@ -2247,6 +2247,18 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     queueMicrotask(() => handleStop({ completed: true }));
   }, [handleStop]);
 
+  const getBreathCycleSnapshotRef = useRef(null);
+  const queueNaturalSessionCompletionRef = useRef(null);
+  const advanceCircuitExerciseRef = useRef(null);
+
+  useEffect(() => {
+    queueNaturalSessionCompletionRef.current = queueNaturalSessionCompletion;
+  }, [queueNaturalSessionCompletion]);
+
+  useEffect(() => {
+    advanceCircuitExerciseRef.current = advanceCircuitExercise;
+  }, [advanceCircuitExercise]);
+
   const handleBreathCycleComplete = useCallback(() => {
     lastCycleBoundaryAtRef.current = performance.now();
     setBreathCount((prev) => prev + 1);
@@ -2678,11 +2690,6 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   };
 
   const previousTimeLeftRef = useRef(timeLeft);
-  const previousTimeLeft = previousTimeLeftRef.current;
-
-  useEffect(() => {
-    previousTimeLeftRef.current = timeLeft;
-  }, [timeLeft]);
 
   // Update tempo sync session elapsed time (calculates segment transitions)
   useEffect(() => {
@@ -2763,6 +2770,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   }, [breathSubmode, breathingPatternForRing, isBreathRunningSession, sessionStartTime]);
 
   useEffect(() => {
+    getBreathCycleSnapshotRef.current = getBreathCycleSnapshot;
+  }, [getBreathCycleSnapshot]);
+
+  useEffect(() => {
     if (!pendingCycleFinish) return undefined;
     if (!isRunning || isSessionPaused || !isBreathRunningSession || breathSubmode === 'stillness') {
       return undefined;
@@ -2802,7 +2813,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
   useEffect(() => {
     let interval = null;
+    const previousTimeLeft = previousTimeLeftRef.current;
     const reachedZeroThisRender = previousTimeLeft > 0 && timeLeft === 0;
+    previousTimeLeftRef.current = timeLeft;
     const isBreathCycleCompletionSession =
       isBreathRunningSession &&
       breathSubmode !== 'stillness' &&
@@ -2816,17 +2829,17 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
         }, 1000);
       } else if (reachedZeroThisRender && countdownValue === null) {
         const now = performance.now();
-        const cycleSnapshot = getBreathCycleSnapshot(now);
+        const cycleSnapshot = getBreathCycleSnapshotRef.current?.(now) ?? null;
 
         if (activeCircuitId && circuitConfig) {
-          queueMicrotask(() => advanceCircuitExercise());
+          advanceCircuitExerciseRef.current?.();
         } else if (isBreathCycleCompletionSession) {
           const boundaryJustCrossed =
             Number.isFinite(lastCycleBoundaryAtRef.current) &&
             Math.abs(now - lastCycleBoundaryAtRef.current) <= BREATH_CYCLE_BOUNDARY_EPSILON_MS;
 
           if (boundaryJustCrossed || cycleSnapshot?.atBoundary) {
-            queueNaturalSessionCompletion({
+            queueNaturalSessionCompletionRef.current?.({
               trigger: 'raw-expiry-immediate',
               phase: cycleSnapshot?.phase || 'inhale',
               boundary: 'exact-cycle-boundary',
@@ -2836,7 +2849,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
             setPendingCycleFinish(true);
           }
         } else {
-          queueNaturalSessionCompletion({
+          queueNaturalSessionCompletionRef.current?.({
             trigger: 'raw-expiry-non-breath',
             phase: 'n/a',
             boundary: 'timer-zero',
@@ -2850,19 +2863,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     };
   }, [
     activeCircuitId,
-    advanceCircuitExercise,
     breathSubmode,
     circuitConfig,
     countdownValue,
-    getBreathCycleSnapshot,
     isBreathRunningSession,
     isRunning,
     isSessionPaused,
     practice,
-    queueNaturalSessionCompletion,
     setTimeLeft,
     timeLeft,
-    previousTimeLeft,
   ]);
 
   const isBreathPracticeRef = useRef(isBreathPractice);
