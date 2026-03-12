@@ -1,3 +1,17 @@
+// src/components/audio/GuidanceAudioController.jsx
+//
+// ─── AUDIO OWNERSHIP: SESSION-LEVEL AMBIENT GUIDANCE ─────────────────────────
+// This component handles SESSION-LEVEL, FILE-BASED, AMBIENT audio narration.
+// It plays a single pre-recorded audio file (e.g. a meditation teacher's voice)
+// that runs continuously for the duration of a practice session.
+//
+// It reads source/status/volume from tempoAudioStore and is driven by
+// PracticeSection.jsx, which sets the source URL from leg.guidance.audioUrl.
+//
+// This component is NOT for per-phase speech events or one-shot breath cues.
+// For phase-event speech synthesis, see: src/services/audioGuidanceService.js
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { useEffect, useRef } from "react";
 import { useTempoAudioStore } from "../../state/tempoAudioStore.js";
 

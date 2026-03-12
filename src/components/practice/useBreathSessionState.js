@@ -72,6 +72,8 @@ export function useBreathSessionState({
 
   const breathingPatternForRing = useMemo(() => {
     // Tempo-sync mode uses its own 3-phase cap schedule (tempoSyncSessionStore) and should not be double-scaled.
+    // NOTE: tempoSessionEffective already uses ring-layer naming (holdIn/holdOut from tempoSyncSessionStore).
+    // The output here is ring-layer naming (holdTop/holdBottom). See naming translation note below.
     if (tempoSyncEnabled && isBreathPractice && hasBenchmark) {
       if (tempoSessionActive && tempoSessionEffective) {
         return {
@@ -114,6 +116,14 @@ export function useBreathSessionState({
     // Optional: when BPM is provided (but not in full tempo-session mode), quantize the scaled pattern to music.
     if (tempoSyncEnabled && isBreathPractice && Number.isFinite(tempoSyncBpm) && tempoSyncBpm > 0) {
       const quantized = quantizePatternToMusicStrict(scaled, tempoSyncBpm);
+      // ─── NAMING TRANSLATION BOUNDARY ───────────────────────────────────────
+      // Data-layer names (breathPresets, breathBenchmarkStore, phaseInstructions):
+      //   inhale | hold1 | exhale | hold2
+      // Ring/render-layer names (BreathingRing props and ring renderers):
+      //   inhale | holdTop | exhale | holdBottom
+      // This return statement is the ONLY place that translation occurs.
+      // Any future phaseInstructions metadata must be keyed by data-layer names.
+      // ────────────────────────────────────────────────────────────────────────
       return {
         inhale: quantized.inhale,
         holdTop: quantized.hold1,
@@ -122,6 +132,14 @@ export function useBreathSessionState({
       };
     }
 
+    // ─── NAMING TRANSLATION BOUNDARY ─────────────────────────────────────────
+    // Data-layer names (breathPresets, breathBenchmarkStore, phaseInstructions):
+    //   inhale | hold1 | exhale | hold2
+    // Ring/render-layer names (BreathingRing props and ring renderers):
+    //   inhale | holdTop | exhale | holdBottom
+    // This return statement is the ONLY place that translation occurs.
+    // Any future phaseInstructions metadata must be keyed by data-layer names.
+    // ─────────────────────────────────────────────────────────────────────────
     return {
       inhale: scaled.inhale,
       holdTop: scaled.hold1,

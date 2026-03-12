@@ -1,4 +1,20 @@
 // src/services/audioGuidanceService.js
+//
+// ─── AUDIO OWNERSHIP: PHASE-EVENT / ONE-SHOT SPEECH DELIVERY ─────────────────
+// This service handles ONE-SHOT, EVENT-DRIVEN speech synthesis — for example,
+// announcing a phase instruction ("Breathe in slowly") at the start of a breath
+// phase, or speaking a cue when a session milestone is reached.
+//
+// It uses the Web Speech API (SpeechSynthesisUtterance) and is a singleton.
+// Call audioGuidance.speak(text) to synthesize speech on demand.
+//
+// This service is NOT for session-level ambient audio narration.
+// For that, see: src/components/audio/GuidanceAudioController.jsx
+//
+// Current status: imported in PracticeSection.jsx but not yet wired to any
+// live session event. Reserved for future phase-instruction audio work.
+// ─────────────────────────────────────────────────────────────────────────────
+//
 // Modular audio guidance system for ritual instructions
 // Supports Web Speech API (default) and pre-recorded audio files (future)
 

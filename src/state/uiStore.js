@@ -28,6 +28,27 @@ export const useUiStore = create((set, get) => ({
     //   practiceConfig?: Record<string, any>,
     //   pathContext?: { runId?: string, activePathId?: string, slotTime?: string, slotIndex?: number, dayIndex?: number, weekIndex?: number },
     //   persistPreferences?: boolean, // default true; set false for recommendations
+    //
+    //   phaseInstructions?: {
+    //     // Per-phase breath quality/style metadata for future breath-variation work.
+    //     // Keys use DATA-LAYER naming: inhale | hold1 | exhale | hold2.
+    //     // (The ring/render layer uses holdTop/holdBottom — translation happens in
+    //     //  useBreathSessionState.js, which is the sole naming boundary.)
+    //     //
+    //     // style: machine-readable pacing token for the phase.
+    //     //   Valid values: 'fast' | 'slow' | 'smooth' | 'natural' | 'max'
+    //     // cue: user-facing text announced at phase entry, or null for silence.
+    //     //   Delivery is via audioGuidanceService (one-shot speech), NOT
+    //     //   GuidanceAudioController (which handles session-level ambient audio).
+    //     //
+    //     inhale?: { style?: string, cue?: string | null },
+    //     hold1?:  { style?: string, cue?: string | null },
+    //     exhale?: { style?: string, cue?: string | null },
+    //     hold2?:  { style?: string, cue?: string | null },
+    //   },
+    //   // NOTE: phaseInstructions is not yet consumed by any runtime component.
+    //   // It is declared here as the canonical pipeline entry point for the
+    //   // breath-variation feature. No behavior changes until a future pass.
     // }
     practiceLaunchContext: null,
     lastPracticeLaunchContext: null,
