@@ -437,7 +437,8 @@ export function CurriculumPrecisionRail() {
                     style={{
                         position: 'fixed',
                         top: gridRect.bottom + 6,
-                        left: gridRect.left,
+                        left: Math.max(8, gridRect.left),
+                        maxWidth: 'calc(100vw - 16px)',
                         fontSize: '9px',
                         color: isLight ? 'rgba(100, 80, 60, 0.7)' : 'rgba(255, 255, 255, 0.6)',
                         display: 'flex',

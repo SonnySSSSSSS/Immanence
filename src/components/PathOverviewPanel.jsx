@@ -1,5 +1,5 @@
 // src/components/PathOverviewPanel.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useCurriculumStore } from '../state/curriculumStore.js';
 import { PracticeTimesPicker } from './schedule/PracticeTimesPicker.jsx';
@@ -10,6 +10,22 @@ import { BreathBenchmark } from './BreathBenchmark.jsx';
 import { useBreathBenchmarkStore } from '../state/breathBenchmarkStore.js';
 import { getScheduleConstraintForPath, validateSelectedTimes } from '../utils/scheduleSelectionConstraints.js';
 import { getPathContract, validatePathActivationSelections } from '../utils/pathContract.js';
+import { InstructionVideoModal } from './InstructionVideoModal.jsx';
+import { PathLifecycleActions } from './ActivePathState.jsx';
+import { getResumableNavigationPathId } from '../state/curriculumStore.js';
+
+const ACCEPTANCE_STEP_VIDEO_MAP = Object.freeze({
+    1: {
+        title: 'The Mechanics of Meaning',
+        videoUrl: '/videos/The_Mechanics_of_Meaning.mp4',
+    },
+    2: {
+        title: 'Music: A Transmission of Consciousness',
+        videoUrl: '/videos/Music__A_Transmission_of_Consciousness.mp4',
+    },
+});
+const ACCEPTANCE_PATH_ID = 'initiation';
+const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
 
 export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -17,20 +33,24 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const setContentLaunchContext = useUiStore(s => s.setContentLaunchContext);
     const goldLabelColor = isLight ? 'rgba(180, 120, 40, 0.75)' : 'var(--gold-80)';
 
-    const { beginPath } = useNavigationStore();
+    const { beginPath, activePath, restoreCurriculumPath } = useNavigationStore();
     const {
+        activeCurriculumId,
         practiceTimeSlots,
         setPracticeTimeSlots,
         selectedDaysOfWeekDraft,
         setSelectedDaysOfWeekDraft,
         getSelectedDaysOfWeekDraft,
     } = useCurriculumStore();
+    const resumablePathId = useCurriculumStore(getResumableNavigationPathId);
     const [expandedWeeks, setExpandedWeeks] = useState([]);
     const [scheduleError, setScheduleError] = useState(null);
     const [daysError, setDaysError] = useState(null);
     const [benchmarkError, setBenchmarkError] = useState(null);
     const [showBenchmark, setShowBenchmark] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
+    const [activeInstructionVideo, setActiveInstructionVideo] = useState(null);
+    const lastAutoOpenedVideoKeyRef = useRef(null);
     const lastBenchmark = useBreathBenchmarkStore(s => s.lastBenchmark);
     const completeAttemptBenchmark = useBreathBenchmarkStore(s => s.completeAttemptBenchmark);
     const canReuseLastBenchmark = useBreathBenchmarkStore(s => s.canReuseLastBenchmark);
@@ -46,7 +66,14 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
     const canReuseForAttempt = Boolean(attemptRunId && canReuseLastBenchmark(14));
 
     if (!path || path.placeholder) return null;
-    const isInitiationPath = String(path.id || '').startsWith('initiation');
+    const isInitiationPath = path.id === ACCEPTANCE_PATH_ID;
+    const isAcceptancePath = path.id === ACCEPTANCE_PATH_ID;
+    const normalizedViewedPathId = normalizeInitiationPathIdentity(path.id);
+    const normalizedActivePathId = normalizeInitiationPathIdentity(activePath?.activePathId ?? null);
+    const normalizedResumablePathId = normalizeInitiationPathIdentity(resumablePathId);
+    const isViewedPathActive = normalizedViewedPathId === normalizedActivePathId;
+    const isViewedPathResumable = normalizedViewedPathId === normalizedResumablePathId;
+    const shouldShowLifecycleActions = isViewedPathActive || isViewedPathResumable;
     const contract = getPathContract(path);
     const orderedDayOptions = [
         { value: 1, label: 'Mon' },
@@ -256,6 +283,34 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
         return null;
     };
 
+    useEffect(() => {
+        const targetVideo = isAcceptancePath ? ACCEPTANCE_STEP_VIDEO_MAP[currentStep] ?? null : null;
+        const targetKey = targetVideo ? `${path.id}:${currentStep}` : null;
+
+        if (!targetKey) {
+            lastAutoOpenedVideoKeyRef.current = null;
+            return;
+        }
+
+        if (lastAutoOpenedVideoKeyRef.current === targetKey) {
+            return;
+        }
+
+        lastAutoOpenedVideoKeyRef.current = targetKey;
+        setActiveInstructionVideo(targetVideo);
+    }, [currentStep, isAcceptancePath, path.id]);
+
+    const ensureViewedPathLoaded = () => {
+        if (isViewedPathActive) return true;
+        if (!isViewedPathResumable) return false;
+        const result = restoreCurriculumPath(activeCurriculumId || null);
+        if (result?.ok === false) {
+            setScheduleError(result.error || 'Unable to restore this path.');
+            return false;
+        }
+        return true;
+    };
+
     return (
         <div
             data-testid="path-overview-panel"
@@ -271,6 +326,33 @@ export function PathOverviewPanel({ path, onBegin, onClose, onNavigate }) {
                 onSave={handleBenchmarkSave}
                 onClose={() => setShowBenchmark(false)}
             />
+            <InstructionVideoModal
+                isOpen={Boolean(activeInstructionVideo)}
+                title={activeInstructionVideo?.title}
+                videoUrl={activeInstructionVideo?.videoUrl}
+                onClose={() => setActiveInstructionVideo(null)}
+            />
+            {shouldShowLifecycleActions && (
+                <div
+                    className="mb-6 rounded-2xl border p-4"
+                    style={{
+                        background: isLight ? 'rgba(180, 140, 90, 0.06)' : 'rgba(250, 208, 120, 0.03)',
+                        borderColor: isLight ? 'rgba(180, 140, 90, 0.14)' : 'rgba(250, 208, 120, 0.12)',
+                    }}
+                >
+                    <div
+                        className="text-[10px] uppercase tracking-[0.18em] mb-3"
+                        style={{ color: goldLabelColor }}
+                    >
+                        Path Actions
+                    </div>
+                    <PathLifecycleActions
+                        compact
+                        ensureActivePath={ensureViewedPathLoaded}
+                        onAfterAbandon={onClose}
+                    />
+                </div>
+            )}
             {/* Center top ornament */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="w-3 h-3 rotate-45 bg-gradient-to-br from-[#F5D18A] to-[#D4A84A]" style={{ boxShadow: '0 0 12px rgba(250, 208, 120, 0.6)' }} />

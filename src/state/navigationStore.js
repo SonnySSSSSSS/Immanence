@@ -6,7 +6,7 @@ import { addDaysToDateKey, getDateKey, getLocalDateKey } from '../utils/dateUtil
 import { getPathById } from '../data/navigationData.js';
 import { useProgressStore } from './progressStore.js';
 import { generatePathReport, savePathReport } from '../reporting/pathReport.js';
-import { useCurriculumStore } from './curriculumStore.js';
+import { getResumableNavigationPathId, useCurriculumStore } from './curriculumStore.js';
 import { useBreathBenchmarkStore } from './breathBenchmarkStore.js';
 import { reconcileCurriculumForNavigation } from './navigationCurriculumInvariant.js';
 import { computeScheduleAnchorStartAt, normalizeAndSortTimeSlots } from '../utils/scheduleUtils.js';
@@ -22,7 +22,12 @@ import {
 
 const SCHEDULE_ADHERENCE_WINDOW_MIN = 15;
 const SCHEDULE_MATCH_RADIUS_MIN = 90;
+const AUTHORITATIVE_INITIATION_PATH_ID = 'initiation';
+const LEGACY_INITIATION_PATH_ID = 'initiation-2';
 const createFallbackRunId = () => `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+const normalizeNavigationPathId = (pathId) => (
+    pathId === LEGACY_INITIATION_PATH_ID ? AUTHORITATIVE_INITIATION_PATH_ID : pathId
+);
 
 const generateRunId = () => {
     try {
@@ -37,7 +42,7 @@ const generateRunId = () => {
 };
 
 const getPathDurationDays = (pathId) => {
-    const path = getPathById(pathId);
+    const path = getPathById(normalizeNavigationPathId(pathId));
     if (!path) return null;
     const contract = getPathContract(path);
     if (typeof contract?.totalDays === 'number') return contract.totalDays;
@@ -107,6 +112,86 @@ const reconcileCurriculumWithNavigationPath = (activePath) => {
     });
 };
 
+const buildCurriculumBackedActivePath = ({
+    pathId,
+    runId = null,
+    curriculumState = {},
+} = {}) => {
+    const normalizedPathId = normalizeNavigationPathId(pathId);
+    const path = getPathById(normalizedPathId);
+    if (!path) {
+        return { ok: false, error: `Unknown path "${normalizedPathId || 'unknown'}".` };
+    }
+
+    const contract = getPathContract(path);
+    const selectedTimesRaw = curriculumState.getPracticeTimeSlots?.() || [];
+    const selectedDaysRaw = curriculumState.getSelectedDaysOfWeekDraft?.()
+        || curriculumState.selectedDaysOfWeekDraft
+        || [];
+    const scheduleConstraint = getScheduleConstraintForPath(normalizedPathId);
+    const normalizedSelections = normalizePathSelections({
+        selectedTimes: selectedTimesRaw,
+        selectedDaysOfWeek: selectedDaysRaw,
+    });
+    const selectedTimes = normalizedSelections.selectedTimes;
+    const frozenSelectedDaysOfWeek = normalizeDayOfWeekList(normalizedSelections.selectedDaysOfWeek);
+    const validation = validateSelectedTimes(selectedTimes, scheduleConstraint);
+    if (!validation.ok) {
+        return { ok: false, error: validation.error };
+    }
+
+    const activationValidation = validatePathActivationSelections(path, {
+        selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+        selectedTimes,
+    });
+    if (!activationValidation.ok) {
+        return { ok: false, error: activationValidation.error };
+    }
+
+    const persistedStartDate = curriculumState?.curriculumStartDate
+        ? new Date(curriculumState.curriculumStartDate)
+        : null;
+    const startedAtDate = persistedStartDate && !Number.isNaN(persistedStartDate.getTime())
+        ? persistedStartDate
+        : computeScheduleAnchorStartAt({
+            now: new Date(),
+            firstSlotTime: selectedTimes[0],
+        });
+    const startedAt = startedAtDate.toISOString();
+    const durationDays = getPathDurationDays(normalizedPathId);
+    const endsAt = computeEndsAt(startedAt, durationDays);
+
+    return {
+        ok: true,
+        activePath: {
+            runId: runId || generateRunId(),
+            activePathId: normalizedPathId,
+            startedAt,
+            endsAt,
+            status: 'active',
+            schedule: {
+                selectedTimes,
+                selectedDaysOfWeek: frozenSelectedDaysOfWeek,
+                activeDays: frozenSelectedDaysOfWeek,
+                practiceDaysPerWeek: contract.practiceDaysPerWeek ?? null,
+                requiredTimeSlots: contract.requiredTimeSlots ?? null,
+                requiredLegsPerDay: contract.requiredLegsPerDay ?? null,
+                maxLegsPerDay: contract.maxLegsPerDay ?? null,
+                timezone: getTimezone(),
+            },
+            progress: {
+                sessionsCompleted: 0,
+                totalMinutes: 0,
+                daysPracticed: 0,
+                streakCurrent: 0,
+                streakBest: 0,
+                lastSessionAt: null,
+            },
+            weekCompletionDates: {},
+        },
+    };
+};
+
 export const useNavigationStore = create(
     persist(
         (set, get) => ({
@@ -115,14 +200,15 @@ export const useNavigationStore = create(
             pendingAttemptRunId: null,
             pendingAttemptPathId: null,
             setSelectedPath: (id) => {
-                console.log("[navigationStore] setSelectedPath ->", id);
+                const normalizedPathId = normalizeNavigationPathId(id);
+                console.log("[navigationStore] setSelectedPath ->", normalizedPathId);
                 console.trace("[navigationStore] setSelectedPath stack");
-                const path = id ? getPathById(id) : null;
+                const path = normalizedPathId ? getPathById(normalizedPathId) : null;
                 const requiresBenchmark = Boolean(path?.showBreathBenchmark);
                 const state = get();
                 const keepExistingPending =
                     requiresBenchmark &&
-                    state.pendingAttemptPathId === id &&
+                    normalizeNavigationPathId(state.pendingAttemptPathId) === normalizedPathId &&
                     typeof state.pendingAttemptRunId === 'string' &&
                     state.pendingAttemptRunId.length > 0;
                 const pendingAttemptRunId = keepExistingPending
@@ -132,15 +218,16 @@ export const useNavigationStore = create(
                     useBreathBenchmarkStore.getState().resetAttemptBenchmark(pendingAttemptRunId);
                 }
                 set({
-                    selectedPathId: id,
+                    selectedPathId: normalizedPathId,
                     pendingAttemptRunId,
-                    pendingAttemptPathId: requiresBenchmark ? id : null,
+                    pendingAttemptPathId: requiresBenchmark ? normalizedPathId : null,
                 });
             },
 
             clearPendingAttempt: (pathId = null) => {
                 const state = get();
-                const shouldClear = !pathId || state.pendingAttemptPathId === pathId;
+                const normalizedPathId = normalizeNavigationPathId(pathId);
+                const shouldClear = !normalizedPathId || normalizeNavigationPathId(state.pendingAttemptPathId) === normalizedPathId;
                 if (!shouldClear) return;
                 set({
                     selectedPathId: null,
@@ -156,9 +243,10 @@ export const useNavigationStore = create(
 
             // Begin a new path
             beginPath: (pathId) => {
+                const normalizedPathId = normalizeNavigationPathId(pathId);
                 const state = get();
                 const hasPendingAttempt =
-                    state.pendingAttemptPathId === pathId &&
+                    normalizeNavigationPathId(state.pendingAttemptPathId) === normalizedPathId &&
                     typeof state.pendingAttemptRunId === 'string' &&
                     state.pendingAttemptRunId.length > 0;
                 const runId = hasPendingAttempt
@@ -171,7 +259,7 @@ export const useNavigationStore = create(
                 const selectedDaysRaw = curriculumState.getSelectedDaysOfWeekDraft?.()
                     || curriculumState.selectedDaysOfWeekDraft
                     || [];
-                const path = getPathById(pathId);
+                const path = getPathById(normalizedPathId);
                 const contract = getPathContract(path);
                 let hasBenchmark = false;
                 let benchmarkStateValid = true;
@@ -206,12 +294,12 @@ export const useNavigationStore = create(
                 }
                 if (benchmarkCheck.warning === 'benchmark_state_unreadable') {
                     console.warn('[navigationStore.beginPath] Benchmark state unreadable; allowing start in fail-safe mode.', {
-                        pathId,
+                        pathId: normalizedPathId,
                         runId,
                         detail: benchmarkCheck.detail || benchmarkStateError || null,
                     });
                 }
-                const scheduleConstraint = getScheduleConstraintForPath(pathId);
+                const scheduleConstraint = getScheduleConstraintForPath(normalizedPathId);
                 const normalizedSelections = normalizePathSelections({
                     selectedTimes: selectedTimesRaw,
                     selectedDaysOfWeek: selectedDaysRaw,
@@ -234,7 +322,7 @@ export const useNavigationStore = create(
                     firstSlotTime: selectedTimes[0],
                 });
                 const startedAt = startedAtDate.toISOString();
-                const durationDays = getPathDurationDays(pathId);
+                const durationDays = getPathDurationDays(normalizedPathId);
                 const endsAt = computeEndsAt(startedAt, durationDays);
                 // Read schedule from canonical curriculum store
 
@@ -242,7 +330,7 @@ export const useNavigationStore = create(
                     activePath: {
                         // Canonical tracking fields
                         runId,
-                        activePathId: pathId,
+                        activePathId: normalizedPathId,
                         startedAt,
                         endsAt,
                         status: 'active',
@@ -276,6 +364,47 @@ export const useNavigationStore = create(
                     : { ok: true };
             },
 
+            restoreCurriculumPath: (programId = null) => {
+                const curriculumState = useCurriculumStore.getState();
+                const targetProgramId = typeof programId === 'string' && programId.trim().length > 0
+                    ? programId.trim()
+                    : (curriculumState.activeCurriculumId || null);
+
+                if (targetProgramId !== 'ritual-initiation-14-v2') {
+                    return {
+                        ok: false,
+                        error: `No path adapter is configured for curriculum "${targetProgramId || 'unknown'}".`,
+                    };
+                }
+
+                const pathId = AUTHORITATIVE_INITIATION_PATH_ID;
+                if (getResumableNavigationPathId(curriculumState) !== pathId) {
+                    return { ok: false, error: 'Curriculum is not in a resumable state.' };
+                }
+
+                const state = get();
+                const pendingRunId = state.pendingAttemptPathId === pathId
+                    ? state.pendingAttemptRunId
+                    : null;
+                const buildResult = buildCurriculumBackedActivePath({
+                    pathId,
+                    runId: pendingRunId || generateRunId(),
+                    curriculumState,
+                });
+                if (!buildResult.ok) {
+                    return buildResult;
+                }
+
+                set({
+                    activePath: buildResult.activePath,
+                    selectedPathId: null,
+                    pendingAttemptRunId: null,
+                    pendingAttemptPathId: null,
+                });
+
+                return { ok: true };
+            },
+
             beginPathForCurriculum: (programId = null) => {
                 const curriculumState = useCurriculumStore.getState();
                 const targetProgramId = typeof programId === 'string' && programId.trim().length > 0
@@ -289,7 +418,12 @@ export const useNavigationStore = create(
                     };
                 }
 
-                const pathId = 'initiation-2';
+                const pathId = AUTHORITATIVE_INITIATION_PATH_ID;
+                const isResumableCurriculumPath = getResumableNavigationPathId(curriculumState) === pathId;
+                if (isResumableCurriculumPath) {
+                    return get().restoreCurriculumPath(targetProgramId);
+                }
+
                 const state = get();
                 if (state.pendingAttemptPathId !== pathId || !state.pendingAttemptRunId) {
                     state.setSelectedPath(pathId);
@@ -354,6 +488,7 @@ export const useNavigationStore = create(
                     pendingAttemptRunId: null,
                     pendingAttemptPathId: null,
                 });
+                useCurriculumStore.getState().clearActiveCurriculumSelection?.();
             },
 
             // Check if a week is completed
@@ -863,7 +998,7 @@ export const useNavigationStore = create(
         }),
         {
             name: 'immanenceOS.navigationState',
-            version: 8,  // Bumped for persisted pending attempt runId/pathId
+            version: 9,  // Bumped for merged initiation path id
             // Do not persist transient UI selections to avoid auto-opening overlays on load
             partialize: (state) => {
                 const { selectedPathId, ...rest } = state;
@@ -881,8 +1016,9 @@ export const useNavigationStore = create(
                 // Clean up legacy fields from activePath if present
                 if (rest?.activePath) {
                     const { pathId: _, startDate: __, currentWeek: ___, completedWeeks: ____, ...cleanPath } = rest.activePath;
-                    const scheduleConstraint = getScheduleConstraintForPath(cleanPath?.activePathId);
-                    const contract = getPathContract(cleanPath?.activePathId);
+                    const normalizedActivePathId = normalizeNavigationPathId(cleanPath?.activePathId);
+                    const scheduleConstraint = getScheduleConstraintForPath(normalizedActivePathId);
+                    const contract = getPathContract(normalizedActivePathId);
                     const selectedTimes = normalizeAndSortTimeSlots(cleanPath?.schedule?.selectedTimes || [], {
                         maxCount: scheduleConstraint?.maxCount ?? contract.maxLegsPerDay ?? 3,
                     });
@@ -898,6 +1034,7 @@ export const useNavigationStore = create(
                         );
                     rest.activePath = {
                         ...cleanPath,
+                        activePathId: normalizedActivePathId,
                         schedule: {
                             ...(cleanPath.schedule || {}),
                             selectedTimes,
@@ -915,7 +1052,7 @@ export const useNavigationStore = create(
                     ...rest,
                     selectedPathId: null,
                     pendingAttemptRunId: rest?.pendingAttemptRunId || null,
-                    pendingAttemptPathId: rest?.pendingAttemptPathId || null,
+                    pendingAttemptPathId: normalizeNavigationPathId(rest?.pendingAttemptPathId || null),
                 };
             },
             onRehydrateStorage: () => (state) => {
@@ -926,6 +1063,7 @@ export const useNavigationStore = create(
 
                 // Ensure no legacy fields in activePath after rehydration
                 if (state?.activePath) {
+                    state.activePath.activePathId = normalizeNavigationPathId(state.activePath.activePathId);
                     const legacyKeys = ['pathId', 'startDate', 'currentWeek', 'completedWeeks'];
                     legacyKeys.forEach(key => {
                         if (key in state.activePath) {
@@ -989,11 +1127,24 @@ export const useNavigationStore = create(
                     );
                 }
 
-                reconcileCurriculumWithNavigationPath(state?.activePath || null);
+                if (!state?.activePath && getResumableNavigationPathId(curriculumState)) {
+                    useNavigationStore.getState().restoreCurriculumPath(curriculumState.activeCurriculumId || null);
+                }
+
+                reconcileCurriculumWithNavigationPath(useNavigationStore.getState().activePath || null);
             }
         }
     )
 );
+
+useCurriculumStore.subscribe((state, prevState) => {
+    const hadResumablePath = getResumableNavigationPathId(prevState || {});
+    const hasResumablePath = getResumableNavigationPathId(state || {});
+    const navState = useNavigationStore.getState();
+    if (navState.activePath) return;
+    if (!hasResumablePath || hadResumablePath === hasResumablePath) return;
+    navState.restoreCurriculumPath?.(state?.activeCurriculumId || null);
+});
 
 useNavigationStore.subscribe((state, prevState) => {
     const hadActivePath = Boolean(prevState?.activePath);

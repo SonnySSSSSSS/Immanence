@@ -5,13 +5,13 @@ export const paths = [
     {
         id: "initiation",
         title: "Initiation Path",
-        subtitle: "A simple beginning",
-        description: "A foundational 2-week journey to establish daily practice rhythms and begin your integration path.",
+        subtitle: "14-day initiation",
+        description: "A strict 14-day initiation contract built on consistency and attention stability.",
         overviewNotes: [
-            "Establish a breath practice that expands capacity across this leg.",
-            "Familiarize yourself with the other fundamental practices."
+            "Establish a strict two-leg daily rhythm that stabilizes attention.",
+            "Complete six active practice days each week with one deliberate rest day."
         ],
-        glyph: "✨",
+        glyph: "🌟",
         duration: 2, // 2 weeks
         showBreathBenchmark: true,
         scheduleSelection: {
@@ -19,60 +19,6 @@ export const paths = [
             maxCount: 2,
             errorMessage: "Please select exactly 2 time slots to begin this path.",
         },
-
-        practices: [
-            { type: "Breathing", pattern: "Box", duration: 7 },
-            { type: "Circuit", duration: 14, circuitId: "evening-awareness-circuit" }
-        ],
-
-        chapters: [],
-        applicationItems: [],
-
-        weeks: [
-            {
-                number: 1,
-                title: "Establish Daily Practice",
-                focus: "Morning breath (7min) + Evening circuit (14min)",
-                practices: [
-                    "Morning: Box breathing (7min)",
-                    "Evening: Circuit: Sitting awareness (7m) -> Body scan (7m)"
-                ],
-                reading: [],
-                tracking: "Complete both sessions daily"
-            },
-            {
-                number: 2,
-                title: "Deepen the Pattern",
-                focus: "Build consistency, notice effects",
-                practices: [
-                    "Morning: Box breathing (7min)",
-                    "Evening: Circuit: Sitting awareness (7m) -> Body scan (7m)"
-                ],
-                reading: [],
-                tracking: "Final day: after your closing ritual, re-benchmark and compare your first and last attempts."
-            }
-        ],
-
-        tracking: {
-            curriculumId: 'ritual-initiation-14-v2',
-            durationDays: 14,
-            summary: "Foundational two-week rhythm for daily practice.",
-            defaultCommitment: {
-                frequency: "daily",
-                sessionsPerWeek: 7,
-            },
-            allowedPractices: ["breath", "circuit"],
-            tags: ["foundation", "initiation"],
-        }
-    },
-    {
-        id: "initiation-2",
-        title: "Initiation Path 2",
-        subtitle: "An alternate beginning",
-        description: "A strict 14-day initiation contract built on consistency and attention stability.",
-        glyph: "🌟",
-        duration: 2, // 14 days
-        showBreathBenchmark: true,
 
         practices: [
             {
@@ -101,12 +47,31 @@ export const paths = [
         chapters: [],
         applicationItems: [],
 
-        weeks: [],
-        scheduleSelection: {
-            requiredCount: 2,
-            maxCount: 2,
-            errorMessage: "Please select exactly 2 time slots to begin this path.",
-        },
+        weeks: [
+            {
+                number: 1,
+                title: "Establish the Contract",
+                focus: "Morning resonance (10min) + Evening body scan (12min)",
+                practices: [
+                    "Morning: Resonance breathing (10min)",
+                    "Evening: Body scan (12min)"
+                ],
+                reading: [],
+                tracking: "Complete both daily sessions across six active days."
+            },
+            {
+                number: 2,
+                title: "Stabilize Attention",
+                focus: "Maintain the rhythm, refine body clarity and steadiness",
+                practices: [
+                    "Morning: Resonance breathing (10min)",
+                    "Evening: Body scan (12min)"
+                ],
+                reading: [],
+                tracking: "Final day: re-benchmark and compare your first and last attempts."
+            }
+        ],
+
         contract: {
             totalDays: 14,
             practiceDaysPerWeek: 6,
@@ -131,7 +96,8 @@ export const paths = [
 
 // Helper functions
 export function getPathById(id) {
-    return paths.find(p => p.id === id);
+    const normalizedId = id === 'initiation-2' ? 'initiation' : id;
+    return paths.find(p => p.id === normalizedId);
 }
 
 export function getActivePaths() {

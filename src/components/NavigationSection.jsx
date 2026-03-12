@@ -16,6 +16,8 @@ import { AvatarV3 } from './avatarV3/AvatarV3.jsx';
 import { useAvatarV3State } from '../state/avatarV3Store.js';
 import { usePathStore } from '../state/pathStore.js';
 
+const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
+
 export function NavigationSection({ currentStage, previewPath, onNavigate, isPracticing = false }) {
   const { activePath, beginPath } = useNavigationStore();
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
@@ -220,7 +222,7 @@ export function NavigationSection({ currentStage, previewPath, onNavigate, isPra
             onClick={(e) => e.stopPropagation()}
           >
             {/* If this is the user's active path, show progress; else show overview to begin */}
-            {activePath?.activePathId === overlayPathId ? (
+            {normalizeInitiationPathIdentity(activePath?.activePathId) === normalizeInitiationPathIdentity(overlayPathId) ? (
               <div className="p-4">
                 <ActivePathState onNavigate={onNavigate} />
                 <button

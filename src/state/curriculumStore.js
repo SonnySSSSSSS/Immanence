@@ -17,6 +17,26 @@ const normalizeDaysOfWeek = (days = []) => {
     return [...new Set(normalized)].sort((a, b) => a - b);
 };
 
+export const getResumableNavigationPathId = (state = {}) => {
+    const activeCurriculumId = typeof state?.activeCurriculumId === 'string'
+        ? state.activeCurriculumId.trim()
+        : '';
+    const practiceTimeSlots = normalizeAndSortTimeSlots(state?.practiceTimeSlots || [], { maxCount: 3 });
+
+    if (
+        activeCurriculumId === 'ritual-initiation-14-v2'
+        && practiceTimeSlots.length > 0
+    ) {
+        return 'initiation';
+    }
+
+    return null;
+};
+
+export const clearCurriculumSelectionPatch = () => ({
+    activeCurriculumId: null,
+});
+
 export const FOUNDATION_CIRCUIT = {
     id: 'intro_circuit',
     name: 'Foundation Circuit',
@@ -173,6 +193,10 @@ export const useCurriculumStore = create(
                 }
                 set({ activeCurriculumId: normalizedId });
                 return true;
+            },
+
+            clearActiveCurriculumSelection: () => {
+                set(clearCurriculumSelectionPatch());
             },
 
             // CURRICULUM ACTIONS

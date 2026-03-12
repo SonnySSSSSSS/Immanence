@@ -45,7 +45,8 @@
       "Bash(grep -v \"//\")",
       "Bash(pkill -f \"npm run dev\")",
       "Bash(python3 -c:*)",
-      "Bash(del \"D:\\\\Unity Apps\\\\immanence-os\\\\fix_ritual_icons.py\")"
+      "Bash(del \"D:\\\\Unity Apps\\\\immanence-os\\\\fix_ritual_icons.py\")",
+      "Bash(xargs grep:*)"
     ]
   },
   "mcpServers": {

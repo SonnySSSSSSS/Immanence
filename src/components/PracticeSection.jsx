@@ -53,6 +53,7 @@ import { SessionControls } from "./practice/SessionControls.jsx";
 import { StillnessRingSession } from "./practice/StillnessRingSession.jsx";
 import PracticeMenu from "./practice/PracticeMenu.jsx";
 import { PracticeOptionsCard } from "./practice/PracticeOptionsCard.jsx";
+import { InstructionVideoPanel } from "./InstructionVideoPanel.jsx";
 import { GlassIconButton, SUB_MODE_ICON_MAP } from "./GlassIconButton.jsx";
 import ParallaxForest from "./ParallaxForest.jsx";
 import { SakshiVisual } from "./SakshiVisual.jsx";
@@ -549,6 +550,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   const [showBreathBenchmark, setShowBreathBenchmark] = useState(false);
   const [initiationBenchmarkContext, setInitiationBenchmarkContext] = useState(null);
   const [pathLaunchGuidance, setPathLaunchGuidance] = useState(undefined);
+  const [pathLaunchInstructionVideo, setPathLaunchInstructionVideo] = useState(undefined);
   const [pendingPathAutoStart, setPendingPathAutoStart] = useState(null);
   const queuedPathAutoStartRequestIdRef = useRef(null);
   const consumedPathAutoStartRequestIdRef = useRef(null);
@@ -587,6 +589,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
   // Persist pathContext from launch context so it survives clearPracticeLaunchContext
   const activePathContextRef = useRef(null);
   const activePathLaunchGuidanceRef = useRef(undefined);
+  const activePathInstructionVideoRef = useRef(undefined);
   const getForceScheduleMatchedPayload = useCallback(() => {
     const pathCtx = activePathContextRef.current;
     if (!pathCtx || pathCtx.forceStart !== true || pathCtx.forceWindowBypass !== true) {
@@ -709,8 +712,10 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     clearLaunchConstraints?.(); // Manual selection exits path/curriculum locks
     setInitiationBenchmarkContext(null);
     setPathLaunchGuidance(undefined);
+    setPathLaunchInstructionVideo(undefined);
     setLaunchStillnessConfig(null);
     activePathContextRef.current = null;
+    activePathInstructionVideoRef.current = undefined;
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
@@ -910,6 +915,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       resetGuidanceCompletionState();
       activePathContextRef.current = null;
       activePathLaunchGuidanceRef.current = undefined;
+      activePathInstructionVideoRef.current = undefined;
       suppressPrefSaveRef.current = false;
       queueMicrotask(() => setLaunchStillnessConfig(null));
       clearLaunchConstraints?.();
@@ -917,6 +923,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       const _fbResetDuration = duration !== SAFE_LAUNCH_FALLBACK.durationMin;
       queueMicrotask(() => {
         setPathLaunchGuidance(undefined);
+        setPathLaunchInstructionVideo(undefined);
         setInitiationBenchmarkContext(null);
         setPendingPathAutoStart(null);
         queuedPathAutoStartRequestIdRef.current = null;
@@ -930,6 +937,11 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     const ctx = practiceLaunchContext;
     queueMicrotask(() => setPathLaunchGuidance(undefined));
+    queueMicrotask(() => setPathLaunchInstructionVideo(
+      Object.prototype.hasOwnProperty.call(ctx, 'instructionVideo')
+        ? (ctx.instructionVideo ?? null)
+        : undefined
+    ));
     pathGuidanceStartedRef.current = false;
     pathGuidanceWasPausedRef.current = false;
     pathGuidanceRanRef.current = false;
@@ -1057,6 +1069,9 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
     }
     activePathLaunchGuidanceRef.current = Object.prototype.hasOwnProperty.call(ctx, 'guidance')
       ? (ctx.guidance ?? null)
+      : undefined;
+    activePathInstructionVideoRef.current = Object.prototype.hasOwnProperty.call(ctx, 'instructionVideo')
+      ? (ctx.instructionVideo ?? null)
       : undefined;
 
     const shouldAutoStartBreathLaunch =
@@ -2291,23 +2306,37 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     const activePathContext = activePathContextRef.current;
     const launchedPathGuidance = activePathLaunchGuidanceRef.current;
+    const launchedPathInstructionVideo = activePathInstructionVideoRef.current;
     const pathSlotIndex = Number(activePathContext?.slotIndex);
     const hasPathOccurrenceContext = Boolean(activePathContext?.activePathId) && Number.isFinite(pathSlotIndex);
     let resolvedPathGuidance = launchedPathGuidance;
+    let resolvedPathInstructionVideo = launchedPathInstructionVideo;
 
-    if (resolvedPathGuidance === undefined && hasPathOccurrenceContext) {
+    if ((resolvedPathGuidance === undefined || resolvedPathInstructionVideo === undefined) && hasPathOccurrenceContext) {
       const pathDef = getPathById(activePathContext.activePathId);
       const pathDayIndex = Number(activePathContext?.dayIndex);
       const occurrences = getPathPracticeOccurrences(pathDef, pathDayIndex);
       const occurrence = occurrences[pathSlotIndex] ?? null;
-      resolvedPathGuidance = occurrence && typeof occurrence === 'object'
-        ? (occurrence.guidance ?? null)
-        : null;
+      if (resolvedPathGuidance === undefined) {
+        resolvedPathGuidance = occurrence && typeof occurrence === 'object'
+          ? (occurrence.guidance ?? null)
+          : null;
+      }
+      if (resolvedPathInstructionVideo === undefined) {
+        resolvedPathInstructionVideo = occurrence && typeof occurrence === 'object'
+          ? (occurrence.instructionVideo ?? null)
+          : null;
+      }
     }
 
-    if (resolvedPathGuidance === undefined && !hasPathOccurrenceContext && activePracticeSession) {
+    if ((resolvedPathGuidance === undefined || resolvedPathInstructionVideo === undefined) && !hasPathOccurrenceContext && activePracticeSession) {
       const activeLeg = getActivePracticeLeg();
-      resolvedPathGuidance = activeLeg?.guidance ?? null;
+      if (resolvedPathGuidance === undefined) {
+        resolvedPathGuidance = activeLeg?.guidance ?? null;
+      }
+      if (resolvedPathInstructionVideo === undefined) {
+        resolvedPathInstructionVideo = activeLeg?.instructionVideo ?? null;
+      }
     }
 
     // Persist preferences only for manual starts (not curriculum/schedule recommendations).
@@ -2352,6 +2381,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
       // Direct start using the card configuration instead of forcing a modal
       const practiceConfig = getPracticeConfig(actualPracticeId);
       setPathLaunchGuidance(resolvedPathGuidance !== undefined ? resolvedPathGuidance : undefined);
+      setPathLaunchInstructionVideo(resolvedPathInstructionVideo !== undefined ? resolvedPathInstructionVideo : undefined);
       setIsRunning(true);
       notifyPracticingChange(true, actualPracticeId, practiceConfig?.requiresFullscreen || false);
       setSessionStartTime(performance.now());
@@ -2370,6 +2400,7 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
 
     const practiceConfig = getPracticeConfig(actualPracticeId);
     setPathLaunchGuidance(resolvedPathGuidance !== undefined ? resolvedPathGuidance : undefined);
+    setPathLaunchInstructionVideo(resolvedPathInstructionVideo !== undefined ? resolvedPathInstructionVideo : undefined);
     // Clear any residual teardown state in the same batch as isRunning=true so that
     // shouldRenderRingCanvas evaluates true on the first render of the new session.
     // Pre-session edits can leave ringTeardownRequested=true from a prior session's
@@ -3145,6 +3176,23 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
           </div>
         )}
 
+        {pathLaunchInstructionVideo && (
+          <div
+            style={{
+              flex: "0 0 auto",
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              padding: isBreathRunningSession ? "max(12px, env(safe-area-inset-top)) 16px 0" : "0 16px 16px",
+            }}
+          >
+            <InstructionVideoPanel
+              video={pathLaunchInstructionVideo}
+              className="w-full max-w-[560px]"
+            />
+          </div>
+        )}
+
         <div className="flex-1 flex items-center justify-center w-full" style={{ minHeight: 0 }}>
           {actualRunningPracticeId === "visualization" ? (
             <VisualizationCanvas
@@ -3801,6 +3849,15 @@ export function PracticeSection({ onPracticingChange, onBreathStateChange, avata
               />
             )}
           />
+
+        {pathLaunchInstructionVideo && (
+          <div className="w-full flex justify-center px-4 pb-4">
+            <InstructionVideoPanel
+              video={pathLaunchInstructionVideo}
+              className="max-w-[720px]"
+            />
+          </div>
+        )}
 
         {/* Bottom Layer: Dynamic Options Card */}
         <PracticeOptionsCard

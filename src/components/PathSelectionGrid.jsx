@@ -3,16 +3,22 @@ import { useState } from 'react';
 import { getAllPaths } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
-import { useCurriculumStore } from '../state/curriculumStore.js';
+import { getResumableNavigationPathId, useCurriculumStore } from '../state/curriculumStore.js';
 import { ThoughtDetachmentOnboarding } from './ThoughtDetachmentOnboarding.jsx';
 import { getPathContract } from '../utils/pathContract.js';
+import { PathLifecycleActions } from './ActivePathState.jsx';
 
 export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const allPaths = getAllPaths();
-    // Show all paths (initiation and initiation-2 for testing)
-    const paths = allPaths.filter(p => p.id.startsWith('initiation'));
-    const { activePath, abandonPath, setSelectedPath } = useNavigationStore();
-    const { onboardingComplete } = useCurriculumStore();
+    const paths = allPaths.filter((p) => p.id === 'initiation');
+    const activePath = useNavigationStore((state) => state.activePath);
+    const abandonPath = useNavigationStore((state) => state.abandonPath);
+    const beginPathForCurriculum = useNavigationStore((state) => state.beginPathForCurriculum);
+    const restoreCurriculumPath = useNavigationStore((state) => state.restoreCurriculumPath);
+    const setSelectedPath = useNavigationStore((state) => state.setSelectedPath);
+    const activeCurriculumId = useCurriculumStore((state) => state.activeCurriculumId);
+    const onboardingComplete = useCurriculumStore((state) => state.onboardingComplete);
+    const resumablePathId = useCurriculumStore(getResumableNavigationPathId);
     const colorScheme = useDisplayModeStore(s => s.colorScheme);
     const isLight = colorScheme === 'light';
 
@@ -46,94 +52,110 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {combinedEntries.map((entry) => {
-                    const isActive = entry.isProgram ? entry.isActive : activePath?.activePathId === entry.id;
+                    const effectivePathId = activePath?.activePathId ?? resumablePathId;
+                    const isActive = entry.isProgram ? entry.isActive : effectivePathId === entry.id;
                     const isSelected = selectedPathId === entry.id;
-                    const hasActivePathMatch = activePath && activePath.activePathId === entry.id;
+                    const hasActivePathMatch = effectivePathId === entry.id;
                     const isPlaceholder = entry.placeholder;
                     const contract = getPathContract(entry);
                     const durationLabel = Number.isInteger(contract.totalDays)
                         ? `${contract.totalDays} days`
                         : (typeof entry.duration === 'number' ? `${entry.duration} weeks` : `${entry.duration} · Ongoing`);
 
+                    const shouldShowLifecycleActions = !entry.isProgram && hasActivePathMatch;
+                    const ensureEntryPathLoaded = () => {
+                        if (activePath?.activePathId === entry.id) return true;
+                        if (resumablePathId !== entry.id) return false;
+                        const result = restoreCurriculumPath(activeCurriculumId || null);
+                        return result?.ok !== false;
+                    };
+
                     return (
-                        <button
-                            key={entry.id}
-                            data-testid={!entry.isProgram ? `path-card-${entry.id}` : undefined}
-                            data-card="true"
-                            data-card-id={`${entry.isProgram ? 'program' : 'path'}:${entry.id}`}
-                            onClick={() => {
-                                if (entry.isProgram) {
-                                    entry.onClick();
-                                } else if (!isPlaceholder) {
-                                    setSelectedPath(entry.id);
-                                    // Clear activePath if it's for a different path
-                                    if (activePath && activePath.activePathId !== entry.id) {
-                                        abandonPath();
+                        <div key={entry.id} className="flex flex-col gap-2">
+                            <button
+                                data-testid={!entry.isProgram ? `path-card-${entry.id}` : undefined}
+                                data-card="true"
+                                data-card-id={`${entry.isProgram ? 'program' : 'path'}:${entry.id}`}
+                                onClick={() => {
+                                    if (entry.isProgram) {
+                                        entry.onClick();
+                                    } else if (!isPlaceholder) {
+                                        setSelectedPath(entry.id);
+                                        // Clear activePath if it's for a different path
+                                        if (activePath && activePath.activePathId !== entry.id) {
+                                            abandonPath();
+                                        }
+                                        if (!activePath && resumablePathId === entry.id) {
+                                            const result = beginPathForCurriculum(activeCurriculumId || 'ritual-initiation-14-v2');
+                                            if (result?.ok === false) {
+                                                onPathSelected?.(entry.id);
+                                                return;
+                                            }
+                                        }
+                                        // Notify parent to open overlay
+                                        onPathSelected?.(entry.id);
                                     }
-                                    // Notify parent to open overlay
-                                    onPathSelected?.(entry.id);
-                                }
-                            }}
-                            disabled={isPlaceholder}
-                            className="relative px-3 py-5 sm:px-4 sm:py-6 rounded-3xl border transition-all text-left overflow-hidden group"
-                            style={{
-                                background: isLight
-                                    ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%)'
-                                    : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
-                                borderColor: hasActivePathMatch
-                                    ? '#D4A84A'
-                                    : isLight
-                                        ? 'rgba(180, 140, 90, 0.15)'
-                                        : 'transparent',
-                                borderWidth: hasActivePathMatch ? '3px' : '1px',
-                                backgroundImage: isLight
-                                    ? isPlaceholder
-                                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.02))'
-                                        : isSelected
-                                            ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(212, 168, 74, 0.08))'
-                                            : isActive
-                                                ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(180, 140, 90, 0.05))'
-                                                : 'linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0.01))'
-                                    : isPlaceholder
-                                        ? `linear-gradient(145deg, rgba(26, 15, 28, 0.5), rgba(21, 11, 22, 0.6)),
-                                           linear-gradient(135deg, rgba(128, 128, 128, 0.2) 0%, rgba(128, 128, 128, 0.1) 50%, rgba(128, 128, 128, 0.15) 100%)`
-                                        : isSelected
-                                            ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                                               linear-gradient(135deg, rgba(212, 168, 74, 0.3) 0%, rgba(212, 168, 74, 0.15) 50%, rgba(212, 168, 74, 0.25) 100%)`
-                                            : isActive
-                                                ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                                                   linear-gradient(135deg, var(--accent-50) 0%, var(--accent-40) 50%, var(--accent-50) 100%)`
-                                                : `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
-                                                   linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)`,
-                                backgroundOrigin: 'border-box',
-                                backgroundClip: 'padding-box, border-box',
-                                boxShadow: isLight
-                                    ? hasActivePathMatch
-                                        ? '0 0 30px rgba(212, 168, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-                                        : '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-                                    : hasActivePathMatch
-                                        ? '0 0 40px rgba(212, 168, 74, 0.5), 0 0 60px rgba(212, 168, 74, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)'
+                                }}
+                                disabled={isPlaceholder}
+                                className="relative px-3 py-5 sm:px-4 sm:py-6 rounded-3xl border transition-all text-left overflow-hidden group"
+                                style={{
+                                    background: isLight
+                                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%)'
+                                        : 'linear-gradient(145deg, rgba(26, 15, 28, 0.92) 0%, rgba(21, 11, 22, 0.95) 100%)',
+                                    borderColor: hasActivePathMatch
+                                        ? '#D4A84A'
+                                        : isLight
+                                            ? 'rgba(180, 140, 90, 0.15)'
+                                            : 'transparent',
+                                    borderWidth: hasActivePathMatch ? '3px' : '1px',
+                                    backgroundImage: isLight
+                                        ? isPlaceholder
+                                            ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.02))'
+                                            : isSelected
+                                                ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(212, 168, 74, 0.08))'
+                                                : isActive
+                                                    ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(180, 140, 90, 0.05))'
+                                                    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0.01))'
                                         : isPlaceholder
-                                            ? '0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03), inset 0 -3px 12px rgba(0, 0, 0, 0.3)'
-                                            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
-                                opacity: isPlaceholder ? 0.4 : 1,
-                                cursor: isPlaceholder ? 'not-allowed' : 'pointer'
-                            }}
-                            onMouseEnter={(e) => {
-                                if (!isPlaceholder && !isActive) {
-                                    e.currentTarget.style.boxShadow = isLight
-                                        ? '0 12px 30px rgba(180, 140, 90, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-                                        : `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)`;
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!isPlaceholder && !isActive) {
-                                    e.currentTarget.style.boxShadow = isLight
-                                        ? '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-                                        : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
-                                }
-                            }}
-                        >
+                                            ? `linear-gradient(145deg, rgba(26, 15, 28, 0.5), rgba(21, 11, 22, 0.6)),
+                                               linear-gradient(135deg, rgba(128, 128, 128, 0.2) 0%, rgba(128, 128, 128, 0.1) 50%, rgba(128, 128, 128, 0.15) 100%)`
+                                            : isSelected
+                                                ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+                                                   linear-gradient(135deg, rgba(212, 168, 74, 0.3) 0%, rgba(212, 168, 74, 0.15) 50%, rgba(212, 168, 74, 0.25) 100%)`
+                                                : isActive
+                                                    ? `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+                                                       linear-gradient(135deg, var(--accent-50) 0%, var(--accent-40) 50%, var(--accent-50) 100%)`
+                                                    : `linear-gradient(145deg, rgba(26, 15, 28, 0.92), rgba(21, 11, 22, 0.95)),
+                                                       linear-gradient(135deg, var(--accent-40) 0%, rgba(138, 43, 226, 0.2) 50%, var(--accent-30) 100%)`,
+                                    backgroundOrigin: 'border-box',
+                                    backgroundClip: 'padding-box, border-box',
+                                    boxShadow: isLight
+                                        ? hasActivePathMatch
+                                            ? '0 0 30px rgba(212, 168, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                                            : '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                                        : hasActivePathMatch
+                                            ? '0 0 40px rgba(212, 168, 74, 0.5), 0 0 60px rgba(212, 168, 74, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)'
+                                            : isPlaceholder
+                                                ? '0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03), inset 0 -3px 12px rgba(0, 0, 0, 0.3)'
+                                                : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)',
+                                    opacity: isPlaceholder ? 0.4 : 1,
+                                    cursor: isPlaceholder ? 'not-allowed' : 'pointer'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!isPlaceholder && !isActive) {
+                                        e.currentTarget.style.boxShadow = isLight
+                                            ? '0 12px 30px rgba(180, 140, 90, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                                            : `0 12px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-20), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 12px rgba(0, 0, 0, 0.4)`;
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isPlaceholder && !isActive) {
+                                        e.currentTarget.style.boxShadow = isLight
+                                            ? '0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+                                            : '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px var(--accent-10), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 12px rgba(0, 0, 0, 0.4)';
+                                    }
+                                }}
+                            >
                             {/* Volcanic glass texture overlay */}
                             <div
                                 className="absolute inset-0 pointer-events-none rounded-2xl"
@@ -220,7 +242,30 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                     </div>
                                 )}
                             </div>
-                        </button>
+                            </button>
+                            {shouldShowLifecycleActions && (
+                                <div
+                                    className="rounded-2xl border px-3 py-3"
+                                    style={{
+                                        background: isLight ? 'rgba(255, 255, 255, 0.38)' : 'rgba(18, 10, 22, 0.72)',
+                                        borderColor: isLight ? 'rgba(180, 140, 90, 0.16)' : 'rgba(250, 208, 120, 0.14)',
+                                        backdropFilter: 'blur(8px)',
+                                        WebkitBackdropFilter: 'blur(8px)',
+                                    }}
+                                >
+                                    <div
+                                        className="mb-2 text-[10px] uppercase tracking-[0.16em]"
+                                        style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
+                                    >
+                                        Path Actions
+                                    </div>
+                                    <PathLifecycleActions
+                                        compact
+                                        ensureActivePath={ensureEntryPathLoaded}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     );
                 })}
             </div>

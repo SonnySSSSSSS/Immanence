@@ -10,6 +10,7 @@ import { getLocalDateKey } from '../utils/dateUtils.js';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const EMPTY_ARRAY = [];
+const normalizeInitiationPathIdentity = (pathId) => (pathId === 'initiation-2' ? 'initiation' : pathId);
 
 const formatTimeLabel = (timeValue) => {
     if (!timeValue || typeof timeValue !== 'string') return null;
@@ -34,15 +35,161 @@ const formatActiveDaysSummary = (activeDays = []) => {
     return d.map((day) => DAY_LABELS[day]).join(' ');
 };
 
-export function ActivePathState() {
-    const { activePath, abandonPath, restartPath, computeProgressMetrics } = useNavigationStore();
-    const sessionsV2 = useProgressStore((s) => s.sessionsV2 || []);
+export function PathLifecycleActions({
+    ensureActivePath = null,
+    onAfterAbandon = null,
+    onAfterRestart = null,
+    compact = false,
+}) {
+    const abandonPath = useNavigationStore((s) => s.abandonPath);
+    const restartPath = useNavigationStore((s) => s.restartPath);
     const colorScheme = useDisplayModeStore((s) => s.colorScheme);
     const isLight = colorScheme === 'light';
     const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
-    const path = activePath ? getPathById(activePath.activePathId) : null;
+    const runEnsureActivePath = () => {
+        if (typeof ensureActivePath !== 'function') return true;
+        const result = ensureActivePath();
+        if (result === false) return false;
+        if (result && typeof result === 'object' && result.ok === false) return false;
+        return true;
+    };
+
+    const handleConfirmRestart = () => {
+        if (!runEnsureActivePath()) return;
+        restartPath();
+        setShowRestartConfirm(false);
+        onAfterRestart?.();
+    };
+
+    const handleConfirmAbandon = () => {
+        if (!runEnsureActivePath()) return;
+        abandonPath();
+        setShowAbandonConfirm(false);
+        onAfterAbandon?.();
+    };
+
+    return (
+        <>
+            <div className={`flex flex-wrap items-center ${compact ? 'gap-2' : 'gap-4'}`}>
+                <button
+                    onClick={() => setShowRestartConfirm(true)}
+                    className={compact ? 'px-4 py-2 rounded-full text-[10px] uppercase transition-colors' : 'px-4 py-3 text-sm transition-colors'}
+                    style={{
+                        fontFamily: compact ? 'var(--font-display)' : undefined,
+                        fontWeight: compact ? 600 : undefined,
+                        letterSpacing: compact ? 'var(--tracking-mythic)' : undefined,
+                        border: compact ? '1px solid var(--accent-20)' : undefined,
+                        background: compact ? 'transparent' : undefined,
+                        color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)',
+                    }}
+                >
+                    Restart path
+                </button>
+                {!showAbandonConfirm ? (
+                    <button
+                        onClick={() => setShowAbandonConfirm(true)}
+                        className={compact ? 'px-4 py-2 rounded-full text-[10px] uppercase transition-colors' : 'px-4 py-3 text-sm transition-colors'}
+                        style={{
+                            fontFamily: compact ? 'var(--font-display)' : undefined,
+                            fontWeight: compact ? 600 : undefined,
+                            letterSpacing: compact ? 'var(--tracking-mythic)' : undefined,
+                            border: compact ? '1px solid var(--accent-20)' : undefined,
+                            background: compact ? 'transparent' : undefined,
+                            color: isLight ? 'rgba(90, 77, 60, 0.4)' : 'rgba(253,251,245,0.4)',
+                        }}
+                    >
+                        Abandon path
+                    </button>
+                ) : (
+                    <div className="flex gap-2 items-center">
+                        <button
+                            onClick={handleConfirmAbandon}
+                            className="px-4 py-2 text-sm text-red-400 border border-red-400/30 rounded-full hover:bg-red-400/10 transition-colors"
+                        >
+                            Confirm
+                        </button>
+                        <button
+                            onClick={() => setShowAbandonConfirm(false)}
+                            className="px-4 py-2 text-sm border rounded-full transition-colors"
+                            style={{
+                                color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)',
+                                borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)',
+                                background: isLight ? 'rgba(255, 255, 255, 0.4)' : 'transparent',
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {showRestartConfirm && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    style={{ background: 'rgba(0,0,0,0.65)' }}
+                    onClick={() => setShowRestartConfirm(false)}
+                >
+                    <div
+                        className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+                        style={{
+                            background: isLight ? 'rgba(255,255,255,0.95)' : 'rgba(20,15,25,0.95)',
+                            border: isLight ? '1px solid rgba(180, 140, 90, 0.3)' : '1px solid var(--accent-20)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3
+                            className="text-lg font-bold mb-2"
+                            style={{
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: 'var(--tracking-wide)',
+                                color: isLight ? 'rgba(140, 100, 40, 0.9)' : 'var(--accent-color)',
+                            }}
+                        >
+                            Restart Path?
+                        </h3>
+                        <p className="text-sm mb-4" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
+                            This resets the current run to Day 1.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowRestartConfirm(false)}
+                                className="px-4 py-2 rounded-full border transition-colors"
+                                style={{
+                                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.8)',
+                                    borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)',
+                                    background: isLight ? 'rgba(255,255,255,0.6)' : 'transparent',
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmRestart}
+                                className="px-4 py-2 rounded-full text-[#050508] font-semibold transition-all"
+                                style={{
+                                    background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))',
+                                    boxShadow: '0 0 18px var(--accent-30)',
+                                }}
+                            >
+                                Restart Path
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
+export function ActivePathState() {
+    const { activePath, computeProgressMetrics } = useNavigationStore();
+    const sessionsV2 = useProgressStore((s) => s.sessionsV2 || []);
+    const colorScheme = useDisplayModeStore((s) => s.colorScheme);
+    const isLight = colorScheme === 'light';
+
+    const normalizedActivePathId = normalizeInitiationPathIdentity(activePath?.activePathId || null);
+    const path = normalizedActivePathId ? getPathById(normalizedActivePathId) : null;
     const contract = path ? getPathContract(path) : {};
     const totalDays = contract.totalDays || 14;
     const metrics = computeProgressMetrics();
@@ -64,8 +211,8 @@ export function ActivePathState() {
             sessionsV2
                 .filter((s) => s?.completion === 'completed')
                 .filter((s) => {
-                    const sessionPathId = s?.pathContext?.activePathId || null;
-                    if (sessionPathId !== activePath.activePathId) return false;
+                    const sessionPathId = normalizeInitiationPathIdentity(s?.pathContext?.activePathId || null);
+                    if (sessionPathId !== normalizedActivePathId) return false;
                     const runId = activePath?.runId || null;
                     const sessionRunId = s?.pathContext?.runId || null;
                     if (runId && sessionRunId) return runId === sessionRunId;
@@ -140,104 +287,7 @@ export function ActivePathState() {
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-                <button
-                    onClick={() => setShowRestartConfirm(true)}
-                    className="px-4 py-3 text-sm transition-colors"
-                    style={{ color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)' }}
-                >
-                    Restart path
-                </button>
-                {!showAbandonConfirm ? (
-                    <button
-                        onClick={() => setShowAbandonConfirm(true)}
-                        className="px-4 py-3 text-sm transition-colors"
-                        style={{ color: isLight ? 'rgba(90, 77, 60, 0.4)' : 'rgba(253,251,245,0.4)' }}
-                    >
-                        Abandon path
-                    </button>
-                ) : (
-                    <div className="flex gap-2 items-center">
-                        <button
-                            onClick={() => {
-                                abandonPath();
-                                setShowAbandonConfirm(false);
-                            }}
-                            className="px-4 py-2 text-sm text-red-400 border border-red-400/30 rounded-full hover:bg-red-400/10 transition-colors"
-                        >
-                            Confirm
-                        </button>
-                        <button
-                            onClick={() => setShowAbandonConfirm(false)}
-                            className="px-4 py-2 text-sm border rounded-full transition-colors"
-                            style={{
-                                color: isLight ? 'rgba(90, 77, 60, 0.6)' : 'rgba(253,251,245,0.6)',
-                                borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)',
-                                background: isLight ? 'rgba(255, 255, 255, 0.4)' : 'transparent',
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {showRestartConfirm && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
-                    style={{ background: 'rgba(0,0,0,0.65)' }}
-                    onClick={() => setShowRestartConfirm(false)}
-                >
-                    <div
-                        className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
-                        style={{
-                            background: isLight ? 'rgba(255,255,255,0.95)' : 'rgba(20,15,25,0.95)',
-                            border: isLight ? '1px solid rgba(180, 140, 90, 0.3)' : '1px solid var(--accent-20)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h3
-                            className="text-lg font-bold mb-2"
-                            style={{
-                                fontFamily: 'var(--font-display)',
-                                letterSpacing: 'var(--tracking-wide)',
-                                color: isLight ? 'rgba(140, 100, 40, 0.9)' : 'var(--accent-color)',
-                            }}
-                        >
-                            Restart Path?
-                        </h3>
-                        <p className="text-sm mb-4" style={{ color: isLight ? 'rgba(90, 77, 60, 0.75)' : 'rgba(253,251,245,0.75)' }}>
-                            This resets the current run to Day 1.
-                        </p>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                onClick={() => setShowRestartConfirm(false)}
-                                className="px-4 py-2 rounded-full border transition-colors"
-                                style={{
-                                    color: isLight ? 'rgba(90, 77, 60, 0.7)' : 'rgba(253,251,245,0.8)',
-                                    borderColor: isLight ? 'rgba(180, 140, 90, 0.3)' : 'var(--accent-20)',
-                                    background: isLight ? 'rgba(255,255,255,0.6)' : 'transparent',
-                                }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    restartPath();
-                                    setShowRestartConfirm(false);
-                                }}
-                                className="px-4 py-2 rounded-full text-[#050508] font-semibold transition-all"
-                                style={{
-                                    background: 'linear-gradient(to bottom right, var(--accent-color), var(--accent-secondary))',
-                                    boxShadow: '0 0 18px var(--accent-30)',
-                                }}
-                            >
-                                Restart Path
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <PathLifecycleActions />
         </div>
     );
 }

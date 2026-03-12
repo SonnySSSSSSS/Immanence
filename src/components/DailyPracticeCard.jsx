@@ -242,6 +242,29 @@ function normalizeGuidanceSpec(guidance) {
     };
 }
 
+function normalizeInstructionVideoSpec(video) {
+    if (typeof video === 'string') {
+        const url = video.trim();
+        return url ? { url } : null;
+    }
+
+    if (!video || typeof video !== 'object') return null;
+
+    const url = typeof video.url === 'string'
+        ? video.url.trim()
+        : (typeof video.videoUrl === 'string' ? video.videoUrl.trim() : '');
+    if (!url) return null;
+
+    const title = typeof video.title === 'string' ? video.title.trim() : '';
+    const poster = typeof video.poster === 'string' ? video.poster.trim() : '';
+
+    return {
+        url,
+        ...(title ? { title } : {}),
+        ...(poster ? { poster } : {}),
+    };
+}
+
 function normalizeBenchmarkPatternForLaunch(pattern) {
     if (!pattern || typeof pattern !== 'object') return null;
 
@@ -267,6 +290,14 @@ function normalizeBenchmarkPatternForLaunch(pattern) {
     };
 }
 
+function normalizeInitiationPathIdentity(pathId) {
+    return pathId === 'initiation-2' ? 'initiation' : pathId;
+}
+
+function isSameInitiationPathIdentity(a, b) {
+    return normalizeInitiationPathIdentity(a) === normalizeInitiationPathIdentity(b);
+}
+
 function resolvePracticeLaunchFromEntry(entry) {
     if (!entry) return null;
 
@@ -289,6 +320,25 @@ function resolvePracticeLaunchFromEntry(entry) {
         const guidance = Object.prototype.hasOwnProperty.call(entry, 'guidance')
             ? normalizeGuidanceSpec(entry.guidance)
             : undefined;
+        const guidanceVideoCandidate =
+            entry.guidance && typeof entry.guidance === 'object'
+                ? (
+                    entry.guidance.instructionVideo
+                    ?? entry.guidance.video
+                    ?? (
+                        typeof entry.guidance.videoUrl === 'string'
+                            ? {
+                                videoUrl: entry.guidance.videoUrl,
+                                title: entry.guidance.videoTitle,
+                                poster: entry.guidance.videoPoster,
+                            }
+                            : undefined
+                    )
+                )
+                : undefined;
+        const instructionVideo = Object.prototype.hasOwnProperty.call(entry, 'instructionVideo')
+            ? normalizeInstructionVideoSpec(entry.instructionVideo)
+            : (guidanceVideoCandidate !== undefined ? normalizeInstructionVideoSpec(guidanceVideoCandidate) : undefined);
 
         // Backward-compat convenience: allow shorthand breathPattern/pattern to map into breath preset.
         if (practiceId === 'breath' && practiceConfig.breathPattern) {
@@ -304,6 +354,7 @@ function resolvePracticeLaunchFromEntry(entry) {
             practiceConfig: Object.keys(practiceConfig).length ? practiceConfig : undefined,
             practiceParamsPatch: Object.keys(practiceParamsPatch).length ? practiceParamsPatch : undefined,
             guidance,
+            instructionVideo,
             overrides: entry.overrides || undefined,
             locks: entry.locks || undefined,
         };
@@ -345,6 +396,18 @@ function resolvePracticeLaunchFromProgramLeg(leg) {
         practiceId,
         duration: durationMin ?? undefined,
         guidance: leg.guidance,
+        instructionVideo: leg.instructionVideo
+            ?? leg.guidance?.instructionVideo
+            ?? leg.guidance?.video
+            ?? (
+                typeof leg.guidance?.videoUrl === 'string'
+                    ? {
+                        videoUrl: leg.guidance.videoUrl,
+                        title: leg.guidance.videoTitle,
+                        poster: leg.guidance.videoPoster,
+                    }
+                    : undefined
+            ),
         practiceParamsPatch: leg.practiceParamsPatch,
         overrides: leg.overrides,
         locks: leg.locks,
@@ -366,7 +429,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
     const dataCardCarousel = import.meta.env.DEV && devCardCarouselId ? String(devCardCarouselId) : undefined;
     
     // Navigation path fallback
-    const activePathId = useNavigationStore(s => s.activePath?.activePathId ?? null);
+    const activePathId = useNavigationStore(s => normalizeInitiationPathIdentity(s.activePath?.activePathId ?? null));
     const activePathObj = activePathId ? getPathById(activePathId) : null;
     const activePath = useNavigationStore(s => s.activePath);
     const todayDow = new Date().getDay();
@@ -407,7 +470,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             }
 
             const sessionPathId = session?.pathContext?.activePathId ?? null;
-            if (!activePathIdForRun || !sessionPathId || sessionPathId !== activePathIdForRun) return false;
+            if (!activePathIdForRun || !sessionPathId || !isSameInitiationPathIdentity(sessionPathId, activePathIdForRun)) return false;
 
             const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
             if (!sessionAnchorIso) return false;
@@ -494,7 +557,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
 
             // Fallback for legacy/orphaned records missing runId.
             const sessionPathId = session?.pathContext?.activePathId ?? null;
-            if (!activePathIdForRun || !sessionPathId || sessionPathId !== activePathIdForRun) return false;
+            if (!activePathIdForRun || !sessionPathId || !isSameInitiationPathIdentity(sessionPathId, activePathIdForRun)) return false;
 
             const sessionAnchorIso = session?.startedAt || session?.endedAt || null;
             if (!sessionAnchorIso) return false;
@@ -749,6 +812,7 @@ export function DailyPracticeCard({ onStartPractice, onViewCurriculum, onNavigat
             locks: slot?.locks || undefined,
             practiceConfig: slot?.practiceConfig || undefined,
             guidance: slot?.guidance ?? null,
+            instructionVideo: slot?.instructionVideo ?? null,
             pathContext: {
                 runId: activePath?.runId,
                 activePathId: activePath?.activePathId ?? null,
