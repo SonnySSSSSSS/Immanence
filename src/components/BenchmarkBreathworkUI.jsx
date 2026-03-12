@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDisplayModeStore } from '../state/displayModeStore';
+import { BENCHMARK_PHASES } from '../data/breathPhasesMeta.js';
 
-const PHASES = [
-    { key: 'inhale', label: 'Inhale', hint: 'Breathe in until you reach your comfortable limit.' },
-    { key: 'hold1', label: 'Hold In', hint: 'Hold with lungs full while staying relaxed.' },
-    { key: 'exhale', label: 'Exhale', hint: 'Release slowly until empty.' },
-    { key: 'hold2', label: 'Hold Out', hint: 'Pause empty without strain.' },
-];
+// Phase metadata is imported from src/data/breathPhasesMeta.js so it can be
+// referenced by other consumers without importing the full benchmark UI component.
+const PHASES = BENCHMARK_PHASES;
 
 const formatPct = (value) => {
     if (!Number.isFinite(value)) return '0%';
