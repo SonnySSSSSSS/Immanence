@@ -1,5 +1,5 @@
 // src/components/ActivePathState.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { getPathById } from '../data/navigationData.js';
 import { useNavigationStore } from '../state/navigationStore.js';
 import { useDisplayModeStore } from '../state/displayModeStore.js';
@@ -203,7 +203,7 @@ export function ActivePathState() {
     const todayDow = new Date().getDay();
     const isRestDay = activeDays.length > 0 && !activeDays.includes(todayDow);
 
-    const nextSessionLabel = useMemo(() => {
+    const nextSessionLabel = (() => {
         if (!activePath || !path) return null;
         if (isRestDay || selectedTimes.length === 0) return null;
         const now = new Date();
@@ -232,7 +232,7 @@ export function ActivePathState() {
             return (h * 60 + m) >= nowMin;
         });
         return upcoming ? formatTimeLabel(upcoming) : null;
-    }, [activePath, path, isRestDay, selectedTimes, sessionsV2]);
+    })();
 
     if (!activePath) return null;
     if (!path) return null;
