@@ -82,7 +82,7 @@ const HOME_HUB_SIDE_PANEL_ASSET_URLS = Object.freeze({
 });
 
 
-function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, previewShowCore, previewAttention, onOpenHardwareGuide, isPracticing = false, lockToHub = false, debugDisableDailyCard = false, debugBuildProbe = false, debugShadowScan = false, debugDailyCardShadowOff = false, debugDailyCardBlurOff = false, debugDailyCardBorderOff = false, debugDailyCardMaskOff = false }) {
+function HomeHub({ onSelectSection, activeSection = null, currentStage, previewPath, isPracticing = false, lockToHub = false, debugShadowScan = false }) {
   // Real data from stores
   const { getStreakInfo, getDomainStats, getWeeklyPattern } = useProgressStore();
   const { getCurrentStage, getDaysUntilNextStage } = useLunarStore();
@@ -90,19 +90,9 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const colorScheme = useDisplayModeStore(s => s.colorScheme);
   const userMode = useUserModeStore((s) => s.userMode);
   const isLight = colorScheme === 'light';
-  // Single-rail app framing: remove hearth/sanctuary width modes to prevent aspect drift.
-  const isSanctuary = false;
-
-  // Debug flags are sourced from App.jsx (URL + localStorage) and passed as props so they work in embedded shells.
-  const disableDailyCard = Boolean(debugDisableDailyCard);
-  const showBuildProbe = Boolean(debugBuildProbe);
   const modeTileBgUrl = 'none';
   const modeTileBackgroundImage = sanitizeModeTileBackgroundImage(modeTileBgUrl);
   void debugShadowScan;
-  const dailyCardShadowOff = Boolean(debugDailyCardShadowOff);
-  const dailyCardBlurOff = Boolean(debugDailyCardBlurOff);
-  const dailyCardBorderOff = Boolean(debugDailyCardBorderOff);
-  const dailyCardMaskOff = Boolean(debugDailyCardMaskOff);
   // Prefer the stage coming from the main app/dev controls (`currentStage`), then fall back to avatar store stage.
   // This prevents "two stage sources" where the avatar/popup drift from the stage shown elsewhere.
   const effectiveStage = currentStage || avatarStage;
@@ -232,26 +222,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     : 0;
 
 
-  // Format last practiced time
-  const formatLastPracticed = (isoDate) => {
-    if (!isoDate) return 'Never';
-    const now = new Date();
-    const then = new Date(isoDate);
-    const diffMs = now - then;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return then.toLocaleDateString();
-  };
-
-  const lastPracticed = formatLastPracticed(breathStats.lastPracticed);
-
   void avgAccuracy;
   void progressToNextStage;
 
@@ -360,8 +330,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const panelH = `clamp(112px, calc(${RAIL_W} * 0.305), 132px)`;
   const panelPad = `calc(${U} * 1.0)`;
   const panelRadius = `calc(${U} * 1.2)`;
-  const coverH = `calc((${panelH}) - ((${panelPad}) * 2) - ((${U}) * 3.0))`;
-  const panelFooterH = `calc((${panelH}) - ((${panelPad}) * 2) - (${coverH}))`;
   const sidePanelFrameStyle = {
     width: panelW,
     height: panelH,
@@ -385,26 +353,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
   const sidePanelFramePrimaryRowStyle = {
     ...sidePanelFrameStyle,
     transform: 'translateY(-18px)',
-  };
-  const sidePanelCoverRectStyle = {
-    width: '100%',
-    height: '100%',
-    flexShrink: 0,
-    border: 'none',
-    background: 'none',
-    boxShadow: 'none',
-  };
-  const sidePanelCoverContentStyle = {
-    width: '100%',
-    height: '100%',
-    padding: `calc(${U} * 0.6)`,
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    textAlign: 'center',
-    gap: `calc(${U} * 0.4)`,
   };
   const sidePanelMetricCellStyle = {
     width: '100%',
@@ -515,17 +463,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     lineHeight: 1,
     letterSpacing: '0.06em',
   };
-  const sidePanelTileImageStyle = {
-    width: '100%',
-    height: `calc(${U} * 2.2)`,
-    flexShrink: 0,
-    borderRadius: `calc(${panelRadius} * 0.72)`,
-    overflow: 'hidden',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    opacity: 0.3,
-    transition: 'opacity 220ms ease',
-  };
   const sidePanelLeftTileStatsColStyle = {
     width: '100%',
     display: 'flex',
@@ -539,13 +476,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     ...sidePanelTileMetricCellStyle,
     minHeight: `calc(${U} * 1.65)`,
     justifyContent: 'center',
-  };
-  const sidePanelLeftTileImageFillStyle = {
-    ...sidePanelTileImageStyle,
-    flex: '1 1 auto',
-    height: 'auto',
-    minHeight: `calc(${U} * 2.2)`,
-    opacity: 0.34,
   };
   const sidePanelTileExpandedMaxHeight = `calc(${panelH} - ((${panelPad}) * 0.9) - 12px)`;
   const sidePanelTileRolledMaxHeight = `calc(${U} * 1.6)`;
@@ -563,33 +493,6 @@ function HomeHub({ onSelectSection, activeSection = null, currentStage, previewP
     cursor: 'pointer',
     padding: '3px 0',
     flexShrink: 0,
-  };
-  const sidePanelFooterStyle = {
-    width: '100%',
-    height: panelFooterH,
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxSizing: 'border-box',
-    textAlign: 'center',
-  };
-  const sidePanelCoverMediaStyle = {
-    width: '100%',
-    height: '100%',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    display: 'flex',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  };
-  const sidePanelInnerPadStyle = {
-    width: '100%',
-    padding: panelPad,
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
   };
 
   // Render helper: donut ring for rate metrics (completion/on-time)

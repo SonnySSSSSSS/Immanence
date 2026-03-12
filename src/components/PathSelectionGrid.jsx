@@ -6,7 +6,6 @@ import { useDisplayModeStore } from '../state/displayModeStore.js';
 import { getResumableNavigationPathId, useCurriculumStore } from '../state/curriculumStore.js';
 import { ThoughtDetachmentOnboarding } from './ThoughtDetachmentOnboarding.jsx';
 import { getPathContract } from '../utils/pathContract.js';
-import { PathLifecycleActions } from './ActivePathState.jsx';
 
 export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
     const allPaths = getAllPaths();
@@ -61,14 +60,6 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                     const durationLabel = Number.isInteger(contract.totalDays)
                         ? `${contract.totalDays} days`
                         : (typeof entry.duration === 'number' ? `${entry.duration} weeks` : `${entry.duration} · Ongoing`);
-
-                    const shouldShowLifecycleActions = !entry.isProgram && hasActivePathMatch;
-                    const ensureEntryPathLoaded = () => {
-                        if (activePath?.activePathId === entry.id) return true;
-                        if (resumablePathId !== entry.id) return false;
-                        const result = restoreCurriculumPath(activeCurriculumId || null);
-                        return result?.ok !== false;
-                    };
 
                     return (
                         <div key={entry.id} className="flex flex-col gap-2">
@@ -243,28 +234,6 @@ export function PathSelectionGrid({ onPathSelected, selectedPathId }) {
                                 )}
                             </div>
                             </button>
-                            {shouldShowLifecycleActions && (
-                                <div
-                                    className="rounded-2xl border px-3 py-3"
-                                    style={{
-                                        background: isLight ? 'rgba(255, 255, 255, 0.38)' : 'rgba(18, 10, 22, 0.72)',
-                                        borderColor: isLight ? 'rgba(180, 140, 90, 0.16)' : 'rgba(250, 208, 120, 0.14)',
-                                        backdropFilter: 'blur(8px)',
-                                        WebkitBackdropFilter: 'blur(8px)',
-                                    }}
-                                >
-                                    <div
-                                        className="mb-2 text-[10px] uppercase tracking-[0.16em]"
-                                        style={{ color: isLight ? 'rgba(140, 100, 40, 0.7)' : 'var(--accent-50)' }}
-                                    >
-                                        Path Actions
-                                    </div>
-                                    <PathLifecycleActions
-                                        compact
-                                        ensureActivePath={ensureEntryPathLoaded}
-                                    />
-                                </div>
-                            )}
                         </div>
                     );
                 })}
