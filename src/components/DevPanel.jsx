@@ -1,33 +1,6 @@
 // src/components/DevPanel.jsx
 // Developer-only lab for testing Immanence OS systems
 // Access: Ctrl+Shift+D or tap version 5 times
-// Per-card wallpaper diagnostics (devtools only)
-function PracticeCardWallpaperDiagnostics({ stageKey }) {
-    const [status, setStatus] = React.useState('pending');
-    const [url, setUrl] = React.useState('');
-    const [baseUrl, setBaseUrl] = React.useState('');
-    React.useEffect(() => {
-        if (!stageKey) return;
-        const base = import.meta.env.BASE_URL || '/';
-        setBaseUrl(base);
-        const wallpaperUrl = getStageWallpaperUrl(stageKey);
-        setUrl(wallpaperUrl);
-        const img = new window.Image();
-        img.onload = () => setStatus('loaded');
-        img.onerror = () => setStatus('error');
-        img.src = wallpaperUrl;
-        // eslint-disable-next-line
-    }, [stageKey]);
-    return (
-        <div style={{ fontSize: 11, fontFamily: 'monospace', background: '#181818', color: '#b5f4ff', borderRadius: 6, padding: 8, margin: '8px 0' }}>
-            <div><b>Practice Card Wallpaper Diagnostics</b></div>
-            <div>stageKey: <span style={{ color: '#fff' }}>{stageKey}</span></div>
-            <div>BASE_URL: <span style={{ color: '#fff' }}>{baseUrl}</span></div>
-            <div>wallpaperUrl: <span style={{ color: '#fff' }}>{url}</span></div>
-            <div>status: <span style={{ color: status === 'loaded' ? '#7fff7f' : status === 'error' ? '#ff7f7f' : '#fff' }}>{status}</span></div>
-        </div>
-    );
-}
 
 import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { generateMockSessions, MOCK_PATTERNS } from '../utils/devDataGenerator';
@@ -148,8 +121,6 @@ export function DevPanel({
     const setPracticeButtonFxEnabled = useSettingsStore(s => s.setPracticeButtonFxEnabled);
     const cardElectricBorderEnabled = useSettingsStore(s => s.cardElectricBorderEnabled);
     const setCardElectricBorderEnabled = useSettingsStore(s => s.setCardElectricBorderEnabled);
-    const _lightModeRingType = useSettingsStore(s => s.lightModeRingType);
-    const _setLightModeRingType = useSettingsStore(s => s.setLightModeRingType);
     const photic = useSettingsStore(s => s.photic);
     const setPhoticSetting = useSettingsStore(s => s.setPhoticSetting);
 
@@ -208,7 +179,6 @@ export function DevPanel({
     const [inspectorOpen, setInspectorOpen] = useState(false);
     const [storeSnapshot, setStoreSnapshot] = useState(null);
     const [cardApplyToAll, setCardApplyToAll] = useState(false);
-    const [peekMode, setPeekMode] = useState(false);
     const [practiceButtonPickMode, setPracticeButtonPickMode] = useState(false);
     const [practiceButtonApplyToAll, setPracticeButtonApplyToAll] = useState(true);
     const [practiceButtonSelectedKey, setPracticeButtonSelectedKey] = useState(null);
@@ -431,7 +401,6 @@ export function DevPanel({
         });
         return () => {
             setPickMode(false);
-            setPeekMode(false);
             un();
         };
     }, [isOpen, devtoolsEnabled]);
@@ -485,18 +454,6 @@ export function DevPanel({
         return () => document.body.classList.remove('dev-nav-btn-probe');
     }, [devtoolsEnabled, navBtnProbeEnabled]);
 
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        const onKeyDown = (event) => {
-            const key = String(event.key || '').toLowerCase();
-            if (event.ctrlKey && event.altKey && event.shiftKey && key === 'k') {
-                event.preventDefault();
-                setPeekMode(v => !v);
-            }
-        };
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, [isOpen, devtoolsEnabled]);
 
     const activeDraft = cardApplyToAll
         ? globalDraft
@@ -517,34 +474,15 @@ export function DevPanel({
         applySelected(next);
     };
 
-    const handleStartPickFlow = () => {
-        stopUniversalPickCaptureImmediate();
-        stopPracticeButtonPickCaptureImmediate();
-        setUniversalPickMode(false);
-        setPracticeButtonPickMode(false);
-        setPickMode(true);
-        setPeekMode(true);
-    };
-
     const onChangeNavBtnSetting = (key, value) => {
         const next = { ...navBtnDraft, [key]: value };
         setNavBtnDraft(next);
         applyNavButtonSettings(next);
     };
 
-    const handleStopPickFlow = () => {
-        setPickMode(false);
-    };
-
-    const handleConfirmPickFlow = () => {
-        setPickMode(false);
-        setPeekMode(false);
-    };
-
     const handleStartUniversalPickFlow = () => {
         // Conflict prevention: remove any other capture listeners synchronously first.
         setPickMode(false);
-        setPeekMode(false);
         stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
         setControlsSelectedId(null);
@@ -563,10 +501,6 @@ export function DevPanel({
         // Effect will handle cleanup when universalPickMode becomes false
         setPickMode(false);
         setUniversalPickMode(false);
-    };
-
-    const handleTogglePeek = () => {
-        setPeekMode(v => !v);
     };
 
     const PRACTICE_BUTTON_PICK_STORAGE_KEY = "immanence.dev.practiceButtonFxPicker";
@@ -622,7 +556,6 @@ export function DevPanel({
         if (legacyPickersEnabled) return undefined;
         // If legacy pickers are hidden, ensure their capture listeners are off.
         setPickMode(false);
-        setPeekMode(false);
         stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
         return undefined;
@@ -655,7 +588,6 @@ export function DevPanel({
 
         // Conflict prevention: never allow two global capture listeners at once.
         setPickMode(false);
-        setPeekMode(false);
         setUniversalPickMode(false);
 
         const normalizePracticeType = (raw) => {
@@ -731,7 +663,6 @@ export function DevPanel({
 
         // Conflict prevention: never allow two global capture listeners at once.
         setPickMode(false);
-        setPeekMode(false);
         stopPracticeButtonPickCaptureImmediate();
         setPracticeButtonPickMode(false);
 
@@ -792,6 +723,11 @@ export function DevPanel({
             detachControlsCapture();
             removePlatesPickerClass();
             stopUniversalPickCaptureImmediate();
+            try {
+                document.documentElement.classList.add('dev-card-picker-active');
+            } catch {
+                // ignore
+            }
 
             const onClickCapture = (event) => {
                 const target = event?.target instanceof Element ? event.target : null;
@@ -814,6 +750,11 @@ export function DevPanel({
                 window.removeEventListener('click', onClickCapture, true);
                 if (universalPickHandlerRef.current === onClickCapture) {
                     universalPickHandlerRef.current = null;
+                }
+                try {
+                    document.documentElement.classList.remove('dev-card-picker-active');
+                } catch {
+                    // ignore
                 }
             };
         }
@@ -861,14 +802,6 @@ export function DevPanel({
         setPlatesFxDraft(refreshed);
     }, [platesSelectedId]);
 
-    useEffect(() => {
-        if (!canRunDevEffects) return undefined;
-        if (!cardState?.pickMode) return undefined;
-        // Conflict prevention: never allow two global capture listeners at once.
-        setPracticeButtonPickMode(false);
-        setUniversalPickMode(false);
-        return undefined;
-    }, [isOpen, devtoolsEnabled, cardState?.pickMode]);
 
     useEffect(() => {
         if (!canRunDevEffects) return undefined;
@@ -883,48 +816,6 @@ export function DevPanel({
     }, 0);
 
     if (!isOpen) return null;
-
-    if (peekMode) {
-        return (
-            <>
-                {/* Practice Card Wallpaper Diagnostics (devtools only) */}
-                <PracticeCardWallpaperDiagnostics stageKey={currentStageKey} />
-                <div data-testid="devpanel-peek" className="fixed inset-0 z-[9999] pointer-events-none">
-                    <div className="absolute top-3 right-3 pointer-events-auto w-[280px] rounded-xl border border-white/20 bg-[#0a0a12]/95 backdrop-blur-md p-3 shadow-2xl">
-                        <div className="text-[11px] text-white/80 mb-2">Card Picker Active</div>
-                        <div className="text-[10px] text-white/55 mb-3">
-                            Click any marked card in the UI, then confirm to return to the panel.
-                        </div>
-                        <div className="text-[10px] text-white/50 mb-3">
-                            Shortcut: <span className="font-mono text-white/80">Ctrl+Alt+Shift+K</span>
-                        </div>
-                        <div className="text-[10px] font-mono text-white/75 mb-3 bg-white/5 border border-white/10 rounded px-2 py-1.5">
-                            Selected: {cardState.hasSelected ? (cardState.selectedCardId || cardState.selectedLabel || 'card') : 'none'}
-                        </div>
-                        {cardState.lastPickFailure?.message && (
-                            <div className="text-[10px] mb-3 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-red-200/90">
-                                {cardState.lastPickFailure.message}
-                            </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                onClick={handleConfirmPickFlow}
-                                className="rounded-lg px-3 py-2 text-xs bg-amber-500/20 border border-amber-400/50 text-amber-200"
-                            >
-                                {cardState.hasSelected ? 'Confirm + Return' : 'Return'}
-                            </button>
-                            <button
-                                onClick={onClose}
-                                className="rounded-lg px-3 py-2 text-xs bg-white/5 border border-white/15 text-white/70"
-                            >
-                                Close Panel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </>
-        );
-    }
 
     return (
         <div
@@ -987,7 +878,6 @@ export function DevPanel({
                     <button
                           onClick={() => {
                               setPickMode(false);
-                              setPeekMode(false);
                               stopPracticeButtonPickCaptureImmediate();
                               setPracticeButtonPickMode(false);
                               stopUniversalPickCaptureImmediate();
@@ -1006,16 +896,16 @@ export function DevPanel({
                 <div className="p-4 space-y-4">
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* AVATAR STAGE (WALLPAPER CONTROL) */}
+                    {/* AVATAR STAGE */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
-                        title="Avatar Stage (Wallpaper)"
+                        title="Avatar Stage"
                         expanded={expandedSections.avatar}
                         onToggle={() => toggleSection('avatar')}
                         isLight={isLight}
                     >
                         <div className="text-xs text-white/50 mb-3">
-                            Stage controls color/wallpaper. Path controls sigil geometry, breath, bloom intensity.
+                            Stage sets the wallpaper color. Path sets sigil geometry, breath pattern, and bloom intensity.
                         </div>
 
                         {/* Stage selector */}
@@ -1098,7 +988,7 @@ export function DevPanel({
 
                         {/* Stage Asset Style Toggle */}
                         <div className="flex items-center gap-3 mb-4">
-                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Title Set</label>
+                            <label className="text-xs w-16" style={{ color: isLight ? 'rgba(140, 100, 60, 0.9)' : '#fb923c' }}>Asset Style</label>
                             <div className="flex bg-white/5 rounded-lg p-1 gap-1">
                                 {[1, 2, 3, 4, 5].map(styleSet => (
                                     <button
@@ -1127,7 +1017,7 @@ export function DevPanel({
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* INSPECTOR (NEW) — Universal Picker */}
+                    {/* UNIFIED INSPECTOR */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <UnifiedInspectorSection
                         expanded={expandedSections.inspectorNew}
@@ -1186,10 +1076,6 @@ export function DevPanel({
                         onChangeCardSetting={onChangeCardSetting}
                         cardTunerExpanded={expandedSections.cardTuner}
                         onToggleCardTuner={() => toggleSection('cardTuner')}
-                        handleStopPickFlow={handleStopPickFlow}
-                        handleStartPickFlow={handleStartPickFlow}
-                        handleTogglePeek={handleTogglePeek}
-                        handleConfirmPickFlow={handleConfirmPickFlow}
                         cardElectricBorderEnabled={cardElectricBorderEnabled}
                         setCardElectricBorderEnabled={setCardElectricBorderEnabled}
                         practiceButtonFxEnabled={practiceButtonFxEnabled}
@@ -1199,7 +1085,6 @@ export function DevPanel({
                         stopUniversalPickCaptureImmediate={stopUniversalPickCaptureImmediate}
                         setUniversalPickMode={setUniversalPickMode}
                         setPickMode={setPickMode}
-                        setPeekMode={setPeekMode}
                         practiceButtonApplyToAll={practiceButtonApplyToAll}
                         setPracticeButtonApplyToAll={setPracticeButtonApplyToAll}
                         practiceButtonSelectedKey={practiceButtonSelectedKey}
@@ -1244,10 +1129,10 @@ export function DevPanel({
                     />
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* REPORTING LAYER TEST SECTION */}
+                    {/* REPORTING LAYER */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
-                        title="Reporting Layer (Dashboard Queries)"
+                        title="Reporting Layer"
                         expanded={expandedSections.reporting || false}
                         onToggle={() => toggleSection('reporting')}
                         isLight={isLight}
@@ -1409,23 +1294,8 @@ export function DevPanel({
                         {/* CoordinateHelper UI - Tutorial Pick mode */}
                         {showCoordinateHelper && <CoordinateHelper />}
 
-                        {/* Tutorial Script Editor */}
-                        <div className="mt-4">
-                            <TutorialEditor />
-                        </div>
-                    </Section>
-
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* DESIGN & DIAGNOSTIC SECTION */}
-                    {/* ═══════════════════════════════════════════════════════════════ */}
-                    <Section
-                        title="Design & Diagnostic"
-                        expanded={expandedSections.design || false}
-                        onToggle={() => toggleSection('design')}
-                        isLight={isLight}
-                    >
                         {/* Photonic Beginner Guide */}
-                        <div className="mb-3">
+                        <div className="mt-4">
                             <button
                                 onClick={() => {
                                     if (photic.beginnerMode) {
@@ -1454,10 +1324,15 @@ export function DevPanel({
                                 {photic.beginnerMode ? 'End Beginner Guide' : 'Start Beginner Guide'}
                             </button>
                         </div>
+
+                        {/* Tutorial Script Editor */}
+                        <div className="mt-4">
+                            <TutorialEditor />
+                        </div>
                     </Section>
 
                     {/* ═══════════════════════════════════════════════════════════════ */}
-                    {/* DATA SECTION */}
+                    {/* DATA MANAGEMENT */}
                     {/* ═══════════════════════════════════════════════════════════════ */}
                     <Section
                         title="Data Management"
@@ -1471,21 +1346,26 @@ export function DevPanel({
                                 const data = devHelpers.getStoreSnapshot();
                                 console.log('Store Snapshot:', data);
                                 navigator.clipboard?.writeText(JSON.stringify(data, null, 2));
-                            }}>Copy to Clipboard</DevButton>
+                            }}>Copy Snapshot</DevButton>
                         </div>
 
-                        {/* Reset all (destructive) */}
-                        <div style={destructiveLocked ? { opacity: 0.5 } : undefined}>
-                            <DestructiveButton
-                                label="Reset ALL Stores"
-                                armed={armed === 'all'}
-                                onArm={makeGuardedAction(() => handleDestructive('all', devHelpers.resetAllStores))}
-                            />
-                            {destructiveLocked && (
-                                <div className="text-[10px] text-white/50 mt-1">
-                                    Arm to enable destructive actions (prod only).
-                                </div>
-                            )}
+                        <div className="border-t border-white/10 mt-1 pt-3">
+                            {/* Reset dev stores (destructive in-memory) */}
+                            <div style={destructiveLocked ? { opacity: 0.5 } : undefined}>
+                                <DestructiveButton
+                                    label="Reset Dev Stores"
+                                    armed={armed === 'all'}
+                                    onArm={makeGuardedAction(() => handleDestructive('all', devHelpers.resetAllStores))}
+                                />
+                                {destructiveLocked && (
+                                    <div className="text-[10px] text-white/50 mt-1">
+                                        Arm to enable destructive actions (prod only).
+                                    </div>
+                                )}
+                            </div>
+                            <div className="text-[10px] text-white/40 mt-1">
+                                In-memory only: resets lunarStore + pathStore. Does not wipe localStorage or session history.
+                            </div>
                         </div>
                     </Section>
 
@@ -1495,8 +1375,21 @@ export function DevPanel({
                         onToggle={() => toggleSection('danger')}
                         isLight={isLight}
                     >
-                        <div className="mb-3">
-                            <DevButton onClick={resetLocalData}>Reset Local Data</DevButton>
+                        <div className="text-[10px] text-white/50 mb-3">Persisted — affects all stores and cannot be undone.</div>
+                        <div style={destructiveLocked ? { opacity: 0.5 } : undefined}>
+                            <DestructiveButton
+                                label="Wipe localStorage"
+                                armed={armed === 'wipeStorage'}
+                                onArm={makeGuardedAction(() => handleDestructive('wipeStorage', resetLocalData))}
+                            />
+                            {destructiveLocked && (
+                                <div className="text-[10px] text-white/50 mt-1">
+                                    Arm to enable destructive actions (prod only).
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-[10px] text-white/40 mt-1">
+                            Wipes all persisted immanenceOS.* localStorage keys and reloads.
                         </div>
                     </Section>
 
@@ -1555,10 +1448,10 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
         console.log(`✅ Injected ${mockSessions.length} mock sessions (${pattern.label})`);
     };
 
-    const clearMockData = () => {
+    const clearAllMockSessions = () => {
         const realSessions = sessions.filter(s => !s.metadata?.mock);
         useProgressStore.setState({ sessions: realSessions });
-        console.log('🗑️ Cleared all mock data');
+        console.log('🗑️ Cleared all mock sessions');
     };
 
     // TRAJECTORY MOCK DATA GENERATION
@@ -1647,11 +1540,6 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
         console.log(`✅ Injected ${mockSessions.length} trajectory sessions (${config.label}) over ${weeksToGenerate} weeks`);
     };
 
-    const clearTrajectoryData = () => {
-        const realSessions = sessions.filter(s => !s.metadata?.mock);
-        useProgressStore.setState({ sessions: realSessions });
-        console.log('🗑️ Cleared trajectory mock data');
-    };
 
     const trajectorySessions = sessions.filter(s => s.metadata?.trajectoryPattern);
     const trajectoryTotalCount = trajectorySessions.length;
@@ -1703,7 +1591,7 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
 
                 {/* Clear button */}
                 <button
-                    onClick={clearTrajectoryData}
+                    onClick={clearAllMockSessions}
                     className="w-full px-3 py-2 rounded-lg text-xs bg-red-500/10 border border-red-500/30 text-red-400/70 hover:bg-red-500/20 transition-all"
                 >
                     🗑️ Clear Trajectory Data
@@ -1715,7 +1603,7 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
                 <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{
                     color: isLight ? 'rgba(60, 50, 40, 0.7)' : 'rgba(255, 255, 255, 0.5)'
                 }}>
-                    📊 Progress Stats (Legacy)
+                    📊 Progress Store
                 </div>
 
                 {/* Session counts */}
@@ -1757,7 +1645,7 @@ function TrackingHubSection({ expanded, onToggle, isLight = false }) {
 
                 {/* Clear button */}
                 <button
-                    onClick={clearMockData}
+                    onClick={clearAllMockSessions}
                     className="w-full px-3 py-2 rounded-lg text-xs bg-red-500/10 border border-red-500/30 text-red-400/70 hover:bg-red-500/20 transition-all"
                 >
                     🗑️ Clear Progress Data
@@ -1930,7 +1818,7 @@ function CurriculumSection({
             {/* Onboarding Status */}
             {!onboardingComplete && (
                 <div className="mb-3 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-300">
-                    ⚠️ Onboarding not complete — curriculum card won't render. Click "Quick Setup" or any simulation button below.
+                    ⚠️ Onboarding not complete — curriculum card won't render. Click 'Quick Setup' or any simulation button below.
                 </div>
             )}
 
@@ -2018,7 +1906,7 @@ function CurriculumSection({
                 <div className="text-xs text-white/50 mb-2">Thought Catalog Testing</div>
                 <div className="grid grid-cols-2 gap-2">
                     <DevButton onClick={populateSampleThoughts}>Add Sample Thoughts</DevButton>
-                    <DevButton onClick={testWeightedRandom}>Test Random Selection</DevButton>
+                    <DevButton onClick={testWeightedRandom}>Test Weighted Selection</DevButton>
                 </div>
             </div>
 
